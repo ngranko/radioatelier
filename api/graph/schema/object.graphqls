@@ -1,0 +1,5 @@
+extend type Mutation {
+  createObject(input: CreateObjectInput!): Object!
+  updateObject(id: ID!, input: UpdateObjectInput!): Object!
+  deleteObject(id: ID!): ID!
+}

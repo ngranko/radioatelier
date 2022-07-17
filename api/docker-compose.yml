@@ -1,0 +1,26 @@
+services:
+  go:
+    build:
+      context: .
+      dockerfile: ./docker/go/Dockerfile
+      target: dev
+    restart: unless-stopped
+    ports:
+      - "7070:8080"
+    env_file: ./.env
+    volumes:
+      - .:/radioatelier
+    depends_on:
+      - db
+
+  db:
+    image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3310:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: example
+      MYSQL_DATABASE: radioatelier
+    volumes:
+      - ./docker/mysql/data:/var/lib/mysql
