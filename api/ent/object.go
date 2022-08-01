@@ -24,9 +24,9 @@ type Object struct {
 	// Description holds the value of the "description" field.
 	Description string `json:"description,omitempty"`
 	// Lat holds the value of the "lat" field.
-	Lat float64 `json:"lat,omitempty"`
+	Lat *float64 `json:"lat,omitempty"`
 	// Lng holds the value of the "lng" field.
-	Lng float64 `json:"lng,omitempty"`
+	Lng *float64 `json:"lng,omitempty"`
 	// InstalledPeriod holds the value of the "installed_period" field.
 	InstalledPeriod *string `json:"installed_period,omitempty"`
 	// IsRemoved holds the value of the "is_removed" field.
@@ -224,13 +224,15 @@ func (o *Object) assignValues(columns []string, values []interface{}) error {
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
 				return fmt.Errorf("unexpected type %T for field lat", values[i])
 			} else if value.Valid {
-				o.Lat = value.Float64
+				o.Lat = new(float64)
+				*o.Lat = value.Float64
 			}
 		case object.FieldLng:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
 				return fmt.Errorf("unexpected type %T for field lng", values[i])
 			} else if value.Valid {
-				o.Lng = value.Float64
+				o.Lng = new(float64)
+				*o.Lng = value.Float64
 			}
 		case object.FieldInstalledPeriod:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -401,11 +403,15 @@ func (o *Object) String() string {
 	builder.WriteString("description=")
 	builder.WriteString(o.Description)
 	builder.WriteString(", ")
-	builder.WriteString("lat=")
-	builder.WriteString(fmt.Sprintf("%v", o.Lat))
+	if v := o.Lat; v != nil {
+		builder.WriteString("lat=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteString(", ")
-	builder.WriteString("lng=")
-	builder.WriteString(fmt.Sprintf("%v", o.Lng))
+	if v := o.Lng; v != nil {
+		builder.WriteString("lng=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteString(", ")
 	if v := o.InstalledPeriod; v != nil {
 		builder.WriteString("installed_period=")

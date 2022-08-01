@@ -714,24 +714,28 @@ type ObjectWhereInput struct {
 	DescriptionContainsFold *string  `json:"descriptionContainsFold,omitempty"`
 
 	// "lat" field predicates.
-	Lat      *float64  `json:"lat,omitempty"`
-	LatNEQ   *float64  `json:"latNEQ,omitempty"`
-	LatIn    []float64 `json:"latIn,omitempty"`
-	LatNotIn []float64 `json:"latNotIn,omitempty"`
-	LatGT    *float64  `json:"latGT,omitempty"`
-	LatGTE   *float64  `json:"latGTE,omitempty"`
-	LatLT    *float64  `json:"latLT,omitempty"`
-	LatLTE   *float64  `json:"latLTE,omitempty"`
+	Lat       *float64  `json:"lat,omitempty"`
+	LatNEQ    *float64  `json:"latNEQ,omitempty"`
+	LatIn     []float64 `json:"latIn,omitempty"`
+	LatNotIn  []float64 `json:"latNotIn,omitempty"`
+	LatGT     *float64  `json:"latGT,omitempty"`
+	LatGTE    *float64  `json:"latGTE,omitempty"`
+	LatLT     *float64  `json:"latLT,omitempty"`
+	LatLTE    *float64  `json:"latLTE,omitempty"`
+	LatIsNil  bool      `json:"latIsNil,omitempty"`
+	LatNotNil bool      `json:"latNotNil,omitempty"`
 
 	// "lng" field predicates.
-	Lng      *float64  `json:"lng,omitempty"`
-	LngNEQ   *float64  `json:"lngNEQ,omitempty"`
-	LngIn    []float64 `json:"lngIn,omitempty"`
-	LngNotIn []float64 `json:"lngNotIn,omitempty"`
-	LngGT    *float64  `json:"lngGT,omitempty"`
-	LngGTE   *float64  `json:"lngGTE,omitempty"`
-	LngLT    *float64  `json:"lngLT,omitempty"`
-	LngLTE   *float64  `json:"lngLTE,omitempty"`
+	Lng       *float64  `json:"lng,omitempty"`
+	LngNEQ    *float64  `json:"lngNEQ,omitempty"`
+	LngIn     []float64 `json:"lngIn,omitempty"`
+	LngNotIn  []float64 `json:"lngNotIn,omitempty"`
+	LngGT     *float64  `json:"lngGT,omitempty"`
+	LngGTE    *float64  `json:"lngGTE,omitempty"`
+	LngLT     *float64  `json:"lngLT,omitempty"`
+	LngLTE    *float64  `json:"lngLTE,omitempty"`
+	LngIsNil  bool      `json:"lngIsNil,omitempty"`
+	LngNotNil bool      `json:"lngNotNil,omitempty"`
 
 	// "installed_period" field predicates.
 	InstalledPeriod             *string  `json:"installedPeriod,omitempty"`
@@ -1107,6 +1111,12 @@ func (i *ObjectWhereInput) P() (predicate.Object, error) {
 	if i.LatLTE != nil {
 		predicates = append(predicates, object.LatLTE(*i.LatLTE))
 	}
+	if i.LatIsNil {
+		predicates = append(predicates, object.LatIsNil())
+	}
+	if i.LatNotNil {
+		predicates = append(predicates, object.LatNotNil())
+	}
 	if i.Lng != nil {
 		predicates = append(predicates, object.LngEQ(*i.Lng))
 	}
@@ -1130,6 +1140,12 @@ func (i *ObjectWhereInput) P() (predicate.Object, error) {
 	}
 	if i.LngLTE != nil {
 		predicates = append(predicates, object.LngLTE(*i.LngLTE))
+	}
+	if i.LngIsNil {
+		predicates = append(predicates, object.LngIsNil())
+	}
+	if i.LngNotNil {
+		predicates = append(predicates, object.LngNotNil())
 	}
 	if i.InstalledPeriod != nil {
 		predicates = append(predicates, object.InstalledPeriodEQ(*i.InstalledPeriod))

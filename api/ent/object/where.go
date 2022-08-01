@@ -499,6 +499,20 @@ func LatLTE(v float64) predicate.Object {
 	})
 }
 
+// LatIsNil applies the IsNil predicate on the "lat" field.
+func LatIsNil() predicate.Object {
+	return predicate.Object(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldLat)))
+	})
+}
+
+// LatNotNil applies the NotNil predicate on the "lat" field.
+func LatNotNil() predicate.Object {
+	return predicate.Object(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldLat)))
+	})
+}
+
 // LngEQ applies the EQ predicate on the "lng" field.
 func LngEQ(v float64) predicate.Object {
 	return predicate.Object(func(s *sql.Selector) {
@@ -572,6 +586,20 @@ func LngLT(v float64) predicate.Object {
 func LngLTE(v float64) predicate.Object {
 	return predicate.Object(func(s *sql.Selector) {
 		s.Where(sql.LTE(s.C(FieldLng), v))
+	})
+}
+
+// LngIsNil applies the IsNil predicate on the "lng" field.
+func LngIsNil() predicate.Object {
+	return predicate.Object(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldLng)))
+	})
+}
+
+// LngNotNil applies the NotNil predicate on the "lng" field.
+func LngNotNil() predicate.Object {
+	return predicate.Object(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldLng)))
 	})
 }
 

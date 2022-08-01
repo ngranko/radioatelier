@@ -50,9 +50,25 @@ func (oc *ObjectCreate) SetLat(f float64) *ObjectCreate {
 	return oc
 }
 
+// SetNillableLat sets the "lat" field if the given value is not nil.
+func (oc *ObjectCreate) SetNillableLat(f *float64) *ObjectCreate {
+	if f != nil {
+		oc.SetLat(*f)
+	}
+	return oc
+}
+
 // SetLng sets the "lng" field.
 func (oc *ObjectCreate) SetLng(f float64) *ObjectCreate {
 	oc.mutation.SetLng(f)
+	return oc
+}
+
+// SetNillableLng sets the "lng" field if the given value is not nil.
+func (oc *ObjectCreate) SetNillableLng(f *float64) *ObjectCreate {
+	if f != nil {
+		oc.SetLng(*f)
+	}
 	return oc
 }
 
@@ -390,12 +406,6 @@ func (oc *ObjectCreate) check() error {
 	if _, ok := oc.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Object.name"`)}
 	}
-	if _, ok := oc.mutation.Lat(); !ok {
-		return &ValidationError{Name: "lat", err: errors.New(`ent: missing required field "Object.lat"`)}
-	}
-	if _, ok := oc.mutation.Lng(); !ok {
-		return &ValidationError{Name: "lng", err: errors.New(`ent: missing required field "Object.lng"`)}
-	}
 	if _, ok := oc.mutation.IsRemoved(); !ok {
 		return &ValidationError{Name: "is_removed", err: errors.New(`ent: missing required field "Object.is_removed"`)}
 	}
@@ -478,7 +488,7 @@ func (oc *ObjectCreate) createSpec() (*Object, *sqlgraph.CreateSpec) {
 			Value:  value,
 			Column: object.FieldLat,
 		})
-		_node.Lat = value
+		_node.Lat = &value
 	}
 	if value, ok := oc.mutation.Lng(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
@@ -486,7 +496,7 @@ func (oc *ObjectCreate) createSpec() (*Object, *sqlgraph.CreateSpec) {
 			Value:  value,
 			Column: object.FieldLng,
 		})
-		_node.Lng = value
+		_node.Lng = &value
 	}
 	if value, ok := oc.mutation.InstalledPeriod(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{

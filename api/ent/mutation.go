@@ -1544,7 +1544,7 @@ func (m *ObjectMutation) Lat() (r float64, exists bool) {
 // OldLat returns the old "lat" field's value of the Object entity.
 // If the Object object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ObjectMutation) OldLat(ctx context.Context) (v float64, err error) {
+func (m *ObjectMutation) OldLat(ctx context.Context) (v *float64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldLat is only allowed on UpdateOne operations")
 	}
@@ -1576,10 +1576,24 @@ func (m *ObjectMutation) AddedLat() (r float64, exists bool) {
 	return *v, true
 }
 
+// ClearLat clears the value of the "lat" field.
+func (m *ObjectMutation) ClearLat() {
+	m.lat = nil
+	m.addlat = nil
+	m.clearedFields[object.FieldLat] = struct{}{}
+}
+
+// LatCleared returns if the "lat" field was cleared in this mutation.
+func (m *ObjectMutation) LatCleared() bool {
+	_, ok := m.clearedFields[object.FieldLat]
+	return ok
+}
+
 // ResetLat resets all changes to the "lat" field.
 func (m *ObjectMutation) ResetLat() {
 	m.lat = nil
 	m.addlat = nil
+	delete(m.clearedFields, object.FieldLat)
 }
 
 // SetLng sets the "lng" field.
@@ -1600,7 +1614,7 @@ func (m *ObjectMutation) Lng() (r float64, exists bool) {
 // OldLng returns the old "lng" field's value of the Object entity.
 // If the Object object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ObjectMutation) OldLng(ctx context.Context) (v float64, err error) {
+func (m *ObjectMutation) OldLng(ctx context.Context) (v *float64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldLng is only allowed on UpdateOne operations")
 	}
@@ -1632,10 +1646,24 @@ func (m *ObjectMutation) AddedLng() (r float64, exists bool) {
 	return *v, true
 }
 
+// ClearLng clears the value of the "lng" field.
+func (m *ObjectMutation) ClearLng() {
+	m.lng = nil
+	m.addlng = nil
+	m.clearedFields[object.FieldLng] = struct{}{}
+}
+
+// LngCleared returns if the "lng" field was cleared in this mutation.
+func (m *ObjectMutation) LngCleared() bool {
+	_, ok := m.clearedFields[object.FieldLng]
+	return ok
+}
+
 // ResetLng resets all changes to the "lng" field.
 func (m *ObjectMutation) ResetLng() {
 	m.lng = nil
 	m.addlng = nil
+	delete(m.clearedFields, object.FieldLng)
 }
 
 // SetInstalledPeriod sets the "installed_period" field.
@@ -2692,6 +2720,12 @@ func (m *ObjectMutation) ClearedFields() []string {
 	if m.FieldCleared(object.FieldDescription) {
 		fields = append(fields, object.FieldDescription)
 	}
+	if m.FieldCleared(object.FieldLat) {
+		fields = append(fields, object.FieldLat)
+	}
+	if m.FieldCleared(object.FieldLng) {
+		fields = append(fields, object.FieldLng)
+	}
 	if m.FieldCleared(object.FieldInstalledPeriod) {
 		fields = append(fields, object.FieldInstalledPeriod)
 	}
@@ -2726,6 +2760,12 @@ func (m *ObjectMutation) ClearField(name string) error {
 	switch name {
 	case object.FieldDescription:
 		m.ClearDescription()
+		return nil
+	case object.FieldLat:
+		m.ClearLat()
+		return nil
+	case object.FieldLng:
+		m.ClearLng()
 		return nil
 	case object.FieldInstalledPeriod:
 		m.ClearInstalledPeriod()

@@ -177,8 +177,8 @@ func (c *CollectionUpdateOne) SetInput(i UpdateCollectionInput) *CollectionUpdat
 type CreateObjectInput struct {
 	Name            string
 	Description     *string
-	Lat             float64
-	Lng             float64
+	Lat             *float64
+	Lng             *float64
 	InstalledPeriod *string
 	IsRemoved       *bool
 	RemovedPeriod   *string
@@ -204,8 +204,12 @@ func (i *CreateObjectInput) Mutate(m *ObjectMutation) {
 	if v := i.Description; v != nil {
 		m.SetDescription(*v)
 	}
-	m.SetLat(i.Lat)
-	m.SetLng(i.Lng)
+	if v := i.Lat; v != nil {
+		m.SetLat(*v)
+	}
+	if v := i.Lng; v != nil {
+		m.SetLng(*v)
+	}
 	if v := i.InstalledPeriod; v != nil {
 		m.SetInstalledPeriod(*v)
 	}
@@ -260,7 +264,9 @@ type UpdateObjectInput struct {
 	Name                 *string
 	ClearDescription     bool
 	Description          *string
+	ClearLat             bool
 	Lat                  *float64
+	ClearLng             bool
 	Lng                  *float64
 	ClearInstalledPeriod bool
 	InstalledPeriod      *string
@@ -303,8 +309,14 @@ func (i *UpdateObjectInput) Mutate(m *ObjectMutation) {
 	if v := i.Description; v != nil {
 		m.SetDescription(*v)
 	}
+	if i.ClearLat {
+		m.ClearLat()
+	}
 	if v := i.Lat; v != nil {
 		m.SetLat(*v)
+	}
+	if i.ClearLng {
+		m.ClearLng()
 	}
 	if v := i.Lng; v != nil {
 		m.SetLng(*v)

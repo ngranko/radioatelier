@@ -65,9 +65,23 @@ func (ou *ObjectUpdate) SetLat(f float64) *ObjectUpdate {
 	return ou
 }
 
+// SetNillableLat sets the "lat" field if the given value is not nil.
+func (ou *ObjectUpdate) SetNillableLat(f *float64) *ObjectUpdate {
+	if f != nil {
+		ou.SetLat(*f)
+	}
+	return ou
+}
+
 // AddLat adds f to the "lat" field.
 func (ou *ObjectUpdate) AddLat(f float64) *ObjectUpdate {
 	ou.mutation.AddLat(f)
+	return ou
+}
+
+// ClearLat clears the value of the "lat" field.
+func (ou *ObjectUpdate) ClearLat() *ObjectUpdate {
+	ou.mutation.ClearLat()
 	return ou
 }
 
@@ -78,9 +92,23 @@ func (ou *ObjectUpdate) SetLng(f float64) *ObjectUpdate {
 	return ou
 }
 
+// SetNillableLng sets the "lng" field if the given value is not nil.
+func (ou *ObjectUpdate) SetNillableLng(f *float64) *ObjectUpdate {
+	if f != nil {
+		ou.SetLng(*f)
+	}
+	return ou
+}
+
 // AddLng adds f to the "lng" field.
 func (ou *ObjectUpdate) AddLng(f float64) *ObjectUpdate {
 	ou.mutation.AddLng(f)
+	return ou
+}
+
+// ClearLng clears the value of the "lng" field.
+func (ou *ObjectUpdate) ClearLng() *ObjectUpdate {
+	ou.mutation.ClearLng()
 	return ou
 }
 
@@ -524,6 +552,12 @@ func (ou *ObjectUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: object.FieldLat,
 		})
 	}
+	if ou.mutation.LatCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeFloat64,
+			Column: object.FieldLat,
+		})
+	}
 	if value, ok := ou.mutation.Lng(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeFloat64,
@@ -535,6 +569,12 @@ func (ou *ObjectUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
 			Type:   field.TypeFloat64,
 			Value:  value,
+			Column: object.FieldLng,
+		})
+	}
+	if ou.mutation.LngCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeFloat64,
 			Column: object.FieldLng,
 		})
 	}
@@ -956,9 +996,23 @@ func (ouo *ObjectUpdateOne) SetLat(f float64) *ObjectUpdateOne {
 	return ouo
 }
 
+// SetNillableLat sets the "lat" field if the given value is not nil.
+func (ouo *ObjectUpdateOne) SetNillableLat(f *float64) *ObjectUpdateOne {
+	if f != nil {
+		ouo.SetLat(*f)
+	}
+	return ouo
+}
+
 // AddLat adds f to the "lat" field.
 func (ouo *ObjectUpdateOne) AddLat(f float64) *ObjectUpdateOne {
 	ouo.mutation.AddLat(f)
+	return ouo
+}
+
+// ClearLat clears the value of the "lat" field.
+func (ouo *ObjectUpdateOne) ClearLat() *ObjectUpdateOne {
+	ouo.mutation.ClearLat()
 	return ouo
 }
 
@@ -969,9 +1023,23 @@ func (ouo *ObjectUpdateOne) SetLng(f float64) *ObjectUpdateOne {
 	return ouo
 }
 
+// SetNillableLng sets the "lng" field if the given value is not nil.
+func (ouo *ObjectUpdateOne) SetNillableLng(f *float64) *ObjectUpdateOne {
+	if f != nil {
+		ouo.SetLng(*f)
+	}
+	return ouo
+}
+
 // AddLng adds f to the "lng" field.
 func (ouo *ObjectUpdateOne) AddLng(f float64) *ObjectUpdateOne {
 	ouo.mutation.AddLng(f)
+	return ouo
+}
+
+// ClearLng clears the value of the "lng" field.
+func (ouo *ObjectUpdateOne) ClearLng() *ObjectUpdateOne {
+	ouo.mutation.ClearLng()
 	return ouo
 }
 
@@ -1445,6 +1513,12 @@ func (ouo *ObjectUpdateOne) sqlSave(ctx context.Context) (_node *Object, err err
 			Column: object.FieldLat,
 		})
 	}
+	if ouo.mutation.LatCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeFloat64,
+			Column: object.FieldLat,
+		})
+	}
 	if value, ok := ouo.mutation.Lng(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeFloat64,
@@ -1456,6 +1530,12 @@ func (ouo *ObjectUpdateOne) sqlSave(ctx context.Context) (_node *Object, err err
 		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
 			Type:   field.TypeFloat64,
 			Value:  value,
+			Column: object.FieldLng,
+		})
+	}
+	if ouo.mutation.LngCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeFloat64,
 			Column: object.FieldLng,
 		})
 	}

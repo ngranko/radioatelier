@@ -29,10 +29,12 @@ func (Object) Fields() []ent.Field {
 		field.String("name"),
 		field.String("description").Optional(),
 		field.Float("lat").
+			Optional().Nillable().
 			SchemaType(map[string]string{
 				dialect.MySQL: "decimal(9,6)",
 			}),
 		field.Float("lng").
+			Optional().Nillable().
 			SchemaType(map[string]string{
 				dialect.MySQL: "decimal(9,6)",
 			}),
@@ -61,8 +63,7 @@ func (Object) Fields() []ent.Field {
 		field.Time("deleted_at").Optional().Nillable(),
 		field.Time("last_sync").Optional().Nillable(),
 		field.String("notion_id").
-			Optional().
-			Nillable().
+			Optional().Nillable().
 			SchemaType(map[string]string{
 				dialect.MySQL: "char(36) binary",
 			}),
