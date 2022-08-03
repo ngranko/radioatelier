@@ -10,7 +10,7 @@ import (
 	"radioatelier/ent/user"
 	"radioatelier/package/db"
 	"radioatelier/package/external"
-	"radioatelier/package/types/property"
+	"radioatelier/package/structs"
 	"strings"
 	"time"
 
@@ -25,101 +25,102 @@ func SyncFromNotion() {
 	currentSyncTime = time.Now()
 
 	if lastSync == nil {
-		getDBLastSyncTime()
+		lastSync = db.GetLastSync(ctx)
 	}
 
-	err := doSync(nil)
+	err := syncNextChunk(nil)
 	if err != nil {
 		fmt.Println(err.Error())
 	}
 }
 
-func getDBLastSyncTime() {
-	obj, err := db.Client.Object.Query().
-		Unique(true).
-		Select(object.FieldLastSync).
-		Order(ent.Desc(object.FieldLastSync)).
-		First(ctx)
-	if err == nil {
-		lastSync = obj.LastSync
-	}
-}
-
-func doSync(startCursor *string) error {
+func syncNextChunk(startCursor *string) error {
 	res, err := external.QueryNotionObjects(ctx, lastSync, startCursor)
 	if err != nil {
 		return err
 	}
 
-	for _, page := range res.Results {
+	for _, notionPage := range res.Results {
+		page := structs.NewPageFromNotion(notionPage)
 		// retrieving an object from the DB
 		obj, err := getOrCreateObject(page, currentSyncTime)
 		if err != nil {
-			// TODO: change it to continue later
 			fmt.Println(err.Error())
-			return err
+			continue
 		}
 
 		if obj.LastSync == &currentSyncTime {
 			// the object was just created, we only need to update the notion lastSync time
-			// TODO: update the notion last sync field and change return to continue later on
-			return nil
+			_, err = external.UpdateLastSync(ctx, *obj.NotionID, currentSyncTime)
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+			continue
+		}
+
+		if obj.UpdatedAt.After(page.UpdatedAt) {
+			// object in the database was updated after the one in notion, no need to update it with notion data
+			continue
 		}
 
 		// update the object
+		updateObject(obj, page)
+
+		// update lastSync in notion
+		_, err = external.UpdateLastSync(ctx, *obj.NotionID, currentSyncTime)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
 	}
 
 	if res.HasMore {
-		return doSync((*string)(&res.NextCursor))
+		return syncNextChunk((*string)(&res.NextCursor))
 	}
 
 	return nil
 }
 
-func getOrCreateObject(page notionapi.Page, currentSyncTime time.Time) (*ent.Object, error) {
+func getOrCreateObject(page structs.Page, currentSyncTime time.Time) (*ent.Object, error) {
 	// retrieving an object from the DB
 	obj, err := db.Client.Object.Query().
-		Where(object.NotionIDEQ(page.ID.String())).
+		Where(object.NotionIDEQ(page.NotionID)).
 		First(ctx)
 	if err != nil {
 		fmt.Println(err.Error())
 		// let's assume that it means that the object doesn't exist
 
-		if page.Archived {
+		if page.DeletedAt != nil {
 			// object is not present in the database and already deleted in Notion, no need to add it in the first place
 			return nil, errors.New("object is not present in the database and already deleted in Notion, skipping")
 		}
 
 		// dealing with user
-		usr, err := getOrCreateUser(page.CreatedBy.ID)
+		usr, err := getOrCreateUser(page.CreatedBy)
 		if err != nil {
 			return nil, err
 		}
 
 		// dealing with city
-		city, err := getOrCreateCity(
-			property.NewSelectProperty(page.Properties["Город"]).GetValue(),
-			property.NewSelectProperty(page.Properties["Страна"]).GetValue(),
-		)
+		city, err := getOrCreateCity(page.City, page.Country)
 		if err != nil {
 			return nil, err
 		}
 
 		// creating an object in the DB
 		return db.Client.Object.Create().
-			SetName(property.NewTitleProperty(page.Properties["Название"]).GetValue()).
-			SetNillableInstalledPeriod(property.NewRichTextProperty(page.Properties["Установлена"]).GetNillableValue()).
-			SetIsRemoved(property.NewCheckboxProperty(page.Properties["Демонтирована?"]).GetValue()).
-			SetNillableRemovedPeriod(property.NewRichTextProperty(page.Properties["Период демонтажа"]).GetNillableValue()).
-			SetSource(property.NewURLProperty(page.Properties["Источник"]).GetValue()).
-			SetType(property.NewSelectProperty(page.Properties["Тип"]).GetValue()).
-			SetTags(property.NewMultiSelectProperty(page.Properties["Теги"]).GetValue()).
-			SetCreatedAt(page.CreatedTime).
-			SetUpdatedAt(page.LastEditedTime).
+			SetName(page.Name).
+			SetNillableInstalledPeriod(page.InstalledPeriod).
+			SetIsRemoved(page.IsRemoved).
+			SetNillableRemovedPeriod(page.RemovedPeriod).
+			SetSource(page.Source).
+			SetType(page.Type).
+			SetTags(page.Tags).
+			SetCreatedAt(page.CreatedAt).
+			SetUpdatedAt(page.UpdatedAt).
 			SetLastSync(currentSyncTime).
 			SetCreatedBy(usr).
 			SetUpdatedBy(usr).
-			SetNotionID(page.ID.String()).
+			SetNotionID(page.NotionID).
 			SetCity(city).
 			Save(ctx)
 	}
@@ -127,9 +128,41 @@ func getOrCreateObject(page notionapi.Page, currentSyncTime time.Time) (*ent.Obj
 	return obj, err
 }
 
-func getOrCreateUser(userID notionapi.UserID) (*ent.User, error) {
+func updateObject(obj *ent.Object, page structs.Page) {
+	obj.Name = page.Name
+	obj.InstalledPeriod = page.InstalledPeriod
+	obj.IsRemoved = page.IsRemoved
+	obj.RemovedPeriod = page.RemovedPeriod
+	obj.Source = &page.Source
+	obj.Type = page.Type
+	obj.Tags = page.Tags
+	obj.UpdatedAt = page.UpdatedAt
+	obj.LastSync = &currentSyncTime
+
+	if page.DeletedAt != nil {
+		obj.DeletedAt = page.DeletedAt
+	}
+
+	updatedBy, err := getOrCreateUser(page.UpdatedBy)
+	if err == nil {
+		obj.Edges.UpdatedBy = updatedBy
+
+		if page.DeletedAt != nil {
+			obj.Edges.DeletedBy = updatedBy
+		}
+	}
+
+	city, err := getOrCreateCity(page.City, page.Country)
+	if err == nil {
+		obj.Edges.City = city
+	}
+
+	obj.Update()
+}
+
+func getOrCreateUser(userID string) (*ent.User, error) {
 	usr, err := db.Client.User.Query().
-		Where(user.NotionIDEQ(userID.String())).
+		Where(user.NotionIDEQ(userID)).
 		First(ctx)
 	if err != nil {
 		fmt.Println(err.Error())
@@ -137,7 +170,7 @@ func getOrCreateUser(userID notionapi.UserID) (*ent.User, error) {
 		// let's assume for now that the user doesn't exist
 
 		//retrieving a user from notion
-		notionUser, err := external.NotionClient.User.Get(ctx, userID)
+		notionUser, err := external.NotionClient.User.Get(ctx, notionapi.UserID(userID))
 		if err != nil {
 			return nil, err
 		}

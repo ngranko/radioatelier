@@ -2,6 +2,7 @@ package property
 
 import (
 	"strings"
+	"time"
 
 	"github.com/jomei/notionapi"
 )
@@ -101,4 +102,26 @@ func (p MultiSelectProperty) GetValue() string {
 		list = append(list, value.Name)
 	}
 	return strings.Join(list, ", ")
+}
+
+type DateProperty struct {
+	property *notionapi.DateProperty
+}
+
+func NewDateProperty(prop notionapi.Property) DateProperty {
+	return DateProperty{
+		property: prop.(*notionapi.DateProperty),
+	}
+}
+
+func (p DateProperty) GetValue() time.Time {
+	return time.Time(*p.property.Date.Start)
+}
+
+func (p DateProperty) GetNillableValue() *time.Time {
+	if p.property.Date.Start != nil {
+		notionDate := time.Time(*p.property.Date.Start)
+		return &notionDate
+	}
+	return nil
 }

@@ -46,3 +46,23 @@ func addQueryObjectFilter(req *notionapi.DatabaseQueryRequest, lastSync *time.Ti
 		},
 	}
 }
+
+func UpdateLastSync(ctx context.Context, pageID string, value time.Time) (*notionapi.Page, error) {
+	return NotionClient.Page.Update(
+		ctx,
+		notionapi.PageID(pageID),
+		getUpdateLastSyncRequestParams(value),
+	)
+}
+
+func getUpdateLastSyncRequestParams(value time.Time) *notionapi.PageUpdateRequest {
+	return &notionapi.PageUpdateRequest{
+		Properties: notionapi.Properties{
+			"lastSync": notionapi.DateProperty{
+				Date: &notionapi.DateObject{
+					Start: (*notionapi.Date)(&value),
+				},
+			},
+		},
+	}
+}
