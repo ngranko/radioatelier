@@ -9,6 +9,8 @@ import (
 
 type Page struct {
 	Name            string
+	IsVisited       bool
+	LastVisited     *time.Time
 	InstalledPeriod *string
 	IsRemoved       bool
 	RemovedPeriod   *string
@@ -29,8 +31,10 @@ type Page struct {
 func NewPageFromNotion(page notionapi.Page) Page {
 	result := Page{
 		Name:            property.NewTitleProperty(page.Properties["Название"]).GetValue(),
-		InstalledPeriod: property.NewRichTextProperty(page.Properties["Установлена"]).GetNillableValue(),
-		IsRemoved:       property.NewCheckboxProperty(page.Properties["Демонтирована?"]).GetValue(),
+		IsVisited:       property.NewCheckboxProperty(page.Properties["Посещен"]).GetValue(),
+		LastVisited:     property.NewDateProperty(page.Properties["Последнее посещение"]).GetNillableValue(),
+		InstalledPeriod: property.NewRichTextProperty(page.Properties["Период установки"]).GetNillableValue(),
+		IsRemoved:       property.NewCheckboxProperty(page.Properties["Демонтирован"]).GetValue(),
 		RemovedPeriod:   property.NewRichTextProperty(page.Properties["Период демонтажа"]).GetNillableValue(),
 		Source:          property.NewURLProperty(page.Properties["Источник"]).GetValue(),
 		Type:            property.NewSelectProperty(page.Properties["Тип"]).GetValue(),

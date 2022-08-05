@@ -138,6 +138,13 @@ func NotionID(v string) predicate.User {
 	})
 }
 
+// IsNotionSubject applies equality check predicate on the "is_notion_subject" field. It's identical to IsNotionSubjectEQ.
+func IsNotionSubject(v bool) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldIsNotionSubject), v))
+	})
+}
+
 // NameEQ applies the EQ predicate on the "name" field.
 func NameEQ(v string) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
@@ -919,6 +926,20 @@ func NotionIDEqualFold(v string) predicate.User {
 func NotionIDContainsFold(v string) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
 		s.Where(sql.ContainsFold(s.C(FieldNotionID), v))
+	})
+}
+
+// IsNotionSubjectEQ applies the EQ predicate on the "is_notion_subject" field.
+func IsNotionSubjectEQ(v bool) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldIsNotionSubject), v))
+	})
+}
+
+// IsNotionSubjectNEQ applies the NEQ predicate on the "is_notion_subject" field.
+func IsNotionSubjectNEQ(v bool) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldIsNotionSubject), v))
 	})
 }
 

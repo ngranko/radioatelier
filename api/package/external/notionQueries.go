@@ -8,15 +8,15 @@ import (
 	"github.com/jomei/notionapi"
 )
 
-func QueryNotionObjects(ctx context.Context, lastSync *time.Time, startCursor *string) (*notionapi.DatabaseQueryResponse, error) {
+func QueryNotionObjects(ctx context.Context, startCursor *string) (*notionapi.DatabaseQueryResponse, error) {
 	return NotionClient.Database.Query(
 		ctx,
 		notionapi.DatabaseID(config.Get().NotionObjectsDBID),
-		getQueryObjectRequestParams(lastSync, startCursor),
+		getQueryObjectRequestParams(startCursor),
 	)
 }
 
-func getQueryObjectRequestParams(lastSync *time.Time, startCursor *string) *notionapi.DatabaseQueryRequest {
+func getQueryObjectRequestParams(startCursor *string) *notionapi.DatabaseQueryRequest {
 	req := notionapi.DatabaseQueryRequest{
 		PageSize: 100,
 		Sorts: []notionapi.SortObject{
@@ -25,10 +25,12 @@ func getQueryObjectRequestParams(lastSync *time.Time, startCursor *string) *noti
 				Direction: "descending",
 			},
 		},
-	}
-
-	if lastSync != nil {
-		addQueryObjectFilter(&req, lastSync)
+		Filter: notionapi.PropertyFilter{
+			Property: "Изменен",
+			Checkbox: &notionapi.CheckboxFilterCondition{
+				Equals: true,
+			},
+		},
 	}
 
 	if startCursor != nil {
@@ -36,15 +38,6 @@ func getQueryObjectRequestParams(lastSync *time.Time, startCursor *string) *noti
 	}
 
 	return &req
-}
-
-func addQueryObjectFilter(req *notionapi.DatabaseQueryRequest, lastSync *time.Time) {
-	req.Filter = notionapi.PropertyFilter{
-		Property: "lastSync",
-		Date: &notionapi.DateFilterCondition{
-			After: (*notionapi.Date)(lastSync),
-		},
-	}
 }
 
 func UpdateLastSync(ctx context.Context, pageID string, value time.Time) (*notionapi.Page, error) {
@@ -58,7 +51,7 @@ func UpdateLastSync(ctx context.Context, pageID string, value time.Time) (*notio
 func getUpdateLastSyncRequestParams(value time.Time) *notionapi.PageUpdateRequest {
 	return &notionapi.PageUpdateRequest{
 		Properties: notionapi.Properties{
-			"lastSync": notionapi.DateProperty{
+			"Последняя синхронизация": notionapi.DateProperty{
 				Date: &notionapi.DateObject{
 					Start: (*notionapi.Date)(&value),
 				},

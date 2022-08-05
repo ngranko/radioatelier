@@ -115,6 +115,20 @@ func (uu *UserUpdate) ClearNotionID() *UserUpdate {
 	return uu
 }
 
+// SetIsNotionSubject sets the "is_notion_subject" field.
+func (uu *UserUpdate) SetIsNotionSubject(b bool) *UserUpdate {
+	uu.mutation.SetIsNotionSubject(b)
+	return uu
+}
+
+// SetNillableIsNotionSubject sets the "is_notion_subject" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableIsNotionSubject(b *bool) *UserUpdate {
+	if b != nil {
+		uu.SetIsNotionSubject(*b)
+	}
+	return uu
+}
+
 // AddCreatedObjectIDs adds the "created_objects" edge to the Object entity by IDs.
 func (uu *UserUpdate) AddCreatedObjectIDs(ids ...puuid.ID) *UserUpdate {
 	uu.mutation.AddCreatedObjectIDs(ids...)
@@ -510,6 +524,13 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Column: user.FieldNotionID,
+		})
+	}
+	if value, ok := uu.mutation.IsNotionSubject(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeBool,
+			Value:  value,
+			Column: user.FieldIsNotionSubject,
 		})
 	}
 	if uu.mutation.CreatedObjectsCleared() {
@@ -1005,6 +1026,20 @@ func (uuo *UserUpdateOne) ClearNotionID() *UserUpdateOne {
 	return uuo
 }
 
+// SetIsNotionSubject sets the "is_notion_subject" field.
+func (uuo *UserUpdateOne) SetIsNotionSubject(b bool) *UserUpdateOne {
+	uuo.mutation.SetIsNotionSubject(b)
+	return uuo
+}
+
+// SetNillableIsNotionSubject sets the "is_notion_subject" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableIsNotionSubject(b *bool) *UserUpdateOne {
+	if b != nil {
+		uuo.SetIsNotionSubject(*b)
+	}
+	return uuo
+}
+
 // AddCreatedObjectIDs adds the "created_objects" edge to the Object entity by IDs.
 func (uuo *UserUpdateOne) AddCreatedObjectIDs(ids ...puuid.ID) *UserUpdateOne {
 	uuo.mutation.AddCreatedObjectIDs(ids...)
@@ -1430,6 +1465,13 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Column: user.FieldNotionID,
+		})
+	}
+	if value, ok := uuo.mutation.IsNotionSubject(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeBool,
+			Value:  value,
+			Column: user.FieldIsNotionSubject,
 		})
 	}
 	if uuo.mutation.CreatedObjectsCleared() {

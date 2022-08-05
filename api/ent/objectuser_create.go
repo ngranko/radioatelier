@@ -12,6 +12,7 @@ import (
 	"radioatelier/ent/user"
 	"time"
 
+	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 )
@@ -21,6 +22,7 @@ type ObjectUserCreate struct {
 	config
 	mutation *ObjectUserMutation
 	hooks    []Hook
+	conflict []sql.ConflictOption
 }
 
 // SetUserID sets the "user_id" field.
@@ -192,6 +194,7 @@ func (ouc *ObjectUserCreate) createSpec() (*ObjectUser, *sqlgraph.CreateSpec) {
 			Table: objectuser.Table,
 		}
 	)
+	_spec.OnConflict = ouc.conflict
 	if value, ok := ouc.mutation.IsVisited(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeBool,
@@ -251,10 +254,236 @@ func (ouc *ObjectUserCreate) createSpec() (*ObjectUser, *sqlgraph.CreateSpec) {
 	return _node, _spec
 }
 
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.ObjectUser.Create().
+//		SetUserID(v).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.ObjectUserUpsert) {
+//			SetUserID(v+v).
+//		}).
+//		Exec(ctx)
+//
+func (ouc *ObjectUserCreate) OnConflict(opts ...sql.ConflictOption) *ObjectUserUpsertOne {
+	ouc.conflict = opts
+	return &ObjectUserUpsertOne{
+		create: ouc,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.ObjectUser.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+//
+func (ouc *ObjectUserCreate) OnConflictColumns(columns ...string) *ObjectUserUpsertOne {
+	ouc.conflict = append(ouc.conflict, sql.ConflictColumns(columns...))
+	return &ObjectUserUpsertOne{
+		create: ouc,
+	}
+}
+
+type (
+	// ObjectUserUpsertOne is the builder for "upsert"-ing
+	//  one ObjectUser node.
+	ObjectUserUpsertOne struct {
+		create *ObjectUserCreate
+	}
+
+	// ObjectUserUpsert is the "OnConflict" setter.
+	ObjectUserUpsert struct {
+		*sql.UpdateSet
+	}
+)
+
+// SetUserID sets the "user_id" field.
+func (u *ObjectUserUpsert) SetUserID(v puuid.ID) *ObjectUserUpsert {
+	u.Set(objectuser.FieldUserID, v)
+	return u
+}
+
+// UpdateUserID sets the "user_id" field to the value that was provided on create.
+func (u *ObjectUserUpsert) UpdateUserID() *ObjectUserUpsert {
+	u.SetExcluded(objectuser.FieldUserID)
+	return u
+}
+
+// SetObjectID sets the "object_id" field.
+func (u *ObjectUserUpsert) SetObjectID(v puuid.ID) *ObjectUserUpsert {
+	u.Set(objectuser.FieldObjectID, v)
+	return u
+}
+
+// UpdateObjectID sets the "object_id" field to the value that was provided on create.
+func (u *ObjectUserUpsert) UpdateObjectID() *ObjectUserUpsert {
+	u.SetExcluded(objectuser.FieldObjectID)
+	return u
+}
+
+// SetIsVisited sets the "is_visited" field.
+func (u *ObjectUserUpsert) SetIsVisited(v bool) *ObjectUserUpsert {
+	u.Set(objectuser.FieldIsVisited, v)
+	return u
+}
+
+// UpdateIsVisited sets the "is_visited" field to the value that was provided on create.
+func (u *ObjectUserUpsert) UpdateIsVisited() *ObjectUserUpsert {
+	u.SetExcluded(objectuser.FieldIsVisited)
+	return u
+}
+
+// SetLastVisit sets the "last_visit" field.
+func (u *ObjectUserUpsert) SetLastVisit(v time.Time) *ObjectUserUpsert {
+	u.Set(objectuser.FieldLastVisit, v)
+	return u
+}
+
+// UpdateLastVisit sets the "last_visit" field to the value that was provided on create.
+func (u *ObjectUserUpsert) UpdateLastVisit() *ObjectUserUpsert {
+	u.SetExcluded(objectuser.FieldLastVisit)
+	return u
+}
+
+// ClearLastVisit clears the value of the "last_visit" field.
+func (u *ObjectUserUpsert) ClearLastVisit() *ObjectUserUpsert {
+	u.SetNull(objectuser.FieldLastVisit)
+	return u
+}
+
+// UpdateNewValues updates the mutable fields using the new values that were set on create.
+// Using this option is equivalent to using:
+//
+//	client.ObjectUser.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//		).
+//		Exec(ctx)
+//
+func (u *ObjectUserUpsertOne) UpdateNewValues() *ObjectUserUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//  client.ObjectUser.Create().
+//      OnConflict(sql.ResolveWithIgnore()).
+//      Exec(ctx)
+//
+func (u *ObjectUserUpsertOne) Ignore() *ObjectUserUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *ObjectUserUpsertOne) DoNothing() *ObjectUserUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the ObjectUserCreate.OnConflict
+// documentation for more info.
+func (u *ObjectUserUpsertOne) Update(set func(*ObjectUserUpsert)) *ObjectUserUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&ObjectUserUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetUserID sets the "user_id" field.
+func (u *ObjectUserUpsertOne) SetUserID(v puuid.ID) *ObjectUserUpsertOne {
+	return u.Update(func(s *ObjectUserUpsert) {
+		s.SetUserID(v)
+	})
+}
+
+// UpdateUserID sets the "user_id" field to the value that was provided on create.
+func (u *ObjectUserUpsertOne) UpdateUserID() *ObjectUserUpsertOne {
+	return u.Update(func(s *ObjectUserUpsert) {
+		s.UpdateUserID()
+	})
+}
+
+// SetObjectID sets the "object_id" field.
+func (u *ObjectUserUpsertOne) SetObjectID(v puuid.ID) *ObjectUserUpsertOne {
+	return u.Update(func(s *ObjectUserUpsert) {
+		s.SetObjectID(v)
+	})
+}
+
+// UpdateObjectID sets the "object_id" field to the value that was provided on create.
+func (u *ObjectUserUpsertOne) UpdateObjectID() *ObjectUserUpsertOne {
+	return u.Update(func(s *ObjectUserUpsert) {
+		s.UpdateObjectID()
+	})
+}
+
+// SetIsVisited sets the "is_visited" field.
+func (u *ObjectUserUpsertOne) SetIsVisited(v bool) *ObjectUserUpsertOne {
+	return u.Update(func(s *ObjectUserUpsert) {
+		s.SetIsVisited(v)
+	})
+}
+
+// UpdateIsVisited sets the "is_visited" field to the value that was provided on create.
+func (u *ObjectUserUpsertOne) UpdateIsVisited() *ObjectUserUpsertOne {
+	return u.Update(func(s *ObjectUserUpsert) {
+		s.UpdateIsVisited()
+	})
+}
+
+// SetLastVisit sets the "last_visit" field.
+func (u *ObjectUserUpsertOne) SetLastVisit(v time.Time) *ObjectUserUpsertOne {
+	return u.Update(func(s *ObjectUserUpsert) {
+		s.SetLastVisit(v)
+	})
+}
+
+// UpdateLastVisit sets the "last_visit" field to the value that was provided on create.
+func (u *ObjectUserUpsertOne) UpdateLastVisit() *ObjectUserUpsertOne {
+	return u.Update(func(s *ObjectUserUpsert) {
+		s.UpdateLastVisit()
+	})
+}
+
+// ClearLastVisit clears the value of the "last_visit" field.
+func (u *ObjectUserUpsertOne) ClearLastVisit() *ObjectUserUpsertOne {
+	return u.Update(func(s *ObjectUserUpsert) {
+		s.ClearLastVisit()
+	})
+}
+
+// Exec executes the query.
+func (u *ObjectUserUpsertOne) Exec(ctx context.Context) error {
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for ObjectUserCreate.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *ObjectUserUpsertOne) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
 // ObjectUserCreateBulk is the builder for creating many ObjectUser entities in bulk.
 type ObjectUserCreateBulk struct {
 	config
 	builders []*ObjectUserCreate
+	conflict []sql.ConflictOption
 }
 
 // Save creates the ObjectUser entities in the database.
@@ -281,6 +510,7 @@ func (oucb *ObjectUserCreateBulk) Save(ctx context.Context) ([]*ObjectUser, erro
 					_, err = mutators[i+1].Mutate(root, oucb.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					spec.OnConflict = oucb.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
 					if err = sqlgraph.BatchCreate(ctx, oucb.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
@@ -326,6 +556,174 @@ func (oucb *ObjectUserCreateBulk) Exec(ctx context.Context) error {
 // ExecX is like Exec, but panics if an error occurs.
 func (oucb *ObjectUserCreateBulk) ExecX(ctx context.Context) {
 	if err := oucb.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.ObjectUser.CreateBulk(builders...).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.ObjectUserUpsert) {
+//			SetUserID(v+v).
+//		}).
+//		Exec(ctx)
+//
+func (oucb *ObjectUserCreateBulk) OnConflict(opts ...sql.ConflictOption) *ObjectUserUpsertBulk {
+	oucb.conflict = opts
+	return &ObjectUserUpsertBulk{
+		create: oucb,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.ObjectUser.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+//
+func (oucb *ObjectUserCreateBulk) OnConflictColumns(columns ...string) *ObjectUserUpsertBulk {
+	oucb.conflict = append(oucb.conflict, sql.ConflictColumns(columns...))
+	return &ObjectUserUpsertBulk{
+		create: oucb,
+	}
+}
+
+// ObjectUserUpsertBulk is the builder for "upsert"-ing
+// a bulk of ObjectUser nodes.
+type ObjectUserUpsertBulk struct {
+	create *ObjectUserCreateBulk
+}
+
+// UpdateNewValues updates the mutable fields using the new values that
+// were set on create. Using this option is equivalent to using:
+//
+//	client.ObjectUser.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//		).
+//		Exec(ctx)
+//
+func (u *ObjectUserUpsertBulk) UpdateNewValues() *ObjectUserUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.ObjectUser.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
+//
+func (u *ObjectUserUpsertBulk) Ignore() *ObjectUserUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *ObjectUserUpsertBulk) DoNothing() *ObjectUserUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the ObjectUserCreateBulk.OnConflict
+// documentation for more info.
+func (u *ObjectUserUpsertBulk) Update(set func(*ObjectUserUpsert)) *ObjectUserUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&ObjectUserUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetUserID sets the "user_id" field.
+func (u *ObjectUserUpsertBulk) SetUserID(v puuid.ID) *ObjectUserUpsertBulk {
+	return u.Update(func(s *ObjectUserUpsert) {
+		s.SetUserID(v)
+	})
+}
+
+// UpdateUserID sets the "user_id" field to the value that was provided on create.
+func (u *ObjectUserUpsertBulk) UpdateUserID() *ObjectUserUpsertBulk {
+	return u.Update(func(s *ObjectUserUpsert) {
+		s.UpdateUserID()
+	})
+}
+
+// SetObjectID sets the "object_id" field.
+func (u *ObjectUserUpsertBulk) SetObjectID(v puuid.ID) *ObjectUserUpsertBulk {
+	return u.Update(func(s *ObjectUserUpsert) {
+		s.SetObjectID(v)
+	})
+}
+
+// UpdateObjectID sets the "object_id" field to the value that was provided on create.
+func (u *ObjectUserUpsertBulk) UpdateObjectID() *ObjectUserUpsertBulk {
+	return u.Update(func(s *ObjectUserUpsert) {
+		s.UpdateObjectID()
+	})
+}
+
+// SetIsVisited sets the "is_visited" field.
+func (u *ObjectUserUpsertBulk) SetIsVisited(v bool) *ObjectUserUpsertBulk {
+	return u.Update(func(s *ObjectUserUpsert) {
+		s.SetIsVisited(v)
+	})
+}
+
+// UpdateIsVisited sets the "is_visited" field to the value that was provided on create.
+func (u *ObjectUserUpsertBulk) UpdateIsVisited() *ObjectUserUpsertBulk {
+	return u.Update(func(s *ObjectUserUpsert) {
+		s.UpdateIsVisited()
+	})
+}
+
+// SetLastVisit sets the "last_visit" field.
+func (u *ObjectUserUpsertBulk) SetLastVisit(v time.Time) *ObjectUserUpsertBulk {
+	return u.Update(func(s *ObjectUserUpsert) {
+		s.SetLastVisit(v)
+	})
+}
+
+// UpdateLastVisit sets the "last_visit" field to the value that was provided on create.
+func (u *ObjectUserUpsertBulk) UpdateLastVisit() *ObjectUserUpsertBulk {
+	return u.Update(func(s *ObjectUserUpsert) {
+		s.UpdateLastVisit()
+	})
+}
+
+// ClearLastVisit clears the value of the "last_visit" field.
+func (u *ObjectUserUpsertBulk) ClearLastVisit() *ObjectUserUpsertBulk {
+	return u.Update(func(s *ObjectUserUpsert) {
+		s.ClearLastVisit()
+	})
+}
+
+// Exec executes the query.
+func (u *ObjectUserUpsertBulk) Exec(ctx context.Context) error {
+	for i, b := range u.create.builders {
+		if len(b.conflict) != 0 {
+			return fmt.Errorf("ent: OnConflict was set for builder %d. Set it on the ObjectUserCreateBulk instead", i)
+		}
+	}
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for ObjectUserCreateBulk.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *ObjectUserUpsertBulk) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

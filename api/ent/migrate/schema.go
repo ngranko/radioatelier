@@ -57,9 +57,9 @@ var (
 		{Name: "description", Type: field.TypeString, Nullable: true},
 		{Name: "lat", Type: field.TypeFloat64, Nullable: true, SchemaType: map[string]string{"mysql": "decimal(9,6)"}},
 		{Name: "lng", Type: field.TypeFloat64, Nullable: true, SchemaType: map[string]string{"mysql": "decimal(9,6)"}},
-		{Name: "installed_period", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"mysql": "varchar(10)"}},
+		{Name: "installed_period", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"mysql": "varchar(20)"}},
 		{Name: "is_removed", Type: field.TypeBool, Default: false},
-		{Name: "removed_period", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"mysql": "varchar(10)"}},
+		{Name: "removed_period", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"mysql": "varchar(20)"}},
 		{Name: "source", Type: field.TypeString, Nullable: true},
 		{Name: "type", Type: field.TypeString, SchemaType: map[string]string{"mysql": "varchar(24)"}},
 		{Name: "tags", Type: field.TypeString, SchemaType: map[string]string{"mysql": "varchar(100)"}},
@@ -143,6 +143,7 @@ var (
 		{Name: "last_login", Type: field.TypeTime, Nullable: true},
 		{Name: "is_active", Type: field.TypeBool, Default: true},
 		{Name: "notion_id", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"mysql": "char(36) binary"}},
+		{Name: "is_notion_subject", Type: field.TypeBool, Default: false},
 	}
 	// UsersTable holds the schema information for the "users" table.
 	UsersTable = &schema.Table{

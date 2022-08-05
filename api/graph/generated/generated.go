@@ -162,6 +162,7 @@ type ComplexityRoot struct {
 		Email              func(childComplexity int) int
 		ID                 func(childComplexity int) int
 		IsActive           func(childComplexity int) int
+		IsNotionSubject    func(childComplexity int) int
 		LastLogin          func(childComplexity int) int
 		Login              func(childComplexity int) int
 		Name               func(childComplexity int) int
@@ -865,6 +866,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.User.IsActive(childComplexity), true
 
+	case "User.isNotionSubject":
+		if e.complexity.User.IsNotionSubject == nil {
+			break
+		}
+
+		return e.complexity.User.IsNotionSubject(childComplexity), true
+
 	case "User.lastLogin":
 		if e.complexity.User.LastLogin == nil {
 			break
@@ -1320,6 +1328,7 @@ input CreateUserInput {
   lastLogin: Time
   isActive: Boolean
   notionID: String
+  isNotionSubject: Boolean
   createdObjectIDs: [ID!]
   updatedObjectIDs: [ID!]
   deletedObjectIDs: [ID!]
@@ -1791,6 +1800,7 @@ input UpdateUserInput {
   isActive: Boolean
   clearNotionID: Boolean
   notionID: String
+  isNotionSubject: Boolean
   addCreatedObjectIDs: [ID!]
   removeCreatedObjectIDs: [ID!]
   addUpdatedObjectIDs: [ID!]
@@ -1815,6 +1825,7 @@ type User implements Node {
   lastLogin: Time
   isActive: Boolean!
   notionID: String
+  isNotionSubject: Boolean!
   createdObjects: [Object!]
   updatedObjects: [Object!]
   deletedObjects: [Object!]
@@ -1953,6 +1964,9 @@ input UserWhereInput {
   notionIDNotNil: Boolean
   notionIDEqualFold: String
   notionIDContainsFold: String
+  """is_notion_subject field predicates"""
+  isNotionSubject: Boolean
+  isNotionSubjectNEQ: Boolean
   """created_objects edge predicates"""
   hasCreatedObjects: Boolean
   hasCreatedObjectsWith: [ObjectWhereInput!]
@@ -3235,6 +3249,8 @@ func (ec *executionContext) fieldContext_Collection_createdBy(ctx context.Contex
 				return ec.fieldContext_User_isActive(ctx, field)
 			case "notionID":
 				return ec.fieldContext_User_notionID(ctx, field)
+			case "isNotionSubject":
+				return ec.fieldContext_User_isNotionSubject(ctx, field)
 			case "createdObjects":
 				return ec.fieldContext_User_createdObjects(ctx, field)
 			case "updatedObjects":
@@ -3311,6 +3327,8 @@ func (ec *executionContext) fieldContext_Collection_updatedBy(ctx context.Contex
 				return ec.fieldContext_User_isActive(ctx, field)
 			case "notionID":
 				return ec.fieldContext_User_notionID(ctx, field)
+			case "isNotionSubject":
+				return ec.fieldContext_User_isNotionSubject(ctx, field)
 			case "createdObjects":
 				return ec.fieldContext_User_createdObjects(ctx, field)
 			case "updatedObjects":
@@ -3471,6 +3489,8 @@ func (ec *executionContext) fieldContext_Collection_users(ctx context.Context, f
 				return ec.fieldContext_User_isActive(ctx, field)
 			case "notionID":
 				return ec.fieldContext_User_notionID(ctx, field)
+			case "isNotionSubject":
+				return ec.fieldContext_User_isNotionSubject(ctx, field)
 			case "createdObjects":
 				return ec.fieldContext_User_createdObjects(ctx, field)
 			case "updatedObjects":
@@ -4444,6 +4464,8 @@ func (ec *executionContext) fieldContext_Mutation_createUser(ctx context.Context
 				return ec.fieldContext_User_isActive(ctx, field)
 			case "notionID":
 				return ec.fieldContext_User_notionID(ctx, field)
+			case "isNotionSubject":
+				return ec.fieldContext_User_isNotionSubject(ctx, field)
 			case "createdObjects":
 				return ec.fieldContext_User_createdObjects(ctx, field)
 			case "updatedObjects":
@@ -4531,6 +4553,8 @@ func (ec *executionContext) fieldContext_Mutation_updateUser(ctx context.Context
 				return ec.fieldContext_User_isActive(ctx, field)
 			case "notionID":
 				return ec.fieldContext_User_notionID(ctx, field)
+			case "isNotionSubject":
+				return ec.fieldContext_User_isNotionSubject(ctx, field)
 			case "createdObjects":
 				return ec.fieldContext_User_createdObjects(ctx, field)
 			case "updatedObjects":
@@ -5350,6 +5374,8 @@ func (ec *executionContext) fieldContext_Object_createdBy(ctx context.Context, f
 				return ec.fieldContext_User_isActive(ctx, field)
 			case "notionID":
 				return ec.fieldContext_User_notionID(ctx, field)
+			case "isNotionSubject":
+				return ec.fieldContext_User_isNotionSubject(ctx, field)
 			case "createdObjects":
 				return ec.fieldContext_User_createdObjects(ctx, field)
 			case "updatedObjects":
@@ -5426,6 +5452,8 @@ func (ec *executionContext) fieldContext_Object_updatedBy(ctx context.Context, f
 				return ec.fieldContext_User_isActive(ctx, field)
 			case "notionID":
 				return ec.fieldContext_User_notionID(ctx, field)
+			case "isNotionSubject":
+				return ec.fieldContext_User_isNotionSubject(ctx, field)
 			case "createdObjects":
 				return ec.fieldContext_User_createdObjects(ctx, field)
 			case "updatedObjects":
@@ -5499,6 +5527,8 @@ func (ec *executionContext) fieldContext_Object_deletedBy(ctx context.Context, f
 				return ec.fieldContext_User_isActive(ctx, field)
 			case "notionID":
 				return ec.fieldContext_User_notionID(ctx, field)
+			case "isNotionSubject":
+				return ec.fieldContext_User_isNotionSubject(ctx, field)
 			case "createdObjects":
 				return ec.fieldContext_User_createdObjects(ctx, field)
 			case "updatedObjects":
@@ -5633,6 +5663,8 @@ func (ec *executionContext) fieldContext_Object_userInfo(ctx context.Context, fi
 				return ec.fieldContext_User_isActive(ctx, field)
 			case "notionID":
 				return ec.fieldContext_User_notionID(ctx, field)
+			case "isNotionSubject":
+				return ec.fieldContext_User_isNotionSubject(ctx, field)
 			case "createdObjects":
 				return ec.fieldContext_User_createdObjects(ctx, field)
 			case "updatedObjects":
@@ -6988,6 +7020,50 @@ func (ec *executionContext) fieldContext_User_notionID(ctx context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _User_isNotionSubject(ctx context.Context, field graphql.CollectedField, obj *ent.User) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_User_isNotionSubject(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsNotionSubject, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_User_isNotionSubject(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _User_createdObjects(ctx context.Context, field graphql.CollectedField, obj *ent.User) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_User_createdObjects(ctx, field)
 	if err != nil {
@@ -7716,6 +7792,8 @@ func (ec *executionContext) fieldContext_UserEdge_node(ctx context.Context, fiel
 				return ec.fieldContext_User_isActive(ctx, field)
 			case "notionID":
 				return ec.fieldContext_User_notionID(ctx, field)
+			case "isNotionSubject":
+				return ec.fieldContext_User_isNotionSubject(ctx, field)
 			case "createdObjects":
 				return ec.fieldContext_User_createdObjects(ctx, field)
 			case "updatedObjects":
@@ -10773,7 +10851,7 @@ func (ec *executionContext) unmarshalInputCreateUserInput(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "email", "login", "password", "role", "lastLogin", "isActive", "notionID", "createdObjectIDs", "updatedObjectIDs", "deletedObjectIDs", "createdCollectionIDs", "updatedCollectionIDs", "collectionIDs", "objectInfoIDs"}
+	fieldsInOrder := [...]string{"name", "email", "login", "password", "role", "lastLogin", "isActive", "notionID", "isNotionSubject", "createdObjectIDs", "updatedObjectIDs", "deletedObjectIDs", "createdCollectionIDs", "updatedCollectionIDs", "collectionIDs", "objectInfoIDs"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -10841,6 +10919,14 @@ func (ec *executionContext) unmarshalInputCreateUserInput(ctx context.Context, o
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("notionID"))
 			it.NotionID, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "isNotionSubject":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isNotionSubject"))
+			it.IsNotionSubject, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -12961,7 +13047,7 @@ func (ec *executionContext) unmarshalInputUpdateUserInput(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "email", "login", "password", "role", "clearLastLogin", "lastLogin", "isActive", "clearNotionID", "notionID", "addCreatedObjectIDs", "removeCreatedObjectIDs", "addUpdatedObjectIDs", "removeUpdatedObjectIDs", "addDeletedObjectIDs", "removeDeletedObjectIDs", "addCreatedCollectionIDs", "removeCreatedCollectionIDs", "addUpdatedCollectionIDs", "removeUpdatedCollectionIDs", "addCollectionIDs", "removeCollectionIDs", "addObjectInfoIDs", "removeObjectInfoIDs"}
+	fieldsInOrder := [...]string{"name", "email", "login", "password", "role", "clearLastLogin", "lastLogin", "isActive", "clearNotionID", "notionID", "isNotionSubject", "addCreatedObjectIDs", "removeCreatedObjectIDs", "addUpdatedObjectIDs", "removeUpdatedObjectIDs", "addDeletedObjectIDs", "removeDeletedObjectIDs", "addCreatedCollectionIDs", "removeCreatedCollectionIDs", "addUpdatedCollectionIDs", "removeUpdatedCollectionIDs", "addCollectionIDs", "removeCollectionIDs", "addObjectInfoIDs", "removeObjectInfoIDs"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -13045,6 +13131,14 @@ func (ec *executionContext) unmarshalInputUpdateUserInput(ctx context.Context, o
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("notionID"))
 			it.NotionID, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "isNotionSubject":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isNotionSubject"))
+			it.IsNotionSubject, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -13213,7 +13307,7 @@ func (ec *executionContext) unmarshalInputUserWhereInput(ctx context.Context, ob
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "email", "emailNEQ", "emailIn", "emailNotIn", "emailGT", "emailGTE", "emailLT", "emailLTE", "emailContains", "emailHasPrefix", "emailHasSuffix", "emailEqualFold", "emailContainsFold", "login", "loginNEQ", "loginIn", "loginNotIn", "loginGT", "loginGTE", "loginLT", "loginLTE", "loginContains", "loginHasPrefix", "loginHasSuffix", "loginEqualFold", "loginContainsFold", "role", "roleNEQ", "roleIn", "roleNotIn", "roleGT", "roleGTE", "roleLT", "roleLTE", "roleContains", "roleHasPrefix", "roleHasSuffix", "roleEqualFold", "roleContainsFold", "lastLogin", "lastLoginNEQ", "lastLoginIn", "lastLoginNotIn", "lastLoginGT", "lastLoginGTE", "lastLoginLT", "lastLoginLTE", "lastLoginIsNil", "lastLoginNotNil", "isActive", "isActiveNEQ", "notionID", "notionIDNEQ", "notionIDIn", "notionIDNotIn", "notionIDGT", "notionIDGTE", "notionIDLT", "notionIDLTE", "notionIDContains", "notionIDHasPrefix", "notionIDHasSuffix", "notionIDIsNil", "notionIDNotNil", "notionIDEqualFold", "notionIDContainsFold", "hasCreatedObjects", "hasCreatedObjectsWith", "hasUpdatedObjects", "hasUpdatedObjectsWith", "hasDeletedObjects", "hasDeletedObjectsWith", "hasCreatedCollections", "hasCreatedCollectionsWith", "hasUpdatedCollections", "hasUpdatedCollectionsWith", "hasCollections", "hasCollectionsWith", "hasObjectInfo", "hasObjectInfoWith"}
+	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "email", "emailNEQ", "emailIn", "emailNotIn", "emailGT", "emailGTE", "emailLT", "emailLTE", "emailContains", "emailHasPrefix", "emailHasSuffix", "emailEqualFold", "emailContainsFold", "login", "loginNEQ", "loginIn", "loginNotIn", "loginGT", "loginGTE", "loginLT", "loginLTE", "loginContains", "loginHasPrefix", "loginHasSuffix", "loginEqualFold", "loginContainsFold", "role", "roleNEQ", "roleIn", "roleNotIn", "roleGT", "roleGTE", "roleLT", "roleLTE", "roleContains", "roleHasPrefix", "roleHasSuffix", "roleEqualFold", "roleContainsFold", "lastLogin", "lastLoginNEQ", "lastLoginIn", "lastLoginNotIn", "lastLoginGT", "lastLoginGTE", "lastLoginLT", "lastLoginLTE", "lastLoginIsNil", "lastLoginNotNil", "isActive", "isActiveNEQ", "notionID", "notionIDNEQ", "notionIDIn", "notionIDNotIn", "notionIDGT", "notionIDGTE", "notionIDLT", "notionIDLTE", "notionIDContains", "notionIDHasPrefix", "notionIDHasSuffix", "notionIDIsNil", "notionIDNotNil", "notionIDEqualFold", "notionIDContainsFold", "isNotionSubject", "isNotionSubjectNEQ", "hasCreatedObjects", "hasCreatedObjectsWith", "hasUpdatedObjects", "hasUpdatedObjectsWith", "hasDeletedObjects", "hasDeletedObjectsWith", "hasCreatedCollections", "hasCreatedCollectionsWith", "hasUpdatedCollections", "hasUpdatedCollectionsWith", "hasCollections", "hasCollectionsWith", "hasObjectInfo", "hasObjectInfoWith"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -13937,6 +14031,22 @@ func (ec *executionContext) unmarshalInputUserWhereInput(ctx context.Context, ob
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("notionIDContainsFold"))
 			it.NotionIDContainsFold, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "isNotionSubject":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isNotionSubject"))
+			it.IsNotionSubject, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "isNotionSubjectNEQ":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isNotionSubjectNEQ"))
+			it.IsNotionSubjectNEQ, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -15129,6 +15239,13 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 
 			out.Values[i] = ec._User_notionID(ctx, field, obj)
 
+		case "isNotionSubject":
+
+			out.Values[i] = ec._User_isNotionSubject(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "createdObjects":
 			field := field
 

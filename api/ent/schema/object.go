@@ -41,13 +41,13 @@ func (Object) Fields() []ent.Field {
 		field.String("installed_period").
 			Optional().Nillable().
 			SchemaType(map[string]string{
-				dialect.MySQL: "varchar(10)",
+				dialect.MySQL: "varchar(20)",
 			}),
 		field.Bool("is_removed").Default(false),
 		field.String("removed_period").
 			Optional().Nillable().
 			SchemaType(map[string]string{
-				dialect.MySQL: "varchar(10)",
+				dialect.MySQL: "varchar(20)",
 			}),
 		field.String("source").Optional().Nillable(),
 		field.String("type").

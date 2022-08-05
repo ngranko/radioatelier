@@ -83,6 +83,10 @@ func init() {
 	userDescIsActive := userFields[6].Descriptor()
 	// user.DefaultIsActive holds the default value on creation for the is_active field.
 	user.DefaultIsActive = userDescIsActive.Default.(bool)
+	// userDescIsNotionSubject is the schema descriptor for is_notion_subject field.
+	userDescIsNotionSubject := userFields[8].Descriptor()
+	// user.DefaultIsNotionSubject holds the default value on creation for the is_notion_subject field.
+	user.DefaultIsNotionSubject = userDescIsNotionSubject.Default.(bool)
 	// userDescID is the schema descriptor for id field.
 	userDescID := userMixinFields0[0].Descriptor()
 	// user.DefaultID holds the default value on creation for the id field.

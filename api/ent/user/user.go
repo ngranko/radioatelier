@@ -27,6 +27,8 @@ const (
 	FieldIsActive = "is_active"
 	// FieldNotionID holds the string denoting the notion_id field in the database.
 	FieldNotionID = "notion_id"
+	// FieldIsNotionSubject holds the string denoting the is_notion_subject field in the database.
+	FieldIsNotionSubject = "is_notion_subject"
 	// EdgeCreatedObjects holds the string denoting the created_objects edge name in mutations.
 	EdgeCreatedObjects = "created_objects"
 	// EdgeUpdatedObjects holds the string denoting the updated_objects edge name in mutations.
@@ -110,6 +112,7 @@ var Columns = []string{
 	FieldLastLogin,
 	FieldIsActive,
 	FieldNotionID,
+	FieldIsNotionSubject,
 }
 
 var (
@@ -134,6 +137,8 @@ func ValidColumn(column string) bool {
 var (
 	// DefaultIsActive holds the default value on creation for the "is_active" field.
 	DefaultIsActive bool
+	// DefaultIsNotionSubject holds the default value on creation for the "is_notion_subject" field.
+	DefaultIsNotionSubject bool
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() puuid.ID
 )

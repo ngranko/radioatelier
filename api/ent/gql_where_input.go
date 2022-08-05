@@ -1748,6 +1748,10 @@ type UserWhereInput struct {
 	NotionIDEqualFold    *string  `json:"notionIDEqualFold,omitempty"`
 	NotionIDContainsFold *string  `json:"notionIDContainsFold,omitempty"`
 
+	// "is_notion_subject" field predicates.
+	IsNotionSubject    *bool `json:"isNotionSubject,omitempty"`
+	IsNotionSubjectNEQ *bool `json:"isNotionSubjectNEQ,omitempty"`
+
 	// "created_objects" edge predicates.
 	HasCreatedObjects     *bool               `json:"hasCreatedObjects,omitempty"`
 	HasCreatedObjectsWith []*ObjectWhereInput `json:"hasCreatedObjectsWith,omitempty"`
@@ -2108,6 +2112,12 @@ func (i *UserWhereInput) P() (predicate.User, error) {
 	}
 	if i.NotionIDContainsFold != nil {
 		predicates = append(predicates, user.NotionIDContainsFold(*i.NotionIDContainsFold))
+	}
+	if i.IsNotionSubject != nil {
+		predicates = append(predicates, user.IsNotionSubjectEQ(*i.IsNotionSubject))
+	}
+	if i.IsNotionSubjectNEQ != nil {
+		predicates = append(predicates, user.IsNotionSubjectNEQ(*i.IsNotionSubjectNEQ))
 	}
 
 	if i.HasCreatedObjects != nil {

@@ -13,6 +13,8 @@ import (
 	"radioatelier/ent/user"
 	"time"
 
+	"entgo.io/ent/dialect"
+	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 )
@@ -22,6 +24,7 @@ type ObjectCreate struct {
 	config
 	mutation *ObjectMutation
 	hooks    []Hook
+	conflict []sql.ConflictOption
 }
 
 // SetName sets the "name" field.
@@ -462,6 +465,7 @@ func (oc *ObjectCreate) createSpec() (*Object, *sqlgraph.CreateSpec) {
 			},
 		}
 	)
+	_spec.OnConflict = oc.conflict
 	if id, ok := oc.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
@@ -711,10 +715,686 @@ func (oc *ObjectCreate) createSpec() (*Object, *sqlgraph.CreateSpec) {
 	return _node, _spec
 }
 
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.Object.Create().
+//		SetName(v).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.ObjectUpsert) {
+//			SetName(v+v).
+//		}).
+//		Exec(ctx)
+//
+func (oc *ObjectCreate) OnConflict(opts ...sql.ConflictOption) *ObjectUpsertOne {
+	oc.conflict = opts
+	return &ObjectUpsertOne{
+		create: oc,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.Object.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+//
+func (oc *ObjectCreate) OnConflictColumns(columns ...string) *ObjectUpsertOne {
+	oc.conflict = append(oc.conflict, sql.ConflictColumns(columns...))
+	return &ObjectUpsertOne{
+		create: oc,
+	}
+}
+
+type (
+	// ObjectUpsertOne is the builder for "upsert"-ing
+	//  one Object node.
+	ObjectUpsertOne struct {
+		create *ObjectCreate
+	}
+
+	// ObjectUpsert is the "OnConflict" setter.
+	ObjectUpsert struct {
+		*sql.UpdateSet
+	}
+)
+
+// SetName sets the "name" field.
+func (u *ObjectUpsert) SetName(v string) *ObjectUpsert {
+	u.Set(object.FieldName, v)
+	return u
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *ObjectUpsert) UpdateName() *ObjectUpsert {
+	u.SetExcluded(object.FieldName)
+	return u
+}
+
+// SetDescription sets the "description" field.
+func (u *ObjectUpsert) SetDescription(v string) *ObjectUpsert {
+	u.Set(object.FieldDescription, v)
+	return u
+}
+
+// UpdateDescription sets the "description" field to the value that was provided on create.
+func (u *ObjectUpsert) UpdateDescription() *ObjectUpsert {
+	u.SetExcluded(object.FieldDescription)
+	return u
+}
+
+// ClearDescription clears the value of the "description" field.
+func (u *ObjectUpsert) ClearDescription() *ObjectUpsert {
+	u.SetNull(object.FieldDescription)
+	return u
+}
+
+// SetLat sets the "lat" field.
+func (u *ObjectUpsert) SetLat(v float64) *ObjectUpsert {
+	u.Set(object.FieldLat, v)
+	return u
+}
+
+// UpdateLat sets the "lat" field to the value that was provided on create.
+func (u *ObjectUpsert) UpdateLat() *ObjectUpsert {
+	u.SetExcluded(object.FieldLat)
+	return u
+}
+
+// AddLat adds v to the "lat" field.
+func (u *ObjectUpsert) AddLat(v float64) *ObjectUpsert {
+	u.Add(object.FieldLat, v)
+	return u
+}
+
+// ClearLat clears the value of the "lat" field.
+func (u *ObjectUpsert) ClearLat() *ObjectUpsert {
+	u.SetNull(object.FieldLat)
+	return u
+}
+
+// SetLng sets the "lng" field.
+func (u *ObjectUpsert) SetLng(v float64) *ObjectUpsert {
+	u.Set(object.FieldLng, v)
+	return u
+}
+
+// UpdateLng sets the "lng" field to the value that was provided on create.
+func (u *ObjectUpsert) UpdateLng() *ObjectUpsert {
+	u.SetExcluded(object.FieldLng)
+	return u
+}
+
+// AddLng adds v to the "lng" field.
+func (u *ObjectUpsert) AddLng(v float64) *ObjectUpsert {
+	u.Add(object.FieldLng, v)
+	return u
+}
+
+// ClearLng clears the value of the "lng" field.
+func (u *ObjectUpsert) ClearLng() *ObjectUpsert {
+	u.SetNull(object.FieldLng)
+	return u
+}
+
+// SetInstalledPeriod sets the "installed_period" field.
+func (u *ObjectUpsert) SetInstalledPeriod(v string) *ObjectUpsert {
+	u.Set(object.FieldInstalledPeriod, v)
+	return u
+}
+
+// UpdateInstalledPeriod sets the "installed_period" field to the value that was provided on create.
+func (u *ObjectUpsert) UpdateInstalledPeriod() *ObjectUpsert {
+	u.SetExcluded(object.FieldInstalledPeriod)
+	return u
+}
+
+// ClearInstalledPeriod clears the value of the "installed_period" field.
+func (u *ObjectUpsert) ClearInstalledPeriod() *ObjectUpsert {
+	u.SetNull(object.FieldInstalledPeriod)
+	return u
+}
+
+// SetIsRemoved sets the "is_removed" field.
+func (u *ObjectUpsert) SetIsRemoved(v bool) *ObjectUpsert {
+	u.Set(object.FieldIsRemoved, v)
+	return u
+}
+
+// UpdateIsRemoved sets the "is_removed" field to the value that was provided on create.
+func (u *ObjectUpsert) UpdateIsRemoved() *ObjectUpsert {
+	u.SetExcluded(object.FieldIsRemoved)
+	return u
+}
+
+// SetRemovedPeriod sets the "removed_period" field.
+func (u *ObjectUpsert) SetRemovedPeriod(v string) *ObjectUpsert {
+	u.Set(object.FieldRemovedPeriod, v)
+	return u
+}
+
+// UpdateRemovedPeriod sets the "removed_period" field to the value that was provided on create.
+func (u *ObjectUpsert) UpdateRemovedPeriod() *ObjectUpsert {
+	u.SetExcluded(object.FieldRemovedPeriod)
+	return u
+}
+
+// ClearRemovedPeriod clears the value of the "removed_period" field.
+func (u *ObjectUpsert) ClearRemovedPeriod() *ObjectUpsert {
+	u.SetNull(object.FieldRemovedPeriod)
+	return u
+}
+
+// SetSource sets the "source" field.
+func (u *ObjectUpsert) SetSource(v string) *ObjectUpsert {
+	u.Set(object.FieldSource, v)
+	return u
+}
+
+// UpdateSource sets the "source" field to the value that was provided on create.
+func (u *ObjectUpsert) UpdateSource() *ObjectUpsert {
+	u.SetExcluded(object.FieldSource)
+	return u
+}
+
+// ClearSource clears the value of the "source" field.
+func (u *ObjectUpsert) ClearSource() *ObjectUpsert {
+	u.SetNull(object.FieldSource)
+	return u
+}
+
+// SetType sets the "type" field.
+func (u *ObjectUpsert) SetType(v string) *ObjectUpsert {
+	u.Set(object.FieldType, v)
+	return u
+}
+
+// UpdateType sets the "type" field to the value that was provided on create.
+func (u *ObjectUpsert) UpdateType() *ObjectUpsert {
+	u.SetExcluded(object.FieldType)
+	return u
+}
+
+// SetTags sets the "tags" field.
+func (u *ObjectUpsert) SetTags(v string) *ObjectUpsert {
+	u.Set(object.FieldTags, v)
+	return u
+}
+
+// UpdateTags sets the "tags" field to the value that was provided on create.
+func (u *ObjectUpsert) UpdateTags() *ObjectUpsert {
+	u.SetExcluded(object.FieldTags)
+	return u
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (u *ObjectUpsert) SetCreatedAt(v time.Time) *ObjectUpsert {
+	u.Set(object.FieldCreatedAt, v)
+	return u
+}
+
+// UpdateCreatedAt sets the "created_at" field to the value that was provided on create.
+func (u *ObjectUpsert) UpdateCreatedAt() *ObjectUpsert {
+	u.SetExcluded(object.FieldCreatedAt)
+	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *ObjectUpsert) SetUpdatedAt(v time.Time) *ObjectUpsert {
+	u.Set(object.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *ObjectUpsert) UpdateUpdatedAt() *ObjectUpsert {
+	u.SetExcluded(object.FieldUpdatedAt)
+	return u
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (u *ObjectUpsert) SetDeletedAt(v time.Time) *ObjectUpsert {
+	u.Set(object.FieldDeletedAt, v)
+	return u
+}
+
+// UpdateDeletedAt sets the "deleted_at" field to the value that was provided on create.
+func (u *ObjectUpsert) UpdateDeletedAt() *ObjectUpsert {
+	u.SetExcluded(object.FieldDeletedAt)
+	return u
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (u *ObjectUpsert) ClearDeletedAt() *ObjectUpsert {
+	u.SetNull(object.FieldDeletedAt)
+	return u
+}
+
+// SetLastSync sets the "last_sync" field.
+func (u *ObjectUpsert) SetLastSync(v time.Time) *ObjectUpsert {
+	u.Set(object.FieldLastSync, v)
+	return u
+}
+
+// UpdateLastSync sets the "last_sync" field to the value that was provided on create.
+func (u *ObjectUpsert) UpdateLastSync() *ObjectUpsert {
+	u.SetExcluded(object.FieldLastSync)
+	return u
+}
+
+// ClearLastSync clears the value of the "last_sync" field.
+func (u *ObjectUpsert) ClearLastSync() *ObjectUpsert {
+	u.SetNull(object.FieldLastSync)
+	return u
+}
+
+// SetNotionID sets the "notion_id" field.
+func (u *ObjectUpsert) SetNotionID(v string) *ObjectUpsert {
+	u.Set(object.FieldNotionID, v)
+	return u
+}
+
+// UpdateNotionID sets the "notion_id" field to the value that was provided on create.
+func (u *ObjectUpsert) UpdateNotionID() *ObjectUpsert {
+	u.SetExcluded(object.FieldNotionID)
+	return u
+}
+
+// ClearNotionID clears the value of the "notion_id" field.
+func (u *ObjectUpsert) ClearNotionID() *ObjectUpsert {
+	u.SetNull(object.FieldNotionID)
+	return u
+}
+
+// UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
+// Using this option is equivalent to using:
+//
+//	client.Object.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(object.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+//
+func (u *ObjectUpsertOne) UpdateNewValues() *ObjectUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.ID(); exists {
+			s.SetIgnore(object.FieldID)
+		}
+		if _, exists := u.create.mutation.CreatedAt(); exists {
+			s.SetIgnore(object.FieldCreatedAt)
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//  client.Object.Create().
+//      OnConflict(sql.ResolveWithIgnore()).
+//      Exec(ctx)
+//
+func (u *ObjectUpsertOne) Ignore() *ObjectUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *ObjectUpsertOne) DoNothing() *ObjectUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the ObjectCreate.OnConflict
+// documentation for more info.
+func (u *ObjectUpsertOne) Update(set func(*ObjectUpsert)) *ObjectUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&ObjectUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetName sets the "name" field.
+func (u *ObjectUpsertOne) SetName(v string) *ObjectUpsertOne {
+	return u.Update(func(s *ObjectUpsert) {
+		s.SetName(v)
+	})
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *ObjectUpsertOne) UpdateName() *ObjectUpsertOne {
+	return u.Update(func(s *ObjectUpsert) {
+		s.UpdateName()
+	})
+}
+
+// SetDescription sets the "description" field.
+func (u *ObjectUpsertOne) SetDescription(v string) *ObjectUpsertOne {
+	return u.Update(func(s *ObjectUpsert) {
+		s.SetDescription(v)
+	})
+}
+
+// UpdateDescription sets the "description" field to the value that was provided on create.
+func (u *ObjectUpsertOne) UpdateDescription() *ObjectUpsertOne {
+	return u.Update(func(s *ObjectUpsert) {
+		s.UpdateDescription()
+	})
+}
+
+// ClearDescription clears the value of the "description" field.
+func (u *ObjectUpsertOne) ClearDescription() *ObjectUpsertOne {
+	return u.Update(func(s *ObjectUpsert) {
+		s.ClearDescription()
+	})
+}
+
+// SetLat sets the "lat" field.
+func (u *ObjectUpsertOne) SetLat(v float64) *ObjectUpsertOne {
+	return u.Update(func(s *ObjectUpsert) {
+		s.SetLat(v)
+	})
+}
+
+// AddLat adds v to the "lat" field.
+func (u *ObjectUpsertOne) AddLat(v float64) *ObjectUpsertOne {
+	return u.Update(func(s *ObjectUpsert) {
+		s.AddLat(v)
+	})
+}
+
+// UpdateLat sets the "lat" field to the value that was provided on create.
+func (u *ObjectUpsertOne) UpdateLat() *ObjectUpsertOne {
+	return u.Update(func(s *ObjectUpsert) {
+		s.UpdateLat()
+	})
+}
+
+// ClearLat clears the value of the "lat" field.
+func (u *ObjectUpsertOne) ClearLat() *ObjectUpsertOne {
+	return u.Update(func(s *ObjectUpsert) {
+		s.ClearLat()
+	})
+}
+
+// SetLng sets the "lng" field.
+func (u *ObjectUpsertOne) SetLng(v float64) *ObjectUpsertOne {
+	return u.Update(func(s *ObjectUpsert) {
+		s.SetLng(v)
+	})
+}
+
+// AddLng adds v to the "lng" field.
+func (u *ObjectUpsertOne) AddLng(v float64) *ObjectUpsertOne {
+	return u.Update(func(s *ObjectUpsert) {
+		s.AddLng(v)
+	})
+}
+
+// UpdateLng sets the "lng" field to the value that was provided on create.
+func (u *ObjectUpsertOne) UpdateLng() *ObjectUpsertOne {
+	return u.Update(func(s *ObjectUpsert) {
+		s.UpdateLng()
+	})
+}
+
+// ClearLng clears the value of the "lng" field.
+func (u *ObjectUpsertOne) ClearLng() *ObjectUpsertOne {
+	return u.Update(func(s *ObjectUpsert) {
+		s.ClearLng()
+	})
+}
+
+// SetInstalledPeriod sets the "installed_period" field.
+func (u *ObjectUpsertOne) SetInstalledPeriod(v string) *ObjectUpsertOne {
+	return u.Update(func(s *ObjectUpsert) {
+		s.SetInstalledPeriod(v)
+	})
+}
+
+// UpdateInstalledPeriod sets the "installed_period" field to the value that was provided on create.
+func (u *ObjectUpsertOne) UpdateInstalledPeriod() *ObjectUpsertOne {
+	return u.Update(func(s *ObjectUpsert) {
+		s.UpdateInstalledPeriod()
+	})
+}
+
+// ClearInstalledPeriod clears the value of the "installed_period" field.
+func (u *ObjectUpsertOne) ClearInstalledPeriod() *ObjectUpsertOne {
+	return u.Update(func(s *ObjectUpsert) {
+		s.ClearInstalledPeriod()
+	})
+}
+
+// SetIsRemoved sets the "is_removed" field.
+func (u *ObjectUpsertOne) SetIsRemoved(v bool) *ObjectUpsertOne {
+	return u.Update(func(s *ObjectUpsert) {
+		s.SetIsRemoved(v)
+	})
+}
+
+// UpdateIsRemoved sets the "is_removed" field to the value that was provided on create.
+func (u *ObjectUpsertOne) UpdateIsRemoved() *ObjectUpsertOne {
+	return u.Update(func(s *ObjectUpsert) {
+		s.UpdateIsRemoved()
+	})
+}
+
+// SetRemovedPeriod sets the "removed_period" field.
+func (u *ObjectUpsertOne) SetRemovedPeriod(v string) *ObjectUpsertOne {
+	return u.Update(func(s *ObjectUpsert) {
+		s.SetRemovedPeriod(v)
+	})
+}
+
+// UpdateRemovedPeriod sets the "removed_period" field to the value that was provided on create.
+func (u *ObjectUpsertOne) UpdateRemovedPeriod() *ObjectUpsertOne {
+	return u.Update(func(s *ObjectUpsert) {
+		s.UpdateRemovedPeriod()
+	})
+}
+
+// ClearRemovedPeriod clears the value of the "removed_period" field.
+func (u *ObjectUpsertOne) ClearRemovedPeriod() *ObjectUpsertOne {
+	return u.Update(func(s *ObjectUpsert) {
+		s.ClearRemovedPeriod()
+	})
+}
+
+// SetSource sets the "source" field.
+func (u *ObjectUpsertOne) SetSource(v string) *ObjectUpsertOne {
+	return u.Update(func(s *ObjectUpsert) {
+		s.SetSource(v)
+	})
+}
+
+// UpdateSource sets the "source" field to the value that was provided on create.
+func (u *ObjectUpsertOne) UpdateSource() *ObjectUpsertOne {
+	return u.Update(func(s *ObjectUpsert) {
+		s.UpdateSource()
+	})
+}
+
+// ClearSource clears the value of the "source" field.
+func (u *ObjectUpsertOne) ClearSource() *ObjectUpsertOne {
+	return u.Update(func(s *ObjectUpsert) {
+		s.ClearSource()
+	})
+}
+
+// SetType sets the "type" field.
+func (u *ObjectUpsertOne) SetType(v string) *ObjectUpsertOne {
+	return u.Update(func(s *ObjectUpsert) {
+		s.SetType(v)
+	})
+}
+
+// UpdateType sets the "type" field to the value that was provided on create.
+func (u *ObjectUpsertOne) UpdateType() *ObjectUpsertOne {
+	return u.Update(func(s *ObjectUpsert) {
+		s.UpdateType()
+	})
+}
+
+// SetTags sets the "tags" field.
+func (u *ObjectUpsertOne) SetTags(v string) *ObjectUpsertOne {
+	return u.Update(func(s *ObjectUpsert) {
+		s.SetTags(v)
+	})
+}
+
+// UpdateTags sets the "tags" field to the value that was provided on create.
+func (u *ObjectUpsertOne) UpdateTags() *ObjectUpsertOne {
+	return u.Update(func(s *ObjectUpsert) {
+		s.UpdateTags()
+	})
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (u *ObjectUpsertOne) SetCreatedAt(v time.Time) *ObjectUpsertOne {
+	return u.Update(func(s *ObjectUpsert) {
+		s.SetCreatedAt(v)
+	})
+}
+
+// UpdateCreatedAt sets the "created_at" field to the value that was provided on create.
+func (u *ObjectUpsertOne) UpdateCreatedAt() *ObjectUpsertOne {
+	return u.Update(func(s *ObjectUpsert) {
+		s.UpdateCreatedAt()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *ObjectUpsertOne) SetUpdatedAt(v time.Time) *ObjectUpsertOne {
+	return u.Update(func(s *ObjectUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *ObjectUpsertOne) UpdateUpdatedAt() *ObjectUpsertOne {
+	return u.Update(func(s *ObjectUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (u *ObjectUpsertOne) SetDeletedAt(v time.Time) *ObjectUpsertOne {
+	return u.Update(func(s *ObjectUpsert) {
+		s.SetDeletedAt(v)
+	})
+}
+
+// UpdateDeletedAt sets the "deleted_at" field to the value that was provided on create.
+func (u *ObjectUpsertOne) UpdateDeletedAt() *ObjectUpsertOne {
+	return u.Update(func(s *ObjectUpsert) {
+		s.UpdateDeletedAt()
+	})
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (u *ObjectUpsertOne) ClearDeletedAt() *ObjectUpsertOne {
+	return u.Update(func(s *ObjectUpsert) {
+		s.ClearDeletedAt()
+	})
+}
+
+// SetLastSync sets the "last_sync" field.
+func (u *ObjectUpsertOne) SetLastSync(v time.Time) *ObjectUpsertOne {
+	return u.Update(func(s *ObjectUpsert) {
+		s.SetLastSync(v)
+	})
+}
+
+// UpdateLastSync sets the "last_sync" field to the value that was provided on create.
+func (u *ObjectUpsertOne) UpdateLastSync() *ObjectUpsertOne {
+	return u.Update(func(s *ObjectUpsert) {
+		s.UpdateLastSync()
+	})
+}
+
+// ClearLastSync clears the value of the "last_sync" field.
+func (u *ObjectUpsertOne) ClearLastSync() *ObjectUpsertOne {
+	return u.Update(func(s *ObjectUpsert) {
+		s.ClearLastSync()
+	})
+}
+
+// SetNotionID sets the "notion_id" field.
+func (u *ObjectUpsertOne) SetNotionID(v string) *ObjectUpsertOne {
+	return u.Update(func(s *ObjectUpsert) {
+		s.SetNotionID(v)
+	})
+}
+
+// UpdateNotionID sets the "notion_id" field to the value that was provided on create.
+func (u *ObjectUpsertOne) UpdateNotionID() *ObjectUpsertOne {
+	return u.Update(func(s *ObjectUpsert) {
+		s.UpdateNotionID()
+	})
+}
+
+// ClearNotionID clears the value of the "notion_id" field.
+func (u *ObjectUpsertOne) ClearNotionID() *ObjectUpsertOne {
+	return u.Update(func(s *ObjectUpsert) {
+		s.ClearNotionID()
+	})
+}
+
+// Exec executes the query.
+func (u *ObjectUpsertOne) Exec(ctx context.Context) error {
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for ObjectCreate.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *ObjectUpsertOne) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// Exec executes the UPSERT query and returns the inserted/updated ID.
+func (u *ObjectUpsertOne) ID(ctx context.Context) (id puuid.ID, err error) {
+	if u.create.driver.Dialect() == dialect.MySQL {
+		// In case of "ON CONFLICT", there is no way to get back non-numeric ID
+		// fields from the database since MySQL does not support the RETURNING clause.
+		return id, errors.New("ent: ObjectUpsertOne.ID is not supported by MySQL driver. Use ObjectUpsertOne.Exec instead")
+	}
+	node, err := u.create.Save(ctx)
+	if err != nil {
+		return id, err
+	}
+	return node.ID, nil
+}
+
+// IDX is like ID, but panics if an error occurs.
+func (u *ObjectUpsertOne) IDX(ctx context.Context) puuid.ID {
+	id, err := u.ID(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
 // ObjectCreateBulk is the builder for creating many Object entities in bulk.
 type ObjectCreateBulk struct {
 	config
 	builders []*ObjectCreate
+	conflict []sql.ConflictOption
 }
 
 // Save creates the Object entities in the database.
@@ -741,6 +1421,7 @@ func (ocb *ObjectCreateBulk) Save(ctx context.Context) ([]*Object, error) {
 					_, err = mutators[i+1].Mutate(root, ocb.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					spec.OnConflict = ocb.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
 					if err = sqlgraph.BatchCreate(ctx, ocb.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
@@ -787,6 +1468,412 @@ func (ocb *ObjectCreateBulk) Exec(ctx context.Context) error {
 // ExecX is like Exec, but panics if an error occurs.
 func (ocb *ObjectCreateBulk) ExecX(ctx context.Context) {
 	if err := ocb.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.Object.CreateBulk(builders...).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.ObjectUpsert) {
+//			SetName(v+v).
+//		}).
+//		Exec(ctx)
+//
+func (ocb *ObjectCreateBulk) OnConflict(opts ...sql.ConflictOption) *ObjectUpsertBulk {
+	ocb.conflict = opts
+	return &ObjectUpsertBulk{
+		create: ocb,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.Object.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+//
+func (ocb *ObjectCreateBulk) OnConflictColumns(columns ...string) *ObjectUpsertBulk {
+	ocb.conflict = append(ocb.conflict, sql.ConflictColumns(columns...))
+	return &ObjectUpsertBulk{
+		create: ocb,
+	}
+}
+
+// ObjectUpsertBulk is the builder for "upsert"-ing
+// a bulk of Object nodes.
+type ObjectUpsertBulk struct {
+	create *ObjectCreateBulk
+}
+
+// UpdateNewValues updates the mutable fields using the new values that
+// were set on create. Using this option is equivalent to using:
+//
+//	client.Object.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(object.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+//
+func (u *ObjectUpsertBulk) UpdateNewValues() *ObjectUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		for _, b := range u.create.builders {
+			if _, exists := b.mutation.ID(); exists {
+				s.SetIgnore(object.FieldID)
+				return
+			}
+			if _, exists := b.mutation.CreatedAt(); exists {
+				s.SetIgnore(object.FieldCreatedAt)
+			}
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.Object.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
+//
+func (u *ObjectUpsertBulk) Ignore() *ObjectUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *ObjectUpsertBulk) DoNothing() *ObjectUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the ObjectCreateBulk.OnConflict
+// documentation for more info.
+func (u *ObjectUpsertBulk) Update(set func(*ObjectUpsert)) *ObjectUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&ObjectUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetName sets the "name" field.
+func (u *ObjectUpsertBulk) SetName(v string) *ObjectUpsertBulk {
+	return u.Update(func(s *ObjectUpsert) {
+		s.SetName(v)
+	})
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *ObjectUpsertBulk) UpdateName() *ObjectUpsertBulk {
+	return u.Update(func(s *ObjectUpsert) {
+		s.UpdateName()
+	})
+}
+
+// SetDescription sets the "description" field.
+func (u *ObjectUpsertBulk) SetDescription(v string) *ObjectUpsertBulk {
+	return u.Update(func(s *ObjectUpsert) {
+		s.SetDescription(v)
+	})
+}
+
+// UpdateDescription sets the "description" field to the value that was provided on create.
+func (u *ObjectUpsertBulk) UpdateDescription() *ObjectUpsertBulk {
+	return u.Update(func(s *ObjectUpsert) {
+		s.UpdateDescription()
+	})
+}
+
+// ClearDescription clears the value of the "description" field.
+func (u *ObjectUpsertBulk) ClearDescription() *ObjectUpsertBulk {
+	return u.Update(func(s *ObjectUpsert) {
+		s.ClearDescription()
+	})
+}
+
+// SetLat sets the "lat" field.
+func (u *ObjectUpsertBulk) SetLat(v float64) *ObjectUpsertBulk {
+	return u.Update(func(s *ObjectUpsert) {
+		s.SetLat(v)
+	})
+}
+
+// AddLat adds v to the "lat" field.
+func (u *ObjectUpsertBulk) AddLat(v float64) *ObjectUpsertBulk {
+	return u.Update(func(s *ObjectUpsert) {
+		s.AddLat(v)
+	})
+}
+
+// UpdateLat sets the "lat" field to the value that was provided on create.
+func (u *ObjectUpsertBulk) UpdateLat() *ObjectUpsertBulk {
+	return u.Update(func(s *ObjectUpsert) {
+		s.UpdateLat()
+	})
+}
+
+// ClearLat clears the value of the "lat" field.
+func (u *ObjectUpsertBulk) ClearLat() *ObjectUpsertBulk {
+	return u.Update(func(s *ObjectUpsert) {
+		s.ClearLat()
+	})
+}
+
+// SetLng sets the "lng" field.
+func (u *ObjectUpsertBulk) SetLng(v float64) *ObjectUpsertBulk {
+	return u.Update(func(s *ObjectUpsert) {
+		s.SetLng(v)
+	})
+}
+
+// AddLng adds v to the "lng" field.
+func (u *ObjectUpsertBulk) AddLng(v float64) *ObjectUpsertBulk {
+	return u.Update(func(s *ObjectUpsert) {
+		s.AddLng(v)
+	})
+}
+
+// UpdateLng sets the "lng" field to the value that was provided on create.
+func (u *ObjectUpsertBulk) UpdateLng() *ObjectUpsertBulk {
+	return u.Update(func(s *ObjectUpsert) {
+		s.UpdateLng()
+	})
+}
+
+// ClearLng clears the value of the "lng" field.
+func (u *ObjectUpsertBulk) ClearLng() *ObjectUpsertBulk {
+	return u.Update(func(s *ObjectUpsert) {
+		s.ClearLng()
+	})
+}
+
+// SetInstalledPeriod sets the "installed_period" field.
+func (u *ObjectUpsertBulk) SetInstalledPeriod(v string) *ObjectUpsertBulk {
+	return u.Update(func(s *ObjectUpsert) {
+		s.SetInstalledPeriod(v)
+	})
+}
+
+// UpdateInstalledPeriod sets the "installed_period" field to the value that was provided on create.
+func (u *ObjectUpsertBulk) UpdateInstalledPeriod() *ObjectUpsertBulk {
+	return u.Update(func(s *ObjectUpsert) {
+		s.UpdateInstalledPeriod()
+	})
+}
+
+// ClearInstalledPeriod clears the value of the "installed_period" field.
+func (u *ObjectUpsertBulk) ClearInstalledPeriod() *ObjectUpsertBulk {
+	return u.Update(func(s *ObjectUpsert) {
+		s.ClearInstalledPeriod()
+	})
+}
+
+// SetIsRemoved sets the "is_removed" field.
+func (u *ObjectUpsertBulk) SetIsRemoved(v bool) *ObjectUpsertBulk {
+	return u.Update(func(s *ObjectUpsert) {
+		s.SetIsRemoved(v)
+	})
+}
+
+// UpdateIsRemoved sets the "is_removed" field to the value that was provided on create.
+func (u *ObjectUpsertBulk) UpdateIsRemoved() *ObjectUpsertBulk {
+	return u.Update(func(s *ObjectUpsert) {
+		s.UpdateIsRemoved()
+	})
+}
+
+// SetRemovedPeriod sets the "removed_period" field.
+func (u *ObjectUpsertBulk) SetRemovedPeriod(v string) *ObjectUpsertBulk {
+	return u.Update(func(s *ObjectUpsert) {
+		s.SetRemovedPeriod(v)
+	})
+}
+
+// UpdateRemovedPeriod sets the "removed_period" field to the value that was provided on create.
+func (u *ObjectUpsertBulk) UpdateRemovedPeriod() *ObjectUpsertBulk {
+	return u.Update(func(s *ObjectUpsert) {
+		s.UpdateRemovedPeriod()
+	})
+}
+
+// ClearRemovedPeriod clears the value of the "removed_period" field.
+func (u *ObjectUpsertBulk) ClearRemovedPeriod() *ObjectUpsertBulk {
+	return u.Update(func(s *ObjectUpsert) {
+		s.ClearRemovedPeriod()
+	})
+}
+
+// SetSource sets the "source" field.
+func (u *ObjectUpsertBulk) SetSource(v string) *ObjectUpsertBulk {
+	return u.Update(func(s *ObjectUpsert) {
+		s.SetSource(v)
+	})
+}
+
+// UpdateSource sets the "source" field to the value that was provided on create.
+func (u *ObjectUpsertBulk) UpdateSource() *ObjectUpsertBulk {
+	return u.Update(func(s *ObjectUpsert) {
+		s.UpdateSource()
+	})
+}
+
+// ClearSource clears the value of the "source" field.
+func (u *ObjectUpsertBulk) ClearSource() *ObjectUpsertBulk {
+	return u.Update(func(s *ObjectUpsert) {
+		s.ClearSource()
+	})
+}
+
+// SetType sets the "type" field.
+func (u *ObjectUpsertBulk) SetType(v string) *ObjectUpsertBulk {
+	return u.Update(func(s *ObjectUpsert) {
+		s.SetType(v)
+	})
+}
+
+// UpdateType sets the "type" field to the value that was provided on create.
+func (u *ObjectUpsertBulk) UpdateType() *ObjectUpsertBulk {
+	return u.Update(func(s *ObjectUpsert) {
+		s.UpdateType()
+	})
+}
+
+// SetTags sets the "tags" field.
+func (u *ObjectUpsertBulk) SetTags(v string) *ObjectUpsertBulk {
+	return u.Update(func(s *ObjectUpsert) {
+		s.SetTags(v)
+	})
+}
+
+// UpdateTags sets the "tags" field to the value that was provided on create.
+func (u *ObjectUpsertBulk) UpdateTags() *ObjectUpsertBulk {
+	return u.Update(func(s *ObjectUpsert) {
+		s.UpdateTags()
+	})
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (u *ObjectUpsertBulk) SetCreatedAt(v time.Time) *ObjectUpsertBulk {
+	return u.Update(func(s *ObjectUpsert) {
+		s.SetCreatedAt(v)
+	})
+}
+
+// UpdateCreatedAt sets the "created_at" field to the value that was provided on create.
+func (u *ObjectUpsertBulk) UpdateCreatedAt() *ObjectUpsertBulk {
+	return u.Update(func(s *ObjectUpsert) {
+		s.UpdateCreatedAt()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *ObjectUpsertBulk) SetUpdatedAt(v time.Time) *ObjectUpsertBulk {
+	return u.Update(func(s *ObjectUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *ObjectUpsertBulk) UpdateUpdatedAt() *ObjectUpsertBulk {
+	return u.Update(func(s *ObjectUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (u *ObjectUpsertBulk) SetDeletedAt(v time.Time) *ObjectUpsertBulk {
+	return u.Update(func(s *ObjectUpsert) {
+		s.SetDeletedAt(v)
+	})
+}
+
+// UpdateDeletedAt sets the "deleted_at" field to the value that was provided on create.
+func (u *ObjectUpsertBulk) UpdateDeletedAt() *ObjectUpsertBulk {
+	return u.Update(func(s *ObjectUpsert) {
+		s.UpdateDeletedAt()
+	})
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (u *ObjectUpsertBulk) ClearDeletedAt() *ObjectUpsertBulk {
+	return u.Update(func(s *ObjectUpsert) {
+		s.ClearDeletedAt()
+	})
+}
+
+// SetLastSync sets the "last_sync" field.
+func (u *ObjectUpsertBulk) SetLastSync(v time.Time) *ObjectUpsertBulk {
+	return u.Update(func(s *ObjectUpsert) {
+		s.SetLastSync(v)
+	})
+}
+
+// UpdateLastSync sets the "last_sync" field to the value that was provided on create.
+func (u *ObjectUpsertBulk) UpdateLastSync() *ObjectUpsertBulk {
+	return u.Update(func(s *ObjectUpsert) {
+		s.UpdateLastSync()
+	})
+}
+
+// ClearLastSync clears the value of the "last_sync" field.
+func (u *ObjectUpsertBulk) ClearLastSync() *ObjectUpsertBulk {
+	return u.Update(func(s *ObjectUpsert) {
+		s.ClearLastSync()
+	})
+}
+
+// SetNotionID sets the "notion_id" field.
+func (u *ObjectUpsertBulk) SetNotionID(v string) *ObjectUpsertBulk {
+	return u.Update(func(s *ObjectUpsert) {
+		s.SetNotionID(v)
+	})
+}
+
+// UpdateNotionID sets the "notion_id" field to the value that was provided on create.
+func (u *ObjectUpsertBulk) UpdateNotionID() *ObjectUpsertBulk {
+	return u.Update(func(s *ObjectUpsert) {
+		s.UpdateNotionID()
+	})
+}
+
+// ClearNotionID clears the value of the "notion_id" field.
+func (u *ObjectUpsertBulk) ClearNotionID() *ObjectUpsertBulk {
+	return u.Update(func(s *ObjectUpsert) {
+		s.ClearNotionID()
+	})
+}
+
+// Exec executes the query.
+func (u *ObjectUpsertBulk) Exec(ctx context.Context) error {
+	for i, b := range u.create.builders {
+		if len(b.conflict) != 0 {
+			return fmt.Errorf("ent: OnConflict was set for builder %d. Set it on the ObjectCreateBulk instead", i)
+		}
+	}
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for ObjectCreateBulk.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *ObjectUpsertBulk) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

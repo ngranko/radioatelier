@@ -252,6 +252,7 @@ input CreateUserInput {
   lastLogin: Time
   isActive: Boolean
   notionID: String
+  isNotionSubject: Boolean
   createdObjectIDs: [ID!]
   updatedObjectIDs: [ID!]
   deletedObjectIDs: [ID!]
@@ -723,6 +724,7 @@ input UpdateUserInput {
   isActive: Boolean
   clearNotionID: Boolean
   notionID: String
+  isNotionSubject: Boolean
   addCreatedObjectIDs: [ID!]
   removeCreatedObjectIDs: [ID!]
   addUpdatedObjectIDs: [ID!]
@@ -747,6 +749,7 @@ type User implements Node {
   lastLogin: Time
   isActive: Boolean!
   notionID: String
+  isNotionSubject: Boolean!
   createdObjects: [Object!]
   updatedObjects: [Object!]
   deletedObjects: [Object!]
@@ -885,6 +888,9 @@ input UserWhereInput {
   notionIDNotNil: Boolean
   notionIDEqualFold: String
   notionIDContainsFold: String
+  """is_notion_subject field predicates"""
+  isNotionSubject: Boolean
+  isNotionSubjectNEQ: Boolean
   """created_objects edge predicates"""
   hasCreatedObjects: Boolean
   hasCreatedObjectsWith: [ObjectWhereInput!]

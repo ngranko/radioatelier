@@ -64,6 +64,7 @@ func (User) Fields() []ent.Field {
 			SchemaType(map[string]string{
 				dialect.MySQL: "char(36) binary",
 			}),
+		field.Bool("is_notion_subject").Default(false),
 	}
 }
 

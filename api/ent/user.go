@@ -33,6 +33,8 @@ type User struct {
 	IsActive bool `json:"is_active,omitempty"`
 	// NotionID holds the value of the "notion_id" field.
 	NotionID *string `json:"notion_id,omitempty"`
+	// IsNotionSubject holds the value of the "is_notion_subject" field.
+	IsNotionSubject bool `json:"is_notion_subject,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the UserQuery when eager-loading is set.
 	Edges UserEdges `json:"edges"`
@@ -142,7 +144,7 @@ func (*User) scanValues(columns []string) ([]interface{}, error) {
 		switch columns[i] {
 		case user.FieldID:
 			values[i] = new(puuid.ID)
-		case user.FieldIsActive:
+		case user.FieldIsActive, user.FieldIsNotionSubject:
 			values[i] = new(sql.NullBool)
 		case user.FieldName, user.FieldEmail, user.FieldLogin, user.FieldPassword, user.FieldRole, user.FieldNotionID:
 			values[i] = new(sql.NullString)
@@ -218,6 +220,12 @@ func (u *User) assignValues(columns []string, values []interface{}) error {
 			} else if value.Valid {
 				u.NotionID = new(string)
 				*u.NotionID = value.String
+			}
+		case user.FieldIsNotionSubject:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field is_notion_subject", values[i])
+			} else if value.Valid {
+				u.IsNotionSubject = value.Bool
 			}
 		}
 	}
@@ -313,6 +321,9 @@ func (u *User) String() string {
 		builder.WriteString("notion_id=")
 		builder.WriteString(*v)
 	}
+	builder.WriteString(", ")
+	builder.WriteString("is_notion_subject=")
+	builder.WriteString(fmt.Sprintf("%v", u.IsNotionSubject))
 	builder.WriteByte(')')
 	return builder.String()
 }

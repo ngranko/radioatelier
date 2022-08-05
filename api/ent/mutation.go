@@ -3494,6 +3494,7 @@ type UserMutation struct {
 	last_login                 *time.Time
 	is_active                  *bool
 	notion_id                  *string
+	is_notion_subject          *bool
 	clearedFields              map[string]struct{}
 	created_objects            map[puuid.ID]struct{}
 	removedcreated_objects     map[puuid.ID]struct{}
@@ -3939,6 +3940,42 @@ func (m *UserMutation) ResetNotionID() {
 	delete(m.clearedFields, user.FieldNotionID)
 }
 
+// SetIsNotionSubject sets the "is_notion_subject" field.
+func (m *UserMutation) SetIsNotionSubject(b bool) {
+	m.is_notion_subject = &b
+}
+
+// IsNotionSubject returns the value of the "is_notion_subject" field in the mutation.
+func (m *UserMutation) IsNotionSubject() (r bool, exists bool) {
+	v := m.is_notion_subject
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsNotionSubject returns the old "is_notion_subject" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldIsNotionSubject(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsNotionSubject is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsNotionSubject requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsNotionSubject: %w", err)
+	}
+	return oldValue.IsNotionSubject, nil
+}
+
+// ResetIsNotionSubject resets all changes to the "is_notion_subject" field.
+func (m *UserMutation) ResetIsNotionSubject() {
+	m.is_notion_subject = nil
+}
+
 // AddCreatedObjectIDs adds the "created_objects" edge to the Object entity by ids.
 func (m *UserMutation) AddCreatedObjectIDs(ids ...puuid.ID) {
 	if m.created_objects == nil {
@@ -4336,7 +4373,7 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 8)
+	fields := make([]string, 0, 9)
 	if m.name != nil {
 		fields = append(fields, user.FieldName)
 	}
@@ -4360,6 +4397,9 @@ func (m *UserMutation) Fields() []string {
 	}
 	if m.notion_id != nil {
 		fields = append(fields, user.FieldNotionID)
+	}
+	if m.is_notion_subject != nil {
+		fields = append(fields, user.FieldIsNotionSubject)
 	}
 	return fields
 }
@@ -4385,6 +4425,8 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.IsActive()
 	case user.FieldNotionID:
 		return m.NotionID()
+	case user.FieldIsNotionSubject:
+		return m.IsNotionSubject()
 	}
 	return nil, false
 }
@@ -4410,6 +4452,8 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldIsActive(ctx)
 	case user.FieldNotionID:
 		return m.OldNotionID(ctx)
+	case user.FieldIsNotionSubject:
+		return m.OldIsNotionSubject(ctx)
 	}
 	return nil, fmt.Errorf("unknown User field %s", name)
 }
@@ -4474,6 +4518,13 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetNotionID(v)
+		return nil
+	case user.FieldIsNotionSubject:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsNotionSubject(v)
 		return nil
 	}
 	return fmt.Errorf("unknown User field %s", name)
@@ -4562,6 +4613,9 @@ func (m *UserMutation) ResetField(name string) error {
 		return nil
 	case user.FieldNotionID:
 		m.ResetNotionID()
+		return nil
+	case user.FieldIsNotionSubject:
+		m.ResetIsNotionSubject()
 		return nil
 	}
 	return fmt.Errorf("unknown User field %s", name)

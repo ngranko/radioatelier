@@ -18,6 +18,9 @@ func NewTitleProperty(prop notionapi.Property) TitleProperty {
 }
 
 func (p TitleProperty) GetValue() string {
+	if len(p.property.Title) == 0 {
+		return ""
+	}
 	return p.property.Title[0].PlainText
 }
 
@@ -32,6 +35,9 @@ func NewRichTextProperty(prop notionapi.Property) RichTextProperty {
 }
 
 func (p RichTextProperty) GetValue() string {
+	if len(p.property.RichText) == 0 {
+		return ""
+	}
 	return p.property.RichText[0].PlainText
 }
 
@@ -119,7 +125,7 @@ func (p DateProperty) GetValue() time.Time {
 }
 
 func (p DateProperty) GetNillableValue() *time.Time {
-	if p.property.Date.Start != nil {
+	if p.property.Date != nil && p.property.Date.Start != nil {
 		notionDate := time.Time(*p.property.Date.Start)
 		return &notionDate
 	}

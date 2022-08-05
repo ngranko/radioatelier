@@ -477,6 +477,7 @@ type CreateUserInput struct {
 	LastLogin            *time.Time
 	IsActive             *bool
 	NotionID             *string
+	IsNotionSubject      *bool
 	CreatedObjectIDs     []puuid.ID
 	UpdatedObjectIDs     []puuid.ID
 	DeletedObjectIDs     []puuid.ID
@@ -501,6 +502,9 @@ func (i *CreateUserInput) Mutate(m *UserMutation) {
 	}
 	if v := i.NotionID; v != nil {
 		m.SetNotionID(*v)
+	}
+	if v := i.IsNotionSubject; v != nil {
+		m.SetIsNotionSubject(*v)
 	}
 	if v := i.CreatedObjectIDs; len(v) > 0 {
 		m.AddCreatedObjectIDs(v...)
@@ -543,6 +547,7 @@ type UpdateUserInput struct {
 	IsActive                   *bool
 	ClearNotionID              bool
 	NotionID                   *string
+	IsNotionSubject            *bool
 	AddCreatedObjectIDs        []puuid.ID
 	RemoveCreatedObjectIDs     []puuid.ID
 	AddUpdatedObjectIDs        []puuid.ID
@@ -590,6 +595,9 @@ func (i *UpdateUserInput) Mutate(m *UserMutation) {
 	}
 	if v := i.NotionID; v != nil {
 		m.SetNotionID(*v)
+	}
+	if v := i.IsNotionSubject; v != nil {
+		m.SetIsNotionSubject(*v)
 	}
 	if v := i.AddCreatedObjectIDs; len(v) > 0 {
 		m.AddCreatedObjectIDs(v...)
