@@ -10,7 +10,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/joho/godotenv v1.4.0
-	github.com/jomei/notionapi v1.8.5
+	github.com/jomei/notionapi v1.9.2
 	github.com/labstack/echo/v4 v4.6.1
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/vektah/gqlparser v1.3.1

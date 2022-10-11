@@ -108,7 +108,7 @@ var (
 	// ObjectUsersColumns holds the columns for the "object_users" table.
 	ObjectUsersColumns = []*schema.Column{
 		{Name: "is_visited", Type: field.TypeBool, Default: false},
-		{Name: "last_visit", Type: field.TypeTime, Nullable: true},
+		{Name: "last_visit", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"mysql": "date"}},
 		{Name: "user_id", Type: field.TypeString, SchemaType: map[string]string{"mysql": "char(39)"}},
 		{Name: "object_id", Type: field.TypeString, SchemaType: map[string]string{"mysql": "char(39)"}},
 	}

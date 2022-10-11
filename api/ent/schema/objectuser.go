@@ -17,12 +17,6 @@ type ObjectUser struct {
 	ent.Schema
 }
 
-// func (ObjectUser) Mixin() []ent.Mixin {
-// 	return []ent.Mixin{
-// 		puuid.MixinWithPrefix("OU"),
-// 	}
-// }
-
 // Fields of the ObjectUser.
 func (ObjectUser) Fields() []ent.Field {
 	return []ent.Field{
@@ -37,7 +31,10 @@ func (ObjectUser) Fields() []ent.Field {
 				dialect.MySQL: "char(39)",
 			}),
 		field.Bool("is_visited").Default(false),
-		field.Time("last_visit").Optional().Nillable(),
+		field.Time("last_visit").Optional().Nillable().
+			SchemaType(map[string]string{
+				dialect.MySQL: "date",
+			}),
 	}
 }
 

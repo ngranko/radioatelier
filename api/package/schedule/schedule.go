@@ -8,6 +8,6 @@ import (
 
 func init() {
 	c := cron.New()
-	c.AddFunc("@hourly", sync.SyncFromNotion)
+	c.AddFunc("@hourly", sync.FromNotion)
 	c.Start()
 }
