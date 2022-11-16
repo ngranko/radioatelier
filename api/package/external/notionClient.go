@@ -1,15 +1,15 @@
 package external
 
 import (
-	"radioatelier/package/config"
+    "radioatelier/package/config"
 
-	"github.com/jomei/notionapi"
+    "github.com/jomei/notionapi"
 )
 
 var NotionClient *notionapi.Client
 
 func init() {
-	conf := config.Get()
+    conf := config.Get()
 
-	NotionClient = notionapi.NewClient(notionapi.Token(conf.NotionToken))
+    NotionClient = notionapi.NewClient(notionapi.Token(conf.NotionToken))
 }
