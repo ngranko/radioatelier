@@ -56,7 +56,9 @@ func main() {
 	})
 
 	// TODO: remove this line after testing is over
-	sync.SyncFromNotion()
+	sync.FromNotion()
+	// obj, _ := db.Client.Object.Query().Where(object.IDEQ("OB-01b7d142-0a17-48a3-927b-0c4923a13b9b")).First(context.TODO())
+	// sync.ToNotion(obj)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }

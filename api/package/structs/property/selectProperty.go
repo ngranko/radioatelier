@@ -23,7 +23,7 @@ func (p *SelectProperty) FillFromNotion(prop notionapi.Property) (Property, erro
 	if prop.GetType() != notionapi.PropertyTypeSelect {
 		return nil, errors.New("Wrong notion property type")
 	}
-	p.Value = prop.(notionapi.SelectProperty).Select
+	p.Value = prop.(*notionapi.SelectProperty).Select
 	return p, nil
 }
 

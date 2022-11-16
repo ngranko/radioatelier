@@ -27,7 +27,7 @@ func (p *TitleProperty) FillFromNotion(prop notionapi.Property) (Property, error
 	if prop.GetType() != notionapi.PropertyTypeTitle {
 		return nil, errors.New("Wrong notion property type")
 	}
-	p.Value = prop.(notionapi.TitleProperty).Title
+	p.Value = prop.(*notionapi.TitleProperty).Title
 	return p, nil
 }
 

@@ -3,6 +3,7 @@ package external
 import (
 	"context"
 	"radioatelier/package/config"
+	"radioatelier/package/structs/property"
 	"time"
 
 	"github.com/jomei/notionapi"
@@ -44,18 +45,16 @@ func UpdateLastSync(ctx context.Context, pageID string, value time.Time) (*notio
 	return NotionClient.Page.Update(
 		ctx,
 		notionapi.PageID(pageID),
-		getUpdateLastSyncRequestParams(value),
+		getUpdateLastSyncRequestParams(value.Truncate(time.Second)),
 	)
 }
 
 func getUpdateLastSyncRequestParams(value time.Time) *notionapi.PageUpdateRequest {
+	prop := property.NewDateProperty()
+	prop.SetValue(&value)
 	return &notionapi.PageUpdateRequest{
 		Properties: notionapi.Properties{
-			"Последняя синхронизация": notionapi.DateProperty{
-				Date: &notionapi.DateObject{
-					Start: (*notionapi.Date)(&value),
-				},
-			},
+			"Последняя синхронизация": prop.ToNotionProperty(),
 		},
 	}
 }

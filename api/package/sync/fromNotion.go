@@ -46,12 +46,17 @@ func syncPage(ctx context.Context, notionPage notionapi.Page) {
 			return
 		}
 	} else {
-		if obj.UpdatedAt.After(page.UpdatedAt) {
+		// currently in Notion CreatedAt and UpdatedAt are getting truncated to a minute,
+		// but that can change in the future, so let's truncate both values
+		if obj.UpdatedAt.Truncate(time.Minute).After(page.UpdatedAt.Truncate(time.Minute)) {
 			fmt.Println("Record in the database updated after the one in notion")
 			return
 		}
 
-		updateObject(ctx, obj, page)
+		obj, err = updateObject(ctx, obj, page)
+        if err != nil {
+            fmt.Println(err.Error())
+        }
 	}
 
 	upsertObjectUser(ctx, obj, page)
@@ -119,6 +124,7 @@ func updateObject(ctx context.Context, obj *ent.Object, page structs.Page) (*ent
 		SetUpdatedAt(currentTime)
 
 	if page.DeletedAt != nil {
+        // deleting pages doesn't seem to work at the moment because Notion doesn't send the archived pages through its API
 		query = query.SetNillableDeletedAt(page.DeletedAt)
 	}
 

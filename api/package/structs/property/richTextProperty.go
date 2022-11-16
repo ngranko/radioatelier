@@ -21,7 +21,7 @@ func (p *RichTextProperty) FillFromNotion(prop notionapi.Property) (Property, er
 	if prop.GetType() != notionapi.PropertyTypeRichText {
 		return nil, errors.New("Wrong notion property type")
 	}
-	p.Value = prop.(notionapi.RichTextProperty).RichText
+	p.Value = prop.(*notionapi.RichTextProperty).RichText
 	return p, nil
 }
 

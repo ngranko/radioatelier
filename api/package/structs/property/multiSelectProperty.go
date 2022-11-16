@@ -26,7 +26,7 @@ func (p *MultiSelectProperty) FillFromNotion(prop notionapi.Property) (Property,
 	if prop.GetType() != notionapi.PropertyTypeMultiSelect {
 		return nil, errors.New("Wrong notion property type")
 	}
-	p.Value = prop.(notionapi.MultiSelectProperty).MultiSelect
+	p.Value = prop.(*notionapi.MultiSelectProperty).MultiSelect
 	return p, nil
 }
 

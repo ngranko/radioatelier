@@ -3,3 +3,4 @@ docker/
 .env.*
 docker-compose.yml
 .gitignore
+radioatelier

@@ -56,3 +56,9 @@ func getUpdatePageRequestParams(ctx context.Context, obj *ent.Object) *notionapi
 
 	return &req
 }
+
+func updateLastSync(ctx context.Context, obj *ent.Object) {
+	obj.Update().
+		SetLastSync(*obj.LastSync).
+		Save(ctx)
+}

@@ -24,7 +24,7 @@ func (p *DateProperty) FillFromNotion(prop notionapi.Property) (Property, error)
 	if prop.GetType() != notionapi.PropertyTypeDate {
 		return nil, errors.New("Wrong notion property type")
 	}
-	p.Value = prop.(notionapi.DateProperty).Date
+	p.Value = prop.(*notionapi.DateProperty).Date
 	return p, nil
 }
 

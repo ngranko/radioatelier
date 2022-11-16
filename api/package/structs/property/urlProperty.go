@@ -21,7 +21,7 @@ func (p *URLProperty) FillFromNotion(prop notionapi.Property) (Property, error) 
 	if prop.GetType() != notionapi.PropertyTypeURL {
 		return nil, errors.New("Wrong notion property type")
 	}
-	p.Value = prop.(notionapi.URLProperty).URL
+	p.Value = prop.(*notionapi.URLProperty).URL
 	return p, nil
 }
 

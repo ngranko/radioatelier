@@ -21,7 +21,7 @@ func (p *CheckboxProperty) FillFromNotion(prop notionapi.Property) (Property, er
 	if prop.GetType() != notionapi.PropertyTypeCheckbox {
 		return nil, errors.New("Wrong notion property type")
 	}
-	p.Value = prop.(notionapi.CheckboxProperty).Checkbox
+	p.Value = prop.(*notionapi.CheckboxProperty).Checkbox
 	return p, nil
 }
 

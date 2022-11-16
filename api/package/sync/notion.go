@@ -44,9 +44,7 @@ func ToNotion(obj *ent.Object) {
 		}
 	}
 
-	obj.Update().
-		SetLastSync(*obj.LastSync).
-		Save(ctx)
+	updateLastSync(ctx, obj)
 }
 
 func withSubjectUser(ctx context.Context) context.Context {
