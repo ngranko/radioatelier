@@ -38,6 +38,26 @@ func (ou *ObjectUpdate) SetName(s string) *ObjectUpdate {
 	return ou
 }
 
+// SetAddress sets the "address" field.
+func (ou *ObjectUpdate) SetAddress(s string) *ObjectUpdate {
+	ou.mutation.SetAddress(s)
+	return ou
+}
+
+// SetNillableAddress sets the "address" field if the given value is not nil.
+func (ou *ObjectUpdate) SetNillableAddress(s *string) *ObjectUpdate {
+	if s != nil {
+		ou.SetAddress(*s)
+	}
+	return ou
+}
+
+// ClearAddress clears the value of the "address" field.
+func (ou *ObjectUpdate) ClearAddress() *ObjectUpdate {
+	ou.mutation.ClearAddress()
+	return ou
+}
+
 // SetDescription sets the "description" field.
 func (ou *ObjectUpdate) SetDescription(s string) *ObjectUpdate {
 	ou.mutation.SetDescription(s)
@@ -525,6 +545,19 @@ func (ou *ObjectUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: object.FieldName,
 		})
 	}
+	if value, ok := ou.mutation.Address(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: object.FieldAddress,
+		})
+	}
+	if ou.mutation.AddressCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: object.FieldAddress,
+		})
+	}
 	if value, ok := ou.mutation.Description(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
@@ -966,6 +999,26 @@ type ObjectUpdateOne struct {
 // SetName sets the "name" field.
 func (ouo *ObjectUpdateOne) SetName(s string) *ObjectUpdateOne {
 	ouo.mutation.SetName(s)
+	return ouo
+}
+
+// SetAddress sets the "address" field.
+func (ouo *ObjectUpdateOne) SetAddress(s string) *ObjectUpdateOne {
+	ouo.mutation.SetAddress(s)
+	return ouo
+}
+
+// SetNillableAddress sets the "address" field if the given value is not nil.
+func (ouo *ObjectUpdateOne) SetNillableAddress(s *string) *ObjectUpdateOne {
+	if s != nil {
+		ouo.SetAddress(*s)
+	}
+	return ouo
+}
+
+// ClearAddress clears the value of the "address" field.
+func (ouo *ObjectUpdateOne) ClearAddress() *ObjectUpdateOne {
+	ouo.mutation.ClearAddress()
 	return ouo
 }
 
@@ -1484,6 +1537,19 @@ func (ouo *ObjectUpdateOne) sqlSave(ctx context.Context) (_node *Object, err err
 			Type:   field.TypeString,
 			Value:  value,
 			Column: object.FieldName,
+		})
+	}
+	if value, ok := ouo.mutation.Address(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: object.FieldAddress,
+		})
+	}
+	if ouo.mutation.AddressCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: object.FieldAddress,
 		})
 	}
 	if value, ok := ouo.mutation.Description(); ok {

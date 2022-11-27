@@ -414,7 +414,6 @@ func (cc *CollectionCreate) createSpec() (*Collection, *sqlgraph.CreateSpec) {
 //			SetName(v+v).
 //		}).
 //		Exec(ctx)
-//
 func (cc *CollectionCreate) OnConflict(opts ...sql.ConflictOption) *CollectionUpsertOne {
 	cc.conflict = opts
 	return &CollectionUpsertOne{
@@ -428,7 +427,6 @@ func (cc *CollectionCreate) OnConflict(opts ...sql.ConflictOption) *CollectionUp
 //	client.Collection.Create().
 //		OnConflict(sql.ConflictColumns(columns...)).
 //		Exec(ctx)
-//
 func (cc *CollectionCreate) OnConflictColumns(columns ...string) *CollectionUpsertOne {
 	cc.conflict = append(cc.conflict, sql.ConflictColumns(columns...))
 	return &CollectionUpsertOne{
@@ -514,7 +512,6 @@ func (u *CollectionUpsert) UpdateUpdatedAt() *CollectionUpsert {
 //			}),
 //		).
 //		Exec(ctx)
-//
 func (u *CollectionUpsertOne) UpdateNewValues() *CollectionUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
@@ -531,10 +528,9 @@ func (u *CollectionUpsertOne) UpdateNewValues() *CollectionUpsertOne {
 // Ignore sets each column to itself in case of conflict.
 // Using this option is equivalent to using:
 //
-//  client.Collection.Create().
-//      OnConflict(sql.ResolveWithIgnore()).
-//      Exec(ctx)
-//
+//	client.Collection.Create().
+//	    OnConflict(sql.ResolveWithIgnore()).
+//	    Exec(ctx)
 func (u *CollectionUpsertOne) Ignore() *CollectionUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
 	return u
@@ -754,7 +750,6 @@ func (ccb *CollectionCreateBulk) ExecX(ctx context.Context) {
 //			SetName(v+v).
 //		}).
 //		Exec(ctx)
-//
 func (ccb *CollectionCreateBulk) OnConflict(opts ...sql.ConflictOption) *CollectionUpsertBulk {
 	ccb.conflict = opts
 	return &CollectionUpsertBulk{
@@ -768,7 +763,6 @@ func (ccb *CollectionCreateBulk) OnConflict(opts ...sql.ConflictOption) *Collect
 //	client.Collection.Create().
 //		OnConflict(sql.ConflictColumns(columns...)).
 //		Exec(ctx)
-//
 func (ccb *CollectionCreateBulk) OnConflictColumns(columns ...string) *CollectionUpsertBulk {
 	ccb.conflict = append(ccb.conflict, sql.ConflictColumns(columns...))
 	return &CollectionUpsertBulk{
@@ -793,7 +787,6 @@ type CollectionUpsertBulk struct {
 //			}),
 //		).
 //		Exec(ctx)
-//
 func (u *CollectionUpsertBulk) UpdateNewValues() *CollectionUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
@@ -816,7 +809,6 @@ func (u *CollectionUpsertBulk) UpdateNewValues() *CollectionUpsertBulk {
 //	client.Collection.Create().
 //		OnConflict(sql.ResolveWithIgnore()).
 //		Exec(ctx)
-//
 func (u *CollectionUpsertBulk) Ignore() *CollectionUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
 	return u

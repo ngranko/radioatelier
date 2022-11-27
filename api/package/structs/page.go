@@ -8,6 +8,7 @@ import (
 
 type Page struct {
     Name            string
+    Address         string
     IsVisited       bool
     LastVisited     *time.Time
     InstalledPeriod *string

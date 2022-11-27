@@ -54,6 +54,7 @@ var (
 	ObjectsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeString, SchemaType: map[string]string{"mysql": "char(39)"}},
 		{Name: "name", Type: field.TypeString},
+		{Name: "address", Type: field.TypeString, Nullable: true},
 		{Name: "description", Type: field.TypeString, Nullable: true},
 		{Name: "lat", Type: field.TypeFloat64, Nullable: true, SchemaType: map[string]string{"mysql": "decimal(9,6)"}},
 		{Name: "lng", Type: field.TypeFloat64, Nullable: true, SchemaType: map[string]string{"mysql": "decimal(9,6)"}},
@@ -81,25 +82,25 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "objects_cities_objects",
-				Columns:    []*schema.Column{ObjectsColumns[16]},
+				Columns:    []*schema.Column{ObjectsColumns[17]},
 				RefColumns: []*schema.Column{CitiesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "objects_users_created_objects",
-				Columns:    []*schema.Column{ObjectsColumns[17]},
-				RefColumns: []*schema.Column{UsersColumns[0]},
-				OnDelete:   schema.NoAction,
-			},
-			{
-				Symbol:     "objects_users_updated_objects",
 				Columns:    []*schema.Column{ObjectsColumns[18]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
-				Symbol:     "objects_users_deleted_objects",
+				Symbol:     "objects_users_updated_objects",
 				Columns:    []*schema.Column{ObjectsColumns[19]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "objects_users_deleted_objects",
+				Columns:    []*schema.Column{ObjectsColumns[20]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.SetNull,
 			},

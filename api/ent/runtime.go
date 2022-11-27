@@ -51,15 +51,15 @@ func init() {
 	objectFields := schema.Object{}.Fields()
 	_ = objectFields
 	// objectDescIsRemoved is the schema descriptor for is_removed field.
-	objectDescIsRemoved := objectFields[5].Descriptor()
+	objectDescIsRemoved := objectFields[6].Descriptor()
 	// object.DefaultIsRemoved holds the default value on creation for the is_removed field.
 	object.DefaultIsRemoved = objectDescIsRemoved.Default.(bool)
 	// objectDescCreatedAt is the schema descriptor for created_at field.
-	objectDescCreatedAt := objectFields[10].Descriptor()
+	objectDescCreatedAt := objectFields[11].Descriptor()
 	// object.DefaultCreatedAt holds the default value on creation for the created_at field.
 	object.DefaultCreatedAt = objectDescCreatedAt.Default.(func() time.Time)
 	// objectDescUpdatedAt is the schema descriptor for updated_at field.
-	objectDescUpdatedAt := objectFields[11].Descriptor()
+	objectDescUpdatedAt := objectFields[12].Descriptor()
 	// object.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	object.DefaultUpdatedAt = objectDescUpdatedAt.Default.(func() time.Time)
 	// object.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.

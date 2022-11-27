@@ -270,7 +270,6 @@ func (ouc *ObjectUserCreate) createSpec() (*ObjectUser, *sqlgraph.CreateSpec) {
 //			SetUserID(v+v).
 //		}).
 //		Exec(ctx)
-//
 func (ouc *ObjectUserCreate) OnConflict(opts ...sql.ConflictOption) *ObjectUserUpsertOne {
 	ouc.conflict = opts
 	return &ObjectUserUpsertOne{
@@ -284,7 +283,6 @@ func (ouc *ObjectUserCreate) OnConflict(opts ...sql.ConflictOption) *ObjectUserU
 //	client.ObjectUser.Create().
 //		OnConflict(sql.ConflictColumns(columns...)).
 //		Exec(ctx)
-//
 func (ouc *ObjectUserCreate) OnConflictColumns(columns ...string) *ObjectUserUpsertOne {
 	ouc.conflict = append(ouc.conflict, sql.ConflictColumns(columns...))
 	return &ObjectUserUpsertOne{
@@ -367,7 +365,6 @@ func (u *ObjectUserUpsert) ClearLastVisit() *ObjectUserUpsert {
 //			sql.ResolveWithNewValues(),
 //		).
 //		Exec(ctx)
-//
 func (u *ObjectUserUpsertOne) UpdateNewValues() *ObjectUserUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
 	return u
@@ -376,10 +373,9 @@ func (u *ObjectUserUpsertOne) UpdateNewValues() *ObjectUserUpsertOne {
 // Ignore sets each column to itself in case of conflict.
 // Using this option is equivalent to using:
 //
-//  client.ObjectUser.Create().
-//      OnConflict(sql.ResolveWithIgnore()).
-//      Exec(ctx)
-//
+//	client.ObjectUser.Create().
+//	    OnConflict(sql.ResolveWithIgnore()).
+//	    Exec(ctx)
 func (u *ObjectUserUpsertOne) Ignore() *ObjectUserUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
 	return u
@@ -575,7 +571,6 @@ func (oucb *ObjectUserCreateBulk) ExecX(ctx context.Context) {
 //			SetUserID(v+v).
 //		}).
 //		Exec(ctx)
-//
 func (oucb *ObjectUserCreateBulk) OnConflict(opts ...sql.ConflictOption) *ObjectUserUpsertBulk {
 	oucb.conflict = opts
 	return &ObjectUserUpsertBulk{
@@ -589,7 +584,6 @@ func (oucb *ObjectUserCreateBulk) OnConflict(opts ...sql.ConflictOption) *Object
 //	client.ObjectUser.Create().
 //		OnConflict(sql.ConflictColumns(columns...)).
 //		Exec(ctx)
-//
 func (oucb *ObjectUserCreateBulk) OnConflictColumns(columns ...string) *ObjectUserUpsertBulk {
 	oucb.conflict = append(oucb.conflict, sql.ConflictColumns(columns...))
 	return &ObjectUserUpsertBulk{
@@ -611,7 +605,6 @@ type ObjectUserUpsertBulk struct {
 //			sql.ResolveWithNewValues(),
 //		).
 //		Exec(ctx)
-//
 func (u *ObjectUserUpsertBulk) UpdateNewValues() *ObjectUserUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
 	return u
@@ -623,7 +616,6 @@ func (u *ObjectUserUpsertBulk) UpdateNewValues() *ObjectUserUpsertBulk {
 //	client.ObjectUser.Create().
 //		OnConflict(sql.ResolveWithIgnore()).
 //		Exec(ctx)
-//
 func (u *ObjectUserUpsertBulk) Ignore() *ObjectUserUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
 	return u

@@ -168,7 +168,7 @@ func (o *Object) Node(ctx context.Context) (node *Node, err error) {
 	node = &Node{
 		ID:     o.ID,
 		Type:   "Object",
-		Fields: make([]*Field, 15),
+		Fields: make([]*Field, 16),
 		Edges:  make([]*Edge, 6),
 	}
 	var buf []byte
@@ -180,10 +180,18 @@ func (o *Object) Node(ctx context.Context) (node *Node, err error) {
 		Name:  "name",
 		Value: string(buf),
 	}
-	if buf, err = json.Marshal(o.Description); err != nil {
+	if buf, err = json.Marshal(o.Address); err != nil {
 		return nil, err
 	}
 	node.Fields[1] = &Field{
+		Type:  "string",
+		Name:  "address",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(o.Description); err != nil {
+		return nil, err
+	}
+	node.Fields[2] = &Field{
 		Type:  "string",
 		Name:  "description",
 		Value: string(buf),
@@ -191,7 +199,7 @@ func (o *Object) Node(ctx context.Context) (node *Node, err error) {
 	if buf, err = json.Marshal(o.Lat); err != nil {
 		return nil, err
 	}
-	node.Fields[2] = &Field{
+	node.Fields[3] = &Field{
 		Type:  "float64",
 		Name:  "lat",
 		Value: string(buf),
@@ -199,7 +207,7 @@ func (o *Object) Node(ctx context.Context) (node *Node, err error) {
 	if buf, err = json.Marshal(o.Lng); err != nil {
 		return nil, err
 	}
-	node.Fields[3] = &Field{
+	node.Fields[4] = &Field{
 		Type:  "float64",
 		Name:  "lng",
 		Value: string(buf),
@@ -207,7 +215,7 @@ func (o *Object) Node(ctx context.Context) (node *Node, err error) {
 	if buf, err = json.Marshal(o.InstalledPeriod); err != nil {
 		return nil, err
 	}
-	node.Fields[4] = &Field{
+	node.Fields[5] = &Field{
 		Type:  "string",
 		Name:  "installed_period",
 		Value: string(buf),
@@ -215,7 +223,7 @@ func (o *Object) Node(ctx context.Context) (node *Node, err error) {
 	if buf, err = json.Marshal(o.IsRemoved); err != nil {
 		return nil, err
 	}
-	node.Fields[5] = &Field{
+	node.Fields[6] = &Field{
 		Type:  "bool",
 		Name:  "is_removed",
 		Value: string(buf),
@@ -223,7 +231,7 @@ func (o *Object) Node(ctx context.Context) (node *Node, err error) {
 	if buf, err = json.Marshal(o.RemovedPeriod); err != nil {
 		return nil, err
 	}
-	node.Fields[6] = &Field{
+	node.Fields[7] = &Field{
 		Type:  "string",
 		Name:  "removed_period",
 		Value: string(buf),
@@ -231,7 +239,7 @@ func (o *Object) Node(ctx context.Context) (node *Node, err error) {
 	if buf, err = json.Marshal(o.Source); err != nil {
 		return nil, err
 	}
-	node.Fields[7] = &Field{
+	node.Fields[8] = &Field{
 		Type:  "string",
 		Name:  "source",
 		Value: string(buf),
@@ -239,7 +247,7 @@ func (o *Object) Node(ctx context.Context) (node *Node, err error) {
 	if buf, err = json.Marshal(o.Type); err != nil {
 		return nil, err
 	}
-	node.Fields[8] = &Field{
+	node.Fields[9] = &Field{
 		Type:  "string",
 		Name:  "type",
 		Value: string(buf),
@@ -247,7 +255,7 @@ func (o *Object) Node(ctx context.Context) (node *Node, err error) {
 	if buf, err = json.Marshal(o.Tags); err != nil {
 		return nil, err
 	}
-	node.Fields[9] = &Field{
+	node.Fields[10] = &Field{
 		Type:  "string",
 		Name:  "tags",
 		Value: string(buf),
@@ -255,7 +263,7 @@ func (o *Object) Node(ctx context.Context) (node *Node, err error) {
 	if buf, err = json.Marshal(o.CreatedAt); err != nil {
 		return nil, err
 	}
-	node.Fields[10] = &Field{
+	node.Fields[11] = &Field{
 		Type:  "time.Time",
 		Name:  "created_at",
 		Value: string(buf),
@@ -263,7 +271,7 @@ func (o *Object) Node(ctx context.Context) (node *Node, err error) {
 	if buf, err = json.Marshal(o.UpdatedAt); err != nil {
 		return nil, err
 	}
-	node.Fields[11] = &Field{
+	node.Fields[12] = &Field{
 		Type:  "time.Time",
 		Name:  "updated_at",
 		Value: string(buf),
@@ -271,7 +279,7 @@ func (o *Object) Node(ctx context.Context) (node *Node, err error) {
 	if buf, err = json.Marshal(o.DeletedAt); err != nil {
 		return nil, err
 	}
-	node.Fields[12] = &Field{
+	node.Fields[13] = &Field{
 		Type:  "time.Time",
 		Name:  "deleted_at",
 		Value: string(buf),
@@ -279,7 +287,7 @@ func (o *Object) Node(ctx context.Context) (node *Node, err error) {
 	if buf, err = json.Marshal(o.LastSync); err != nil {
 		return nil, err
 	}
-	node.Fields[13] = &Field{
+	node.Fields[14] = &Field{
 		Type:  "time.Time",
 		Name:  "last_sync",
 		Value: string(buf),
@@ -287,7 +295,7 @@ func (o *Object) Node(ctx context.Context) (node *Node, err error) {
 	if buf, err = json.Marshal(o.NotionID); err != nil {
 		return nil, err
 	}
-	node.Fields[14] = &Field{
+	node.Fields[15] = &Field{
 		Type:  "string",
 		Name:  "notion_id",
 		Value: string(buf),
@@ -549,9 +557,8 @@ func (c *Client) newNodeOpts(opts []NodeOption) *nodeOptions {
 // Noder returns a Node by its id. If the NodeType was not provided, it will
 // be derived from the id value according to the universal-id configuration.
 //
-//		c.Noder(ctx, id)
-//		c.Noder(ctx, id, ent.WithNodeType(typeResolver))
-//
+//	c.Noder(ctx, id)
+//	c.Noder(ctx, id, ent.WithNodeType(typeResolver))
 func (c *Client) Noder(ctx context.Context, id puuid.ID, opts ...NodeOption) (_ Noder, err error) {
 	defer func() {
 		if IsNotFound(err) {

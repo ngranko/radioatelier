@@ -696,6 +696,23 @@ type ObjectWhereInput struct {
 	NameEqualFold    *string  `json:"nameEqualFold,omitempty"`
 	NameContainsFold *string  `json:"nameContainsFold,omitempty"`
 
+	// "address" field predicates.
+	Address             *string  `json:"address,omitempty"`
+	AddressNEQ          *string  `json:"addressNEQ,omitempty"`
+	AddressIn           []string `json:"addressIn,omitempty"`
+	AddressNotIn        []string `json:"addressNotIn,omitempty"`
+	AddressGT           *string  `json:"addressGT,omitempty"`
+	AddressGTE          *string  `json:"addressGTE,omitempty"`
+	AddressLT           *string  `json:"addressLT,omitempty"`
+	AddressLTE          *string  `json:"addressLTE,omitempty"`
+	AddressContains     *string  `json:"addressContains,omitempty"`
+	AddressHasPrefix    *string  `json:"addressHasPrefix,omitempty"`
+	AddressHasSuffix    *string  `json:"addressHasSuffix,omitempty"`
+	AddressIsNil        bool     `json:"addressIsNil,omitempty"`
+	AddressNotNil       bool     `json:"addressNotNil,omitempty"`
+	AddressEqualFold    *string  `json:"addressEqualFold,omitempty"`
+	AddressContainsFold *string  `json:"addressContainsFold,omitempty"`
+
 	// "description" field predicates.
 	Description             *string  `json:"description,omitempty"`
 	DescriptionNEQ          *string  `json:"descriptionNEQ,omitempty"`
@@ -1041,6 +1058,51 @@ func (i *ObjectWhereInput) P() (predicate.Object, error) {
 	}
 	if i.NameContainsFold != nil {
 		predicates = append(predicates, object.NameContainsFold(*i.NameContainsFold))
+	}
+	if i.Address != nil {
+		predicates = append(predicates, object.AddressEQ(*i.Address))
+	}
+	if i.AddressNEQ != nil {
+		predicates = append(predicates, object.AddressNEQ(*i.AddressNEQ))
+	}
+	if len(i.AddressIn) > 0 {
+		predicates = append(predicates, object.AddressIn(i.AddressIn...))
+	}
+	if len(i.AddressNotIn) > 0 {
+		predicates = append(predicates, object.AddressNotIn(i.AddressNotIn...))
+	}
+	if i.AddressGT != nil {
+		predicates = append(predicates, object.AddressGT(*i.AddressGT))
+	}
+	if i.AddressGTE != nil {
+		predicates = append(predicates, object.AddressGTE(*i.AddressGTE))
+	}
+	if i.AddressLT != nil {
+		predicates = append(predicates, object.AddressLT(*i.AddressLT))
+	}
+	if i.AddressLTE != nil {
+		predicates = append(predicates, object.AddressLTE(*i.AddressLTE))
+	}
+	if i.AddressContains != nil {
+		predicates = append(predicates, object.AddressContains(*i.AddressContains))
+	}
+	if i.AddressHasPrefix != nil {
+		predicates = append(predicates, object.AddressHasPrefix(*i.AddressHasPrefix))
+	}
+	if i.AddressHasSuffix != nil {
+		predicates = append(predicates, object.AddressHasSuffix(*i.AddressHasSuffix))
+	}
+	if i.AddressIsNil {
+		predicates = append(predicates, object.AddressIsNil())
+	}
+	if i.AddressNotNil {
+		predicates = append(predicates, object.AddressNotNil())
+	}
+	if i.AddressEqualFold != nil {
+		predicates = append(predicates, object.AddressEqualFold(*i.AddressEqualFold))
+	}
+	if i.AddressContainsFold != nil {
+		predicates = append(predicates, object.AddressContainsFold(*i.AddressContainsFold))
 	}
 	if i.Description != nil {
 		predicates = append(predicates, object.DescriptionEQ(*i.Description))

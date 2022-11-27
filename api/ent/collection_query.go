@@ -409,7 +409,6 @@ func (cq *CollectionQuery) WithUsers(opts ...func(*UserQuery)) *CollectionQuery 
 //		GroupBy(collection.FieldName).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-//
 func (cq *CollectionQuery) GroupBy(field string, fields ...string) *CollectionGroupBy {
 	grbuild := &CollectionGroupBy{config: cq.config}
 	grbuild.fields = append([]string{field}, fields...)
@@ -436,7 +435,6 @@ func (cq *CollectionQuery) GroupBy(field string, fields ...string) *CollectionGr
 //	client.Collection.Query().
 //		Select(collection.FieldName).
 //		Scan(ctx, &v)
-//
 func (cq *CollectionQuery) Select(fields ...string) *CollectionSelect {
 	cq.fields = append(cq.fields, fields...)
 	selbuild := &CollectionSelect{CollectionQuery: cq}

@@ -176,6 +176,7 @@ func (c *CollectionUpdateOne) SetInput(i UpdateCollectionInput) *CollectionUpdat
 // CreateObjectInput represents a mutation input for creating objects.
 type CreateObjectInput struct {
 	Name            string
+	Address         *string
 	Description     *string
 	Lat             *float64
 	Lng             *float64
@@ -201,6 +202,9 @@ type CreateObjectInput struct {
 // Mutate applies the CreateObjectInput on the ObjectMutation builder.
 func (i *CreateObjectInput) Mutate(m *ObjectMutation) {
 	m.SetName(i.Name)
+	if v := i.Address; v != nil {
+		m.SetAddress(*v)
+	}
 	if v := i.Description; v != nil {
 		m.SetDescription(*v)
 	}
@@ -262,6 +266,8 @@ func (c *ObjectCreate) SetInput(i CreateObjectInput) *ObjectCreate {
 // UpdateObjectInput represents a mutation input for updating objects.
 type UpdateObjectInput struct {
 	Name                 *string
+	ClearAddress         bool
+	Address              *string
 	ClearDescription     bool
 	Description          *string
 	ClearLat             bool
@@ -302,6 +308,12 @@ type UpdateObjectInput struct {
 func (i *UpdateObjectInput) Mutate(m *ObjectMutation) {
 	if v := i.Name; v != nil {
 		m.SetName(*v)
+	}
+	if i.ClearAddress {
+		m.ClearAddress()
+	}
+	if v := i.Address; v != nil {
+		m.SetAddress(*v)
 	}
 	if i.ClearDescription {
 		m.ClearDescription()

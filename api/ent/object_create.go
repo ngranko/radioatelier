@@ -33,6 +33,20 @@ func (oc *ObjectCreate) SetName(s string) *ObjectCreate {
 	return oc
 }
 
+// SetAddress sets the "address" field.
+func (oc *ObjectCreate) SetAddress(s string) *ObjectCreate {
+	oc.mutation.SetAddress(s)
+	return oc
+}
+
+// SetNillableAddress sets the "address" field if the given value is not nil.
+func (oc *ObjectCreate) SetNillableAddress(s *string) *ObjectCreate {
+	if s != nil {
+		oc.SetAddress(*s)
+	}
+	return oc
+}
+
 // SetDescription sets the "description" field.
 func (oc *ObjectCreate) SetDescription(s string) *ObjectCreate {
 	oc.mutation.SetDescription(s)
@@ -478,6 +492,14 @@ func (oc *ObjectCreate) createSpec() (*Object, *sqlgraph.CreateSpec) {
 		})
 		_node.Name = value
 	}
+	if value, ok := oc.mutation.Address(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: object.FieldAddress,
+		})
+		_node.Address = value
+	}
 	if value, ok := oc.mutation.Description(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
@@ -731,7 +753,6 @@ func (oc *ObjectCreate) createSpec() (*Object, *sqlgraph.CreateSpec) {
 //			SetName(v+v).
 //		}).
 //		Exec(ctx)
-//
 func (oc *ObjectCreate) OnConflict(opts ...sql.ConflictOption) *ObjectUpsertOne {
 	oc.conflict = opts
 	return &ObjectUpsertOne{
@@ -745,7 +766,6 @@ func (oc *ObjectCreate) OnConflict(opts ...sql.ConflictOption) *ObjectUpsertOne 
 //	client.Object.Create().
 //		OnConflict(sql.ConflictColumns(columns...)).
 //		Exec(ctx)
-//
 func (oc *ObjectCreate) OnConflictColumns(columns ...string) *ObjectUpsertOne {
 	oc.conflict = append(oc.conflict, sql.ConflictColumns(columns...))
 	return &ObjectUpsertOne{
@@ -775,6 +795,24 @@ func (u *ObjectUpsert) SetName(v string) *ObjectUpsert {
 // UpdateName sets the "name" field to the value that was provided on create.
 func (u *ObjectUpsert) UpdateName() *ObjectUpsert {
 	u.SetExcluded(object.FieldName)
+	return u
+}
+
+// SetAddress sets the "address" field.
+func (u *ObjectUpsert) SetAddress(v string) *ObjectUpsert {
+	u.Set(object.FieldAddress, v)
+	return u
+}
+
+// UpdateAddress sets the "address" field to the value that was provided on create.
+func (u *ObjectUpsert) UpdateAddress() *ObjectUpsert {
+	u.SetExcluded(object.FieldAddress)
+	return u
+}
+
+// ClearAddress clears the value of the "address" field.
+func (u *ObjectUpsert) ClearAddress() *ObjectUpsert {
+	u.SetNull(object.FieldAddress)
 	return u
 }
 
@@ -1023,7 +1061,6 @@ func (u *ObjectUpsert) ClearNotionID() *ObjectUpsert {
 //			}),
 //		).
 //		Exec(ctx)
-//
 func (u *ObjectUpsertOne) UpdateNewValues() *ObjectUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
@@ -1040,10 +1077,9 @@ func (u *ObjectUpsertOne) UpdateNewValues() *ObjectUpsertOne {
 // Ignore sets each column to itself in case of conflict.
 // Using this option is equivalent to using:
 //
-//  client.Object.Create().
-//      OnConflict(sql.ResolveWithIgnore()).
-//      Exec(ctx)
-//
+//	client.Object.Create().
+//	    OnConflict(sql.ResolveWithIgnore()).
+//	    Exec(ctx)
 func (u *ObjectUpsertOne) Ignore() *ObjectUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
 	return u
@@ -1076,6 +1112,27 @@ func (u *ObjectUpsertOne) SetName(v string) *ObjectUpsertOne {
 func (u *ObjectUpsertOne) UpdateName() *ObjectUpsertOne {
 	return u.Update(func(s *ObjectUpsert) {
 		s.UpdateName()
+	})
+}
+
+// SetAddress sets the "address" field.
+func (u *ObjectUpsertOne) SetAddress(v string) *ObjectUpsertOne {
+	return u.Update(func(s *ObjectUpsert) {
+		s.SetAddress(v)
+	})
+}
+
+// UpdateAddress sets the "address" field to the value that was provided on create.
+func (u *ObjectUpsertOne) UpdateAddress() *ObjectUpsertOne {
+	return u.Update(func(s *ObjectUpsert) {
+		s.UpdateAddress()
+	})
+}
+
+// ClearAddress clears the value of the "address" field.
+func (u *ObjectUpsertOne) ClearAddress() *ObjectUpsertOne {
+	return u.Update(func(s *ObjectUpsert) {
+		s.ClearAddress()
 	})
 }
 
@@ -1487,7 +1544,6 @@ func (ocb *ObjectCreateBulk) ExecX(ctx context.Context) {
 //			SetName(v+v).
 //		}).
 //		Exec(ctx)
-//
 func (ocb *ObjectCreateBulk) OnConflict(opts ...sql.ConflictOption) *ObjectUpsertBulk {
 	ocb.conflict = opts
 	return &ObjectUpsertBulk{
@@ -1501,7 +1557,6 @@ func (ocb *ObjectCreateBulk) OnConflict(opts ...sql.ConflictOption) *ObjectUpser
 //	client.Object.Create().
 //		OnConflict(sql.ConflictColumns(columns...)).
 //		Exec(ctx)
-//
 func (ocb *ObjectCreateBulk) OnConflictColumns(columns ...string) *ObjectUpsertBulk {
 	ocb.conflict = append(ocb.conflict, sql.ConflictColumns(columns...))
 	return &ObjectUpsertBulk{
@@ -1526,7 +1581,6 @@ type ObjectUpsertBulk struct {
 //			}),
 //		).
 //		Exec(ctx)
-//
 func (u *ObjectUpsertBulk) UpdateNewValues() *ObjectUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
@@ -1549,7 +1603,6 @@ func (u *ObjectUpsertBulk) UpdateNewValues() *ObjectUpsertBulk {
 //	client.Object.Create().
 //		OnConflict(sql.ResolveWithIgnore()).
 //		Exec(ctx)
-//
 func (u *ObjectUpsertBulk) Ignore() *ObjectUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
 	return u
@@ -1582,6 +1635,27 @@ func (u *ObjectUpsertBulk) SetName(v string) *ObjectUpsertBulk {
 func (u *ObjectUpsertBulk) UpdateName() *ObjectUpsertBulk {
 	return u.Update(func(s *ObjectUpsert) {
 		s.UpdateName()
+	})
+}
+
+// SetAddress sets the "address" field.
+func (u *ObjectUpsertBulk) SetAddress(v string) *ObjectUpsertBulk {
+	return u.Update(func(s *ObjectUpsert) {
+		s.SetAddress(v)
+	})
+}
+
+// UpdateAddress sets the "address" field to the value that was provided on create.
+func (u *ObjectUpsertBulk) UpdateAddress() *ObjectUpsertBulk {
+	return u.Update(func(s *ObjectUpsert) {
+		s.UpdateAddress()
+	})
+}
+
+// ClearAddress clears the value of the "address" field.
+func (u *ObjectUpsertBulk) ClearAddress() *ObjectUpsertBulk {
+	return u.Update(func(s *ObjectUpsert) {
+		s.ClearAddress()
 	})
 }
 

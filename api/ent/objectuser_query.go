@@ -267,7 +267,6 @@ func (ouq *ObjectUserQuery) WithObject(opts ...func(*ObjectQuery)) *ObjectUserQu
 //		GroupBy(objectuser.FieldUserID).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-//
 func (ouq *ObjectUserQuery) GroupBy(field string, fields ...string) *ObjectUserGroupBy {
 	grbuild := &ObjectUserGroupBy{config: ouq.config}
 	grbuild.fields = append([]string{field}, fields...)
@@ -294,7 +293,6 @@ func (ouq *ObjectUserQuery) GroupBy(field string, fields ...string) *ObjectUserG
 //	client.ObjectUser.Query().
 //		Select(objectuser.FieldUserID).
 //		Scan(ctx, &v)
-//
 func (ouq *ObjectUserQuery) Select(fields ...string) *ObjectUserSelect {
 	ouq.fields = append(ouq.fields, fields...)
 	selbuild := &ObjectUserSelect{ObjectUserQuery: ouq}

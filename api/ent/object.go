@@ -21,6 +21,8 @@ type Object struct {
 	ID puuid.ID `json:"id,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
+	// Address holds the value of the "address" field.
+	Address string `json:"address,omitempty"`
 	// Description holds the value of the "description" field.
 	Description string `json:"description,omitempty"`
 	// Lat holds the value of the "lat" field.
@@ -175,7 +177,7 @@ func (*Object) scanValues(columns []string) ([]interface{}, error) {
 			values[i] = new(sql.NullBool)
 		case object.FieldLat, object.FieldLng:
 			values[i] = new(sql.NullFloat64)
-		case object.FieldName, object.FieldDescription, object.FieldInstalledPeriod, object.FieldRemovedPeriod, object.FieldSource, object.FieldType, object.FieldTags, object.FieldNotionID:
+		case object.FieldName, object.FieldAddress, object.FieldDescription, object.FieldInstalledPeriod, object.FieldRemovedPeriod, object.FieldSource, object.FieldType, object.FieldTags, object.FieldNotionID:
 			values[i] = new(sql.NullString)
 		case object.FieldCreatedAt, object.FieldUpdatedAt, object.FieldDeletedAt, object.FieldLastSync:
 			values[i] = new(sql.NullTime)
@@ -213,6 +215,12 @@ func (o *Object) assignValues(columns []string, values []interface{}) error {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
 			} else if value.Valid {
 				o.Name = value.String
+			}
+		case object.FieldAddress:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field address", values[i])
+			} else if value.Valid {
+				o.Address = value.String
 			}
 		case object.FieldDescription:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -399,6 +407,9 @@ func (o *Object) String() string {
 	builder.WriteString(fmt.Sprintf("id=%v, ", o.ID))
 	builder.WriteString("name=")
 	builder.WriteString(o.Name)
+	builder.WriteString(", ")
+	builder.WriteString("address=")
+	builder.WriteString(o.Address)
 	builder.WriteString(", ")
 	builder.WriteString("description=")
 	builder.WriteString(o.Description)

@@ -14,6 +14,8 @@ const (
 	FieldID = "id"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
+	// FieldAddress holds the string denoting the address field in the database.
+	FieldAddress = "address"
 	// FieldDescription holds the string denoting the description field in the database.
 	FieldDescription = "description"
 	// FieldLat holds the string denoting the lat field in the database.
@@ -109,6 +111,7 @@ const (
 var Columns = []string{
 	FieldID,
 	FieldName,
+	FieldAddress,
 	FieldDescription,
 	FieldLat,
 	FieldLng,
