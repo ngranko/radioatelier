@@ -15,7 +15,7 @@ import (
     "radioatelier/ent/migrate"
     "radioatelier/graph/resolver"
     "radioatelier/package/db"
-    "radioatelier/package/sync"
+    _ "radioatelier/package/schedule"
 )
 
 func main() {
@@ -54,11 +54,6 @@ func main() {
     e.GET("/", func(c echo.Context) error {
         return c.String(http.StatusOK, "Welcome!")
     })
-
-    // TODO: remove this line after testing is over
-    sync.FromNotion()
-    // obj, _ := db.Client.Object.Query().Where(object.IDEQ("OB-01b7d142-0a17-48a3-927b-0c4923a13b9b")).First(context.TODO())
-    // sync.ToNotion(obj)
 
     e.Logger.Fatal(e.Start(":8080"))
 }

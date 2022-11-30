@@ -53,7 +53,7 @@ func NewPageProperties() PageProperties {
 
 func (p PageProperties) FillFromObject(ctx context.Context, obj *ent.Object) PageProperties {
     p.SetName(obj.Name)
-    p.SetAddress(&obj.Address)
+    p.SetAddress(obj.Address)
     p.SetIsRemoved(obj.IsRemoved)
     p.SetType(obj.Type)
     p.SetTags(obj.Tags)
@@ -131,12 +131,12 @@ func (p PageProperties) SetName(value string) {
     p[Name].(*property.TitleProperty).SetValue(value)
 }
 
-func (p PageProperties) GetAddress() *string {
-    return p[Address].(*property.RichTextProperty).GetValue()
+func (p PageProperties) GetAddress() string {
+    return *p[Address].(*property.RichTextProperty).GetValue()
 }
 
-func (p PageProperties) SetAddress(value *string) {
-    p[Address].(*property.RichTextProperty).SetValue(value)
+func (p PageProperties) SetAddress(value string) {
+    p[Address].(*property.RichTextProperty).SetValue(&value)
 }
 
 func (p PageProperties) GetIsVisited() bool {

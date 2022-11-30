@@ -32,6 +32,7 @@ func NewPageFromNotion(page notionapi.Page) Page {
     props := NewPageProperties().FillFromNotion(page.Properties)
     result := Page{
         Name:            props.GetName(),
+        Address:         props.GetAddress(),
         IsVisited:       props.GetIsVisited(),
         LastVisited:     props.GetLastVisited(),
         InstalledPeriod: props.GetInstalledPeriod(),

@@ -92,6 +92,7 @@ func doCreateObject(ctx context.Context, page structs.Page, usr *ent.User, city 
 
     return db.Client.Object.Create().
         SetName(page.Name).
+        SetAddress(page.Address).
         SetNillableInstalledPeriod(page.InstalledPeriod).
         SetIsRemoved(page.IsRemoved).
         SetNillableRemovedPeriod(page.RemovedPeriod).
@@ -113,6 +114,7 @@ func updateObject(ctx context.Context, obj *ent.Object, page structs.Page) (*ent
 
     query := obj.Update().
         SetName(page.Name).
+        SetAddress(page.Address).
         SetNillableInstalledPeriod(page.InstalledPeriod).
         SetIsRemoved(page.IsRemoved).
         SetNillableRemovedPeriod(page.RemovedPeriod).
