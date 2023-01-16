@@ -1,6 +1,7 @@
 package schema
 
 import (
+    "entgo.io/ent/dialect/entsql"
     "radioatelier/ent/schema/puuid"
 
     "entgo.io/contrib/entgql"
@@ -48,7 +49,10 @@ func (ObjectUser) Edges() []ent.Edge {
         edge.To("object", Object.Type).
             Unique().
             Required().
-            Field("object_id"),
+            Field("object_id").
+            Annotations(entsql.Annotation{
+                OnDelete: entsql.Cascade,
+            }),
     }
 }
 
@@ -61,5 +65,8 @@ func (ObjectUser) Annotations() []schema.Annotation {
         entgql.Mutations(
             entgql.MutationUpdate(),
         ),
+        entsql.Annotation{
+            Collation: "utf8mb4_0900_ai_ci",
+        },
     }
 }

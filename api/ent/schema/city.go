@@ -1,6 +1,7 @@
 package schema
 
 import (
+    "entgo.io/ent/dialect/entsql"
     "radioatelier/ent/schema/puuid"
 
     "entgo.io/contrib/entgql"
@@ -53,5 +54,8 @@ func (City) Annotations() []schema.Annotation {
             entgql.MutationCreate(),
             entgql.MutationUpdate(),
         ),
+        entsql.Annotation{
+            Collation: "utf8mb4_0900_ai_ci",
+        },
     }
 }
