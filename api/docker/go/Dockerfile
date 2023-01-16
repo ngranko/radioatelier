@@ -11,7 +11,7 @@ ENTRYPOINT CompileDaemon --build="go build radioatelier.go" --command=./radioate
 FROM base as build
 RUN go build radioatelier.go
 
-FROM alpine:3.13 as prod
+FROM alpine:3.17 as prod
 WORKDIR /radioatelier
 RUN apk add --no-cache tzdata
 COPY --from=build /radioatelier/radioatelier .
