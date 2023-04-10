@@ -19,13 +19,10 @@ import (
 // ObjectUserQuery is the builder for querying ObjectUser entities.
 type ObjectUserQuery struct {
 	config
-	limit      *int
-	offset     *int
-	unique     *bool
+	ctx        *QueryContext
 	order      []OrderFunc
-	fields     []string
+	inters     []Interceptor
 	predicates []predicate.ObjectUser
-	// eager-loading edges.
 	withUser   *UserQuery
 	withObject *ObjectQuery
 	modifiers  []func(*sql.Selector)
@@ -41,26 +38,26 @@ func (ouq *ObjectUserQuery) Where(ps ...predicate.ObjectUser) *ObjectUserQuery {
 	return ouq
 }
 
-// Limit adds a limit step to the query.
+// Limit the number of records to be returned by this query.
 func (ouq *ObjectUserQuery) Limit(limit int) *ObjectUserQuery {
-	ouq.limit = &limit
+	ouq.ctx.Limit = &limit
 	return ouq
 }
 
-// Offset adds an offset step to the query.
+// Offset to start from.
 func (ouq *ObjectUserQuery) Offset(offset int) *ObjectUserQuery {
-	ouq.offset = &offset
+	ouq.ctx.Offset = &offset
 	return ouq
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
 func (ouq *ObjectUserQuery) Unique(unique bool) *ObjectUserQuery {
-	ouq.unique = &unique
+	ouq.ctx.Unique = &unique
 	return ouq
 }
 
-// Order adds an order step to the query.
+// Order specifies how the records should be ordered.
 func (ouq *ObjectUserQuery) Order(o ...OrderFunc) *ObjectUserQuery {
 	ouq.order = append(ouq.order, o...)
 	return ouq
@@ -68,7 +65,7 @@ func (ouq *ObjectUserQuery) Order(o ...OrderFunc) *ObjectUserQuery {
 
 // QueryUser chains the current query on the "user" edge.
 func (ouq *ObjectUserQuery) QueryUser() *UserQuery {
-	query := &UserQuery{config: ouq.config}
+	query := (&UserClient{config: ouq.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := ouq.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -90,7 +87,7 @@ func (ouq *ObjectUserQuery) QueryUser() *UserQuery {
 
 // QueryObject chains the current query on the "object" edge.
 func (ouq *ObjectUserQuery) QueryObject() *ObjectQuery {
-	query := &ObjectQuery{config: ouq.config}
+	query := (&ObjectClient{config: ouq.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := ouq.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -113,7 +110,7 @@ func (ouq *ObjectUserQuery) QueryObject() *ObjectQuery {
 // First returns the first ObjectUser entity from the query.
 // Returns a *NotFoundError when no ObjectUser was found.
 func (ouq *ObjectUserQuery) First(ctx context.Context) (*ObjectUser, error) {
-	nodes, err := ouq.Limit(1).All(ctx)
+	nodes, err := ouq.Limit(1).All(setContextOp(ctx, ouq.ctx, "First"))
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +133,7 @@ func (ouq *ObjectUserQuery) FirstX(ctx context.Context) *ObjectUser {
 // Returns a *NotSingularError when more than one ObjectUser entity is found.
 // Returns a *NotFoundError when no ObjectUser entities are found.
 func (ouq *ObjectUserQuery) Only(ctx context.Context) (*ObjectUser, error) {
-	nodes, err := ouq.Limit(2).All(ctx)
+	nodes, err := ouq.Limit(2).All(setContextOp(ctx, ouq.ctx, "Only"))
 	if err != nil {
 		return nil, err
 	}
@@ -161,10 +158,12 @@ func (ouq *ObjectUserQuery) OnlyX(ctx context.Context) *ObjectUser {
 
 // All executes the query and returns a list of ObjectUsers.
 func (ouq *ObjectUserQuery) All(ctx context.Context) ([]*ObjectUser, error) {
+	ctx = setContextOp(ctx, ouq.ctx, "All")
 	if err := ouq.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
-	return ouq.sqlAll(ctx)
+	qr := querierAll[[]*ObjectUser, *ObjectUserQuery]()
+	return withInterceptors[[]*ObjectUser](ctx, ouq, qr, ouq.inters)
 }
 
 // AllX is like All, but panics if an error occurs.
@@ -178,10 +177,11 @@ func (ouq *ObjectUserQuery) AllX(ctx context.Context) []*ObjectUser {
 
 // Count returns the count of the given query.
 func (ouq *ObjectUserQuery) Count(ctx context.Context) (int, error) {
+	ctx = setContextOp(ctx, ouq.ctx, "Count")
 	if err := ouq.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
-	return ouq.sqlCount(ctx)
+	return withInterceptors[int](ctx, ouq, querierCount[*ObjectUserQuery](), ouq.inters)
 }
 
 // CountX is like Count, but panics if an error occurs.
@@ -195,10 +195,15 @@ func (ouq *ObjectUserQuery) CountX(ctx context.Context) int {
 
 // Exist returns true if the query has elements in the graph.
 func (ouq *ObjectUserQuery) Exist(ctx context.Context) (bool, error) {
-	if err := ouq.prepareQuery(ctx); err != nil {
-		return false, err
+	ctx = setContextOp(ctx, ouq.ctx, "Exist")
+	switch _, err := ouq.First(ctx); {
+	case IsNotFound(err):
+		return false, nil
+	case err != nil:
+		return false, fmt.Errorf("ent: check existence: %w", err)
+	default:
+		return true, nil
 	}
-	return ouq.sqlExist(ctx)
 }
 
 // ExistX is like Exist, but panics if an error occurs.
@@ -218,23 +223,22 @@ func (ouq *ObjectUserQuery) Clone() *ObjectUserQuery {
 	}
 	return &ObjectUserQuery{
 		config:     ouq.config,
-		limit:      ouq.limit,
-		offset:     ouq.offset,
+		ctx:        ouq.ctx.Clone(),
 		order:      append([]OrderFunc{}, ouq.order...),
+		inters:     append([]Interceptor{}, ouq.inters...),
 		predicates: append([]predicate.ObjectUser{}, ouq.predicates...),
 		withUser:   ouq.withUser.Clone(),
 		withObject: ouq.withObject.Clone(),
 		// clone intermediate query.
-		sql:    ouq.sql.Clone(),
-		path:   ouq.path,
-		unique: ouq.unique,
+		sql:  ouq.sql.Clone(),
+		path: ouq.path,
 	}
 }
 
 // WithUser tells the query-builder to eager-load the nodes that are connected to
 // the "user" edge. The optional arguments are used to configure the query builder of the edge.
 func (ouq *ObjectUserQuery) WithUser(opts ...func(*UserQuery)) *ObjectUserQuery {
-	query := &UserQuery{config: ouq.config}
+	query := (&UserClient{config: ouq.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
@@ -245,7 +249,7 @@ func (ouq *ObjectUserQuery) WithUser(opts ...func(*UserQuery)) *ObjectUserQuery 
 // WithObject tells the query-builder to eager-load the nodes that are connected to
 // the "object" edge. The optional arguments are used to configure the query builder of the edge.
 func (ouq *ObjectUserQuery) WithObject(opts ...func(*ObjectQuery)) *ObjectUserQuery {
-	query := &ObjectQuery{config: ouq.config}
+	query := (&ObjectClient{config: ouq.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
@@ -268,16 +272,11 @@ func (ouq *ObjectUserQuery) WithObject(opts ...func(*ObjectQuery)) *ObjectUserQu
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (ouq *ObjectUserQuery) GroupBy(field string, fields ...string) *ObjectUserGroupBy {
-	grbuild := &ObjectUserGroupBy{config: ouq.config}
-	grbuild.fields = append([]string{field}, fields...)
-	grbuild.path = func(ctx context.Context) (prev *sql.Selector, err error) {
-		if err := ouq.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		return ouq.sqlQuery(ctx), nil
-	}
+	ouq.ctx.Fields = append([]string{field}, fields...)
+	grbuild := &ObjectUserGroupBy{build: ouq}
+	grbuild.flds = &ouq.ctx.Fields
 	grbuild.label = objectuser.Label
-	grbuild.flds, grbuild.scan = &grbuild.fields, grbuild.Scan
+	grbuild.scan = grbuild.Scan
 	return grbuild
 }
 
@@ -294,15 +293,30 @@ func (ouq *ObjectUserQuery) GroupBy(field string, fields ...string) *ObjectUserG
 //		Select(objectuser.FieldUserID).
 //		Scan(ctx, &v)
 func (ouq *ObjectUserQuery) Select(fields ...string) *ObjectUserSelect {
-	ouq.fields = append(ouq.fields, fields...)
-	selbuild := &ObjectUserSelect{ObjectUserQuery: ouq}
-	selbuild.label = objectuser.Label
-	selbuild.flds, selbuild.scan = &ouq.fields, selbuild.Scan
-	return selbuild
+	ouq.ctx.Fields = append(ouq.ctx.Fields, fields...)
+	sbuild := &ObjectUserSelect{ObjectUserQuery: ouq}
+	sbuild.label = objectuser.Label
+	sbuild.flds, sbuild.scan = &ouq.ctx.Fields, sbuild.Scan
+	return sbuild
+}
+
+// Aggregate returns a ObjectUserSelect configured with the given aggregations.
+func (ouq *ObjectUserQuery) Aggregate(fns ...AggregateFunc) *ObjectUserSelect {
+	return ouq.Select().Aggregate(fns...)
 }
 
 func (ouq *ObjectUserQuery) prepareQuery(ctx context.Context) error {
-	for _, f := range ouq.fields {
+	for _, inter := range ouq.inters {
+		if inter == nil {
+			return fmt.Errorf("ent: uninitialized interceptor (forgotten import ent/runtime?)")
+		}
+		if trv, ok := inter.(Traverser); ok {
+			if err := trv.Traverse(ctx, ouq); err != nil {
+				return err
+			}
+		}
+	}
+	for _, f := range ouq.ctx.Fields {
 		if !objectuser.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
@@ -326,10 +340,10 @@ func (ouq *ObjectUserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*
 			ouq.withObject != nil,
 		}
 	)
-	_spec.ScanValues = func(columns []string) ([]interface{}, error) {
+	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*ObjectUser).scanValues(nil, columns)
 	}
-	_spec.Assign = func(columns []string, values []interface{}) error {
+	_spec.Assign = func(columns []string, values []any) error {
 		node := &ObjectUser{config: ouq.config}
 		nodes = append(nodes, node)
 		node.Edges.loadedTypes = loadedTypes
@@ -347,65 +361,83 @@ func (ouq *ObjectUserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-
 	if query := ouq.withUser; query != nil {
-		ids := make([]puuid.ID, 0, len(nodes))
-		nodeids := make(map[puuid.ID][]*ObjectUser)
-		for i := range nodes {
-			fk := nodes[i].UserID
-			if _, ok := nodeids[fk]; !ok {
-				ids = append(ids, fk)
-			}
-			nodeids[fk] = append(nodeids[fk], nodes[i])
-		}
-		query.Where(user.IDIn(ids...))
-		neighbors, err := query.All(ctx)
-		if err != nil {
+		if err := ouq.loadUser(ctx, query, nodes, nil,
+			func(n *ObjectUser, e *User) { n.Edges.User = e }); err != nil {
 			return nil, err
 		}
-		for _, n := range neighbors {
-			nodes, ok := nodeids[n.ID]
-			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "user_id" returned %v`, n.ID)
-			}
-			for i := range nodes {
-				nodes[i].Edges.User = n
-			}
-		}
 	}
-
 	if query := ouq.withObject; query != nil {
-		ids := make([]puuid.ID, 0, len(nodes))
-		nodeids := make(map[puuid.ID][]*ObjectUser)
-		for i := range nodes {
-			fk := nodes[i].ObjectID
-			if _, ok := nodeids[fk]; !ok {
-				ids = append(ids, fk)
-			}
-			nodeids[fk] = append(nodeids[fk], nodes[i])
-		}
-		query.Where(object.IDIn(ids...))
-		neighbors, err := query.All(ctx)
-		if err != nil {
+		if err := ouq.loadObject(ctx, query, nodes, nil,
+			func(n *ObjectUser, e *Object) { n.Edges.Object = e }); err != nil {
 			return nil, err
 		}
-		for _, n := range neighbors {
-			nodes, ok := nodeids[n.ID]
-			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "object_id" returned %v`, n.ID)
-			}
-			for i := range nodes {
-				nodes[i].Edges.Object = n
-			}
-		}
 	}
-
 	for i := range ouq.loadTotal {
 		if err := ouq.loadTotal[i](ctx, nodes); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
+}
+
+func (ouq *ObjectUserQuery) loadUser(ctx context.Context, query *UserQuery, nodes []*ObjectUser, init func(*ObjectUser), assign func(*ObjectUser, *User)) error {
+	ids := make([]puuid.ID, 0, len(nodes))
+	nodeids := make(map[puuid.ID][]*ObjectUser)
+	for i := range nodes {
+		fk := nodes[i].UserID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(user.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "user_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
+func (ouq *ObjectUserQuery) loadObject(ctx context.Context, query *ObjectQuery, nodes []*ObjectUser, init func(*ObjectUser), assign func(*ObjectUser, *Object)) error {
+	ids := make([]puuid.ID, 0, len(nodes))
+	nodeids := make(map[puuid.ID][]*ObjectUser)
+	for i := range nodes {
+		fk := nodes[i].ObjectID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(object.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "object_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
 }
 
 func (ouq *ObjectUserQuery) sqlCount(ctx context.Context) (int, error) {
@@ -418,27 +450,15 @@ func (ouq *ObjectUserQuery) sqlCount(ctx context.Context) (int, error) {
 	return sqlgraph.CountNodes(ctx, ouq.driver, _spec)
 }
 
-func (ouq *ObjectUserQuery) sqlExist(ctx context.Context) (bool, error) {
-	n, err := ouq.sqlCount(ctx)
-	if err != nil {
-		return false, fmt.Errorf("ent: check existence: %w", err)
-	}
-	return n > 0, nil
-}
-
 func (ouq *ObjectUserQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := &sqlgraph.QuerySpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   objectuser.Table,
-			Columns: objectuser.Columns,
-		},
-		From:   ouq.sql,
-		Unique: true,
-	}
-	if unique := ouq.unique; unique != nil {
+	_spec := sqlgraph.NewQuerySpec(objectuser.Table, objectuser.Columns, nil)
+	_spec.From = ouq.sql
+	if unique := ouq.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
+	} else if ouq.path != nil {
+		_spec.Unique = true
 	}
-	if fields := ouq.fields; len(fields) > 0 {
+	if fields := ouq.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		for i := range fields {
 			_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
@@ -451,10 +471,10 @@ func (ouq *ObjectUserQuery) querySpec() *sqlgraph.QuerySpec {
 			}
 		}
 	}
-	if limit := ouq.limit; limit != nil {
+	if limit := ouq.ctx.Limit; limit != nil {
 		_spec.Limit = *limit
 	}
-	if offset := ouq.offset; offset != nil {
+	if offset := ouq.ctx.Offset; offset != nil {
 		_spec.Offset = *offset
 	}
 	if ps := ouq.order; len(ps) > 0 {
@@ -470,7 +490,7 @@ func (ouq *ObjectUserQuery) querySpec() *sqlgraph.QuerySpec {
 func (ouq *ObjectUserQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(ouq.driver.Dialect())
 	t1 := builder.Table(objectuser.Table)
-	columns := ouq.fields
+	columns := ouq.ctx.Fields
 	if len(columns) == 0 {
 		columns = objectuser.Columns
 	}
@@ -479,7 +499,7 @@ func (ouq *ObjectUserQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector = ouq.sql
 		selector.Select(selector.Columns(columns...)...)
 	}
-	if ouq.unique != nil && *ouq.unique {
+	if ouq.ctx.Unique != nil && *ouq.ctx.Unique {
 		selector.Distinct()
 	}
 	for _, p := range ouq.predicates {
@@ -488,12 +508,12 @@ func (ouq *ObjectUserQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	for _, p := range ouq.order {
 		p(selector)
 	}
-	if offset := ouq.offset; offset != nil {
+	if offset := ouq.ctx.Offset; offset != nil {
 		// limit is mandatory for offset clause. We start
 		// with default value, and override it below if needed.
 		selector.Offset(*offset).Limit(math.MaxInt32)
 	}
-	if limit := ouq.limit; limit != nil {
+	if limit := ouq.ctx.Limit; limit != nil {
 		selector.Limit(*limit)
 	}
 	return selector
@@ -501,13 +521,8 @@ func (ouq *ObjectUserQuery) sqlQuery(ctx context.Context) *sql.Selector {
 
 // ObjectUserGroupBy is the group-by builder for ObjectUser entities.
 type ObjectUserGroupBy struct {
-	config
 	selector
-	fields []string
-	fns    []AggregateFunc
-	// intermediate query (i.e. traversal path).
-	sql  *sql.Selector
-	path func(context.Context) (*sql.Selector, error)
+	build *ObjectUserQuery
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
@@ -516,74 +531,77 @@ func (ougb *ObjectUserGroupBy) Aggregate(fns ...AggregateFunc) *ObjectUserGroupB
 	return ougb
 }
 
-// Scan applies the group-by query and scans the result into the given value.
-func (ougb *ObjectUserGroupBy) Scan(ctx context.Context, v interface{}) error {
-	query, err := ougb.path(ctx)
-	if err != nil {
+// Scan applies the selector query and scans the result into the given value.
+func (ougb *ObjectUserGroupBy) Scan(ctx context.Context, v any) error {
+	ctx = setContextOp(ctx, ougb.build.ctx, "GroupBy")
+	if err := ougb.build.prepareQuery(ctx); err != nil {
 		return err
 	}
-	ougb.sql = query
-	return ougb.sqlScan(ctx, v)
+	return scanWithInterceptors[*ObjectUserQuery, *ObjectUserGroupBy](ctx, ougb.build, ougb, ougb.build.inters, v)
 }
 
-func (ougb *ObjectUserGroupBy) sqlScan(ctx context.Context, v interface{}) error {
-	for _, f := range ougb.fields {
-		if !objectuser.ValidColumn(f) {
-			return &ValidationError{Name: f, err: fmt.Errorf("invalid field %q for group-by", f)}
-		}
+func (ougb *ObjectUserGroupBy) sqlScan(ctx context.Context, root *ObjectUserQuery, v any) error {
+	selector := root.sqlQuery(ctx).Select()
+	aggregation := make([]string, 0, len(ougb.fns))
+	for _, fn := range ougb.fns {
+		aggregation = append(aggregation, fn(selector))
 	}
-	selector := ougb.sqlQuery()
+	if len(selector.SelectedColumns()) == 0 {
+		columns := make([]string, 0, len(*ougb.flds)+len(ougb.fns))
+		for _, f := range *ougb.flds {
+			columns = append(columns, selector.C(f))
+		}
+		columns = append(columns, aggregation...)
+		selector.Select(columns...)
+	}
+	selector.GroupBy(selector.Columns(*ougb.flds...)...)
 	if err := selector.Err(); err != nil {
 		return err
 	}
 	rows := &sql.Rows{}
 	query, args := selector.Query()
-	if err := ougb.driver.Query(ctx, query, args, rows); err != nil {
+	if err := ougb.build.driver.Query(ctx, query, args, rows); err != nil {
 		return err
 	}
 	defer rows.Close()
 	return sql.ScanSlice(rows, v)
 }
 
-func (ougb *ObjectUserGroupBy) sqlQuery() *sql.Selector {
-	selector := ougb.sql.Select()
-	aggregation := make([]string, 0, len(ougb.fns))
-	for _, fn := range ougb.fns {
-		aggregation = append(aggregation, fn(selector))
-	}
-	// If no columns were selected in a custom aggregation function, the default
-	// selection is the fields used for "group-by", and the aggregation functions.
-	if len(selector.SelectedColumns()) == 0 {
-		columns := make([]string, 0, len(ougb.fields)+len(ougb.fns))
-		for _, f := range ougb.fields {
-			columns = append(columns, selector.C(f))
-		}
-		columns = append(columns, aggregation...)
-		selector.Select(columns...)
-	}
-	return selector.GroupBy(selector.Columns(ougb.fields...)...)
-}
-
 // ObjectUserSelect is the builder for selecting fields of ObjectUser entities.
 type ObjectUserSelect struct {
 	*ObjectUserQuery
 	selector
-	// intermediate query (i.e. traversal path).
-	sql *sql.Selector
+}
+
+// Aggregate adds the given aggregation functions to the selector query.
+func (ous *ObjectUserSelect) Aggregate(fns ...AggregateFunc) *ObjectUserSelect {
+	ous.fns = append(ous.fns, fns...)
+	return ous
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (ous *ObjectUserSelect) Scan(ctx context.Context, v interface{}) error {
+func (ous *ObjectUserSelect) Scan(ctx context.Context, v any) error {
+	ctx = setContextOp(ctx, ous.ctx, "Select")
 	if err := ous.prepareQuery(ctx); err != nil {
 		return err
 	}
-	ous.sql = ous.ObjectUserQuery.sqlQuery(ctx)
-	return ous.sqlScan(ctx, v)
+	return scanWithInterceptors[*ObjectUserQuery, *ObjectUserSelect](ctx, ous.ObjectUserQuery, ous, ous.inters, v)
 }
 
-func (ous *ObjectUserSelect) sqlScan(ctx context.Context, v interface{}) error {
+func (ous *ObjectUserSelect) sqlScan(ctx context.Context, root *ObjectUserQuery, v any) error {
+	selector := root.sqlQuery(ctx)
+	aggregation := make([]string, 0, len(ous.fns))
+	for _, fn := range ous.fns {
+		aggregation = append(aggregation, fn(selector))
+	}
+	switch n := len(*ous.selector.flds); {
+	case n == 0 && len(aggregation) > 0:
+		selector.Select(aggregation...)
+	case n != 0 && len(aggregation) > 0:
+		selector.AppendSelect(aggregation...)
+	}
 	rows := &sql.Rows{}
-	query, args := ous.sql.Query()
+	query, args := selector.Query()
 	if err := ous.driver.Query(ctx, query, args, rows); err != nil {
 		return err
 	}

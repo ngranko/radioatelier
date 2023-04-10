@@ -12,309 +12,187 @@ import (
 
 // ID filters vertices based on their ID field.
 func ID(id puuid.ID) predicate.City {
-	return predicate.City(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldID), id))
-	})
+	return predicate.City(sql.FieldEQ(FieldID, id))
 }
 
 // IDEQ applies the EQ predicate on the ID field.
 func IDEQ(id puuid.ID) predicate.City {
-	return predicate.City(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldID), id))
-	})
+	return predicate.City(sql.FieldEQ(FieldID, id))
 }
 
 // IDNEQ applies the NEQ predicate on the ID field.
 func IDNEQ(id puuid.ID) predicate.City {
-	return predicate.City(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldID), id))
-	})
+	return predicate.City(sql.FieldNEQ(FieldID, id))
 }
 
 // IDIn applies the In predicate on the ID field.
 func IDIn(ids ...puuid.ID) predicate.City {
-	return predicate.City(func(s *sql.Selector) {
-		v := make([]interface{}, len(ids))
-		for i := range v {
-			v[i] = ids[i]
-		}
-		s.Where(sql.In(s.C(FieldID), v...))
-	})
+	return predicate.City(sql.FieldIn(FieldID, ids...))
 }
 
 // IDNotIn applies the NotIn predicate on the ID field.
 func IDNotIn(ids ...puuid.ID) predicate.City {
-	return predicate.City(func(s *sql.Selector) {
-		v := make([]interface{}, len(ids))
-		for i := range v {
-			v[i] = ids[i]
-		}
-		s.Where(sql.NotIn(s.C(FieldID), v...))
-	})
+	return predicate.City(sql.FieldNotIn(FieldID, ids...))
 }
 
 // IDGT applies the GT predicate on the ID field.
 func IDGT(id puuid.ID) predicate.City {
-	return predicate.City(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldID), id))
-	})
+	return predicate.City(sql.FieldGT(FieldID, id))
 }
 
 // IDGTE applies the GTE predicate on the ID field.
 func IDGTE(id puuid.ID) predicate.City {
-	return predicate.City(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldID), id))
-	})
+	return predicate.City(sql.FieldGTE(FieldID, id))
 }
 
 // IDLT applies the LT predicate on the ID field.
 func IDLT(id puuid.ID) predicate.City {
-	return predicate.City(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldID), id))
-	})
+	return predicate.City(sql.FieldLT(FieldID, id))
 }
 
 // IDLTE applies the LTE predicate on the ID field.
 func IDLTE(id puuid.ID) predicate.City {
-	return predicate.City(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldID), id))
-	})
+	return predicate.City(sql.FieldLTE(FieldID, id))
 }
 
 // Name applies equality check predicate on the "name" field. It's identical to NameEQ.
 func Name(v string) predicate.City {
-	return predicate.City(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldName), v))
-	})
+	return predicate.City(sql.FieldEQ(FieldName, v))
 }
 
 // Country applies equality check predicate on the "country" field. It's identical to CountryEQ.
 func Country(v string) predicate.City {
-	return predicate.City(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldCountry), v))
-	})
+	return predicate.City(sql.FieldEQ(FieldCountry, v))
 }
 
 // NameEQ applies the EQ predicate on the "name" field.
 func NameEQ(v string) predicate.City {
-	return predicate.City(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldName), v))
-	})
+	return predicate.City(sql.FieldEQ(FieldName, v))
 }
 
 // NameNEQ applies the NEQ predicate on the "name" field.
 func NameNEQ(v string) predicate.City {
-	return predicate.City(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldName), v))
-	})
+	return predicate.City(sql.FieldNEQ(FieldName, v))
 }
 
 // NameIn applies the In predicate on the "name" field.
 func NameIn(vs ...string) predicate.City {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.City(func(s *sql.Selector) {
-		// if not arguments were provided, append the FALSE constants,
-		// since we can't apply "IN ()". This will make this predicate falsy.
-		if len(v) == 0 {
-			s.Where(sql.False())
-			return
-		}
-		s.Where(sql.In(s.C(FieldName), v...))
-	})
+	return predicate.City(sql.FieldIn(FieldName, vs...))
 }
 
 // NameNotIn applies the NotIn predicate on the "name" field.
 func NameNotIn(vs ...string) predicate.City {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.City(func(s *sql.Selector) {
-		// if not arguments were provided, append the FALSE constants,
-		// since we can't apply "IN ()". This will make this predicate falsy.
-		if len(v) == 0 {
-			s.Where(sql.False())
-			return
-		}
-		s.Where(sql.NotIn(s.C(FieldName), v...))
-	})
+	return predicate.City(sql.FieldNotIn(FieldName, vs...))
 }
 
 // NameGT applies the GT predicate on the "name" field.
 func NameGT(v string) predicate.City {
-	return predicate.City(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldName), v))
-	})
+	return predicate.City(sql.FieldGT(FieldName, v))
 }
 
 // NameGTE applies the GTE predicate on the "name" field.
 func NameGTE(v string) predicate.City {
-	return predicate.City(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldName), v))
-	})
+	return predicate.City(sql.FieldGTE(FieldName, v))
 }
 
 // NameLT applies the LT predicate on the "name" field.
 func NameLT(v string) predicate.City {
-	return predicate.City(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldName), v))
-	})
+	return predicate.City(sql.FieldLT(FieldName, v))
 }
 
 // NameLTE applies the LTE predicate on the "name" field.
 func NameLTE(v string) predicate.City {
-	return predicate.City(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldName), v))
-	})
+	return predicate.City(sql.FieldLTE(FieldName, v))
 }
 
 // NameContains applies the Contains predicate on the "name" field.
 func NameContains(v string) predicate.City {
-	return predicate.City(func(s *sql.Selector) {
-		s.Where(sql.Contains(s.C(FieldName), v))
-	})
+	return predicate.City(sql.FieldContains(FieldName, v))
 }
 
 // NameHasPrefix applies the HasPrefix predicate on the "name" field.
 func NameHasPrefix(v string) predicate.City {
-	return predicate.City(func(s *sql.Selector) {
-		s.Where(sql.HasPrefix(s.C(FieldName), v))
-	})
+	return predicate.City(sql.FieldHasPrefix(FieldName, v))
 }
 
 // NameHasSuffix applies the HasSuffix predicate on the "name" field.
 func NameHasSuffix(v string) predicate.City {
-	return predicate.City(func(s *sql.Selector) {
-		s.Where(sql.HasSuffix(s.C(FieldName), v))
-	})
+	return predicate.City(sql.FieldHasSuffix(FieldName, v))
 }
 
 // NameEqualFold applies the EqualFold predicate on the "name" field.
 func NameEqualFold(v string) predicate.City {
-	return predicate.City(func(s *sql.Selector) {
-		s.Where(sql.EqualFold(s.C(FieldName), v))
-	})
+	return predicate.City(sql.FieldEqualFold(FieldName, v))
 }
 
 // NameContainsFold applies the ContainsFold predicate on the "name" field.
 func NameContainsFold(v string) predicate.City {
-	return predicate.City(func(s *sql.Selector) {
-		s.Where(sql.ContainsFold(s.C(FieldName), v))
-	})
+	return predicate.City(sql.FieldContainsFold(FieldName, v))
 }
 
 // CountryEQ applies the EQ predicate on the "country" field.
 func CountryEQ(v string) predicate.City {
-	return predicate.City(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldCountry), v))
-	})
+	return predicate.City(sql.FieldEQ(FieldCountry, v))
 }
 
 // CountryNEQ applies the NEQ predicate on the "country" field.
 func CountryNEQ(v string) predicate.City {
-	return predicate.City(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldCountry), v))
-	})
+	return predicate.City(sql.FieldNEQ(FieldCountry, v))
 }
 
 // CountryIn applies the In predicate on the "country" field.
 func CountryIn(vs ...string) predicate.City {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.City(func(s *sql.Selector) {
-		// if not arguments were provided, append the FALSE constants,
-		// since we can't apply "IN ()". This will make this predicate falsy.
-		if len(v) == 0 {
-			s.Where(sql.False())
-			return
-		}
-		s.Where(sql.In(s.C(FieldCountry), v...))
-	})
+	return predicate.City(sql.FieldIn(FieldCountry, vs...))
 }
 
 // CountryNotIn applies the NotIn predicate on the "country" field.
 func CountryNotIn(vs ...string) predicate.City {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.City(func(s *sql.Selector) {
-		// if not arguments were provided, append the FALSE constants,
-		// since we can't apply "IN ()". This will make this predicate falsy.
-		if len(v) == 0 {
-			s.Where(sql.False())
-			return
-		}
-		s.Where(sql.NotIn(s.C(FieldCountry), v...))
-	})
+	return predicate.City(sql.FieldNotIn(FieldCountry, vs...))
 }
 
 // CountryGT applies the GT predicate on the "country" field.
 func CountryGT(v string) predicate.City {
-	return predicate.City(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldCountry), v))
-	})
+	return predicate.City(sql.FieldGT(FieldCountry, v))
 }
 
 // CountryGTE applies the GTE predicate on the "country" field.
 func CountryGTE(v string) predicate.City {
-	return predicate.City(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldCountry), v))
-	})
+	return predicate.City(sql.FieldGTE(FieldCountry, v))
 }
 
 // CountryLT applies the LT predicate on the "country" field.
 func CountryLT(v string) predicate.City {
-	return predicate.City(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldCountry), v))
-	})
+	return predicate.City(sql.FieldLT(FieldCountry, v))
 }
 
 // CountryLTE applies the LTE predicate on the "country" field.
 func CountryLTE(v string) predicate.City {
-	return predicate.City(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldCountry), v))
-	})
+	return predicate.City(sql.FieldLTE(FieldCountry, v))
 }
 
 // CountryContains applies the Contains predicate on the "country" field.
 func CountryContains(v string) predicate.City {
-	return predicate.City(func(s *sql.Selector) {
-		s.Where(sql.Contains(s.C(FieldCountry), v))
-	})
+	return predicate.City(sql.FieldContains(FieldCountry, v))
 }
 
 // CountryHasPrefix applies the HasPrefix predicate on the "country" field.
 func CountryHasPrefix(v string) predicate.City {
-	return predicate.City(func(s *sql.Selector) {
-		s.Where(sql.HasPrefix(s.C(FieldCountry), v))
-	})
+	return predicate.City(sql.FieldHasPrefix(FieldCountry, v))
 }
 
 // CountryHasSuffix applies the HasSuffix predicate on the "country" field.
 func CountryHasSuffix(v string) predicate.City {
-	return predicate.City(func(s *sql.Selector) {
-		s.Where(sql.HasSuffix(s.C(FieldCountry), v))
-	})
+	return predicate.City(sql.FieldHasSuffix(FieldCountry, v))
 }
 
 // CountryEqualFold applies the EqualFold predicate on the "country" field.
 func CountryEqualFold(v string) predicate.City {
-	return predicate.City(func(s *sql.Selector) {
-		s.Where(sql.EqualFold(s.C(FieldCountry), v))
-	})
+	return predicate.City(sql.FieldEqualFold(FieldCountry, v))
 }
 
 // CountryContainsFold applies the ContainsFold predicate on the "country" field.
 func CountryContainsFold(v string) predicate.City {
-	return predicate.City(func(s *sql.Selector) {
-		s.Where(sql.ContainsFold(s.C(FieldCountry), v))
-	})
+	return predicate.City(sql.FieldContainsFold(FieldCountry, v))
 }
 
 // HasObjects applies the HasEdge predicate on the "objects" edge.
@@ -322,7 +200,6 @@ func HasObjects() predicate.City {
 	return predicate.City(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(ObjectsTable, FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, ObjectsTable, ObjectsColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)

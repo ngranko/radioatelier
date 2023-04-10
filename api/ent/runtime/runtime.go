@@ -5,6 +5,6 @@ package runtime
 // The schema-stitching logic is generated in radioatelier/ent/runtime.go
 
 const (
-	Version = "v0.11.1"                                         // Version of ent codegen.
-	Sum     = "h1:im67R+2W3Nee2bNS2YnoYz8oAF0Qz4AOlIvKRIAEISY=" // Sum of ent codegen.
+	Version = "v0.11.10"                                        // Version of ent codegen.
+	Sum     = "h1:iqn32ybY5HRW3xSAyMNdNKpZhKgMf1Zunsej9yPKUI8=" // Sum of ent codegen.
 )

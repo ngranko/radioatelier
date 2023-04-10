@@ -211,7 +211,7 @@ func collectedField(ctx context.Context, path ...string) *graphql.CollectedField
 walk:
 	for _, name := range path {
 		for _, f := range graphql.CollectFields(oc, field.Selections, nil) {
-			if f.Name == name {
+			if f.Alias == name {
 				field = f
 				continue walk
 			}
@@ -408,23 +408,19 @@ func (c *CityQuery) Paginate(
 		return nil, err
 	}
 	conn := &CityConnection{Edges: []*CityEdge{}}
-	if !hasCollectedField(ctx, edgesField) || first != nil && *first == 0 || last != nil && *last == 0 {
-		if hasCollectedField(ctx, totalCountField) || hasCollectedField(ctx, pageInfoField) {
-			if conn.TotalCount, err = c.Count(ctx); err != nil {
+	ignoredEdges := !hasCollectedField(ctx, edgesField)
+	if hasCollectedField(ctx, totalCountField) || hasCollectedField(ctx, pageInfoField) {
+		hasPagination := after != nil || first != nil || before != nil || last != nil
+		if hasPagination || ignoredEdges {
+			if conn.TotalCount, err = c.Clone().Count(ctx); err != nil {
 				return nil, err
 			}
 			conn.PageInfo.HasNextPage = first != nil && conn.TotalCount > 0
 			conn.PageInfo.HasPreviousPage = last != nil && conn.TotalCount > 0
 		}
-		return conn, nil
 	}
-
-	if (after != nil || first != nil || before != nil || last != nil) && hasCollectedField(ctx, totalCountField) {
-		count, err := c.Clone().Count(ctx)
-		if err != nil {
-			return nil, err
-		}
-		conn.TotalCount = count
+	if ignoredEdges || (first != nil && *first == 0) || (last != nil && *last == 0) {
+		return conn, nil
 	}
 
 	c = pager.applyCursors(c, after, before)
@@ -439,11 +435,68 @@ func (c *CityQuery) Paginate(
 	}
 
 	nodes, err := c.All(ctx)
-	if err != nil || len(nodes) == 0 {
-		return conn, err
+	if err != nil {
+		return nil, err
 	}
 	conn.build(nodes, pager, after, first, before, last)
 	return conn, nil
+}
+
+var (
+	// CityOrderFieldName orders City by name.
+	CityOrderFieldName = &CityOrderField{
+		field: city.FieldName,
+		toCursor: func(c *City) Cursor {
+			return Cursor{
+				ID:    c.ID,
+				Value: c.Name,
+			}
+		},
+	}
+	// CityOrderFieldCountry orders City by country.
+	CityOrderFieldCountry = &CityOrderField{
+		field: city.FieldCountry,
+		toCursor: func(c *City) Cursor {
+			return Cursor{
+				ID:    c.ID,
+				Value: c.Country,
+			}
+		},
+	}
+)
+
+// String implement fmt.Stringer interface.
+func (f CityOrderField) String() string {
+	var str string
+	switch f.field {
+	case city.FieldName:
+		str = "NAME"
+	case city.FieldCountry:
+		str = "COUNTRY"
+	}
+	return str
+}
+
+// MarshalGQL implements graphql.Marshaler interface.
+func (f CityOrderField) MarshalGQL(w io.Writer) {
+	io.WriteString(w, strconv.Quote(f.String()))
+}
+
+// UnmarshalGQL implements graphql.Unmarshaler interface.
+func (f *CityOrderField) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("CityOrderField %T must be a string", v)
+	}
+	switch str {
+	case "NAME":
+		*f = *CityOrderFieldName
+	case "COUNTRY":
+		*f = *CityOrderFieldCountry
+	default:
+		return fmt.Errorf("%s is not a valid CityOrderField", str)
+	}
+	return nil
 }
 
 // CityOrderField defines the ordering field of City.
@@ -643,23 +696,19 @@ func (c *CollectionQuery) Paginate(
 		return nil, err
 	}
 	conn := &CollectionConnection{Edges: []*CollectionEdge{}}
-	if !hasCollectedField(ctx, edgesField) || first != nil && *first == 0 || last != nil && *last == 0 {
-		if hasCollectedField(ctx, totalCountField) || hasCollectedField(ctx, pageInfoField) {
-			if conn.TotalCount, err = c.Count(ctx); err != nil {
+	ignoredEdges := !hasCollectedField(ctx, edgesField)
+	if hasCollectedField(ctx, totalCountField) || hasCollectedField(ctx, pageInfoField) {
+		hasPagination := after != nil || first != nil || before != nil || last != nil
+		if hasPagination || ignoredEdges {
+			if conn.TotalCount, err = c.Clone().Count(ctx); err != nil {
 				return nil, err
 			}
 			conn.PageInfo.HasNextPage = first != nil && conn.TotalCount > 0
 			conn.PageInfo.HasPreviousPage = last != nil && conn.TotalCount > 0
 		}
-		return conn, nil
 	}
-
-	if (after != nil || first != nil || before != nil || last != nil) && hasCollectedField(ctx, totalCountField) {
-		count, err := c.Clone().Count(ctx)
-		if err != nil {
-			return nil, err
-		}
-		conn.TotalCount = count
+	if ignoredEdges || (first != nil && *first == 0) || (last != nil && *last == 0) {
+		return conn, nil
 	}
 
 	c = pager.applyCursors(c, after, before)
@@ -674,8 +723,8 @@ func (c *CollectionQuery) Paginate(
 	}
 
 	nodes, err := c.All(ctx)
-	if err != nil || len(nodes) == 0 {
-		return conn, err
+	if err != nil {
+		return nil, err
 	}
 	conn.build(nodes, pager, after, first, before, last)
 	return conn, nil
@@ -949,23 +998,19 @@ func (o *ObjectQuery) Paginate(
 		return nil, err
 	}
 	conn := &ObjectConnection{Edges: []*ObjectEdge{}}
-	if !hasCollectedField(ctx, edgesField) || first != nil && *first == 0 || last != nil && *last == 0 {
-		if hasCollectedField(ctx, totalCountField) || hasCollectedField(ctx, pageInfoField) {
-			if conn.TotalCount, err = o.Count(ctx); err != nil {
+	ignoredEdges := !hasCollectedField(ctx, edgesField)
+	if hasCollectedField(ctx, totalCountField) || hasCollectedField(ctx, pageInfoField) {
+		hasPagination := after != nil || first != nil || before != nil || last != nil
+		if hasPagination || ignoredEdges {
+			if conn.TotalCount, err = o.Clone().Count(ctx); err != nil {
 				return nil, err
 			}
 			conn.PageInfo.HasNextPage = first != nil && conn.TotalCount > 0
 			conn.PageInfo.HasPreviousPage = last != nil && conn.TotalCount > 0
 		}
-		return conn, nil
 	}
-
-	if (after != nil || first != nil || before != nil || last != nil) && hasCollectedField(ctx, totalCountField) {
-		count, err := o.Clone().Count(ctx)
-		if err != nil {
-			return nil, err
-		}
-		conn.TotalCount = count
+	if ignoredEdges || (first != nil && *first == 0) || (last != nil && *last == 0) {
+		return conn, nil
 	}
 
 	o = pager.applyCursors(o, after, before)
@@ -980,11 +1025,54 @@ func (o *ObjectQuery) Paginate(
 	}
 
 	nodes, err := o.All(ctx)
-	if err != nil || len(nodes) == 0 {
-		return conn, err
+	if err != nil {
+		return nil, err
 	}
 	conn.build(nodes, pager, after, first, before, last)
 	return conn, nil
+}
+
+var (
+	// ObjectOrderFieldName orders Object by name.
+	ObjectOrderFieldName = &ObjectOrderField{
+		field: object.FieldName,
+		toCursor: func(o *Object) Cursor {
+			return Cursor{
+				ID:    o.ID,
+				Value: o.Name,
+			}
+		},
+	}
+)
+
+// String implement fmt.Stringer interface.
+func (f ObjectOrderField) String() string {
+	var str string
+	switch f.field {
+	case object.FieldName:
+		str = "NAME"
+	}
+	return str
+}
+
+// MarshalGQL implements graphql.Marshaler interface.
+func (f ObjectOrderField) MarshalGQL(w io.Writer) {
+	io.WriteString(w, strconv.Quote(f.String()))
+}
+
+// UnmarshalGQL implements graphql.Unmarshaler interface.
+func (f *ObjectOrderField) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("ObjectOrderField %T must be a string", v)
+	}
+	switch str {
+	case "NAME":
+		*f = *ObjectOrderFieldName
+	default:
+		return fmt.Errorf("%s is not a valid ObjectOrderField", str)
+	}
+	return nil
 }
 
 // ObjectOrderField defines the ordering field of Object.
@@ -1184,23 +1272,19 @@ func (u *UserQuery) Paginate(
 		return nil, err
 	}
 	conn := &UserConnection{Edges: []*UserEdge{}}
-	if !hasCollectedField(ctx, edgesField) || first != nil && *first == 0 || last != nil && *last == 0 {
-		if hasCollectedField(ctx, totalCountField) || hasCollectedField(ctx, pageInfoField) {
-			if conn.TotalCount, err = u.Count(ctx); err != nil {
+	ignoredEdges := !hasCollectedField(ctx, edgesField)
+	if hasCollectedField(ctx, totalCountField) || hasCollectedField(ctx, pageInfoField) {
+		hasPagination := after != nil || first != nil || before != nil || last != nil
+		if hasPagination || ignoredEdges {
+			if conn.TotalCount, err = u.Clone().Count(ctx); err != nil {
 				return nil, err
 			}
 			conn.PageInfo.HasNextPage = first != nil && conn.TotalCount > 0
 			conn.PageInfo.HasPreviousPage = last != nil && conn.TotalCount > 0
 		}
-		return conn, nil
 	}
-
-	if (after != nil || first != nil || before != nil || last != nil) && hasCollectedField(ctx, totalCountField) {
-		count, err := u.Clone().Count(ctx)
-		if err != nil {
-			return nil, err
-		}
-		conn.TotalCount = count
+	if ignoredEdges || (first != nil && *first == 0) || (last != nil && *last == 0) {
+		return conn, nil
 	}
 
 	u = pager.applyCursors(u, after, before)
@@ -1215,8 +1299,8 @@ func (u *UserQuery) Paginate(
 	}
 
 	nodes, err := u.All(ctx)
-	if err != nil || len(nodes) == 0 {
-		return conn, err
+	if err != nil {
+		return nil, err
 	}
 	conn.build(nodes, pager, after, first, before, last)
 	return conn, nil

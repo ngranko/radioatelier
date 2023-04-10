@@ -72,50 +72,8 @@ func (cc *CityCreate) Mutation() *CityMutation {
 
 // Save creates the City in the database.
 func (cc *CityCreate) Save(ctx context.Context) (*City, error) {
-	var (
-		err  error
-		node *City
-	)
 	cc.defaults()
-	if len(cc.hooks) == 0 {
-		if err = cc.check(); err != nil {
-			return nil, err
-		}
-		node, err = cc.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*CityMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			if err = cc.check(); err != nil {
-				return nil, err
-			}
-			cc.mutation = mutation
-			if node, err = cc.sqlSave(ctx); err != nil {
-				return nil, err
-			}
-			mutation.id = &node.ID
-			mutation.done = true
-			return node, err
-		})
-		for i := len(cc.hooks) - 1; i >= 0; i-- {
-			if cc.hooks[i] == nil {
-				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = cc.hooks[i](mut)
-		}
-		v, err := mut.Mutate(ctx, cc.mutation)
-		if err != nil {
-			return nil, err
-		}
-		nv, ok := v.(*City)
-		if !ok {
-			return nil, fmt.Errorf("unexpected node type %T returned from CityMutation", v)
-		}
-		node = nv
-	}
-	return node, err
+	return withHooks[*City, CityMutation](ctx, cc.sqlSave, cc.mutation, cc.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
@@ -160,6 +118,9 @@ func (cc *CityCreate) check() error {
 }
 
 func (cc *CityCreate) sqlSave(ctx context.Context) (*City, error) {
+	if err := cc.check(); err != nil {
+		return nil, err
+	}
 	_node, _spec := cc.createSpec()
 	if err := sqlgraph.CreateNode(ctx, cc.driver, _spec); err != nil {
 		if sqlgraph.IsConstraintError(err) {
@@ -174,19 +135,15 @@ func (cc *CityCreate) sqlSave(ctx context.Context) (*City, error) {
 			return nil, err
 		}
 	}
+	cc.mutation.id = &_node.ID
+	cc.mutation.done = true
 	return _node, nil
 }
 
 func (cc *CityCreate) createSpec() (*City, *sqlgraph.CreateSpec) {
 	var (
 		_node = &City{config: cc.config}
-		_spec = &sqlgraph.CreateSpec{
-			Table: city.Table,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeString,
-				Column: city.FieldID,
-			},
-		}
+		_spec = sqlgraph.NewCreateSpec(city.Table, sqlgraph.NewFieldSpec(city.FieldID, field.TypeString))
 	)
 	_spec.OnConflict = cc.conflict
 	if id, ok := cc.mutation.ID(); ok {
@@ -194,19 +151,11 @@ func (cc *CityCreate) createSpec() (*City, *sqlgraph.CreateSpec) {
 		_spec.ID.Value = &id
 	}
 	if value, ok := cc.mutation.Name(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: city.FieldName,
-		})
+		_spec.SetField(city.FieldName, field.TypeString, value)
 		_node.Name = value
 	}
 	if value, ok := cc.mutation.Country(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: city.FieldCountry,
-		})
+		_spec.SetField(city.FieldCountry, field.TypeString, value)
 		_node.Country = value
 	}
 	if nodes := cc.mutation.ObjectsIDs(); len(nodes) > 0 {
@@ -217,10 +166,7 @@ func (cc *CityCreate) createSpec() (*City, *sqlgraph.CreateSpec) {
 			Columns: []string{city.ObjectsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
-					Column: object.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(object.FieldID, field.TypeString),
 			},
 		}
 		for _, k := range nodes {
@@ -558,7 +504,6 @@ func (u *CityUpsertBulk) UpdateNewValues() *CityUpsertBulk {
 		for _, b := range u.create.builders {
 			if _, exists := b.mutation.ID(); exists {
 				s.SetIgnore(city.FieldID)
-				return
 			}
 		}
 	}))

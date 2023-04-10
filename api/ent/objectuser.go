@@ -40,7 +40,7 @@ type ObjectUserEdges struct {
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [2]bool
 	// totalCount holds the count of the edges above.
-	totalCount [2]*int
+	totalCount [2]map[string]int
 }
 
 // UserOrErr returns the User value or an error if the edge
@@ -48,8 +48,7 @@ type ObjectUserEdges struct {
 func (e ObjectUserEdges) UserOrErr() (*User, error) {
 	if e.loadedTypes[0] {
 		if e.User == nil {
-			// The edge user was loaded in eager-loading,
-			// but was not found.
+			// Edge was loaded but was not found.
 			return nil, &NotFoundError{label: user.Label}
 		}
 		return e.User, nil
@@ -62,8 +61,7 @@ func (e ObjectUserEdges) UserOrErr() (*User, error) {
 func (e ObjectUserEdges) ObjectOrErr() (*Object, error) {
 	if e.loadedTypes[1] {
 		if e.Object == nil {
-			// The edge object was loaded in eager-loading,
-			// but was not found.
+			// Edge was loaded but was not found.
 			return nil, &NotFoundError{label: object.Label}
 		}
 		return e.Object, nil
@@ -72,8 +70,8 @@ func (e ObjectUserEdges) ObjectOrErr() (*Object, error) {
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
-func (*ObjectUser) scanValues(columns []string) ([]interface{}, error) {
-	values := make([]interface{}, len(columns))
+func (*ObjectUser) scanValues(columns []string) ([]any, error) {
+	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
 		case objectuser.FieldUserID, objectuser.FieldObjectID:
@@ -91,7 +89,7 @@ func (*ObjectUser) scanValues(columns []string) ([]interface{}, error) {
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the ObjectUser fields.
-func (ou *ObjectUser) assignValues(columns []string, values []interface{}) error {
+func (ou *ObjectUser) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
@@ -129,19 +127,19 @@ func (ou *ObjectUser) assignValues(columns []string, values []interface{}) error
 
 // QueryUser queries the "user" edge of the ObjectUser entity.
 func (ou *ObjectUser) QueryUser() *UserQuery {
-	return (&ObjectUserClient{config: ou.config}).QueryUser(ou)
+	return NewObjectUserClient(ou.config).QueryUser(ou)
 }
 
 // QueryObject queries the "object" edge of the ObjectUser entity.
 func (ou *ObjectUser) QueryObject() *ObjectQuery {
-	return (&ObjectUserClient{config: ou.config}).QueryObject(ou)
+	return NewObjectUserClient(ou.config).QueryObject(ou)
 }
 
 // Update returns a builder for updating this ObjectUser.
 // Note that you need to call ObjectUser.Unwrap() before calling this method if this ObjectUser
 // was returned from a transaction, and the transaction was committed or rolled back.
 func (ou *ObjectUser) Update() *ObjectUserUpdateOne {
-	return (&ObjectUserClient{config: ou.config}).UpdateOne(ou)
+	return NewObjectUserClient(ou.config).UpdateOne(ou)
 }
 
 // Unwrap unwraps the ObjectUser entity that was returned from a transaction after it was closed,
@@ -178,9 +176,3 @@ func (ou *ObjectUser) String() string {
 
 // ObjectUsers is a parsable slice of ObjectUser.
 type ObjectUsers []*ObjectUser
-
-func (ou ObjectUsers) config(cfg config) {
-	for _i := range ou {
-		ou[_i].config = cfg
-	}
-}

@@ -22,9 +22,9 @@ type Object struct {
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// Address holds the value of the "address" field.
-	Address string `json:"address,omitempty"`
+	Address *string `json:"address,omitempty"`
 	// Description holds the value of the "description" field.
-	Description string `json:"description,omitempty"`
+	Description *string `json:"description,omitempty"`
 	// Lat holds the value of the "lat" field.
 	Lat *float64 `json:"lat,omitempty"`
 	// Lng holds the value of the "lng" field.
@@ -80,7 +80,11 @@ type ObjectEdges struct {
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [7]bool
 	// totalCount holds the count of the edges above.
-	totalCount [6]*int
+	totalCount [6]map[string]int
+
+	namedCollections map[string][]*Collection
+	namedUserInfo    map[string][]*User
+	namedObjectUser  map[string][]*ObjectUser
 }
 
 // CreatedByOrErr returns the CreatedBy value or an error if the edge
@@ -88,8 +92,7 @@ type ObjectEdges struct {
 func (e ObjectEdges) CreatedByOrErr() (*User, error) {
 	if e.loadedTypes[0] {
 		if e.CreatedBy == nil {
-			// The edge created_by was loaded in eager-loading,
-			// but was not found.
+			// Edge was loaded but was not found.
 			return nil, &NotFoundError{label: user.Label}
 		}
 		return e.CreatedBy, nil
@@ -102,8 +105,7 @@ func (e ObjectEdges) CreatedByOrErr() (*User, error) {
 func (e ObjectEdges) UpdatedByOrErr() (*User, error) {
 	if e.loadedTypes[1] {
 		if e.UpdatedBy == nil {
-			// The edge updated_by was loaded in eager-loading,
-			// but was not found.
+			// Edge was loaded but was not found.
 			return nil, &NotFoundError{label: user.Label}
 		}
 		return e.UpdatedBy, nil
@@ -116,8 +118,7 @@ func (e ObjectEdges) UpdatedByOrErr() (*User, error) {
 func (e ObjectEdges) DeletedByOrErr() (*User, error) {
 	if e.loadedTypes[2] {
 		if e.DeletedBy == nil {
-			// The edge deleted_by was loaded in eager-loading,
-			// but was not found.
+			// Edge was loaded but was not found.
 			return nil, &NotFoundError{label: user.Label}
 		}
 		return e.DeletedBy, nil
@@ -148,8 +149,7 @@ func (e ObjectEdges) UserInfoOrErr() ([]*User, error) {
 func (e ObjectEdges) CityOrErr() (*City, error) {
 	if e.loadedTypes[5] {
 		if e.City == nil {
-			// The edge city was loaded in eager-loading,
-			// but was not found.
+			// Edge was loaded but was not found.
 			return nil, &NotFoundError{label: city.Label}
 		}
 		return e.City, nil
@@ -167,8 +167,8 @@ func (e ObjectEdges) ObjectUserOrErr() ([]*ObjectUser, error) {
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
-func (*Object) scanValues(columns []string) ([]interface{}, error) {
-	values := make([]interface{}, len(columns))
+func (*Object) scanValues(columns []string) ([]any, error) {
+	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
 		case object.FieldID:
@@ -198,7 +198,7 @@ func (*Object) scanValues(columns []string) ([]interface{}, error) {
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the Object fields.
-func (o *Object) assignValues(columns []string, values []interface{}) error {
+func (o *Object) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
@@ -220,13 +220,15 @@ func (o *Object) assignValues(columns []string, values []interface{}) error {
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field address", values[i])
 			} else if value.Valid {
-				o.Address = value.String
+				o.Address = new(string)
+				*o.Address = value.String
 			}
 		case object.FieldDescription:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field description", values[i])
 			} else if value.Valid {
-				o.Description = value.String
+				o.Description = new(string)
+				*o.Description = value.String
 			}
 		case object.FieldLat:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
@@ -349,44 +351,44 @@ func (o *Object) assignValues(columns []string, values []interface{}) error {
 
 // QueryCreatedBy queries the "created_by" edge of the Object entity.
 func (o *Object) QueryCreatedBy() *UserQuery {
-	return (&ObjectClient{config: o.config}).QueryCreatedBy(o)
+	return NewObjectClient(o.config).QueryCreatedBy(o)
 }
 
 // QueryUpdatedBy queries the "updated_by" edge of the Object entity.
 func (o *Object) QueryUpdatedBy() *UserQuery {
-	return (&ObjectClient{config: o.config}).QueryUpdatedBy(o)
+	return NewObjectClient(o.config).QueryUpdatedBy(o)
 }
 
 // QueryDeletedBy queries the "deleted_by" edge of the Object entity.
 func (o *Object) QueryDeletedBy() *UserQuery {
-	return (&ObjectClient{config: o.config}).QueryDeletedBy(o)
+	return NewObjectClient(o.config).QueryDeletedBy(o)
 }
 
 // QueryCollections queries the "collections" edge of the Object entity.
 func (o *Object) QueryCollections() *CollectionQuery {
-	return (&ObjectClient{config: o.config}).QueryCollections(o)
+	return NewObjectClient(o.config).QueryCollections(o)
 }
 
 // QueryUserInfo queries the "user_info" edge of the Object entity.
 func (o *Object) QueryUserInfo() *UserQuery {
-	return (&ObjectClient{config: o.config}).QueryUserInfo(o)
+	return NewObjectClient(o.config).QueryUserInfo(o)
 }
 
 // QueryCity queries the "city" edge of the Object entity.
 func (o *Object) QueryCity() *CityQuery {
-	return (&ObjectClient{config: o.config}).QueryCity(o)
+	return NewObjectClient(o.config).QueryCity(o)
 }
 
 // QueryObjectUser queries the "object_user" edge of the Object entity.
 func (o *Object) QueryObjectUser() *ObjectUserQuery {
-	return (&ObjectClient{config: o.config}).QueryObjectUser(o)
+	return NewObjectClient(o.config).QueryObjectUser(o)
 }
 
 // Update returns a builder for updating this Object.
 // Note that you need to call Object.Unwrap() before calling this method if this Object
 // was returned from a transaction, and the transaction was committed or rolled back.
 func (o *Object) Update() *ObjectUpdateOne {
-	return (&ObjectClient{config: o.config}).UpdateOne(o)
+	return NewObjectClient(o.config).UpdateOne(o)
 }
 
 // Unwrap unwraps the Object entity that was returned from a transaction after it was closed,
@@ -408,11 +410,15 @@ func (o *Object) String() string {
 	builder.WriteString("name=")
 	builder.WriteString(o.Name)
 	builder.WriteString(", ")
-	builder.WriteString("address=")
-	builder.WriteString(o.Address)
+	if v := o.Address; v != nil {
+		builder.WriteString("address=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
-	builder.WriteString("description=")
-	builder.WriteString(o.Description)
+	if v := o.Description; v != nil {
+		builder.WriteString("description=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
 	if v := o.Lat; v != nil {
 		builder.WriteString("lat=")
@@ -472,11 +478,77 @@ func (o *Object) String() string {
 	return builder.String()
 }
 
-// Objects is a parsable slice of Object.
-type Objects []*Object
+// NamedCollections returns the Collections named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (o *Object) NamedCollections(name string) ([]*Collection, error) {
+	if o.Edges.namedCollections == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := o.Edges.namedCollections[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
 
-func (o Objects) config(cfg config) {
-	for _i := range o {
-		o[_i].config = cfg
+func (o *Object) appendNamedCollections(name string, edges ...*Collection) {
+	if o.Edges.namedCollections == nil {
+		o.Edges.namedCollections = make(map[string][]*Collection)
+	}
+	if len(edges) == 0 {
+		o.Edges.namedCollections[name] = []*Collection{}
+	} else {
+		o.Edges.namedCollections[name] = append(o.Edges.namedCollections[name], edges...)
 	}
 }
+
+// NamedUserInfo returns the UserInfo named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (o *Object) NamedUserInfo(name string) ([]*User, error) {
+	if o.Edges.namedUserInfo == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := o.Edges.namedUserInfo[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (o *Object) appendNamedUserInfo(name string, edges ...*User) {
+	if o.Edges.namedUserInfo == nil {
+		o.Edges.namedUserInfo = make(map[string][]*User)
+	}
+	if len(edges) == 0 {
+		o.Edges.namedUserInfo[name] = []*User{}
+	} else {
+		o.Edges.namedUserInfo[name] = append(o.Edges.namedUserInfo[name], edges...)
+	}
+}
+
+// NamedObjectUser returns the ObjectUser named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (o *Object) NamedObjectUser(name string) ([]*ObjectUser, error) {
+	if o.Edges.namedObjectUser == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := o.Edges.namedObjectUser[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (o *Object) appendNamedObjectUser(name string, edges ...*ObjectUser) {
+	if o.Edges.namedObjectUser == nil {
+		o.Edges.namedObjectUser = make(map[string][]*ObjectUser)
+	}
+	if len(edges) == 0 {
+		o.Edges.namedObjectUser[name] = []*ObjectUser{}
+	} else {
+		o.Edges.namedObjectUser[name] = append(o.Edges.namedObjectUser[name], edges...)
+	}
+}
+
+// Objects is a parsable slice of Object.
+type Objects []*Object

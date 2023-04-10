@@ -147,11 +147,11 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Cities      func(childComplexity int, after *ent.Cursor, first *int, before *ent.Cursor, last *int, where *ent.CityWhereInput) int
+		Cities      func(childComplexity int, after *ent.Cursor, first *int, before *ent.Cursor, last *int, orderBy *ent.CityOrder, where *ent.CityWhereInput) int
 		Collections func(childComplexity int, after *ent.Cursor, first *int, before *ent.Cursor, last *int, orderBy *ent.CollectionOrder, where *ent.CollectionWhereInput) int
 		Node        func(childComplexity int, id puuid.ID) int
 		Nodes       func(childComplexity int, ids []puuid.ID) int
-		Objects     func(childComplexity int, after *ent.Cursor, first *int, before *ent.Cursor, last *int, where *ent.ObjectWhereInput) int
+		Objects     func(childComplexity int, after *ent.Cursor, first *int, before *ent.Cursor, last *int, orderBy *ent.ObjectOrder, where *ent.ObjectWhereInput) int
 		Users       func(childComplexity int, after *ent.Cursor, first *int, before *ent.Cursor, last *int, orderBy *ent.UserOrder, where *ent.UserWhereInput) int
 	}
 
@@ -203,9 +203,9 @@ type MutationResolver interface {
 type QueryResolver interface {
 	Node(ctx context.Context, id puuid.ID) (ent.Noder, error)
 	Nodes(ctx context.Context, ids []puuid.ID) ([]ent.Noder, error)
-	Cities(ctx context.Context, after *ent.Cursor, first *int, before *ent.Cursor, last *int, where *ent.CityWhereInput) (*ent.CityConnection, error)
+	Cities(ctx context.Context, after *ent.Cursor, first *int, before *ent.Cursor, last *int, orderBy *ent.CityOrder, where *ent.CityWhereInput) (*ent.CityConnection, error)
 	Collections(ctx context.Context, after *ent.Cursor, first *int, before *ent.Cursor, last *int, orderBy *ent.CollectionOrder, where *ent.CollectionWhereInput) (*ent.CollectionConnection, error)
-	Objects(ctx context.Context, after *ent.Cursor, first *int, before *ent.Cursor, last *int, where *ent.ObjectWhereInput) (*ent.ObjectConnection, error)
+	Objects(ctx context.Context, after *ent.Cursor, first *int, before *ent.Cursor, last *int, orderBy *ent.ObjectOrder, where *ent.ObjectWhereInput) (*ent.ObjectConnection, error)
 	Users(ctx context.Context, after *ent.Cursor, first *int, before *ent.Cursor, last *int, orderBy *ent.UserOrder, where *ent.UserWhereInput) (*ent.UserConnection, error)
 }
 
@@ -763,7 +763,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Cities(childComplexity, args["after"].(*ent.Cursor), args["first"].(*int), args["before"].(*ent.Cursor), args["last"].(*int), args["where"].(*ent.CityWhereInput)), true
+		return e.complexity.Query.Cities(childComplexity, args["after"].(*ent.Cursor), args["first"].(*int), args["before"].(*ent.Cursor), args["last"].(*int), args["orderBy"].(*ent.CityOrder), args["where"].(*ent.CityWhereInput)), true
 
 	case "Query.collections":
 		if e.complexity.Query.Collections == nil {
@@ -811,7 +811,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Objects(childComplexity, args["after"].(*ent.Cursor), args["first"].(*int), args["before"].(*ent.Cursor), args["last"].(*int), args["where"].(*ent.ObjectWhereInput)), true
+		return e.complexity.Query.Objects(childComplexity, args["after"].(*ent.Cursor), args["first"].(*int), args["before"].(*ent.Cursor), args["last"].(*int), args["orderBy"].(*ent.ObjectOrder), args["where"].(*ent.ObjectWhereInput)), true
 
 	case "Query.users":
 		if e.complexity.Query.Users == nil {
@@ -980,6 +980,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	rc := graphql.GetOperationContext(ctx)
 	ec := executionContext{rc, e}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputCityOrder,
 		ec.unmarshalInputCityWhereInput,
 		ec.unmarshalInputCollectionOrder,
 		ec.unmarshalInputCollectionWhereInput,
@@ -987,6 +988,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCreateCollectionInput,
 		ec.unmarshalInputCreateObjectInput,
 		ec.unmarshalInputCreateUserInput,
+		ec.unmarshalInputObjectOrder,
 		ec.unmarshalInputObjectWhereInput,
 		ec.unmarshalInputUpdateCityInput,
 		ec.unmarshalInputUpdateCollectionInput,
@@ -1105,6 +1107,18 @@ type CityEdge {
   node: City
   """A cursor for use in pagination."""
   cursor: Cursor!
+}
+"""Ordering options for City connections"""
+input CityOrder {
+  """The ordering direction."""
+  direction: OrderDirection! = ASC
+  """The field by which to order Cities."""
+  field: CityOrderField!
+}
+"""Properties by which City connections can be ordered."""
+enum CityOrderField {
+  NAME
+  COUNTRY
 }
 """
 CityWhereInput is used for filtering City objects.
@@ -1400,6 +1414,17 @@ type ObjectEdge {
   """A cursor for use in pagination."""
   cursor: Cursor!
 }
+"""Ordering options for Object connections"""
+input ObjectOrder {
+  """The ordering direction."""
+  direction: OrderDirection! = ASC
+  """The field by which to order Objects."""
+  field: ObjectOrderField!
+}
+"""Properties by which Object connections can be ordered."""
+enum ObjectOrderField {
+  NAME
+}
 """
 ObjectWhereInput is used for filtering Object objects.
 Input was generated by ent.
@@ -1684,6 +1709,9 @@ type Query {
     """Returns the last _n_ elements from the list."""
     last: Int
 
+    """Ordering options for Cities returned from the connection."""
+    orderBy: CityOrder
+
     """Filtering options for Cities returned from the connection."""
     where: CityWhereInput
   ): CityConnection!
@@ -1719,6 +1747,9 @@ type Query {
     """Returns the last _n_ elements from the list."""
     last: Int
 
+    """Ordering options for Objects returned from the connection."""
+    orderBy: ObjectOrder
+
     """Filtering options for Objects returned from the connection."""
     where: ObjectWhereInput
   ): ObjectConnection!
@@ -1751,6 +1782,7 @@ input UpdateCityInput {
   country: String
   addObjectIDs: [ID!]
   removeObjectIDs: [ID!]
+  clearObjects: Boolean
 }
 """
 UpdateCollectionInput is used for update Collection object.
@@ -1758,17 +1790,19 @@ Input was generated by ent.
 """
 input UpdateCollectionInput {
   name: String
-  clearDescription: Boolean
   description: String
+  clearDescription: Boolean
   updatedAt: Time
-  clearCreatedBy: Boolean
   createdByID: ID
-  clearUpdatedBy: Boolean
+  clearCreatedBy: Boolean
   updatedByID: ID
+  clearUpdatedBy: Boolean
   addObjectIDs: [ID!]
   removeObjectIDs: [ID!]
+  clearObjects: Boolean
   addUserIDs: [ID!]
   removeUserIDs: [ID!]
+  clearUsers: Boolean
 }
 """
 UpdateObjectInput is used for update Object object.
@@ -1776,42 +1810,44 @@ Input was generated by ent.
 """
 input UpdateObjectInput {
   name: String
-  clearAddress: Boolean
   address: String
-  clearDescription: Boolean
+  clearAddress: Boolean
   description: String
-  clearLat: Boolean
+  clearDescription: Boolean
   lat: Float
-  clearLng: Boolean
+  clearLat: Boolean
   lng: Float
-  clearInstalledPeriod: Boolean
+  clearLng: Boolean
   installedPeriod: String
+  clearInstalledPeriod: Boolean
   isRemoved: Boolean
-  clearRemovedPeriod: Boolean
   removedPeriod: String
-  clearSource: Boolean
+  clearRemovedPeriod: Boolean
   source: String
+  clearSource: Boolean
   type: String
   tags: String
   updatedAt: Time
-  clearDeletedAt: Boolean
   deletedAt: Time
-  clearLastSync: Boolean
+  clearDeletedAt: Boolean
   lastSync: Time
-  clearNotionID: Boolean
+  clearLastSync: Boolean
   notionID: String
-  clearCreatedBy: Boolean
+  clearNotionID: Boolean
   createdByID: ID
-  clearUpdatedBy: Boolean
+  clearCreatedBy: Boolean
   updatedByID: ID
-  clearDeletedBy: Boolean
+  clearUpdatedBy: Boolean
   deletedByID: ID
+  clearDeletedBy: Boolean
   addCollectionIDs: [ID!]
   removeCollectionIDs: [ID!]
+  clearCollections: Boolean
   addUserInfoIDs: [ID!]
   removeUserInfoIDs: [ID!]
-  clearCity: Boolean
+  clearUserInfo: Boolean
   cityID: ID
+  clearCity: Boolean
 }
 """
 UpdateUserInput is used for update User object.
@@ -1823,26 +1859,33 @@ input UpdateUserInput {
   login: String
   password: String
   role: String
-  clearLastLogin: Boolean
   lastLogin: Time
+  clearLastLogin: Boolean
   isActive: Boolean
-  clearNotionID: Boolean
   notionID: String
+  clearNotionID: Boolean
   isNotionSubject: Boolean
   addCreatedObjectIDs: [ID!]
   removeCreatedObjectIDs: [ID!]
+  clearCreatedObjects: Boolean
   addUpdatedObjectIDs: [ID!]
   removeUpdatedObjectIDs: [ID!]
+  clearUpdatedObjects: Boolean
   addDeletedObjectIDs: [ID!]
   removeDeletedObjectIDs: [ID!]
+  clearDeletedObjects: Boolean
   addCreatedCollectionIDs: [ID!]
   removeCreatedCollectionIDs: [ID!]
+  clearCreatedCollections: Boolean
   addUpdatedCollectionIDs: [ID!]
   removeUpdatedCollectionIDs: [ID!]
+  clearUpdatedCollections: Boolean
   addCollectionIDs: [ID!]
   removeCollectionIDs: [ID!]
+  clearCollections: Boolean
   addObjectInfoIDs: [ID!]
   removeObjectInfoIDs: [ID!]
+  clearObjectInfo: Boolean
 }
 type User implements Node {
   id: ID!
@@ -2295,15 +2338,24 @@ func (ec *executionContext) field_Query_cities_args(ctx context.Context, rawArgs
 		}
 	}
 	args["last"] = arg3
-	var arg4 *ent.CityWhereInput
-	if tmp, ok := rawArgs["where"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("where"))
-		arg4, err = ec.unmarshalOCityWhereInput2ᚖradioatelierᚋentᚐCityWhereInput(ctx, tmp)
+	var arg4 *ent.CityOrder
+	if tmp, ok := rawArgs["orderBy"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
+		arg4, err = ec.unmarshalOCityOrder2ᚖradioatelierᚋentᚐCityOrder(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["where"] = arg4
+	args["orderBy"] = arg4
+	var arg5 *ent.CityWhereInput
+	if tmp, ok := rawArgs["where"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("where"))
+		arg5, err = ec.unmarshalOCityWhereInput2ᚖradioatelierᚋentᚐCityWhereInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["where"] = arg5
 	return args, nil
 }
 
@@ -2436,15 +2488,24 @@ func (ec *executionContext) field_Query_objects_args(ctx context.Context, rawArg
 		}
 	}
 	args["last"] = arg3
-	var arg4 *ent.ObjectWhereInput
-	if tmp, ok := rawArgs["where"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("where"))
-		arg4, err = ec.unmarshalOObjectWhereInput2ᚖradioatelierᚋentᚐObjectWhereInput(ctx, tmp)
+	var arg4 *ent.ObjectOrder
+	if tmp, ok := rawArgs["orderBy"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
+		arg4, err = ec.unmarshalOObjectOrder2ᚖradioatelierᚋentᚐObjectOrder(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["where"] = arg4
+	args["orderBy"] = arg4
+	var arg5 *ent.ObjectWhereInput
+	if tmp, ok := rawArgs["where"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("where"))
+		arg5, err = ec.unmarshalOObjectWhereInput2ᚖradioatelierᚋentᚐObjectWhereInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["where"] = arg5
 	return args, nil
 }
 
@@ -4789,9 +4850,9 @@ func (ec *executionContext) _Object_address(ctx context.Context, field graphql.C
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*string)
 	fc.Result = res
-	return ec.marshalOString2string(ctx, field.Selections, res)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Object_address(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4830,9 +4891,9 @@ func (ec *executionContext) _Object_description(ctx context.Context, field graph
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*string)
 	fc.Result = res
-	return ec.marshalOString2string(ctx, field.Selections, res)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Object_description(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6386,7 +6447,7 @@ func (ec *executionContext) _Query_cities(ctx context.Context, field graphql.Col
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Cities(rctx, fc.Args["after"].(*ent.Cursor), fc.Args["first"].(*int), fc.Args["before"].(*ent.Cursor), fc.Args["last"].(*int), fc.Args["where"].(*ent.CityWhereInput))
+		return ec.resolvers.Query().Cities(rctx, fc.Args["after"].(*ent.Cursor), fc.Args["first"].(*int), fc.Args["before"].(*ent.Cursor), fc.Args["last"].(*int), fc.Args["orderBy"].(*ent.CityOrder), fc.Args["where"].(*ent.CityWhereInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6512,7 +6573,7 @@ func (ec *executionContext) _Query_objects(ctx context.Context, field graphql.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Objects(rctx, fc.Args["after"].(*ent.Cursor), fc.Args["first"].(*int), fc.Args["before"].(*ent.Cursor), fc.Args["last"].(*int), fc.Args["where"].(*ent.ObjectWhereInput))
+		return ec.resolvers.Query().Objects(rctx, fc.Args["after"].(*ent.Cursor), fc.Args["first"].(*int), fc.Args["before"].(*ent.Cursor), fc.Args["last"].(*int), fc.Args["orderBy"].(*ent.ObjectOrder), fc.Args["where"].(*ent.ObjectWhereInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9719,6 +9780,46 @@ func (ec *executionContext) fieldContext___Type_specifiedByURL(ctx context.Conte
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputCityOrder(ctx context.Context, obj interface{}) (ent.CityOrder, error) {
+	var it ent.CityOrder
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	if _, present := asMap["direction"]; !present {
+		asMap["direction"] = "ASC"
+	}
+
+	fieldsInOrder := [...]string{"direction", "field"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "direction":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
+			it.Direction, err = ec.unmarshalNOrderDirection2radioatelierᚋentᚐOrderDirection(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "field":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			it.Field, err = ec.unmarshalNCityOrderField2ᚖradioatelierᚋentᚐCityOrderField(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCityWhereInput(ctx context.Context, obj interface{}) (ent.CityWhereInput, error) {
 	var it ent.CityWhereInput
 	asMap := map[string]interface{}{}
@@ -11078,6 +11179,46 @@ func (ec *executionContext) unmarshalInputCreateUserInput(ctx context.Context, o
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("objectInfoIDs"))
 			it.ObjectInfoIDs, err = ec.unmarshalOID2ᚕradioatelierᚋentᚋschemaᚋpuuidᚐIDᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputObjectOrder(ctx context.Context, obj interface{}) (ent.ObjectOrder, error) {
+	var it ent.ObjectOrder
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	if _, present := asMap["direction"]; !present {
+		asMap["direction"] = "ASC"
+	}
+
+	fieldsInOrder := [...]string{"direction", "field"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "direction":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
+			it.Direction, err = ec.unmarshalNOrderDirection2radioatelierᚋentᚐOrderDirection(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "field":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			it.Field, err = ec.unmarshalNObjectOrderField2ᚖradioatelierᚋentᚐObjectOrderField(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -12794,7 +12935,7 @@ func (ec *executionContext) unmarshalInputUpdateCityInput(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "country", "addObjectIDs", "removeObjectIDs"}
+	fieldsInOrder := [...]string{"name", "country", "addObjectIDs", "removeObjectIDs", "clearObjects"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -12833,6 +12974,14 @@ func (ec *executionContext) unmarshalInputUpdateCityInput(ctx context.Context, o
 			if err != nil {
 				return it, err
 			}
+		case "clearObjects":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearObjects"))
+			it.ClearObjects, err = ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		}
 	}
 
@@ -12846,7 +12995,7 @@ func (ec *executionContext) unmarshalInputUpdateCollectionInput(ctx context.Cont
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "clearDescription", "description", "updatedAt", "clearCreatedBy", "createdByID", "clearUpdatedBy", "updatedByID", "addObjectIDs", "removeObjectIDs", "addUserIDs", "removeUserIDs"}
+	fieldsInOrder := [...]string{"name", "description", "clearDescription", "updatedAt", "createdByID", "clearCreatedBy", "updatedByID", "clearUpdatedBy", "addObjectIDs", "removeObjectIDs", "clearObjects", "addUserIDs", "removeUserIDs", "clearUsers"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -12861,19 +13010,19 @@ func (ec *executionContext) unmarshalInputUpdateCollectionInput(ctx context.Cont
 			if err != nil {
 				return it, err
 			}
-		case "clearDescription":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearDescription"))
-			it.ClearDescription, err = ec.unmarshalOBoolean2bool(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "description":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
 			it.Description, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "clearDescription":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearDescription"))
+			it.ClearDescription, err = ec.unmarshalOBoolean2bool(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -12885,14 +13034,6 @@ func (ec *executionContext) unmarshalInputUpdateCollectionInput(ctx context.Cont
 			if err != nil {
 				return it, err
 			}
-		case "clearCreatedBy":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearCreatedBy"))
-			it.ClearCreatedBy, err = ec.unmarshalOBoolean2bool(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "createdByID":
 			var err error
 
@@ -12901,11 +13042,11 @@ func (ec *executionContext) unmarshalInputUpdateCollectionInput(ctx context.Cont
 			if err != nil {
 				return it, err
 			}
-		case "clearUpdatedBy":
+		case "clearCreatedBy":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearUpdatedBy"))
-			it.ClearUpdatedBy, err = ec.unmarshalOBoolean2bool(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearCreatedBy"))
+			it.ClearCreatedBy, err = ec.unmarshalOBoolean2bool(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -12914,6 +13055,14 @@ func (ec *executionContext) unmarshalInputUpdateCollectionInput(ctx context.Cont
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("updatedByID"))
 			it.UpdatedByID, err = ec.unmarshalOID2ᚖradioatelierᚋentᚋschemaᚋpuuidᚐID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "clearUpdatedBy":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearUpdatedBy"))
+			it.ClearUpdatedBy, err = ec.unmarshalOBoolean2bool(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -12933,6 +13082,14 @@ func (ec *executionContext) unmarshalInputUpdateCollectionInput(ctx context.Cont
 			if err != nil {
 				return it, err
 			}
+		case "clearObjects":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearObjects"))
+			it.ClearObjects, err = ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		case "addUserIDs":
 			var err error
 
@@ -12949,6 +13106,14 @@ func (ec *executionContext) unmarshalInputUpdateCollectionInput(ctx context.Cont
 			if err != nil {
 				return it, err
 			}
+		case "clearUsers":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearUsers"))
+			it.ClearUsers, err = ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		}
 	}
 
@@ -12962,7 +13127,7 @@ func (ec *executionContext) unmarshalInputUpdateObjectInput(ctx context.Context,
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "clearAddress", "address", "clearDescription", "description", "clearLat", "lat", "clearLng", "lng", "clearInstalledPeriod", "installedPeriod", "isRemoved", "clearRemovedPeriod", "removedPeriod", "clearSource", "source", "type", "tags", "updatedAt", "clearDeletedAt", "deletedAt", "clearLastSync", "lastSync", "clearNotionID", "notionID", "clearCreatedBy", "createdByID", "clearUpdatedBy", "updatedByID", "clearDeletedBy", "deletedByID", "addCollectionIDs", "removeCollectionIDs", "addUserInfoIDs", "removeUserInfoIDs", "clearCity", "cityID"}
+	fieldsInOrder := [...]string{"name", "address", "clearAddress", "description", "clearDescription", "lat", "clearLat", "lng", "clearLng", "installedPeriod", "clearInstalledPeriod", "isRemoved", "removedPeriod", "clearRemovedPeriod", "source", "clearSource", "type", "tags", "updatedAt", "deletedAt", "clearDeletedAt", "lastSync", "clearLastSync", "notionID", "clearNotionID", "createdByID", "clearCreatedBy", "updatedByID", "clearUpdatedBy", "deletedByID", "clearDeletedBy", "addCollectionIDs", "removeCollectionIDs", "clearCollections", "addUserInfoIDs", "removeUserInfoIDs", "clearUserInfo", "cityID", "clearCity"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -12977,14 +13142,6 @@ func (ec *executionContext) unmarshalInputUpdateObjectInput(ctx context.Context,
 			if err != nil {
 				return it, err
 			}
-		case "clearAddress":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearAddress"))
-			it.ClearAddress, err = ec.unmarshalOBoolean2bool(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "address":
 			var err error
 
@@ -12993,11 +13150,11 @@ func (ec *executionContext) unmarshalInputUpdateObjectInput(ctx context.Context,
 			if err != nil {
 				return it, err
 			}
-		case "clearDescription":
+		case "clearAddress":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearDescription"))
-			it.ClearDescription, err = ec.unmarshalOBoolean2bool(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearAddress"))
+			it.ClearAddress, err = ec.unmarshalOBoolean2bool(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -13009,11 +13166,11 @@ func (ec *executionContext) unmarshalInputUpdateObjectInput(ctx context.Context,
 			if err != nil {
 				return it, err
 			}
-		case "clearLat":
+		case "clearDescription":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearLat"))
-			it.ClearLat, err = ec.unmarshalOBoolean2bool(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearDescription"))
+			it.ClearDescription, err = ec.unmarshalOBoolean2bool(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -13025,11 +13182,11 @@ func (ec *executionContext) unmarshalInputUpdateObjectInput(ctx context.Context,
 			if err != nil {
 				return it, err
 			}
-		case "clearLng":
+		case "clearLat":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearLng"))
-			it.ClearLng, err = ec.unmarshalOBoolean2bool(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearLat"))
+			it.ClearLat, err = ec.unmarshalOBoolean2bool(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -13041,11 +13198,11 @@ func (ec *executionContext) unmarshalInputUpdateObjectInput(ctx context.Context,
 			if err != nil {
 				return it, err
 			}
-		case "clearInstalledPeriod":
+		case "clearLng":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearInstalledPeriod"))
-			it.ClearInstalledPeriod, err = ec.unmarshalOBoolean2bool(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearLng"))
+			it.ClearLng, err = ec.unmarshalOBoolean2bool(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -13057,19 +13214,19 @@ func (ec *executionContext) unmarshalInputUpdateObjectInput(ctx context.Context,
 			if err != nil {
 				return it, err
 			}
+		case "clearInstalledPeriod":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearInstalledPeriod"))
+			it.ClearInstalledPeriod, err = ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		case "isRemoved":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isRemoved"))
 			it.IsRemoved, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "clearRemovedPeriod":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearRemovedPeriod"))
-			it.ClearRemovedPeriod, err = ec.unmarshalOBoolean2bool(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -13081,11 +13238,11 @@ func (ec *executionContext) unmarshalInputUpdateObjectInput(ctx context.Context,
 			if err != nil {
 				return it, err
 			}
-		case "clearSource":
+		case "clearRemovedPeriod":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearSource"))
-			it.ClearSource, err = ec.unmarshalOBoolean2bool(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearRemovedPeriod"))
+			it.ClearRemovedPeriod, err = ec.unmarshalOBoolean2bool(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -13094,6 +13251,14 @@ func (ec *executionContext) unmarshalInputUpdateObjectInput(ctx context.Context,
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("source"))
 			it.Source, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "clearSource":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearSource"))
+			it.ClearSource, err = ec.unmarshalOBoolean2bool(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -13121,14 +13286,6 @@ func (ec *executionContext) unmarshalInputUpdateObjectInput(ctx context.Context,
 			if err != nil {
 				return it, err
 			}
-		case "clearDeletedAt":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearDeletedAt"))
-			it.ClearDeletedAt, err = ec.unmarshalOBoolean2bool(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "deletedAt":
 			var err error
 
@@ -13137,11 +13294,11 @@ func (ec *executionContext) unmarshalInputUpdateObjectInput(ctx context.Context,
 			if err != nil {
 				return it, err
 			}
-		case "clearLastSync":
+		case "clearDeletedAt":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearLastSync"))
-			it.ClearLastSync, err = ec.unmarshalOBoolean2bool(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearDeletedAt"))
+			it.ClearDeletedAt, err = ec.unmarshalOBoolean2bool(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -13153,11 +13310,11 @@ func (ec *executionContext) unmarshalInputUpdateObjectInput(ctx context.Context,
 			if err != nil {
 				return it, err
 			}
-		case "clearNotionID":
+		case "clearLastSync":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearNotionID"))
-			it.ClearNotionID, err = ec.unmarshalOBoolean2bool(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearLastSync"))
+			it.ClearLastSync, err = ec.unmarshalOBoolean2bool(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -13169,11 +13326,11 @@ func (ec *executionContext) unmarshalInputUpdateObjectInput(ctx context.Context,
 			if err != nil {
 				return it, err
 			}
-		case "clearCreatedBy":
+		case "clearNotionID":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearCreatedBy"))
-			it.ClearCreatedBy, err = ec.unmarshalOBoolean2bool(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearNotionID"))
+			it.ClearNotionID, err = ec.unmarshalOBoolean2bool(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -13185,11 +13342,11 @@ func (ec *executionContext) unmarshalInputUpdateObjectInput(ctx context.Context,
 			if err != nil {
 				return it, err
 			}
-		case "clearUpdatedBy":
+		case "clearCreatedBy":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearUpdatedBy"))
-			it.ClearUpdatedBy, err = ec.unmarshalOBoolean2bool(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearCreatedBy"))
+			it.ClearCreatedBy, err = ec.unmarshalOBoolean2bool(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -13201,11 +13358,11 @@ func (ec *executionContext) unmarshalInputUpdateObjectInput(ctx context.Context,
 			if err != nil {
 				return it, err
 			}
-		case "clearDeletedBy":
+		case "clearUpdatedBy":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearDeletedBy"))
-			it.ClearDeletedBy, err = ec.unmarshalOBoolean2bool(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearUpdatedBy"))
+			it.ClearUpdatedBy, err = ec.unmarshalOBoolean2bool(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -13214,6 +13371,14 @@ func (ec *executionContext) unmarshalInputUpdateObjectInput(ctx context.Context,
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedByID"))
 			it.DeletedByID, err = ec.unmarshalOID2ᚖradioatelierᚋentᚋschemaᚋpuuidᚐID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "clearDeletedBy":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearDeletedBy"))
+			it.ClearDeletedBy, err = ec.unmarshalOBoolean2bool(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -13233,6 +13398,14 @@ func (ec *executionContext) unmarshalInputUpdateObjectInput(ctx context.Context,
 			if err != nil {
 				return it, err
 			}
+		case "clearCollections":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearCollections"))
+			it.ClearCollections, err = ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		case "addUserInfoIDs":
 			var err error
 
@@ -13249,11 +13422,11 @@ func (ec *executionContext) unmarshalInputUpdateObjectInput(ctx context.Context,
 			if err != nil {
 				return it, err
 			}
-		case "clearCity":
+		case "clearUserInfo":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearCity"))
-			it.ClearCity, err = ec.unmarshalOBoolean2bool(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearUserInfo"))
+			it.ClearUserInfo, err = ec.unmarshalOBoolean2bool(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -13262,6 +13435,14 @@ func (ec *executionContext) unmarshalInputUpdateObjectInput(ctx context.Context,
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cityID"))
 			it.CityID, err = ec.unmarshalOID2ᚖradioatelierᚋentᚋschemaᚋpuuidᚐID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "clearCity":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearCity"))
+			it.ClearCity, err = ec.unmarshalOBoolean2bool(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -13278,7 +13459,7 @@ func (ec *executionContext) unmarshalInputUpdateUserInput(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "email", "login", "password", "role", "clearLastLogin", "lastLogin", "isActive", "clearNotionID", "notionID", "isNotionSubject", "addCreatedObjectIDs", "removeCreatedObjectIDs", "addUpdatedObjectIDs", "removeUpdatedObjectIDs", "addDeletedObjectIDs", "removeDeletedObjectIDs", "addCreatedCollectionIDs", "removeCreatedCollectionIDs", "addUpdatedCollectionIDs", "removeUpdatedCollectionIDs", "addCollectionIDs", "removeCollectionIDs", "addObjectInfoIDs", "removeObjectInfoIDs"}
+	fieldsInOrder := [...]string{"name", "email", "login", "password", "role", "lastLogin", "clearLastLogin", "isActive", "notionID", "clearNotionID", "isNotionSubject", "addCreatedObjectIDs", "removeCreatedObjectIDs", "clearCreatedObjects", "addUpdatedObjectIDs", "removeUpdatedObjectIDs", "clearUpdatedObjects", "addDeletedObjectIDs", "removeDeletedObjectIDs", "clearDeletedObjects", "addCreatedCollectionIDs", "removeCreatedCollectionIDs", "clearCreatedCollections", "addUpdatedCollectionIDs", "removeUpdatedCollectionIDs", "clearUpdatedCollections", "addCollectionIDs", "removeCollectionIDs", "clearCollections", "addObjectInfoIDs", "removeObjectInfoIDs", "clearObjectInfo"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -13325,19 +13506,19 @@ func (ec *executionContext) unmarshalInputUpdateUserInput(ctx context.Context, o
 			if err != nil {
 				return it, err
 			}
-		case "clearLastLogin":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearLastLogin"))
-			it.ClearLastLogin, err = ec.unmarshalOBoolean2bool(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "lastLogin":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastLogin"))
 			it.LastLogin, err = ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "clearLastLogin":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearLastLogin"))
+			it.ClearLastLogin, err = ec.unmarshalOBoolean2bool(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -13349,19 +13530,19 @@ func (ec *executionContext) unmarshalInputUpdateUserInput(ctx context.Context, o
 			if err != nil {
 				return it, err
 			}
-		case "clearNotionID":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearNotionID"))
-			it.ClearNotionID, err = ec.unmarshalOBoolean2bool(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "notionID":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("notionID"))
 			it.NotionID, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "clearNotionID":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearNotionID"))
+			it.ClearNotionID, err = ec.unmarshalOBoolean2bool(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -13389,6 +13570,14 @@ func (ec *executionContext) unmarshalInputUpdateUserInput(ctx context.Context, o
 			if err != nil {
 				return it, err
 			}
+		case "clearCreatedObjects":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearCreatedObjects"))
+			it.ClearCreatedObjects, err = ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		case "addUpdatedObjectIDs":
 			var err error
 
@@ -13402,6 +13591,14 @@ func (ec *executionContext) unmarshalInputUpdateUserInput(ctx context.Context, o
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("removeUpdatedObjectIDs"))
 			it.RemoveUpdatedObjectIDs, err = ec.unmarshalOID2ᚕradioatelierᚋentᚋschemaᚋpuuidᚐIDᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "clearUpdatedObjects":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearUpdatedObjects"))
+			it.ClearUpdatedObjects, err = ec.unmarshalOBoolean2bool(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -13421,6 +13618,14 @@ func (ec *executionContext) unmarshalInputUpdateUserInput(ctx context.Context, o
 			if err != nil {
 				return it, err
 			}
+		case "clearDeletedObjects":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearDeletedObjects"))
+			it.ClearDeletedObjects, err = ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		case "addCreatedCollectionIDs":
 			var err error
 
@@ -13434,6 +13639,14 @@ func (ec *executionContext) unmarshalInputUpdateUserInput(ctx context.Context, o
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("removeCreatedCollectionIDs"))
 			it.RemoveCreatedCollectionIDs, err = ec.unmarshalOID2ᚕradioatelierᚋentᚋschemaᚋpuuidᚐIDᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "clearCreatedCollections":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearCreatedCollections"))
+			it.ClearCreatedCollections, err = ec.unmarshalOBoolean2bool(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -13453,6 +13666,14 @@ func (ec *executionContext) unmarshalInputUpdateUserInput(ctx context.Context, o
 			if err != nil {
 				return it, err
 			}
+		case "clearUpdatedCollections":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearUpdatedCollections"))
+			it.ClearUpdatedCollections, err = ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		case "addCollectionIDs":
 			var err error
 
@@ -13469,6 +13690,14 @@ func (ec *executionContext) unmarshalInputUpdateUserInput(ctx context.Context, o
 			if err != nil {
 				return it, err
 			}
+		case "clearCollections":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearCollections"))
+			it.ClearCollections, err = ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		case "addObjectInfoIDs":
 			var err error
 
@@ -13482,6 +13711,14 @@ func (ec *executionContext) unmarshalInputUpdateUserInput(ctx context.Context, o
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("removeObjectInfoIDs"))
 			it.RemoveObjectInfoIDs, err = ec.unmarshalOID2ᚕradioatelierᚋentᚋschemaᚋpuuidᚐIDᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "clearObjectInfo":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearObjectInfo"))
+			it.ClearObjectInfo, err = ec.unmarshalOBoolean2bool(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -16043,6 +16280,22 @@ func (ec *executionContext) marshalNCityConnection2ᚖradioatelierᚋentᚐCityC
 	return ec._CityConnection(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNCityOrderField2ᚖradioatelierᚋentᚐCityOrderField(ctx context.Context, v interface{}) (*ent.CityOrderField, error) {
+	var res = new(ent.CityOrderField)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCityOrderField2ᚖradioatelierᚋentᚐCityOrderField(ctx context.Context, sel ast.SelectionSet, v *ent.CityOrderField) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return v
+}
+
 func (ec *executionContext) unmarshalNCityWhereInput2ᚖradioatelierᚋentᚐCityWhereInput(ctx context.Context, v interface{}) (*ent.CityWhereInput, error) {
 	res, err := ec.unmarshalInputCityWhereInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
@@ -16263,6 +16516,22 @@ func (ec *executionContext) marshalNObjectConnection2ᚖradioatelierᚋentᚐObj
 		return graphql.Null
 	}
 	return ec._ObjectConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNObjectOrderField2ᚖradioatelierᚋentᚐObjectOrderField(ctx context.Context, v interface{}) (*ent.ObjectOrderField, error) {
+	var res = new(ent.ObjectOrderField)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNObjectOrderField2ᚖradioatelierᚋentᚐObjectOrderField(ctx context.Context, sel ast.SelectionSet, v *ent.ObjectOrderField) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return v
 }
 
 func (ec *executionContext) unmarshalNObjectWhereInput2ᚖradioatelierᚋentᚐObjectWhereInput(ctx context.Context, v interface{}) (*ent.ObjectWhereInput, error) {
@@ -16717,6 +16986,14 @@ func (ec *executionContext) marshalOCityEdge2ᚖradioatelierᚋentᚐCityEdge(ct
 	return ec._CityEdge(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalOCityOrder2ᚖradioatelierᚋentᚐCityOrder(ctx context.Context, v interface{}) (*ent.CityOrder, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputCityOrder(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalOCityWhereInput2ᚕᚖradioatelierᚋentᚐCityWhereInputᚄ(ctx context.Context, v interface{}) ([]*ent.CityWhereInput, error) {
 	if v == nil {
 		return nil, nil
@@ -17130,6 +17407,14 @@ func (ec *executionContext) marshalOObjectEdge2ᚖradioatelierᚋentᚐObjectEdg
 		return graphql.Null
 	}
 	return ec._ObjectEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOObjectOrder2ᚖradioatelierᚋentᚐObjectOrder(ctx context.Context, v interface{}) (*ent.ObjectOrder, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputObjectOrder(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOObjectWhereInput2ᚕᚖradioatelierᚋentᚐObjectWhereInputᚄ(ctx context.Context, v interface{}) ([]*ent.ObjectWhereInput, error) {

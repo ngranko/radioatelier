@@ -147,50 +147,8 @@ func (cc *CollectionCreate) Mutation() *CollectionMutation {
 
 // Save creates the Collection in the database.
 func (cc *CollectionCreate) Save(ctx context.Context) (*Collection, error) {
-	var (
-		err  error
-		node *Collection
-	)
 	cc.defaults()
-	if len(cc.hooks) == 0 {
-		if err = cc.check(); err != nil {
-			return nil, err
-		}
-		node, err = cc.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*CollectionMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			if err = cc.check(); err != nil {
-				return nil, err
-			}
-			cc.mutation = mutation
-			if node, err = cc.sqlSave(ctx); err != nil {
-				return nil, err
-			}
-			mutation.id = &node.ID
-			mutation.done = true
-			return node, err
-		})
-		for i := len(cc.hooks) - 1; i >= 0; i-- {
-			if cc.hooks[i] == nil {
-				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = cc.hooks[i](mut)
-		}
-		v, err := mut.Mutate(ctx, cc.mutation)
-		if err != nil {
-			return nil, err
-		}
-		nv, ok := v.(*Collection)
-		if !ok {
-			return nil, fmt.Errorf("unexpected node type %T returned from CollectionMutation", v)
-		}
-		node = nv
-	}
-	return node, err
+	return withHooks[*Collection, CollectionMutation](ctx, cc.sqlSave, cc.mutation, cc.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
@@ -252,6 +210,9 @@ func (cc *CollectionCreate) check() error {
 }
 
 func (cc *CollectionCreate) sqlSave(ctx context.Context) (*Collection, error) {
+	if err := cc.check(); err != nil {
+		return nil, err
+	}
 	_node, _spec := cc.createSpec()
 	if err := sqlgraph.CreateNode(ctx, cc.driver, _spec); err != nil {
 		if sqlgraph.IsConstraintError(err) {
@@ -266,19 +227,15 @@ func (cc *CollectionCreate) sqlSave(ctx context.Context) (*Collection, error) {
 			return nil, err
 		}
 	}
+	cc.mutation.id = &_node.ID
+	cc.mutation.done = true
 	return _node, nil
 }
 
 func (cc *CollectionCreate) createSpec() (*Collection, *sqlgraph.CreateSpec) {
 	var (
 		_node = &Collection{config: cc.config}
-		_spec = &sqlgraph.CreateSpec{
-			Table: collection.Table,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeString,
-				Column: collection.FieldID,
-			},
-		}
+		_spec = sqlgraph.NewCreateSpec(collection.Table, sqlgraph.NewFieldSpec(collection.FieldID, field.TypeString))
 	)
 	_spec.OnConflict = cc.conflict
 	if id, ok := cc.mutation.ID(); ok {
@@ -286,35 +243,19 @@ func (cc *CollectionCreate) createSpec() (*Collection, *sqlgraph.CreateSpec) {
 		_spec.ID.Value = &id
 	}
 	if value, ok := cc.mutation.Name(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: collection.FieldName,
-		})
+		_spec.SetField(collection.FieldName, field.TypeString, value)
 		_node.Name = value
 	}
 	if value, ok := cc.mutation.Description(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: collection.FieldDescription,
-		})
+		_spec.SetField(collection.FieldDescription, field.TypeString, value)
 		_node.Description = value
 	}
 	if value, ok := cc.mutation.CreatedAt(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: collection.FieldCreatedAt,
-		})
+		_spec.SetField(collection.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
 	}
 	if value, ok := cc.mutation.UpdatedAt(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: collection.FieldUpdatedAt,
-		})
+		_spec.SetField(collection.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
 	}
 	if nodes := cc.mutation.CreatedByIDs(); len(nodes) > 0 {
@@ -325,10 +266,7 @@ func (cc *CollectionCreate) createSpec() (*Collection, *sqlgraph.CreateSpec) {
 			Columns: []string{collection.CreatedByColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
-					Column: user.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeString),
 			},
 		}
 		for _, k := range nodes {
@@ -345,10 +283,7 @@ func (cc *CollectionCreate) createSpec() (*Collection, *sqlgraph.CreateSpec) {
 			Columns: []string{collection.UpdatedByColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
-					Column: user.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeString),
 			},
 		}
 		for _, k := range nodes {
@@ -365,10 +300,7 @@ func (cc *CollectionCreate) createSpec() (*Collection, *sqlgraph.CreateSpec) {
 			Columns: collection.ObjectsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
-					Column: object.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(object.FieldID, field.TypeString),
 			},
 		}
 		for _, k := range nodes {
@@ -384,10 +316,7 @@ func (cc *CollectionCreate) createSpec() (*Collection, *sqlgraph.CreateSpec) {
 			Columns: collection.UsersPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
-					Column: user.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeString),
 			},
 		}
 		for _, k := range nodes {
@@ -474,18 +403,6 @@ func (u *CollectionUpsert) UpdateDescription() *CollectionUpsert {
 // ClearDescription clears the value of the "description" field.
 func (u *CollectionUpsert) ClearDescription() *CollectionUpsert {
 	u.SetNull(collection.FieldDescription)
-	return u
-}
-
-// SetCreatedAt sets the "created_at" field.
-func (u *CollectionUpsert) SetCreatedAt(v time.Time) *CollectionUpsert {
-	u.Set(collection.FieldCreatedAt, v)
-	return u
-}
-
-// UpdateCreatedAt sets the "created_at" field to the value that was provided on create.
-func (u *CollectionUpsert) UpdateCreatedAt() *CollectionUpsert {
-	u.SetExcluded(collection.FieldCreatedAt)
 	return u
 }
 
@@ -584,20 +501,6 @@ func (u *CollectionUpsertOne) UpdateDescription() *CollectionUpsertOne {
 func (u *CollectionUpsertOne) ClearDescription() *CollectionUpsertOne {
 	return u.Update(func(s *CollectionUpsert) {
 		s.ClearDescription()
-	})
-}
-
-// SetCreatedAt sets the "created_at" field.
-func (u *CollectionUpsertOne) SetCreatedAt(v time.Time) *CollectionUpsertOne {
-	return u.Update(func(s *CollectionUpsert) {
-		s.SetCreatedAt(v)
-	})
-}
-
-// UpdateCreatedAt sets the "created_at" field to the value that was provided on create.
-func (u *CollectionUpsertOne) UpdateCreatedAt() *CollectionUpsertOne {
-	return u.Update(func(s *CollectionUpsert) {
-		s.UpdateCreatedAt()
 	})
 }
 
@@ -793,7 +696,6 @@ func (u *CollectionUpsertBulk) UpdateNewValues() *CollectionUpsertBulk {
 		for _, b := range u.create.builders {
 			if _, exists := b.mutation.ID(); exists {
 				s.SetIgnore(collection.FieldID)
-				return
 			}
 			if _, exists := b.mutation.CreatedAt(); exists {
 				s.SetIgnore(collection.FieldCreatedAt)
@@ -862,20 +764,6 @@ func (u *CollectionUpsertBulk) UpdateDescription() *CollectionUpsertBulk {
 func (u *CollectionUpsertBulk) ClearDescription() *CollectionUpsertBulk {
 	return u.Update(func(s *CollectionUpsert) {
 		s.ClearDescription()
-	})
-}
-
-// SetCreatedAt sets the "created_at" field.
-func (u *CollectionUpsertBulk) SetCreatedAt(v time.Time) *CollectionUpsertBulk {
-	return u.Update(func(s *CollectionUpsert) {
-		s.SetCreatedAt(v)
-	})
-}
-
-// UpdateCreatedAt sets the "created_at" field to the value that was provided on create.
-func (u *CollectionUpsertBulk) UpdateCreatedAt() *CollectionUpsertBulk {
-	return u.Update(func(s *CollectionUpsert) {
-		s.UpdateCreatedAt()
 	})
 }
 

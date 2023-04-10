@@ -33,6 +33,7 @@ func (c *CityCreate) SetInput(i CreateCityInput) *CityCreate {
 type UpdateCityInput struct {
 	Name            *string
 	Country         *string
+	ClearObjects    bool
 	AddObjectIDs    []puuid.ID
 	RemoveObjectIDs []puuid.ID
 }
@@ -44,6 +45,9 @@ func (i *UpdateCityInput) Mutate(m *CityMutation) {
 	}
 	if v := i.Country; v != nil {
 		m.SetCountry(*v)
+	}
+	if i.ClearObjects {
+		m.ClearObjects()
 	}
 	if v := i.AddObjectIDs; len(v) > 0 {
 		m.AddObjectIDs(v...)
@@ -115,8 +119,10 @@ type UpdateCollectionInput struct {
 	CreatedByID      *puuid.ID
 	ClearUpdatedBy   bool
 	UpdatedByID      *puuid.ID
+	ClearObjects     bool
 	AddObjectIDs     []puuid.ID
 	RemoveObjectIDs  []puuid.ID
+	ClearUsers       bool
 	AddUserIDs       []puuid.ID
 	RemoveUserIDs    []puuid.ID
 }
@@ -147,11 +153,17 @@ func (i *UpdateCollectionInput) Mutate(m *CollectionMutation) {
 	if v := i.UpdatedByID; v != nil {
 		m.SetUpdatedByID(*v)
 	}
+	if i.ClearObjects {
+		m.ClearObjects()
+	}
 	if v := i.AddObjectIDs; len(v) > 0 {
 		m.AddObjectIDs(v...)
 	}
 	if v := i.RemoveObjectIDs; len(v) > 0 {
 		m.RemoveObjectIDs(v...)
+	}
+	if i.ClearUsers {
+		m.ClearUsers()
 	}
 	if v := i.AddUserIDs; len(v) > 0 {
 		m.AddUserIDs(v...)
@@ -296,8 +308,10 @@ type UpdateObjectInput struct {
 	UpdatedByID          *puuid.ID
 	ClearDeletedBy       bool
 	DeletedByID          *puuid.ID
+	ClearCollections     bool
 	AddCollectionIDs     []puuid.ID
 	RemoveCollectionIDs  []puuid.ID
+	ClearUserInfo        bool
 	AddUserInfoIDs       []puuid.ID
 	RemoveUserInfoIDs    []puuid.ID
 	ClearCity            bool
@@ -399,11 +413,17 @@ func (i *UpdateObjectInput) Mutate(m *ObjectMutation) {
 	if v := i.DeletedByID; v != nil {
 		m.SetDeletedByID(*v)
 	}
+	if i.ClearCollections {
+		m.ClearCollections()
+	}
 	if v := i.AddCollectionIDs; len(v) > 0 {
 		m.AddCollectionIDs(v...)
 	}
 	if v := i.RemoveCollectionIDs; len(v) > 0 {
 		m.RemoveCollectionIDs(v...)
+	}
+	if i.ClearUserInfo {
+		m.ClearUserInfo()
 	}
 	if v := i.AddUserInfoIDs; len(v) > 0 {
 		m.AddUserInfoIDs(v...)
@@ -560,18 +580,25 @@ type UpdateUserInput struct {
 	ClearNotionID              bool
 	NotionID                   *string
 	IsNotionSubject            *bool
+	ClearCreatedObjects        bool
 	AddCreatedObjectIDs        []puuid.ID
 	RemoveCreatedObjectIDs     []puuid.ID
+	ClearUpdatedObjects        bool
 	AddUpdatedObjectIDs        []puuid.ID
 	RemoveUpdatedObjectIDs     []puuid.ID
+	ClearDeletedObjects        bool
 	AddDeletedObjectIDs        []puuid.ID
 	RemoveDeletedObjectIDs     []puuid.ID
+	ClearCreatedCollections    bool
 	AddCreatedCollectionIDs    []puuid.ID
 	RemoveCreatedCollectionIDs []puuid.ID
+	ClearUpdatedCollections    bool
 	AddUpdatedCollectionIDs    []puuid.ID
 	RemoveUpdatedCollectionIDs []puuid.ID
+	ClearCollections           bool
 	AddCollectionIDs           []puuid.ID
 	RemoveCollectionIDs        []puuid.ID
+	ClearObjectInfo            bool
 	AddObjectInfoIDs           []puuid.ID
 	RemoveObjectInfoIDs        []puuid.ID
 }
@@ -611,11 +638,17 @@ func (i *UpdateUserInput) Mutate(m *UserMutation) {
 	if v := i.IsNotionSubject; v != nil {
 		m.SetIsNotionSubject(*v)
 	}
+	if i.ClearCreatedObjects {
+		m.ClearCreatedObjects()
+	}
 	if v := i.AddCreatedObjectIDs; len(v) > 0 {
 		m.AddCreatedObjectIDs(v...)
 	}
 	if v := i.RemoveCreatedObjectIDs; len(v) > 0 {
 		m.RemoveCreatedObjectIDs(v...)
+	}
+	if i.ClearUpdatedObjects {
+		m.ClearUpdatedObjects()
 	}
 	if v := i.AddUpdatedObjectIDs; len(v) > 0 {
 		m.AddUpdatedObjectIDs(v...)
@@ -623,11 +656,17 @@ func (i *UpdateUserInput) Mutate(m *UserMutation) {
 	if v := i.RemoveUpdatedObjectIDs; len(v) > 0 {
 		m.RemoveUpdatedObjectIDs(v...)
 	}
+	if i.ClearDeletedObjects {
+		m.ClearDeletedObjects()
+	}
 	if v := i.AddDeletedObjectIDs; len(v) > 0 {
 		m.AddDeletedObjectIDs(v...)
 	}
 	if v := i.RemoveDeletedObjectIDs; len(v) > 0 {
 		m.RemoveDeletedObjectIDs(v...)
+	}
+	if i.ClearCreatedCollections {
+		m.ClearCreatedCollections()
 	}
 	if v := i.AddCreatedCollectionIDs; len(v) > 0 {
 		m.AddCreatedCollectionIDs(v...)
@@ -635,17 +674,26 @@ func (i *UpdateUserInput) Mutate(m *UserMutation) {
 	if v := i.RemoveCreatedCollectionIDs; len(v) > 0 {
 		m.RemoveCreatedCollectionIDs(v...)
 	}
+	if i.ClearUpdatedCollections {
+		m.ClearUpdatedCollections()
+	}
 	if v := i.AddUpdatedCollectionIDs; len(v) > 0 {
 		m.AddUpdatedCollectionIDs(v...)
 	}
 	if v := i.RemoveUpdatedCollectionIDs; len(v) > 0 {
 		m.RemoveUpdatedCollectionIDs(v...)
 	}
+	if i.ClearCollections {
+		m.ClearCollections()
+	}
 	if v := i.AddCollectionIDs; len(v) > 0 {
 		m.AddCollectionIDs(v...)
 	}
 	if v := i.RemoveCollectionIDs; len(v) > 0 {
 		m.RemoveCollectionIDs(v...)
+	}
+	if i.ClearObjectInfo {
+		m.ClearObjectInfo()
 	}
 	if v := i.AddObjectInfoIDs; len(v) > 0 {
 		m.AddObjectInfoIDs(v...)

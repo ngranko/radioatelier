@@ -27,13 +27,16 @@ func (c *CityQuery) collectField(ctx context.Context, op *graphql.OperationConte
 		switch field.Name {
 		case "objects":
 			var (
-				path  = append(path, field.Name)
-				query = &ObjectQuery{config: c.config}
+				alias = field.Alias
+				path  = append(path, alias)
+				query = (&ObjectClient{config: c.config}).Query()
 			)
 			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
 				return err
 			}
-			c.withObjects = query
+			c.WithNamedObjects(alias, func(wq *ObjectQuery) {
+				*wq = *query
+			})
 		}
 	}
 	return nil
@@ -62,6 +65,28 @@ func newCityPaginateArgs(rv map[string]interface{}) *cityPaginateArgs {
 	if v := rv[beforeField]; v != nil {
 		args.before = v.(*Cursor)
 	}
+	if v, ok := rv[orderByField]; ok {
+		switch v := v.(type) {
+		case map[string]interface{}:
+			var (
+				err1, err2 error
+				order      = &CityOrder{Field: &CityOrderField{}}
+			)
+			if d, ok := v[directionField]; ok {
+				err1 = order.Direction.UnmarshalGQL(d)
+			}
+			if f, ok := v[fieldField]; ok {
+				err2 = order.Field.UnmarshalGQL(f)
+			}
+			if err1 == nil && err2 == nil {
+				args.opts = append(args.opts, WithCityOrder(order))
+			}
+		case *CityOrder:
+			if v != nil {
+				args.opts = append(args.opts, WithCityOrder(v))
+			}
+		}
+	}
 	if v, ok := rv[whereField].(*CityWhereInput); ok {
 		args.opts = append(args.opts, WithCityFilter(v.Filter))
 	}
@@ -84,19 +109,21 @@ func (c *CollectionQuery) collectField(ctx context.Context, op *graphql.Operatio
 	path = append([]string(nil), path...)
 	for _, field := range graphql.CollectFields(op, field.Selections, satisfies) {
 		switch field.Name {
-		case "createdBy", "created_by":
+		case "createdBy":
 			var (
-				path  = append(path, field.Name)
-				query = &UserQuery{config: c.config}
+				alias = field.Alias
+				path  = append(path, alias)
+				query = (&UserClient{config: c.config}).Query()
 			)
 			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
 				return err
 			}
 			c.withCreatedBy = query
-		case "updatedBy", "updated_by":
+		case "updatedBy":
 			var (
-				path  = append(path, field.Name)
-				query = &UserQuery{config: c.config}
+				alias = field.Alias
+				path  = append(path, alias)
+				query = (&UserClient{config: c.config}).Query()
 			)
 			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
 				return err
@@ -104,22 +131,28 @@ func (c *CollectionQuery) collectField(ctx context.Context, op *graphql.Operatio
 			c.withUpdatedBy = query
 		case "objects":
 			var (
-				path  = append(path, field.Name)
-				query = &ObjectQuery{config: c.config}
+				alias = field.Alias
+				path  = append(path, alias)
+				query = (&ObjectClient{config: c.config}).Query()
 			)
 			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
 				return err
 			}
-			c.withObjects = query
+			c.WithNamedObjects(alias, func(wq *ObjectQuery) {
+				*wq = *query
+			})
 		case "users":
 			var (
-				path  = append(path, field.Name)
-				query = &UserQuery{config: c.config}
+				alias = field.Alias
+				path  = append(path, alias)
+				query = (&UserClient{config: c.config}).Query()
 			)
 			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
 				return err
 			}
-			c.withUsers = query
+			c.WithNamedUsers(alias, func(wq *UserQuery) {
+				*wq = *query
+			})
 		}
 	}
 	return nil
@@ -192,28 +225,31 @@ func (o *ObjectQuery) collectField(ctx context.Context, op *graphql.OperationCon
 	path = append([]string(nil), path...)
 	for _, field := range graphql.CollectFields(op, field.Selections, satisfies) {
 		switch field.Name {
-		case "createdBy", "created_by":
+		case "createdBy":
 			var (
-				path  = append(path, field.Name)
-				query = &UserQuery{config: o.config}
+				alias = field.Alias
+				path  = append(path, alias)
+				query = (&UserClient{config: o.config}).Query()
 			)
 			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
 				return err
 			}
 			o.withCreatedBy = query
-		case "updatedBy", "updated_by":
+		case "updatedBy":
 			var (
-				path  = append(path, field.Name)
-				query = &UserQuery{config: o.config}
+				alias = field.Alias
+				path  = append(path, alias)
+				query = (&UserClient{config: o.config}).Query()
 			)
 			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
 				return err
 			}
 			o.withUpdatedBy = query
-		case "deletedBy", "deleted_by":
+		case "deletedBy":
 			var (
-				path  = append(path, field.Name)
-				query = &UserQuery{config: o.config}
+				alias = field.Alias
+				path  = append(path, alias)
+				query = (&UserClient{config: o.config}).Query()
 			)
 			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
 				return err
@@ -221,26 +257,33 @@ func (o *ObjectQuery) collectField(ctx context.Context, op *graphql.OperationCon
 			o.withDeletedBy = query
 		case "collections":
 			var (
-				path  = append(path, field.Name)
-				query = &CollectionQuery{config: o.config}
+				alias = field.Alias
+				path  = append(path, alias)
+				query = (&CollectionClient{config: o.config}).Query()
 			)
 			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
 				return err
 			}
-			o.withCollections = query
-		case "userInfo", "user_info":
+			o.WithNamedCollections(alias, func(wq *CollectionQuery) {
+				*wq = *query
+			})
+		case "userInfo":
 			var (
-				path  = append(path, field.Name)
-				query = &UserQuery{config: o.config}
+				alias = field.Alias
+				path  = append(path, alias)
+				query = (&UserClient{config: o.config}).Query()
 			)
 			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
 				return err
 			}
-			o.withUserInfo = query
+			o.WithNamedUserInfo(alias, func(wq *UserQuery) {
+				*wq = *query
+			})
 		case "city":
 			var (
-				path  = append(path, field.Name)
-				query = &CityQuery{config: o.config}
+				alias = field.Alias
+				path  = append(path, alias)
+				query = (&CityClient{config: o.config}).Query()
 			)
 			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
 				return err
@@ -274,6 +317,28 @@ func newObjectPaginateArgs(rv map[string]interface{}) *objectPaginateArgs {
 	if v := rv[beforeField]; v != nil {
 		args.before = v.(*Cursor)
 	}
+	if v, ok := rv[orderByField]; ok {
+		switch v := v.(type) {
+		case map[string]interface{}:
+			var (
+				err1, err2 error
+				order      = &ObjectOrder{Field: &ObjectOrderField{}}
+			)
+			if d, ok := v[directionField]; ok {
+				err1 = order.Direction.UnmarshalGQL(d)
+			}
+			if f, ok := v[fieldField]; ok {
+				err2 = order.Field.UnmarshalGQL(f)
+			}
+			if err1 == nil && err2 == nil {
+				args.opts = append(args.opts, WithObjectOrder(order))
+			}
+		case *ObjectOrder:
+			if v != nil {
+				args.opts = append(args.opts, WithObjectOrder(v))
+			}
+		}
+	}
 	if v, ok := rv[whereField].(*ObjectWhereInput); ok {
 		args.opts = append(args.opts, WithObjectFilter(v.Filter))
 	}
@@ -296,69 +361,90 @@ func (u *UserQuery) collectField(ctx context.Context, op *graphql.OperationConte
 	path = append([]string(nil), path...)
 	for _, field := range graphql.CollectFields(op, field.Selections, satisfies) {
 		switch field.Name {
-		case "createdObjects", "created_objects":
+		case "createdObjects":
 			var (
-				path  = append(path, field.Name)
-				query = &ObjectQuery{config: u.config}
+				alias = field.Alias
+				path  = append(path, alias)
+				query = (&ObjectClient{config: u.config}).Query()
 			)
 			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
 				return err
 			}
-			u.withCreatedObjects = query
-		case "updatedObjects", "updated_objects":
+			u.WithNamedCreatedObjects(alias, func(wq *ObjectQuery) {
+				*wq = *query
+			})
+		case "updatedObjects":
 			var (
-				path  = append(path, field.Name)
-				query = &ObjectQuery{config: u.config}
+				alias = field.Alias
+				path  = append(path, alias)
+				query = (&ObjectClient{config: u.config}).Query()
 			)
 			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
 				return err
 			}
-			u.withUpdatedObjects = query
-		case "deletedObjects", "deleted_objects":
+			u.WithNamedUpdatedObjects(alias, func(wq *ObjectQuery) {
+				*wq = *query
+			})
+		case "deletedObjects":
 			var (
-				path  = append(path, field.Name)
-				query = &ObjectQuery{config: u.config}
+				alias = field.Alias
+				path  = append(path, alias)
+				query = (&ObjectClient{config: u.config}).Query()
 			)
 			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
 				return err
 			}
-			u.withDeletedObjects = query
-		case "createdCollections", "created_collections":
+			u.WithNamedDeletedObjects(alias, func(wq *ObjectQuery) {
+				*wq = *query
+			})
+		case "createdCollections":
 			var (
-				path  = append(path, field.Name)
-				query = &CollectionQuery{config: u.config}
+				alias = field.Alias
+				path  = append(path, alias)
+				query = (&CollectionClient{config: u.config}).Query()
 			)
 			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
 				return err
 			}
-			u.withCreatedCollections = query
-		case "updatedCollections", "updated_collections":
+			u.WithNamedCreatedCollections(alias, func(wq *CollectionQuery) {
+				*wq = *query
+			})
+		case "updatedCollections":
 			var (
-				path  = append(path, field.Name)
-				query = &CollectionQuery{config: u.config}
+				alias = field.Alias
+				path  = append(path, alias)
+				query = (&CollectionClient{config: u.config}).Query()
 			)
 			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
 				return err
 			}
-			u.withUpdatedCollections = query
+			u.WithNamedUpdatedCollections(alias, func(wq *CollectionQuery) {
+				*wq = *query
+			})
 		case "collections":
 			var (
-				path  = append(path, field.Name)
-				query = &CollectionQuery{config: u.config}
+				alias = field.Alias
+				path  = append(path, alias)
+				query = (&CollectionClient{config: u.config}).Query()
 			)
 			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
 				return err
 			}
-			u.withCollections = query
-		case "objectInfo", "object_info":
+			u.WithNamedCollections(alias, func(wq *CollectionQuery) {
+				*wq = *query
+			})
+		case "objectInfo":
 			var (
-				path  = append(path, field.Name)
-				query = &ObjectQuery{config: u.config}
+				alias = field.Alias
+				path  = append(path, alias)
+				query = (&ObjectClient{config: u.config}).Query()
 			)
 			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
 				return err
 			}
-			u.withObjectInfo = query
+			u.WithNamedObjectInfo(alias, func(wq *ObjectQuery) {
+				*wq = *query
+			})
 		}
 	}
 	return nil
@@ -435,7 +521,7 @@ func fieldArgs(ctx context.Context, whereInput interface{}, path ...string) map[
 	for _, name := range path {
 		var field *graphql.CollectedField
 		for _, f := range graphql.CollectFields(oc, fc.Field.Selections, nil) {
-			if f.Name == name {
+			if f.Alias == name {
 				field = &f
 				break
 			}
@@ -472,7 +558,7 @@ func unmarshalArgs(ctx context.Context, whereInput interface{}, args map[string]
 		}
 		c := &Cursor{}
 		if c.UnmarshalGQL(v) == nil {
-			args[k] = &c
+			args[k] = c
 		}
 	}
 	if v, ok := args[whereField]; ok && whereInput != nil {

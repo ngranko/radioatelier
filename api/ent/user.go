@@ -62,7 +62,16 @@ type UserEdges struct {
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [8]bool
 	// totalCount holds the count of the edges above.
-	totalCount [7]*int
+	totalCount [7]map[string]int
+
+	namedCreatedObjects     map[string][]*Object
+	namedUpdatedObjects     map[string][]*Object
+	namedDeletedObjects     map[string][]*Object
+	namedCreatedCollections map[string][]*Collection
+	namedUpdatedCollections map[string][]*Collection
+	namedCollections        map[string][]*Collection
+	namedObjectInfo         map[string][]*Object
+	namedObjectUser         map[string][]*ObjectUser
 }
 
 // CreatedObjectsOrErr returns the CreatedObjects value or an error if the edge
@@ -138,8 +147,8 @@ func (e UserEdges) ObjectUserOrErr() ([]*ObjectUser, error) {
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
-func (*User) scanValues(columns []string) ([]interface{}, error) {
-	values := make([]interface{}, len(columns))
+func (*User) scanValues(columns []string) ([]any, error) {
+	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
 		case user.FieldID:
@@ -159,7 +168,7 @@ func (*User) scanValues(columns []string) ([]interface{}, error) {
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the User fields.
-func (u *User) assignValues(columns []string, values []interface{}) error {
+func (u *User) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
@@ -234,49 +243,49 @@ func (u *User) assignValues(columns []string, values []interface{}) error {
 
 // QueryCreatedObjects queries the "created_objects" edge of the User entity.
 func (u *User) QueryCreatedObjects() *ObjectQuery {
-	return (&UserClient{config: u.config}).QueryCreatedObjects(u)
+	return NewUserClient(u.config).QueryCreatedObjects(u)
 }
 
 // QueryUpdatedObjects queries the "updated_objects" edge of the User entity.
 func (u *User) QueryUpdatedObjects() *ObjectQuery {
-	return (&UserClient{config: u.config}).QueryUpdatedObjects(u)
+	return NewUserClient(u.config).QueryUpdatedObjects(u)
 }
 
 // QueryDeletedObjects queries the "deleted_objects" edge of the User entity.
 func (u *User) QueryDeletedObjects() *ObjectQuery {
-	return (&UserClient{config: u.config}).QueryDeletedObjects(u)
+	return NewUserClient(u.config).QueryDeletedObjects(u)
 }
 
 // QueryCreatedCollections queries the "created_collections" edge of the User entity.
 func (u *User) QueryCreatedCollections() *CollectionQuery {
-	return (&UserClient{config: u.config}).QueryCreatedCollections(u)
+	return NewUserClient(u.config).QueryCreatedCollections(u)
 }
 
 // QueryUpdatedCollections queries the "updated_collections" edge of the User entity.
 func (u *User) QueryUpdatedCollections() *CollectionQuery {
-	return (&UserClient{config: u.config}).QueryUpdatedCollections(u)
+	return NewUserClient(u.config).QueryUpdatedCollections(u)
 }
 
 // QueryCollections queries the "collections" edge of the User entity.
 func (u *User) QueryCollections() *CollectionQuery {
-	return (&UserClient{config: u.config}).QueryCollections(u)
+	return NewUserClient(u.config).QueryCollections(u)
 }
 
 // QueryObjectInfo queries the "object_info" edge of the User entity.
 func (u *User) QueryObjectInfo() *ObjectQuery {
-	return (&UserClient{config: u.config}).QueryObjectInfo(u)
+	return NewUserClient(u.config).QueryObjectInfo(u)
 }
 
 // QueryObjectUser queries the "object_user" edge of the User entity.
 func (u *User) QueryObjectUser() *ObjectUserQuery {
-	return (&UserClient{config: u.config}).QueryObjectUser(u)
+	return NewUserClient(u.config).QueryObjectUser(u)
 }
 
 // Update returns a builder for updating this User.
 // Note that you need to call User.Unwrap() before calling this method if this User
 // was returned from a transaction, and the transaction was committed or rolled back.
 func (u *User) Update() *UserUpdateOne {
-	return (&UserClient{config: u.config}).UpdateOne(u)
+	return NewUserClient(u.config).UpdateOne(u)
 }
 
 // Unwrap unwraps the User entity that was returned from a transaction after it was closed,
@@ -328,11 +337,197 @@ func (u *User) String() string {
 	return builder.String()
 }
 
-// Users is a parsable slice of User.
-type Users []*User
+// NamedCreatedObjects returns the CreatedObjects named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (u *User) NamedCreatedObjects(name string) ([]*Object, error) {
+	if u.Edges.namedCreatedObjects == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := u.Edges.namedCreatedObjects[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
 
-func (u Users) config(cfg config) {
-	for _i := range u {
-		u[_i].config = cfg
+func (u *User) appendNamedCreatedObjects(name string, edges ...*Object) {
+	if u.Edges.namedCreatedObjects == nil {
+		u.Edges.namedCreatedObjects = make(map[string][]*Object)
+	}
+	if len(edges) == 0 {
+		u.Edges.namedCreatedObjects[name] = []*Object{}
+	} else {
+		u.Edges.namedCreatedObjects[name] = append(u.Edges.namedCreatedObjects[name], edges...)
 	}
 }
+
+// NamedUpdatedObjects returns the UpdatedObjects named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (u *User) NamedUpdatedObjects(name string) ([]*Object, error) {
+	if u.Edges.namedUpdatedObjects == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := u.Edges.namedUpdatedObjects[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (u *User) appendNamedUpdatedObjects(name string, edges ...*Object) {
+	if u.Edges.namedUpdatedObjects == nil {
+		u.Edges.namedUpdatedObjects = make(map[string][]*Object)
+	}
+	if len(edges) == 0 {
+		u.Edges.namedUpdatedObjects[name] = []*Object{}
+	} else {
+		u.Edges.namedUpdatedObjects[name] = append(u.Edges.namedUpdatedObjects[name], edges...)
+	}
+}
+
+// NamedDeletedObjects returns the DeletedObjects named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (u *User) NamedDeletedObjects(name string) ([]*Object, error) {
+	if u.Edges.namedDeletedObjects == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := u.Edges.namedDeletedObjects[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (u *User) appendNamedDeletedObjects(name string, edges ...*Object) {
+	if u.Edges.namedDeletedObjects == nil {
+		u.Edges.namedDeletedObjects = make(map[string][]*Object)
+	}
+	if len(edges) == 0 {
+		u.Edges.namedDeletedObjects[name] = []*Object{}
+	} else {
+		u.Edges.namedDeletedObjects[name] = append(u.Edges.namedDeletedObjects[name], edges...)
+	}
+}
+
+// NamedCreatedCollections returns the CreatedCollections named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (u *User) NamedCreatedCollections(name string) ([]*Collection, error) {
+	if u.Edges.namedCreatedCollections == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := u.Edges.namedCreatedCollections[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (u *User) appendNamedCreatedCollections(name string, edges ...*Collection) {
+	if u.Edges.namedCreatedCollections == nil {
+		u.Edges.namedCreatedCollections = make(map[string][]*Collection)
+	}
+	if len(edges) == 0 {
+		u.Edges.namedCreatedCollections[name] = []*Collection{}
+	} else {
+		u.Edges.namedCreatedCollections[name] = append(u.Edges.namedCreatedCollections[name], edges...)
+	}
+}
+
+// NamedUpdatedCollections returns the UpdatedCollections named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (u *User) NamedUpdatedCollections(name string) ([]*Collection, error) {
+	if u.Edges.namedUpdatedCollections == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := u.Edges.namedUpdatedCollections[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (u *User) appendNamedUpdatedCollections(name string, edges ...*Collection) {
+	if u.Edges.namedUpdatedCollections == nil {
+		u.Edges.namedUpdatedCollections = make(map[string][]*Collection)
+	}
+	if len(edges) == 0 {
+		u.Edges.namedUpdatedCollections[name] = []*Collection{}
+	} else {
+		u.Edges.namedUpdatedCollections[name] = append(u.Edges.namedUpdatedCollections[name], edges...)
+	}
+}
+
+// NamedCollections returns the Collections named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (u *User) NamedCollections(name string) ([]*Collection, error) {
+	if u.Edges.namedCollections == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := u.Edges.namedCollections[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (u *User) appendNamedCollections(name string, edges ...*Collection) {
+	if u.Edges.namedCollections == nil {
+		u.Edges.namedCollections = make(map[string][]*Collection)
+	}
+	if len(edges) == 0 {
+		u.Edges.namedCollections[name] = []*Collection{}
+	} else {
+		u.Edges.namedCollections[name] = append(u.Edges.namedCollections[name], edges...)
+	}
+}
+
+// NamedObjectInfo returns the ObjectInfo named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (u *User) NamedObjectInfo(name string) ([]*Object, error) {
+	if u.Edges.namedObjectInfo == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := u.Edges.namedObjectInfo[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (u *User) appendNamedObjectInfo(name string, edges ...*Object) {
+	if u.Edges.namedObjectInfo == nil {
+		u.Edges.namedObjectInfo = make(map[string][]*Object)
+	}
+	if len(edges) == 0 {
+		u.Edges.namedObjectInfo[name] = []*Object{}
+	} else {
+		u.Edges.namedObjectInfo[name] = append(u.Edges.namedObjectInfo[name], edges...)
+	}
+}
+
+// NamedObjectUser returns the ObjectUser named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (u *User) NamedObjectUser(name string) ([]*ObjectUser, error) {
+	if u.Edges.namedObjectUser == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := u.Edges.namedObjectUser[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (u *User) appendNamedObjectUser(name string, edges ...*ObjectUser) {
+	if u.Edges.namedObjectUser == nil {
+		u.Edges.namedObjectUser = make(map[string][]*ObjectUser)
+	}
+	if len(edges) == 0 {
+		u.Edges.namedObjectUser[name] = []*ObjectUser{}
+	} else {
+		u.Edges.namedObjectUser[name] = append(u.Edges.namedObjectUser[name], edges...)
+	}
+}
+
+// Users is a parsable slice of User.
+type Users []*User

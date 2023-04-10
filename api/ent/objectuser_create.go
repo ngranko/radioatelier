@@ -82,48 +82,8 @@ func (ouc *ObjectUserCreate) Mutation() *ObjectUserMutation {
 
 // Save creates the ObjectUser in the database.
 func (ouc *ObjectUserCreate) Save(ctx context.Context) (*ObjectUser, error) {
-	var (
-		err  error
-		node *ObjectUser
-	)
 	ouc.defaults()
-	if len(ouc.hooks) == 0 {
-		if err = ouc.check(); err != nil {
-			return nil, err
-		}
-		node, err = ouc.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*ObjectUserMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			if err = ouc.check(); err != nil {
-				return nil, err
-			}
-			ouc.mutation = mutation
-			if node, err = ouc.sqlSave(ctx); err != nil {
-				return nil, err
-			}
-			return node, err
-		})
-		for i := len(ouc.hooks) - 1; i >= 0; i-- {
-			if ouc.hooks[i] == nil {
-				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = ouc.hooks[i](mut)
-		}
-		v, err := mut.Mutate(ctx, ouc.mutation)
-		if err != nil {
-			return nil, err
-		}
-		nv, ok := v.(*ObjectUser)
-		if !ok {
-			return nil, fmt.Errorf("unexpected node type %T returned from ObjectUserMutation", v)
-		}
-		node = nv
-	}
-	return node, err
+	return withHooks[*ObjectUser, ObjectUserMutation](ctx, ouc.sqlSave, ouc.mutation, ouc.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
@@ -177,6 +137,9 @@ func (ouc *ObjectUserCreate) check() error {
 }
 
 func (ouc *ObjectUserCreate) sqlSave(ctx context.Context) (*ObjectUser, error) {
+	if err := ouc.check(); err != nil {
+		return nil, err
+	}
 	_node, _spec := ouc.createSpec()
 	if err := sqlgraph.CreateNode(ctx, ouc.driver, _spec); err != nil {
 		if sqlgraph.IsConstraintError(err) {
@@ -190,25 +153,15 @@ func (ouc *ObjectUserCreate) sqlSave(ctx context.Context) (*ObjectUser, error) {
 func (ouc *ObjectUserCreate) createSpec() (*ObjectUser, *sqlgraph.CreateSpec) {
 	var (
 		_node = &ObjectUser{config: ouc.config}
-		_spec = &sqlgraph.CreateSpec{
-			Table: objectuser.Table,
-		}
+		_spec = sqlgraph.NewCreateSpec(objectuser.Table, nil)
 	)
 	_spec.OnConflict = ouc.conflict
 	if value, ok := ouc.mutation.IsVisited(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeBool,
-			Value:  value,
-			Column: objectuser.FieldIsVisited,
-		})
+		_spec.SetField(objectuser.FieldIsVisited, field.TypeBool, value)
 		_node.IsVisited = value
 	}
 	if value, ok := ouc.mutation.LastVisit(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: objectuser.FieldLastVisit,
-		})
+		_spec.SetField(objectuser.FieldLastVisit, field.TypeTime, value)
 		_node.LastVisit = &value
 	}
 	if nodes := ouc.mutation.UserIDs(); len(nodes) > 0 {
@@ -219,10 +172,7 @@ func (ouc *ObjectUserCreate) createSpec() (*ObjectUser, *sqlgraph.CreateSpec) {
 			Columns: []string{objectuser.UserColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
-					Column: user.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeString),
 			},
 		}
 		for _, k := range nodes {
@@ -239,10 +189,7 @@ func (ouc *ObjectUserCreate) createSpec() (*ObjectUser, *sqlgraph.CreateSpec) {
 			Columns: []string{objectuser.ObjectColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
-					Column: object.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(object.FieldID, field.TypeString),
 			},
 		}
 		for _, k := range nodes {

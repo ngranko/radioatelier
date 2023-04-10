@@ -5,31 +5,34 @@ package resolver
 
 import (
 	"context"
+
 	"radioatelier/ent"
 	"radioatelier/ent/schema/puuid"
 	"radioatelier/graph/generated"
+	"radioatelier/package/adapter/controller"
+	"radioatelier/package/adapter/db/repository"
+	"radioatelier/package/infrastructure/db"
 )
 
 // CreateCity is the resolver for the createCity field.
 func (r *mutationResolver) CreateCity(ctx context.Context, input ent.CreateCityInput) (*ent.City, error) {
-	client := ent.FromContext(ctx)
-	return client.City.Create().
-		SetInput(input).
-		Save(ctx)
+	repo := repository.NewCityRepository(db.WithTransactionalMutation(ctx))
+	city := controller.NewCityController(repo)
+	return city.Create(ctx, input)
 }
 
 // UpdateCity is the resolver for the updateCity field.
 func (r *mutationResolver) UpdateCity(ctx context.Context, id puuid.ID, input ent.UpdateCityInput) (*ent.City, error) {
-	client := ent.FromContext(ctx)
-	return client.City.UpdateOneID(id).
-		SetInput(input).
-		Save(ctx)
+	repo := repository.NewCityRepository(db.WithTransactionalMutation(ctx))
+	city := controller.NewCityController(repo)
+	return city.Update(ctx, id, input)
 }
 
 // DeleteCity is the resolver for the deleteCity field.
 func (r *mutationResolver) DeleteCity(ctx context.Context, id puuid.ID) (puuid.ID, error) {
-	client := ent.FromContext(ctx)
-	return id, client.City.DeleteOneID(id).Exec(ctx)
+	repo := repository.NewCityRepository(db.WithTransactionalMutation(ctx))
+	city := controller.NewCityController(repo)
+	return city.Delete(ctx, id)
 }
 
 // Mutation returns generated.MutationResolver implementation.

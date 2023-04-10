@@ -4,7 +4,6 @@ package ent
 
 import (
 	"context"
-	"fmt"
 	"radioatelier/ent/object"
 	"radioatelier/ent/predicate"
 
@@ -28,34 +27,7 @@ func (od *ObjectDelete) Where(ps ...predicate.Object) *ObjectDelete {
 
 // Exec executes the deletion query and returns how many vertices were deleted.
 func (od *ObjectDelete) Exec(ctx context.Context) (int, error) {
-	var (
-		err      error
-		affected int
-	)
-	if len(od.hooks) == 0 {
-		affected, err = od.sqlExec(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*ObjectMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			od.mutation = mutation
-			affected, err = od.sqlExec(ctx)
-			mutation.done = true
-			return affected, err
-		})
-		for i := len(od.hooks) - 1; i >= 0; i-- {
-			if od.hooks[i] == nil {
-				return 0, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = od.hooks[i](mut)
-		}
-		if _, err := mut.Mutate(ctx, od.mutation); err != nil {
-			return 0, err
-		}
-	}
-	return affected, err
+	return withHooks[int, ObjectMutation](ctx, od.sqlExec, od.mutation, od.hooks)
 }
 
 // ExecX is like Exec, but panics if an error occurs.
@@ -68,15 +40,7 @@ func (od *ObjectDelete) ExecX(ctx context.Context) int {
 }
 
 func (od *ObjectDelete) sqlExec(ctx context.Context) (int, error) {
-	_spec := &sqlgraph.DeleteSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table: object.Table,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeString,
-				Column: object.FieldID,
-			},
-		},
-	}
+	_spec := sqlgraph.NewDeleteSpec(object.Table, sqlgraph.NewFieldSpec(object.FieldID, field.TypeString))
 	if ps := od.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -88,12 +52,19 @@ func (od *ObjectDelete) sqlExec(ctx context.Context) (int, error) {
 	if err != nil && sqlgraph.IsConstraintError(err) {
 		err = &ConstraintError{msg: err.Error(), wrap: err}
 	}
+	od.mutation.done = true
 	return affected, err
 }
 
 // ObjectDeleteOne is the builder for deleting a single Object entity.
 type ObjectDeleteOne struct {
 	od *ObjectDelete
+}
+
+// Where appends a list predicates to the ObjectDelete builder.
+func (odo *ObjectDeleteOne) Where(ps ...predicate.Object) *ObjectDeleteOne {
+	odo.od.mutation.Where(ps...)
+	return odo
 }
 
 // Exec executes the deletion query.
@@ -111,5 +82,7 @@ func (odo *ObjectDeleteOne) Exec(ctx context.Context) error {
 
 // ExecX is like Exec, but panics if an error occurs.
 func (odo *ObjectDeleteOne) ExecX(ctx context.Context) {
-	odo.od.ExecX(ctx)
+	if err := odo.Exec(ctx); err != nil {
+		panic(err)
+	}
 }

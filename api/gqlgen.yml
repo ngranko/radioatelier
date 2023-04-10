@@ -21,7 +21,7 @@ exec:
 # Where should the resolver implementations go?
 resolver:
   layout: follow-schema
-  dir: graph/resolver
+  dir: package/adapter/resolver
   package: resolver
 
 # Optional: turn on use ` + "`" + `gqlgen:"fieldName"` + "`" + ` tags in your models
@@ -53,7 +53,7 @@ autobind:
 models:
   ID:
     model:
-      - radioatelier/ent/schema/puuid.ID
+      - radioatelier/package/model.ID
       - github.com/99designs/gqlgen/graphql.ID
   Int:
     model:
@@ -62,7 +62,7 @@ models:
       - github.com/99designs/gqlgen/graphql.Int32
   Node:
     model:
-      - radioatelier/ent.Noder
+      - radioatelier/package/model.Node
   Password:
     model:
-      - radioatelier/ent/schema/passwordgql.Password
+      - radioatelier/package/model.Password
