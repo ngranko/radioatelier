@@ -1,59 +1,45 @@
 package main
 
 import (
-    "context"
-    "errors"
-    "log"
-    "net/http"
+	"context"
+	"log"
 
-    "entgo.io/contrib/entgql"
-    "github.com/99designs/gqlgen/graphql/handler"
-    "github.com/99designs/gqlgen/graphql/playground"
-    "github.com/labstack/echo/v4"
-    "github.com/labstack/echo/v4/middleware"
-
-    "radioatelier/ent/migrate"
-    "radioatelier/graph/resolver"
-    "radioatelier/package/db"
-    _ "radioatelier/package/schedule"
+	"radioatelier/ent"
+	"radioatelier/ent/migrate"
+	"radioatelier/package/infrastructure/db"
+	"radioatelier/package/infrastructure/graphql"
+	"radioatelier/package/infrastructure/router"
+	"radioatelier/package/sync"
+	//_ "radioatelier/package/schedule"
 )
 
 func main() {
-    e := echo.New()
+	client := db.Client()
+	// TODO: does this required if it should basically be available throughout the whole app lifecycle?
+	defer client.Close()
 
-    defer db.Client.Close()
+	runMigrations(client)
 
-    // Run the migration here
-    err := db.Client.Schema.Create(
-        context.Background(),
-        migrate.WithDropIndex(true),
-        migrate.WithDropColumn(true),
-    )
+	srv := graphql.NewServer(client)
+	e := router.New(srv)
 
-    if !errors.Is(err, nil) {
-        log.Fatalf("Error: failed creating schema resources %v\n", err)
-    }
+	//obj, _ := db.Client.Object.Create().SetName("test").SetType("Вывеска").SetTags("123").SetCityID("CT-7480cb00-2db8-4df0-8495-a550be8705fb").SetCreatedByID("UR-795242bf-096c-44d0").SetUpdatedByID("UR-795242bf-096c-44d0").Save(context.Background())
+	//obj.Update().SetName("Updated test").Save(context.Background())
+	//db.Client.Object.DeleteOne(obj).Exec(context.Background())
 
-    e.Use(middleware.Logger())
-    e.Use(middleware.Recover())
+	sync.FromNotion(context.Background())
 
-    srv := handler.NewDefaultServer(resolver.NewSchema(db.Client))
-    srv.Use(entgql.Transactioner{TxOpener: db.Client})
-    {
-        e.POST("/query", func(c echo.Context) error {
-            srv.ServeHTTP(c.Response(), c.Request())
-            return nil
-        })
+	e.Logger.Fatal(e.Start(":8080"))
+}
 
-        e.GET("/playground", func(c echo.Context) error {
-            playground.Handler("GraphQL", "/query").ServeHTTP(c.Response(), c.Request())
-            return nil
-        })
-    }
-
-    e.GET("/", func(c echo.Context) error {
-        return c.String(http.StatusOK, "Welcome!")
-    })
-
-    e.Logger.Fatal(e.Start(":8080"))
+func runMigrations(client *ent.Client) {
+	// TODO: do I need to get a proper context over here?
+	err := client.Schema.Create(
+		context.Background(),
+		migrate.WithDropIndex(true),
+		migrate.WithDropColumn(true),
+	)
+	if err != nil {
+		log.Fatalf("Error: failed creating schema resources %v\n", err)
+	}
 }

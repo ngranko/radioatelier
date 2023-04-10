@@ -129,7 +129,7 @@ var (
 				Symbol:     "object_users_objects_object",
 				Columns:    []*schema.Column{ObjectUsersColumns[3]},
 				RefColumns: []*schema.Column{ObjectsColumns[0]},
-				OnDelete:   schema.NoAction,
+				OnDelete:   schema.Cascade,
 			},
 		},
 	}
@@ -154,8 +154,8 @@ var (
 	}
 	// ObjectCollectionsColumns holds the columns for the "object_collections" table.
 	ObjectCollectionsColumns = []*schema.Column{
-		{Name: "object_id", Type: field.TypeString},
-		{Name: "collection_id", Type: field.TypeString},
+		{Name: "object_id", Type: field.TypeString, SchemaType: map[string]string{"mysql": "char(39)"}},
+		{Name: "collection_id", Type: field.TypeString, SchemaType: map[string]string{"mysql": "char(39)"}},
 	}
 	// ObjectCollectionsTable holds the schema information for the "object_collections" table.
 	ObjectCollectionsTable = &schema.Table{
@@ -179,8 +179,8 @@ var (
 	}
 	// UserCollectionsColumns holds the columns for the "user_collections" table.
 	UserCollectionsColumns = []*schema.Column{
-		{Name: "user_id", Type: field.TypeString},
-		{Name: "collection_id", Type: field.TypeString},
+		{Name: "user_id", Type: field.TypeString, SchemaType: map[string]string{"mysql": "char(39)"}},
+		{Name: "collection_id", Type: field.TypeString, SchemaType: map[string]string{"mysql": "char(39)"}},
 	}
 	// UserCollectionsTable holds the schema information for the "user_collections" table.
 	UserCollectionsTable = &schema.Table{

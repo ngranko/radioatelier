@@ -5,28 +5,31 @@ package resolver
 
 import (
 	"context"
+
 	"radioatelier/ent"
 	"radioatelier/ent/schema/puuid"
+	"radioatelier/package/adapter/controller"
+	"radioatelier/package/adapter/db/repository"
+	"radioatelier/package/infrastructure/db"
 )
 
 // CreateCollection is the resolver for the createCollection field.
 func (r *mutationResolver) CreateCollection(ctx context.Context, input ent.CreateCollectionInput) (*ent.Collection, error) {
-	client := ent.FromContext(ctx)
-	return client.Collection.Create().
-		SetInput(input).
-		Save(ctx)
+	repo := repository.NewCollectionRepository(db.WithTransactionalMutation(ctx))
+	collection := controller.NewCollectionController(repo)
+	return collection.Create(ctx, input)
 }
 
 // UpdateCollection is the resolver for the updateCollection field.
 func (r *mutationResolver) UpdateCollection(ctx context.Context, id puuid.ID, input ent.UpdateCollectionInput) (*ent.Collection, error) {
-	client := ent.FromContext(ctx)
-	return client.Collection.UpdateOneID(id).
-		SetInput(input).
-		Save(ctx)
+	repo := repository.NewCollectionRepository(db.WithTransactionalMutation(ctx))
+	collection := controller.NewCollectionController(repo)
+	return collection.Update(ctx, id, input)
 }
 
 // DeleteCollection is the resolver for the deleteCollection field.
 func (r *mutationResolver) DeleteCollection(ctx context.Context, id puuid.ID) (puuid.ID, error) {
-	client := ent.FromContext(ctx)
-	return id, client.Collection.DeleteOneID(id).Exec(ctx)
+	repo := repository.NewCollectionRepository(db.WithTransactionalMutation(ctx))
+	collection := controller.NewCollectionController(repo)
+	return collection.Delete(ctx, id)
 }

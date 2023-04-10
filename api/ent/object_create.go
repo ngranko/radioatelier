@@ -330,50 +330,8 @@ func (oc *ObjectCreate) Mutation() *ObjectMutation {
 
 // Save creates the Object in the database.
 func (oc *ObjectCreate) Save(ctx context.Context) (*Object, error) {
-	var (
-		err  error
-		node *Object
-	)
 	oc.defaults()
-	if len(oc.hooks) == 0 {
-		if err = oc.check(); err != nil {
-			return nil, err
-		}
-		node, err = oc.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*ObjectMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			if err = oc.check(); err != nil {
-				return nil, err
-			}
-			oc.mutation = mutation
-			if node, err = oc.sqlSave(ctx); err != nil {
-				return nil, err
-			}
-			mutation.id = &node.ID
-			mutation.done = true
-			return node, err
-		})
-		for i := len(oc.hooks) - 1; i >= 0; i-- {
-			if oc.hooks[i] == nil {
-				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = oc.hooks[i](mut)
-		}
-		v, err := mut.Mutate(ctx, oc.mutation)
-		if err != nil {
-			return nil, err
-		}
-		nv, ok := v.(*Object)
-		if !ok {
-			return nil, fmt.Errorf("unexpected node type %T returned from ObjectMutation", v)
-		}
-		node = nv
-	}
-	return node, err
+	return withHooks[*Object, ObjectMutation](ctx, oc.sqlSave, oc.mutation, oc.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
@@ -451,6 +409,9 @@ func (oc *ObjectCreate) check() error {
 }
 
 func (oc *ObjectCreate) sqlSave(ctx context.Context) (*Object, error) {
+	if err := oc.check(); err != nil {
+		return nil, err
+	}
 	_node, _spec := oc.createSpec()
 	if err := sqlgraph.CreateNode(ctx, oc.driver, _spec); err != nil {
 		if sqlgraph.IsConstraintError(err) {
@@ -465,19 +426,15 @@ func (oc *ObjectCreate) sqlSave(ctx context.Context) (*Object, error) {
 			return nil, err
 		}
 	}
+	oc.mutation.id = &_node.ID
+	oc.mutation.done = true
 	return _node, nil
 }
 
 func (oc *ObjectCreate) createSpec() (*Object, *sqlgraph.CreateSpec) {
 	var (
 		_node = &Object{config: oc.config}
-		_spec = &sqlgraph.CreateSpec{
-			Table: object.Table,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeString,
-				Column: object.FieldID,
-			},
-		}
+		_spec = sqlgraph.NewCreateSpec(object.Table, sqlgraph.NewFieldSpec(object.FieldID, field.TypeString))
 	)
 	_spec.OnConflict = oc.conflict
 	if id, ok := oc.mutation.ID(); ok {
@@ -485,131 +442,67 @@ func (oc *ObjectCreate) createSpec() (*Object, *sqlgraph.CreateSpec) {
 		_spec.ID.Value = &id
 	}
 	if value, ok := oc.mutation.Name(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: object.FieldName,
-		})
+		_spec.SetField(object.FieldName, field.TypeString, value)
 		_node.Name = value
 	}
 	if value, ok := oc.mutation.Address(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: object.FieldAddress,
-		})
-		_node.Address = value
+		_spec.SetField(object.FieldAddress, field.TypeString, value)
+		_node.Address = &value
 	}
 	if value, ok := oc.mutation.Description(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: object.FieldDescription,
-		})
-		_node.Description = value
+		_spec.SetField(object.FieldDescription, field.TypeString, value)
+		_node.Description = &value
 	}
 	if value, ok := oc.mutation.Lat(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeFloat64,
-			Value:  value,
-			Column: object.FieldLat,
-		})
+		_spec.SetField(object.FieldLat, field.TypeFloat64, value)
 		_node.Lat = &value
 	}
 	if value, ok := oc.mutation.Lng(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeFloat64,
-			Value:  value,
-			Column: object.FieldLng,
-		})
+		_spec.SetField(object.FieldLng, field.TypeFloat64, value)
 		_node.Lng = &value
 	}
 	if value, ok := oc.mutation.InstalledPeriod(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: object.FieldInstalledPeriod,
-		})
+		_spec.SetField(object.FieldInstalledPeriod, field.TypeString, value)
 		_node.InstalledPeriod = &value
 	}
 	if value, ok := oc.mutation.IsRemoved(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeBool,
-			Value:  value,
-			Column: object.FieldIsRemoved,
-		})
+		_spec.SetField(object.FieldIsRemoved, field.TypeBool, value)
 		_node.IsRemoved = value
 	}
 	if value, ok := oc.mutation.RemovedPeriod(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: object.FieldRemovedPeriod,
-		})
+		_spec.SetField(object.FieldRemovedPeriod, field.TypeString, value)
 		_node.RemovedPeriod = &value
 	}
 	if value, ok := oc.mutation.Source(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: object.FieldSource,
-		})
+		_spec.SetField(object.FieldSource, field.TypeString, value)
 		_node.Source = &value
 	}
 	if value, ok := oc.mutation.GetType(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: object.FieldType,
-		})
+		_spec.SetField(object.FieldType, field.TypeString, value)
 		_node.Type = value
 	}
 	if value, ok := oc.mutation.Tags(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: object.FieldTags,
-		})
+		_spec.SetField(object.FieldTags, field.TypeString, value)
 		_node.Tags = value
 	}
 	if value, ok := oc.mutation.CreatedAt(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: object.FieldCreatedAt,
-		})
+		_spec.SetField(object.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
 	}
 	if value, ok := oc.mutation.UpdatedAt(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: object.FieldUpdatedAt,
-		})
+		_spec.SetField(object.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
 	}
 	if value, ok := oc.mutation.DeletedAt(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: object.FieldDeletedAt,
-		})
+		_spec.SetField(object.FieldDeletedAt, field.TypeTime, value)
 		_node.DeletedAt = &value
 	}
 	if value, ok := oc.mutation.LastSync(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: object.FieldLastSync,
-		})
+		_spec.SetField(object.FieldLastSync, field.TypeTime, value)
 		_node.LastSync = &value
 	}
 	if value, ok := oc.mutation.NotionID(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: object.FieldNotionID,
-		})
+		_spec.SetField(object.FieldNotionID, field.TypeString, value)
 		_node.NotionID = &value
 	}
 	if nodes := oc.mutation.CreatedByIDs(); len(nodes) > 0 {
@@ -620,10 +513,7 @@ func (oc *ObjectCreate) createSpec() (*Object, *sqlgraph.CreateSpec) {
 			Columns: []string{object.CreatedByColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
-					Column: user.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeString),
 			},
 		}
 		for _, k := range nodes {
@@ -640,10 +530,7 @@ func (oc *ObjectCreate) createSpec() (*Object, *sqlgraph.CreateSpec) {
 			Columns: []string{object.UpdatedByColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
-					Column: user.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeString),
 			},
 		}
 		for _, k := range nodes {
@@ -660,10 +547,7 @@ func (oc *ObjectCreate) createSpec() (*Object, *sqlgraph.CreateSpec) {
 			Columns: []string{object.DeletedByColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
-					Column: user.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeString),
 			},
 		}
 		for _, k := range nodes {
@@ -680,10 +564,7 @@ func (oc *ObjectCreate) createSpec() (*Object, *sqlgraph.CreateSpec) {
 			Columns: object.CollectionsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
-					Column: collection.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(collection.FieldID, field.TypeString),
 			},
 		}
 		for _, k := range nodes {
@@ -699,10 +580,7 @@ func (oc *ObjectCreate) createSpec() (*Object, *sqlgraph.CreateSpec) {
 			Columns: object.UserInfoPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
-					Column: user.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeString),
 			},
 		}
 		for _, k := range nodes {
@@ -722,10 +600,7 @@ func (oc *ObjectCreate) createSpec() (*Object, *sqlgraph.CreateSpec) {
 			Columns: []string{object.CityColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
-					Column: city.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(city.FieldID, field.TypeString),
 			},
 		}
 		for _, k := range nodes {
@@ -969,18 +844,6 @@ func (u *ObjectUpsert) SetTags(v string) *ObjectUpsert {
 // UpdateTags sets the "tags" field to the value that was provided on create.
 func (u *ObjectUpsert) UpdateTags() *ObjectUpsert {
 	u.SetExcluded(object.FieldTags)
-	return u
-}
-
-// SetCreatedAt sets the "created_at" field.
-func (u *ObjectUpsert) SetCreatedAt(v time.Time) *ObjectUpsert {
-	u.Set(object.FieldCreatedAt, v)
-	return u
-}
-
-// UpdateCreatedAt sets the "created_at" field to the value that was provided on create.
-func (u *ObjectUpsert) UpdateCreatedAt() *ObjectUpsert {
-	u.SetExcluded(object.FieldCreatedAt)
 	return u
 }
 
@@ -1318,20 +1181,6 @@ func (u *ObjectUpsertOne) UpdateTags() *ObjectUpsertOne {
 	})
 }
 
-// SetCreatedAt sets the "created_at" field.
-func (u *ObjectUpsertOne) SetCreatedAt(v time.Time) *ObjectUpsertOne {
-	return u.Update(func(s *ObjectUpsert) {
-		s.SetCreatedAt(v)
-	})
-}
-
-// UpdateCreatedAt sets the "created_at" field to the value that was provided on create.
-func (u *ObjectUpsertOne) UpdateCreatedAt() *ObjectUpsertOne {
-	return u.Update(func(s *ObjectUpsert) {
-		s.UpdateCreatedAt()
-	})
-}
-
 // SetUpdatedAt sets the "updated_at" field.
 func (u *ObjectUpsertOne) SetUpdatedAt(v time.Time) *ObjectUpsertOne {
 	return u.Update(func(s *ObjectUpsert) {
@@ -1587,7 +1436,6 @@ func (u *ObjectUpsertBulk) UpdateNewValues() *ObjectUpsertBulk {
 		for _, b := range u.create.builders {
 			if _, exists := b.mutation.ID(); exists {
 				s.SetIgnore(object.FieldID)
-				return
 			}
 			if _, exists := b.mutation.CreatedAt(); exists {
 				s.SetIgnore(object.FieldCreatedAt)
@@ -1838,20 +1686,6 @@ func (u *ObjectUpsertBulk) SetTags(v string) *ObjectUpsertBulk {
 func (u *ObjectUpsertBulk) UpdateTags() *ObjectUpsertBulk {
 	return u.Update(func(s *ObjectUpsert) {
 		s.UpdateTags()
-	})
-}
-
-// SetCreatedAt sets the "created_at" field.
-func (u *ObjectUpsertBulk) SetCreatedAt(v time.Time) *ObjectUpsertBulk {
-	return u.Update(func(s *ObjectUpsert) {
-		s.SetCreatedAt(v)
-	})
-}
-
-// UpdateCreatedAt sets the "created_at" field to the value that was provided on create.
-func (u *ObjectUpsertBulk) UpdateCreatedAt() *ObjectUpsertBulk {
-	return u.Update(func(s *ObjectUpsert) {
-		s.UpdateCreatedAt()
 	})
 }
 

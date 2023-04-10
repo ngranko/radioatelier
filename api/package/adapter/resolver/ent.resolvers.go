@@ -5,9 +5,12 @@ package resolver
 
 import (
 	"context"
+
 	"radioatelier/ent"
 	"radioatelier/ent/schema/puuid"
 	"radioatelier/graph/generated"
+	"radioatelier/package/adapter/controller"
+	repository2 "radioatelier/package/adapter/db/repository"
 )
 
 // Node is the resolver for the node field.
@@ -21,39 +24,31 @@ func (r *queryResolver) Nodes(ctx context.Context, ids []puuid.ID) ([]ent.Noder,
 }
 
 // Cities is the resolver for the cities field.
-func (r *queryResolver) Cities(ctx context.Context, after *ent.Cursor, first *int, before *ent.Cursor, last *int, where *ent.CityWhereInput) (*ent.CityConnection, error) {
-	return r.client.City.Query().
-		Paginate(ctx, after, first, before, last,
-			// ent.WithCityOrder(orderBy),
-			ent.WithCityFilter(where.Filter),
-		)
+func (r *queryResolver) Cities(ctx context.Context, after *ent.Cursor, first *int, before *ent.Cursor, last *int, orderBy *ent.CityOrder, where *ent.CityWhereInput) (*ent.CityConnection, error) {
+	repo := repository2.NewCityRepository(r.client)
+	city := controller.NewCityController(repo)
+	return city.List(ctx, after, first, before, last, orderBy, where)
 }
 
 // Collections is the resolver for the collections field.
 func (r *queryResolver) Collections(ctx context.Context, after *ent.Cursor, first *int, before *ent.Cursor, last *int, orderBy *ent.CollectionOrder, where *ent.CollectionWhereInput) (*ent.CollectionConnection, error) {
-	return r.client.Collection.Query().
-		Paginate(ctx, after, first, before, last,
-			ent.WithCollectionOrder(orderBy),
-			ent.WithCollectionFilter(where.Filter),
-		)
+	repo := repository2.NewCollectionRepository(r.client)
+	collection := controller.NewCollectionController(repo)
+	return collection.List(ctx, after, first, before, last, orderBy, where)
 }
 
 // Objects is the resolver for the objects field.
-func (r *queryResolver) Objects(ctx context.Context, after *ent.Cursor, first *int, before *ent.Cursor, last *int, where *ent.ObjectWhereInput) (*ent.ObjectConnection, error) {
-	return r.client.Object.Query().
-		Paginate(ctx, after, first, before, last,
-			// ent.WithObjectOrder(orderBy),
-			ent.WithObjectFilter(where.Filter),
-		)
+func (r *queryResolver) Objects(ctx context.Context, after *ent.Cursor, first *int, before *ent.Cursor, last *int, orderBy *ent.ObjectOrder, where *ent.ObjectWhereInput) (*ent.ObjectConnection, error) {
+	repo := repository2.NewObjectRepository(r.client)
+	object := controller.NewObjectController(repo)
+	return object.List(ctx, after, first, before, last, orderBy, where)
 }
 
 // Users is the resolver for the users field.
 func (r *queryResolver) Users(ctx context.Context, after *ent.Cursor, first *int, before *ent.Cursor, last *int, orderBy *ent.UserOrder, where *ent.UserWhereInput) (*ent.UserConnection, error) {
-	return r.client.User.Query().
-		Paginate(ctx, after, first, before, last,
-			ent.WithUserOrder(orderBy),
-			ent.WithUserFilter(where.Filter),
-		)
+	repo := repository2.NewUserRepository(r.client)
+	user := controller.NewUserController(repo)
+	return user.List(ctx, after, first, before, last, orderBy, where)
 }
 
 // Query returns generated.QueryResolver implementation.

@@ -33,7 +33,9 @@ type CityEdges struct {
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [1]bool
 	// totalCount holds the count of the edges above.
-	totalCount [1]*int
+	totalCount [1]map[string]int
+
+	namedObjects map[string][]*Object
 }
 
 // ObjectsOrErr returns the Objects value or an error if the edge
@@ -46,8 +48,8 @@ func (e CityEdges) ObjectsOrErr() ([]*Object, error) {
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
-func (*City) scanValues(columns []string) ([]interface{}, error) {
-	values := make([]interface{}, len(columns))
+func (*City) scanValues(columns []string) ([]any, error) {
+	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
 		case city.FieldID:
@@ -63,7 +65,7 @@ func (*City) scanValues(columns []string) ([]interface{}, error) {
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the City fields.
-func (c *City) assignValues(columns []string, values []interface{}) error {
+func (c *City) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
@@ -94,14 +96,14 @@ func (c *City) assignValues(columns []string, values []interface{}) error {
 
 // QueryObjects queries the "objects" edge of the City entity.
 func (c *City) QueryObjects() *ObjectQuery {
-	return (&CityClient{config: c.config}).QueryObjects(c)
+	return NewCityClient(c.config).QueryObjects(c)
 }
 
 // Update returns a builder for updating this City.
 // Note that you need to call City.Unwrap() before calling this method if this City
 // was returned from a transaction, and the transaction was committed or rolled back.
 func (c *City) Update() *CityUpdateOne {
-	return (&CityClient{config: c.config}).UpdateOne(c)
+	return NewCityClient(c.config).UpdateOne(c)
 }
 
 // Unwrap unwraps the City entity that was returned from a transaction after it was closed,
@@ -129,11 +131,29 @@ func (c *City) String() string {
 	return builder.String()
 }
 
-// Cities is a parsable slice of City.
-type Cities []*City
+// NamedObjects returns the Objects named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (c *City) NamedObjects(name string) ([]*Object, error) {
+	if c.Edges.namedObjects == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := c.Edges.namedObjects[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
 
-func (c Cities) config(cfg config) {
-	for _i := range c {
-		c[_i].config = cfg
+func (c *City) appendNamedObjects(name string, edges ...*Object) {
+	if c.Edges.namedObjects == nil {
+		c.Edges.namedObjects = make(map[string][]*Object)
+	}
+	if len(edges) == 0 {
+		c.Edges.namedObjects[name] = []*Object{}
+	} else {
+		c.Edges.namedObjects[name] = append(c.Edges.namedObjects[name], edges...)
 	}
 }
+
+// Cities is a parsable slice of City.
+type Cities []*City

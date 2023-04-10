@@ -1,13 +1,18 @@
 package schedule
 
 import (
-    "radioatelier/package/sync"
+	"context"
 
-    "github.com/robfig/cron/v3"
+	"radioatelier/package/adapter/cron"
+	"radioatelier/package/sync"
 )
 
 func init() {
-    c := cron.New()
-    c.AddFunc("@hourly", sync.FromNotion)
-    c.Start()
+	c := cron.New()
+	c.AddJob("@hourly", syncFromNotion)
+	c.Start()
+}
+
+func syncFromNotion() {
+	sync.FromNotion(context.Background())
 }

@@ -47,7 +47,10 @@ type CollectionEdges struct {
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [4]bool
 	// totalCount holds the count of the edges above.
-	totalCount [4]*int
+	totalCount [4]map[string]int
+
+	namedObjects map[string][]*Object
+	namedUsers   map[string][]*User
 }
 
 // CreatedByOrErr returns the CreatedBy value or an error if the edge
@@ -55,8 +58,7 @@ type CollectionEdges struct {
 func (e CollectionEdges) CreatedByOrErr() (*User, error) {
 	if e.loadedTypes[0] {
 		if e.CreatedBy == nil {
-			// The edge created_by was loaded in eager-loading,
-			// but was not found.
+			// Edge was loaded but was not found.
 			return nil, &NotFoundError{label: user.Label}
 		}
 		return e.CreatedBy, nil
@@ -69,8 +71,7 @@ func (e CollectionEdges) CreatedByOrErr() (*User, error) {
 func (e CollectionEdges) UpdatedByOrErr() (*User, error) {
 	if e.loadedTypes[1] {
 		if e.UpdatedBy == nil {
-			// The edge updated_by was loaded in eager-loading,
-			// but was not found.
+			// Edge was loaded but was not found.
 			return nil, &NotFoundError{label: user.Label}
 		}
 		return e.UpdatedBy, nil
@@ -97,8 +98,8 @@ func (e CollectionEdges) UsersOrErr() ([]*User, error) {
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
-func (*Collection) scanValues(columns []string) ([]interface{}, error) {
-	values := make([]interface{}, len(columns))
+func (*Collection) scanValues(columns []string) ([]any, error) {
+	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
 		case collection.FieldID:
@@ -120,7 +121,7 @@ func (*Collection) scanValues(columns []string) ([]interface{}, error) {
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the Collection fields.
-func (c *Collection) assignValues(columns []string, values []interface{}) error {
+func (c *Collection) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
@@ -177,29 +178,29 @@ func (c *Collection) assignValues(columns []string, values []interface{}) error 
 
 // QueryCreatedBy queries the "created_by" edge of the Collection entity.
 func (c *Collection) QueryCreatedBy() *UserQuery {
-	return (&CollectionClient{config: c.config}).QueryCreatedBy(c)
+	return NewCollectionClient(c.config).QueryCreatedBy(c)
 }
 
 // QueryUpdatedBy queries the "updated_by" edge of the Collection entity.
 func (c *Collection) QueryUpdatedBy() *UserQuery {
-	return (&CollectionClient{config: c.config}).QueryUpdatedBy(c)
+	return NewCollectionClient(c.config).QueryUpdatedBy(c)
 }
 
 // QueryObjects queries the "objects" edge of the Collection entity.
 func (c *Collection) QueryObjects() *ObjectQuery {
-	return (&CollectionClient{config: c.config}).QueryObjects(c)
+	return NewCollectionClient(c.config).QueryObjects(c)
 }
 
 // QueryUsers queries the "users" edge of the Collection entity.
 func (c *Collection) QueryUsers() *UserQuery {
-	return (&CollectionClient{config: c.config}).QueryUsers(c)
+	return NewCollectionClient(c.config).QueryUsers(c)
 }
 
 // Update returns a builder for updating this Collection.
 // Note that you need to call Collection.Unwrap() before calling this method if this Collection
 // was returned from a transaction, and the transaction was committed or rolled back.
 func (c *Collection) Update() *CollectionUpdateOne {
-	return (&CollectionClient{config: c.config}).UpdateOne(c)
+	return NewCollectionClient(c.config).UpdateOne(c)
 }
 
 // Unwrap unwraps the Collection entity that was returned from a transaction after it was closed,
@@ -233,11 +234,53 @@ func (c *Collection) String() string {
 	return builder.String()
 }
 
-// Collections is a parsable slice of Collection.
-type Collections []*Collection
+// NamedObjects returns the Objects named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (c *Collection) NamedObjects(name string) ([]*Object, error) {
+	if c.Edges.namedObjects == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := c.Edges.namedObjects[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
 
-func (c Collections) config(cfg config) {
-	for _i := range c {
-		c[_i].config = cfg
+func (c *Collection) appendNamedObjects(name string, edges ...*Object) {
+	if c.Edges.namedObjects == nil {
+		c.Edges.namedObjects = make(map[string][]*Object)
+	}
+	if len(edges) == 0 {
+		c.Edges.namedObjects[name] = []*Object{}
+	} else {
+		c.Edges.namedObjects[name] = append(c.Edges.namedObjects[name], edges...)
 	}
 }
+
+// NamedUsers returns the Users named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (c *Collection) NamedUsers(name string) ([]*User, error) {
+	if c.Edges.namedUsers == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := c.Edges.namedUsers[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (c *Collection) appendNamedUsers(name string, edges ...*User) {
+	if c.Edges.namedUsers == nil {
+		c.Edges.namedUsers = make(map[string][]*User)
+	}
+	if len(edges) == 0 {
+		c.Edges.namedUsers[name] = []*User{}
+	} else {
+		c.Edges.namedUsers[name] = append(c.Edges.namedUsers[name], edges...)
+	}
+}
+
+// Collections is a parsable slice of Collection.
+type Collections []*Collection

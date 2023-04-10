@@ -106,40 +106,7 @@ func (ouu *ObjectUserUpdate) ClearObject() *ObjectUserUpdate {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (ouu *ObjectUserUpdate) Save(ctx context.Context) (int, error) {
-	var (
-		err      error
-		affected int
-	)
-	if len(ouu.hooks) == 0 {
-		if err = ouu.check(); err != nil {
-			return 0, err
-		}
-		affected, err = ouu.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*ObjectUserMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			if err = ouu.check(); err != nil {
-				return 0, err
-			}
-			ouu.mutation = mutation
-			affected, err = ouu.sqlSave(ctx)
-			mutation.done = true
-			return affected, err
-		})
-		for i := len(ouu.hooks) - 1; i >= 0; i-- {
-			if ouu.hooks[i] == nil {
-				return 0, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = ouu.hooks[i](mut)
-		}
-		if _, err := mut.Mutate(ctx, ouu.mutation); err != nil {
-			return 0, err
-		}
-	}
-	return affected, err
+	return withHooks[int, ObjectUserMutation](ctx, ouu.sqlSave, ouu.mutation, ouu.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -176,22 +143,10 @@ func (ouu *ObjectUserUpdate) check() error {
 }
 
 func (ouu *ObjectUserUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   objectuser.Table,
-			Columns: objectuser.Columns,
-			CompositeID: []*sqlgraph.FieldSpec{
-				{
-					Type:   field.TypeString,
-					Column: objectuser.FieldUserID,
-				},
-				{
-					Type:   field.TypeString,
-					Column: objectuser.FieldObjectID,
-				},
-			},
-		},
+	if err := ouu.check(); err != nil {
+		return n, err
 	}
+	_spec := sqlgraph.NewUpdateSpec(objectuser.Table, objectuser.Columns, sqlgraph.NewFieldSpec(objectuser.FieldUserID, field.TypeString), sqlgraph.NewFieldSpec(objectuser.FieldObjectID, field.TypeString))
 	if ps := ouu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -200,24 +155,13 @@ func (ouu *ObjectUserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 	}
 	if value, ok := ouu.mutation.IsVisited(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeBool,
-			Value:  value,
-			Column: objectuser.FieldIsVisited,
-		})
+		_spec.SetField(objectuser.FieldIsVisited, field.TypeBool, value)
 	}
 	if value, ok := ouu.mutation.LastVisit(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: objectuser.FieldLastVisit,
-		})
+		_spec.SetField(objectuser.FieldLastVisit, field.TypeTime, value)
 	}
 	if ouu.mutation.LastVisitCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Column: objectuser.FieldLastVisit,
-		})
+		_spec.ClearField(objectuser.FieldLastVisit, field.TypeTime)
 	}
 	if ouu.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -227,10 +171,7 @@ func (ouu *ObjectUserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{objectuser.UserColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
-					Column: user.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeString),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -243,10 +184,7 @@ func (ouu *ObjectUserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{objectuser.UserColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
-					Column: user.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeString),
 			},
 		}
 		for _, k := range nodes {
@@ -262,10 +200,7 @@ func (ouu *ObjectUserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{objectuser.ObjectColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
-					Column: object.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(object.FieldID, field.TypeString),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -278,10 +213,7 @@ func (ouu *ObjectUserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{objectuser.ObjectColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
-					Column: object.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(object.FieldID, field.TypeString),
 			},
 		}
 		for _, k := range nodes {
@@ -297,6 +229,7 @@ func (ouu *ObjectUserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		return 0, err
 	}
+	ouu.mutation.done = true
 	return n, nil
 }
 
@@ -381,6 +314,12 @@ func (ouuo *ObjectUserUpdateOne) ClearObject() *ObjectUserUpdateOne {
 	return ouuo
 }
 
+// Where appends a list predicates to the ObjectUserUpdate builder.
+func (ouuo *ObjectUserUpdateOne) Where(ps ...predicate.ObjectUser) *ObjectUserUpdateOne {
+	ouuo.mutation.Where(ps...)
+	return ouuo
+}
+
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
 func (ouuo *ObjectUserUpdateOne) Select(field string, fields ...string) *ObjectUserUpdateOne {
@@ -390,46 +329,7 @@ func (ouuo *ObjectUserUpdateOne) Select(field string, fields ...string) *ObjectU
 
 // Save executes the query and returns the updated ObjectUser entity.
 func (ouuo *ObjectUserUpdateOne) Save(ctx context.Context) (*ObjectUser, error) {
-	var (
-		err  error
-		node *ObjectUser
-	)
-	if len(ouuo.hooks) == 0 {
-		if err = ouuo.check(); err != nil {
-			return nil, err
-		}
-		node, err = ouuo.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*ObjectUserMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			if err = ouuo.check(); err != nil {
-				return nil, err
-			}
-			ouuo.mutation = mutation
-			node, err = ouuo.sqlSave(ctx)
-			mutation.done = true
-			return node, err
-		})
-		for i := len(ouuo.hooks) - 1; i >= 0; i-- {
-			if ouuo.hooks[i] == nil {
-				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = ouuo.hooks[i](mut)
-		}
-		v, err := mut.Mutate(ctx, ouuo.mutation)
-		if err != nil {
-			return nil, err
-		}
-		nv, ok := v.(*ObjectUser)
-		if !ok {
-			return nil, fmt.Errorf("unexpected node type %T returned from ObjectUserMutation", v)
-		}
-		node = nv
-	}
-	return node, err
+	return withHooks[*ObjectUser, ObjectUserMutation](ctx, ouuo.sqlSave, ouuo.mutation, ouuo.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -466,22 +366,10 @@ func (ouuo *ObjectUserUpdateOne) check() error {
 }
 
 func (ouuo *ObjectUserUpdateOne) sqlSave(ctx context.Context) (_node *ObjectUser, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   objectuser.Table,
-			Columns: objectuser.Columns,
-			CompositeID: []*sqlgraph.FieldSpec{
-				{
-					Type:   field.TypeString,
-					Column: objectuser.FieldUserID,
-				},
-				{
-					Type:   field.TypeString,
-					Column: objectuser.FieldObjectID,
-				},
-			},
-		},
+	if err := ouuo.check(); err != nil {
+		return _node, err
 	}
+	_spec := sqlgraph.NewUpdateSpec(objectuser.Table, objectuser.Columns, sqlgraph.NewFieldSpec(objectuser.FieldUserID, field.TypeString), sqlgraph.NewFieldSpec(objectuser.FieldObjectID, field.TypeString))
 	if id, ok := ouuo.mutation.UserID(); !ok {
 		return nil, &ValidationError{Name: "user_id", err: errors.New(`ent: missing "ObjectUser.user_id" for update`)}
 	} else {
@@ -509,24 +397,13 @@ func (ouuo *ObjectUserUpdateOne) sqlSave(ctx context.Context) (_node *ObjectUser
 		}
 	}
 	if value, ok := ouuo.mutation.IsVisited(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeBool,
-			Value:  value,
-			Column: objectuser.FieldIsVisited,
-		})
+		_spec.SetField(objectuser.FieldIsVisited, field.TypeBool, value)
 	}
 	if value, ok := ouuo.mutation.LastVisit(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: objectuser.FieldLastVisit,
-		})
+		_spec.SetField(objectuser.FieldLastVisit, field.TypeTime, value)
 	}
 	if ouuo.mutation.LastVisitCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Column: objectuser.FieldLastVisit,
-		})
+		_spec.ClearField(objectuser.FieldLastVisit, field.TypeTime)
 	}
 	if ouuo.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -536,10 +413,7 @@ func (ouuo *ObjectUserUpdateOne) sqlSave(ctx context.Context) (_node *ObjectUser
 			Columns: []string{objectuser.UserColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
-					Column: user.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeString),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -552,10 +426,7 @@ func (ouuo *ObjectUserUpdateOne) sqlSave(ctx context.Context) (_node *ObjectUser
 			Columns: []string{objectuser.UserColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
-					Column: user.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeString),
 			},
 		}
 		for _, k := range nodes {
@@ -571,10 +442,7 @@ func (ouuo *ObjectUserUpdateOne) sqlSave(ctx context.Context) (_node *ObjectUser
 			Columns: []string{objectuser.ObjectColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
-					Column: object.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(object.FieldID, field.TypeString),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -587,10 +455,7 @@ func (ouuo *ObjectUserUpdateOne) sqlSave(ctx context.Context) (_node *ObjectUser
 			Columns: []string{objectuser.ObjectColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
-					Column: object.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(object.FieldID, field.TypeString),
 			},
 		}
 		for _, k := range nodes {
@@ -609,5 +474,6 @@ func (ouuo *ObjectUserUpdateOne) sqlSave(ctx context.Context) (_node *ObjectUser
 		}
 		return nil, err
 	}
+	ouuo.mutation.done = true
 	return _node, nil
 }
