@@ -1,7 +1,7 @@
 package model
 
 import (
-	"radioatelier/ent"
+    "radioatelier/ent"
 )
 
 type Collection = ent.Collection

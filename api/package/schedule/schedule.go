@@ -1,18 +1,18 @@
 package schedule
 
 import (
-	"context"
+    "context"
 
-	"radioatelier/package/adapter/cron"
-	"radioatelier/package/sync"
+    "radioatelier/package/adapter/cron"
+    "radioatelier/package/sync"
 )
 
 func init() {
-	c := cron.New()
-	c.AddJob("@hourly", syncFromNotion)
-	c.Start()
+    c := cron.New()
+    c.AddJob("@hourly", syncFromNotion)
+    c.Start()
 }
 
 func syncFromNotion() {
-	sync.FromNotion(context.Background())
+    sync.FromNotion(context.Background())
 }

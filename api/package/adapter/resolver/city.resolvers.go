@@ -4,35 +4,35 @@ package resolver
 // will be copied through when generating and any unknown code will be moved to the end.
 
 import (
-	"context"
+    "context"
 
-	"radioatelier/ent"
-	"radioatelier/ent/schema/puuid"
-	"radioatelier/graph/generated"
-	"radioatelier/package/adapter/controller"
-	"radioatelier/package/adapter/db/repository"
-	"radioatelier/package/infrastructure/db"
+    "radioatelier/ent"
+    "radioatelier/ent/schema/puuid"
+    "radioatelier/graph/generated"
+    "radioatelier/package/adapter/controller"
+    "radioatelier/package/adapter/db/repository"
+    "radioatelier/package/infrastructure/db"
 )
 
 // CreateCity is the resolver for the createCity field.
 func (r *mutationResolver) CreateCity(ctx context.Context, input ent.CreateCityInput) (*ent.City, error) {
-	repo := repository.NewCityRepository(db.WithTransactionalMutation(ctx))
-	city := controller.NewCityController(repo)
-	return city.Create(ctx, input)
+    repo := repository.NewCityRepository(db.WithTransactionalMutation(ctx))
+    city := controller.NewCityController(repo)
+    return city.Create(ctx, input)
 }
 
 // UpdateCity is the resolver for the updateCity field.
 func (r *mutationResolver) UpdateCity(ctx context.Context, id puuid.ID, input ent.UpdateCityInput) (*ent.City, error) {
-	repo := repository.NewCityRepository(db.WithTransactionalMutation(ctx))
-	city := controller.NewCityController(repo)
-	return city.Update(ctx, id, input)
+    repo := repository.NewCityRepository(db.WithTransactionalMutation(ctx))
+    city := controller.NewCityController(repo)
+    return city.Update(ctx, id, input)
 }
 
 // DeleteCity is the resolver for the deleteCity field.
 func (r *mutationResolver) DeleteCity(ctx context.Context, id puuid.ID) (puuid.ID, error) {
-	repo := repository.NewCityRepository(db.WithTransactionalMutation(ctx))
-	city := controller.NewCityController(repo)
-	return city.Delete(ctx, id)
+    repo := repository.NewCityRepository(db.WithTransactionalMutation(ctx))
+    city := controller.NewCityController(repo)
+    return city.Delete(ctx, id)
 }
 
 // Mutation returns generated.MutationResolver implementation.

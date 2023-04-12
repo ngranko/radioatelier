@@ -1,11 +1,11 @@
 package hook
 
 import (
-	"context"
+    "context"
 
-	"radioatelier/ent"
-	"radioatelier/ent/user"
-	"radioatelier/package/util"
+    "radioatelier/ent"
+    "radioatelier/ent/user"
+    "radioatelier/package/util"
 )
 
 //func SyncWithNotion(next ent.Mutator) ent.Mutator {
@@ -56,14 +56,14 @@ import (
 //}
 
 func isSyncable(ctx context.Context, obj *ent.Object) bool {
-	count, err := obj.QueryUserInfo().Where(user.NotionIDNotNil()).Count(ctx)
-	return err == nil && count > 0
+    count, err := obj.QueryUserInfo().Where(user.NotionIDNotNil()).Count(ctx)
+    return err == nil && count > 0
 }
 
 func isSyncMutation(fields []string) bool {
-	return util.Contains(fields, "last_sync")
+    return util.Contains(fields, "last_sync")
 }
 
 func isDeleteMutation(operation ent.Op) bool {
-	return operation == ent.OpDelete || operation == ent.OpDeleteOne
+    return operation == ent.OpDelete || operation == ent.OpDeleteOne
 }
