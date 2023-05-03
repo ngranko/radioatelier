@@ -80,12 +80,12 @@ if [[ ${CURRENT_BRANCH} != ${releaseBranch} ]]; then
 fi
 
 echo -e "creating app image"
-docker build --compress -q --tag registry.signlivesmatter.site/radioatelier-web/app:${version} --target prod docker || bail
+docker build --compress --file docker/app/Dockerfile --tag registry.radioatelier.one/radioatelier-web/app:${version} --target prod . || bail
 if ! isReleaseCandidateRelease ${version}; then
-    docker tag registry.signlivesmatter.site/radioatelier-web/app:${version} registry.signlivesmatter.site/radioatelier-web/app:latest
-    docker push registry.signlivesmatter.site/radioatelier-web/app:latest || bail
+    docker tag registry.radioatelier.one/radioatelier-web/app:${version} registry.radioatelier.one/radioatelier-web/app:latest
+    docker push registry.radioatelier.one/radioatelier-web/app:latest || bail
 fi
-docker push registry.signlivesmatter.site/radioatelier-web/app:${version} || bail
+docker push registry.radioatelier.one/radioatelier-web/app:${version} || bail
 
 if ! isReleaseCandidateRelease ${version}; then
     git tag v${version}
@@ -93,7 +93,7 @@ if ! isReleaseCandidateRelease ${version}; then
 fi
 
 echo -e "${GRAY}cleaning up created images${NC}"
-docker rmi registry.signlivesmatter.site/radioatelier-web/app:${version}
+docker rmi registry.radioatelier.one/radioatelier-web/app:${version}
 docker image prune -f
 
 cleanup
