@@ -32,10 +32,10 @@ ssh -t ngranko@$host "
     cd /var/docker/radioatelier-web
 
     echo -e \"Pulling docker images from the registry\"
-    updateImage registry.signlivesmatter.site/radioatelier-web/app ${version}
+    updateImage registry.radioatelier.one/radioatelier-web/app ${version}
 
     echo -e \"Creating new containers\"
-    docker-compose up -d
+    docker compose up -d
 
     echo -e \"Removing dangling docker images\"
     docker image prune -af
