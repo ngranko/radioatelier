@@ -1,4 +1,13 @@
-<div class="links">
+<script lang="ts">
+    let innerWidth;
+
+    $: rawIconWidth = innerWidth / 8;
+    $: iconWidth = Math.max(Math.min(rawIconWidth, 80), 40);
+</script>
+
+<svelte:window bind:innerWidth />
+
+<div class="links" style="--icon-width:{iconWidth}px">
     <a href="https://instagram.com/radio__atelier/" target="_blank">
         <img class="igIcon" src="/instagram_icon.svg" alt="instagram" />
     </a>
@@ -10,7 +19,7 @@
 <style lang="scss">
     .links {
         display: flex;
-        width: 320px;
+        width: calc(var(--icon-width) * 4);
         justify-content: space-between;
         align-items: flex-start;
         margin-top: 64px;
@@ -18,14 +27,14 @@
     }
 
     .igIcon {
-        width: 80px;
-        height: 80px;
+        width: var(--icon-width);
+        height: var(--icon-width);
         filter: invert(1);
     }
 
     .tgIcon {
-        width: 84px;
-        height: 84px;
+        width: calc(var(--icon-width) * 1.05);
+        height: calc(var(--icon-width) * 1.05);
         filter: invert(1);
     }
 </style>
