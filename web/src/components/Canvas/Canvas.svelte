@@ -84,7 +84,7 @@
     }
 
     function draw(ctx: CanvasRenderingContext2D) {
-        ctx.clearRect(-translate[0], -translate[1], canvasElement.width, canvasElement.height);
+        ctx.clearRect(-translate[0], -translate[1], width, height);
         fnsToDraw.forEach(fn => fn(ctx));
 
         if (animate) {
