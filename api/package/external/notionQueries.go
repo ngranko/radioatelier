@@ -12,7 +12,7 @@ import (
 )
 
 func QueryNotionObjects(ctx context.Context, startCursor *string) (*notionapi.DatabaseQueryResponse, error) {
-    return notion.Client().Database.Query(
+    return notion.GetClient().Database.Query(
         ctx,
         notionapi.DatabaseID(config.Get().NotionObjectsDBID),
         getQueryObjectRequestParams(startCursor),
@@ -44,7 +44,7 @@ func getQueryObjectRequestParams(startCursor *string) *notionapi.DatabaseQueryRe
 }
 
 func UpdateLastSync(ctx context.Context, pageID string, value time.Time) (*notionapi.Page, error) {
-    return notion.Client().Page.Update(
+    return notion.GetClient().Page.Update(
         ctx,
         notionapi.PageID(pageID),
         getUpdateLastSyncRequestParams(value.Truncate(time.Second)),
