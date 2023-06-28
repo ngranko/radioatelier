@@ -1,6 +1,7 @@
 docker/
 .env
 .env.*
+!.env.example
 docker-compose.yml
 .gitignore
 radioatelier
