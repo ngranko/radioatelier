@@ -53,7 +53,7 @@ autobind:
 models:
   ID:
     model:
-      - radioatelier/package/model.ID
+      - radioatelier/package/adapter/db/model.ID
       - github.com/99designs/gqlgen/graphql.ID
   Int:
     model:
@@ -62,7 +62,7 @@ models:
       - github.com/99designs/gqlgen/graphql.Int32
   Node:
     model:
-      - radioatelier/package/model.Node
+      - radioatelier/package/adapter/db/model.Node
   Password:
     model:
-      - radioatelier/package/model.Password
+      - radioatelier/package/adapter/db/model.Password
