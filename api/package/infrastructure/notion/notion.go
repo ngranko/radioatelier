@@ -6,14 +6,16 @@ import (
     "github.com/jomei/notionapi"
 )
 
-var сlient *notionapi.Client
+type Client = notionapi.Client
+
+var client *Client
 
 func init() {
     conf := config.Get()
 
-    сlient = notionapi.NewClient(notionapi.Token(conf.NotionToken))
+    client = notionapi.NewClient(notionapi.Token(conf.NotionToken))
 }
 
-func Client() *notionapi.Client {
-    return сlient
+func GetClient() *Client {
+    return client
 }

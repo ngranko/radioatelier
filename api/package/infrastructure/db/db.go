@@ -12,7 +12,9 @@ import (
     "radioatelier/package/infrastructure/db/hook"
 )
 
-var c *ent.Client
+type Client = ent.Client
+
+var c *Client
 
 func init() {
     var entOptions []ent.Option
@@ -57,6 +59,6 @@ func getDSN() string {
     return mc.FormatDSN()
 }
 
-func Client() *ent.Client {
+func GetClient() *Client {
     return c
 }

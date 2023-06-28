@@ -12,7 +12,7 @@ import (
 )
 
 func createInNotion(ctx context.Context, obj *ent.Object) error {
-    _, err := notion.Client().Page.Create(
+    _, err := notion.GetClient().Page.Create(
         ctx,
         getCreatePageRequestParams(ctx, obj),
     )
@@ -20,7 +20,7 @@ func createInNotion(ctx context.Context, obj *ent.Object) error {
 }
 
 func updateInNotion(ctx context.Context, obj *ent.Object) error {
-    _, err := notion.Client().Page.Update(
+    _, err := notion.GetClient().Page.Update(
         ctx,
         notionapi.PageID(*obj.NotionID),
         getUpdatePageRequestParams(ctx, obj),
@@ -29,7 +29,7 @@ func updateInNotion(ctx context.Context, obj *ent.Object) error {
 }
 
 func deleteInNotion(ctx context.Context, obj *ent.Object) error {
-    _, err := notion.Client().Page.Update(
+    _, err := notion.GetClient().Page.Update(
         ctx,
         notionapi.PageID(*obj.NotionID),
         &notionapi.PageUpdateRequest{

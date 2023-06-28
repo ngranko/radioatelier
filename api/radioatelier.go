@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-    client := db.Client()
+    client := db.GetClient()
     // TODO: does this required if it should basically be available throughout the whole app lifecycle?
     defer client.Close()
 

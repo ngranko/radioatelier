@@ -65,7 +65,7 @@ func syncPage(ctx context.Context, notionPage notionapi.Page) {
 }
 
 func getObject(ctx context.Context, page structs.Page) (*ent.Object, error) {
-    return db.Client().Object.Query().
+    return db.GetClient().Object.Query().
         Where(object.NotionIDEQ(page.NotionID)).
         First(ctx)
 }
@@ -91,7 +91,7 @@ func createObject(ctx context.Context, page structs.Page) (*ent.Object, error) {
 func doCreateObject(ctx context.Context, page structs.Page, usr *ent.User, city *ent.City) (*ent.Object, error) {
     currentTime := time.Now()
 
-    return db.Client().Object.Create().
+    return db.GetClient().Object.Create().
         SetName(page.Name).
         SetNillableAddress(page.Address).
         SetNillableInstalledPeriod(page.InstalledPeriod).
@@ -156,7 +156,7 @@ func updateNotionLastSync(ctx context.Context, obj *ent.Object) {
 }
 
 func getOrCreateUser(ctx context.Context, userID string) (*ent.User, error) {
-    usr, err := db.Client().User.Query().
+    usr, err := db.GetClient().User.Query().
         Where(user.NotionIDEQ(userID)).
         First(ctx)
     if err != nil {
@@ -164,7 +164,7 @@ func getOrCreateUser(ctx context.Context, userID string) (*ent.User, error) {
 
         // let's assume for now that the user doesn't exist
 
-        notionUser, err := notion.Client().User.Get(ctx, notionapi.UserID(userID))
+        notionUser, err := notion.GetClient().User.Get(ctx, notionapi.UserID(userID))
         if err != nil {
             return nil, err
         }
@@ -174,7 +174,7 @@ func getOrCreateUser(ctx context.Context, userID string) (*ent.User, error) {
             newUserEmail = notionUser.Person.Email
         }
 
-        return db.Client().User.Create().
+        return db.GetClient().User.Create().
             SetName(notionUser.Name).
             SetLogin(strings.ToLower(strings.ReplaceAll(notionUser.Name, " ", ""))).
             SetPassword("").
@@ -188,7 +188,7 @@ func getOrCreateUser(ctx context.Context, userID string) (*ent.User, error) {
 }
 
 func getOrCreateCity(ctx context.Context, cityName string, countryName string) (*ent.City, error) {
-    ct, err := db.Client().City.Query().
+    ct, err := db.GetClient().City.Query().
         Where(city.NameEQ(cityName)).
         First(ctx)
     if err != nil {
@@ -196,7 +196,7 @@ func getOrCreateCity(ctx context.Context, cityName string, countryName string) (
 
         // let's assume that it doesn't exsists for now
 
-        return db.Client().City.Create().
+        return db.GetClient().City.Create().
             SetName(cityName).
             SetCountry(countryName).
             Save(ctx)
