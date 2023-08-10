@@ -6,10 +6,11 @@ import (
     "radioatelier/ent"
     "radioatelier/ent/object"
     "radioatelier/package/adapter/db/model"
+    "radioatelier/package/infrastructure/db"
 )
 
 type objectRepository struct {
-    client *ent.Client
+    client *db.Client
 }
 
 type Object interface {
@@ -20,7 +21,7 @@ type Object interface {
     Delete(ctx context.Context, id model.ID) (model.ID, error)
 }
 
-func NewObjectRepository(client *ent.Client) Object {
+func NewObjectRepository(client *db.Client) Object {
     return &objectRepository{client: client}
 }
 

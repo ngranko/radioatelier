@@ -5,10 +5,11 @@ import (
 
     "radioatelier/ent"
     "radioatelier/package/adapter/db/model"
+    "radioatelier/package/infrastructure/db"
 )
 
 type cityRepository struct {
-    client *ent.Client
+    client *db.Client
 }
 
 type City interface {
@@ -18,7 +19,7 @@ type City interface {
     Delete(ctx context.Context, id model.ID) (model.ID, error)
 }
 
-func NewCityRepository(client *ent.Client) City {
+func NewCityRepository(client *db.Client) City {
     return &cityRepository{client: client}
 }
 
