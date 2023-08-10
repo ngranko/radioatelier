@@ -5,10 +5,11 @@ import (
 
     "radioatelier/ent"
     "radioatelier/package/adapter/db/model"
+    "radioatelier/package/infrastructure/db"
 )
 
 type userRepository struct {
-    client *ent.Client
+    client *db.Client
 }
 
 type User interface {
@@ -18,7 +19,7 @@ type User interface {
     Delete(ctx context.Context, id model.ID) (model.ID, error)
 }
 
-func NewUserRepository(client *ent.Client) User {
+func NewUserRepository(client *db.Client) User {
     return &userRepository{client: client}
 }
 

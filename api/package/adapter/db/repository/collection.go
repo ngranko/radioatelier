@@ -5,10 +5,11 @@ import (
 
     "radioatelier/ent"
     "radioatelier/package/adapter/db/model"
+    "radioatelier/package/infrastructure/db"
 )
 
 type collectionRepository struct {
-    client *ent.Client
+    client *db.Client
 }
 
 type Collection interface {
@@ -18,7 +19,7 @@ type Collection interface {
     Delete(ctx context.Context, id model.ID) (model.ID, error)
 }
 
-func NewCollectionRepository(client *ent.Client) Collection {
+func NewCollectionRepository(client *db.Client) Collection {
     return &collectionRepository{client: client}
 }
 
