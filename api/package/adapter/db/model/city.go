@@ -1,15 +1,7 @@
 package model
 
-import (
-    "radioatelier/ent"
-)
-
-type City = ent.City
-
-type CreateCityInput = ent.CreateCityInput
-type UpdateCityInput = ent.UpdateCityInput
-type CityWhereInput = ent.CityWhereInput
-
-type CityOrder = ent.CityOrder
-
-type CityConnection = ent.CityConnection
+type City struct {
+    Base
+    Name    string `gorm:"type:varchar(50);not null"`
+    Country string `gorm:"type:varchar(50);not null"`
+}

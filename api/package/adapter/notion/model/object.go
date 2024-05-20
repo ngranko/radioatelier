@@ -4,6 +4,8 @@ import (
     "time"
 
     "github.com/jomei/notionapi"
+
+    "radioatelier/package/adapter/notion/property"
 )
 
 type PropertyName string
@@ -23,8 +25,8 @@ const (
 )
 
 type Object struct {
-    Name            string
-    Address         *string
+    Name            *property.TitleProperty
+    Address         *property.RichTextProperty
     InstalledPeriod *string
     IsRemoved       bool
     RemovedPeriod   *string
@@ -47,15 +49,17 @@ func NewObject() Object {
     return Object{}
 }
 
-func NewObjectFromRaw(page notionapi.Page) Object {
-    var address *string
+func NewObjectFromRaw(page notionapi.Page) *Object {
+    address := &property.RichTextProperty{
+        Name: string(Address),
+    }
     var installedPeriod *string
     var removedPeriod *string
 
     if len(page.Properties[string(Address)].(*notionapi.RichTextProperty).RichText) > 0 {
-        address = &page.Properties[string(Address)].(*notionapi.RichTextProperty).RichText[0].PlainText
+        address.Value = &page.Properties[string(Address)].(*notionapi.RichTextProperty).RichText[0].PlainText
     } else {
-        address = nil
+        address.Value = nil
     }
 
     if len(page.Properties[string(InstalledPeriod)].(*notionapi.RichTextProperty).RichText) > 0 {
@@ -71,7 +75,10 @@ func NewObjectFromRaw(page notionapi.Page) Object {
     }
 
     result := Object{
-        Name:            page.Properties[string(Name)].(*notionapi.TitleProperty).Title[0].PlainText,
+        Name: &property.TitleProperty{
+            Name:  string(Name),
+            Value: &page.Properties[string(Name)].(*notionapi.TitleProperty).Title[0].PlainText,
+        },
         Address:         address,
         InstalledPeriod: installedPeriod,
         IsRemoved:       page.Properties[string(IsRemoved)].(*notionapi.CheckboxProperty).Checkbox,
@@ -93,5 +100,5 @@ func NewObjectFromRaw(page notionapi.Page) Object {
         result.DeletedBy = &result.UpdatedBy
     }
 
-    return result
+    return &result
 }

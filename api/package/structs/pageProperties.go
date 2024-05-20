@@ -5,7 +5,7 @@ import (
     "fmt"
     "time"
 
-    "radioatelier/ent"
+    "radioatelier/package/adapter/db/model"
     "radioatelier/package/structs/property"
 
     "github.com/jomei/notionapi"
@@ -45,11 +45,11 @@ func NewPageProperties() PageProperties {
     }
 }
 
-func (p PageProperties) FillFromObject(ctx context.Context, obj *ent.Object) PageProperties {
+func (p PageProperties) FillFromObject(ctx context.Context, obj *model.Object) PageProperties {
     p.SetName(obj.Name)
     p.SetAddress(obj.Address)
     p.SetIsRemoved(obj.IsRemoved)
-    p.SetType(obj.Type)
+    p.SetType(obj.Category.Name)
     p.SetTags(obj.Tags)
     p.setLastSync(obj.LastSync)
 
@@ -57,8 +57,8 @@ func (p PageProperties) FillFromObject(ctx context.Context, obj *ent.Object) Pag
         p.SetInstalledPeriod(obj.InstalledPeriod)
     }
 
-    if obj.RemovedPeriod != nil {
-        p.SetRemovedPeriod(obj.RemovedPeriod)
+    if obj.RemovalPeriod != nil {
+        p.SetRemovedPeriod(obj.RemovalPeriod)
     }
 
     if obj.Source != nil {

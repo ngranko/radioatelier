@@ -1,49 +1,55 @@
 package repository
 
 import (
-    "context"
+    "github.com/google/uuid"
 
-    "radioatelier/ent"
     "radioatelier/package/adapter/db/model"
     "radioatelier/package/infrastructure/db"
 )
 
-type userRepository struct {
+type userRepo struct {
     client *db.Client
 }
 
 type User interface {
-    List(ctx context.Context, after *model.Cursor, first *int, before *model.Cursor, last *int, orderBy *model.UserOrder, where *model.UserWhereInput) (*model.UserConnection, error)
-    Create(ctx context.Context, input model.CreateUserInput) (*model.User, error)
-    Update(ctx context.Context, id model.ID, input model.UpdateUserInput) (*model.User, error)
-    Delete(ctx context.Context, id model.ID) (model.ID, error)
+    Repository[model.User]
+    IsRegistered(email string) bool
+    GetByID(id uuid.UUID) (*model.User, error)
+    GetByEmail(email string) (*model.User, error)
 }
 
 func NewUserRepository(client *db.Client) User {
-    return &userRepository{client: client}
+    return &userRepo{
+        client: client,
+    }
 }
 
-func (r *userRepository) List(
-    ctx context.Context,
-    after *model.Cursor,
-    first *int,
-    before *model.Cursor,
-    last *int,
-    orderBy *model.UserOrder,
-    where *model.UserWhereInput,
-) (*model.UserConnection, error) {
-    return r.client.User.Query().
-        Paginate(ctx, after, first, before, last, ent.WithUserOrder(orderBy), ent.WithUserFilter(where.Filter))
+func (r *userRepo) IsRegistered(email string) bool {
+    var count int64
+    r.client.Model(&model.User{}).Where("email = ?", email).Count(&count)
+    return count > 0
 }
 
-func (r *userRepository) Create(ctx context.Context, input model.CreateUserInput) (*model.User, error) {
-    return r.client.User.Create().SetInput(input).Save(ctx)
+func (r *userRepo) GetByID(id uuid.UUID) (*model.User, error) {
+    user := model.User{Base: model.Base{ID: id}}
+    err := r.client.First(&user).Error
+    return &user, err
 }
 
-func (r *userRepository) Update(ctx context.Context, id model.ID, input model.UpdateUserInput) (*model.User, error) {
-    return r.client.User.UpdateOneID(id).SetInput(input).Save(ctx)
+func (r *userRepo) GetByEmail(email string) (*model.User, error) {
+    user := model.User{Email: email}
+    err := r.client.Where(&user).First(&user).Error
+    return &user, err
 }
 
-func (r *userRepository) Delete(ctx context.Context, id model.ID) (model.ID, error) {
-    return id, r.client.User.DeleteOneID(id).Exec(ctx)
+func (r *userRepo) Create(user *model.User) error {
+    return r.client.Create(user).Error
+}
+
+func (r *userRepo) Save(user *model.User) error {
+    return r.client.Save(user).Error
+}
+
+func (r *userRepo) Delete(user *model.User) error {
+    return r.client.Delete(user).Error
 }

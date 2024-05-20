@@ -12,36 +12,48 @@ type Property interface {
 
 type CheckboxProperty struct {
     Name  string
-    Value bool
+    Value *bool
 }
 
 func (p *CheckboxProperty) Raw() notionapi.Property {
+    if p.Value == nil {
+        return nil
+    }
+
     return notionapi.CheckboxProperty{
-        Checkbox: p.Value,
+        Checkbox: *p.Value,
     }
 }
 
 type DateProperty struct {
     Name  string
-    Value time.Time
+    Value *time.Time
 }
 
 func (p *DateProperty) Raw() notionapi.Property {
+    if p.Value == nil {
+        return nil
+    }
+
     return notionapi.DateProperty{
         Date: &notionapi.DateObject{
-            Start: (*notionapi.Date)(&p.Value),
+            Start: (*notionapi.Date)(p.Value),
         },
     }
 }
 
 type MultiSelectProperty struct {
     Name  string
-    Value []string
+    Value *[]string
 }
 
-func (p *MultiSelectProperty) Raw() notionapi.MultiSelectProperty {
+func (p *MultiSelectProperty) Raw() notionapi.Property {
+    if p.Value == nil {
+        return nil
+    }
+
     var optionArr []notionapi.Option
-    for _, tag := range p.Value {
+    for _, tag := range *p.Value {
         optionArr = append(optionArr, notionapi.Option{
             Name: tag,
         })
@@ -54,17 +66,21 @@ func (p *MultiSelectProperty) Raw() notionapi.MultiSelectProperty {
 
 type RichTextProperty struct {
     Name  string
-    Value string
+    Value *string
 }
 
-func (p *RichTextProperty) Raw() notionapi.RichTextProperty {
+func (p *RichTextProperty) Raw() notionapi.Property {
+    if p.Value == nil {
+        return nil
+    }
+
     return notionapi.RichTextProperty{
         RichText: []notionapi.RichText{
             {
                 Text: &notionapi.Text{
-                    Content: p.Value,
+                    Content: *p.Value,
                 },
-                PlainText: p.Value,
+                PlainText: *p.Value,
             },
         },
     }
@@ -72,28 +88,36 @@ func (p *RichTextProperty) Raw() notionapi.RichTextProperty {
 
 type SelectProperty struct {
     Name  string
-    Value string
+    Value *string
 }
 
-func (p *SelectProperty) Raw() notionapi.SelectProperty {
+func (p *SelectProperty) Raw() notionapi.Property {
+    if p.Value == nil {
+        return nil
+    }
+
     return notionapi.SelectProperty{
         Select: notionapi.Option{
-            Name: p.Value,
+            Name: *p.Value,
         },
     }
 }
 
 type TitleProperty struct {
     Name  string
-    Value string
+    Value *string
 }
 
 func (p *TitleProperty) Raw() notionapi.Property {
+    if p.Value == nil {
+        return nil
+    }
+
     return notionapi.TitleProperty{
         Title: []notionapi.RichText{
             {
                 Text: &notionapi.Text{
-                    Content: p.Value,
+                    Content: *p.Value,
                 },
             },
         },
@@ -102,12 +126,13 @@ func (p *TitleProperty) Raw() notionapi.Property {
 
 type URLProperty struct {
     Name  string
-    Value string
+    Value *string
 }
 
 func (p *URLProperty) Raw() notionapi.Property {
-    if p.Value == "" {
+    if p.Value == nil {
         return nil
     }
-    return notionapi.URLProperty{URL: p.Value}
+
+    return notionapi.URLProperty{URL: *p.Value}
 }

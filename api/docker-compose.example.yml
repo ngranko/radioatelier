@@ -6,7 +6,7 @@ services:
       target: dev
     restart: unless-stopped
     ports:
-      - "7070:8080"
+      - "7070:3000"
     env_file: ./.env
     volumes:
       - .:/radioatelier

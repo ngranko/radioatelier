@@ -7,10 +7,6 @@ import (
     "strings"
     "time"
 
-    "radioatelier/ent"
-    "radioatelier/ent/city"
-    "radioatelier/ent/object"
-    "radioatelier/ent/user"
     "radioatelier/package/external"
     "radioatelier/package/infrastructure/db"
     "radioatelier/package/infrastructure/notion"
