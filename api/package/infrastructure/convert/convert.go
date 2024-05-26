@@ -2,6 +2,7 @@ package convert
 
 import (
     "strconv"
+    "unicode"
 )
 
 func StringToBool(val string, fallback bool) bool {
@@ -20,4 +21,15 @@ func StringToInt(val string, fallback int) int {
     }
 
     return intval
+}
+
+func LowercaseFirst(s string) string {
+    if len(s) == 0 {
+        return s
+    }
+
+    r := []rune(s)
+    r[0] = unicode.ToLower(r[0])
+
+    return string(r)
 }

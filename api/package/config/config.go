@@ -20,6 +20,9 @@ type Config struct {
     NotionObjectsDBID string
     LogLevel          slog.Level
     JWTSecret         string
+    JWEPrivateKeyPath string
+    MinPasswordScore  int
+    Host              string
 }
 
 var config Config
@@ -40,6 +43,9 @@ func init() {
         NotionObjectsDBID: os.Getenv("NOTION_OBJECTS_DB_ID"),
         LogLevel:          slog.Level(convert.StringToInt(os.Getenv("LOG_LEVEL"), 0)),
         JWTSecret:         os.Getenv("JWT_SECRET"),
+        JWEPrivateKeyPath: os.Getenv("JWE_PRIVATE_KEY_PATH"),
+        MinPasswordScore:  2,
+        Host:              os.Getenv("PROJECT_HOST"),
     }
 }
 

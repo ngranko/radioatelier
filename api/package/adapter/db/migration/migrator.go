@@ -10,7 +10,9 @@ import (
     "radioatelier/package/infrastructure/logger"
 )
 
-var migrationList []list.Migration
+var migrationList = []list.Migration{
+    list.Migration202405230126,
+}
 
 func Run(client *db.Client) {
     updateSchema(client)

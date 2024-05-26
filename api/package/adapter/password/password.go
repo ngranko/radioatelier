@@ -1,43 +1,44 @@
 package password
 
 import (
-    "errors"
-
+    "github.com/trustelem/zxcvbn"
     "golang.org/x/crypto/bcrypt"
+
+    "radioatelier/package/config"
 )
 
 type Password struct {
-    raw  *string
-    hash *string
+    raw string
     Hashable
-    Comparable
+    Verifiable
+    StrengthLimitable
 }
 
 type Hashable interface {
     Hash() (string, error)
 }
 
-type Comparable interface {
-    IsEqual(value string) bool
+type Verifiable interface {
+    Verify(hash string) bool
+}
+
+type StrengthLimitable interface {
+    IsStrong() bool
 }
 
 func NewFromRaw(raw string) *Password {
-    return &Password{raw: &raw}
-}
-
-func NewFromHash(hash string) *Password {
-    return &Password{hash: &hash}
+    return &Password{raw: raw}
 }
 
 func (p *Password) Hash() (string, error) {
-    if p.raw == nil {
-        return "", errors.New("cannot hash an empty password")
-    }
+    hashed, err := bcrypt.GenerateFromPassword([]byte(p.raw), 10)
+    return string(hashed), err
+}
 
-    hashed, err := bcrypt.GenerateFromPassword([]byte(*p.raw), 10)
-    hashedString := string(hashed)
-    if err == nil {
-        p.hash = &hashedString
-    }
-    return hashedString, err
+func (p *Password) Verify(hash string) error {
+    return bcrypt.CompareHashAndPassword([]byte(hash), []byte(p.raw))
+}
+
+func (p *Password) IsStrong() bool {
+    return zxcvbn.PasswordStrength(p.raw, []string{}).Score >= config.Get().MinPasswordScore
 }
