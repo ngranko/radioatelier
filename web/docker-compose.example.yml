@@ -1,0 +1,9 @@
+services:
+    app:
+        build:
+            context: .
+            dockerfile: docker/app/Dockerfile
+            target: prod
+        ports:
+            - 3000:3000
+        restart: unless-stopped

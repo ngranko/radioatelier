@@ -1,0 +1,39 @@
+@use 'colors';
+
+$normal-face: sofia-pro, sans-serif;
+
+@mixin line-height-condensed {
+    line-height: 1;
+}
+
+@mixin line-height-normal {
+    line-height: 1.4;
+}
+
+@mixin line-height-tall {
+    line-height: 1.8;
+}
+
+@mixin weight-light {
+    font-weight: 200;
+}
+
+@mixin weight-normal {
+    font-weight: 400;
+}
+
+@mixin weight-bold {
+    font-weight: 700;
+}
+
+@mixin sized($size) {
+    font-size: $size;
+}
+
+@mixin size-12 {
+    @include sized(12px);
+}
+
+@mixin size-16 {
+    @include sized(16px);
+}

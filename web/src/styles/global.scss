@@ -1,0 +1,20 @@
+@use 'typography';
+
+* {
+    box-sizing: border-box;
+    -webkit-font-smoothing: subpixel-antialiased;
+
+    &:focus {
+        outline: none;
+    }
+}
+
+html {
+    @include typography.line-height-normal;
+    font-family: typography.$normal-face;
+    font-optical-sizing: auto;
+}
+
+body {
+    margin: 0;
+}
