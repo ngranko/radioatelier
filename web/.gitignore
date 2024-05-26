@@ -11,3 +11,6 @@ docker-compose.*.yml
 !docker-compose.example.yml
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+/assets/keys/*
+!/assets/keys/.gitkeep
