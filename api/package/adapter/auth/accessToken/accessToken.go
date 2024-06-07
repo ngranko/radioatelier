@@ -22,7 +22,6 @@ type AccessToken interface {
     Encode() (string, error)
     Verify() error
     UserID() uuid.UUID
-    UserVerified() bool
 }
 
 func NewFromRaw(rawToken jwt.Token) AccessToken {
@@ -125,12 +124,4 @@ func (t *accessToken) UserID() uuid.UUID {
     }
 
     return val
-}
-
-func (t *accessToken) UserVerified() bool {
-    val, ok := t.rawToken.Get("verified")
-    if !ok {
-        return false
-    }
-    return val.(bool)
 }

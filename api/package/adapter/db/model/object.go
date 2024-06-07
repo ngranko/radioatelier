@@ -10,12 +10,14 @@ type Object struct {
     Base
     Name            string `gorm:"type:varchar(255);not null"`
     Address         string `gorm:"type:varchar(128)"`
+    CityID          *uuid.UUID
+    City            *City
     Description     string
-    Latitude        float64 `gorm:"type:decimal(9,6)"`
-    Longitude       float64 `gorm:"type:decimal(9,6)"`
-    InstalledPeriod string  `gorm:"type:varchar(20)"`
-    IsRemoved       bool    `gorm:"type:tinyint(1);not null;default:0"`
-    RemovalPeriod   string  `gorm:"type:varchar(20)"`
+    Latitude        string `gorm:"type:varchar(10)"`
+    Longitude       string `gorm:"type:varchar(10)"`
+    InstalledPeriod string `gorm:"type:varchar(20)"`
+    IsRemoved       bool   `gorm:"type:tinyint(1);not null;default:0"`
+    RemovalPeriod   string `gorm:"type:varchar(20)"`
     Source          string
     CategoryID      uuid.UUID
     Category        Category

@@ -11,12 +11,19 @@ type cityRepo struct {
 
 type City interface {
     Repository[model.City]
+    GetList() ([]model.City, error)
 }
 
 func NewCityRepository(client *db.Client) City {
     return &cityRepo{
         client: client,
     }
+}
+
+func (r *cityRepo) GetList() ([]model.City, error) {
+    var list []model.City
+    err := r.client.Model(&model.City{}).Find(&list).Error
+    return list, err
 }
 
 func (r *cityRepo) Create(city *model.City) error {
