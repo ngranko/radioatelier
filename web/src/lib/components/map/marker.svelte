@@ -3,7 +3,7 @@
     import {base} from '$app/paths';
     import {mapLoader, map} from '$lib/stores/map';
 
-    export let id: string;
+    export let id: string | null = null;
     export let lat: string;
     export let lng: string;
     let mapRef: google.maps.Map;

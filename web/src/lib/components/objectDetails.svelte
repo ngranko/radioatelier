@@ -1,5 +1,5 @@
 <script lang="ts">
-    import {createEventDispatcher, onMount} from 'svelte';
+    import {createEventDispatcher} from 'svelte';
     import {fly} from 'svelte/transition';
     import {cubicInOut} from 'svelte/easing';
     import CategorySelect from '$lib/components/categorySelect.svelte';
