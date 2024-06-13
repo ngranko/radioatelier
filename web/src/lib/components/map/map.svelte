@@ -1,15 +1,10 @@
 <script lang="ts">
-    import {onMount, onDestroy, createEventDispatcher} from 'svelte';
+    import {onMount, createEventDispatcher} from 'svelte';
     import {mapLoader, map} from '$lib/stores/map';
 
     let container: HTMLDivElement;
-    let mapRef: google.maps.Map;
     let isInteracted = false;
     const loadedAt = Date.now();
-
-    const unsubscribe = map.subscribe(value => {
-        mapRef = value;
-    });
 
     const dispatch = createEventDispatcher();
 
@@ -45,24 +40,24 @@
         }
 
         try {
-            event.addListener(mapRef, 'click', function (event: google.maps.MapMouseEvent) {
+            event.addListener($map, 'click', function (event: google.maps.MapMouseEvent) {
                 isInteracted = true;
                 dispatch('click', {lat: event.latLng?.lat(), lng: event.latLng?.lng()});
             });
 
-            event.addListener(mapRef, 'bounds_changed', function () {
+            event.addListener($map, 'bounds_changed', function () {
                 isInteracted = true;
             });
 
-            event.addListener(mapRef, 'maptypeid_changed', function () {
+            event.addListener($map, 'maptypeid_changed', function () {
                 isInteracted = true;
             });
 
-            event.addListener(mapRef, 'resize', function () {
+            event.addListener($map, 'resize', function () {
                 isInteracted = true;
             });
 
-            event.addListener(mapRef, 'rightclick', function () {
+            event.addListener($map, 'rightclick', function () {
                 isInteracted = true;
             });
         } catch (e) {
@@ -73,8 +68,6 @@
         updateCurrentPosition();
     });
 
-    onDestroy(unsubscribe);
-
     function updateCurrentPosition() {
         navigator.geolocation.getCurrentPosition(
             position => {
@@ -83,8 +76,8 @@
                 console.log(center);
                 console.log('geolocation loaded in', Date.now() - loadedAt);
 
-                if (!isInteracted && mapRef) {
-                    mapRef.setCenter({
+                if (!isInteracted && $map) {
+                    $map.setCenter({
                         lat: position.coords.latitude,
                         lng: position.coords.longitude,
                     });

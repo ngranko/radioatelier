@@ -4,6 +4,7 @@
     import {createCategory, listCategories} from '$lib/api/category';
 
     export let name: string;
+    export let value: string | undefined;
 
     interface Item {
         value: string;
@@ -59,6 +60,7 @@
     on:filter={handleFilter}
     on:blur={handleBlur}
     bind:filterText
+    value={items.length > 0 ? value : undefined}
     {items}
 >
     <div slot="item" let:item>

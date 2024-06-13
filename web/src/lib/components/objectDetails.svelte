@@ -32,7 +32,7 @@
             <label>
                 Name: <input name="name" value={initialValues.name ?? ''} />
             </label>
-            <CategorySelect name="categoryId" />
+            <CategorySelect name="categoryId" value={initialValues.categoryId} />
             <button type="submit">Add</button>
             <button type="button" on:click={handleClose}>Close</button>
         </form>

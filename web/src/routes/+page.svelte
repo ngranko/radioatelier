@@ -1,9 +1,9 @@
 <script lang="ts">
-    import {onMount, onDestroy} from 'svelte';
+    import {onMount} from 'svelte';
     import {createMutation, createQuery} from '@tanstack/svelte-query';
     import {createObject, listObjects} from '$lib/api/object';
     import type {CreateObjectInputs} from '$lib/interfaces/object';
-    import {mapLoader, map} from '$lib/stores/map';
+    import {mapLoader, map, activeObjectInfo} from '$lib/stores/map';
     import Map from '$lib/components/map/map.svelte';
     import Marker from '$lib/components/map/marker.svelte';
     import ObjectDetails from '$lib/components/objectDetails.svelte';
@@ -16,13 +16,7 @@
         lng: string;
     }
 
-    let mapRef: google.maps.Map;
     const permanentMarkers: {[key: string]: MarkerItem} = {};
-    let clickedLocation: Location | null = null;
-
-    const unsubscribe = map.subscribe(value => {
-        mapRef = value;
-    });
 
     const mutation = createMutation({
         mutationFn: createObject,
@@ -47,36 +41,34 @@
             console.log(placesLib);
             const searchBox = new placesLib.SearchBox(input);
 
-            mapRef.controls[ControlPosition.TOP_RIGHT].push(input);
+            $map.controls[ControlPosition.TOP_RIGHT].push(input);
 
             // Bias the SearchBox results towards current map's viewport.
-            mapRef.addListener('bounds_changed', () => {
-                searchBox.setBounds(mapRef.getBounds() as google.maps.LatLngBounds);
+            $map.addListener('bounds_changed', () => {
+                searchBox.setBounds($map.getBounds() as google.maps.LatLngBounds);
             });
         } catch (e) {
             console.error(e);
         }
     });
 
-    onDestroy(unsubscribe);
-
     function handleClose() {
-        if (clickedLocation === null) {
+        if (!$activeObjectInfo.object) {
             return;
         }
 
-        clickedLocation = null;
+        activeObjectInfo.reset();
     }
 
     async function handleSave(event: CustomEvent<CreateObjectInputs>) {
-        if (!clickedLocation) {
+        if (!$activeObjectInfo.object) {
             return;
         }
 
         try {
             const result = await $mutation.mutateAsync(event.detail);
             permanentMarkers[`${result.data.lat}${result.data.lng}`] = result.data;
-            clickedLocation = null;
+            activeObjectInfo.reset();
         } catch (error) {
             console.error($mutation.error);
             return;
@@ -85,16 +77,13 @@
 
     function handleMapClick(event: CustomEvent<Location>) {
         console.log(event.detail);
-        clickedLocation = event.detail;
+        activeObjectInfo.set({isLoading: false, object: {id: null, ...event.detail}});
     }
 </script>
 
-{#if clickedLocation !== null}
+{#if $activeObjectInfo.object}
     <ObjectDetails
-        initialValues={{
-            lat: String(clickedLocation.lat),
-            lng: String(clickedLocation.lng),
-        }}
+        initialValues={$activeObjectInfo.object}
         on:save={handleSave}
         on:close={handleClose}
     />
@@ -103,14 +92,18 @@
 <div>
     <input id="pac-input" class="search" type="text" placeholder="Search Box" />
     <Map on:click={handleMapClick} />
-    {#if mapRef}
+    {#if $map}
         {#each Object.values(permanentMarkers) as marker (marker.id)}
             <Marker id={marker.id} lat={marker.lat} lng={marker.lng} />
         {/each}
 
-        {#if clickedLocation}
-            {#key `${clickedLocation.lat},${clickedLocation.lng}`}
-                <Marker {...clickedLocation} />
+        {#if $activeObjectInfo.object && !$activeObjectInfo.object.id}
+            {#key `${$activeObjectInfo.object.lat},${$activeObjectInfo.object.lng}`}
+                <Marker
+                    lat={$activeObjectInfo.object.lat}
+                    lng={$activeObjectInfo.object.lng}
+                    initialActive={true}
+                />
             {/key}
         {/if}
     {/if}

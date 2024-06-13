@@ -1,6 +1,8 @@
 package repository
 
 import (
+    "github.com/google/uuid"
+
     "radioatelier/package/adapter/db/model"
     "radioatelier/package/infrastructure/db"
 )
@@ -12,6 +14,7 @@ type objectRepo struct {
 type Object interface {
     Repository[model.Object]
     GetList() ([]model.Object, error)
+    GetByID(id uuid.UUID) (*model.Object, error)
 }
 
 func NewObjectRepository(client *db.Client) Object {
@@ -24,6 +27,12 @@ func (r *objectRepo) GetList() ([]model.Object, error) {
     var list []model.Object
     err := r.client.Model(&model.Object{}).Find(&list).Error
     return list, err
+}
+
+func (r *objectRepo) GetByID(id uuid.UUID) (*model.Object, error) {
+    object := model.Object{Base: model.Base{ID: id}}
+    err := r.client.Where(&object).First(&object).Error
+    return &object, err
 }
 
 func (r *objectRepo) Create(object *model.Object) error {

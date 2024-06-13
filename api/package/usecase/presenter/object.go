@@ -1,6 +1,8 @@
 package presenter
 
 import (
+    "github.com/google/uuid"
+
     "radioatelier/package/adapter/db/model"
     "radioatelier/package/adapter/db/repository"
     "radioatelier/package/infrastructure/db"
@@ -21,6 +23,16 @@ func NewObject() Object {
         model:      &model.Object{},
         repository: repository.NewObjectRepository(db.Get()),
     }
+}
+
+func GetByID(id uuid.UUID) (Object, error) {
+    repo := repository.NewObjectRepository(db.Get())
+    object, err := repo.GetByID(id)
+    if err != nil {
+        return nil, err
+    }
+
+    return &objectPresenter{repository: repo, model: object}, nil
 }
 
 func GetObjectList() ([]Object, error) {

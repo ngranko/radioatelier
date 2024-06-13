@@ -10,17 +10,17 @@ import (
 )
 
 type GetListPayloadData struct {
-    Objects []Object `json:"objects"`
+    Objects []ObjectListItem `json:"objects"`
 }
 
-type Object struct {
+type ObjectListItem struct {
     ID        uuid.UUID `json:"id"`
     Latitude  string    `json:"lat"`
     Longitude string    `json:"lng"`
 }
 
 func GetList(w http.ResponseWriter, r *http.Request) {
-    var objects []Object
+    var objects []ObjectListItem
     list, err := presenter.GetObjectList()
     if err != nil {
         router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
@@ -28,7 +28,7 @@ func GetList(w http.ResponseWriter, r *http.Request) {
     }
 
     for _, object := range list {
-        objects = append(objects, Object{
+        objects = append(objects, ObjectListItem{
             ID:        object.GetModel().ID,
             Latitude:  object.GetModel().Latitude,
             Longitude: object.GetModel().Longitude,
@@ -36,7 +36,7 @@ func GetList(w http.ResponseWriter, r *http.Request) {
     }
 
     if objects == nil {
-        objects = make([]Object, 0)
+        objects = make([]ObjectListItem, 0)
     }
 
     router.NewResponse().
