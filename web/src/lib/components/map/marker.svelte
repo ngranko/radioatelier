@@ -1,6 +1,5 @@
 <script lang="ts">
     import {onMount, onDestroy} from 'svelte';
-    import {base} from '$app/paths';
     import {mapLoader, map, activeObjectInfo, activeMarker} from '$lib/stores/map';
     import {createQuery} from '@tanstack/svelte-query';
     import {getObject} from '$lib/api/object';
@@ -29,9 +28,18 @@
     onMount(async () => {
         activeMarker.deactivate();
 
-        const icon = document.createElement('img');
-        icon.src = `${base}/pointDefault.svg`;
+        const icon = document.createElement('div');
+        icon.innerHTML = '<i class="fa-solid fa-bolt"></i>';
         icon.style.transform = initialActive ? 'translate(0, 50%) scale(1.2)' : 'translate(0, 50%)';
+        icon.style.borderRadius = '50%';
+        icon.style.width = '24px';
+        icon.style.height = '24px';
+        icon.style.fontSize = '14px';
+        icon.style.color = 'white';
+        icon.style.backgroundColor = 'black';
+        icon.style.display = 'flex';
+        icon.style.justifyContent = 'center';
+        icon.style.alignItems = 'center';
 
         const {AdvancedMarkerElement, CollisionBehavior} = await $mapLoader.importLibrary('marker');
 
