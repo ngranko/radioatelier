@@ -11,7 +11,7 @@
     onMount(async () => {
         const {ControlPosition, event} = await $mapLoader.importLibrary('core');
 
-        const mapOptions = {
+        const mapOptions: google.maps.MapOptions = {
             zoom: 15,
             // TODO: use geolocation API if everything else failed?
             center: JSON.parse(localStorage.getItem('lastCenter') ?? ''),
@@ -29,6 +29,7 @@
             streetViewControlOptions: {
                 position: ControlPosition.RIGHT_BOTTOM,
             },
+            clickableIcons: false,
         };
 
         try {
