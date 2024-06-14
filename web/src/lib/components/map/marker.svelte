@@ -5,7 +5,7 @@
     import {createQuery} from '@tanstack/svelte-query';
     import {getObject} from '$lib/api/object';
 
-    export let id: string | null = null;
+    export let id: string | undefined = undefined;
     export let lat: string;
     export let lng: string;
     export let initialActive = false;

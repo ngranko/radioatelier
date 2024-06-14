@@ -1,9 +1,11 @@
 import type {Payload} from '$lib/interfaces/api';
 import JsonRequest from '$lib/api/request/JsonRequest';
-import {METHOD_GET, METHOD_POST} from '$lib/api/constants';
+import {METHOD_DELETE, METHOD_GET, METHOD_POST} from '$lib/api/constants';
 import type {
     CreateObjectInputs,
     CreateObjectResponsePayload,
+    DeleteObjectInputs,
+    DeleteObjectPayloadData,
     GetObjectContext,
     GetObjectResponsePayload,
     ListObjectsResponsePayload,
@@ -25,4 +27,10 @@ export async function getObject({
     queryKey: [_key, {id}],
 }: QueryFunctionContext<GetObjectContext>): Promise<Payload<GetObjectResponsePayload>> {
     return new AuthRequest(new JsonRequest(`/api/object/${id}`, METHOD_GET)).send();
+}
+
+export async function deleteObject(
+    values: DeleteObjectInputs,
+): Promise<Payload<DeleteObjectPayloadData>> {
+    return new AuthRequest(new JsonRequest(`/api/object/${values.id}`, METHOD_DELETE)).send();
 }

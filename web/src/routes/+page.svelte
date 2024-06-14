@@ -4,6 +4,8 @@
     import {createObject, listObjects} from '$lib/api/object';
     import type {CreateObjectInputs} from '$lib/interfaces/object';
     import {mapLoader, map, activeObjectInfo} from '$lib/stores/map';
+    import {createObject, deleteObject, listObjects} from '$lib/api/object';
+    import type {Object} from '$lib/interfaces/object';
     import Map from '$lib/components/map/map.svelte';
     import Marker from '$lib/components/map/marker.svelte';
     import ObjectDetails from '$lib/components/objectDetails.svelte';
@@ -16,17 +18,21 @@
         lng: string;
     }
 
-    const permanentMarkers: {[key: string]: MarkerItem} = {};
+    let permanentMarkers: {[key: string]: MarkerItem} = {};
 
-    const mutation = createMutation({
+    const createObjectMutation = createMutation({
         mutationFn: createObject,
+    });
+
+    const deleteObjectMutation = createMutation({
+        mutationFn: deleteObject,
     });
 
     const objects = createQuery({queryKey: ['objects'], queryFn: listObjects});
 
     $: if ($objects.isSuccess) {
         for (const object of $objects.data.data.objects) {
-            permanentMarkers[`${object.lat}${object.lng}`] = object;
+            permanentMarkers[object.id] = object;
         }
     }
 
@@ -60,24 +66,41 @@
         activeObjectInfo.reset();
     }
 
-    async function handleSave(event: CustomEvent<CreateObjectInputs>) {
+    async function handleSave(event: CustomEvent<Object>) {
         if (!$activeObjectInfo.object) {
             return;
         }
 
         try {
-            const result = await $mutation.mutateAsync(event.detail);
-            permanentMarkers[`${result.data.lat}${result.data.lng}`] = result.data;
+            const result = await $createObjectMutation.mutateAsync(event.detail);
+            permanentMarkers[result.data.id] = result.data;
             activeObjectInfo.reset();
         } catch (error) {
-            console.error($mutation.error);
+            console.error($createObjectMutation.error);
+            return;
+        }
+    }
+
+    async function handleDelete(event: CustomEvent<string>) {
+        if (!$activeObjectInfo.object || !event.detail) {
+            return;
+        }
+
+        try {
+            const result = await $deleteObjectMutation.mutateAsync({id: event.detail});
+            delete permanentMarkers[result.data.id];
+            permanentMarkers = {...permanentMarkers};
+            activeObjectInfo.reset();
+            activeMarker.set(null);
+        } catch (error) {
+            console.error($createObjectMutation.error);
             return;
         }
     }
 
     function handleMapClick(event: CustomEvent<Location>) {
         console.log(event.detail);
-        activeObjectInfo.set({isLoading: false, object: {id: null, ...event.detail}});
+        activeObjectInfo.set({isLoading: false, object: {id: undefined, ...event.detail}});
     }
 </script>
 
@@ -86,6 +109,7 @@
         initialValues={$activeObjectInfo.object}
         on:save={handleSave}
         on:close={handleClose}
+        on:delete={handleDelete}
     />
 {/if}
 

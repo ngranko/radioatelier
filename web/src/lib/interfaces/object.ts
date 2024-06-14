@@ -7,7 +7,7 @@ export interface Object {
 }
 
 export interface BareObject {
-    id: string | null;
+    id: string | undefined;
     lat: string;
     lng: string;
 }
@@ -49,4 +49,12 @@ export interface GetObjectInputs {
 
 export interface GetObjectResponsePayload {
     object: Object;
+}
+
+export interface DeleteObjectInputs {
+    id: string;
+}
+
+export interface DeleteObjectPayloadData {
+    id: string;
 }

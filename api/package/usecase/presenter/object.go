@@ -50,10 +50,18 @@ func GetObjectList() ([]Object, error) {
     return result, nil
 }
 
+func DeleteByID(id uuid.UUID) error {
+    return repository.NewObjectRepository(db.Get()).Delete(&model.Object{Base: model.Base{ID: id}})
+}
+
 func (p *objectPresenter) GetModel() *model.Object {
     return p.model
 }
 
 func (p *objectPresenter) Create() error {
     return p.repository.Create(p.model)
+}
+
+func (p *objectPresenter) Delete() error {
+    return p.repository.Delete(p.model)
 }
