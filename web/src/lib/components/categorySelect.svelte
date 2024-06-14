@@ -2,6 +2,7 @@
     import {createMutation, createQuery} from '@tanstack/svelte-query';
     import Select from 'svelte-select';
     import {createCategory, listCategories} from '$lib/api/category';
+    import {beforeUpdate} from 'svelte';
 
     export let name: string;
     export let value: string | undefined;
@@ -15,6 +16,12 @@
     let filterText = '';
     let items: Item[] = [];
     let justValue: string | undefined;
+
+    beforeUpdate(() => {
+        if (!justValue && value) {
+            justValue = value;
+        }
+    });
 
     const createCategoryMutation = createMutation({
         mutationFn: createCategory,
@@ -54,13 +61,12 @@
 </script>
 
 <Select
-    bind:justValue
+    value={justValue}
     placeholder="Выберите категорию"
     on:change={handleChange}
     on:filter={handleFilter}
     on:blur={handleBlur}
     bind:filterText
-    value={items.length > 0 ? value : undefined}
     {items}
 >
     <div slot="item" let:item>
