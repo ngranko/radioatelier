@@ -27,7 +27,7 @@
     }
 
     onMount(async () => {
-        deactivatePreviousMarker();
+        activeMarker.deactivate();
 
         const icon = document.createElement('img');
         icon.src = `${base}/pointDefault.svg`;
@@ -50,22 +50,15 @@
     });
 
     function handleMarkerClick() {
-        deactivatePreviousMarker();
-
         if (!$objectDetails.isSuccess) {
             activeObjectInfo.set({isLoading: true, object: {id, lat, lng}});
             $objectDetails.refetch();
         } else {
             activeObjectInfo.set({isLoading: false, object: $objectDetails.data.data.object});
         }
-        (marker.content as HTMLElement).style.transform = 'translate(0, 50%) scale(1.2)';
 
-        activeMarker.update(() => marker);
-    }
-
-    function deactivatePreviousMarker() {
-        if ($activeMarker) {
-            ($activeMarker.content as HTMLElement).style.transform = 'translate(0, 50%)';
-        }
+        activeMarker.deactivate();
+        activeMarker.set(marker);
+        activeMarker.activate();
     }
 </script>

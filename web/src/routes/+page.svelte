@@ -1,11 +1,9 @@
 <script lang="ts">
     import {onMount} from 'svelte';
     import {createMutation, createQuery} from '@tanstack/svelte-query';
-    import {createObject, listObjects} from '$lib/api/object';
-    import type {CreateObjectInputs} from '$lib/interfaces/object';
-    import {mapLoader, map, activeObjectInfo} from '$lib/stores/map';
     import {createObject, deleteObject, listObjects} from '$lib/api/object';
     import type {Object} from '$lib/interfaces/object';
+    import {mapLoader, map, activeObjectInfo, activeMarker} from '$lib/stores/map';
     import Map from '$lib/components/map/map.svelte';
     import Marker from '$lib/components/map/marker.svelte';
     import ObjectDetails from '$lib/components/objectDetails.svelte';
@@ -63,6 +61,7 @@
             return;
         }
 
+        activeMarker.deactivate();
         activeObjectInfo.reset();
     }
 
