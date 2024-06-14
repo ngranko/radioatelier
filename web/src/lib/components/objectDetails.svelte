@@ -26,6 +26,11 @@
 </script>
 
 <aside class="popup" transition:fly={{x: -100, duration: 200, easing: cubicInOut}}>
+    <section class="header">
+        <button class="close" on:click={handleClose}>
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    </section>
     {#key `${initialValues.lat},${initialValues.lng}`}
         <form method="POST" on:submit|preventDefault|stopPropagation={handleSave}>
             <input type="hidden" name="id" value={initialValues.id} />
@@ -45,7 +50,9 @@
     {/key}
 </aside>
 
-<style>
+<style lang="scss">
+    @use '../../styles/colors';
+
     .popup {
         position: absolute;
         width: 300px;
@@ -55,5 +62,25 @@
         border-radius: 10px;
         z-index: 1;
         background-color: white;
+    }
+
+    .header {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 16px;
+    }
+
+    .close {
+        border: 0;
+        padding: 0;
+        margin: 0;
+        background: none;
+        font-size: 26px;
+        cursor: pointer;
+        transition: 0.2s;
+
+        &:hover {
+            color: colors.$neonBlue;
+        }
     }
 </style>
