@@ -3,15 +3,15 @@
     import {fly} from 'svelte/transition';
     import {cubicInOut} from 'svelte/easing';
     import CategorySelect from '$lib/components/categorySelect.svelte';
-    import type {Object} from '$lib/interfaces/object';
+    import type {LooseObject} from '$lib/interfaces/object';
 
     const dispatch = createEventDispatcher();
 
-    export let initialValues: Partial<Object>;
+    export let initialValues: Partial<LooseObject>;
 
     function handleSave(event: SubmitEvent) {
         const formData = new FormData(event.currentTarget as HTMLFormElement);
-        const values = Object.fromEntries(formData) as unknown as Object;
+        const values = Object.fromEntries(formData) as unknown as LooseObject;
 
         dispatch('save', values);
     }

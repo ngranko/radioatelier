@@ -103,7 +103,7 @@
 
     function handleMapClick(event: CustomEvent<Location>) {
         console.log(event.detail);
-        activeObjectInfo.set({isLoading: false, object: {id: undefined, ...event.detail}});
+        activeObjectInfo.set({isLoading: false, object: {id: null, ...event.detail}});
     }
 </script>
 

@@ -15,11 +15,12 @@
 
     let filterText = '';
     let items: Item[] = [];
-    let justValue: string | undefined;
+    let inValue: string | null;
+    let justValue: string | null;
 
     beforeUpdate(() => {
-        if (!justValue && value) {
-            justValue = value;
+        if (!inValue && value) {
+            inValue = value;
         }
     });
 
@@ -61,7 +62,8 @@
 </script>
 
 <Select
-    value={justValue}
+    bind:value={inValue}
+    bind:justValue
     placeholder="Выберите категорию"
     on:change={handleChange}
     on:filter={handleFilter}

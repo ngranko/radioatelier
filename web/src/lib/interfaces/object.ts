@@ -6,8 +6,16 @@ export interface Object {
     lng: string;
 }
 
+export interface LooseObject {
+    id: string | null;
+    name: string;
+    categoryId: string;
+    lat: string;
+    lng: string;
+}
+
 export interface BareObject {
-    id: string | undefined;
+    id: string | null;
     lat: string;
     lng: string;
 }
@@ -24,12 +32,7 @@ export interface CreateObjectInputs {
     categoryId: string;
 }
 
-export interface CreateObjectResponsePayload {
-    id: string;
-    name: string;
-    lat: string;
-    lng: string;
-}
+export type CreateObjectResponsePayload = Object;
 
 export interface ListObjectsResponsePayload {
     objects: ObjectListItem[];
