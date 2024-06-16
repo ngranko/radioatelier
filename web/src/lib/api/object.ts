@@ -1,6 +1,6 @@
 import type {Payload} from '$lib/interfaces/api';
 import JsonRequest from '$lib/api/request/JsonRequest';
-import {METHOD_DELETE, METHOD_GET, METHOD_POST} from '$lib/api/constants';
+import {METHOD_DELETE, METHOD_GET, METHOD_POST, METHOD_PUT} from '$lib/api/constants';
 import type {
     CreateObjectInputs,
     CreateObjectResponsePayload,
@@ -9,6 +9,8 @@ import type {
     GetObjectContext,
     GetObjectResponsePayload,
     ListObjectsResponsePayload,
+    UpdateObjectInputs,
+    UpdateObjectResponsePayload,
 } from '$lib/interfaces/object';
 import AuthRequest from '$lib/api/request/AuthRequest';
 import type {QueryFunctionContext} from '@tanstack/svelte-query';
@@ -27,6 +29,14 @@ export async function getObject({
     queryKey: [_key, {id}],
 }: QueryFunctionContext<GetObjectContext>): Promise<Payload<GetObjectResponsePayload>> {
     return new AuthRequest(new JsonRequest(`/api/object/${id}`, METHOD_GET)).send();
+}
+
+export async function updateObject(
+    values: UpdateObjectInputs,
+): Promise<Payload<UpdateObjectResponsePayload>> {
+    return new AuthRequest(
+        new JsonRequest(`/api/object/${values.id}`, METHOD_PUT).setParams(values.updatedFields),
+    ).send();
 }
 
 export async function deleteObject(

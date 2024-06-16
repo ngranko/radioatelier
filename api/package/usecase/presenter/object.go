@@ -16,6 +16,8 @@ type objectPresenter struct {
 type Object interface {
     GetModel() *model.Object
     Create() error
+    Update() error
+    Delete() error
 }
 
 func NewObject() Object {
@@ -60,6 +62,10 @@ func (p *objectPresenter) GetModel() *model.Object {
 
 func (p *objectPresenter) Create() error {
     return p.repository.Create(p.model)
+}
+
+func (p *objectPresenter) Update() error {
+    return p.repository.Save(p.model)
 }
 
 func (p *objectPresenter) Delete() error {

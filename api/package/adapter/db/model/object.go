@@ -27,4 +27,6 @@ type Object struct {
     LastSync        *time.Time
     CreatedBy       uuid.UUID `gorm:"type:char(36);not null"`
     Creator         User      `gorm:"foreignKey:created_by"`
+    UpdatedBy       uuid.UUID `gorm:"type:char(36);not null"`
+    Updater         User      `gorm:"foreignKey:updated_by"`
 }

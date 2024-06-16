@@ -54,6 +54,13 @@ export interface GetObjectResponsePayload {
     object: Object;
 }
 
+export interface UpdateObjectInputs {
+    id: string;
+    updatedFields: Omit<Object, 'id' | 'lat' | 'lng'>;
+}
+
+export type UpdateObjectResponsePayload = Object;
+
 export interface DeleteObjectInputs {
     id: string;
 }

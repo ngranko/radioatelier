@@ -11,14 +11,14 @@ import (
     "radioatelier/package/usecase/validation/validator"
 )
 
-type CreateInput struct {
-    Name       string    `json:"name" validate:"required,max=255"`
-    Lat        string    `json:"lat" validate:"required"`
-    Lng        string    `json:"lng" validate:"required"`
-    CategoryID uuid.UUID `json:"categoryId" validate:"required,uuid"`
+type UpdateInput struct {
+    Name       string    `json:"name" validate:"max=255"`
+    Lat        string    `json:"lat"`
+    Lng        string    `json:"lng"`
+    CategoryID uuid.UUID `json:"categoryId" validate:"uuid"`
 }
 
-type CreatePayloadData struct {
+type UpdatePayloadData struct {
     ID         uuid.UUID `json:"id"`
     Name       string    `json:"name"`
     Lat        string    `json:"lat"`
@@ -26,8 +26,17 @@ type CreatePayloadData struct {
     CategoryID uuid.UUID `json:"categoryId"`
 }
 
-func Create(w http.ResponseWriter, r *http.Request) {
-    var payload *CreateInput
+func Update(w http.ResponseWriter, r *http.Request) {
+    objectID, err := uuid.Parse(router.GetPathParam(r, "id"))
+    if err != nil {
+        router.NewResponse().
+            WithStatus(http.StatusBadRequest).
+            WithPayload(router.Payload{Message: "Object ID not recognized"}).
+            Send(w)
+        return
+    }
+
+    var payload *UpdateInput
 
     success := router.DecodeRequestParams(w, r, &payload)
     if !success {
@@ -57,17 +66,24 @@ func Create(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    obj := presenter.NewObject()
-    objModel := obj.GetModel()
-    objModel.Name = payload.Name
-    objModel.Latitude = payload.Lat
-    objModel.Longitude = payload.Lng
-    objModel.CategoryID = payload.CategoryID
-    objModel.CreatedBy = user.GetModel().ID
-    objModel.Creator = *user.GetModel()
+    object, err := presenter.GetByID(objectID)
+    if err != nil {
+        router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
+        return
+    }
+
+    objModel := object.GetModel()
+    if len(payload.Name) > 0 {
+        objModel.Name = payload.Name
+    }
+
+    if payload.CategoryID != uuid.Nil {
+        objModel.CategoryID = payload.CategoryID
+    }
+
     objModel.UpdatedBy = user.GetModel().ID
     objModel.Updater = *user.GetModel()
-    err = obj.Create()
+    err = object.Update()
     if err != nil {
         router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
         return
@@ -76,7 +92,7 @@ func Create(w http.ResponseWriter, r *http.Request) {
     router.NewResponse().
         WithStatus(http.StatusOK).
         WithPayload(router.Payload{
-            Data: CreatePayloadData{
+            Data: UpdatePayloadData{
                 ID:         objModel.ID,
                 Name:       objModel.Name,
                 Lat:        objModel.Latitude,

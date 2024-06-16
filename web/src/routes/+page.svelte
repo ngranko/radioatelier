@@ -1,6 +1,6 @@
 <script lang="ts">
     // import {onMount} from 'svelte';
-    import {createMutation, createQuery} from '@tanstack/svelte-query';
+    import {createMutation, createQuery, useQueryClient} from '@tanstack/svelte-query';
     import {createObject, deleteObject, listObjects} from '$lib/api/object';
     import type {Object} from '$lib/interfaces/object';
     import {/*mapLoader, */ map, activeObjectInfo, activeMarker} from '$lib/stores/map';
@@ -8,6 +8,9 @@
     import Marker from '$lib/components/map/marker.svelte';
     import ObjectDetails from '$lib/components/objectDetails.svelte';
     import type {Location} from '$lib/interfaces/map';
+    import {updateObject} from '$lib/api/object.js';
+    import toast from 'svelte-french-toast';
+    import RequestError from '$lib/errors/RequestError';
 
     interface MarkerItem {
         id: string;
@@ -16,10 +19,16 @@
         lng: string;
     }
 
+    const client = useQueryClient();
+
     let permanentMarkers: {[key: string]: MarkerItem} = {};
 
     const createObjectMutation = createMutation({
         mutationFn: createObject,
+    });
+
+    const updateObjectMutation = createMutation({
+        mutationFn: updateObject,
     });
 
     const deleteObjectMutation = createMutation({
@@ -71,17 +80,40 @@
         }
 
         if (!event.detail.id) {
-            try {
-                const result = await $createObjectMutation.mutateAsync(event.detail);
-                permanentMarkers[result.data.id] = result.data;
-                activeObjectInfo.reset();
-            } catch (error) {
-                console.error($createObjectMutation.error);
-                return;
-            }
+            await toast.promise(createNewObject(event.detail), {
+                loading: 'Creating...',
+                success: 'Object created!',
+                error: 'Failed creating an object',
+            });
         } else {
-            console.log('updates are not working for now');
+            await toast.promise(updateExistingObject(event.detail), {
+                loading: 'Updating...',
+                success: 'Object updated!',
+                error: 'Failed updating an object',
+            });
         }
+    }
+
+    async function createNewObject(object: Object) {
+        const result = await $createObjectMutation.mutateAsync(object);
+        client.setQueryData(['object', {id: result.data.id}], {
+            message: '',
+            data: {object: result.data},
+        });
+        permanentMarkers[result.data.id] = result.data;
+        activeObjectInfo.reset();
+    }
+
+    async function updateExistingObject(object: Object) {
+        const result = await $updateObjectMutation.mutateAsync({
+            id: object.id,
+            updatedFields: object,
+        });
+        client.setQueryData(['object', {id: result.data.id}], {
+            message: '',
+            data: {object: result.data},
+        });
+        activeObjectInfo.reset();
     }
 
     async function handleDelete(event: CustomEvent<string>) {
@@ -89,16 +121,19 @@
             return;
         }
 
-        try {
-            const result = await $deleteObjectMutation.mutateAsync({id: event.detail});
-            delete permanentMarkers[result.data.id];
-            permanentMarkers = {...permanentMarkers};
-            activeObjectInfo.reset();
-            activeMarker.set(null);
-        } catch (error) {
-            console.error($createObjectMutation.error);
-            return;
-        }
+        await toast.promise(deleteExistingObject(event.detail), {
+            loading: 'Deleting...',
+            success: 'Object deleted!',
+            error: 'Failed deleting an object',
+        });
+    }
+
+    async function deleteExistingObject(id: string) {
+        const result = await $deleteObjectMutation.mutateAsync({id});
+        delete permanentMarkers[result.data.id];
+        permanentMarkers = {...permanentMarkers};
+        activeObjectInfo.reset();
+        activeMarker.set(null);
     }
 
     function handleMapClick(event: CustomEvent<Location>) {
