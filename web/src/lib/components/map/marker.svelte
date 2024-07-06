@@ -4,7 +4,7 @@
     import {createQuery} from '@tanstack/svelte-query';
     import {getObject} from '$lib/api/object';
 
-    export let id: string | undefined = undefined;
+    export let id: string | null = null;
     export let lat: string;
     export let lng: string;
     export let initialActive = false;
@@ -30,16 +30,7 @@
 
         const icon = document.createElement('div');
         icon.innerHTML = '<i class="fa-solid fa-bolt"></i>';
-        icon.style.transform = initialActive ? 'translate(0, 50%) scale(1.2)' : 'translate(0, 50%)';
-        icon.style.borderRadius = '50%';
-        icon.style.width = '24px';
-        icon.style.height = '24px';
-        icon.style.fontSize = '14px';
-        icon.style.color = 'white';
-        icon.style.backgroundColor = 'black';
-        icon.style.display = 'flex';
-        icon.style.justifyContent = 'center';
-        icon.style.alignItems = 'center';
+        icon.className = initialActive ? 'marker appearing active' : 'marker appearing';
 
         const {AdvancedMarkerElement, CollisionBehavior} = await $mapLoader.importLibrary('marker');
 
@@ -51,10 +42,13 @@
             gmpClickable: true,
         });
         marker.addListener('click', handleMarkerClick);
+
+        setTimeout(() => (marker.content as HTMLDivElement).classList.remove('appearing'), 200);
     });
 
     onDestroy(() => {
-        marker.map = null;
+        (marker.content as HTMLDivElement).classList.add('exiting');
+        setTimeout(() => (marker.map = null), 200);
     });
 
     function handleMarkerClick() {
@@ -70,3 +64,47 @@
         activeMarker.activate();
     }
 </script>
+
+<style lang="scss">
+    :global(.marker) {
+        width: 24px;
+        height: 24px;
+        transform: translate(0, 50%);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 50%;
+        font-size: 14px;
+        color: white;
+        background-color: black;
+        transition: transform 0.1s ease-in-out;
+    }
+
+    :global(.active) {
+        transform: translate(0, 50%) scale(1.2);
+    }
+
+    :global(.appearing) {
+        animation-name: popIn;
+        animation-iteration-count: 1;
+        animation-duration: 0.2s;
+        animation-timing-function: cubic-bezier(0.92, 0.18, 0.8, 0.71);
+    }
+
+    :global(.exiting) {
+        animation-name: popIn;
+        animation-direction: reverse;
+        animation-iteration-count: 1;
+        animation-duration: 0.2s;
+        animation-timing-function: cubic-bezier(0.92, 0.18, 0.8, 0.71);
+    }
+
+    @keyframes -global-popIn {
+        0% {
+            transform: translate(0, 50%) scale(0);
+        }
+        100% {
+            transform: translate(0, 50%) scale(1);
+        }
+    }
+</style>

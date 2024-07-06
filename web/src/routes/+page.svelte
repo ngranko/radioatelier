@@ -11,6 +11,8 @@
     import {updateObject} from '$lib/api/object.js';
     import toast from 'svelte-french-toast';
     import RequestError from '$lib/errors/RequestError';
+    import {goto} from '$app/navigation';
+    import {page} from '$app/stores';
 
     interface MarkerItem {
         id: string;
@@ -36,6 +38,13 @@
     });
 
     const objects = createQuery({queryKey: ['objects'], queryFn: listObjects});
+    $: if (
+        $objects.isError &&
+        $objects.error instanceof RequestError &&
+        $objects.error.isAuthorizationError()
+    ) {
+        goto(`/login?ref=${encodeURIComponent($page.url.pathname)}`);
+    }
 
     $: if ($objects.isSuccess) {
         for (const object of $objects.data.data.objects) {

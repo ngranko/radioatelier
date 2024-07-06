@@ -6,6 +6,8 @@
     import ServerError from '$lib/errors/ServerError';
     import {STATUS_TOO_MANY_REQUESTS} from '$lib/api/constants';
     import config from '$lib/config';
+    import {Toaster} from 'svelte-french-toast';
+    import {onMount} from 'svelte';
 
     const queryClient = new QueryClient({
         defaultOptions: {
@@ -18,9 +20,16 @@
                 staleTime: 1000 * 20,
             },
         },
-    })
+    });
+
+    onMount(() => {
+        if (location.pathname !== '/login') {
+            console.log('not login');
+        }
+    });
 </script>
 
 <QueryClientProvider client={queryClient}>
     <slot />
+    <Toaster />
 </QueryClientProvider>

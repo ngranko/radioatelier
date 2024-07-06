@@ -30,14 +30,14 @@ export const activeMarker = {
     deactivate: () =>
         privateActiveMarker.update(value => {
             if (value) {
-                (value.content as HTMLElement).style.transform = 'translate(0, 50%)';
+                (value.content as HTMLElement).classList.remove('active');
             }
             return value;
         }),
     activate: () =>
         privateActiveMarker.update(value => {
             if (value) {
-                (value.content as HTMLElement).style.transform = 'translate(0, 50%) scale(1.2)';
+                (value.content as HTMLElement).classList.add('active');
             }
             return value;
         }),

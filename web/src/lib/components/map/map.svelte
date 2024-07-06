@@ -5,6 +5,8 @@
     let container: HTMLDivElement;
     let isInteracted = false;
     const loadedAt = Date.now();
+    let clickTimeout: number | undefined;
+    let isClicked = false;
 
     const dispatch = createEventDispatcher();
 
@@ -43,7 +45,30 @@
         try {
             event.addListener($map, 'click', function (event: google.maps.MapMouseEvent) {
                 isInteracted = true;
-                dispatch('click', {lat: event.latLng?.lat(), lng: event.latLng?.lng()});
+
+                if ((event.domEvent as MouseEvent | TouchEvent).detail === 1) {
+                    isClicked = false;
+                    if (clickTimeout) {
+                        return;
+                    }
+
+                    clickTimeout = setTimeout(() => {
+                        isClicked = true;
+                        dispatch('click', {lat: event.latLng?.lat(), lng: event.latLng?.lng()});
+                        clickTimeout = undefined;
+                    }, 200);
+                }
+            });
+
+            event.addListener($map, 'dblclick', function () {
+                if (isClicked) {
+                    // event.stop() doesn't work for some reason, so adding this awesome crutch
+                    $map.set('disableDoubleClickZoom', true);
+                    isClicked = false;
+                    return;
+                }
+                clearTimeout(clickTimeout);
+                clickTimeout = undefined;
             });
 
             event.addListener($map, 'bounds_changed', function () {
