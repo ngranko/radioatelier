@@ -54,7 +54,19 @@ jobs:
 
     - name: Tag the current commit
       run: |
-        git tag ${{ steps.calculate-version.outputs.version }} && git push origin ${{ steps.calculate-version.outputs.version }}
-      
-    # - name: Build the Docker image
-    #   run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
+        git tag v${{ steps.calculate-version.outputs.version }}
+        git push origin v${{ steps.calculate-version.outputs.version }}
+
+    - name: Build the api docker image
+      run: |
+        cd api
+        docker build --compress --file docker/go/Dockerfile -t registry.radioatelier.one/radioatelier/go:${{ steps.calculate-version.outputs.version }} -t registry.radioatelier.one/radioatelier/go:latest --target prod .
+        docker push registry.radioatelier.one/radioatelier/go:${{ steps.calculate-version.outputs.version }}
+        docker push registry.radioatelier.one/radioatelier/go:latest
+
+    - name: Build the web docker image
+      run: |
+        cd web
+        docker build --compress --file docker/app/Dockerfile -t registry.radioatelier.one/radioatelier/web:${{ steps.calculate-version.outputs.version }} -t registry.radioatelier.one/radioatelier/web:latest --target prod .
+        docker push registry.radioatelier.one/radioatelier/web:${{ steps.calculate-version.outputs.version }}
+        docker push registry.radioatelier.one/radioatelier/web:latest
