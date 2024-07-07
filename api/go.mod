@@ -8,7 +8,6 @@ require (
 	github.com/go-playground/universal-translator v0.18.1
 	github.com/go-playground/validator/v10 v10.20.0
 	github.com/google/uuid v1.3.0
-	github.com/joho/godotenv v1.5.1
 	github.com/jomei/notionapi v1.12.0
 	github.com/lestrrat-go/jwx/v2 v2.0.21
 	github.com/robfig/cron/v3 v3.0.1
