@@ -25,7 +25,9 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
 
-    - uses: paulhatch/semantic-version@v5.3.0
+    - name: Calculate version
+      id: calculate-version
+      uses: paulhatch/semantic-version@v5.3.0
       with:
         # The prefix to use to identify tags
         tag_prefix: "v"
@@ -52,7 +54,7 @@ jobs:
 
     - name: Display SemVer
       run: |
-          echo "$version_tag" && echo "$version" && echo "$major.$minor.$patch"
+          echo "${{ steps.calculate-version.outputs.version-tag }}" && echo "${{ steps.calculate-version.outputs.version }}" && echo "${{ steps.calculate-version.outputs.major }}.${{ steps.calculate-version.outputs.minor }}.${{ steps.calculate-version.outputs.patch }}"
         
     # - name: Build the Docker image
     #   run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
