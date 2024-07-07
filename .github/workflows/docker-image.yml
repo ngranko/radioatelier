@@ -52,9 +52,9 @@ jobs:
         # If true, the branch will be used to select the maximum version.
         version_from_branch: false
 
-    - name: Display SemVer
+    - name: Tag the current commit
       run: |
-          echo "${{ steps.calculate-version.outputs.version-tag }}" && echo "${{ steps.calculate-version.outputs.version }}" && echo "${{ steps.calculate-version.outputs.major }}.${{ steps.calculate-version.outputs.minor }}.${{ steps.calculate-version.outputs.patch }}"
-        
+        git tag ${{ steps.calculate-version.outputs.version }} && git push origin ${{ steps.calculate-version.outputs.version }}
+      
     # - name: Build the Docker image
     #   run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
