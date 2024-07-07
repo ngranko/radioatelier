@@ -49,6 +49,10 @@ jobs:
         debug: false
         # If true, the branch will be used to select the maximum version.
         version_from_branch: false
+
+    - name: Display SemVer
+      run: |
+          echo "echo "$version_tag" && echo "$version" && echo "$major.$minor.$patch"
         
     # - name: Build the Docker image
     #   run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
