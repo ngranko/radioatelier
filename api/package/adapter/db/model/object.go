@@ -13,8 +13,8 @@ type Object struct {
     CityID          *uuid.UUID
     City            *City
     Description     string
-    Latitude        string `gorm:"type:varchar(10)"`
-    Longitude       string `gorm:"type:varchar(10)"`
+    Latitude        string `gorm:"type:varchar(20)"`
+    Longitude       string `gorm:"type:varchar(20)"`
     InstalledPeriod string `gorm:"type:varchar(20)"`
     IsRemoved       bool   `gorm:"type:tinyint(1);not null;default:0"`
     RemovalPeriod   string `gorm:"type:varchar(20)"`
