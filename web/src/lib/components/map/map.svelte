@@ -16,7 +16,9 @@
         const mapOptions: google.maps.MapOptions = {
             zoom: 15,
             // TODO: use geolocation API if everything else failed?
-            center: JSON.parse(localStorage.getItem('lastCenter') ?? ''),
+            center: localStorage.getItem('lastCenter')
+                ? JSON.parse(localStorage.getItem('lastCenter') as string)
+                : '',
             mapId: '5b6e83dfb8822236',
             controlSize: 40,
             // I can always enable it if I see that I need it< but for now let's leave as little controls as I can
