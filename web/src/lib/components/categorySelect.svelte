@@ -51,6 +51,7 @@
                     i.value = result.data.id;
                     delete i.created;
                 }
+                inValue = result.data.id;
                 return i;
             });
         }
