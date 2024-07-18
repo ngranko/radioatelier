@@ -1,8 +1,8 @@
 <script lang="ts">
     import {createMutation, createQuery} from '@tanstack/svelte-query';
-    import Select from 'svelte-select';
     import {createCategory, listCategories} from '$lib/api/category';
     import {beforeUpdate} from 'svelte';
+    import Svelecte from 'svelecte';
 
     export let name: string;
     export let value: string | undefined;
@@ -13,10 +13,8 @@
         created?: boolean;
     }
 
-    let filterText = '';
     let items: Item[] = [];
     let inValue: string | null;
-    let justValue: string | null;
 
     beforeUpdate(() => {
         if (!inValue && value) {
@@ -32,49 +30,44 @@
 
     $: if ($categories.isSuccess) {
         items = $categories.data.data.categories.map(
-            (item): Item => ({value: item.id, label: item.name, created: false}),
+            (item): Item => ({value: item.id, label: item.name}),
         );
     }
 
-    function handleFilter(e: CustomEvent<Item[]>) {
-        if (e.detail.length === 0 && filterText.length > 0) {
-            const prev = items.filter(i => !i.created);
-            items = [...prev, {value: filterText, label: filterText, created: true}];
-        }
-    }
-
-    async function handleChange(e: CustomEvent<Item>) {
-        if (e.detail.created) {
-            const result = await $createCategoryMutation.mutateAsync({name: e.detail.label});
-            items = items.map(i => {
-                if (i.value === e.detail.value) {
-                    i.value = result.data.id;
-                    delete i.created;
-                }
-                inValue = result.data.id;
-                return i;
-            });
-        }
-    }
-
-    function handleBlur() {
-        items = items.filter(i => !i.created);
+    async function handleCreate(props: {
+        inputValue: string;
+        valueField: string;
+        labelField: string;
+        prefix: string;
+    }) {
+        const result = await $createCategoryMutation.mutateAsync({name: props.inputValue});
+        return {value: result.data.id, label: result.data.name};
     }
 </script>
 
-<Select
-    bind:value={inValue}
-    bind:justValue
+<Svelecte
     placeholder="Выберите категорию"
-    on:change={handleChange}
-    on:filter={handleFilter}
-    on:blur={handleBlur}
-    bind:filterText
-    {items}
->
-    <div slot="item" let:item>
-        {item.created ? 'Создать: ' : ''}
-        {item.label}
-    </div>
-</Select>
-<input type="hidden" {name} value={justValue} />
+    highlightFirstItem={false}
+    creatable={true}
+    i18n={{
+        createRowLabel: value => `Создать '${value}'`,
+    }}
+    options={items.sort((a, b) => a.label.localeCompare(b.label))}
+    {name}
+    bind:value={inValue}
+    createHandler={handleCreate}
+/>
+
+<style lang="scss">
+    @use '../../styles/colors';
+    @use '../../styles/typography';
+
+    :global(.creatable-row) {
+        @include typography.brand-face;
+    }
+
+    :global(.svelecte .sv-control) {
+        height: 38px;
+        border-color: colors.$lightgray;
+    }
+</style>

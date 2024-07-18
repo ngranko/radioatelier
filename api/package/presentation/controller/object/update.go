@@ -12,18 +12,22 @@ import (
 )
 
 type UpdateInput struct {
-    Name       string    `json:"name" validate:"max=255"`
-    Lat        string    `json:"lat"`
-    Lng        string    `json:"lng"`
-    CategoryID uuid.UUID `json:"categoryId" validate:"uuid"`
+    Name        string    `json:"name" validate:"max=255"`
+    Description string    `json:"description"`
+    Lat         string    `json:"lat"`
+    Lng         string    `json:"lng"`
+    Address     string    `json:"address" validate:"max=128"`
+    CategoryID  uuid.UUID `json:"categoryId" validate:"uuid"`
 }
 
 type UpdatePayloadData struct {
-    ID         uuid.UUID `json:"id"`
-    Name       string    `json:"name"`
-    Lat        string    `json:"lat"`
-    Lng        string    `json:"lng"`
-    CategoryID uuid.UUID `json:"categoryId"`
+    ID          uuid.UUID `json:"id"`
+    Name        string    `json:"name"`
+    Description string    `json:"description"`
+    Lat         string    `json:"lat"`
+    Lng         string    `json:"lng"`
+    Address     string    `json:"address"`
+    CategoryID  uuid.UUID `json:"categoryId"`
 }
 
 func Update(w http.ResponseWriter, r *http.Request) {
@@ -77,8 +81,16 @@ func Update(w http.ResponseWriter, r *http.Request) {
         objModel.Name = payload.Name
     }
 
+    if len(payload.Description) > 0 {
+        objModel.Description = payload.Description
+    }
+
     if payload.CategoryID != uuid.Nil {
         objModel.CategoryID = payload.CategoryID
+    }
+
+    if len(payload.Address) > 0 {
+        objModel.Address = payload.Address
     }
 
     objModel.UpdatedBy = user.GetModel().ID
@@ -93,11 +105,13 @@ func Update(w http.ResponseWriter, r *http.Request) {
         WithStatus(http.StatusOK).
         WithPayload(router.Payload{
             Data: UpdatePayloadData{
-                ID:         objModel.ID,
-                Name:       objModel.Name,
-                Lat:        objModel.Latitude,
-                Lng:        objModel.Longitude,
-                CategoryID: objModel.CategoryID,
+                ID:          objModel.ID,
+                Name:        objModel.Name,
+                Description: objModel.Description,
+                Lat:         objModel.Latitude,
+                Lng:         objModel.Longitude,
+                Address:     objModel.Address,
+                CategoryID:  objModel.CategoryID,
             },
         }).
         Send(w)

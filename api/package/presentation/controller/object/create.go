@@ -12,18 +12,22 @@ import (
 )
 
 type CreateInput struct {
-    Name       string    `json:"name" validate:"required,max=255"`
-    Lat        string    `json:"lat" validate:"required"`
-    Lng        string    `json:"lng" validate:"required"`
-    CategoryID uuid.UUID `json:"categoryId" validate:"required,uuid"`
+    Name        string    `json:"name" validate:"required,max=255"`
+    Description string    `json:"description"`
+    Lat         string    `json:"lat" validate:"required"`
+    Lng         string    `json:"lng" validate:"required"`
+    Address     string    `json:"address" validate:"required,max=128"`
+    CategoryID  uuid.UUID `json:"categoryId" validate:"required,uuid"`
 }
 
 type CreatePayloadData struct {
-    ID         uuid.UUID `json:"id"`
-    Name       string    `json:"name"`
-    Lat        string    `json:"lat"`
-    Lng        string    `json:"lng"`
-    CategoryID uuid.UUID `json:"categoryId"`
+    ID          uuid.UUID `json:"id"`
+    Name        string    `json:"name"`
+    Description string    `json:"description"`
+    Lat         string    `json:"lat"`
+    Lng         string    `json:"lng"`
+    Address     string    `json:"address"`
+    CategoryID  uuid.UUID `json:"categoryId"`
 }
 
 func Create(w http.ResponseWriter, r *http.Request) {
@@ -60,8 +64,10 @@ func Create(w http.ResponseWriter, r *http.Request) {
     obj := presenter.NewObject()
     objModel := obj.GetModel()
     objModel.Name = payload.Name
+    objModel.Description = payload.Description
     objModel.Latitude = payload.Lat
     objModel.Longitude = payload.Lng
+    objModel.Address = payload.Address
     objModel.CategoryID = payload.CategoryID
     objModel.CreatedBy = user.GetModel().ID
     objModel.Creator = *user.GetModel()
@@ -77,11 +83,13 @@ func Create(w http.ResponseWriter, r *http.Request) {
         WithStatus(http.StatusOK).
         WithPayload(router.Payload{
             Data: CreatePayloadData{
-                ID:         objModel.ID,
-                Name:       objModel.Name,
-                Lat:        objModel.Latitude,
-                Lng:        objModel.Longitude,
-                CategoryID: objModel.CategoryID,
+                ID:          objModel.ID,
+                Name:        objModel.Name,
+                Description: objModel.Description,
+                Lat:         objModel.Latitude,
+                Lng:         objModel.Longitude,
+                Address:     objModel.Address,
+                CategoryID:  objModel.CategoryID,
             },
         }).
         Send(w)

@@ -30,14 +30,14 @@ export const activeMarker = {
     deactivate: () =>
         privateActiveMarker.update(value => {
             if (value) {
-                (value.content as HTMLElement).classList.remove('active');
+                (value.content as HTMLElement).classList.remove('map-marker-active');
             }
             return value;
         }),
     activate: () =>
         privateActiveMarker.update(value => {
             if (value) {
-                (value.content as HTMLElement).classList.add('active');
+                (value.content as HTMLElement).classList.add('map-marker-active');
             }
             return value;
         }),

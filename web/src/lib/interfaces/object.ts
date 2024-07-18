@@ -9,9 +9,11 @@ export interface Object {
 export interface LooseObject {
     id: string | null;
     name: string;
+    description: string;
     categoryId: string;
     lat: string;
     lng: string;
+    address: string;
 }
 
 export interface BareObject {

@@ -14,11 +14,13 @@ type GetDetailsPayloadData struct {
 }
 
 type Object struct {
-    ID         uuid.UUID `json:"id"`
-    Name       string    `json:"name"`
-    Latitude   string    `json:"lat"`
-    Longitude  string    `json:"lng"`
-    CategoryID uuid.UUID `json:"categoryId"`
+    ID          uuid.UUID `json:"id"`
+    Name        string    `json:"name"`
+    Description string    `json:"description"`
+    Latitude    string    `json:"lat"`
+    Longitude   string    `json:"lng"`
+    Address     string    `json:"address"`
+    CategoryID  uuid.UUID `json:"categoryId"`
 }
 
 func GetDetails(w http.ResponseWriter, r *http.Request) {
@@ -42,11 +44,13 @@ func GetDetails(w http.ResponseWriter, r *http.Request) {
         WithPayload(router.Payload{
             Data: GetDetailsPayloadData{
                 Object: Object{
-                    ID:         object.GetModel().ID,
-                    Name:       object.GetModel().Name,
-                    Latitude:   object.GetModel().Latitude,
-                    Longitude:  object.GetModel().Longitude,
-                    CategoryID: object.GetModel().CategoryID,
+                    ID:          object.GetModel().ID,
+                    Name:        object.GetModel().Name,
+                    Description: object.GetModel().Description,
+                    Latitude:    object.GetModel().Latitude,
+                    Longitude:   object.GetModel().Longitude,
+                    Address:     object.GetModel().Address,
+                    CategoryID:  object.GetModel().CategoryID,
                 },
             },
         }).

@@ -2,6 +2,10 @@
 
 $normal-face: sofia-pro, sans-serif;
 
+@mixin brand-face {
+    font-family: $normal-face;
+}
+
 @mixin line-height-condensed {
     line-height: 1;
 }

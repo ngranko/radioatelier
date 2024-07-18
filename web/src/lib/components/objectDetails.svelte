@@ -4,6 +4,8 @@
     import {cubicInOut} from 'svelte/easing';
     import CategorySelect from '$lib/components/categorySelect.svelte';
     import type {LooseObject} from '$lib/interfaces/object';
+    import Input from '$lib/components/input/input.svelte';
+    import Textarea from '$lib/components/input/textarea.svelte';
 
     const dispatch = createEventDispatcher();
 
@@ -32,20 +34,25 @@
         </button>
     </section>
     {#key `${initialValues.lat},${initialValues.lng}`}
-        <form method="POST" on:submit|preventDefault|stopPropagation={handleSave}>
+        <form class="form" method="POST" on:submit|preventDefault|stopPropagation={handleSave}>
             <input type="hidden" name="id" value={initialValues.id} />
-            <div>Lattitude: {initialValues.lat}</div>
             <input type="hidden" name="lat" value={initialValues.lat} />
-            <div>Longitude: {initialValues.lng}</div>
             <input type="hidden" name="lng" value={initialValues.lng} />
-            <label>
-                Name: <input name="name" value={initialValues.name ?? ''} />
-            </label>
+
+            <Input name="name" value={initialValues.name ?? ''} placeholder="Название" />
             <CategorySelect name="categoryId" value={initialValues.categoryId} />
-            <button type="submit">Save</button>
-            {#if initialValues.id}
-                <button type="button" on:click={handleDelete}>Delete</button>
-            {/if}
+            <Textarea
+                name="description"
+                value={initialValues.description ?? ''}
+                placeholder="description"
+            />
+            <Input name="address" value={initialValues.address ?? ''} placeholder="Адрес" />
+            <div>
+                <button type="submit">Save</button>
+                {#if initialValues.id}
+                    <button type="button" on:click={handleDelete}>Delete</button>
+                {/if}
+            </div>
         </form>
     {/key}
 </aside>
@@ -55,7 +62,7 @@
 
     .popup {
         position: absolute;
-        width: 300px;
+        width: 400px;
         height: calc(100vh - 8px * 2);
         margin: 8px;
         padding: 24px;
@@ -82,5 +89,11 @@
         &:hover {
             color: colors.$neonBlue;
         }
+    }
+
+    .form {
+        display: grid;
+        grid-template-columns: 1fr;
+        grid-gap: 16px;
     }
 </style>

@@ -30,7 +30,9 @@
 
         const icon = document.createElement('div');
         icon.innerHTML = '<i class="fa-solid fa-bolt"></i>';
-        icon.className = initialActive ? 'marker appearing active' : 'marker appearing';
+        icon.className = initialActive
+            ? 'map-marker map-marker-appearing map-marker-active'
+            : 'map-marker map-marker-appearing';
 
         const {AdvancedMarkerElement, CollisionBehavior} = await $mapLoader.importLibrary('marker');
 
@@ -43,11 +45,14 @@
         });
         marker.addListener('click', handleMarkerClick);
 
-        setTimeout(() => (marker.content as HTMLDivElement).classList.remove('appearing'), 200);
+        setTimeout(
+            () => (marker.content as HTMLDivElement).classList.remove('map-marker-appearing'),
+            200,
+        );
     });
 
     onDestroy(() => {
-        (marker.content as HTMLDivElement).classList.add('exiting');
+        (marker.content as HTMLDivElement).classList.add('map-marker-exiting');
         setTimeout(() => (marker.map = null), 200);
     });
 
@@ -66,7 +71,7 @@
 </script>
 
 <style lang="scss">
-    :global(.marker) {
+    :global(.map-marker) {
         width: 24px;
         height: 24px;
         transform: translate(0, 50%);
@@ -80,18 +85,18 @@
         transition: transform 0.1s ease-in-out;
     }
 
-    :global(.active) {
+    :global(.map-marker-active) {
         transform: translate(0, 50%) scale(1.2);
     }
 
-    :global(.appearing) {
+    :global(.map-marker-appearing) {
         animation-name: popIn;
         animation-iteration-count: 1;
         animation-duration: 0.2s;
         animation-timing-function: cubic-bezier(0.92, 0.18, 0.8, 0.71);
     }
 
-    :global(.exiting) {
+    :global(.map-marker-exiting) {
         animation-name: popIn;
         animation-direction: reverse;
         animation-iteration-count: 1;
