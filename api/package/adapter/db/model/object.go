@@ -21,7 +21,7 @@ type Object struct {
     Source          string
     CategoryID      uuid.UUID
     Category        Category
-    Tags            string     `gorm:"type:varchar(100)"`
+    Tags            []*Tag     `gorm:"many2many:object_tags;constraint:OnDelete:CASCADE"`
     Image           string     `gorm:"type:blob"`
     NotionID        *uuid.UUID `gorm:"type:char(36)"`
     LastSync        *time.Time
