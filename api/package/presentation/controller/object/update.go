@@ -12,22 +12,28 @@ import (
 )
 
 type UpdateInput struct {
-    Name        string    `json:"name" validate:"max=255"`
-    Description string    `json:"description"`
-    Lat         string    `json:"lat"`
-    Lng         string    `json:"lng"`
-    Address     string    `json:"address" validate:"max=128"`
-    CategoryID  uuid.UUID `json:"categoryId" validate:"uuid"`
+    Name            string    `json:"name" validate:"max=255"`
+    Description     string    `json:"description"`
+    Lat             string    `json:"lat"`
+    Lng             string    `json:"lng"`
+    Address         string    `json:"address" validate:"max=128"`
+    InstalledPeriod string    `json:"installedPeriod" validate:"max=20"`
+    IsRemoved       bool      `json:"isRemoved"`
+    RemovalPeriod   string    `json:"removalPeriod" validate:"max=20"`
+    CategoryID      uuid.UUID `json:"categoryId" validate:"uuid"`
 }
 
 type UpdatePayloadData struct {
-    ID          uuid.UUID `json:"id"`
-    Name        string    `json:"name"`
-    Description string    `json:"description"`
-    Lat         string    `json:"lat"`
-    Lng         string    `json:"lng"`
-    Address     string    `json:"address"`
-    CategoryID  uuid.UUID `json:"categoryId"`
+    ID              uuid.UUID `json:"id"`
+    Name            string    `json:"name"`
+    Description     string    `json:"description"`
+    Lat             string    `json:"lat"`
+    Lng             string    `json:"lng"`
+    Address         string    `json:"address"`
+    InstalledPeriod string    `json:"installedPeriod"`
+    IsRemoved       bool      `json:"isRemoved"`
+    RemovalPeriod   string    `json:"removalPeriod"`
+    CategoryID      uuid.UUID `json:"categoryId"`
 }
 
 func Update(w http.ResponseWriter, r *http.Request) {
@@ -93,6 +99,15 @@ func Update(w http.ResponseWriter, r *http.Request) {
         objModel.Address = payload.Address
     }
 
+    if len(payload.InstalledPeriod) > 0 {
+        objModel.InstalledPeriod = payload.InstalledPeriod
+    }
+
+    if len(payload.RemovalPeriod) > 0 {
+        objModel.RemovalPeriod = payload.RemovalPeriod
+    }
+
+    objModel.IsRemoved = payload.IsRemoved
     objModel.UpdatedBy = user.GetModel().ID
     objModel.Updater = *user.GetModel()
     err = object.Update()
@@ -105,13 +120,16 @@ func Update(w http.ResponseWriter, r *http.Request) {
         WithStatus(http.StatusOK).
         WithPayload(router.Payload{
             Data: UpdatePayloadData{
-                ID:          objModel.ID,
-                Name:        objModel.Name,
-                Description: objModel.Description,
-                Lat:         objModel.Latitude,
-                Lng:         objModel.Longitude,
-                Address:     objModel.Address,
-                CategoryID:  objModel.CategoryID,
+                ID:              objModel.ID,
+                Name:            objModel.Name,
+                Description:     objModel.Description,
+                Lat:             objModel.Latitude,
+                Lng:             objModel.Longitude,
+                Address:         objModel.Address,
+                InstalledPeriod: objModel.InstalledPeriod,
+                IsRemoved:       objModel.IsRemoved,
+                RemovalPeriod:   objModel.RemovalPeriod,
+                CategoryID:      objModel.CategoryID,
             },
         }).
         Send(w)

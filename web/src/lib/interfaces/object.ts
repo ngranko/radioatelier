@@ -1,19 +1,21 @@
-export interface Object {
-    id: string;
-    name: string;
-    categoryId: string;
-    lat: string;
-    lng: string;
-}
-
-export interface LooseObject {
-    id: string | null;
+interface BaseObject {
     name: string;
     description: string;
     categoryId: string;
     lat: string;
     lng: string;
     address: string;
+    installedPeriod: string;
+    isRemoved: boolean;
+    removalPeriod: string;
+}
+
+export interface Object extends BaseObject {
+    id: string;
+}
+
+export interface LooseObject extends BaseObject {
+    id: string | null;
 }
 
 export interface BareObject {
@@ -27,12 +29,7 @@ export interface ObjectDetailsInfo {
     object: Object | BareObject | null;
 }
 
-export interface CreateObjectInputs {
-    name: string;
-    lat: string;
-    lng: string;
-    categoryId: string;
-}
+export type CreateObjectInputs = Omit<Object, 'id'>;
 
 export type CreateObjectResponsePayload = Object;
 

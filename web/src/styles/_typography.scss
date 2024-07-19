@@ -34,8 +34,8 @@ $normal-face: sofia-pro, sans-serif;
     font-size: $size;
 }
 
-@mixin size-12 {
-    @include sized(12px);
+@mixin size-14 {
+    @include sized(14px);
 }
 
 @mixin size-16 {

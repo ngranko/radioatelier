@@ -12,22 +12,28 @@ import (
 )
 
 type CreateInput struct {
-    Name        string    `json:"name" validate:"required,max=255"`
-    Description string    `json:"description"`
-    Lat         string    `json:"lat" validate:"required"`
-    Lng         string    `json:"lng" validate:"required"`
-    Address     string    `json:"address" validate:"required,max=128"`
-    CategoryID  uuid.UUID `json:"categoryId" validate:"required,uuid"`
+    Name            string    `json:"name" validate:"required,max=255"`
+    Description     string    `json:"description"`
+    Lat             string    `json:"lat" validate:"required"`
+    Lng             string    `json:"lng" validate:"required"`
+    Address         string    `json:"address" validate:"required,max=128"`
+    InstalledPeriod string    `json:"installedPeriod" validate:"required,max=20"`
+    IsRemoved       bool      `json:"isRemoved"`
+    RemovalPeriod   string    `json:"removalPeriod" validate:"required,max=20"`
+    CategoryID      uuid.UUID `json:"categoryId" validate:"required,uuid"`
 }
 
 type CreatePayloadData struct {
-    ID          uuid.UUID `json:"id"`
-    Name        string    `json:"name"`
-    Description string    `json:"description"`
-    Lat         string    `json:"lat"`
-    Lng         string    `json:"lng"`
-    Address     string    `json:"address"`
-    CategoryID  uuid.UUID `json:"categoryId"`
+    ID              uuid.UUID `json:"id"`
+    Name            string    `json:"name"`
+    Description     string    `json:"description"`
+    Lat             string    `json:"lat"`
+    Lng             string    `json:"lng"`
+    Address         string    `json:"address"`
+    InstalledPeriod string    `json:"installedPeriod"`
+    IsRemoved       bool      `json:"isRemoved"`
+    RemovalPeriod   string    `json:"removalPeriod"`
+    CategoryID      uuid.UUID `json:"categoryId"`
 }
 
 func Create(w http.ResponseWriter, r *http.Request) {
@@ -68,6 +74,9 @@ func Create(w http.ResponseWriter, r *http.Request) {
     objModel.Latitude = payload.Lat
     objModel.Longitude = payload.Lng
     objModel.Address = payload.Address
+    objModel.InstalledPeriod = payload.InstalledPeriod
+    objModel.IsRemoved = payload.IsRemoved
+    objModel.RemovalPeriod = payload.RemovalPeriod
     objModel.CategoryID = payload.CategoryID
     objModel.CreatedBy = user.GetModel().ID
     objModel.Creator = *user.GetModel()
@@ -83,13 +92,16 @@ func Create(w http.ResponseWriter, r *http.Request) {
         WithStatus(http.StatusOK).
         WithPayload(router.Payload{
             Data: CreatePayloadData{
-                ID:          objModel.ID,
-                Name:        objModel.Name,
-                Description: objModel.Description,
-                Lat:         objModel.Latitude,
-                Lng:         objModel.Longitude,
-                Address:     objModel.Address,
-                CategoryID:  objModel.CategoryID,
+                ID:              objModel.ID,
+                Name:            objModel.Name,
+                Description:     objModel.Description,
+                Lat:             objModel.Latitude,
+                Lng:             objModel.Longitude,
+                Address:         objModel.Address,
+                InstalledPeriod: objModel.InstalledPeriod,
+                IsRemoved:       objModel.IsRemoved,
+                RemovalPeriod:   objModel.RemovalPeriod,
+                CategoryID:      objModel.CategoryID,
             },
         }).
         Send(w)

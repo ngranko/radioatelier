@@ -1,5 +1,4 @@
 <script lang="ts">
-    // import {onMount} from 'svelte';
     import {createMutation, createQuery, useQueryClient} from '@tanstack/svelte-query';
     import {createObject, deleteObject, listObjects} from '$lib/api/object';
     import type {Object} from '$lib/interfaces/object';
@@ -90,15 +89,15 @@
 
         if (!event.detail.id) {
             await toast.promise(createNewObject(event.detail), {
-                loading: 'Creating...',
-                success: 'Object created!',
-                error: 'Failed creating an object',
+                loading: 'Создаю...',
+                success: 'Объект создан!',
+                error: 'Не удалось создать объект',
             });
         } else {
             await toast.promise(updateExistingObject(event.detail), {
-                loading: 'Updating...',
-                success: 'Object updated!',
-                error: 'Failed updating an object',
+                loading: 'Обновляю...',
+                success: 'Объект обновлен!',
+                error: 'Не удалось обновить объект',
             });
         }
     }
@@ -131,9 +130,9 @@
         }
 
         await toast.promise(deleteExistingObject(event.detail), {
-            loading: 'Deleting...',
-            success: 'Object deleted!',
-            error: 'Failed deleting an object',
+            loading: 'Удаляю...',
+            success: 'Объект удален!',
+            error: 'Не удалось удалить объект',
         });
     }
 

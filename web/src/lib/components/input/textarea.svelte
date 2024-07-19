@@ -1,10 +1,11 @@
 <script lang="ts">
-    export let name: string;
+    export let id: string | undefined = undefined;
+    export let name: string | undefined = undefined;
     export let value: string;
-    export let placeholder: string;
+    export let placeholder: string | undefined = undefined;
 </script>
 
-<textarea {name} {value} {placeholder} class="element" />
+<textarea {id} {name} {value} {placeholder} class="element" />
 
 <style lang="scss">
     @use '../../../styles/colors';

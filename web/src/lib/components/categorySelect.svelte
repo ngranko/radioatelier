@@ -4,7 +4,8 @@
     import {beforeUpdate} from 'svelte';
     import Svelecte from 'svelecte';
 
-    export let name: string;
+    export let id: string | undefined = undefined;
+    export let name: string | undefined = undefined;
     export let value: string | undefined;
 
     interface Item {
@@ -46,7 +47,8 @@
 </script>
 
 <Svelecte
-    placeholder="Выберите категорию"
+    inputId={id}
+    placeholder="Не выбрана"
     highlightFirstItem={false}
     creatable={true}
     i18n={{

@@ -1,10 +1,11 @@
 <script lang="ts">
-    export let name: string;
+    export let id: string | undefined = undefined;
+    export let name: string | undefined = undefined;
     export let value: string;
-    export let placeholder: string;
+    export let placeholder: string | undefined = undefined;
 </script>
 
-<input class="element" type="text" {name} {value} {placeholder} data-1p-ignore />
+<input class="element" type="text" {id} {name} {value} {placeholder} data-1p-ignore />
 
 <style lang="scss">
     @use '../../../styles/colors';
