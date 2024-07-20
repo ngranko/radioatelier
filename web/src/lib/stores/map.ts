@@ -1,11 +1,12 @@
 import {readable, writable} from 'svelte/store';
 import {Loader} from '@googlemaps/js-api-loader';
 import type {ObjectDetailsInfo} from '$lib/interfaces/object';
+import config from '$lib/config';
 
 export const mapLoader = readable<Loader>(undefined, function start(set) {
     set(
         new Loader({
-            apiKey: 'AIzaSyDLWuVdej-R0l4O-aabmUVOyfcMA6gtWh4',
+            apiKey: config.googleMapsApiKey,
             version: 'weekly',
             libraries: ['places', 'marker'],
         }),

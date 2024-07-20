@@ -1,9 +1,14 @@
-import {METHOD_DELETE, METHOD_GET, STATUS_REQUEST_ERROR, STATUS_SERVER_ERROR,} from '$lib/api/constants';
+import {
+    METHOD_DELETE,
+    METHOD_GET,
+    STATUS_REQUEST_ERROR,
+    STATUS_SERVER_ERROR,
+} from '$lib/api/constants';
 import type {HttpMethod} from '$lib/interfaces/http';
 import type KeyVal from '$lib/interfaces/keyVal';
 import RequestError from '$lib/errors/RequestError';
 import ServerError from '$lib/errors/ServerError';
-import type {Payload, RawResponse} from '$lib/interfaces/api';
+import type {RawResponse} from '$lib/interfaces/api';
 import type Request from '$lib/api/request/Request';
 
 interface RequestParams {
@@ -11,7 +16,7 @@ interface RequestParams {
     init: RequestInit;
 }
 
-export default class JsonRequest implements Request<Payload<never>> {
+export default class JsonRequest implements Request<object> {
     private readonly uri: string;
     private readonly method: HttpMethod;
     private readonly headers: KeyVal<string>;
@@ -50,7 +55,7 @@ export default class JsonRequest implements Request<Payload<never>> {
         return this;
     }
 
-    public async send(): Promise<Payload<never>> {
+    public async send(): Promise<object> {
         const {resource, init} = this.prepareRequest();
 
         const response = await this.doSend(resource, init);
@@ -58,14 +63,14 @@ export default class JsonRequest implements Request<Payload<never>> {
             throw new RequestError(
                 `Request to ${this.uri} ended with an error (response status ${response.status})`,
                 response.status,
-                response.payload.errors,
+                response.payload,
             );
         }
 
         return response.payload;
     }
 
-    private async doSend(resource: RequestInfo, init: RequestInit): Promise<RawResponse<never>> {
+    private async doSend(resource: RequestInfo, init: RequestInit): Promise<RawResponse<object>> {
         return fetch(resource, init).then(async response => {
             if (response.status >= STATUS_SERVER_ERROR) {
                 throw new ServerError(

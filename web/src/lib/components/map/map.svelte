@@ -1,6 +1,9 @@
 <script lang="ts">
     import {onMount, createEventDispatcher} from 'svelte';
     import {mapLoader, map} from '$lib/stores/map';
+    import {createMutation} from '@tanstack/svelte-query';
+    import {getLocation} from '$lib/api/location';
+    import type {Location} from '$lib/interfaces/location';
 
     let container: HTMLDivElement;
     let isInteracted = false;
@@ -10,15 +13,18 @@
 
     const dispatch = createEventDispatcher();
 
+    const location = createMutation({
+        mutationFn: getLocation,
+    });
+
     onMount(async () => {
         const {ControlPosition, event} = await $mapLoader.importLibrary('core');
 
+        const center = await getCenter();
+
         const mapOptions: google.maps.MapOptions = {
             zoom: 15,
-            // TODO: use geolocation API if everything else failed?
-            center: localStorage.getItem('lastCenter')
-                ? JSON.parse(localStorage.getItem('lastCenter') as string)
-                : '',
+            center,
             mapId: '5b6e83dfb8822236',
             controlSize: 40,
             // I can always enable it if I see that I need it< but for now let's leave as little controls as I can
@@ -95,6 +101,22 @@
 
         updateCurrentPosition();
     });
+
+    async function getCenter(): Promise<Location> {
+        if (localStorage.getItem('lastCenter')) {
+            return JSON.parse(localStorage.getItem('lastCenter') as string);
+        }
+
+        try {
+            const result = await $location.mutateAsync();
+            return result.location ?? {lat: 0, lng: 0};
+        } catch (e) {
+            console.error('error getting location');
+            console.error(e);
+        }
+
+        return {lat: 0, lng: 0};
+    }
 
     function updateCurrentPosition() {
         navigator.geolocation.getCurrentPosition(

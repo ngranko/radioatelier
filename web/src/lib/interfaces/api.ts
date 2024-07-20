@@ -6,7 +6,7 @@ export interface Payload<TData = unknown, TErrors = KeyVal<string>> {
     data: TData;
 }
 
-export interface RawResponse<T = unknown> {
+export interface RawResponse<T> {
     status: number;
-    payload: Payload<T>;
+    payload: T;
 }

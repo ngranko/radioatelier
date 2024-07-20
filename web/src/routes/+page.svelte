@@ -6,7 +6,7 @@
     import Map from '$lib/components/map/map.svelte';
     import Marker from '$lib/components/map/marker.svelte';
     import ObjectDetails from '$lib/components/objectDetails.svelte';
-    import type {Location} from '$lib/interfaces/map';
+    import type {Location} from '$lib/interfaces/location';
     import {updateObject} from '$lib/api/object.js';
     import toast from 'svelte-french-toast';
     import RequestError from '$lib/errors/RequestError';
@@ -145,7 +145,6 @@
     }
 
     function handleMapClick(event: CustomEvent<Location>) {
-        console.log(event.detail);
         activeObjectInfo.set({isLoading: false, object: {id: null, ...event.detail}});
     }
 </script>
