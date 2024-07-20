@@ -1,5 +1,4 @@
 import BaseError from '$lib/errors/BaseError';
-import type KeyVal from '$lib/interfaces/keyVal';
 import {
     STATUS_FORBIDDEN,
     STATUS_UNAUTHORIZED,
