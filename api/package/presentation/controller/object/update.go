@@ -14,8 +14,6 @@ import (
 type UpdateInput struct {
     Name            string    `json:"name" validate:"max=255"`
     Description     string    `json:"description"`
-    Lat             string    `json:"lat"`
-    Lng             string    `json:"lng"`
     Address         string    `json:"address" validate:"max=128"`
     InstalledPeriod string    `json:"installedPeriod" validate:"max=20"`
     IsRemoved       bool      `json:"isRemoved"`

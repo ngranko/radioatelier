@@ -9,6 +9,7 @@
 
     const dispatch = createEventDispatcher();
 
+    export let key: string;
     export let initialValues: Partial<LooseObject>;
 
     function handleSave(event: SubmitEvent) {
@@ -33,7 +34,7 @@
             <i class="fa-solid fa-xmark"></i>
         </button>
     </section>
-    {#key `${initialValues.lat},${initialValues.lng}`}
+    {#key key}
         <form class="form" method="POST" on:submit|preventDefault|stopPropagation={handleSave}>
             <input type="hidden" name="id" value={initialValues.id} />
             <input type="hidden" name="lat" value={initialValues.lat} />

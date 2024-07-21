@@ -9,6 +9,8 @@ import type {
     GetObjectContext,
     GetObjectResponsePayload,
     ListObjectsResponsePayload,
+    RepositionObjectInputs,
+    RepositionObjectResponsePayload,
     UpdateObjectInputs,
     UpdateObjectResponsePayload,
 } from '$lib/interfaces/object';
@@ -36,6 +38,16 @@ export async function updateObject(
 ): Promise<Payload<UpdateObjectResponsePayload>> {
     return new AuthRequest(
         new JsonRequest(`/api/object/${values.id}`, METHOD_PUT).setParams(values.updatedFields),
+    ).send();
+}
+
+export async function repositionObject(
+    values: RepositionObjectInputs,
+): Promise<Payload<RepositionObjectResponsePayload>> {
+    return new AuthRequest(
+        new JsonRequest(`/api/object/${values.id}/position`, METHOD_PUT).setParams(
+            values.updatedFields,
+        ),
     ).send();
 }
 

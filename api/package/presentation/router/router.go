@@ -26,6 +26,7 @@ func ConfigureRouter() *router.Router {
         r.Get("/list", object.GetList)
         r.Get("/{id}", object.GetDetails)
         r.Put("/{id}", object.Update)
+        r.Put("/{id}/position", object.Reposition)
         r.Delete("/{id}", object.Delete)
     })
 

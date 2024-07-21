@@ -145,13 +145,18 @@
     }
 
     function handleMapClick(event: CustomEvent<Location>) {
-        activeObjectInfo.set({isLoading: false, object: {id: null, ...event.detail}});
+        activeObjectInfo.set({
+            isLoading: false,
+            detailsId: new Date().getTime().toString(),
+            object: {id: null, lat: String(event.detail.lat), lng: String(event.detail.lng)},
+        });
     }
 </script>
 
 {#if $activeObjectInfo.object}
     <ObjectDetails
         initialValues={$activeObjectInfo.object}
+        key={$activeObjectInfo.detailsId}
         on:save={handleSave}
         on:close={handleClose}
         on:delete={handleDelete}

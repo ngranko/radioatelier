@@ -26,6 +26,7 @@ export interface BareObject {
 
 export interface ObjectDetailsInfo {
     isLoading: boolean;
+    detailsId: string;
     object: Object | BareObject | null;
 }
 
@@ -59,6 +60,13 @@ export interface UpdateObjectInputs {
 }
 
 export type UpdateObjectResponsePayload = Object;
+
+export interface RepositionObjectInputs {
+    id: string;
+    updatedFields: Pick<Object, 'lat' | 'lng'>;
+}
+
+export type RepositionObjectResponsePayload = BareObject;
 
 export interface DeleteObjectInputs {
     id: string;

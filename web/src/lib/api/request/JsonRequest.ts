@@ -16,7 +16,7 @@ interface RequestParams {
     init: RequestInit;
 }
 
-export default class JsonRequest implements Request<object> {
+export default class JsonRequest implements Request<never> {
     private readonly uri: string;
     private readonly method: HttpMethod;
     private readonly headers: KeyVal<string>;
@@ -55,7 +55,7 @@ export default class JsonRequest implements Request<object> {
         return this;
     }
 
-    public async send(): Promise<object> {
+    public async send(): Promise<never> {
         const {resource, init} = this.prepareRequest();
 
         const response = await this.doSend(resource, init);
@@ -67,7 +67,7 @@ export default class JsonRequest implements Request<object> {
             );
         }
 
-        return response.payload;
+        return response.payload as never;
     }
 
     private async doSend(resource: RequestInfo, init: RequestInit): Promise<RawResponse<object>> {
@@ -80,7 +80,6 @@ export default class JsonRequest implements Request<object> {
 
             return response.json().then(payload => ({
                 status: response.status,
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 payload,
             }));
         });

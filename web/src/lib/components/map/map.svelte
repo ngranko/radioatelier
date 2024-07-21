@@ -1,6 +1,6 @@
 <script lang="ts">
     import {onMount, createEventDispatcher} from 'svelte';
-    import {mapLoader, map} from '$lib/stores/map';
+    import {mapLoader, map, dragTimeout} from '$lib/stores/map';
     import {createMutation} from '@tanstack/svelte-query';
     import {getLocation} from '$lib/api/location';
     import type {Location} from '$lib/interfaces/location';
@@ -80,6 +80,7 @@
             });
 
             event.addListener($map, 'bounds_changed', function () {
+                dragTimeout.remove();
                 isInteracted = true;
             });
 

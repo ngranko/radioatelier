@@ -15,12 +15,17 @@ export const mapLoader = readable<Loader>(undefined, function start(set) {
 
 export const map = writable<google.maps.Map>(undefined);
 
-const {subscribe, set} = writable<ObjectDetailsInfo>({isLoading: false, object: null});
+const {subscribe, set, update} = writable<ObjectDetailsInfo>({
+    isLoading: false,
+    detailsId: '',
+    object: null,
+});
 
 export const activeObjectInfo = {
     subscribe,
-    reset: () => set({isLoading: false, object: null}),
+    reset: () => set({isLoading: false, detailsId: '', object: null}),
     set,
+    update,
 };
 
 const privateActiveMarker = writable<google.maps.marker.AdvancedMarkerElement | null>(null);
@@ -41,5 +46,26 @@ export const activeMarker = {
                 (value.content as HTMLElement).classList.add('map-marker-active');
             }
             return value;
+        }),
+};
+
+const privateDragTimeout = writable<number | null>(null);
+
+export const dragTimeout = {
+    subscribe: privateDragTimeout.subscribe,
+    set: (timeout: number) => {
+        privateDragTimeout.update(value => {
+            if (value) {
+                clearTimeout(value);
+            }
+            return timeout;
+        });
+    },
+    remove: () =>
+        privateDragTimeout.update(value => {
+            if (value) {
+                clearTimeout(value);
+            }
+            return null;
         }),
 };
