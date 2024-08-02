@@ -135,6 +135,10 @@
     }
 
     function handleMarkerClick() {
+        if ($activeObjectInfo.object && $activeObjectInfo.object.id === id) {
+            return;
+        }
+
         if (skipClick) {
             skipClick = false;
             return;
