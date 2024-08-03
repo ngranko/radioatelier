@@ -4,6 +4,7 @@ import (
     "radioatelier/package/infrastructure/router"
     "radioatelier/package/presentation/controller/category"
     "radioatelier/package/presentation/controller/object"
+    "radioatelier/package/presentation/controller/tag"
     "radioatelier/package/presentation/controller/token"
     "radioatelier/package/presentation/controller/user"
     "radioatelier/package/usecase/middleware"
@@ -28,6 +29,13 @@ func ConfigureRouter() *router.Router {
         r.Put("/{id}", object.Update)
         r.Put("/{id}/position", object.Reposition)
         r.Delete("/{id}", object.Delete)
+    })
+
+    r.Route("/tag", func(r *router.Router) {
+        r.Use(middleware.VerifyAccessToken)
+
+        r.Post("/", tag.Create)
+        r.Get("/list", tag.GetList)
     })
 
     r.Route("/token", func(r *router.Router) {

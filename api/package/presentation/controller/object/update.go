@@ -12,26 +12,30 @@ import (
 )
 
 type UpdateInput struct {
-    Name            string    `json:"name" validate:"max=255"`
-    Description     string    `json:"description"`
-    Address         string    `json:"address" validate:"max=128"`
-    InstalledPeriod string    `json:"installedPeriod" validate:"max=20"`
-    IsRemoved       bool      `json:"isRemoved"`
-    RemovalPeriod   string    `json:"removalPeriod" validate:"max=20"`
-    CategoryID      uuid.UUID `json:"categoryId" validate:"uuid"`
+    Name            string      `json:"name" validate:"max=255"`
+    Description     string      `json:"description"`
+    Address         string      `json:"address" validate:"max=128"`
+    InstalledPeriod string      `json:"installedPeriod" validate:"max=20"`
+    IsRemoved       bool        `json:"isRemoved"`
+    RemovalPeriod   string      `json:"removalPeriod" validate:"max=20"`
+    Source          string      `json:"source"`
+    CategoryID      uuid.UUID   `json:"categoryId" validate:"uuid"`
+    Tags            []uuid.UUID `json:"tags"`
 }
 
 type UpdatePayloadData struct {
-    ID              uuid.UUID `json:"id"`
-    Name            string    `json:"name"`
-    Description     string    `json:"description"`
-    Lat             string    `json:"lat"`
-    Lng             string    `json:"lng"`
-    Address         string    `json:"address"`
-    InstalledPeriod string    `json:"installedPeriod"`
-    IsRemoved       bool      `json:"isRemoved"`
-    RemovalPeriod   string    `json:"removalPeriod"`
-    CategoryID      uuid.UUID `json:"categoryId"`
+    ID              uuid.UUID   `json:"id"`
+    Name            string      `json:"name"`
+    Description     string      `json:"description"`
+    Lat             string      `json:"lat"`
+    Lng             string      `json:"lng"`
+    Address         string      `json:"address"`
+    InstalledPeriod string      `json:"installedPeriod"`
+    IsRemoved       bool        `json:"isRemoved"`
+    RemovalPeriod   string      `json:"removalPeriod"`
+    Source          string      `json:"source"`
+    CategoryID      uuid.UUID   `json:"categoryId"`
+    Tags            []uuid.UUID `json:"tags"`
 }
 
 func Update(w http.ResponseWriter, r *http.Request) {
@@ -93,22 +97,20 @@ func Update(w http.ResponseWriter, r *http.Request) {
         objModel.CategoryID = payload.CategoryID
     }
 
-    if len(payload.Address) > 0 {
-        objModel.Address = payload.Address
-    }
-
-    if len(payload.InstalledPeriod) > 0 {
-        objModel.InstalledPeriod = payload.InstalledPeriod
-    }
-
-    if len(payload.RemovalPeriod) > 0 {
-        objModel.RemovalPeriod = payload.RemovalPeriod
-    }
-
+    objModel.Address = payload.Address
+    objModel.InstalledPeriod = payload.InstalledPeriod
+    objModel.RemovalPeriod = payload.RemovalPeriod
+    objModel.Source = payload.Source
     objModel.IsRemoved = payload.IsRemoved
     objModel.UpdatedBy = user.GetModel().ID
     objModel.Updater = *user.GetModel()
     err = object.Update()
+    if err != nil {
+        router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
+        return
+    }
+
+    err = object.SetTags(payload.Tags)
     if err != nil {
         router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
         return
@@ -127,7 +129,9 @@ func Update(w http.ResponseWriter, r *http.Request) {
                 InstalledPeriod: objModel.InstalledPeriod,
                 IsRemoved:       objModel.IsRemoved,
                 RemovalPeriod:   objModel.RemovalPeriod,
+                Source:          objModel.Source,
                 CategoryID:      objModel.CategoryID,
+                Tags:            payload.Tags,
             },
         }).
         Send(w)

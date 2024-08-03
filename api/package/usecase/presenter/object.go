@@ -18,6 +18,8 @@ type Object interface {
     Create() error
     Update() error
     Delete() error
+    GetTags() ([]Tag, error)
+    SetTags(tags []uuid.UUID) error
 }
 
 func NewObject() Object {
@@ -70,4 +72,23 @@ func (p *objectPresenter) Update() error {
 
 func (p *objectPresenter) Delete() error {
     return p.repository.Delete(p.model)
+}
+
+func (p *objectPresenter) GetTags() ([]Tag, error) {
+    var result []Tag
+
+    tags, err := p.repository.GetTags(p.model)
+    if err != nil {
+        return nil, err
+    }
+
+    for _, tag := range tags {
+        result = append(result, NewTagFromModel(tag))
+    }
+
+    return result, nil
+}
+
+func (p *objectPresenter) SetTags(tags []uuid.UUID) error {
+    return p.repository.SetTags(p.model, tags)
 }

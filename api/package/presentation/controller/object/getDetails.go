@@ -14,16 +14,18 @@ type GetDetailsPayloadData struct {
 }
 
 type Object struct {
-    ID              uuid.UUID `json:"id"`
-    Name            string    `json:"name"`
-    Description     string    `json:"description"`
-    Latitude        string    `json:"lat"`
-    Longitude       string    `json:"lng"`
-    Address         string    `json:"address"`
-    InstalledPeriod string    `json:"installedPeriod"`
-    IsRemoved       bool      `json:"isRemoved"`
-    RemovalPeriod   string    `json:"removalPeriod"`
-    CategoryID      uuid.UUID `json:"categoryId"`
+    ID              uuid.UUID   `json:"id"`
+    Name            string      `json:"name"`
+    Description     string      `json:"description"`
+    Latitude        string      `json:"lat"`
+    Longitude       string      `json:"lng"`
+    Address         string      `json:"address"`
+    InstalledPeriod string      `json:"installedPeriod"`
+    IsRemoved       bool        `json:"isRemoved"`
+    RemovalPeriod   string      `json:"removalPeriod"`
+    Source          string      `json:"source"`
+    CategoryID      uuid.UUID   `json:"categoryId"`
+    Tags            []uuid.UUID `json:"tags"`
 }
 
 func GetDetails(w http.ResponseWriter, r *http.Request) {
@@ -42,6 +44,17 @@ func GetDetails(w http.ResponseWriter, r *http.Request) {
         return
     }
 
+    tags, err := object.GetTags()
+    if err != nil {
+        router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
+        return
+    }
+
+    var result []uuid.UUID
+    for _, tag := range tags {
+        result = append(result, tag.GetModel().ID)
+    }
+
     router.NewResponse().
         WithStatus(http.StatusOK).
         WithPayload(router.Payload{
@@ -56,7 +69,9 @@ func GetDetails(w http.ResponseWriter, r *http.Request) {
                     InstalledPeriod: object.GetModel().InstalledPeriod,
                     IsRemoved:       object.GetModel().IsRemoved,
                     RemovalPeriod:   object.GetModel().RemovalPeriod,
+                    Source:          object.GetModel().Source,
                     CategoryID:      object.GetModel().CategoryID,
+                    Tags:            result,
                 },
             },
         }).

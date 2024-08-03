@@ -2,12 +2,14 @@ interface BaseObject {
     name: string;
     description: string;
     categoryId: string;
+    tags: string[];
     lat: string;
     lng: string;
     address: string;
     installedPeriod: string;
     isRemoved: boolean;
     removalPeriod: string;
+    source: string;
 }
 
 export interface Object extends BaseObject {

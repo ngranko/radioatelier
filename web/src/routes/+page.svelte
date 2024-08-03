@@ -5,7 +5,7 @@
     import {/*mapLoader, */ map, activeObjectInfo, activeMarker} from '$lib/stores/map';
     import Map from '$lib/components/map/map.svelte';
     import Marker from '$lib/components/map/marker.svelte';
-    import ObjectDetails from '$lib/components/objectDetails.svelte';
+    import ObjectDetails from '$lib/components/objectDetails/objectDetails.svelte';
     import type {Location} from '$lib/interfaces/location';
     import {updateObject} from '$lib/api/object.js';
     import toast from 'svelte-french-toast';
@@ -157,6 +157,7 @@
     <ObjectDetails
         initialValues={$activeObjectInfo.object}
         key={$activeObjectInfo.detailsId}
+        isLoading={$activeObjectInfo.isLoading}
         on:save={handleSave}
         on:close={handleClose}
         on:delete={handleDelete}
