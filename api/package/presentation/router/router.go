@@ -4,6 +4,7 @@ import (
     "radioatelier/package/infrastructure/router"
     "radioatelier/package/presentation/controller/category"
     "radioatelier/package/presentation/controller/object"
+    "radioatelier/package/presentation/controller/privateTag"
     "radioatelier/package/presentation/controller/tag"
     "radioatelier/package/presentation/controller/token"
     "radioatelier/package/presentation/controller/user"
@@ -36,6 +37,11 @@ func ConfigureRouter() *router.Router {
 
         r.Post("/", tag.Create)
         r.Get("/list", tag.GetList)
+
+        r.Route("/private", func(r *router.Router) {
+            r.Post("/", privateTag.Create)
+            r.Get("/list", privateTag.GetList)
+        })
     })
 
     r.Route("/token", func(r *router.Router) {

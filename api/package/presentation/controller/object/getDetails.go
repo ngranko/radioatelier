@@ -5,6 +5,7 @@ import (
 
     "github.com/google/uuid"
 
+    "radioatelier/package/adapter/auth/accessToken"
     "radioatelier/package/infrastructure/router"
     "radioatelier/package/usecase/presenter"
 )
@@ -26,9 +27,20 @@ type Object struct {
     Source          string      `json:"source"`
     CategoryID      uuid.UUID   `json:"categoryId"`
     Tags            []uuid.UUID `json:"tags"`
+    PrivateTags     []uuid.UUID `json:"privateTags"`
 }
 
 func GetDetails(w http.ResponseWriter, r *http.Request) {
+    token := r.Context().Value("Token").(accessToken.AccessToken)
+    user, err := presenter.FindUserByID(token.UserID())
+    if err != nil {
+        router.NewResponse().
+            WithStatus(http.StatusNotFound).
+            WithPayload(router.Payload{Message: "User not found"}).
+            Send(w)
+        return
+    }
+
     objectID, err := uuid.Parse(router.GetPathParam(r, "id"))
     if err != nil {
         router.NewResponse().
@@ -50,9 +62,20 @@ func GetDetails(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    var result []uuid.UUID
+    var tagsResult []uuid.UUID
     for _, tag := range tags {
-        result = append(result, tag.GetModel().ID)
+        tagsResult = append(tagsResult, tag.GetModel().ID)
+    }
+
+    privateTags, err := object.GetPrivateTags(user)
+    if err != nil {
+        router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
+        return
+    }
+
+    var privateTagsResult []uuid.UUID
+    for _, privateTag := range privateTags {
+        privateTagsResult = append(privateTagsResult, privateTag.GetModel().ID)
     }
 
     router.NewResponse().
@@ -71,7 +94,8 @@ func GetDetails(w http.ResponseWriter, r *http.Request) {
                     RemovalPeriod:   object.GetModel().RemovalPeriod,
                     Source:          object.GetModel().Source,
                     CategoryID:      object.GetModel().CategoryID,
-                    Tags:            result,
+                    Tags:            tagsResult,
+                    PrivateTags:     privateTagsResult,
                 },
             },
         }).

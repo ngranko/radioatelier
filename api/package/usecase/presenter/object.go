@@ -20,6 +20,8 @@ type Object interface {
     Delete() error
     GetTags() ([]Tag, error)
     SetTags(tags []uuid.UUID) error
+    GetPrivateTags(user User) ([]PrivateTag, error)
+    SetPrivateTags(tags []uuid.UUID, user User) error
 }
 
 func NewObject() Object {
@@ -91,4 +93,23 @@ func (p *objectPresenter) GetTags() ([]Tag, error) {
 
 func (p *objectPresenter) SetTags(tags []uuid.UUID) error {
     return p.repository.SetTags(p.model, tags)
+}
+
+func (p *objectPresenter) GetPrivateTags(user User) ([]PrivateTag, error) {
+    var result []PrivateTag
+
+    tags, err := p.repository.GetPrivateTags(p.model, user.GetModel())
+    if err != nil {
+        return nil, err
+    }
+
+    for _, tag := range tags {
+        result = append(result, NewPrivateTagFromModel(tag))
+    }
+
+    return result, nil
+}
+
+func (p *objectPresenter) SetPrivateTags(tags []uuid.UUID, user User) error {
+    return p.repository.SetPrivateTags(p.model, user.GetModel(), tags)
 }

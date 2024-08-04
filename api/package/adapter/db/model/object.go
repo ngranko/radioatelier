@@ -21,9 +21,10 @@ type Object struct {
     Source          string
     CategoryID      uuid.UUID
     Category        Category
-    Tags            []*Tag     `gorm:"many2many:object_tags;constraint:OnDelete:CASCADE"`
-    Image           string     `gorm:"type:blob"`
-    NotionID        *uuid.UUID `gorm:"type:char(36)"`
+    Tags            []*Tag        `gorm:"many2many:object_tags;constraint:OnDelete:CASCADE"`
+    PrivateTags     []*PrivateTag `gorm:"many2many:object_private_tags;constraint:OnDelete:CASCADE"`
+    Image           string        `gorm:"type:blob"`
+    NotionID        *uuid.UUID    `gorm:"type:char(36)"`
     LastSync        *time.Time
     CreatedBy       uuid.UUID `gorm:"type:char(36);not null"`
     Creator         User      `gorm:"foreignKey:created_by"`

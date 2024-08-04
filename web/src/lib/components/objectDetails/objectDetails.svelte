@@ -12,12 +12,14 @@
     export let isLoading: boolean = false;
 
     let tags: string[] = [];
+    let privateTags: string[] = [];
 
     function handleSave(event: SubmitEvent) {
         const formData = new FormData(event.currentTarget as HTMLFormElement);
         const formValues = Object.fromEntries(formData) as unknown as LooseObject;
         formValues.isRemoved = Boolean(formValues.isRemoved);
         formValues.tags = tags;
+        formValues.privateTags = privateTags;
 
         dispatch('save', formValues);
     }
@@ -43,7 +45,7 @@
             <div class="loader">Loading...</div>
         {:else}
             <form class="form" method="POST" on:submit|preventDefault|stopPropagation={handleSave}>
-                <FormContents {initialValues} bind:tags />
+                <FormContents {initialValues} bind:tags bind:privateTags />
                 <div class="actions">
                     <button type="submit">Save</button>
                     {#if initialValues.id}

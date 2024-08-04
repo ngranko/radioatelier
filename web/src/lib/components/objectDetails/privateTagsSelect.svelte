@@ -1,7 +1,7 @@
 <script lang="ts">
     import {createMutation, createQuery} from '@tanstack/svelte-query';
-    import {createTag, listTags} from '$lib/api/tag';
     import Svelecte from 'svelecte';
+    import {createPrivateTag, listPrivateTags} from '$lib/api/privateTag';
 
     interface Item {
         value: string;
@@ -23,10 +23,10 @@
 
     // TODO: update query cache on success
     const createTagMutation = createMutation({
-        mutationFn: createTag,
+        mutationFn: createPrivateTag,
     });
 
-    const tags = createQuery({queryKey: ['tags'], queryFn: listTags});
+    const tags = createQuery({queryKey: ['privateTags'], queryFn: listPrivateTags});
 
     $: if ($tags.isSuccess) {
         items = $tags.data.data.tags.map((item): Item => ({value: item.id, label: item.name}));

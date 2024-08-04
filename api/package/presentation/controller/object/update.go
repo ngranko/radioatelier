@@ -21,6 +21,7 @@ type UpdateInput struct {
     Source          string      `json:"source"`
     CategoryID      uuid.UUID   `json:"categoryId" validate:"uuid"`
     Tags            []uuid.UUID `json:"tags"`
+    PrivateTags     []uuid.UUID `json:"privateTags"`
 }
 
 type UpdatePayloadData struct {
@@ -36,6 +37,7 @@ type UpdatePayloadData struct {
     Source          string      `json:"source"`
     CategoryID      uuid.UUID   `json:"categoryId"`
     Tags            []uuid.UUID `json:"tags"`
+    PrivateTags     []uuid.UUID `json:"privateTags"`
 }
 
 func Update(w http.ResponseWriter, r *http.Request) {
@@ -111,6 +113,12 @@ func Update(w http.ResponseWriter, r *http.Request) {
     }
 
     err = object.SetTags(payload.Tags)
+    if err != nil {
+        router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
+        return
+    }
+
+    err = object.SetPrivateTags(payload.PrivateTags, user)
     if err != nil {
         router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
         return

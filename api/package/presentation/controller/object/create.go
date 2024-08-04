@@ -23,6 +23,7 @@ type CreateInput struct {
     Source          string      `json:"source"`
     CategoryID      uuid.UUID   `json:"categoryId" validate:"required,uuid"`
     Tags            []uuid.UUID `json:"tags"`
+    PrivateTags     []uuid.UUID `json:"privateTags"`
 }
 
 type CreatePayloadData struct {
@@ -38,6 +39,7 @@ type CreatePayloadData struct {
     Source          string      `json:"source"`
     CategoryID      uuid.UUID   `json:"categoryId"`
     Tags            []uuid.UUID `json:"tags"`
+    PrivateTags     []uuid.UUID `json:"privateTags"`
 }
 
 func Create(w http.ResponseWriter, r *http.Request) {
@@ -94,6 +96,12 @@ func Create(w http.ResponseWriter, r *http.Request) {
     }
 
     err = obj.SetTags(payload.Tags)
+    if err != nil {
+        router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
+        return
+    }
+
+    err = obj.SetPrivateTags(payload.PrivateTags, user)
     if err != nil {
         router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
         return

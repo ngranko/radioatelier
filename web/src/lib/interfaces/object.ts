@@ -3,6 +3,7 @@ interface BaseObject {
     description: string;
     categoryId: string;
     tags: string[];
+    privateTags: string[];
     lat: string;
     lng: string;
     address: string;

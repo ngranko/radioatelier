@@ -27,6 +27,8 @@ func updateSchema(client *db.Client) {
         &model.Object{},
         &model.RefreshToken{},
         &model.User{},
+        &model.Tag{},
+        &model.PrivateTag{},
     )
     if err != nil {
         logger.GetZerolog().Error("error while migrating the database", slog.Any("error", err))

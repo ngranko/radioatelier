@@ -1,6 +1,7 @@
 <script lang="ts">
     import CategorySelect from '$lib/components/objectDetails/categorySelect.svelte';
     import TagsSelect from '$lib/components/objectDetails/tagsSelect.svelte';
+    import PrivateTagsSelect from '$lib/components/objectDetails/privateTagsSelect.svelte';
     import type {LooseObject} from '$lib/interfaces/object';
     import Input from '$lib/components/input/input.svelte';
     import Textarea from '$lib/components/input/textarea.svelte';
@@ -8,6 +9,7 @@
 
     export let initialValues: Partial<LooseObject>;
     export let tags: string[] = [];
+    export let privateTags: string[] = [];
 </script>
 
 <input type="hidden" name="id" value={initialValues.id} />
@@ -29,6 +31,15 @@
         name="tags"
         bind:initialValue={initialValues.tags}
         bind:selection={tags}
+    />
+</div>
+<div class="field">
+    <label for="privateTags" class="label">Приватные теги</label>
+    <PrivateTagsSelect
+        id="privateTags"
+        name="privateTags"
+        bind:initialValue={initialValues.privateTags}
+        bind:selection={privateTags}
     />
 </div>
 <div class="field">
