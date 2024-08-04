@@ -1,21 +1,34 @@
 <script lang="ts">
-    import {createMutation, createQuery} from '@tanstack/svelte-query';
+    import {createMutation, createQuery, useQueryClient} from '@tanstack/svelte-query';
     import {createCategory, listCategories} from '$lib/api/category';
     import Svelecte from 'svelecte';
-
-    export let id: string | undefined = undefined;
-    export let name: string | undefined = undefined;
-    export let value: string | undefined;
+    import type {Payload} from '$lib/interfaces/api';
+    import type {ListCategoriesResponsePayload} from '$lib/interfaces/category.js';
 
     interface Item {
         value: string;
         label: string;
     }
 
+    const client = useQueryClient();
+
+    export let id: string | undefined = undefined;
+    export let name: string | undefined = undefined;
+    export let value: string | undefined;
+
     let items: Item[] = [];
 
     const createCategoryMutation = createMutation({
         mutationFn: createCategory,
+        onSuccess: ({data}) => {
+            const cachedValue: Payload<ListCategoriesResponsePayload> | undefined =
+                client.getQueryData(['categories']);
+            if (cachedValue) {
+                client.setQueryData(['categories'], {
+                    data: {categories: [...cachedValue.data.categories, data]},
+                });
+            }
+        },
     });
 
     const categories = createQuery({queryKey: ['categories'], queryFn: listCategories});

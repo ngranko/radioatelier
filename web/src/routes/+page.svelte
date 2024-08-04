@@ -1,7 +1,7 @@
 <script lang="ts">
     import {createMutation, createQuery, useQueryClient} from '@tanstack/svelte-query';
     import {createObject, deleteObject, listObjects} from '$lib/api/object';
-    import type {Object} from '$lib/interfaces/object';
+    import type {ListObjectsResponsePayload, Object} from '$lib/interfaces/object';
     import {/*mapLoader, */ map, activeObjectInfo, activeMarker} from '$lib/stores/map';
     import Map from '$lib/components/map/map.svelte';
     import Marker from '$lib/components/map/marker.svelte';
@@ -12,6 +12,9 @@
     import RequestError from '$lib/errors/RequestError';
     import {goto} from '$app/navigation';
     import {page} from '$app/stores';
+    import type {Payload} from '$lib/interfaces/api';
+    import type {UpdateObjectResponsePayload} from '$lib/interfaces/object.js';
+    import type {ListTagsResponsePayload} from '$lib/interfaces/tag';
 
     interface MarkerItem {
         id: string;
@@ -26,14 +29,41 @@
 
     const createObjectMutation = createMutation({
         mutationFn: createObject,
+        onSuccess: ({data}) => {
+            const cachedListValue: Payload<ListObjectsResponsePayload> | undefined =
+                client.getQueryData(['objects']);
+            if (cachedListValue) {
+                client.setQueryData(['objects'], {
+                    data: {objects: [...cachedListValue.data.objects, data]},
+                });
+            }
+        },
     });
 
     const updateObjectMutation = createMutation({
         mutationFn: updateObject,
+        onSuccess: ({data}) => {
+            const cachedValue: Payload<UpdateObjectResponsePayload> | undefined =
+                client.getQueryData(['object', {id: data.id}]);
+            if (cachedValue) {
+                client.setQueryData(['object', {id: data.id}], {
+                    data: {...cachedValue.data, ...data},
+                });
+            }
+        },
     });
 
     const deleteObjectMutation = createMutation({
         mutationFn: deleteObject,
+        onSuccess: ({data}) => {
+            const cachedValue: Payload<ListObjectsResponsePayload> | undefined =
+                client.getQueryData(['objects']);
+            if (cachedValue) {
+                client.setQueryData(['objects'], {
+                    data: {objects: cachedValue.data.objects.filter(item => item.id != data.id)},
+                });
+            }
+        },
     });
 
     const objects = createQuery({queryKey: ['objects'], queryFn: listObjects});

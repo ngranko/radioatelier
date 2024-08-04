@@ -1,7 +1,9 @@
 <script lang="ts">
-    import {createMutation, createQuery} from '@tanstack/svelte-query';
+    import {createMutation, createQuery, useQueryClient} from '@tanstack/svelte-query';
     import {createTag, listTags} from '$lib/api/tag';
     import Svelecte from 'svelecte';
+    import type {Payload} from '$lib/interfaces/api';
+    import type {ListTagsResponsePayload} from '$lib/interfaces/tag';
 
     interface Item {
         value: string;
@@ -12,6 +14,8 @@
         value: string;
     }
 
+    const client = useQueryClient();
+
     export let id: string | undefined = undefined;
     export let name: string | undefined = undefined;
     export let initialValue: string[] | undefined = [];
@@ -21,9 +25,16 @@
     let value: ValueItem[] = initialValue?.map(item => ({value: item})) ?? [];
     let items: Item[] = [];
 
-    // TODO: update query cache on success
     const createTagMutation = createMutation({
         mutationFn: createTag,
+        onSuccess: ({data}) => {
+            const cachedValue: Payload<ListTagsResponsePayload> | undefined = client.getQueryData([
+                'tags',
+            ]);
+            if (cachedValue) {
+                client.setQueryData(['tags'], {data: {tags: [...cachedValue.data.tags, data]}});
+            }
+        },
     });
 
     const tags = createQuery({queryKey: ['tags'], queryFn: listTags});
