@@ -3,7 +3,6 @@
     import Svelecte from 'svelecte';
     import {createPrivateTag, listPrivateTags} from '$lib/api/privateTag';
     import type {Payload} from '$lib/interfaces/api';
-    import type {ListTagsResponsePayload} from '$lib/interfaces/tag';
     import type {ListPrivateTagsResponsePayload} from '$lib/interfaces/privateTag';
 
     interface Item {

@@ -14,7 +14,6 @@
     import {page} from '$app/stores';
     import type {Payload} from '$lib/interfaces/api';
     import type {UpdateObjectResponsePayload} from '$lib/interfaces/object.js';
-    import type {ListTagsResponsePayload} from '$lib/interfaces/tag';
 
     interface MarkerItem {
         id: string;
