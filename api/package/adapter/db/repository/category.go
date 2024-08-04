@@ -22,7 +22,7 @@ func NewCategoryRepository(client *db.Client) Category {
 
 func (r *categoryRepo) GetList() ([]model.Category, error) {
     var list []model.Category
-    err := r.client.Model(&model.Category{}).Find(&list).Error
+    err := r.client.Model(&model.Category{}).Select("id", "name").Find(&list).Error
     return list, err
 }
 

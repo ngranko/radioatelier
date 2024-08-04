@@ -27,7 +27,7 @@ func NewObjectRepository(client *db.Client) Object {
 
 func (r *objectRepo) GetList() ([]model.Object, error) {
     var list []model.Object
-    err := r.client.Model(&model.Object{}).Find(&list).Error
+    err := r.client.Model(&model.Object{}).Select("id", "latitude", "longitude").Find(&list).Error
     return list, err
 }
 

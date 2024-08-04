@@ -22,7 +22,7 @@ func NewTagRepository(client *db.Client) Tag {
 
 func (r *tagRepo) GetList() ([]model.Tag, error) {
     var list []model.Tag
-    err := r.client.Model(&model.Tag{}).Find(&list).Error
+    err := r.client.Model(&model.Tag{}).Select("id", "name").Find(&list).Error
     return list, err
 }
 
