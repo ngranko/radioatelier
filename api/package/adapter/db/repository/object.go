@@ -71,7 +71,7 @@ func (r *objectRepo) GetPrivateTags(object *model.Object, user *model.User) ([]*
     err := r.client.Model(object).
         Joins("inner join object_private_tags opt on objects.id = opt.object_id").
         Joins("inner join private_tags pt on opt.private_tag_id = pt.id").
-        Where("pt.created_by = ?", user.ID).
+        Where("pt.created_by = ? and objects.id = ?", user.ID, object.ID).
         Select("pt.*").
         Find(&tags).
         Error
