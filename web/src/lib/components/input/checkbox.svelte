@@ -39,8 +39,8 @@
                 display: block;
                 width: 4px;
                 height: 8px;
-                border-bottom: 2px solid colors.$neonBlue;
-                border-right: 2px solid colors.$neonBlue;
+                border-bottom: 2px solid colors.$primary;
+                border-right: 2px solid colors.$primary;
                 transform: rotate(45deg);
                 left: 6px;
                 top: 3px;

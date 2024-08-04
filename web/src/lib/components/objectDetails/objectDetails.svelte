@@ -4,6 +4,8 @@
     import {cubicInOut} from 'svelte/easing';
     import type {LooseObject} from '$lib/interfaces/object';
     import FormContents from '$lib/components/objectDetails/formContents.svelte';
+    import PrimaryButton from '$lib/components/button/primaryButton.svelte';
+    import TextButton from '$lib/components/button/textButton.svelte';
 
     const dispatch = createEventDispatcher();
 
@@ -47,9 +49,11 @@
             <form class="form" method="POST" on:submit|preventDefault|stopPropagation={handleSave}>
                 <FormContents {initialValues} bind:tags bind:privateTags />
                 <div class="actions">
-                    <button type="submit">Save</button>
+                    <PrimaryButton type="submit">Сохранить</PrimaryButton>
                     {#if initialValues.id}
-                        <button type="button" on:click={handleDelete}>Delete</button>
+                        <TextButton type="submit" modifier="danger" on:click={handleDelete}>
+                            Удалить
+                        </TextButton>
                     {/if}
                 </div>
             </form>
@@ -90,7 +94,7 @@
         transition: 0.2s;
 
         &:hover {
-            color: colors.$neonBlue;
+            color: colors.$primary;
         }
     }
 
@@ -114,6 +118,8 @@
     .actions {
         position: sticky;
         bottom: 0;
+        padding-top: 8px;
+        border-top: 1px solid colors.$lightgray;
         background-color: white;
     }
 </style>
