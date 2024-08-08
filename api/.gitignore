@@ -10,4 +10,4 @@ docker-compose.*.yml
 /docker/mysql/data
 
 /assets/keys/*
-!/assets/keys/.gitkeep
+!.gitkeep

@@ -3,6 +3,7 @@ module radioatelier
 go 1.22.0
 
 require (
+	github.com/essentialkaos/translit/v2 v2.1.3
 	github.com/go-chi/chi/v5 v5.0.12
 	github.com/go-playground/locales v0.14.1
 	github.com/go-playground/universal-translator v0.18.1
@@ -17,6 +18,8 @@ require (
 	github.com/thanhpk/randstr v1.0.6
 	github.com/trustelem/zxcvbn v1.0.1
 	golang.org/x/crypto v0.21.0
+	golang.org/x/image v0.18.0
+	golang.org/x/text v0.16.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gorm.io/driver/mysql v1.5.6
 	gorm.io/gorm v1.25.10
@@ -48,5 +51,4 @@ require (
 	golang.org/x/exp v0.0.0-20230522175609-2e198f4a06a1 // indirect
 	golang.org/x/net v0.23.0 // indirect
 	golang.org/x/sys v0.18.0 // indirect
-	golang.org/x/text v0.14.0 // indirect
 )

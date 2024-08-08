@@ -46,17 +46,23 @@
             <!-- TODO: do a proper loader later -->
             <div class="loader">Loading...</div>
         {:else}
-            <form class="form" method="POST" on:submit|preventDefault|stopPropagation={handleSave}>
-                <FormContents {initialValues} bind:tags bind:privateTags />
-                <div class="actions">
-                    <PrimaryButton type="submit">Сохранить</PrimaryButton>
-                    {#if initialValues.id}
-                        <TextButton type="submit" modifier="danger" on:click={handleDelete}>
-                            Удалить
-                        </TextButton>
-                    {/if}
-                </div>
-            </form>
+            <div class="scroller">
+                <form
+                    class="form"
+                    method="POST"
+                    on:submit|preventDefault|stopPropagation={handleSave}
+                >
+                    <FormContents {initialValues} bind:tags bind:privateTags />
+                    <div class="actions">
+                        <PrimaryButton type="submit">Сохранить</PrimaryButton>
+                        {#if initialValues.id}
+                            <TextButton type="button" modifier="danger" on:click={handleDelete}>
+                                Удалить
+                            </TextButton>
+                        {/if}
+                    </div>
+                </form>
+            </div>
         {/if}
     {/key}
 </aside>
@@ -72,7 +78,6 @@
         width: 400px;
         height: calc(100vh - 8px * 2);
         margin: 8px;
-        padding: 24px;
         border-radius: 10px;
         z-index: 1;
         background-color: white;
@@ -81,10 +86,12 @@
     .header {
         display: flex;
         justify-content: flex-end;
-        margin-bottom: 16px;
+        padding: 12px;
     }
 
     .close {
+        width: 26px;
+        height: 26px;
         border: 0;
         padding: 0;
         margin: 0;
@@ -96,6 +103,10 @@
         &:hover {
             color: colors.$primary;
         }
+
+        & i {
+            display: block;
+        }
     }
 
     .loader {
@@ -105,20 +116,25 @@
         align-items: center;
     }
 
+    .scroller {
+        overflow-y: auto;
+        --webkit-overflow-scrolling: touch;
+    }
+
     .form {
+        padding: 0 24px;
         display: grid;
         grid-template-columns: 1fr;
         grid-gap: 16px;
         align-content: flex-start;
         flex: 1;
-        overflow-y: auto;
-        --webkit-overflow-scrolling: touch;
     }
 
     .actions {
         position: sticky;
         bottom: 0;
         padding-top: 8px;
+        padding-bottom: 24px;
         border-top: 1px solid colors.$lightgray;
         background-color: white;
     }

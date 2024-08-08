@@ -29,6 +29,7 @@ func ConfigureRouter() *router.Router {
         r.Get("/{id}", object.GetDetails)
         r.Put("/{id}", object.Update)
         r.Put("/{id}/position", object.Reposition)
+        r.Post("/{id}/image", object.UploadImage)
         r.Delete("/{id}", object.Delete)
     })
 

@@ -6,4 +6,6 @@ services:
             target: prod
         ports:
             - 3000:3000
+        volumes:
+            - ../uploads:/app/client/uploads
         restart: unless-stopped

@@ -19,6 +19,7 @@ type UpdateInput struct {
     IsRemoved       bool        `json:"isRemoved"`
     RemovalPeriod   string      `json:"removalPeriod" validate:"max=20"`
     Source          string      `json:"source"`
+    Image           string      `json:"image"`
     CategoryID      uuid.UUID   `json:"categoryId" validate:"uuid"`
     Tags            []uuid.UUID `json:"tags"`
     PrivateTags     []uuid.UUID `json:"privateTags"`
@@ -35,6 +36,7 @@ type UpdatePayloadData struct {
     IsRemoved       bool        `json:"isRemoved"`
     RemovalPeriod   string      `json:"removalPeriod"`
     Source          string      `json:"source"`
+    Image           string      `json:"image"`
     CategoryID      uuid.UUID   `json:"categoryId"`
     Tags            []uuid.UUID `json:"tags"`
     PrivateTags     []uuid.UUID `json:"privateTags"`
@@ -103,6 +105,7 @@ func Update(w http.ResponseWriter, r *http.Request) {
     objModel.InstalledPeriod = payload.InstalledPeriod
     objModel.RemovalPeriod = payload.RemovalPeriod
     objModel.Source = payload.Source
+    objModel.Image = payload.Image
     objModel.IsRemoved = payload.IsRemoved
     objModel.UpdatedBy = user.GetModel().ID
     objModel.Updater = *user.GetModel()
@@ -138,6 +141,7 @@ func Update(w http.ResponseWriter, r *http.Request) {
                 IsRemoved:       objModel.IsRemoved,
                 RemovalPeriod:   objModel.RemovalPeriod,
                 Source:          objModel.Source,
+                Image:           objModel.Image,
                 CategoryID:      objModel.CategoryID,
                 Tags:            payload.Tags,
             },

@@ -16,11 +16,12 @@ type CreateInput struct {
     Description     string      `json:"description"`
     Lat             string      `json:"lat" validate:"required"`
     Lng             string      `json:"lng" validate:"required"`
-    Address         string      `json:"address" validate:"required,max=128"`
-    InstalledPeriod string      `json:"installedPeriod" validate:"required,max=20"`
+    Address         string      `json:"address" validate:"max=128"`
+    InstalledPeriod string      `json:"installedPeriod" validate:"max=20"`
     IsRemoved       bool        `json:"isRemoved"`
-    RemovalPeriod   string      `json:"removalPeriod" validate:"required,max=20"`
+    RemovalPeriod   string      `json:"removalPeriod" validate:"max=20"`
     Source          string      `json:"source"`
+    Image           string      `json:"image"`
     CategoryID      uuid.UUID   `json:"categoryId" validate:"required,uuid"`
     Tags            []uuid.UUID `json:"tags"`
     PrivateTags     []uuid.UUID `json:"privateTags"`
@@ -37,6 +38,7 @@ type CreatePayloadData struct {
     IsRemoved       bool        `json:"isRemoved"`
     RemovalPeriod   string      `json:"removalPeriod"`
     Source          string      `json:"source"`
+    Image           string      `json:"image"`
     CategoryID      uuid.UUID   `json:"categoryId"`
     Tags            []uuid.UUID `json:"tags"`
     PrivateTags     []uuid.UUID `json:"privateTags"`
@@ -84,6 +86,7 @@ func Create(w http.ResponseWriter, r *http.Request) {
     objModel.IsRemoved = payload.IsRemoved
     objModel.RemovalPeriod = payload.RemovalPeriod
     objModel.Source = payload.Source
+    objModel.Image = payload.Image
     objModel.CategoryID = payload.CategoryID
     objModel.CreatedBy = user.GetModel().ID
     objModel.Creator = *user.GetModel()
@@ -121,6 +124,7 @@ func Create(w http.ResponseWriter, r *http.Request) {
                 IsRemoved:       objModel.IsRemoved,
                 RemovalPeriod:   objModel.RemovalPeriod,
                 Source:          objModel.Source,
+                Image:           objModel.Image,
                 CategoryID:      objModel.CategoryID,
                 Tags:            payload.Tags,
             },

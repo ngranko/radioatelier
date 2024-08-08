@@ -11,6 +11,7 @@ interface BaseObject {
     isRemoved: boolean;
     removalPeriod: string;
     source: string;
+    image: string;
 }
 
 export interface Object extends BaseObject {
@@ -77,4 +78,13 @@ export interface DeleteObjectInputs {
 
 export interface DeleteObjectPayloadData {
     id: string;
+}
+
+export interface UploadImageInputs {
+    id: string;
+    formData: FormData;
+}
+
+export interface UploadImagePayloadData {
+    url: string;
 }

@@ -25,6 +25,7 @@ type Object struct {
     IsRemoved       bool        `json:"isRemoved"`
     RemovalPeriod   string      `json:"removalPeriod"`
     Source          string      `json:"source"`
+    Image           string      `json:"image"`
     CategoryID      uuid.UUID   `json:"categoryId"`
     Tags            []uuid.UUID `json:"tags"`
     PrivateTags     []uuid.UUID `json:"privateTags"`
@@ -93,6 +94,7 @@ func GetDetails(w http.ResponseWriter, r *http.Request) {
                     IsRemoved:       object.GetModel().IsRemoved,
                     RemovalPeriod:   object.GetModel().RemovalPeriod,
                     Source:          object.GetModel().Source,
+                    Image:           object.GetModel().Image,
                     CategoryID:      object.GetModel().CategoryID,
                     Tags:            tagsResult,
                     PrivateTags:     privateTagsResult,
