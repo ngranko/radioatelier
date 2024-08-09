@@ -20,6 +20,7 @@
         const formData = new FormData(event.currentTarget as HTMLFormElement);
         const formValues = Object.fromEntries(formData) as unknown as LooseObject;
         formValues.isRemoved = Boolean(formValues.isRemoved);
+        formValues.isPublic = Boolean(formValues.isPublic);
         formValues.tags = tags;
         formValues.privateTags = privateTags;
 

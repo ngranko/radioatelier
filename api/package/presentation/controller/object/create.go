@@ -22,6 +22,7 @@ type CreateInput struct {
     RemovalPeriod   string      `json:"removalPeriod" validate:"max=20"`
     Source          string      `json:"source"`
     Image           string      `json:"image"`
+    IsPublic        bool        `json:"isPublic"`
     CategoryID      uuid.UUID   `json:"categoryId" validate:"required,uuid"`
     Tags            []uuid.UUID `json:"tags"`
     PrivateTags     []uuid.UUID `json:"privateTags"`
@@ -39,6 +40,7 @@ type CreatePayloadData struct {
     RemovalPeriod   string      `json:"removalPeriod"`
     Source          string      `json:"source"`
     Image           string      `json:"image"`
+    IsPublic        bool        `json:"isPublic"`
     CategoryID      uuid.UUID   `json:"categoryId"`
     Tags            []uuid.UUID `json:"tags"`
     PrivateTags     []uuid.UUID `json:"privateTags"`
@@ -87,6 +89,7 @@ func Create(w http.ResponseWriter, r *http.Request) {
     objModel.RemovalPeriod = payload.RemovalPeriod
     objModel.Source = payload.Source
     objModel.Image = payload.Image
+    objModel.IsPublic = payload.IsPublic
     objModel.CategoryID = payload.CategoryID
     objModel.CreatedBy = user.GetModel().ID
     objModel.Creator = *user.GetModel()
@@ -125,8 +128,10 @@ func Create(w http.ResponseWriter, r *http.Request) {
                 RemovalPeriod:   objModel.RemovalPeriod,
                 Source:          objModel.Source,
                 Image:           objModel.Image,
+                IsPublic:        objModel.IsPublic,
                 CategoryID:      objModel.CategoryID,
                 Tags:            payload.Tags,
+                PrivateTags:     payload.PrivateTags,
             },
         }).
         Send(w)

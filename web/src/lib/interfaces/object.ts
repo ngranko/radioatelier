@@ -12,6 +12,7 @@ interface BaseObject {
     removalPeriod: string;
     source: string;
     image: string;
+    isPublic: boolean;
 }
 
 export interface Object extends BaseObject {

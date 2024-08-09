@@ -9,6 +9,7 @@
     import {createMutation} from '@tanstack/svelte-query';
     import {uploadImage} from '$lib/api/object';
     import ImageUpload from '$lib/components/input/imageUpload.svelte';
+    import Switch from '$lib/components/input/switch.svelte';
 
     export let initialValues: Partial<LooseObject>;
     export let tags: string[] = [];
@@ -46,6 +47,9 @@
 <div class="field">
     <label for="name" class="label">Название</label>
     <Input id="name" name="name" value={initialValues.name ?? ''} />
+</div>
+<div class="field">
+    <Switch id="isPublic" name="isPublic" bind:checked={initialValues.isPublic} label="Публичная" />
 </div>
 <div class="field">
     <label for="categoryId" class="label">Категория</label>
