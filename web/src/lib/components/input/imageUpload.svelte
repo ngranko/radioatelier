@@ -45,7 +45,7 @@
     <button
         type="button"
         class="display"
-        style="background-image:url('{value}')"
+        style="background-image:url('{value && value.length ? value : '/image_empty.jpg'}')"
         on:click={handleOpen}
     />
     <button type="button" class="button" on:click={handleButtonClick}>
