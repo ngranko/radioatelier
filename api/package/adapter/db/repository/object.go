@@ -13,7 +13,7 @@ type objectRepo struct {
 
 type Object interface {
     Repository[model.Object]
-    GetList() ([]model.Object, error)
+    GetList(userID uuid.UUID) ([]model.Object, error)
     GetByID(id uuid.UUID) (*model.Object, error)
     GetTags(object *model.Object) ([]*model.Tag, error)
     SetTags(object *model.Object, tags []uuid.UUID) error
@@ -27,9 +27,15 @@ func NewObjectRepository(client *db.Client) Object {
     }
 }
 
-func (r *objectRepo) GetList() ([]model.Object, error) {
+func (r *objectRepo) GetList(userID uuid.UUID) ([]model.Object, error) {
     var list []model.Object
-    err := r.client.Model(&model.Object{}).Select("id", "latitude", "longitude").Find(&list).Error
+    err := r.client.
+        Model(&model.Object{}).
+        Select("id", "latitude", "longitude").
+        Where(&model.Object{IsPublic: true}).
+        Or(&model.Object{CreatedBy: userID}).
+        Find(&list).
+        Error
     return list, err
 }
 

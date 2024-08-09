@@ -8,6 +8,7 @@ import (
 
 type Object struct {
     Base
+    IsPublic        bool   `gorm:"type:tinyint(1);not null;default:0"`
     Name            string `gorm:"type:varchar(255);not null"`
     Address         string `gorm:"type:varchar(128)"`
     CityID          *uuid.UUID

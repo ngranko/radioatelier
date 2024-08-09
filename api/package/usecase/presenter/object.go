@@ -41,10 +41,10 @@ func GetByID(id uuid.UUID) (Object, error) {
     return &objectPresenter{repository: repo, model: object}, nil
 }
 
-func GetObjectList() ([]Object, error) {
+func GetObjectList(userID uuid.UUID) ([]Object, error) {
     var result []Object
     repo := repository.NewObjectRepository(db.Get())
-    list, err := repo.GetList()
+    list, err := repo.GetList(userID)
     if err != nil {
         return nil, err
     }
