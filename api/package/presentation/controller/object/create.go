@@ -29,21 +29,21 @@ type CreateInput struct {
 }
 
 type CreatePayloadData struct {
-    ID              uuid.UUID   `json:"id"`
-    Name            string      `json:"name"`
-    Description     string      `json:"description"`
-    Lat             string      `json:"lat"`
-    Lng             string      `json:"lng"`
-    Address         string      `json:"address"`
-    InstalledPeriod string      `json:"installedPeriod"`
-    IsRemoved       bool        `json:"isRemoved"`
-    RemovalPeriod   string      `json:"removalPeriod"`
-    Source          string      `json:"source"`
-    Image           string      `json:"image"`
-    IsPublic        bool        `json:"isPublic"`
-    CategoryID      uuid.UUID   `json:"categoryId"`
-    Tags            []uuid.UUID `json:"tags"`
-    PrivateTags     []uuid.UUID `json:"privateTags"`
+    ID              uuid.UUID `json:"id"`
+    Name            string    `json:"name"`
+    Description     string    `json:"description"`
+    Lat             string    `json:"lat"`
+    Lng             string    `json:"lng"`
+    Address         string    `json:"address"`
+    InstalledPeriod string    `json:"installedPeriod"`
+    IsRemoved       bool      `json:"isRemoved"`
+    RemovalPeriod   string    `json:"removalPeriod"`
+    Source          string    `json:"source"`
+    Image           string    `json:"image"`
+    IsPublic        bool      `json:"isPublic"`
+    Category        Category  `json:"category"`
+    Tags            []Tag     `json:"tags"`
+    PrivateTags     []Tag     `json:"privateTags"`
 }
 
 func Create(w http.ResponseWriter, r *http.Request) {
@@ -113,6 +113,24 @@ func Create(w http.ResponseWriter, r *http.Request) {
         return
     }
 
+    category, err := getCategory(obj)
+    if err != nil {
+        router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
+        return
+    }
+
+    tags, err := getTags(obj)
+    if err != nil {
+        router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
+        return
+    }
+
+    privateTags, err := getPrivateTags(obj, user)
+    if err != nil {
+        router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
+        return
+    }
+
     router.NewResponse().
         WithStatus(http.StatusOK).
         WithPayload(router.Payload{
@@ -129,9 +147,9 @@ func Create(w http.ResponseWriter, r *http.Request) {
                 Source:          objModel.Source,
                 Image:           objModel.Image,
                 IsPublic:        objModel.IsPublic,
-                CategoryID:      objModel.CategoryID,
-                Tags:            payload.Tags,
-                PrivateTags:     payload.PrivateTags,
+                Category:        category,
+                Tags:            tags,
+                PrivateTags:     privateTags,
             },
         }).
         Send(w)

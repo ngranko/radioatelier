@@ -3,20 +3,13 @@
     import {createCategory, listCategories} from '$lib/api/category';
     import Svelecte from 'svelecte';
     import type {Payload} from '$lib/interfaces/api';
-    import type {ListCategoriesResponsePayload} from '$lib/interfaces/category.js';
-
-    interface Item {
-        value: string;
-        label: string;
-    }
+    import type {Category, ListCategoriesResponsePayload} from '$lib/interfaces/category.js';
 
     const client = useQueryClient();
 
     export let id: string | undefined = undefined;
     export let name: string | undefined = undefined;
-    export let value: string | undefined;
-
-    let items: Item[] = [];
+    export let value: Category | undefined;
 
     const createCategoryMutation = createMutation({
         mutationFn: createCategory,
@@ -32,12 +25,6 @@
     });
 
     const categories = createQuery({queryKey: ['categories'], queryFn: listCategories});
-
-    $: if ($categories.isSuccess) {
-        items = $categories.data.data.categories.map(
-            (item): Item => ({value: item.id, label: item.name}),
-        );
-    }
 
     async function handleCreate(props: {
         inputValue: string;
@@ -57,12 +44,15 @@
         placeholder="Не выбрана"
         highlightFirstItem={false}
         creatable={true}
+        valueField="id"
+        labelField="name"
         i18n={{
             createRowLabel: value => `Создать '${value}'`,
         }}
-        options={items.sort((a, b) => a.label.localeCompare(b.label))}
+        options={$categories.data?.data.categories.sort((a, b) => a.name.localeCompare(b.name))}
         {name}
         bind:value
+        valueAsObject={true}
         createHandler={handleCreate}
     />
 {/if}
@@ -77,6 +67,6 @@
 
     :global(.svelecte .sv-control) {
         height: 38px;
-        border-color: colors.$lightgray;
+        border-color: colors.$gray;
     }
 </style>

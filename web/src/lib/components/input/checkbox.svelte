@@ -28,7 +28,7 @@
         position: relative;
         width: 20px;
         height: 20px;
-        border: 1px solid colors.$lightgray;
+        border: 1px solid colors.$gray;
         border-radius: 2px;
         cursor: pointer;
 

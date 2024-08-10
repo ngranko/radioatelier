@@ -18,6 +18,7 @@ type Object interface {
     Create() error
     Update() error
     Delete() error
+    GetCategory() (Category, error)
     GetTags() ([]Tag, error)
     SetTags(tags []uuid.UUID) error
     GetPrivateTags(user User) ([]PrivateTag, error)
@@ -74,6 +75,15 @@ func (p *objectPresenter) Update() error {
 
 func (p *objectPresenter) Delete() error {
     return p.repository.Delete(p.model)
+}
+
+func (p *objectPresenter) GetCategory() (Category, error) {
+    category, err := p.repository.GetCategory(p.model)
+    if err != nil {
+        return nil, err
+    }
+
+    return NewCategoryFromModel(category), nil
 }
 
 func (p *objectPresenter) GetTags() ([]Tag, error) {

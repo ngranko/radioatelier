@@ -8,7 +8,7 @@ export interface ListCategoriesResponsePayload {
     categories: Category[];
 }
 
-interface Category {
+export interface Category {
     id: string;
     name: string;
 }

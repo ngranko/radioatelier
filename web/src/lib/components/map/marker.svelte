@@ -27,6 +27,7 @@
     $: if ($objectDetails.isSuccess) {
         activeObjectInfo.set({
             isLoading: false,
+            isEditing: false,
             detailsId: $objectDetails.data.data.object.id,
             object: $objectDetails.data.data.object,
         });
@@ -145,11 +146,17 @@
         }
 
         if (!$objectDetails.isSuccess) {
-            activeObjectInfo.set({isLoading: true, detailsId: id!, object: {id, lat, lng}});
+            activeObjectInfo.set({
+                isLoading: true,
+                isEditing: false,
+                detailsId: id!,
+                object: {id, lat, lng},
+            });
             $objectDetails.refetch();
         } else {
             activeObjectInfo.set({
                 isLoading: false,
+                isEditing: false,
                 detailsId: $objectDetails.data.data.object.id,
                 object: $objectDetails.data.data.object,
             });

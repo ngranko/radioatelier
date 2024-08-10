@@ -15,6 +15,7 @@ type Object interface {
     Repository[model.Object]
     GetList(userID uuid.UUID) ([]model.Object, error)
     GetByID(id uuid.UUID) (*model.Object, error)
+    GetCategory(object *model.Object) (*model.Category, error)
     GetTags(object *model.Object) ([]*model.Tag, error)
     SetTags(object *model.Object, tags []uuid.UUID) error
     GetPrivateTags(object *model.Object, user *model.User) ([]*model.PrivateTag, error)
@@ -55,6 +56,12 @@ func (r *objectRepo) Save(object *model.Object) error {
 
 func (r *objectRepo) Delete(object *model.Object) error {
     return r.client.Delete(object).Error
+}
+
+func (r *objectRepo) GetCategory(object *model.Object) (*model.Category, error) {
+    var category *model.Category
+    err := r.client.Model(object).Association("Category").Find(&category)
+    return category, err
 }
 
 func (r *objectRepo) GetTags(object *model.Object) ([]*model.Tag, error) {

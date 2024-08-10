@@ -176,6 +176,7 @@
     function handleMapClick(event: CustomEvent<Location>) {
         activeObjectInfo.set({
             isLoading: false,
+            isEditing: true,
             detailsId: new Date().getTime().toString(),
             object: {id: null, lat: String(event.detail.lat), lng: String(event.detail.lng)},
         });
@@ -187,6 +188,7 @@
         initialValues={$activeObjectInfo.object}
         key={$activeObjectInfo.detailsId}
         isLoading={$activeObjectInfo.isLoading}
+        isEditing={$activeObjectInfo.isEditing}
         on:save={handleSave}
         on:close={handleClose}
         on:delete={handleDelete}

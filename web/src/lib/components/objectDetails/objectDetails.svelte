@@ -3,36 +3,37 @@
     import {fly} from 'svelte/transition';
     import {cubicInOut} from 'svelte/easing';
     import type {LooseObject} from '$lib/interfaces/object';
-    import FormContents from '$lib/components/objectDetails/formContents.svelte';
-    import PrimaryButton from '$lib/components/button/primaryButton.svelte';
-    import TextButton from '$lib/components/button/textButton.svelte';
+    import Form from '$lib/components/objectDetails/form.svelte';
+    import ViewMode from '$lib/components/objectDetails/viewMode.svelte';
+    import ImageUpload from '$lib/components/input/imageUpload.svelte';
+    import {createMutation} from '@tanstack/svelte-query';
+    import {uploadImage} from '$lib/api/object';
 
     const dispatch = createEventDispatcher();
 
     export let key: string;
     export let initialValues: Partial<LooseObject>;
     export let isLoading: boolean = false;
+    export let isEditing: boolean = false;
 
-    let tags: string[] = [];
-    let privateTags: string[] = [];
+    const image = createMutation({
+        mutationFn: uploadImage,
+    });
 
-    function handleSave(event: SubmitEvent) {
-        const formData = new FormData(event.currentTarget as HTMLFormElement);
-        const formValues = Object.fromEntries(formData) as unknown as LooseObject;
-        formValues.isRemoved = Boolean(formValues.isRemoved);
-        formValues.isPublic = Boolean(formValues.isPublic);
-        formValues.tags = tags;
-        formValues.privateTags = privateTags;
+    function handleImageChange(event: CustomEvent<File>) {
+        const file = event.detail;
 
-        dispatch('save', formValues);
+        const formData = new FormData();
+        formData.append('file', file);
+
+        $image.mutateAsync({id: initialValues.id as string, formData}).then(result => {
+            console.log(result);
+            initialValues.image = result.data.url;
+        });
     }
 
     function handleClose() {
         dispatch('close');
-    }
-
-    function handleDelete() {
-        dispatch('delete', initialValues.id);
     }
 </script>
 
@@ -48,21 +49,18 @@
             <div class="loader">Loading...</div>
         {:else}
             <div class="scroller">
-                <form
-                    class="form"
-                    method="POST"
-                    on:submit|preventDefault|stopPropagation={handleSave}
-                >
-                    <FormContents {initialValues} bind:tags bind:privateTags />
-                    <div class="actions">
-                        <PrimaryButton type="submit">Сохранить</PrimaryButton>
-                        {#if initialValues.id}
-                            <TextButton type="button" modifier="danger" on:click={handleDelete}>
-                                Удалить
-                            </TextButton>
-                        {/if}
-                    </div>
-                </form>
+                <div class="image-uploader">
+                    <ImageUpload
+                        bind:value={initialValues.image}
+                        on:change={handleImageChange}
+                        disabled={!isEditing}
+                    />
+                </div>
+                {#if isEditing}
+                    <Form {initialValues} on:save on:delete />
+                {:else}
+                    <ViewMode {initialValues} on:delete />
+                {/if}
             </div>
         {/if}
     {/key}
@@ -70,7 +68,6 @@
 
 <style lang="scss">
     @use '../../../styles/colors';
-    @use '../../../styles/typography';
 
     .popup {
         position: absolute;
@@ -122,21 +119,7 @@
         --webkit-overflow-scrolling: touch;
     }
 
-    .form {
-        padding: 0 24px;
-        display: grid;
-        grid-template-columns: 1fr;
-        grid-gap: 16px;
-        align-content: flex-start;
-        flex: 1;
-    }
-
-    .actions {
-        position: sticky;
-        bottom: 0;
-        padding-top: 8px;
-        padding-bottom: 24px;
-        border-top: 1px solid colors.$lightgray;
-        background-color: white;
+    .image-uploader {
+        margin-bottom: 16px;
     }
 </style>

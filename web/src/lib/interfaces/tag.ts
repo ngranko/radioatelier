@@ -8,7 +8,7 @@ export interface ListTagsResponsePayload {
     tags: Tag[];
 }
 
-interface Tag {
+export interface Tag {
     id: string;
     name: string;
 }

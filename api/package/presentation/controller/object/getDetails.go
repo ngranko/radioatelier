@@ -15,21 +15,21 @@ type GetDetailsPayloadData struct {
 }
 
 type Object struct {
-    ID              uuid.UUID   `json:"id"`
-    Name            string      `json:"name"`
-    Description     string      `json:"description"`
-    Latitude        string      `json:"lat"`
-    Longitude       string      `json:"lng"`
-    Address         string      `json:"address"`
-    InstalledPeriod string      `json:"installedPeriod"`
-    IsRemoved       bool        `json:"isRemoved"`
-    RemovalPeriod   string      `json:"removalPeriod"`
-    Source          string      `json:"source"`
-    Image           string      `json:"image"`
-    IsPublic        bool        `json:"isPublic"`
-    CategoryID      uuid.UUID   `json:"categoryId"`
-    Tags            []uuid.UUID `json:"tags"`
-    PrivateTags     []uuid.UUID `json:"privateTags"`
+    ID              uuid.UUID `json:"id"`
+    Name            string    `json:"name"`
+    Description     string    `json:"description"`
+    Latitude        string    `json:"lat"`
+    Longitude       string    `json:"lng"`
+    Address         string    `json:"address"`
+    InstalledPeriod string    `json:"installedPeriod"`
+    IsRemoved       bool      `json:"isRemoved"`
+    RemovalPeriod   string    `json:"removalPeriod"`
+    Source          string    `json:"source"`
+    Image           string    `json:"image"`
+    IsPublic        bool      `json:"isPublic"`
+    Category        Category  `json:"category"`
+    Tags            []Tag     `json:"tags"`
+    PrivateTags     []Tag     `json:"privateTags"`
 }
 
 func GetDetails(w http.ResponseWriter, r *http.Request) {
@@ -58,26 +58,22 @@ func GetDetails(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    tags, err := object.GetTags()
+    category, err := getCategory(object)
     if err != nil {
         router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
         return
     }
 
-    var tagsResult []uuid.UUID
-    for _, tag := range tags {
-        tagsResult = append(tagsResult, tag.GetModel().ID)
-    }
-
-    privateTags, err := object.GetPrivateTags(user)
+    tags, err := getTags(object)
     if err != nil {
         router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
         return
     }
 
-    var privateTagsResult []uuid.UUID
-    for _, privateTag := range privateTags {
-        privateTagsResult = append(privateTagsResult, privateTag.GetModel().ID)
+    privateTags, err := getPrivateTags(object, user)
+    if err != nil {
+        router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
+        return
     }
 
     router.NewResponse().
@@ -97,9 +93,9 @@ func GetDetails(w http.ResponseWriter, r *http.Request) {
                     Source:          object.GetModel().Source,
                     Image:           object.GetModel().Image,
                     IsPublic:        object.GetModel().IsPublic,
-                    CategoryID:      object.GetModel().CategoryID,
-                    Tags:            tagsResult,
-                    PrivateTags:     privateTagsResult,
+                    Category:        category,
+                    Tags:            tags,
+                    PrivateTags:     privateTags,
                 },
             },
         }).

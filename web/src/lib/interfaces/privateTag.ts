@@ -8,7 +8,7 @@ export interface ListPrivateTagsResponsePayload {
     tags: PrivateTag[];
 }
 
-interface PrivateTag {
+export interface PrivateTag {
     id: string;
     name: string;
 }

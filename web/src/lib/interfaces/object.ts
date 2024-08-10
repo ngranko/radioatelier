@@ -1,9 +1,30 @@
-interface BaseObject {
+import type {Category} from '$lib/interfaces/category';
+import type {Tag} from '$lib/interfaces/tag';
+import type {PrivateTag} from '$lib/interfaces/privateTag';
+
+export interface ShallowObject {
     name: string;
     description: string;
     categoryId: string;
     tags: string[];
     privateTags: string[];
+    lat: string;
+    lng: string;
+    address: string;
+    installedPeriod: string;
+    isRemoved: boolean;
+    removalPeriod: string;
+    source: string;
+    image: string;
+    isPublic: boolean;
+}
+
+interface BaseObject {
+    name: string;
+    description: string;
+    category: Category;
+    tags: Tag[];
+    privateTags: PrivateTag[];
     lat: string;
     lng: string;
     address: string;
@@ -31,6 +52,7 @@ export interface BareObject {
 
 export interface ObjectDetailsInfo {
     isLoading: boolean;
+    isEditing: boolean;
     detailsId: string;
     object: Object | BareObject | null;
 }

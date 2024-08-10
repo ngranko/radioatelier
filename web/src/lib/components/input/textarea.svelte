@@ -18,11 +18,11 @@
         min-height: 120px;
         padding: 7px 10px;
         border-radius: 6px;
-        border: 1px solid colors.$lightgray;
+        border: 1px solid colors.$gray;
         transition: box-shadow 0.1s;
 
         &:focus {
-            box-shadow: inset 0 1px 5px colors.$lightgray;
+            box-shadow: inset 0 1px 5px colors.$gray;
         }
     }
 </style>

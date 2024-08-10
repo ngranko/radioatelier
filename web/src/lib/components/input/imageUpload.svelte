@@ -8,6 +8,7 @@
     export let id: string | undefined = undefined;
     export let name: string | undefined = undefined;
     export let value: string | undefined = undefined;
+    export let disabled: boolean = false;
 
     let isOpen = false;
 
@@ -48,9 +49,11 @@
         style="background-image:url('{value && value.length ? value : '/image_empty.jpg'}')"
         on:click={handleOpen}
     />
-    <button type="button" class="button" on:click={handleButtonClick}>
-        {value ? 'Сменить изображение' : 'Загрузить изображение'}
-    </button>
+    {#if !disabled}
+        <button type="button" class="button" on:click={handleButtonClick}>
+            {value ? 'Сменить изображение' : 'Загрузить изображение'}
+        </button>
+    {/if}
     <input type="hidden" {name} {value} />
     <input
         bind:this={imageUploadRef}
@@ -59,6 +62,7 @@
         type="file"
         accept="image/jpeg,image/png"
         on:change={handleImageChange}
+        {disabled}
     />
 
     {#if isOpen}
@@ -74,7 +78,6 @@
 </div>
 
 <style lang="scss">
-    @use '../../../styles/colors';
     @use '../../../styles/typography';
 
     .root {

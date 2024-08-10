@@ -23,6 +23,13 @@ func NewCategory() Category {
     }
 }
 
+func NewCategoryFromModel(model *model.Category) Category {
+    return &categoryPresenter{
+        model:      model,
+        repository: repository.NewCategoryRepository(db.Get()),
+    }
+}
+
 func GetCategoryList() ([]Category, error) {
     var result []Category
     repo := repository.NewCategoryRepository(db.Get())

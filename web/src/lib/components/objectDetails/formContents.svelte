@@ -6,43 +6,15 @@
     import Input from '$lib/components/input/input.svelte';
     import Textarea from '$lib/components/input/textarea.svelte';
     import Checkbox from '$lib/components/input/checkbox.svelte';
-    import {createMutation} from '@tanstack/svelte-query';
-    import {uploadImage} from '$lib/api/object';
-    import ImageUpload from '$lib/components/input/imageUpload.svelte';
     import Switch from '$lib/components/input/switch.svelte';
 
     export let initialValues: Partial<LooseObject>;
-    export let tags: string[] = [];
-    export let privateTags: string[] = [];
-
-    const image = createMutation({
-        mutationFn: uploadImage,
-    });
-
-    function handleImageChange(event: CustomEvent<File>) {
-        const file = event.detail;
-
-        const formData = new FormData();
-        formData.append('file', file);
-
-        $image.mutateAsync({id: initialValues.id as string, formData}).then(result => {
-            console.log(result);
-            initialValues.image = result.data.url;
-        });
-    }
 </script>
 
-<div class="wider">
-    <ImageUpload
-        id="image"
-        name="image"
-        bind:value={initialValues.image}
-        on:change={handleImageChange}
-    />
-</div>
 <input type="hidden" name="id" value={initialValues.id} />
 <input type="hidden" name="lat" value={initialValues.lat} />
 <input type="hidden" name="lng" value={initialValues.lng} />
+<input type="hidden" name="image" value={initialValues.image ?? ''} />
 
 <div class="field">
     <label for="name" class="label">Название</label>
@@ -53,16 +25,11 @@
 </div>
 <div class="field">
     <label for="categoryId" class="label">Категория</label>
-    <CategorySelect id="categoryId" name="categoryId" bind:value={initialValues.categoryId} />
+    <CategorySelect id="categoryId" name="categoryId" bind:value={initialValues.category} />
 </div>
 <div class="field">
     <label for="tags" class="label">Теги</label>
-    <TagsSelect
-        id="tags"
-        name="tags"
-        bind:initialValue={initialValues.tags}
-        bind:selection={tags}
-    />
+    <TagsSelect id="tags" name="tags" bind:initialValue={initialValues.tags} />
 </div>
 <div class="field">
     <label for="privateTags" class="label">Приватные теги</label>
@@ -70,7 +37,6 @@
         id="privateTags"
         name="privateTags"
         bind:initialValue={initialValues.privateTags}
-        bind:selection={privateTags}
     />
 </div>
 <div class="field">
@@ -114,10 +80,6 @@
         display: flex;
         flex-direction: column;
         align-items: stretch;
-    }
-
-    .wider {
-        margin: 0 -24px;
     }
 
     .label {

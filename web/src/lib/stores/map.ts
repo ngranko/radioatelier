@@ -17,13 +17,14 @@ export const map = writable<google.maps.Map>(undefined);
 
 const {subscribe, set, update} = writable<ObjectDetailsInfo>({
     isLoading: false,
+    isEditing: false,
     detailsId: '',
     object: null,
 });
 
 export const activeObjectInfo = {
     subscribe,
-    reset: () => set({isLoading: false, detailsId: '', object: null}),
+    reset: () => set({isLoading: false, isEditing: false, detailsId: '', object: null}),
     set,
     update,
 };

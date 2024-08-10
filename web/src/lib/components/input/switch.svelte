@@ -21,6 +21,7 @@
         display: inline-block;
         width: 40px;
         height: 24px;
+        margin-right: 8px;
     }
 
     .switch input {
@@ -36,7 +37,7 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background-color: colors.$lightgray;
+        background-color: colors.$gray;
         transition: 0.2s;
         border-radius: 24px;
     }

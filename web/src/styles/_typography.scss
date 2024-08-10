@@ -41,3 +41,11 @@ $normal-face: sofia-pro, sans-serif;
 @mixin size-16 {
     @include sized(16px);
 }
+
+@mixin size-22 {
+    @include sized(22px);
+}
+
+@mixin size-28 {
+    @include sized(28px);
+}

@@ -3,27 +3,13 @@
     import Svelecte from 'svelecte';
     import {createPrivateTag, listPrivateTags} from '$lib/api/privateTag';
     import type {Payload} from '$lib/interfaces/api';
-    import type {ListPrivateTagsResponsePayload} from '$lib/interfaces/privateTag';
-
-    interface Item {
-        value: string;
-        label: string;
-    }
-
-    interface ValueItem {
-        value: string;
-    }
+    import type {ListPrivateTagsResponsePayload, PrivateTag} from '$lib/interfaces/privateTag';
 
     const client = useQueryClient();
 
     export let id: string | undefined = undefined;
     export let name: string | undefined = undefined;
-    export let initialValue: string[] | undefined = [];
-    export let selection: string[] = [];
-
-    let prevInitialValue: string[] = initialValue ?? [];
-    let value: ValueItem[] = initialValue?.map(item => ({value: item})) ?? [];
-    let items: Item[] = [];
+    export let initialValue: PrivateTag[] = [];
 
     const createTagMutation = createMutation({
         mutationFn: createPrivateTag,
@@ -39,23 +25,6 @@
     });
 
     const tags = createQuery({queryKey: ['privateTags'], queryFn: listPrivateTags});
-
-    $: if ($tags.isSuccess) {
-        items = $tags.data.data.tags.map((item): Item => ({value: item.id, label: item.name}));
-    }
-
-    $: {
-        if (
-            initialValue &&
-            (prevInitialValue.length !== initialValue.length ||
-                !initialValue.every((value, index) => value === prevInitialValue[index]))
-        ) {
-            value = initialValue.map(item => ({value: item}));
-        }
-        prevInitialValue = initialValue ?? [];
-    }
-
-    $: selection = value.map(item => item.value);
 
     async function handleCreate(props: {
         inputValue: string;
@@ -77,12 +46,14 @@
         creatable={true}
         multiple={true}
         clearable={true}
+        valueField="id"
+        labelField="name"
         i18n={{
             createRowLabel: value => `Создать '${value}'`,
         }}
-        options={items.sort((a, b) => a.label.localeCompare(b.label))}
+        options={$tags.data?.data.tags.sort((a, b) => a.name.localeCompare(b.name))}
         {name}
-        bind:value
+        bind:value={initialValue}
         valueAsObject={true}
         createHandler={handleCreate}
     />
@@ -98,6 +69,6 @@
 
     :global(.svelecte .sv-control) {
         height: 38px;
-        border-color: colors.$lightgray;
+        border-color: colors.$gray;
     }
 </style>
