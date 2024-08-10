@@ -5,15 +5,12 @@
     import RefreshToken from '$lib/api/auth/refreshToken';
     import {page} from '$app/stores';
     import {goto} from '$app/navigation';
+    import Input from '$lib/components/input/input.svelte';
+    import PrimaryButton from '$lib/components/button/primaryButton.svelte';
 
     const mutation = createMutation({
         mutationFn: login,
     });
-
-    $: console.log('submitted at', $mutation.submittedAt);
-    $: console.log('is pending', $mutation.isPending);
-    $: console.log('is success', $mutation.isSuccess);
-    $: console.log('is error', $mutation.isError);
 
     async function handleSubmit(event: SubmitEvent) {
         const formData = new FormData(event.currentTarget as HTMLFormElement);
@@ -33,16 +30,65 @@
     }
 </script>
 
-<h1>Login page</h1>
-
-<form method="POST" on:submit|preventDefault|stopPropagation={handleSubmit}>
-    <input type="email" name="email" placeholder="email" required />
-    <input type="password" name="password" placeholder="пароль" required />
-    <button>Войти</button>
-</form>
+<section class="login-page">
+    <div class="title">
+        <img src="/logo.svg" class="logo" alt="logo" />
+        <span class="separator">.</span>
+        <span class="name">архив</span>
+    </div>
+    <form method="POST" class="form" on:submit|preventDefault|stopPropagation={handleSubmit}>
+        <div class="field">
+            <label for="email" class="label">email</label>
+            <Input id="email" type="email" name="email" required />
+        </div>
+        <div class="field">
+            <label for="password" class="label">пароль</label>
+            <Input id="password" type="password" name="password" required />
+        </div>
+        <div class="actions">
+            <PrimaryButton>Войти</PrimaryButton>
+        </div>
+    </form>
+</section>
 
 <style lang="scss">
-    button {
-        background: none;
+    @use '../../styles/typography';
+
+    .login-page {
+        height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .title {
+        @include typography.size-32;
+        width: 100%;
+        max-width: 400px;
+        margin-bottom: 40px;
+    }
+
+    .logo {
+        height: 32px;
+    }
+
+    .form {
+        width: 100%;
+        max-width: 400px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .field {
+        margin-bottom: 16px;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .label {
+        @include typography.size-14;
+        margin-bottom: 4px;
     }
 </style>
