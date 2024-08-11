@@ -119,14 +119,14 @@
         if (!event.detail.id) {
             await toast.promise(createNewObject(event.detail), {
                 loading: 'Создаю...',
-                success: 'Объект создан!',
-                error: 'Не удалось создать объект',
+                success: 'Точка создана!',
+                error: 'Не удалось создать точку',
             });
         } else {
             await toast.promise(updateExistingObject(event.detail), {
                 loading: 'Обновляю...',
-                success: 'Объект обновлен!',
-                error: 'Не удалось обновить объект',
+                success: 'Точка обновлена!',
+                error: 'Не удалось обновить точку',
             });
         }
     }
@@ -160,8 +160,8 @@
 
         await toast.promise(deleteExistingObject(event.detail), {
             loading: 'Удаляю...',
-            success: 'Объект удален!',
-            error: 'Не удалось удалить объект',
+            success: 'Точка удалена!',
+            error: 'Не удалось удалить точку',
         });
     }
 

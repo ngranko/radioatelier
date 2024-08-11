@@ -73,8 +73,9 @@
         position: absolute;
         display: flex;
         flex-direction: column;
-        width: 400px;
-        height: calc(100vh - 8px * 2);
+        width: calc(100dvw - 8px * 2);
+        max-width: 400px;
+        height: calc(100dvh - 8px * 2);
         margin: 8px;
         border-radius: 10px;
         z-index: 1;
