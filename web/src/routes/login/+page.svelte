@@ -56,6 +56,7 @@
 
     .login-page {
         height: 100dvh;
+        padding: 24px;
         display: flex;
         flex-direction: column;
         justify-content: center;
