@@ -56,7 +56,17 @@
             gmpClickable: true,
         });
         marker.addListener('click', handleMarkerClick);
-        icon.addEventListener('mousedown', function () {
+        icon.addEventListener('mousedown', handleClickStart);
+        icon.addEventListener('touchstart', handleClickStart);
+        icon.addEventListener('mouseup', handleClickEnd);
+        icon.addEventListener('touchend', handleClickEnd);
+
+        setTimeout(
+            () => (marker.content as HTMLDivElement).classList.remove('map-marker-appearing'),
+            200,
+        );
+
+        function handleClickStart() {
             dragTimeout.set(
                 setTimeout(async () => {
                     const {event} = await $mapLoader.importLibrary('core');
@@ -75,9 +85,9 @@
                     skipClick = true;
                 }, 500),
             );
-        });
+        }
 
-        icon.addEventListener('mouseup', async () => {
+        async function handleClickEnd() {
             dragTimeout.remove();
             $map.set('draggable', true);
 
@@ -93,12 +103,7 @@
             }
 
             icon.classList.remove('map-marker-draggable');
-        });
-
-        setTimeout(
-            () => (marker.content as HTMLDivElement).classList.remove('map-marker-appearing'),
-            200,
-        );
+        }
     });
 
     onDestroy(() => {
