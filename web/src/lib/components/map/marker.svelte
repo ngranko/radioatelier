@@ -56,17 +56,17 @@
             gmpClickable: true,
         });
         marker.addListener('click', handleMarkerClick);
-        icon.addEventListener('mousedown', handleClickStart);
-        icon.addEventListener('touchstart', handleClickStart);
-        icon.addEventListener('mouseup', handleClickEnd);
-        icon.addEventListener('touchend', handleClickEnd);
+        icon.addEventListener('mousedown', () => handleClickStart('map-marker-draggable'));
+        icon.addEventListener('touchstart', () => handleClickStart('map-marker-draggable-mobile'));
+        icon.addEventListener('mouseup', () => handleClickEnd('map-marker-draggable'));
+        icon.addEventListener('touchend', () => handleClickEnd('map-marker-draggable-mobile'));
 
         setTimeout(
             () => (marker.content as HTMLDivElement).classList.remove('map-marker-appearing'),
             200,
         );
 
-        function handleClickStart() {
+        function handleClickStart(className: string) {
             dragTimeout.set(
                 setTimeout(async () => {
                     const {event} = await $mapLoader.importLibrary('core');
@@ -80,14 +80,17 @@
                         },
                     );
 
-                    icon.classList.add('map-marker-draggable');
+                    icon.classList.add(className);
                     $map.set('draggable', false);
+                    if ('vibrate' in navigator) {
+                        navigator.vibrate(100);
+                    }
                     skipClick = true;
                 }, 500),
             );
         }
 
-        async function handleClickEnd() {
+        async function handleClickEnd(className: string) {
             dragTimeout.remove();
             $map.set('draggable', true);
 
@@ -102,7 +105,7 @@
                 updateObjectCoordinates();
             }
 
-            icon.classList.remove('map-marker-draggable');
+            icon.classList.remove(className);
         }
     });
 
@@ -212,6 +215,11 @@
     :global(.map-marker-draggable) {
         opacity: 0.5;
         transform: translate(0, 50%) scale(1.2);
+    }
+
+    :global(.map-marker-draggable-mobile) {
+        opacity: 0.5;
+        transform: translate(0, -100%) scale(1.2);
     }
 
     @keyframes -global-popIn {
