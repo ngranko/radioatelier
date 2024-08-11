@@ -33,7 +33,7 @@
         prefix: string;
     }) {
         const result = await $createCategoryMutation.mutateAsync({name: props.inputValue});
-        return {value: result.data.id, label: result.data.name};
+        return {id: result.data.id, name: result.data.name};
     }
 </script>
 
