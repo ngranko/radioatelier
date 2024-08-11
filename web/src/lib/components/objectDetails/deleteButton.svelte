@@ -1,19 +1,21 @@
 <script lang="ts">
     import TextButton from '$lib/components/button/textButton.svelte';
+    import Dialog from '$lib/components/dialog.svelte';
 
     let dialog: HTMLDialogElement;
+    let isDialogOpen = false;
 
     function handleDialogOpen() {
-        dialog.showModal();
+        isDialogOpen = true;
     }
 
     function handleClose() {
-        dialog.close();
+        isDialogOpen = false;
     }
 </script>
 
 <TextButton type="button" modifier="danger" on:click={handleDialogOpen}>Удалить</TextButton>
-<dialog bind:this={dialog} class="dialog">
+<Dialog isOpen={isDialogOpen}>
     <p>Вы действительно хотите удалить точку?</p>
     <div class="actions">
         <TextButton type="button" on:click={handleClose}>Отменить</TextButton>
@@ -21,40 +23,9 @@
             <TextButton type="button" modifier="danger" on:click>Удалить</TextButton>
         </span>
     </div>
-</dialog>
+</Dialog>
 
 <style lang="scss">
-    .dialog {
-        border: 0;
-        border-radius: 8px;
-        opacity: 0;
-        transition: 0.2s ease-out allow-discrete;
-
-        &[open] {
-            opacity: 1;
-        }
-
-        &::backdrop {
-            background-color: rgb(0 0 0 / 0%);
-            transition: 0.2s ease-out allow-discrete;
-        }
-
-        &[open]::backdrop {
-            background-color: rgb(0 0 0 / 25%);
-        }
-    }
-
-    // will be supported in svelte 5
-    @starting-style {
-        .dialog[open] {
-            opacity: 0;
-        }
-
-        .dialog[open]::backdrop {
-            background-color: rgb(0 0 0 / 0%);
-        }
-    }
-
     .actions {
         display: flex;
         justify-content: flex-end;

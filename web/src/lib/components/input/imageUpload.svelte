@@ -10,7 +10,7 @@
     export let value: string | undefined = undefined;
     export let disabled: boolean = false;
 
-    let isOpen = false;
+    let isPreviewOpen = false;
 
     let imageUploadRef: HTMLInputElement;
 
@@ -25,8 +25,12 @@
         dispatch('change', file);
     }
 
-    function handleButtonClick() {
+    function handleUploadClick() {
         imageUploadRef.click();
+    }
+
+    function handleRemoveClick() {
+        value = undefined;
     }
 
     function handleOpen() {
@@ -34,11 +38,11 @@
             return;
         }
 
-        isOpen = true;
+        isPreviewOpen = true;
     }
 
     function handleClose() {
-        isOpen = false;
+        isPreviewOpen = false;
     }
 </script>
 
@@ -50,9 +54,16 @@
         on:click={handleOpen}
     />
     {#if !disabled}
-        <button type="button" class="button" on:click={handleButtonClick}>
-            {value ? 'Сменить изображение' : 'Загрузить изображение'}
-        </button>
+        <div class="actions">
+            <button type="button" class="button" on:click={handleUploadClick}>
+                {value ? 'Сменить изображение' : 'Загрузить изображение'}
+            </button>
+            {#if value}
+                <button type="button" class="button-delete" on:click={handleRemoveClick}>
+                    Удалить изображение
+                </button>
+            {/if}
+        </div>
     {/if}
     <input type="hidden" {name} {value} />
     <input
@@ -65,7 +76,7 @@
         {disabled}
     />
 
-    {#if isOpen}
+    {#if isPreviewOpen}
         <button
             class="overlay"
             on:click={handleClose}
@@ -78,6 +89,7 @@
 </div>
 
 <style lang="scss">
+    @use '../../../styles/colors';
     @use '../../../styles/typography';
 
     .root {
@@ -94,11 +106,22 @@
         cursor: pointer;
     }
 
-    .button {
-        @include typography.brand-face;
+    .actions {
         position: absolute;
         left: 0;
+        right: 0;
         bottom: 0;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .button {
+        @include typography.brand-face;
+    }
+
+    .button-delete {
+        @include typography.brand-face;
+        color: colors.$danger;
     }
 
     .imageUpload {
