@@ -102,6 +102,7 @@
         aspect-ratio: 2 / 1;
         border: none;
         background-size: contain;
+        background-position: center;
         background-repeat: no-repeat;
         cursor: pointer;
     }
