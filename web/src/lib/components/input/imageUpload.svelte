@@ -101,7 +101,7 @@
         width: 100%;
         aspect-ratio: 2 / 1;
         border: none;
-        background-size: cover;
+        background-size: contain;
         background-repeat: no-repeat;
         cursor: pointer;
     }
