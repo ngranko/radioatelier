@@ -8,6 +8,7 @@
     import ImageUpload from '$lib/components/input/imageUpload.svelte';
     import {createMutation} from '@tanstack/svelte-query';
     import {uploadImage} from '$lib/api/object';
+    import toast from 'svelte-french-toast';
 
     const dispatch = createEventDispatcher();
 
@@ -26,10 +27,17 @@
         const formData = new FormData();
         formData.append('file', file);
 
-        $image.mutateAsync({id: initialValues.id as string, formData}).then(result => {
-            console.log(result);
-            initialValues.image = result.data.url;
-        });
+        toast.promise(
+            $image.mutateAsync({id: initialValues.id as string, formData}).then(result => {
+                console.log(result);
+                initialValues.image = result.data.url;
+            }),
+            {
+                loading: 'Загружаю...',
+                success: 'Фото загружено!',
+                error: 'Не удалось загрузить фото',
+            },
+        );
     }
 
     function handleClose() {
