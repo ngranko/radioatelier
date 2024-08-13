@@ -19,6 +19,11 @@
     function handleDelete() {
         dispatch('delete', initialValues.id);
     }
+
+    function startsWithNumber(str: string): boolean {
+        const char = str.charAt(0);
+        return char >= '0' && char <= '9';
+    }
 </script>
 
 <div class="preview">
@@ -55,10 +60,22 @@
         <p>{initialValues.description}</p>
     {/if}
     {#if initialValues.installedPeriod}
-        <p>Появилась в {initialValues.installedPeriod}</p>
+        <p>
+            Появилась <span class="lowercase">
+                {startsWithNumber(initialValues.installedPeriod)
+                    ? 'в ' + initialValues.installedPeriod
+                    : initialValues.installedPeriod}
+            </span>
+        </p>
     {/if}
     {#if initialValues.removalPeriod}
-        <p>Пропала в {initialValues.removalPeriod}</p>
+        <p>
+            Пропала <span class="lowercase">
+                {startsWithNumber(initialValues.removalPeriod)
+                    ? 'в ' + initialValues.removalPeriod
+                    : initialValues.removalPeriod}
+            </span>
+        </p>
     {/if}
     {#if initialValues.source}
         <p>
@@ -131,5 +148,9 @@
     .actions {
         display: flex;
         justify-content: space-between;
+    }
+
+    .lowercase {
+        text-transform: lowercase;
     }
 </style>
