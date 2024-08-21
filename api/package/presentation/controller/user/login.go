@@ -48,7 +48,7 @@ func LogIn(w http.ResponseWriter, r *http.Request) {
             WithPayload(router.Payload{
                 Message: err.Error(),
                 Errors: map[string]string{
-                    "email": "This email is not registered",
+                    "email": "Этот email не зарегистрирован",
                 },
             }).
             Send(w)
@@ -62,7 +62,7 @@ func LogIn(w http.ResponseWriter, r *http.Request) {
             WithPayload(router.Payload{
                 Message: err.Error(),
                 Errors: map[string]string{
-                    "password": "Incorrect password",
+                    "password": "Неверный пароль",
                 },
             }).
             Send(w)

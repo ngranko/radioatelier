@@ -1,32 +1,50 @@
 <script lang="ts">
     import {createMutation} from '@tanstack/svelte-query';
-    import type {LoginFormInputs} from '$lib/interfaces/auth';
+    import type {LoginFormInputs, LoginResponsePayload} from '$lib/interfaces/auth';
     import {login} from '$lib/api/auth';
     import RefreshToken from '$lib/api/auth/refreshToken';
     import {page} from '$app/stores';
     import {goto} from '$app/navigation';
-    import Input from '$lib/components/input/input.svelte';
     import PrimaryButton from '$lib/components/button/primaryButton.svelte';
+    import FormInput from '$lib/components/form/formInput.svelte';
+    import FormPasswordInput from '$lib/components/form/formPasswordInput.svelte';
+    import {createForm} from 'felte';
+    import RequestError from '$lib/errors/RequestError';
+    import type {Payload} from '$lib/interfaces/api';
+    import type {ChangePasswordFormErrors} from '$lib/interfaces/user';
+    import toast from 'svelte-french-toast';
+    import type {LoginFormErrors} from '$lib/interfaces/auth.js';
 
     const mutation = createMutation({
         mutationFn: login,
     });
 
-    async function handleSubmit(event: SubmitEvent) {
-        const formData = new FormData(event.currentTarget as HTMLFormElement);
-        const values: LoginFormInputs = Object.fromEntries(formData) as unknown as LoginFormInputs;
-
-        try {
-            const result = await $mutation.mutateAsync(values);
-            RefreshToken.set(result.data.refreshToken);
-        } catch (error) {
-            console.error($mutation.error);
-            return;
-        }
-
-        const ref = $page.url.searchParams.get('ref');
-        await goto(ref ?? '/');
-    }
+    const {form, errors, isSubmitting} = createForm({
+        onSubmit: async (values: LoginFormInputs) => await $mutation.mutateAsync(values),
+        onSuccess: async result => {
+            console.log(result);
+            RefreshToken.set((result as LoginResponsePayload).data.refreshToken);
+            const ref = $page.url.searchParams.get('ref');
+            await goto(ref ?? '/');
+        },
+        onError: error => {
+            console.log(error);
+            if (error instanceof RequestError && (error.payload as Payload).errors) {
+                return (error.payload as Payload<null, ChangePasswordFormErrors>).errors;
+            }
+            toast.error('Вход не удался');
+        },
+        validate: (values: LoginFormInputs) => {
+            const errors: LoginFormErrors = {};
+            if (!values.email) {
+                errors.email = 'Пожалуйста, введите email';
+            }
+            if (!values.password) {
+                errors.password = 'Пожалуйста, введите пароль';
+            }
+            return errors;
+        },
+    });
 </script>
 
 <section class="login-page">
@@ -35,17 +53,25 @@
         <span class="separator">.</span>
         <span class="name">архив</span>
     </div>
-    <form method="POST" class="form" on:submit|preventDefault|stopPropagation={handleSubmit}>
-        <div class="field">
-            <label for="email" class="label">email</label>
-            <Input id="email" type="email" name="email" required />
-        </div>
-        <div class="field">
-            <label for="password" class="label">пароль</label>
-            <Input id="password" type="password" name="password" required />
-        </div>
+    <form class="form" use:form>
+        <FormInput
+            id="email"
+            name="email"
+            required
+            label="email"
+            error={Boolean($errors.email)}
+            errorMessage={$errors.email ? $errors.email[0] : undefined}
+        />
+        <FormPasswordInput
+            id="password"
+            name="password"
+            required
+            label="пароль"
+            error={Boolean($errors.password)}
+            errorMessage={$errors.password ? $errors.password[0] : undefined}
+        />
         <div class="actions">
-            <PrimaryButton>Войти</PrimaryButton>
+            <PrimaryButton disabled={$isSubmitting.valueOf()}>Войти</PrimaryButton>
         </div>
     </form>
 </section>
@@ -78,17 +104,5 @@
         max-width: 400px;
         display: flex;
         flex-direction: column;
-    }
-
-    .field {
-        margin-bottom: 16px;
-        display: flex;
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .label {
-        @include typography.size-14;
-        margin-bottom: 4px;
     }
 </style>

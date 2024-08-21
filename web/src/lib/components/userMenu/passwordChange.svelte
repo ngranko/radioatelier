@@ -15,9 +15,8 @@
     export let isDialogOpen = false;
 
     const {form, data, errors, isSubmitting, reset} = createForm({
-        onSubmit: async (values: ChangePasswordFormInputs) => {
-            await $changePasswordMutation.mutateAsync(values);
-        },
+        onSubmit: async (values: ChangePasswordFormInputs) =>
+            $changePasswordMutation.mutateAsync(values),
         onSuccess: () => {
             toast.success('Пароль успешно изменен');
             isDialogOpen = false;

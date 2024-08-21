@@ -15,6 +15,7 @@
     export let errorMessage: string | undefined = undefined;
     export let withStrengthIndicator: boolean = false;
 
+    let isPlainPassword: boolean = false;
     let PasswordStrength: ComponentType;
 
     onMount(async () => {
@@ -30,11 +31,31 @@
         field: true,
         error: error,
     });
+
+    function handleShowPasswordClick() {
+        isPlainPassword = !isPlainPassword;
+    }
 </script>
 
 <div class={classes}>
     {#if label}<label for={id} class="label">{label}</label>{/if}
-    <Input {id} type="password" {name} {value} {required} {placeholder} />
+    <div class="inputContainer">
+        <Input
+            {id}
+            type={isPlainPassword ? 'text' : 'password'}
+            {name}
+            {value}
+            {required}
+            {placeholder}
+        />
+        <button type="button" class="showPassword" on:click={handleShowPasswordClick}>
+            {#if isPlainPassword}
+                <i class="fa-regular fa-eye-slash"></i>
+            {:else}
+                <i class="fa-regular fa-eye"></i>
+            {/if}
+        </button>
+    </div>
     {#if withStrengthIndicator && PasswordStrength}
         <PasswordStrength {value} />
     {/if}
@@ -55,6 +76,28 @@
         display: flex;
         flex-direction: column;
         align-items: stretch;
+    }
+
+    .inputContainer {
+        position: relative;
+
+        & :global(input) {
+            width: 100%;
+        }
+    }
+
+    .showPassword {
+        @include typography.size-20;
+        position: absolute;
+        top: 50%;
+        right: 0;
+        width: 41px;
+        margin: 0;
+        padding: 8px;
+        background: none;
+        border: none;
+        transform: translateY(-50%);
+        cursor: pointer;
     }
 
     .error {
