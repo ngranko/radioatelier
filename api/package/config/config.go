@@ -4,7 +4,7 @@ import (
     "log/slog"
     "os"
 
-    "radioatelier/package/infrastructure/convert"
+    "radioatelier/package/infrastructure/transformations"
 )
 
 type Config struct {
@@ -28,14 +28,14 @@ var config Config
 
 func init() {
     config = Config{
-        IsLive:               convert.StringToBool(os.Getenv("IS_LIVE"), true),
+        IsLive:               transformations.StringToBool(os.Getenv("IS_LIVE"), true),
         DBHost:               os.Getenv("DB_HOST"),
         DBUser:               os.Getenv("DB_USER"),
         DBPass:               os.Getenv("DB_PASS"),
         DBName:               os.Getenv("DB_NAME"),
         NotionToken:          os.Getenv("NOTION_TOKEN"),
         NotionObjectsDBID:    os.Getenv("NOTION_OBJECTS_DB_ID"),
-        LogLevel:             slog.Level(convert.StringToInt(os.Getenv("LOG_LEVEL"), 0)),
+        LogLevel:             slog.Level(transformations.StringToInt(os.Getenv("LOG_LEVEL"), 0)),
         JWTSecret:            os.Getenv("JWT_SECRET"),
         JWEPrivateKeyPath:    os.Getenv("JWE_PRIVATE_KEY_PATH"),
         MinPasswordScore:     2,

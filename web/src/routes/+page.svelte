@@ -5,6 +5,7 @@
     import {/*mapLoader, */ map, activeObjectInfo, activeMarker} from '$lib/stores/map';
     import Map from '$lib/components/map/map.svelte';
     import Marker from '$lib/components/map/marker.svelte';
+    import UserMenu from '$lib/components/userMenu/userMenu.svelte';
     import ObjectDetails from '$lib/components/objectDetails/objectDetails.svelte';
     import type {Location} from '$lib/interfaces/location';
     import {updateObject} from '$lib/api/object.js';
@@ -194,6 +195,8 @@
         on:delete={handleDelete}
     />
 {/if}
+
+<UserMenu />
 
 <div>
     <!--    <input id="pac-input" class="search" type="text" placeholder="Search Box" />-->

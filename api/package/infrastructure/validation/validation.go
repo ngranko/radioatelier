@@ -25,6 +25,7 @@ type validate struct {
 
 type Validator interface {
     RegisterRule(rule Rule) error
+    CustomizeError(tag string, message string)
     ValidateStruct(s interface{}) Result
 }
 
@@ -70,6 +71,11 @@ func (v *validate) registerMessage(tag string, message string, trans ut.Translat
             t, _ := ut.T(tag, fe.Field())
             return t
         })
+}
+
+func (v *validate) CustomizeError(tag string, message string) {
+    ruTrans, _ := v.uni.GetTranslator("ru")
+    v.registerMessage(tag, message, ruTrans)
 }
 
 func (v *validate) ValidateStruct(s interface{}) Result {

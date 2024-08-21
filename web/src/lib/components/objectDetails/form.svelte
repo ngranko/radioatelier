@@ -1,6 +1,6 @@
 <script lang="ts">
     import {createEventDispatcher} from 'svelte';
-    import type {LooseObject, ShallowObject} from '$lib/interfaces/object';
+    import type {LooseObject} from '$lib/interfaces/object';
     import FormContents from '$lib/components/objectDetails/formContents.svelte';
     import PrimaryButton from '$lib/components/button/primaryButton.svelte';
     import TextButton from '$lib/components/button/textButton.svelte';
@@ -13,11 +13,12 @@
 
     function handleSave(event: SubmitEvent) {
         const formData = new FormData(event.currentTarget as HTMLFormElement);
-        const formValues = Object.fromEntries(formData) as unknown as ShallowObject;
+        const formValues = Object.fromEntries(formData) as unknown as LooseObject;
         formValues.isRemoved = Boolean(formValues.isRemoved);
         formValues.isPublic = Boolean(formValues.isPublic);
-        formValues.tags = initialValues.tags?.map(item => item.id) ?? [];
-        formValues.privateTags = initialValues.privateTags?.map(item => item.id) ?? [];
+        formValues.category = initialValues.category ?? {id: '', name: ''};
+        formValues.tags = initialValues.tags ?? [];
+        formValues.privateTags = initialValues.privateTags ?? [];
 
         dispatch('save', formValues);
     }

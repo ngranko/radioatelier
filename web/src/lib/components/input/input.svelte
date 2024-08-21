@@ -19,7 +19,7 @@
         padding: 7px 10px;
         border-radius: 6px;
         border: 1px solid colors.$gray;
-        transition: box-shadow 0.1s;
+        transition: box-shadow 0.2s;
 
         &:focus {
             box-shadow: inset 0 1px 5px colors.$gray;

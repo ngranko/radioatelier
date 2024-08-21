@@ -15,7 +15,6 @@
     async function handleSubmit(event: SubmitEvent) {
         const formData = new FormData(event.currentTarget as HTMLFormElement);
         const values: LoginFormInputs = Object.fromEntries(formData) as unknown as LoginFormInputs;
-        console.log(values);
 
         try {
             const result = await $mutation.mutateAsync(values);

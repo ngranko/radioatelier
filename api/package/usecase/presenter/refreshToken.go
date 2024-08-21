@@ -20,6 +20,7 @@ type RefreshToken interface {
     Renew() (RefreshToken, error)
     IsValid() bool
     Invalidate() error
+    InvalidateFamily() error
 }
 
 func FindRefreshTokenByString(tokenString string) (RefreshToken, error) {
@@ -94,4 +95,8 @@ func (p *refreshTokenPresenter) Invalidate() error {
     }
 
     return nil
+}
+
+func (p *refreshTokenPresenter) InvalidateFamily() error {
+    return p.repository.DeleteTokenFamily(p.model)
 }

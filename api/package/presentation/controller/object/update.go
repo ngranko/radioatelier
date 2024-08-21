@@ -7,23 +7,24 @@ import (
 
     "radioatelier/package/adapter/auth/accessToken"
     "radioatelier/package/infrastructure/router"
+    "radioatelier/package/infrastructure/transformations"
     "radioatelier/package/usecase/presenter"
     "radioatelier/package/usecase/validation/validator"
 )
 
 type UpdateInput struct {
-    Name            string      `json:"name" validate:"max=255"`
-    Description     string      `json:"description"`
-    Address         string      `json:"address" validate:"max=128"`
-    InstalledPeriod string      `json:"installedPeriod" validate:"max=20"`
-    IsRemoved       bool        `json:"isRemoved"`
-    RemovalPeriod   string      `json:"removalPeriod" validate:"max=20"`
-    Source          string      `json:"source"`
-    Image           string      `json:"image"`
-    IsPublic        bool        `json:"isPublic"`
-    CategoryID      uuid.UUID   `json:"categoryId" validate:"uuid"`
-    Tags            []uuid.UUID `json:"tags"`
-    PrivateTags     []uuid.UUID `json:"privateTags"`
+    Name            string   `json:"name" validate:"max=255"`
+    Description     string   `json:"description"`
+    Address         string   `json:"address" validate:"max=128"`
+    InstalledPeriod string   `json:"installedPeriod" validate:"max=20"`
+    IsRemoved       bool     `json:"isRemoved"`
+    RemovalPeriod   string   `json:"removalPeriod" validate:"max=20"`
+    Source          string   `json:"source"`
+    Image           string   `json:"image"`
+    IsPublic        bool     `json:"isPublic"`
+    Category        Category `json:"category" validate:"uuid"`
+    Tags            []Tag    `json:"tags"`
+    PrivateTags     []Tag    `json:"privateTags"`
 }
 
 type UpdatePayloadData struct {
@@ -99,8 +100,8 @@ func Update(w http.ResponseWriter, r *http.Request) {
         objModel.Description = payload.Description
     }
 
-    if payload.CategoryID != uuid.Nil {
-        objModel.CategoryID = payload.CategoryID
+    if payload.Category.ID != uuid.Nil {
+        objModel.CategoryID = payload.Category.ID
     }
 
     objModel.Address = payload.Address
@@ -118,31 +119,13 @@ func Update(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    err = object.SetTags(payload.Tags)
+    err = object.SetTags(transformations.Map(payload.Tags, func(item Tag) uuid.UUID { return item.ID }))
     if err != nil {
         router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
         return
     }
 
-    err = object.SetPrivateTags(payload.PrivateTags, user)
-    if err != nil {
-        router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
-        return
-    }
-
-    category, err := getCategory(object)
-    if err != nil {
-        router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
-        return
-    }
-
-    tags, err := getTags(object)
-    if err != nil {
-        router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
-        return
-    }
-
-    privateTags, err := getPrivateTags(object, user)
+    err = object.SetPrivateTags(transformations.Map(payload.PrivateTags, func(item Tag) uuid.UUID { return item.ID }), user)
     if err != nil {
         router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
         return
@@ -164,9 +147,9 @@ func Update(w http.ResponseWriter, r *http.Request) {
                 Source:          objModel.Source,
                 Image:           objModel.Image,
                 IsPublic:        objModel.IsPublic,
-                Category:        category,
-                Tags:            tags,
-                PrivateTags:     privateTags,
+                Category:        payload.Category,
+                Tags:            payload.Tags,
+                PrivateTags:     payload.PrivateTags,
             },
         }).
         Send(w)

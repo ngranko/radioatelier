@@ -20,6 +20,7 @@ type userPresenter struct {
 type User interface {
     GetModel() *model.User
     ValidatePassword(candidate string) error
+    UpdatePassword(raw string) error
     UpdateLastLoginInfo() error
 }
 
@@ -76,6 +77,21 @@ func (p *userPresenter) GetModel() *model.User {
 func (p *userPresenter) ValidatePassword(candidate string) error {
     pass := password.NewFromRaw(candidate)
     return pass.Verify(p.model.Password)
+}
+
+func (p *userPresenter) UpdatePassword(raw string) error {
+    pass, err := password.NewFromRaw(raw).Hash()
+    if err != nil {
+        return err
+    }
+
+    p.model.Password = pass
+    err = p.repository.Save(p.model)
+    if err != nil {
+        return err
+    }
+
+    return nil
 }
 
 func (p *userPresenter) UpdateLastLoginInfo() error {

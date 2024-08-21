@@ -49,24 +49,22 @@ func ConfigureRouter() *router.Router {
         r.Use(middleware.VerifyRefreshToken)
 
         r.Get("/refresh", token.Refresh)
-        //r.Post("/invalidate", token.Invalidate)
+        r.Post("/invalidate", token.Invalidate)
     })
 
     r.Route("/user", func(r *router.Router) {
         r.Post("/login", user.LogIn)
-        //
+
         //r.Post("/resetpass/code", user.SendPasswordResetLink)
         //r.Post("/resetpass/{code}", user.ResetPassword)
-        //
-        //r.Group(func(r *router.Router) {
-        //	r.Use(middleware.VerifyAccessToken)
-        //	r.Use(middleware.RequireVerifiedAccessTokenUser)
-        //
-        //	r.Post("/logout", user.LogOut)
-        //	r.Get("/me", user.Me)
-        //	r.Delete("/me", user.DeleteMe)
-        //	r.Post("/password", user.ChangePassword)
-        //})
+
+        r.Group(func(r *router.Router) {
+            r.Use(middleware.VerifyAccessToken)
+
+            //	r.Get("/me", user.Me)
+            r.Post("/password", user.ChangePassword)
+            r.Post("/logout", user.LogOut)
+        })
     })
 
     return r

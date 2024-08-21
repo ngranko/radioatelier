@@ -30,6 +30,15 @@
         font-size: 16px;
         transition: background-color 0.2s ease-in-out;
         cursor: pointer;
+
+        &:disabled {
+            background-color: colors.$gray;
+            cursor: default;
+
+            &:hover {
+                background-color: colors.$gray;
+            }
+        }
     }
 
     .primary {

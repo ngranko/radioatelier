@@ -4,7 +4,7 @@ import (
     ut "github.com/go-playground/universal-translator"
     "github.com/go-playground/validator/v10"
 
-    "radioatelier/package/infrastructure/convert"
+    "radioatelier/package/infrastructure/transformations"
 )
 
 type Errors = map[string]string
@@ -30,7 +30,7 @@ func (r result) GetErrors(lang string) Errors {
     if r.errors != nil {
         trans, _ := r.uni.GetTranslator(lang)
         for _, err := range r.errors.(validator.ValidationErrors) {
-            list[convert.LowercaseFirst(err.Field())] = err.Translate(trans)
+            list[transformations.LowercaseFirst(err.Field())] = err.Translate(trans)
         }
     }
 

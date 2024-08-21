@@ -1,52 +1,51 @@
 <script lang="ts">
+    import {cubicInOut} from 'svelte/easing';
+    import {fade} from 'svelte/transition';
+    import {createEventDispatcher} from 'svelte';
+
+    const dispatch = createEventDispatcher();
+
     export let isOpen: boolean = false;
-    let prevOpen: boolean = isOpen;
-    let dialog: HTMLDialogElement;
 
-    $: if (prevOpen !== isOpen) {
-        prevOpen = isOpen;
-
-        if (isOpen) {
-            dialog.showModal();
-        } else {
-            dialog.close();
-        }
+    function handleClose() {
+        dispatch('close');
     }
 </script>
 
-<dialog bind:this={dialog} class="dialog">
-    <slot />
-</dialog>
+{#if isOpen}
+    <div
+        class="backdrop"
+        role="none"
+        on:click={handleClose}
+        transition:fade={{duration: 200, easing: cubicInOut}}
+    >
+        <div role="document" class="dialog" on:click|stopPropagation>
+            <slot />
+        </div>
+    </div>
+{/if}
 
 <style lang="scss">
-    .dialog {
-        border: 0;
-        border-radius: 8px;
-        opacity: 0;
-        transition: 0.2s ease-out allow-discrete;
+    @use '../../styles/colors';
 
-        &[open] {
-            opacity: 1;
-        }
-
-        &::backdrop {
-            background-color: rgb(0 0 0 / 0%);
-            transition: 0.2s ease-out allow-discrete;
-        }
-
-        &[open]::backdrop {
-            background-color: rgb(0 0 0 / 25%);
-        }
+    .backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        background-color: rgba(0, 0, 0, 0.3);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 100;
     }
 
-    // will be supported in svelte 5
-    @starting-style {
-        .dialog[open] {
-            opacity: 0;
-        }
-
-        .dialog[open]::backdrop {
-            background-color: rgb(0 0 0 / 0%);
-        }
+    .dialog {
+        max-width: calc(100dvw - 32px);
+        padding: 24px;
+        border: 0;
+        border-radius: 8px;
+        background-color: colors.$white;
     }
 </style>

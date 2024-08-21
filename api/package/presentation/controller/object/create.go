@@ -7,25 +7,26 @@ import (
 
     "radioatelier/package/adapter/auth/accessToken"
     "radioatelier/package/infrastructure/router"
+    "radioatelier/package/infrastructure/transformations"
     "radioatelier/package/usecase/presenter"
     "radioatelier/package/usecase/validation/validator"
 )
 
 type CreateInput struct {
-    Name            string      `json:"name" validate:"required,max=255"`
-    Description     string      `json:"description"`
-    Lat             string      `json:"lat" validate:"required"`
-    Lng             string      `json:"lng" validate:"required"`
-    Address         string      `json:"address" validate:"max=128"`
-    InstalledPeriod string      `json:"installedPeriod" validate:"max=20"`
-    IsRemoved       bool        `json:"isRemoved"`
-    RemovalPeriod   string      `json:"removalPeriod" validate:"max=20"`
-    Source          string      `json:"source"`
-    Image           string      `json:"image"`
-    IsPublic        bool        `json:"isPublic"`
-    CategoryID      uuid.UUID   `json:"categoryId" validate:"required,uuid"`
-    Tags            []uuid.UUID `json:"tags"`
-    PrivateTags     []uuid.UUID `json:"privateTags"`
+    Name            string   `json:"name" validate:"required,max=255"`
+    Description     string   `json:"description"`
+    Lat             string   `json:"lat" validate:"required"`
+    Lng             string   `json:"lng" validate:"required"`
+    Address         string   `json:"address" validate:"max=128"`
+    InstalledPeriod string   `json:"installedPeriod" validate:"max=20"`
+    IsRemoved       bool     `json:"isRemoved"`
+    RemovalPeriod   string   `json:"removalPeriod" validate:"max=20"`
+    Source          string   `json:"source"`
+    Image           string   `json:"image"`
+    IsPublic        bool     `json:"isPublic"`
+    Category        Category `json:"category" validate:"required,uuid"`
+    Tags            []Tag    `json:"tags"`
+    PrivateTags     []Tag    `json:"privateTags"`
 }
 
 type CreatePayloadData struct {
@@ -90,7 +91,7 @@ func Create(w http.ResponseWriter, r *http.Request) {
     objModel.Source = payload.Source
     objModel.Image = payload.Image
     objModel.IsPublic = payload.IsPublic
-    objModel.CategoryID = payload.CategoryID
+    objModel.CategoryID = payload.Category.ID
     objModel.CreatedBy = user.GetModel().ID
     objModel.Creator = *user.GetModel()
     objModel.UpdatedBy = user.GetModel().ID
@@ -101,31 +102,13 @@ func Create(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    err = obj.SetTags(payload.Tags)
+    err = obj.SetTags(transformations.Map(payload.Tags, func(item Tag) uuid.UUID { return item.ID }))
     if err != nil {
         router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
         return
     }
 
-    err = obj.SetPrivateTags(payload.PrivateTags, user)
-    if err != nil {
-        router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
-        return
-    }
-
-    category, err := getCategory(obj)
-    if err != nil {
-        router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
-        return
-    }
-
-    tags, err := getTags(obj)
-    if err != nil {
-        router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
-        return
-    }
-
-    privateTags, err := getPrivateTags(obj, user)
+    err = obj.SetPrivateTags(transformations.Map(payload.PrivateTags, func(item Tag) uuid.UUID { return item.ID }), user)
     if err != nil {
         router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
         return
@@ -147,9 +130,9 @@ func Create(w http.ResponseWriter, r *http.Request) {
                 Source:          objModel.Source,
                 Image:           objModel.Image,
                 IsPublic:        objModel.IsPublic,
-                Category:        category,
-                Tags:            tags,
-                PrivateTags:     privateTags,
+                Category:        payload.Category,
+                Tags:            payload.Tags,
+                PrivateTags:     payload.PrivateTags,
             },
         }).
         Send(w)
