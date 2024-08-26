@@ -4,6 +4,7 @@ import (
     "radioatelier/package/infrastructure/router"
     "radioatelier/package/presentation/controller/category"
     "radioatelier/package/presentation/controller/object"
+    "radioatelier/package/presentation/controller/objectImport"
     "radioatelier/package/presentation/controller/privateTag"
     "radioatelier/package/presentation/controller/tag"
     "radioatelier/package/presentation/controller/token"
@@ -19,6 +20,13 @@ func ConfigureRouter() *router.Router {
 
         r.Post("/", category.Create)
         r.Get("/list", category.GetList)
+    })
+
+    r.Route("/import", func(r *router.Router) {
+        r.Use(middleware.VerifyAccessToken)
+
+        r.Post("/upload", objectImport.UploadFile)
+        r.Get("/preview/{id}", objectImport.GetPreview)
     })
 
     r.Route("/object", func(r *router.Router) {

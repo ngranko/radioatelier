@@ -7,12 +7,12 @@ import (
 )
 
 type Category struct {
-    ID   uuid.UUID `json:"id"`
+    ID   uuid.UUID `json:"id" validate:"uuid"`
     Name string    `json:"name"`
 }
 
 type Tag struct {
-    ID   uuid.UUID `json:"id"`
+    ID   uuid.UUID `json:"id" validate:"uuid"`
     Name string    `json:"name"`
 }
 

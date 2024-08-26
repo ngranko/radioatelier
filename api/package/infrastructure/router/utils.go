@@ -14,6 +14,10 @@ func GetPathParam(r *http.Request, name string) string {
     return chi.URLParam(r, name)
 }
 
+func GetQueryParam(r *http.Request, name string) string {
+    return r.URL.Query().Get(name)
+}
+
 func DecodeRequestParams[T interface{}](w http.ResponseWriter, r *http.Request, receiver *T) bool {
     err := json.NewDecoder(r.Body).Decode(receiver)
     if err != nil {

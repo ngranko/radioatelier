@@ -6,7 +6,6 @@ import (
     "path/filepath"
 
     "radioatelier/package/config"
-    "radioatelier/package/file"
     "radioatelier/package/infrastructure/logger"
     "radioatelier/package/infrastructure/router"
     "radioatelier/package/usecase/file/image"
@@ -43,26 +42,19 @@ func UploadImage(w http.ResponseWriter, r *http.Request) {
 
     img.ResizeToFit(config.Get().ImageResolutionLimit)
 
-    destination := file.NewUploadedFileFromMultipart(header)
-    path, err := destination.Create()
-    if err != nil {
-        logger.GetZerolog().Error("failed creating an uploads file", slog.Any("error", err))
-        router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
-        return
-    }
-
-    err = img.Save(destination)
+    dest, err := img.Save(config.Get().UploadDir + "/" + header.Filename)
     if err != nil {
         logger.GetZerolog().Error("failed writing an image", slog.Any("error", err))
         router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
         return
     }
+    defer dest.Close()
 
     router.NewResponse().
         WithStatus(http.StatusOK).
         WithPayload(router.Payload{
             Data: UploadImagePayloadData{
-                URL: "/uploads/" + filepath.Base(path),
+                URL: "/uploads/" + filepath.Base(dest.GetPath()),
             },
         }).
         Send(w)

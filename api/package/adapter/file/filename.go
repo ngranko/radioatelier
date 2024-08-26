@@ -1,6 +1,9 @@
 package file
 
 import (
+    "os"
+    "path/filepath"
+    "strconv"
     "strings"
     "unicode"
 
@@ -45,4 +48,27 @@ func trimEnds(input string) string {
 
 func sanitize(input string) string {
     return trimEnds(replaceNonAlphaNum(removeAccents(tranliterate(toLower(removeIllFormed(input))))))
+}
+
+func getUniqueFilename(path string) string {
+    suffix := 0
+    currentFilename := path
+
+    for fileExists(currentFilename) {
+        suffix++
+        currentFilename = suffixFilename(path, strconv.Itoa(suffix))
+    }
+
+    return currentFilename
+}
+
+func suffixFilename(original string, suffix string) string {
+    extension := filepath.Ext(original)
+    name := original[:len(original)-len(extension)]
+    return sanitize(name+"_"+suffix) + extension
+}
+
+func fileExists(path string) bool {
+    _, err := os.Stat(path)
+    return err == nil
 }

@@ -4,23 +4,22 @@ import (
     "errors"
     "math"
     "mime/multipart"
-    "net/http"
 
-    "radioatelier/package/file"
-    imageAdapter "radioatelier/package/file/image"
+    "radioatelier/package/adapter/file"
+    "radioatelier/package/adapter/file/image"
 )
 
 type Image struct {
-    raw imageAdapter.Image
+    raw image.Image
 }
 
-func NewImage(file multipart.File) (*Image, error) {
-    mimeType, err := getMimeType(file)
+func NewImage(upload multipart.File) (*Image, error) {
+    mimeType, err := file.GetMimeType(upload)
     if err != nil {
         return nil, err
     }
 
-    img, err := makeRawImage(file, mimeType)
+    img, err := makeRawImage(upload, mimeType)
     if err != nil {
         return nil, err
     }
@@ -47,32 +46,26 @@ func (i *Image) getSizeInsideLimit(sizeLimit int) (width, height int) {
     return i.raw.GetWidth() * sizeLimit / i.raw.GetHeight(), sizeLimit
 }
 
-func (i *Image) Save(file file.UploadedFile) error {
-    return i.raw.Save(file)
-}
-
-func getMimeType(file multipart.File) (string, error) {
-    fileHeader := make([]byte, 512)
-
-    _, err := file.Read(fileHeader)
+func (i *Image) Save(path string) (file.File, error) {
+    dest, err := file.CreateFile(path)
     if err != nil {
-        return "", err
+        return nil, err
     }
 
-    _, err = file.Seek(0, 0)
+    err = i.raw.Save(dest)
     if err != nil {
-        return "", err
+        return nil, err
     }
 
-    return http.DetectContentType(fileHeader), nil
+    return dest, nil
 }
 
-func makeRawImage(file multipart.File, mimeType string) (imageAdapter.Image, error) {
+func makeRawImage(file multipart.File, mimeType string) (image.Image, error) {
     switch mimeType {
     case "image/jpeg":
-        return imageAdapter.NewJpegFile(file)
+        return image.NewJpegFile(file)
     case "image/png":
-        return imageAdapter.NewPngFile(file)
+        return image.NewPngFile(file)
     default:
         return nil, errors.New("unsupported mime type")
     }

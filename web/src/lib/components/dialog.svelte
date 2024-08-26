@@ -47,5 +47,8 @@
         border: 0;
         border-radius: 8px;
         background-color: colors.$white;
+        transition:
+            width 0.2s ease-in-out,
+            height 0.2s ease-in-out;
     }
 </style>

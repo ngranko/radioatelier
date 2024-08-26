@@ -6,12 +6,14 @@
     import {invalidateToken} from '$lib/api/token';
     import RefreshToken from '$lib/api/auth/refreshToken';
     import Loader from '$lib/components/loader.svelte';
+    import ImportDialog from '$lib/components/userMenu/importDialog.svelte';
     import {goto} from '$app/navigation';
     import {type ComponentType, createEventDispatcher} from 'svelte';
     import toast from 'svelte-french-toast';
 
     const dispatch = createEventDispatcher();
 
+    let isImportDialogOpen = false;
     let isDialogOpen = false;
     let isDialogLoading = false;
     let PasswordChange: ComponentType;
@@ -46,6 +48,10 @@
         }
     }
 
+    function handleImportClick() {
+        isImportDialogOpen = true;
+    }
+
     function handleLogoutClick() {
         $logoutMutation.mutate();
     }
@@ -61,7 +67,7 @@
         <i class="fa-solid fa-key"></i>
         Сменить пароль
     </button>
-    <button class="userMenuButton" disabled>
+    <button class="userMenuButton" on:click={handleImportClick}>
         <i class="fa-solid fa-file-import"></i>
         Импорт точек
     </button>
@@ -80,6 +86,8 @@
 {#if PasswordChange}
     <PasswordChange bind:isDialogOpen />
 {/if}
+
+<ImportDialog bind:isOpen={isImportDialogOpen} />
 
 <style lang="scss">
     @use 'sass:color';

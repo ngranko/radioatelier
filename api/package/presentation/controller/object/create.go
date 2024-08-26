@@ -24,7 +24,7 @@ type CreateInput struct {
     Source          string   `json:"source"`
     Image           string   `json:"image"`
     IsPublic        bool     `json:"isPublic"`
-    Category        Category `json:"category" validate:"required,uuid"`
+    Category        Category `json:"category" validate:"required"`
     Tags            []Tag    `json:"tags"`
     PrivateTags     []Tag    `json:"privateTags"`
 }

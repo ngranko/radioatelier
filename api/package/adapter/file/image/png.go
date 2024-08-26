@@ -8,7 +8,7 @@ import (
 
     "golang.org/x/image/draw"
 
-    "radioatelier/package/file"
+    "radioatelier/package/adapter/file"
     "radioatelier/package/infrastructure/logger"
 )
 
@@ -43,6 +43,6 @@ func (f *pngFile) GetHeight() int {
     return f.original.Bounds().Max.Y
 }
 
-func (f *pngFile) Save(file file.UploadedFile) error {
+func (f *pngFile) Save(file file.File) error {
     return png.Encode(file, f.current)
 }

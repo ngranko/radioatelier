@@ -22,7 +22,7 @@ type UpdateInput struct {
     Source          string   `json:"source"`
     Image           string   `json:"image"`
     IsPublic        bool     `json:"isPublic"`
-    Category        Category `json:"category" validate:"uuid"`
+    Category        Category `json:"category"`
     Tags            []Tag    `json:"tags"`
     PrivateTags     []Tag    `json:"privateTags"`
 }
