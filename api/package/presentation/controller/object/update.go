@@ -57,7 +57,7 @@ func Update(w http.ResponseWriter, r *http.Request) {
 
     var payload *UpdateInput
 
-    success := router.DecodeRequestParams(w, r, &payload)
+    success := router.DecodeRequestParams(r, &payload)
     if !success {
         router.NewResponse().WithStatus(http.StatusBadRequest).Send(w)
         return

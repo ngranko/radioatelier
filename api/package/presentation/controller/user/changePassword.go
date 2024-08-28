@@ -20,7 +20,7 @@ func ChangePassword(w http.ResponseWriter, r *http.Request) {
     token := r.Context().Value("Token").(accessToken.AccessToken)
     var payload *ChangePasswordInput
 
-    success := router.DecodeRequestParams(w, r, &payload)
+    success := router.DecodeRequestParams(r, &payload)
     if !success {
         router.NewResponse().WithStatus(http.StatusBadRequest).Send(w)
         return

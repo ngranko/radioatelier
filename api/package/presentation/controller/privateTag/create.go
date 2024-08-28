@@ -23,7 +23,7 @@ type CreatePayloadData struct {
 func Create(w http.ResponseWriter, r *http.Request) {
     var payload *CreateInput
 
-    success := router.DecodeRequestParams(w, r, &payload)
+    success := router.DecodeRequestParams(r, &payload)
     if !success {
         router.NewResponse().WithStatus(http.StatusBadRequest).Send(w)
         return
