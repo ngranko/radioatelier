@@ -4,6 +4,8 @@
     import {createQuery, useQueryClient} from '@tanstack/svelte-query';
     import {getObject} from '$lib/api/object';
     import {useRepositionMutation} from '$lib/api/mutation/reposition';
+    import {getAddress} from '$lib/api/location';
+    import type {Object} from '$lib/interfaces/object';
 
     export let id: string | null = null;
     export let lat: string;
@@ -22,6 +24,12 @@
         enabled: false,
     });
 
+    const objectAddress = createQuery({
+        queryKey: ['objectAddress', {lat, lng}],
+        queryFn: getAddress,
+        enabled: false,
+    });
+
     const reposition = useRepositionMutation(client);
 
     $: if ($objectDetails.isSuccess) {
@@ -37,6 +45,28 @@
         console.error($objectDetails.error);
     }
 
+    $: if ($objectAddress.isSuccess) {
+        console.log($objectAddress.data);
+        activeObjectInfo.update(value => ({
+            ...value,
+            isLoading: false,
+            object: {
+                ...(value.object as Object),
+                address: $objectAddress.data?.data.address ?? '',
+                city: $objectAddress.data?.data.city ?? '',
+                country: $objectAddress.data?.data.country ?? '',
+            },
+        }));
+    }
+
+    $: if ($objectAddress.isError) {
+        console.error($objectAddress.error);
+        activeObjectInfo.update(value => ({
+            ...value,
+            isLoading: false,
+        }));
+    }
+
     onMount(async () => {
         activeMarker.deactivate();
 
@@ -47,6 +77,14 @@
             : 'map-marker map-marker-appearing';
 
         const {AdvancedMarkerElement, CollisionBehavior} = await $mapLoader.importLibrary('marker');
+
+        if (id === null) {
+            void $objectAddress.refetch();
+            activeObjectInfo.update(value => ({
+                ...value,
+                isLoading: true,
+            }));
+        }
 
         marker = new AdvancedMarkerElement({
             map: $map,

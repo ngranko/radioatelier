@@ -35,6 +35,7 @@ func ConfigureRouter() *router.Router {
         r.Post("/", object.Create)
         r.Get("/list", object.GetList)
         r.Get("/{id}", object.GetDetails)
+        r.Get("/address", object.GetAddress)
         r.Put("/{id}", object.Update)
         r.Put("/{id}/position", object.Reposition)
         r.Post("/{id}/image", object.UploadImage)

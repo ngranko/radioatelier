@@ -16,18 +16,28 @@ interface RequestParams {
     init: RequestInit;
 }
 
+interface JsonRequestOptions {
+    noContentType?: boolean;
+}
+
 export default class JsonRequest implements Request<never> {
     private readonly uri: string;
     private readonly method: HttpMethod;
     private readonly headers: KeyVal<string>;
     private params: KeyVal;
     private formData?: FormData;
+    private options: JsonRequestOptions;
 
-    public constructor(uri: string, method: HttpMethod = METHOD_GET) {
+    public constructor(
+        uri: string,
+        method: HttpMethod = METHOD_GET,
+        options: JsonRequestOptions = {},
+    ) {
         this.uri = uri;
         this.method = method;
         this.params = {};
         this.headers = {};
+        this.options = options;
     }
 
     public setParams(params: {}): this {
@@ -93,9 +103,10 @@ export default class JsonRequest implements Request<never> {
                 credentials: 'same-origin',
                 headers: {
                     Accept: 'application/json',
-                    ...(typeof this.formData === 'undefined' && {
-                        'Content-Type': 'application/json',
-                    }),
+                    ...(typeof this.formData === 'undefined' &&
+                        !this.options.noContentType && {
+                            'Content-Type': 'application/json',
+                        }),
                     ...this.headers,
                 },
                 ...(this.method !== METHOD_GET &&

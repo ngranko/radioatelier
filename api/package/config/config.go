@@ -20,6 +20,7 @@ type Config struct {
     JWEPrivateKeyPath    string
     MinPasswordScore     int
     Host                 string
+    GoogleAPIKey         string
     UploadDir            string
     ImageResolutionLimit int
 }
@@ -40,6 +41,7 @@ func init() {
         JWEPrivateKeyPath:    os.Getenv("JWE_PRIVATE_KEY_PATH"),
         MinPasswordScore:     2,
         Host:                 os.Getenv("PROJECT_HOST"),
+        GoogleAPIKey:         os.Getenv("GOOGLE_API_KEY"),
         UploadDir:            "/radioatelier/assets/uploads",
         ImageResolutionLimit: 1000,
     }
