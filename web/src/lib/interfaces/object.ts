@@ -19,6 +19,8 @@ interface BaseObject {
     source: string;
     image: string;
     isPublic: boolean;
+    isVisited: boolean;
+    rating: string;
 }
 
 export interface Object extends BaseObject {

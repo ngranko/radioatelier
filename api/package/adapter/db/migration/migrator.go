@@ -30,6 +30,7 @@ func updateSchema(client *db.Client) {
         &model.Tag{},
         &model.PrivateTag{},
         &model.MapPoint{},
+        &model.ObjectUser{},
     )
     if err != nil {
         logger.GetZerolog().Error("error while migrating the database", slog.Any("error", err))

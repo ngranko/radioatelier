@@ -29,6 +29,8 @@ type Object struct {
     Source          string    `json:"source"`
     Image           string    `json:"image"`
     IsPublic        bool      `json:"isPublic"`
+    IsVisited       bool      `json:"isVisited"`
+    Rating          string    `json:"rating"`
     Category        Category  `json:"category"`
     Tags            []Tag     `json:"tags"`
     PrivateTags     []Tag     `json:"privateTags"`
@@ -84,6 +86,11 @@ func GetDetails(w http.ResponseWriter, r *http.Request) {
         return
     }
 
+    objectUser, err := presenter.GetObjectUser(object.GetModel().ID, user.GetModel().ID)
+    if err != nil {
+        objectUser = presenter.NewObjectUser()
+    }
+
     router.NewResponse().
         WithStatus(http.StatusOK).
         WithPayload(router.Payload{
@@ -103,6 +110,8 @@ func GetDetails(w http.ResponseWriter, r *http.Request) {
                     Source:          object.GetModel().Source,
                     Image:           object.GetModel().Image,
                     IsPublic:        object.GetModel().IsPublic,
+                    IsVisited:       objectUser.GetModel().IsVisited,
+                    Rating:          objectUser.GetModel().Rating,
                     Category:        category,
                     Tags:            tags,
                     PrivateTags:     privateTags,

@@ -54,16 +54,26 @@
     <div class="flags">
         {#if initialValues.isPublic}
             <div title="Публичная" class="flag">
-                <i class="fa-regular fa-eye"></i>
+                <i class="fa-solid fa-lock-open"></i>
             </div>
         {:else}
             <div title="Приватная" class="flag">
-                <i class="fa-regular fa-eye-slash"></i>
+                <i class="fa-solid fa-lock"></i>
             </div>
+            {#if initialValues.isVisited}
+                <div title="Посещена" class="flag">
+                    <i class="fa-solid fa-person-walking-arrow-right"></i>
+                </div>
+            {/if}
         {/if}
         {#if initialValues.isRemoved}
             <div title="Уничтожена" class="flag">
                 <i class="fa-solid fa-ghost"></i>
+            </div>
+        {/if}
+        {#if initialValues.rating}
+            <div title="Рейтинг" class="flag">
+                {initialValues.rating}
             </div>
         {/if}
     </div>

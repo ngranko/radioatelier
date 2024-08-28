@@ -15,17 +15,19 @@ import (
 type CreateInput struct {
     Name            string   `json:"name" validate:"required,max=255"`
     Description     string   `json:"description"`
-    Lat             string   `json:"lat" validate:"required"`
-    Lng             string   `json:"lng" validate:"required"`
+    Lat             string   `json:"lat" validate:"required;latitude"`
+    Lng             string   `json:"lng" validate:"required;longitude"`
     Address         string   `json:"address" validate:"max=128"`
     City            string   `json:"city" validate:"max=64"`
     Country         string   `json:"country" validate:"max=64"`
     InstalledPeriod string   `json:"installedPeriod" validate:"max=20"`
     IsRemoved       bool     `json:"isRemoved"`
     RemovalPeriod   string   `json:"removalPeriod" validate:"max=20"`
-    Source          string   `json:"source"`
+    Source          string   `json:"source" validate:"max=0|url"`
     Image           string   `json:"image"`
     IsPublic        bool     `json:"isPublic"`
+    IsVisited       bool     `json:"isVisited"`
+    Rating          string   `json:"rating" validate:"max=0|oneof=👍 🫳 👎"`
     Category        Category `json:"category" validate:"required"`
     Tags            []Tag    `json:"tags"`
     PrivateTags     []Tag    `json:"privateTags"`
@@ -46,6 +48,8 @@ type CreatePayloadData struct {
     Source          string    `json:"source"`
     Image           string    `json:"image"`
     IsPublic        bool      `json:"isPublic"`
+    IsVisited       bool      `json:"isVisited"`
+    Rating          string    `json:"rating"`
     Category        Category  `json:"category"`
     Tags            []Tag     `json:"tags"`
     PrivateTags     []Tag     `json:"privateTags"`
@@ -130,6 +134,18 @@ func Create(w http.ResponseWriter, r *http.Request) {
         return
     }
 
+    objectUser := presenter.NewObjectUser()
+    objectUserModel := objectUser.GetModel()
+    objectUserModel.ObjectID = objModel.ID
+    objectUserModel.UserID = user.GetModel().ID
+    objectUserModel.IsVisited = payload.IsVisited
+    objectUserModel.Rating = payload.Rating
+    err = objectUser.Create()
+    if err != nil {
+        router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
+        return
+    }
+
     router.NewResponse().
         WithStatus(http.StatusOK).
         WithPayload(router.Payload{
@@ -148,6 +164,8 @@ func Create(w http.ResponseWriter, r *http.Request) {
                 Source:          objModel.Source,
                 Image:           objModel.Image,
                 IsPublic:        objModel.IsPublic,
+                IsVisited:       objectUserModel.IsVisited,
+                Rating:          objectUserModel.Rating,
                 Category:        payload.Category,
                 Tags:            payload.Tags,
                 PrivateTags:     payload.PrivateTags,

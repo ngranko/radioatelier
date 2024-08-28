@@ -16,6 +16,7 @@
         const formValues = Object.fromEntries(formData) as unknown as LooseObject;
         formValues.isRemoved = Boolean(formValues.isRemoved);
         formValues.isPublic = Boolean(formValues.isPublic);
+        formValues.isVisited = Boolean(formValues.isVisited);
         formValues.category = initialValues.category ?? {id: '', name: ''};
         formValues.tags = initialValues.tags ?? [];
         formValues.privateTags = initialValues.privateTags ?? [];
@@ -55,7 +56,7 @@
     .form {
         padding: 0 24px;
         display: grid;
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
         grid-gap: 16px;
         align-content: flex-start;
         flex: 1;
@@ -69,6 +70,7 @@
         padding-bottom: 24px;
         border-top: 1px solid colors.$gray;
         background-color: white;
+        grid-column: 1 / -1;
     }
 
     .save-button {

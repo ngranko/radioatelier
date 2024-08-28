@@ -21,9 +21,11 @@ type UpdateInput struct {
     InstalledPeriod string   `json:"installedPeriod" validate:"max=20"`
     IsRemoved       bool     `json:"isRemoved"`
     RemovalPeriod   string   `json:"removalPeriod" validate:"max=20"`
-    Source          string   `json:"source"`
+    Source          string   `json:"source" validate:"max=0|url"`
     Image           string   `json:"image"`
     IsPublic        bool     `json:"isPublic"`
+    IsVisited       bool     `json:"isVisited"`
+    Rating          string   `json:"rating" validate:"max=0|oneof=👍 🫳 👎"`
     Category        Category `json:"category"`
     Tags            []Tag    `json:"tags"`
     PrivateTags     []Tag    `json:"privateTags"`
@@ -44,6 +46,8 @@ type UpdatePayloadData struct {
     Source          string    `json:"source"`
     Image           string    `json:"image"`
     IsPublic        bool      `json:"isPublic"`
+    IsVisited       bool      `json:"isVisited"`
+    Rating          string    `json:"rating"`
     Category        Category  `json:"category"`
     Tags            []Tag     `json:"tags"`
     PrivateTags     []Tag     `json:"privateTags"`
@@ -150,6 +154,25 @@ func Update(w http.ResponseWriter, r *http.Request) {
         return
     }
 
+    objectUser, err := presenter.GetObjectUser(object.GetModel().ID, user.GetModel().ID)
+    if err != nil {
+        objectUser = presenter.NewObjectUser()
+    }
+    objectUserModel := objectUser.GetModel()
+    objectUserModel.ObjectID = object.GetModel().ID
+    objectUserModel.UserID = user.GetModel().ID
+    objectUserModel.IsVisited = payload.IsVisited
+    objectUserModel.Rating = payload.Rating
+    if objectUserModel.ID == uuid.Nil {
+        err = objectUser.Create()
+    } else {
+        err = objectUser.Update()
+    }
+    if err != nil {
+        router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
+        return
+    }
+
     router.NewResponse().
         WithStatus(http.StatusOK).
         WithPayload(router.Payload{
@@ -168,6 +191,8 @@ func Update(w http.ResponseWriter, r *http.Request) {
                 Source:          objModel.Source,
                 Image:           objModel.Image,
                 IsPublic:        objModel.IsPublic,
+                IsVisited:       objectUserModel.IsVisited,
+                Rating:          objectUserModel.Rating,
                 Category:        payload.Category,
                 Tags:            payload.Tags,
                 PrivateTags:     payload.PrivateTags,

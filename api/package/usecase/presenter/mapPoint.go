@@ -33,21 +33,6 @@ func NewMapPointFromModel(model *model.MapPoint) MapPoint {
     }
 }
 
-func GetMapPointList() ([]MapPoint, error) {
-    var result []MapPoint
-    repo := repository.NewMapPointRepository(db.Get())
-    list, err := repo.GetList()
-    if err != nil {
-        return nil, err
-    }
-
-    for _, mapPointModel := range list {
-        result = append(result, &mapPointPresenter{repository: repo, model: &mapPointModel})
-    }
-
-    return result, nil
-}
-
 func DeleteMapPointByID(id uuid.UUID) error {
     return repository.NewMapPointRepository(db.Get()).Delete(&model.MapPoint{Base: model.Base{ID: id}})
 }
