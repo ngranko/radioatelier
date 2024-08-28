@@ -43,10 +43,12 @@
 
     .dialog {
         max-width: calc(100dvw - 32px);
+        max-height: calc(100dvh - 32px);
         padding: 24px;
         border: 0;
         border-radius: 8px;
         background-color: colors.$white;
+        overflow: auto;
         transition:
             width 0.2s ease-in-out,
             height 0.2s ease-in-out;
