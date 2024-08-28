@@ -66,7 +66,7 @@
     }
 
     :global(.svelecte .sv-control) {
-        min-height: 38px;
+        --sv-min-height: 38px;
         border-color: colors.$gray;
     }
 </style>
