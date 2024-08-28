@@ -24,6 +24,20 @@
         const char = str.charAt(0);
         return char >= '0' && char <= '9';
     }
+
+    function composeAddress(): string {
+        const addressArray: string[] = [];
+        if (initialValues.address) {
+            addressArray.push(initialValues.address);
+        }
+        if (initialValues.city) {
+            addressArray.push(initialValues.city);
+        }
+        if (initialValues.country) {
+            addressArray.push(initialValues.country);
+        }
+        return addressArray.join(', ');
+    }
 </script>
 
 <div class="preview">
@@ -53,8 +67,10 @@
             </div>
         {/if}
     </div>
-    {#if initialValues.address}
-        <p>{initialValues.address}</p>
+    {#if initialValues.address || initialValues.city || initialValues.country}
+        <p>
+            {composeAddress()}
+        </p>
     {/if}
     {#if initialValues.description}
         <p>{initialValues.description}</p>

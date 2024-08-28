@@ -18,6 +18,7 @@ type Object interface {
     Create() error
     Update() error
     Delete() error
+    GetMapPoint() (MapPoint, error)
     GetCategory() (Category, error)
     GetTags() ([]Tag, error)
     SetTags(tags []uuid.UUID) error
@@ -32,7 +33,7 @@ func NewObject() Object {
     }
 }
 
-func GetByID(id uuid.UUID) (Object, error) {
+func GetObjectByID(id uuid.UUID) (Object, error) {
     repo := repository.NewObjectRepository(db.Get())
     object, err := repo.GetByID(id)
     if err != nil {
@@ -57,7 +58,7 @@ func GetObjectList(userID uuid.UUID) ([]Object, error) {
     return result, nil
 }
 
-func DeleteByID(id uuid.UUID) error {
+func DeleteObjectByID(id uuid.UUID) error {
     return repository.NewObjectRepository(db.Get()).Delete(&model.Object{Base: model.Base{ID: id}})
 }
 
@@ -75,6 +76,15 @@ func (p *objectPresenter) Update() error {
 
 func (p *objectPresenter) Delete() error {
     return p.repository.Delete(p.model)
+}
+
+func (p *objectPresenter) GetMapPoint() (MapPoint, error) {
+    mapPoint, err := p.repository.GetMapPoint(p.model)
+    if err != nil {
+        return nil, err
+    }
+
+    return NewMapPointFromModel(mapPoint), nil
 }
 
 func (p *objectPresenter) GetCategory() (Category, error) {

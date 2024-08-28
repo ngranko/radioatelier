@@ -62,7 +62,7 @@ func Reposition(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    object, err := presenter.GetByID(objectID)
+    object, err := presenter.GetObjectByID(objectID)
     if err != nil {
         router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
         return

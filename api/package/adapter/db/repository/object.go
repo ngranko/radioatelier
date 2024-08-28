@@ -15,6 +15,7 @@ type Object interface {
     Repository[model.Object]
     GetList(userID uuid.UUID) ([]model.Object, error)
     GetByID(id uuid.UUID) (*model.Object, error)
+    GetMapPoint(object *model.Object) (*model.MapPoint, error)
     GetCategory(object *model.Object) (*model.Category, error)
     GetTags(object *model.Object) ([]*model.Tag, error)
     SetTags(object *model.Object, tags []uuid.UUID) error
@@ -32,7 +33,8 @@ func (r *objectRepo) GetList(userID uuid.UUID) ([]model.Object, error) {
     var list []model.Object
     err := r.client.
         Model(&model.Object{}).
-        Select("id", "latitude", "longitude").
+        Joins("MapPoint").
+        Select("objects.id", "MapPoint.latitude", "MapPoint.longitude").
         Where(&model.Object{IsPublic: true}).
         Or(&model.Object{CreatedBy: userID}).
         Find(&list).
@@ -56,6 +58,12 @@ func (r *objectRepo) Save(object *model.Object) error {
 
 func (r *objectRepo) Delete(object *model.Object) error {
     return r.client.Delete(object).Error
+}
+
+func (r *objectRepo) GetMapPoint(object *model.Object) (*model.MapPoint, error) {
+    var mapPoint *model.MapPoint
+    err := r.client.Model(object).Association("MapPoint").Find(&mapPoint)
+    return mapPoint, err
 }
 
 func (r *objectRepo) GetCategory(object *model.Object) (*model.Category, error) {

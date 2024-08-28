@@ -16,6 +16,8 @@ type UpdateInput struct {
     Name            string   `json:"name" validate:"max=255"`
     Description     string   `json:"description"`
     Address         string   `json:"address" validate:"max=128"`
+    City            string   `json:"city" validate:"max=64"`
+    Country         string   `json:"country" validate:"max=64"`
     InstalledPeriod string   `json:"installedPeriod" validate:"max=20"`
     IsRemoved       bool     `json:"isRemoved"`
     RemovalPeriod   string   `json:"removalPeriod" validate:"max=20"`
@@ -34,6 +36,8 @@ type UpdatePayloadData struct {
     Lat             string    `json:"lat"`
     Lng             string    `json:"lng"`
     Address         string    `json:"address"`
+    City            string    `json:"city"`
+    Country         string    `json:"country"`
     InstalledPeriod string    `json:"installedPeriod"`
     IsRemoved       bool      `json:"isRemoved"`
     RemovalPeriod   string    `json:"removalPeriod"`
@@ -85,7 +89,23 @@ func Update(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    object, err := presenter.GetByID(objectID)
+    object, err := presenter.GetObjectByID(objectID)
+    if err != nil {
+        router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
+        return
+    }
+
+    mapPoint, err := object.GetMapPoint()
+    if err != nil {
+        router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
+        return
+    }
+
+    mapPointModel := mapPoint.GetModel()
+    mapPointModel.Address = payload.Address
+    mapPointModel.City = payload.City
+    mapPointModel.Country = payload.Country
+    err = mapPoint.Update()
     if err != nil {
         router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
         return
@@ -104,7 +124,6 @@ func Update(w http.ResponseWriter, r *http.Request) {
         objModel.CategoryID = payload.Category.ID
     }
 
-    objModel.Address = payload.Address
     objModel.InstalledPeriod = payload.InstalledPeriod
     objModel.RemovalPeriod = payload.RemovalPeriod
     objModel.Source = payload.Source
@@ -138,9 +157,11 @@ func Update(w http.ResponseWriter, r *http.Request) {
                 ID:              objModel.ID,
                 Name:            objModel.Name,
                 Description:     objModel.Description,
-                Lat:             objModel.Latitude,
-                Lng:             objModel.Longitude,
-                Address:         objModel.Address,
+                Lat:             mapPointModel.Latitude,
+                Lng:             mapPointModel.Longitude,
+                Address:         mapPointModel.Address,
+                City:            mapPointModel.City,
+                Country:         mapPointModel.Country,
                 InstalledPeriod: objModel.InstalledPeriod,
                 IsRemoved:       objModel.IsRemoved,
                 RemovalPeriod:   objModel.RemovalPeriod,

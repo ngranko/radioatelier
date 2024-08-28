@@ -12,6 +12,7 @@ import (
 
 var migrationList = []list.Migration{
     list.Migration202405230126,
+    list.Migration202408281421,
 }
 
 func Run(client *db.Client) {
@@ -22,13 +23,13 @@ func Run(client *db.Client) {
 func updateSchema(client *db.Client) {
     err := client.AutoMigrate(
         &model.Category{},
-        &model.City{},
         &model.Migration{},
         &model.Object{},
         &model.RefreshToken{},
         &model.User{},
         &model.Tag{},
         &model.PrivateTag{},
+        &model.MapPoint{},
     )
     if err != nil {
         logger.GetZerolog().Error("error while migrating the database", slog.Any("error", err))

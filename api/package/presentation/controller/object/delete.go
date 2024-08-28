@@ -23,7 +23,19 @@ func Delete(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    err = presenter.DeleteByID(objectID)
+    object, err := presenter.GetObjectByID(objectID)
+    if err != nil {
+        router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
+        return
+    }
+
+    err = presenter.DeleteObjectByID(objectID)
+    if err != nil {
+        router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
+        return
+    }
+
+    err = presenter.DeleteMapPointByID(object.GetModel().MapPointID)
     if err != nil {
         router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
         return

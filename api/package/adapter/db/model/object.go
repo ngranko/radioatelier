@@ -11,8 +11,8 @@ type Object struct {
     IsPublic        bool   `gorm:"type:tinyint(1);not null;default:0"`
     Name            string `gorm:"type:varchar(255);not null"`
     Address         string `gorm:"type:varchar(128)"`
-    CityID          *uuid.UUID
-    City            *City
+    MapPointID      uuid.UUID
+    MapPoint        MapPoint
     Description     string
     Latitude        string `gorm:"type:varchar(20)"`
     Longitude       string `gorm:"type:varchar(20)"`

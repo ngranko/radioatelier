@@ -48,6 +48,14 @@
     <Input id="address" name="address" value={initialValues.address ?? ''} />
 </div>
 <div class="field">
+    <label for="city" class="label">Город</label>
+    <Input id="city" name="city" value={initialValues.city ?? ''} />
+</div>
+<div class="field">
+    <label for="country" class="label">Страна</label>
+    <Input id="country" name="country" value={initialValues.country ?? ''} />
+</div>
+<div class="field">
     <label for="installedPeriod" class="label">Период создания</label>
     <Input
         id="installedPeriod"

@@ -33,8 +33,8 @@ func GetList(w http.ResponseWriter, r *http.Request) {
     for _, object := range list {
         objects = append(objects, ListItem{
             ID:        object.GetModel().ID,
-            Latitude:  object.GetModel().Latitude,
-            Longitude: object.GetModel().Longitude,
+            Latitude:  object.GetModel().MapPoint.Latitude,
+            Longitude: object.GetModel().MapPoint.Longitude,
         })
     }
 

@@ -11,6 +11,8 @@ interface BaseObject {
     lat: string;
     lng: string;
     address: string;
+    city: string;
+    country: string;
     installedPeriod: string;
     isRemoved: boolean;
     removalPeriod: string;

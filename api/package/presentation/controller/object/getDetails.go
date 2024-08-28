@@ -21,6 +21,8 @@ type Object struct {
     Latitude        string    `json:"lat"`
     Longitude       string    `json:"lng"`
     Address         string    `json:"address"`
+    City            string    `json:"city"`
+    Country         string    `json:"country"`
     InstalledPeriod string    `json:"installedPeriod"`
     IsRemoved       bool      `json:"isRemoved"`
     RemovalPeriod   string    `json:"removalPeriod"`
@@ -52,7 +54,13 @@ func GetDetails(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    object, err := presenter.GetByID(objectID)
+    object, err := presenter.GetObjectByID(objectID)
+    if err != nil {
+        router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
+        return
+    }
+
+    mapPoint, err := object.GetMapPoint()
     if err != nil {
         router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
         return
@@ -84,9 +92,11 @@ func GetDetails(w http.ResponseWriter, r *http.Request) {
                     ID:              object.GetModel().ID,
                     Name:            object.GetModel().Name,
                     Description:     object.GetModel().Description,
-                    Latitude:        object.GetModel().Latitude,
-                    Longitude:       object.GetModel().Longitude,
-                    Address:         object.GetModel().Address,
+                    Latitude:        mapPoint.GetModel().Latitude,
+                    Longitude:       mapPoint.GetModel().Longitude,
+                    Address:         mapPoint.GetModel().Address,
+                    City:            mapPoint.GetModel().City,
+                    Country:         mapPoint.GetModel().Country,
                     InstalledPeriod: object.GetModel().InstalledPeriod,
                     IsRemoved:       object.GetModel().IsRemoved,
                     RemovalPeriod:   object.GetModel().RemovalPeriod,
