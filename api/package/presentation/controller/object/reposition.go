@@ -68,9 +68,22 @@ func Reposition(w http.ResponseWriter, r *http.Request) {
         return
     }
 
+    mapPoint, err := object.GetMapPoint()
+    if err != nil {
+        router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
+        return
+    }
+
+    mapPointModel := mapPoint.GetModel()
+    mapPointModel.Latitude = payload.Lat
+    mapPointModel.Longitude = payload.Lng
+    err = mapPoint.Update()
+    if err != nil {
+        router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
+        return
+    }
+
     objModel := object.GetModel()
-    objModel.Latitude = payload.Lat
-    objModel.Longitude = payload.Lng
     objModel.UpdatedBy = user.GetModel().ID
     objModel.Updater = *user.GetModel()
     err = object.Update()
