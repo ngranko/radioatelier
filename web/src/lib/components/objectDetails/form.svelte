@@ -3,8 +3,8 @@
     import type {LooseObject} from '$lib/interfaces/object';
     import FormContents from '$lib/components/objectDetails/formContents.svelte';
     import PrimaryButton from '$lib/components/button/primaryButton.svelte';
-    import TextButton from '$lib/components/button/textButton.svelte';
     import DeleteButton from '$lib/components/objectDetails/deleteButton.svelte';
+    import BackButton from '$lib/components/objectDetails/backButton.svelte';
     import {activeObjectInfo} from '$lib/stores/map';
 
     const dispatch = createEventDispatcher();
@@ -43,7 +43,7 @@
             <PrimaryButton type="submit">Сохранить</PrimaryButton>
         </div>
         {#if initialValues.id}
-            <TextButton type="button" on:click={handleBack}>Назад</TextButton>
+            <BackButton on:click={handleBack} />
             <span class="flexer" />
             <DeleteButton on:click={handleDelete} />
         {/if}

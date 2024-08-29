@@ -2,6 +2,7 @@
     import {cubicInOut} from 'svelte/easing';
     import {fade} from 'svelte/transition';
     import {createEventDispatcher} from 'svelte';
+    import {portal} from 'svelte-portal';
 
     const dispatch = createEventDispatcher();
 
@@ -18,6 +19,7 @@
         role="none"
         on:click={handleClose}
         transition:fade={{duration: 200, easing: cubicInOut}}
+        use:portal={'#portal'}
     >
         <div role="document" class="dialog" on:click|stopPropagation>
             <slot />

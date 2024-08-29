@@ -6,6 +6,7 @@
     import {useRepositionMutation} from '$lib/api/mutation/reposition';
     import {getAddress} from '$lib/api/location';
     import type {Object} from '$lib/interfaces/object';
+    import CloseConfirmation from '$lib/components/objectDetails/closeConfirmation.svelte';
 
     export let id: string | null = null;
     export let lat: string;
@@ -15,6 +16,7 @@
     let skipClick = false;
     let isDragged = false;
     let mouseMoveListener: google.maps.MapsEventListener | null = null;
+    let isConfirmationOpen = false;
 
     const client = useQueryClient();
 
@@ -191,6 +193,14 @@
             return;
         }
 
+        if ($activeObjectInfo.isEditing) {
+            isConfirmationOpen = true;
+        } else {
+            changeActiveMarker();
+        }
+    }
+
+    function changeActiveMarker() {
         if (!$objectDetails.isSuccess) {
             activeObjectInfo.set({
                 isLoading: true,
@@ -213,6 +223,8 @@
         activeMarker.activate();
     }
 </script>
+
+<CloseConfirmation bind:isOpen={isConfirmationOpen} on:click={changeActiveMarker} />
 
 <style lang="scss">
     :global(.map-marker) {

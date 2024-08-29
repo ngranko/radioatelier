@@ -9,6 +9,7 @@
     import {createMutation} from '@tanstack/svelte-query';
     import {uploadImage} from '$lib/api/object';
     import toast from 'svelte-french-toast';
+    import CloseButton from '$lib/components/objectDetails/closeButton.svelte';
 
     const dispatch = createEventDispatcher();
 
@@ -47,9 +48,7 @@
 
 <aside class="popup" transition:fly={{x: -100, duration: 200, easing: cubicInOut}}>
     <section class="header">
-        <button class="close" on:click={handleClose}>
-            <i class="fa-solid fa-xmark"></i>
-        </button>
+        <CloseButton on:click={handleClose} />
     </section>
     {#key key}
         {#if isLoading}
@@ -94,26 +93,6 @@
         display: flex;
         justify-content: flex-end;
         padding: 12px;
-    }
-
-    .close {
-        width: 26px;
-        height: 26px;
-        border: 0;
-        padding: 0;
-        margin: 0;
-        background: none;
-        font-size: 26px;
-        cursor: pointer;
-        transition: 0.2s;
-
-        &:hover {
-            color: colors.$primary;
-        }
-
-        & i {
-            display: block;
-        }
     }
 
     .loader {

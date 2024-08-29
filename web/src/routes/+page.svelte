@@ -15,10 +15,10 @@
     import {page} from '$app/stores';
     import type {Payload} from '$lib/interfaces/api';
     import type {UpdateObjectResponsePayload} from '$lib/interfaces/object.js';
+    import CloseConfirmation from '$lib/components/objectDetails/closeConfirmation.svelte';
 
     interface MarkerItem {
         id: string;
-        name?: string;
         lat: string;
         lng: string;
     }
@@ -26,6 +26,8 @@
     const client = useQueryClient();
 
     let permanentMarkers: {[key: string]: MarkerItem} = {};
+    let isConfirmationOpen = false;
+    let savedLocation: Location | null = null;
 
     const createObjectMutation = createMutation({
         mutationFn: createObject,
@@ -175,11 +177,20 @@
     }
 
     function handleMapClick(event: CustomEvent<Location>) {
+        savedLocation = {lat: event.detail.lat, lng: event.detail.lng};
+        if ($activeObjectInfo.isEditing) {
+            isConfirmationOpen = true;
+        } else {
+            setActiveObject();
+        }
+    }
+
+    function setActiveObject() {
         activeObjectInfo.set({
             isLoading: false,
             isEditing: true,
             detailsId: new Date().getTime().toString(),
-            object: {id: null, lat: String(event.detail.lat), lng: String(event.detail.lng)},
+            object: {id: null, lat: String(savedLocation!.lat), lng: String(savedLocation!.lng)},
         });
     }
 </script>
@@ -194,6 +205,7 @@
         on:close={handleClose}
         on:delete={handleDelete}
     />
+    <CloseConfirmation bind:isOpen={isConfirmationOpen} on:click={setActiveObject} />
 {/if}
 
 <UserMenu />

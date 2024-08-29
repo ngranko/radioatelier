@@ -32,4 +32,5 @@
 <QueryClientProvider client={queryClient}>
     <slot />
     <Toaster />
+    <div id="portal" />
 </QueryClientProvider>

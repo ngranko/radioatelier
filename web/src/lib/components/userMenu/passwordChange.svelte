@@ -50,8 +50,8 @@
     });
 
     function handleDialogClose() {
-        isDialogOpen = false;
         reset();
+        isDialogOpen = false;
     }
 </script>
 
