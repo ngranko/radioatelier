@@ -15,8 +15,8 @@ import (
 type CreateInput struct {
     Name            string   `json:"name" validate:"required,max=255"`
     Description     string   `json:"description"`
-    Lat             string   `json:"lat" validate:"required;latitude"`
-    Lng             string   `json:"lng" validate:"required;longitude"`
+    Lat             string   `json:"lat" validate:"required,latitude"`
+    Lng             string   `json:"lng" validate:"required,longitude"`
     Address         string   `json:"address" validate:"max=128"`
     City            string   `json:"city" validate:"max=64"`
     Country         string   `json:"country" validate:"max=64"`
