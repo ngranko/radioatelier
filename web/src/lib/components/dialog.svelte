@@ -8,7 +8,12 @@
 
     export let isOpen: boolean = false;
 
-    function handleClose() {
+    let dialogRef: HTMLElement;
+
+    function handleClose(event: Event) {
+        if (dialogRef.contains(event.target as Node)) {
+            return;
+        }
         dispatch('close');
     }
 </script>
@@ -21,7 +26,7 @@
         transition:fade={{duration: 200, easing: cubicInOut}}
         use:portal={'#portal'}
     >
-        <div role="document" class="dialog" on:click|stopPropagation>
+        <div bind:this={dialogRef} role="document" class="dialog">
             <slot />
         </div>
     </div>
