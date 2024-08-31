@@ -29,9 +29,9 @@
     placeholder="Выберите"
     bind:value={initialValues.rating}
     options={[
-        {value: '👍', text: '👍'},
-        {value: '🫳', text: '🫳'},
-        {value: '👎', text: '👎'},
+        {value: '1', text: '⭐️'},
+        {value: '2', text: '⭐⭐'},
+        {value: '3', text: '🌟🌟🌟'},
     ]}
 />
 <div class="fieldLong">
