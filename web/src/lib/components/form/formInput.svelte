@@ -11,14 +11,15 @@
     export let placeholder: string | undefined = undefined;
     export let required = false;
     export let label: string | undefined = undefined;
-    export let error: boolean = false;
-    export let errorMessage: string | undefined = undefined;
+    export let error: string[] | null | undefined = undefined;
 
     let classes: string;
+    let isError: boolean;
 
+    $: isError = Boolean(error);
     $: classes = clsx({
         field: true,
-        error: error,
+        error: isError,
     });
 </script>
 
@@ -27,7 +28,7 @@
     <Input {id} {type} {name} {value} {required} {placeholder} />
     {#if error}
         <span class="errorMessage" transition:fade={{duration: 200, easing: cubicInOut}}>
-            {errorMessage}
+            {error[0]}
         </span>
     {/if}
 </div>

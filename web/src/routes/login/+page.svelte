@@ -13,37 +13,33 @@
     import type {Payload} from '$lib/interfaces/api';
     import type {ChangePasswordFormErrors} from '$lib/interfaces/user';
     import toast from 'svelte-french-toast';
-    import type {LoginFormErrors} from '$lib/interfaces/auth.js';
+    import * as yup from 'yup';
+    import {validator} from '@felte/validator-yup';
 
     const mutation = createMutation({
         mutationFn: login,
     });
 
-    const {form, errors, isSubmitting} = createForm({
+    const schema = yup.object({
+        email: yup.string().required('Пожалуйста, введите email'),
+        password: yup.string().required('Пожалуйста, повторите пароль'),
+    });
+
+    const {form, errors, isSubmitting} = createForm<yup.InferType<typeof schema>>({
         onSubmit: async (values: LoginFormInputs) => await $mutation.mutateAsync(values),
         onSuccess: async result => {
-            console.log(result);
             RefreshToken.set((result as LoginResponsePayload).data.refreshToken);
             const ref = $page.url.searchParams.get('ref');
             await goto(ref ?? '/');
         },
         onError: error => {
-            console.log(error);
+            console.error(error);
             if (error instanceof RequestError && (error.payload as Payload).errors) {
                 return (error.payload as Payload<null, ChangePasswordFormErrors>).errors;
             }
             toast.error('Вход не удался');
         },
-        validate: (values: LoginFormInputs) => {
-            const errors: LoginFormErrors = {};
-            if (!values.email) {
-                errors.email = 'Пожалуйста, введите email';
-            }
-            if (!values.password) {
-                errors.password = 'Пожалуйста, введите пароль';
-            }
-            return errors;
-        },
+        extend: validator({schema}),
     });
 </script>
 
@@ -54,21 +50,13 @@
         <span class="name">архив</span>
     </div>
     <form class="form" use:form>
-        <FormInput
-            id="email"
-            name="email"
-            required
-            label="email"
-            error={Boolean($errors.email)}
-            errorMessage={$errors.email ? $errors.email[0] : undefined}
-        />
+        <FormInput id="email" name="email" required label="email" error={$errors.email} />
         <FormPasswordInput
             id="password"
             name="password"
             required
             label="пароль"
-            error={Boolean($errors.password)}
-            errorMessage={$errors.password ? $errors.password[0] : undefined}
+            error={$errors.password}
         />
         <div class="actions">
             <PrimaryButton disabled={$isSubmitting.valueOf()}>Войти</PrimaryButton>

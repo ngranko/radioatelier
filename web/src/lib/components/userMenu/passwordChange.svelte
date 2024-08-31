@@ -11,10 +11,28 @@
     import RequestError from '$lib/errors/RequestError';
     import type {Payload} from '$lib/interfaces/api';
     import toast from 'svelte-french-toast';
+    import {validator} from '@felte/validator-yup';
+    import * as yup from 'yup';
+    import type {TestContext} from 'yup';
+
+    const schema = yup.object({
+        password: yup
+            .string()
+            .required('Пожалуйста, введите пароль')
+            .test('strongPassword', 'Слишком слабый пароль', isPasswordAcceptable),
+        passwordConfirm: yup
+            .string()
+            .required('Пожалуйста, повторите пароль')
+            .test(
+                'passwordsMatch',
+                'Пароли не совпадают',
+                (value: string, context: TestContext) => value === context.parent.password,
+            ),
+    });
 
     export let isDialogOpen = false;
 
-    const {form, data, errors, isSubmitting, reset} = createForm({
+    const {form, data, errors, isSubmitting, reset} = createForm<yup.InferType<typeof schema>>({
         onSubmit: async (values: ChangePasswordFormInputs) =>
             $changePasswordMutation.mutateAsync(values),
         onSuccess: () => {
@@ -27,22 +45,7 @@
             }
             toast.error('Не удалось сменить пароль');
         },
-        validate: (values: ChangePasswordFormInputs) => {
-            const errors: ChangePasswordFormErrors = {};
-            if (!values.password) {
-                errors.password = 'Пожалуйста, введите пароль';
-            }
-            if (!isPasswordAcceptable(values.password)) {
-                errors.password = 'Слишком слабый пароль';
-            }
-            if (!values.passwordConfirm) {
-                errors.passwordConfirm = 'Пожалуйста, введите пароль еще раз';
-            }
-            if (values.password !== values.passwordConfirm) {
-                errors.passwordConfirm = 'Пароли не совпадают';
-            }
-            return errors;
-        },
+        extend: validator({schema}),
     });
 
     const changePasswordMutation = createMutation({
@@ -64,8 +67,7 @@
             required
             label="Пароль"
             value={$data.password}
-            error={Boolean($errors.password)}
-            errorMessage={$errors.password ? $errors.password[0] : undefined}
+            error={$errors.password}
             withStrengthIndicator
         />
         <FormPasswordInput
@@ -73,8 +75,7 @@
             name="passwordConfirm"
             required
             label="Повторите пароль"
-            error={Boolean($errors.passwordConfirm)}
-            errorMessage={$errors.passwordConfirm ? $errors.passwordConfirm[0] : undefined}
+            error={$errors.passwordConfirm}
         />
         <div class="actions">
             <PrimaryButton disabled={$isSubmitting.valueOf()}>Сменить</PrimaryButton>

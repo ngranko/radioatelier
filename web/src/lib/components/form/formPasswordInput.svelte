@@ -11,8 +11,7 @@
     export let placeholder: string | undefined = undefined;
     export let required = false;
     export let label: string | undefined = undefined;
-    export let error: boolean = false;
-    export let errorMessage: string | undefined = undefined;
+    export let error: string[] | null | undefined = undefined;
     export let withStrengthIndicator: boolean = false;
 
     let isPlainPassword: boolean = false;
@@ -26,10 +25,12 @@
     });
 
     let classes: string;
+    let isError: boolean;
 
+    $: isError = Boolean(error);
     $: classes = clsx({
         field: true,
-        error: error,
+        error: isError,
     });
 
     function handleShowPasswordClick() {
@@ -61,7 +62,7 @@
     {/if}
     {#if error}
         <span class="errorMessage" transition:fade={{duration: 200, easing: cubicInOut}}>
-            {errorMessage}
+            {error[0]}
         </span>
     {/if}
 </div>
