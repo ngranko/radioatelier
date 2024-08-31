@@ -1,7 +1,7 @@
 <script lang="ts">
-    import CategorySelect from '$lib/components/objectDetails/categorySelect.svelte';
-    import TagsSelect from '$lib/components/objectDetails/tagsSelect.svelte';
-    import PrivateTagsSelect from '$lib/components/objectDetails/privateTagsSelect.svelte';
+    import CategorySelect from '$lib/components/objectDetails/editMode/categorySelect.svelte';
+    import TagsSelect from '$lib/components/objectDetails/editMode/tagsSelect.svelte';
+    import PrivateTagsSelect from '$lib/components/objectDetails/editMode/privateTagsSelect.svelte';
     import type {LooseObject} from '$lib/interfaces/object';
     import Input from '$lib/components/input/input.svelte';
     import Textarea from '$lib/components/input/textarea.svelte';
@@ -97,8 +97,8 @@
 </div>
 
 <style lang="scss">
-    @use '../../../styles/colors';
-    @use '../../../styles/typography';
+    @use '../../../../styles/colors';
+    @use '../../../../styles/typography';
 
     .field {
         display: flex;

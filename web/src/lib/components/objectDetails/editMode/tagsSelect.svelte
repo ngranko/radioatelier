@@ -59,8 +59,8 @@
 {/if}
 
 <style lang="scss">
-    @use '../../../styles/colors';
-    @use '../../../styles/typography';
+    @use '../../../../styles/colors';
+    @use '../../../../styles/typography';
 
     :global(.creatable-row) {
         @include typography.brand-face;

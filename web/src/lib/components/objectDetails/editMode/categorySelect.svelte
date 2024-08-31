@@ -1,30 +1,30 @@
 <script lang="ts">
     import {createMutation, createQuery, useQueryClient} from '@tanstack/svelte-query';
+    import {createCategory, listCategories} from '$lib/api/category';
     import Svelecte from 'svelecte';
-    import {createPrivateTag, listPrivateTags} from '$lib/api/privateTag';
     import type {Payload} from '$lib/interfaces/api';
-    import type {ListPrivateTagsResponsePayload, PrivateTag} from '$lib/interfaces/privateTag';
+    import type {Category, ListCategoriesResponsePayload} from '$lib/interfaces/category.js';
 
     const client = useQueryClient();
 
     export let id: string | undefined = undefined;
     export let name: string | undefined = undefined;
-    export let initialValue: PrivateTag[] = [];
+    export let value: Category | undefined;
 
-    const createTagMutation = createMutation({
-        mutationFn: createPrivateTag,
+    const createCategoryMutation = createMutation({
+        mutationFn: createCategory,
         onSuccess: ({data}) => {
-            const cachedValue: Payload<ListPrivateTagsResponsePayload> | undefined =
-                client.getQueryData(['privateTags']);
+            const cachedValue: Payload<ListCategoriesResponsePayload> | undefined =
+                client.getQueryData(['categories']);
             if (cachedValue) {
-                client.setQueryData(['privateTags'], {
-                    data: {tags: [...cachedValue.data.tags, data]},
+                client.setQueryData(['categories'], {
+                    data: {categories: [...cachedValue.data.categories, data]},
                 });
             }
         },
     });
 
-    const tags = createQuery({queryKey: ['privateTags'], queryFn: listPrivateTags});
+    const categories = createQuery({queryKey: ['categories'], queryFn: listCategories});
 
     async function handleCreate(props: {
         inputValue: string;
@@ -32,36 +32,34 @@
         labelField: string;
         prefix: string;
     }) {
-        const result = await $createTagMutation.mutateAsync({name: props.inputValue});
+        const result = await $createCategoryMutation.mutateAsync({name: props.inputValue});
         return {id: result.data.id, name: result.data.name};
     }
 </script>
 
 <!-- TODO: add loading state -->
-{#if !$tags.isLoading}
+{#if !$categories.isLoading}
     <Svelecte
         inputId={id}
-        placeholder="Не выбраны"
+        placeholder="Не выбрана"
         highlightFirstItem={false}
         creatable={true}
-        multiple={true}
-        clearable={true}
         valueField="id"
         labelField="name"
         i18n={{
             createRowLabel: value => `Создать '${value}'`,
         }}
-        options={$tags.data?.data.tags.sort((a, b) => a.name.localeCompare(b.name))}
+        options={$categories.data?.data.categories.sort((a, b) => a.name.localeCompare(b.name))}
         {name}
-        bind:value={initialValue}
+        bind:value
         valueAsObject={true}
         createHandler={handleCreate}
     />
 {/if}
 
 <style lang="scss">
-    @use '../../../styles/colors';
-    @use '../../../styles/typography';
+    @use '../../../../styles/colors';
+    @use '../../../../styles/typography';
 
     :global(.creatable-row) {
         @include typography.brand-face;

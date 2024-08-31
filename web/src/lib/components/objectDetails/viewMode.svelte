@@ -2,7 +2,7 @@
     import type {LooseObject} from '$lib/interfaces/object';
     import TextButton from '$lib/components/button/textButton.svelte';
     import {activeObjectInfo} from '$lib/stores/map';
-    import DeleteButton from '$lib/components/objectDetails/deleteButton.svelte';
+    import DeleteButton from '$lib/components/objectDetails/editMode/deleteButton.svelte';
     import {createEventDispatcher} from 'svelte';
 
     const dispatch = createEventDispatcher();

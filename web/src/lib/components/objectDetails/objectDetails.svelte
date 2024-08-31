@@ -3,7 +3,7 @@
     import {fly} from 'svelte/transition';
     import {cubicInOut} from 'svelte/easing';
     import type {LooseObject} from '$lib/interfaces/object';
-    import Form from '$lib/components/objectDetails/form.svelte';
+    import Form from '$lib/components/objectDetails/editMode/form.svelte';
     import ViewMode from '$lib/components/objectDetails/viewMode.svelte';
     import ImageUpload from '$lib/components/input/imageUpload.svelte';
     import {createMutation} from '@tanstack/svelte-query';

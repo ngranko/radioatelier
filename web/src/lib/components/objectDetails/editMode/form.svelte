@@ -1,10 +1,10 @@
 <script lang="ts">
     import {createEventDispatcher} from 'svelte';
     import type {LooseObject} from '$lib/interfaces/object';
-    import FormContents from '$lib/components/objectDetails/formContents.svelte';
+    import FormContents from '$lib/components/objectDetails/editMode/formContents.svelte';
     import PrimaryButton from '$lib/components/button/primaryButton.svelte';
-    import DeleteButton from '$lib/components/objectDetails/deleteButton.svelte';
-    import BackButton from '$lib/components/objectDetails/backButton.svelte';
+    import DeleteButton from '$lib/components/objectDetails/editMode/deleteButton.svelte';
+    import BackButton from '$lib/components/objectDetails/editMode/backButton.svelte';
     import {activeObjectInfo} from '$lib/stores/map';
 
     const dispatch = createEventDispatcher();
@@ -51,7 +51,7 @@
 </form>
 
 <style lang="scss">
-    @use '../../../styles/colors';
+    @use '../../../../styles/colors';
 
     .form {
         padding: 0 24px;

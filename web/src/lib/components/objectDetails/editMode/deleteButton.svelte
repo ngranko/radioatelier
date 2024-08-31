@@ -2,7 +2,6 @@
     import TextButton from '$lib/components/button/textButton.svelte';
     import Dialog from '$lib/components/dialog.svelte';
 
-    let dialog: HTMLDialogElement;
     let isDialogOpen = false;
 
     function handleDialogOpen() {
