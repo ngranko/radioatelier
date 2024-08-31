@@ -5,11 +5,6 @@ export interface LoginFormInputs {
     password: string;
 }
 
-export interface LoginFormErrors {
-    email?: string;
-    password?: string;
-}
-
 export interface LoginResponsePayload extends Payload {
     errors?: {
         email?: string;
