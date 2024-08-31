@@ -59,6 +59,7 @@ func (c *csvDocument) Save(file file.File) error {
 func (c *csvDocument) decodeContents(contents io.Reader, separator rune) ([][]string, error) {
     reader := csv.NewReader(contents)
     reader.Comma = separator
+    reader.LazyQuotes = true
     parsed, err := reader.ReadAll()
     if err != nil {
         return nil, err
