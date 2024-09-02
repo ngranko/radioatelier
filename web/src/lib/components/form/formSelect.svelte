@@ -11,7 +11,7 @@
 
     export let id: string | undefined = undefined;
     export let name: string | undefined = undefined;
-    export let value: string | number | undefined = '';
+    export let value: string | number | null | undefined = '';
     export let options: Option[] = [];
     export let placeholder: string | undefined = undefined;
     export let required = false;
