@@ -3,6 +3,7 @@ package router
 import (
     "radioatelier/package/infrastructure/router"
     "radioatelier/package/presentation/controller/category"
+    "radioatelier/package/presentation/controller/nonce"
     "radioatelier/package/presentation/controller/object"
     "radioatelier/package/presentation/controller/objectImport"
     "radioatelier/package/presentation/controller/privateTag"
@@ -27,6 +28,18 @@ func ConfigureRouter() *router.Router {
 
         r.Post("/upload", objectImport.UploadFile)
         r.Get("/preview/{id}", objectImport.GetPreview)
+
+        r.Group(func(r *router.Router) {
+            r.Use(middleware.VerifyNonce)
+
+            r.Get("/", objectImport.StartImport)
+        })
+    })
+
+    r.Route("/nonce", func(r *router.Router) {
+        r.Use(middleware.VerifyAccessToken)
+
+        r.Get("/", nonce.Get)
     })
 
     r.Route("/object", func(r *router.Router) {

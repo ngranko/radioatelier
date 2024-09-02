@@ -7,6 +7,8 @@
     import toast from 'svelte-french-toast';
     import {getPreview, uploadFile} from '$lib/api/import';
     import Svelecte from 'svelecte';
+    import {ImportProvider} from '$lib/services/importProvider';
+    import type {ImportMappings} from '$lib/interfaces/import';
 
     export let isOpen = false;
 
@@ -69,6 +71,7 @@
     function handleClose() {
         isOpen = false;
         currentStep = 1;
+        // TODO: cancel import if it is in progress
     }
 
     async function handleSeparatorChange() {
@@ -82,6 +85,18 @@
         } catch (error) {
             console.error(error);
         }
+    }
+
+    function handleImport(event: CustomEvent<ImportMappings>) {
+        const values = event.detail;
+        console.log(values);
+
+        const importProvider = new ImportProvider();
+        importProvider.setSuccessHandler(message => console.log(message));
+        importProvider.setErrorHandler(message => console.log(message));
+        importProvider.setProgressHandler(message => console.log(message));
+        importProvider.setDisconnectHandler(() => console.log('disconnected'));
+        importProvider.start(fileId, values);
     }
 </script>
 
@@ -135,7 +150,7 @@
                 />
             </div>
             <h3>Импортировать колонки</h3>
-            <Form {preview} />
+            <Form {preview} on:close={handleClose} on:submit={handleImport} />
         </div>
     {/if}
 </Dialog>
@@ -160,6 +175,7 @@
     .step2 {
         width: 100%;
         max-width: 600px;
+        margin-bottom: -24px;
     }
 
     .preview {

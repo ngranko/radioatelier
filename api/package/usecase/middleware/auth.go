@@ -8,6 +8,7 @@ import (
 
     "radioatelier/package/adapter/auth/accessToken"
     "radioatelier/package/adapter/db/repository"
+    "radioatelier/package/adapter/nonce"
     "radioatelier/package/infrastructure/db"
     "radioatelier/package/infrastructure/logger"
     "radioatelier/package/infrastructure/router"
@@ -86,5 +87,19 @@ func VerifyRefreshToken(next http.Handler) http.Handler {
 
         ctx := context.WithValue(r.Context(), "RefreshToken", token)
         next.ServeHTTP(w, r.WithContext(ctx))
+    })
+}
+
+func VerifyNonce(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        token := r.URL.Query().Get("token")
+        if !nonce.GetNonceStore().Use(token) {
+            router.NewResponse().
+                WithStatus(http.StatusUnauthorized).
+                WithPayload(router.Payload{Message: "Token is invalid"}).
+                Send(w)
+            return
+        }
+        next.ServeHTTP(w, r)
     })
 }
