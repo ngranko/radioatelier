@@ -41,6 +41,19 @@
 </script>
 
 <div class="preview">
+    {#if initialValues.rating}
+        <div class="rating">
+            {#if initialValues.rating === '1'}
+                ⭐️
+            {/if}
+            {#if initialValues.rating === '2'}
+                ⭐️⭐️
+            {/if}
+            {#if initialValues.rating === '3'}
+                🌟🌟🌟️
+            {/if}
+        </div>
+    {/if}
     <div class="category">{initialValues.category?.name ?? ''}</div>
     <h1 class="name">{initialValues.name}</h1>
     <div class="tags">
@@ -69,11 +82,6 @@
         {#if initialValues.isRemoved}
             <div title="Уничтожена" class="flag">
                 <i class="fa-solid fa-ghost"></i>
-            </div>
-        {/if}
-        {#if initialValues.rating}
-            <div title="Рейтинг" class="flag">
-                {initialValues.rating}
             </div>
         {/if}
     </div>
@@ -123,6 +131,10 @@
 
     .preview {
         padding: 16px 24px 24px;
+    }
+
+    .rating {
+        @include typography.size-22;
     }
 
     .category {

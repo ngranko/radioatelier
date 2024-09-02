@@ -28,7 +28,7 @@ type CreateInput struct {
     Image           string   `json:"image"`
     IsPublic        bool     `json:"isPublic"`
     IsVisited       bool     `json:"isVisited"`
-    Rating          string   `json:"rating" validate:"max=0|oneof=👍 🫳 👎"`
+    Rating          string   `json:"rating" validate:"max=0|oneof=1 2 3"`
     Category        Category `json:"category" validate:"required"`
     Tags            []Tag    `json:"tags"`
     PrivateTags     []Tag    `json:"privateTags"`
