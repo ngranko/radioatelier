@@ -4,6 +4,7 @@ import (
     "log/slog"
     "net/http"
 
+    "radioatelier/package/config"
     "radioatelier/package/infrastructure/logger"
     "radioatelier/package/infrastructure/router"
     "radioatelier/package/usecase/presenter"
@@ -35,7 +36,7 @@ func LogIn(w http.ResponseWriter, r *http.Request) {
             WithStatus(http.StatusUnprocessableEntity).
             WithPayload(router.Payload{
                 Message: "Validation failed",
-                Errors:  res.GetErrors("ru"),
+                Errors:  res.GetErrors(config.Get().ProjectLocale),
             }).
             Send(w)
         return

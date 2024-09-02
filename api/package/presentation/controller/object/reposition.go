@@ -6,14 +6,15 @@ import (
     "github.com/google/uuid"
 
     "radioatelier/package/adapter/auth/accessToken"
+    "radioatelier/package/config"
     "radioatelier/package/infrastructure/router"
     "radioatelier/package/usecase/presenter"
     "radioatelier/package/usecase/validation/validator"
 )
 
 type RepositionInput struct {
-    Lat string `json:"lat"`
-    Lng string `json:"lng"`
+    Lat string `json:"lat" validate:"required,latitude"`
+    Lng string `json:"lng" validate:"required,longitude"`
 }
 
 type RepositionPayloadData struct {
@@ -46,7 +47,7 @@ func Reposition(w http.ResponseWriter, r *http.Request) {
             WithStatus(http.StatusUnprocessableEntity).
             WithPayload(router.Payload{
                 Message: "Validation failed",
-                Errors:  res.GetErrors("ru"),
+                Errors:  res.GetErrors(config.Get().ProjectLocale),
             }).
             Send(w)
         return

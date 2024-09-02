@@ -27,6 +27,6 @@ func NewObjectController(repo repository.Object) Object {
 
 func (c *object) Create(ctx context.Context, obj *model.Object) (*model.Object, error) {
     req := request.NewCreateRequest()
-    req.SetParent(config.Get().NotionObjectsDBID)
+    req.SetParent(config.Get().Notion.ObjectsDBID)
     req.AddProperty(string(model.Name), obj.Name)
 }

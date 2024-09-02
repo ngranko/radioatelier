@@ -27,7 +27,7 @@ func NewObjectRepository(client *notion.Client) Object {
 }
 
 func (r *objectRepository) List(ctx context.Context, req *request.QueryRequest) (*notionapi.DatabaseQueryResponse, error) {
-    return r.client.Database.Query(ctx, model.DatabaseID(config.Get().NotionObjectsDBID), req)
+    return r.client.Database.Query(ctx, model.DatabaseID(config.Get().Notion.ObjectsDBID), req)
 }
 
 func (r *objectRepository) Create(ctx context.Context, req *request.CreateRequest) (*notionapi.Page, error) {

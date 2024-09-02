@@ -5,6 +5,7 @@ import (
 
     "github.com/google/uuid"
 
+    "radioatelier/package/config"
     "radioatelier/package/infrastructure/router"
     "radioatelier/package/usecase/presenter"
     "radioatelier/package/usecase/validation/validator"
@@ -34,7 +35,7 @@ func Create(w http.ResponseWriter, r *http.Request) {
             WithStatus(http.StatusUnprocessableEntity).
             WithPayload(router.Payload{
                 Message: "Validation failed",
-                Errors:  res.GetErrors("ru"),
+                Errors:  res.GetErrors(config.Get().ProjectLocale),
             }).
             Send(w)
         return

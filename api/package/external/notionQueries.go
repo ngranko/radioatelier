@@ -14,7 +14,7 @@ import (
 func QueryNotionObjects(ctx context.Context, startCursor *string) (*notionapi.DatabaseQueryResponse, error) {
     return notion.GetClient().Database.Query(
         ctx,
-        notionapi.DatabaseID(config.Get().NotionObjectsDBID),
+        notionapi.DatabaseID(config.Get().Notion.ObjectsDBID),
         getQueryObjectRequestParams(startCursor),
     )
 }

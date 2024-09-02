@@ -13,7 +13,7 @@ var client *Client
 func init() {
     conf := config.Get()
 
-    client = notionapi.NewClient(notionapi.Token(conf.NotionToken))
+    client = notionapi.NewClient(notionapi.Token(conf.Notion.Token))
 }
 
 func GetClient() *Client {

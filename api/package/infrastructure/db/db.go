@@ -17,10 +17,10 @@ func init() {
     conf := config.Get()
     dsn := fmt.Sprintf(
         "%s:%s@tcp(%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
-        conf.DBUser,
-        conf.DBPass,
-        conf.DBHost,
-        conf.DBName,
+        conf.MySQL.User,
+        conf.MySQL.Pass,
+        conf.MySQL.Host,
+        conf.MySQL.Name,
     )
 
     db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})

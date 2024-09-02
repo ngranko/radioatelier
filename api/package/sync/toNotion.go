@@ -4,6 +4,7 @@ import (
     "context"
 
     "radioatelier/ent"
+
     "radioatelier/package/config"
     "radioatelier/package/infrastructure/notion"
     "radioatelier/package/structs"
@@ -42,7 +43,7 @@ func deleteInNotion(ctx context.Context, obj *ent.Object) error {
 func getCreatePageRequestParams(ctx context.Context, obj *ent.Object) *notionapi.PageCreateRequest {
     req := notionapi.PageCreateRequest{
         Parent: notionapi.Parent{
-            DatabaseID: notionapi.DatabaseID(config.Get().NotionObjectsDBID),
+            DatabaseID: notionapi.DatabaseID(config.Get().Notion.ObjectsDBID),
         },
         Properties: structs.NewPageProperties().FillFromObject(ctx, obj).ToNotionProperties(),
     }
