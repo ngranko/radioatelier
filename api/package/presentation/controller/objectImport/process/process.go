@@ -11,7 +11,7 @@ import (
     "radioatelier/package/usecase/presenter"
 )
 
-func importObjects(ctx context.Context, ch chan message, ID string, mappings types.ImportMappings) {
+func importObjects(ctx context.Context, ch chan message, ID string, separator rune, mappings types.ImportMappings) {
     user := ctx.Value("user").(presenter.User)
 
     f, err := file.Open("/tmp/" + ID)
@@ -21,7 +21,7 @@ func importObjects(ctx context.Context, ch chan message, ID string, mappings typ
     }
     defer f.Delete()
 
-    logger.GetZerolog().Info("importing objects", slog.String("user", user.GetModel().ID.String()), slog.String("id", ID), slog.Any("mappings", mappings))
+    logger.GetZerolog().Info("importing objects", slog.String("user", user.GetModel().ID.String()), slog.String("id", ID), slog.Any("separator", separator), slog.Any("mappings", mappings))
     percentage := 0
 
     for {
@@ -33,7 +33,7 @@ func importObjects(ctx context.Context, ch chan message, ID string, mappings typ
             if percentage < 100 {
                 percentage++
                 ch <- message{percentage: percentage}
-                time.Sleep(time.Second)
+                time.Sleep(time.Second / 5)
             } else {
                 ch <- message{result: &result{text: "Импортировано 30 точек из 50", errors: []string{"Строка 13: неверные координаты", "Строка 29: пустое название"}}}
                 return

@@ -30,6 +30,6 @@ func inputMessageHandler(message ws.Message, client *ws.Client) error {
         }
     }
 
-    go process.StartImport(payload.ID, payload.Mappings, client)
+    go process.StartImport(payload.ID, []rune(payload.Separator)[0], payload.Mappings, client)
     return nil
 }

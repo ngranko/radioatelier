@@ -13,8 +13,9 @@ const (
 )
 
 type InputPayload struct {
-    ID       string         `json:"id" validate:"required"`
-    Mappings ImportMappings `json:"mappings" validate:"required"`
+    ID        string         `json:"id" validate:"required"`
+    Separator string         `json:"separator" validate:"required"`
+    Mappings  ImportMappings `json:"mappings" validate:"required"`
 }
 
 type ImportMappings struct {

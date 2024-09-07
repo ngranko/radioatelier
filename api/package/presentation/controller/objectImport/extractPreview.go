@@ -11,19 +11,22 @@ import (
     "radioatelier/package/usecase/validation/validator"
 )
 
-type GetPreviewInput struct {
+type ExtractPreviewInput struct {
     ID        string `json:"id" validate:"required"`
     Separator string `json:"separator" validate:"required,max=1"`
 }
 
-type GetPreviewPayloadData struct {
+type ExtractPreviewPayloadData struct {
     Preview [][]string `json:"preview"`
 }
 
-func GetPreview(w http.ResponseWriter, r *http.Request) {
-    payload := GetPreviewInput{
-        ID:        router.GetPathParam(r, "id"),
-        Separator: router.GetQueryParam(r, "separator"),
+func ExtractPreview(w http.ResponseWriter, r *http.Request) {
+    var payload *ExtractPreviewInput
+
+    success := router.DecodeRequestParams(r, &payload)
+    if !success {
+        router.NewResponse().WithStatus(http.StatusBadRequest).Send(w)
+        return
     }
 
     res := validator.Get().ValidateStruct(payload)
@@ -55,7 +58,7 @@ func GetPreview(w http.ResponseWriter, r *http.Request) {
     router.NewResponse().
         WithStatus(http.StatusOK).
         WithPayload(router.Payload{
-            Data: GetPreviewPayloadData{
+            Data: ExtractPreviewPayloadData{
                 Preview: preview,
             }}).
         Send(w)

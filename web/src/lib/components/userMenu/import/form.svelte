@@ -7,10 +7,9 @@
     import * as yup from 'yup';
     import {validator} from '@felte/validator-yup';
     import Tooltip from '$lib/components/tooltip.svelte';
+    import {importInfo} from '$lib/stores/import';
 
     const dispatch = createEventDispatcher();
-
-    export let preview: string[][] = [];
 
     const schema = yup.object({
         coordinates: yup
@@ -18,7 +17,7 @@
             .required('Пожалуйста, выберите колонку')
             .test('validFormat', 'Допустимый формат: 0.000000,0.000000', (value: number) => {
                 const regex = /^-?\d{1,3}\.\d+,\s?-?\d{1,3}\.\d+$/;
-                return regex.test(preview[1][value]);
+                return regex.test($importInfo.preview[1][value]);
             }),
         name: yup.number().required('Пожалуйста, выберите колонку'),
         isVisited: yup.number().nullable(),
@@ -29,7 +28,7 @@
                 if (!value) {
                     return true;
                 }
-                return ['1', '2', '3'].includes(preview[1][value]);
+                return ['1', '2', '3'].includes($importInfo.preview[1][value]);
             }),
         isPublic: yup.number().nullable(),
         category: yup.number().required('Пожалуйста, выберите колонку'),
@@ -45,7 +44,7 @@
                         return true;
                     }
                     const regex = /^([\w\s!,.\-–—]+;\s?)*[\w\s!,.\-–—]+$/;
-                    return regex.test(preview[1][value]);
+                    return regex.test($importInfo.preview[1][value]);
                 },
             ),
         privateTags: yup
@@ -59,7 +58,7 @@
                         return true;
                     }
                     const regex = /^([\w\s!,.\-–—]+;\s?)*[\w\s!,.\-–—]+$/;
-                    return regex.test(preview[1][value]);
+                    return regex.test($importInfo.preview[1][value]);
                 },
             ),
         description: yup.number().nullable(),
@@ -77,7 +76,7 @@
                     return true;
                 }
                 try {
-                    new URL(preview[1][value]);
+                    new URL($importInfo.preview[1][value]);
                     return true;
                 } catch (e) {
                     return false;
@@ -90,32 +89,6 @@
             dispatch('submit', values);
         },
         extend: validator({schema}),
-        // onSuccess: () => {
-        //     toast.success('Пароль успешно изменен');
-        //     // isDialogOpen = false;
-        // },
-        // onError: error => {
-        //     if (error instanceof RequestError && error.status === 422) {
-        //         return (error.payload as Payload<null, ChangePasswordFormErrors>).errors;
-        //     }
-        //     toast.error('Не удалось сменить пароль');
-        // },
-        // validate: (values: ChangePasswordFormInputs) => {
-        //     const errors: ChangePasswordFormErrors = {};
-        //     if (!values.password) {
-        //         errors.password = 'Пожалуйста, введите пароль';
-        //     }
-        //     if (!isPasswordAcceptable(values.password)) {
-        //         errors.password = 'Слишком слабый пароль';
-        //     }
-        //     if (!values.passwordConfirm) {
-        //         errors.passwordConfirm = 'Пожалуйста, введите пароль еще раз';
-        //     }
-        //     if (values.password !== values.passwordConfirm) {
-        //         errors.passwordConfirm = 'Пароли не совпадают';
-        //     }
-        //     return errors;
-        // },
     });
 
     function handleClose() {
@@ -133,7 +106,7 @@
             required
             placeholder="Выберите колонку"
             bind:value={$data.coordinates}
-            options={preview[0].map((item, index) => ({value: index, text: item}))}
+            options={$importInfo.preview[0].map((item, index) => ({value: index, text: item}))}
             error={$errors.coordinates}
         />
         <Tooltip>
@@ -149,7 +122,7 @@
             required
             placeholder="Выберите колонку"
             bind:value={$data.name}
-            options={preview[0].map((item, index) => ({value: index, text: item}))}
+            options={$importInfo.preview[0].map((item, index) => ({value: index, text: item}))}
             error={$errors.name}
         />
         <Tooltip>
@@ -163,7 +136,7 @@
             label="Посещена"
             placeholder="Выберите колонку"
             bind:value={$data.isVisited}
-            options={preview[0].map((item, index) => ({value: index, text: item}))}
+            options={$importInfo.preview[0].map((item, index) => ({value: index, text: item}))}
             error={$errors.isVisited}
         />
         <Tooltip>Понимает значения 0 и 1. Остальные значения будут приведены к этим двум.</Tooltip>
@@ -175,7 +148,7 @@
             label="Рейтинг"
             placeholder="Выберите колонку"
             bind:value={$data.rating}
-            options={preview[0].map((item, index) => ({value: index, text: item}))}
+            options={$importInfo.preview[0].map((item, index) => ({value: index, text: item}))}
             error={$errors.rating}
         />
         <Tooltip>Может быть от 1 до 3. Любые другие значения будут проигнорированы.</Tooltip>
@@ -187,7 +160,7 @@
             label="Публичная"
             placeholder="Выберите колонку"
             bind:value={$data.isPublic}
-            options={preview[0].map((item, index) => ({value: index, text: item}))}
+            options={$importInfo.preview[0].map((item, index) => ({value: index, text: item}))}
             error={$errors.isPublic}
         />
         <Tooltip>Понимает значения 0 и 1. Остальные значения будут приведены к этим двум.</Tooltip>
@@ -200,7 +173,7 @@
             required
             placeholder="Выберите колонку"
             bind:value={$data.category}
-            options={preview[0].map((item, index) => ({value: index, text: item}))}
+            options={$importInfo.preview[0].map((item, index) => ({value: index, text: item}))}
             error={$errors.category}
         />
         <Tooltip>
@@ -214,7 +187,7 @@
             label="Фотография"
             placeholder="Не заполнять"
             bind:value={$data.image}
-            options={preview[0].map((item, index) => ({value: index, text: item}))}
+            options={$importInfo.preview[0].map((item, index) => ({value: index, text: item}))}
             error={$errors.image}
         />
         <Tooltip>Может быть ссылкой на фотографию или base64-кодированным содержанием.</Tooltip>
@@ -226,7 +199,7 @@
             label="Теги"
             placeholder="Не заполнять"
             bind:value={$data.tags}
-            options={preview[0].map((item, index) => ({value: index, text: item}))}
+            options={$importInfo.preview[0].map((item, index) => ({value: index, text: item}))}
             error={$errors.tags}
         />
         <Tooltip>
@@ -241,7 +214,7 @@
             label="Приватные теги"
             placeholder="Не заполнять"
             bind:value={$data.privateTags}
-            options={preview[0].map((item, index) => ({value: index, text: item}))}
+            options={$importInfo.preview[0].map((item, index) => ({value: index, text: item}))}
             error={$errors.privateTags}
         />
         <Tooltip>
@@ -256,7 +229,7 @@
             label="Информация"
             placeholder="Не заполнять"
             bind:value={$data.description}
-            options={preview[0].map((item, index) => ({value: index, text: item}))}
+            options={$importInfo.preview[0].map((item, index) => ({value: index, text: item}))}
             error={$errors.description}
         />
         <Tooltip>Любая информация о точке.</Tooltip>
@@ -268,7 +241,7 @@
             label="Адрес"
             placeholder="Не заполнять"
             bind:value={$data.address}
-            options={preview[0].map((item, index) => ({value: index, text: item}))}
+            options={$importInfo.preview[0].map((item, index) => ({value: index, text: item}))}
             error={$errors.address}
         />
         <Tooltip>Максимальная длина – 128 символов. Слишком длинные адреса будут обрезаны.</Tooltip>
@@ -280,7 +253,7 @@
             label="Город"
             placeholder="Не заполнять"
             bind:value={$data.city}
-            options={preview[0].map((item, index) => ({value: index, text: item}))}
+            options={$importInfo.preview[0].map((item, index) => ({value: index, text: item}))}
             error={$errors.city}
         />
         <Tooltip>Максимальная длина – 64 символа. Слишком длинные названия будут обрезаны.</Tooltip>
@@ -292,7 +265,7 @@
             label="Страна"
             placeholder="Не заполнять"
             bind:value={$data.country}
-            options={preview[0].map((item, index) => ({value: index, text: item}))}
+            options={$importInfo.preview[0].map((item, index) => ({value: index, text: item}))}
             error={$errors.country}
         />
         <Tooltip>Максимальная длина – 64 символа. Слишком длинные названия будут обрезаны.</Tooltip>
@@ -304,7 +277,7 @@
             label="Период создания"
             placeholder="Не заполнять"
             bind:value={$data.installedPeriod}
-            options={preview[0].map((item, index) => ({value: index, text: item}))}
+            options={$importInfo.preview[0].map((item, index) => ({value: index, text: item}))}
             error={$errors.installedPeriod}
         />
         <Tooltip>Максимальная длина – 20 символов. Слишком длинные строки будут обрезаны.</Tooltip>
@@ -316,7 +289,7 @@
             label="Уничтожена"
             placeholder="Не заполнять"
             bind:value={$data.isRemoved}
-            options={preview[0].map((item, index) => ({value: index, text: item}))}
+            options={$importInfo.preview[0].map((item, index) => ({value: index, text: item}))}
             error={$errors.isRemoved}
         />
         <Tooltip>Понимает значения 0 и 1. Остальные значения будут приведены к этим двум.</Tooltip>
@@ -328,7 +301,7 @@
             label="Период пропажи"
             placeholder="Не заполнять"
             bind:value={$data.removalPeriod}
-            options={preview[0].map((item, index) => ({value: index, text: item}))}
+            options={$importInfo.preview[0].map((item, index) => ({value: index, text: item}))}
             error={$errors.removalPeriod}
         />
         <Tooltip>Максимальная длина – 20 символов. Слишком длинные строки будут обрезаны.</Tooltip>
@@ -340,7 +313,7 @@
             label="Ссылка на источник"
             placeholder="Не заполнять"
             bind:value={$data.source}
-            options={preview[0].map((item, index) => ({value: index, text: item}))}
+            options={$importInfo.preview[0].map((item, index) => ({value: index, text: item}))}
             error={$errors.source}
         />
         <Tooltip>Должна быть валидной ссылкой, другие значения будут проигнорированы.</Tooltip>

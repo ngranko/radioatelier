@@ -1,4 +1,5 @@
 import type {WebSocketMessage} from '$lib/api/websocket/WebSocketMessage';
+import type {ImportProvider} from '$lib/services/importProvider';
 
 export interface UploadFileInputs {
     formData: FormData;
@@ -8,17 +9,18 @@ export interface UploadFileResponseData {
     id: string;
 }
 
-export interface GetPreviewInputs {
+export interface ExtractPreviewInputs {
     id: string;
     separator: string;
 }
 
-export interface GetPreviewResponseData {
+export interface ExtractPreviewResponseData {
     preview: string[][];
 }
 
 export interface WSSendInputMessagePayload {
     id: string;
+    separator: string;
     mappings: ImportMappings;
 }
 
@@ -56,4 +58,17 @@ export interface ImportMappings {
     isRemoved: number | null;
     removalPeriod: number | null;
     source: number | null;
+}
+
+export interface ImportInfo {
+    id: string;
+    provider: ImportProvider;
+    separator: string;
+    currentStep: number;
+    preview: string[][];
+    status: string;
+    percentage: number;
+    resultText: string;
+    rowErrors: string[];
+    globalError: string;
 }

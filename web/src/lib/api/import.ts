@@ -1,10 +1,10 @@
 import JsonRequest from '$lib/api/request/JsonRequest';
-import {METHOD_GET, METHOD_POST} from '$lib/api/constants';
+import {METHOD_POST} from '$lib/api/constants';
 import AuthRequest from '$lib/api/request/AuthRequest';
 import type {Payload} from '$lib/interfaces/api';
 import type {
-    GetPreviewInputs,
-    GetPreviewResponseData,
+    ExtractPreviewInputs,
+    ExtractPreviewResponseData,
     UploadFileInputs,
     UploadFileResponseData,
 } from '$lib/interfaces/import';
@@ -15,14 +15,10 @@ export function uploadFile({formData}: UploadFileInputs): Promise<Payload<Upload
     ).send();
 }
 
-export function getPreview({
-    id,
-    separator,
-}: GetPreviewInputs): Promise<Payload<GetPreviewResponseData>> {
+export function extractPreview(
+    params: ExtractPreviewInputs,
+): Promise<Payload<ExtractPreviewResponseData>> {
     return new AuthRequest(
-        new JsonRequest(`/api/import/preview/${id}`, METHOD_GET).setParam(
-            'separator',
-            encodeURIComponent(separator),
-        ),
+        new JsonRequest(`/api/import/preview`, METHOD_POST).setParams(params),
     ).send();
 }

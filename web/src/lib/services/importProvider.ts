@@ -24,7 +24,7 @@ import WebSocketError from '$lib/errors/WebSocketError';
 import config from '$lib/config';
 
 export class ImportProvider {
-    private readonly connection: WebSocketConnection;
+    private connection: WebSocketConnection;
     private successHandler?: ImportSuccessHandler;
     private errorHandler?: ImportErrorHandler;
     private disconnectHandler?: ImportDisconnectHandler;
@@ -34,7 +34,7 @@ export class ImportProvider {
     private isFinished = false;
 
     public constructor() {
-        this.connection = new WebSocketConnection(`wss://${document.location.host}/api/import`);
+        this.connection = new WebSocketConnection('');
     }
 
     public isRunning(): boolean {
@@ -57,7 +57,9 @@ export class ImportProvider {
         this.progressHandler = handler;
     }
 
-    public async start(id: string, mappings: ImportMappings) {
+    public async start(id: string, separator: string, mappings: ImportMappings) {
+        this.connection = new WebSocketConnection(`wss://${document.location.host}/api/import`);
+
         const response = await getNonce();
         this.connection.setParam('token', response.data.nonce);
 
@@ -65,6 +67,7 @@ export class ImportProvider {
             this.isStarted = true;
             this.connection.sendMessage<WSSendInputMessagePayload>(WSSendInputMessageType, {
                 id,
+                separator,
                 mappings,
             });
         });

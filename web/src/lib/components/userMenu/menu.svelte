@@ -6,7 +6,7 @@
     import {invalidateToken} from '$lib/api/token';
     import RefreshToken from '$lib/api/auth/refreshToken';
     import Loader from '$lib/components/loader.svelte';
-    import ImportDialog from '$lib/components/userMenu/importDialog.svelte';
+    import ImportDialog from '$lib/components/userMenu/import/importDialog.svelte';
     import {goto} from '$app/navigation';
     import {type ComponentType, createEventDispatcher} from 'svelte';
     import toast from 'svelte-french-toast';

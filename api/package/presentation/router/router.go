@@ -27,7 +27,7 @@ func ConfigureRouter() *router.Router {
         r.Use(middleware.VerifyAccessToken)
 
         r.Post("/upload", objectImport.UploadFile)
-        r.Get("/preview/{id}", objectImport.GetPreview)
+        r.Post("/preview", objectImport.ExtractPreview)
 
         r.Group(func(r *router.Router) {
             r.Use(middleware.VerifyNonce)

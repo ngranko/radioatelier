@@ -21,14 +21,14 @@ type result struct {
     errors []string
 }
 
-func StartImport(ID string, mappings types.ImportMappings, client *ws.Client) {
+func StartImport(ID string, separator rune, mappings types.ImportMappings, client *ws.Client) {
     ch := make(chan message)
     defer close(ch)
 
     user := client.Context.Value("user").(presenter.User)
 
     go sendPings(client)
-    go importObjects(client.Context, ch, ID, mappings)
+    go importObjects(client.Context, ch, ID, separator, mappings)
 
     for {
         select {
