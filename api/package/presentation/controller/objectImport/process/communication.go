@@ -17,8 +17,8 @@ type message struct {
 }
 
 type result struct {
-    text   string
-    errors []string
+    text     string
+    feedback []types.LineFeedback
 }
 
 func StartImport(ID string, separator rune, mappings types.ImportMappings, client *ws.Client) {
@@ -94,7 +94,7 @@ func processErrorMessage(err error, client *ws.Client) {
 }
 
 func processSuccessMessage(msg message, client *ws.Client) {
-    payload := types.ResultPayload{Text: msg.result.text, Errors: msg.result.errors}
+    payload := types.ResultPayload{Text: msg.result.text, Feedback: msg.result.feedback}
     _ = sendMessageToClient(client, types.MessageTypeSuccess, payload, true)
 }
 

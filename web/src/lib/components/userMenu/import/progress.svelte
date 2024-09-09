@@ -8,6 +8,11 @@
     function handleClose() {
         dispatch('close');
     }
+
+    function handleReset(event: Event) {
+        event.stopPropagation();
+        importInfo.reset();
+    }
 </script>
 
 <div class="root">
@@ -18,19 +23,31 @@
     {:else if $importInfo.status === 'success'}
         <h2>Импорт завершен!</h2>
         <div>{$importInfo.resultText}</div>
-        {#if $importInfo.rowErrors.length > 0}
+        {#if $importInfo.lineFeedback.length > 0}
             <h3>Ошибки:</h3>
-            {#each $importInfo.rowErrors as error}<div>{error}</div>{/each}
+            {#each $importInfo.lineFeedback as item}
+                {#if item.severity === 'warning'}
+                    <div class="warningFeedback">
+                        <i class="fa-solid fa-circle-exclamation"></i>
+                        {item.text}
+                    </div>
+                {:else}
+                    <div class="errorFeedback">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                        {item.text}
+                    </div>
+                {/if}
+            {/each}
         {/if}
         <div class="actions">
-            <TextButton on:click={handleClose}>Импортировать другой файл</TextButton>
+            <TextButton on:click={handleReset}>Импортировать другой файл</TextButton>
             <TextButton on:click={handleClose}>Закрыть</TextButton>
         </div>
     {:else if $importInfo.status === 'error'}
         <h2>Во время импорта произошла ошибка</h2>
         <div>{$importInfo.globalError}</div>
         <div class="actions">
-            <TextButton on:click={handleClose}>Импортировать другой файл</TextButton>
+            <TextButton on:click={handleReset}>Импортировать другой файл</TextButton>
             <TextButton on:click={handleClose}>Закрыть</TextButton>
         </div>
     {/if}
@@ -50,6 +67,18 @@
         @include typography.size-32;
         @include typography.weight-bold;
         margin-bottom: 24px;
+    }
+
+    .warningFeedback {
+        & i {
+            color: colors.$secondary;
+        }
+    }
+
+    .errorFeedback {
+        & i {
+            color: colors.$danger;
+        }
     }
 
     .actions {

@@ -3,7 +3,6 @@ package file
 import (
     "errors"
     "io"
-    "mime/multipart"
     "net/http"
     "os"
 )
@@ -21,12 +20,12 @@ type File interface {
     Write(p []byte) (int, error)
     ReadAt(p []byte, off int64) (int, error)
     Seek(offset int64, whence int) (int64, error)
-    Save(contents []byte) error
+    Save(contents io.Reader) error
     Delete() error
     Close() error
 }
 
-func CreateFile(path string) (File, error) {
+func Create(path string) (File, error) {
     f := &file{
         path: getUniqueFilename(path),
     }
@@ -40,7 +39,7 @@ func CreateFile(path string) (File, error) {
     return f, nil
 }
 
-func CreateTempFile() (File, error) {
+func CreateTemp() (File, error) {
     f := &file{}
 
     output, err := os.CreateTemp("", "")
@@ -65,12 +64,12 @@ func Open(path string) (File, error) {
     }, nil
 }
 
-func (f *file) Save(contents []byte) error {
+func (f *file) Save(contents io.Reader) error {
     if f.raw == nil {
         return errors.New("file is not open")
     }
 
-    _, err := f.Write(contents)
+    _, err := io.Copy(f.raw, contents)
     if err != nil {
         return err
     }
@@ -136,7 +135,7 @@ func (f *file) GetMimeType() (string, error) {
     return GetMimeType(f.raw)
 }
 
-func GetMimeType(contents multipart.File) (string, error) {
+func GetMimeType(contents io.ReadSeeker) (string, error) {
     fileHeader := make([]byte, 512)
 
     _, err := contents.Read(fileHeader)

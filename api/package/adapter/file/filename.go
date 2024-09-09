@@ -28,7 +28,7 @@ func tranliterate(input string) string {
 }
 
 func replaceNonAlphaNum(input string) string {
-    removeNonAlphaNum := runes.Remove(runes.NotIn(rangetable.Merge(unicode.Latin, unicode.Digit)))
+    removeNonAlphaNum := runes.Remove(runes.NotIn(rangetable.Merge(unicode.Latin, unicode.Digit, unicode.White_Space, unicode.Punct)))
     output, _, _ := transform.String(removeNonAlphaNum, input)
     return output
 }
@@ -63,9 +63,11 @@ func getUniqueFilename(path string) string {
 }
 
 func suffixFilename(original string, suffix string) string {
+    dirname := filepath.Dir(original)
+    basename := filepath.Base(original)
     extension := filepath.Ext(original)
-    name := original[:len(original)-len(extension)]
-    return sanitize(name+"_"+suffix) + extension
+    name := basename[:len(basename)-len(extension)]
+    return dirname + "/" + sanitize(name+"_"+suffix) + extension
 }
 
 func fileExists(path string) bool {

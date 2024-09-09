@@ -45,6 +45,15 @@ func GetCategoryList() ([]Category, error) {
     return result, nil
 }
 
+func GetCategoryByName(name string) (Category, error) {
+    repo := repository.NewCategoryRepository(db.Get())
+    categoryModel, err := repo.GetByName(name)
+    if err != nil {
+        return nil, err
+    }
+    return &categoryPresenter{repository: repo, model: &categoryModel}, nil
+}
+
 func (p *categoryPresenter) GetModel() *model.Category {
     return p.model
 }

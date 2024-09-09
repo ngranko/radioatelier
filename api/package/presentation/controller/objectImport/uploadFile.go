@@ -1,13 +1,13 @@
 package objectImport
 
 import (
+    "io"
     "log/slog"
     "net/http"
     "path/filepath"
     "strings"
 
     "radioatelier/package/adapter/file"
-    "radioatelier/package/adapter/file/document"
     "radioatelier/package/infrastructure/logger"
     "radioatelier/package/infrastructure/router"
 )
@@ -48,15 +48,20 @@ func UploadFile(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    destination, err := file.CreateTempFile()
+    destination, err := file.CreateTemp()
     if err != nil {
         logger.GetZerolog().Error("failed creating a temp file", slog.Any("error", err))
         router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
         return
     }
 
-    csv := document.NewCSV(upload)
-    err = csv.Save(destination)
+    fileBytes, err := io.ReadAll(upload)
+    if err != nil {
+        logger.GetZerolog().Error("failed reading an uploaded file", slog.Any("error", err))
+        router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
+        return
+    }
+    _, err = destination.Write(fileBytes)
     if err != nil {
         logger.GetZerolog().Error("failed saving csv into a temp dir", slog.Any("error", err))
         router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)

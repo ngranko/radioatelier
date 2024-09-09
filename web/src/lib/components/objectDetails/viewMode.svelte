@@ -157,6 +157,7 @@
         background-color: color.scale(colors.$primary, $lightness: +80%);
         border-radius: 4px;
         margin-right: 4px;
+        margin-top: 4px;
     }
 
     .tag-private {
@@ -164,6 +165,7 @@
         background-color: color.scale(colors.$secondary, $lightness: +80%);
         border-radius: 4px;
         margin-right: 4px;
+        margin-top: 4px;
     }
 
     .flags {

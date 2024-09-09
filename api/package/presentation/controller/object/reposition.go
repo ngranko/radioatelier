@@ -98,8 +98,8 @@ func Reposition(w http.ResponseWriter, r *http.Request) {
         WithPayload(router.Payload{
             Data: UpdatePayloadData{
                 ID:  objModel.ID,
-                Lat: objModel.Latitude,
-                Lng: objModel.Longitude,
+                Lat: mapPointModel.Latitude,
+                Lng: mapPointModel.Longitude,
             },
         }).
         Send(w)

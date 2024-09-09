@@ -41,14 +41,14 @@ func ExtractPreview(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    sheet, err := document.OpenCSV("/tmp/" + payload.ID)
+    sheet, err := document.OpenCSV("/tmp/"+payload.ID, []rune(payload.Separator)[0])
     if err != nil {
         logger.GetZerolog().Error("failed opening csv", slog.Any("error", err))
         router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
         return
     }
 
-    preview, err := sheet.GetPreview([]rune(payload.Separator)[0])
+    preview, err := sheet.GetPreview()
     if err != nil {
         logger.GetZerolog().Error("failed getting preview", slog.Any("error", err))
         router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)

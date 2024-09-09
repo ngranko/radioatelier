@@ -10,7 +10,7 @@ const initialValue = {
     status: 'idle',
     percentage: 0,
     resultText: '',
-    rowErrors: [],
+    lineFeedback: [],
     globalError: '',
 };
 
@@ -33,7 +33,7 @@ function initializeProvider() {
             ...value,
             status: 'success',
             resultText: message.payload.text,
-            rowErrors: message.payload.errors,
+            lineFeedback: message.payload.feedback,
         })),
     );
     importProvider.setErrorHandler(message => {

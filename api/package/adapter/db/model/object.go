@@ -10,12 +10,9 @@ type Object struct {
     Base
     IsPublic        bool   `gorm:"type:tinyint(1);not null;default:0"`
     Name            string `gorm:"type:varchar(255);not null"`
-    Address         string `gorm:"type:varchar(128)"`
     MapPointID      uuid.UUID
     MapPoint        MapPoint
     Description     string
-    Latitude        string `gorm:"type:varchar(20)"`
-    Longitude       string `gorm:"type:varchar(20)"`
     InstalledPeriod string `gorm:"type:varchar(20)"`
     IsRemoved       bool   `gorm:"type:tinyint(1);not null;default:0"`
     RemovalPeriod   string `gorm:"type:varchar(20)"`

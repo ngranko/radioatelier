@@ -45,6 +45,15 @@ func GetTagList() ([]Tag, error) {
     return result, nil
 }
 
+func GetTagByName(name string) (Tag, error) {
+    repo := repository.NewTagRepository(db.Get())
+    tagModel, err := repo.GetByName(name)
+    if err != nil {
+        return nil, err
+    }
+    return &tagPresenter{repository: repo, model: &tagModel}, nil
+}
+
 func (p *tagPresenter) GetModel() *model.Tag {
     return p.model
 }

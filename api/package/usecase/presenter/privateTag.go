@@ -45,6 +45,15 @@ func GetPrivateTagList(user User) ([]PrivateTag, error) {
     return result, nil
 }
 
+func GetPrivateTagByName(user User, name string) (PrivateTag, error) {
+    repo := repository.NewPrivateTagRepository(db.Get())
+    privateTagModel, err := repo.GetByName(user.GetModel().ID, name)
+    if err != nil {
+        return nil, err
+    }
+    return &privateTagPresenter{repository: repo, model: &privateTagModel}, nil
+}
+
 func (p *privateTagPresenter) GetModel() *model.PrivateTag {
     return p.model
 }

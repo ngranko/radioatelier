@@ -19,10 +19,12 @@ type InputPayload struct {
 }
 
 type ImportMappings struct {
-    Coordinates     *int `json:"coordinates" validate:"required"`
-    Name            *int `json:"name" validate:"required"`
+    Coordinates     int  `json:"coordinates" validate:"number"`
+    Name            int  `json:"name" validate:"number"`
+    IsVisited       *int `json:"isVisited"`
+    Rating          *int `json:"rating"`
     IsPublic        *int `json:"isPublic"`
-    Category        *int `json:"category" validate:"required"`
+    Category        int  `json:"category" validate:"number"`
     Image           *int `json:"image"`
     Tags            *int `json:"tags"`
     PrivateTags     *int `json:"privateTags"`
@@ -36,13 +38,23 @@ type ImportMappings struct {
     Source          *int `json:"source"`
 }
 
+type Location struct {
+    Latitude  string `validate:"required,latitude"`
+    Longitude string `validate:"required,longitude"`
+}
+
 type ProgressPayload struct {
     Percentage int `json:"percentage"`
 }
 
 type ResultPayload struct {
-    Text   string   `json:"text"`
-    Errors []string `json:"errors"`
+    Text     string         `json:"text"`
+    Feedback []LineFeedback `json:"feedback"`
+}
+
+type LineFeedback struct {
+    Text     string `json:"text"`
+    Severity string `json:"severity"`
 }
 
 type ErrorPayload struct {

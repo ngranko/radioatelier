@@ -17,6 +17,7 @@ type MapPoint interface {
     GetModel() *model.MapPoint
     Create() error
     Update() error
+    Delete() error
 }
 
 func NewMapPoint() MapPoint {
@@ -47,4 +48,8 @@ func (p *mapPointPresenter) Create() error {
 
 func (p *mapPointPresenter) Update() error {
     return p.repository.Save(p.model)
+}
+
+func (p *mapPointPresenter) Delete() error {
+    return p.repository.Delete(p.model)
 }

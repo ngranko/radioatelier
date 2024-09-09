@@ -43,7 +43,7 @@
                     if (!value) {
                         return true;
                     }
-                    const regex = /^([\w\s!,.\-–—]+;\s?)*[\w\s!,.\-–—]+$/;
+                    const regex = /^([а-яА-Я\w\s!,.\-–—()]+;\s?)*[а-яА-Я\w\s!,.\-–—()]+$/;
                     return regex.test($importInfo.preview[1][value]);
                 },
             ),
@@ -57,7 +57,7 @@
                     if (!value) {
                         return true;
                     }
-                    const regex = /^([\w\s!,.\-–—]+;\s?)*[\w\s!,.\-–—]+$/;
+                    const regex = /^([а-яА-Я\w\s!,.\-–—()]+;\s?)*[а-яА-Я\w\s!,.\-–—()]+$/;
                     return regex.test($importInfo.preview[1][value]);
                 },
             ),
@@ -204,7 +204,8 @@
         />
         <Tooltip>
             Список тегов, разделенных точкой с запятой. Например: tag1; tag2; tag3. Можно
-            использовать пробелы и символы !,.-
+            использовать пробелы и символы <code>!,.-()</code>
+            . Максимальная длина каждого тега – 100 символов. Слишком длинные теги будут обрезаны
         </Tooltip>
     </div>
     <div class="fieldWrapper">
@@ -219,7 +220,8 @@
         />
         <Tooltip>
             Список тегов, разделенных точкой с запятой. Например: tag1; tag2; tag3. Можно
-            использовать пробелы и символы !,.-
+            использовать пробелы и символы <code>!,.-()</code>
+            . Максимальная длина каждого тега – 100 символов. Слишком длинные теги будут обрезаны
         </Tooltip>
     </div>
     <div class="fieldWrapper">
@@ -336,6 +338,10 @@
         & > :global(:first-child) {
             flex: 1;
         }
+
+        & > :global(:last-child) {
+            z-index: 1;
+        }
     }
 
     .actions {
@@ -348,6 +354,7 @@
         display: flex;
         justify-content: flex-end;
         background-color: colors.$white;
+        z-index: 1;
     }
 
     .import {

@@ -26,7 +26,7 @@ export interface WSSendInputMessagePayload {
 
 export interface WSSuccessMessagePayload {
     text: string;
-    errors: string[];
+    feedback: LineFeedback[];
 }
 
 export interface WSErrorMessagePayload {
@@ -69,6 +69,11 @@ export interface ImportInfo {
     status: string;
     percentage: number;
     resultText: string;
-    rowErrors: string[];
+    lineFeedback: LineFeedback[];
     globalError: string;
+}
+
+export interface LineFeedback {
+    text: string;
+    severity: 'warning' | 'error';
 }

@@ -12,6 +12,7 @@ type categoryRepo struct {
 type Category interface {
     Repository[model.Category]
     GetList() ([]model.Category, error)
+    GetByName(name string) (model.Category, error)
 }
 
 func NewCategoryRepository(client *db.Client) Category {
@@ -24,6 +25,12 @@ func (r *categoryRepo) GetList() ([]model.Category, error) {
     var list []model.Category
     err := r.client.Model(&model.Category{}).Select("id", "name").Find(&list).Error
     return list, err
+}
+
+func (r *categoryRepo) GetByName(name string) (model.Category, error) {
+    category := model.Category{Name: name}
+    err := r.client.Where(&category).First(&category).Error
+    return category, err
 }
 
 func (r *categoryRepo) Create(category *model.Category) error {

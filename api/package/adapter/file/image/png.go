@@ -3,8 +3,8 @@ package image
 import (
     "image"
     "image/png"
+    "io"
     "log/slog"
-    "mime/multipart"
 
     "golang.org/x/image/draw"
 
@@ -17,7 +17,7 @@ type pngFile struct {
     current  *image.NRGBA
 }
 
-func NewPngFile(upload multipart.File) (Image, error) {
+func NewPngFile(upload io.Reader) (Image, error) {
     src, err := png.Decode(upload)
     if err != nil {
         logger.GetZerolog().Error("failed decoding image", slog.Any("error", err))
@@ -41,6 +41,10 @@ func (f *pngFile) GetWidth() int {
 
 func (f *pngFile) GetHeight() int {
     return f.original.Bounds().Max.Y
+}
+
+func (f *pngFile) GetFormat() string {
+    return "png"
 }
 
 func (f *pngFile) Save(file file.File) error {

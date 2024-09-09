@@ -27,6 +27,7 @@ type Validator interface {
     RegisterRule(rule Rule) error
     CustomizeError(tag string, message string)
     ValidateStruct(s interface{}) Result
+    ValidateVar(value interface{}, rules string) Result
 }
 
 var once sync.Once
@@ -80,6 +81,16 @@ func (v *validate) CustomizeError(tag string, message string) {
 
 func (v *validate) ValidateStruct(s interface{}) Result {
     err := v.v.Struct(s)
+
+    return result{
+        ok:     err == nil,
+        errors: err,
+        uni:    v.uni,
+    }
+}
+
+func (v *validate) ValidateVar(value interface{}, rules string) Result {
+    err := v.v.Var(value, rules)
 
     return result{
         ok:     err == nil,
