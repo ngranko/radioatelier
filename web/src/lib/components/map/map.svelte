@@ -1,9 +1,10 @@
 <script lang="ts">
     import {onMount, createEventDispatcher} from 'svelte';
-    import {mapLoader, map, dragTimeout} from '$lib/stores/map';
+    import {mapLoader, map, dragTimeout, clusterer} from '$lib/stores/map';
     import {createMutation} from '@tanstack/svelte-query';
     import {getLocation} from '$lib/api/location';
     import type {Location} from '$lib/interfaces/location';
+    import {MarkerClusterer} from '@googlemaps/markerclusterer';
 
     let container: HTMLDivElement;
     let isInteracted = false;
@@ -45,6 +46,7 @@
         try {
             const {Map} = await $mapLoader.importLibrary('maps');
             map.update(() => new Map(container, mapOptions));
+            clusterer.set(new MarkerClusterer({markers: [], map: $map}));
         } catch (e) {
             console.error('error instantiating map');
             console.error(e);

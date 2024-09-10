@@ -6,7 +6,7 @@
         activeObjectInfo,
         activeMarker,
         dragTimeout,
-        markers,
+        clusterer,
     } from '$lib/stores/map';
     import {createQuery, useQueryClient} from '@tanstack/svelte-query';
     import {getObject} from '$lib/api/object';
@@ -14,7 +14,6 @@
     import {getAddress} from '$lib/api/location';
     import type {Object} from '$lib/interfaces/object';
     import CloseConfirmation from '$lib/components/objectDetails/closeConfirmation.svelte';
-    import {MarkerClusterer} from '@googlemaps/markerclusterer';
 
     export let id: string | null = null;
     export let lat: string;
@@ -111,8 +110,8 @@
 
         if (id) {
             // only update clusterer on persistent markers
-            markers.add(id, marker);
-            new MarkerClusterer({markers: Object.values($markers), map: $map});
+            $clusterer.addMarker(marker);
+            // markers.add(id, marker);
         }
 
         setTimeout(
@@ -166,6 +165,7 @@
     onDestroy(() => {
         (marker.content as HTMLDivElement).classList.add('map-marker-exiting');
         setTimeout(() => (marker.map = null), 200);
+        $clusterer.removeMarker(marker);
     });
 
     function updateObjectCoordinates() {
