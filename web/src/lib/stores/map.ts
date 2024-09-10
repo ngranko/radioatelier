@@ -2,6 +2,7 @@ import {readable, writable} from 'svelte/store';
 import {Loader} from '@googlemaps/js-api-loader';
 import type {ObjectDetailsInfo} from '$lib/interfaces/object';
 import config from '$lib/config';
+import type KeyVal from '$lib/interfaces/keyVal';
 
 export const mapLoader = readable<Loader>(undefined, function start(set) {
     set(
@@ -69,4 +70,25 @@ export const dragTimeout = {
             }
             return null;
         }),
+};
+
+type Markers = KeyVal<google.maps.marker.AdvancedMarkerElement>;
+
+const privateMarkers = writable<Markers>({});
+
+export const markers = {
+    subscribe: privateMarkers.subscribe,
+    set: privateMarkers.set,
+    add: (detailsId: string, marker: google.maps.marker.AdvancedMarkerElement) => {
+        privateMarkers.update(markers => {
+            markers[detailsId] = marker;
+            return markers;
+        });
+    },
+    remove: (detailsId: string) => {
+        privateMarkers.update(markers => {
+            delete markers[detailsId];
+            return markers;
+        });
+    },
 };

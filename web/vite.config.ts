@@ -7,7 +7,7 @@ export default defineConfig({
         sveltekit(),
         cjsInterop({
             // Add broken npm package here
-            dependencies: ['@googlemaps/js-api-loader'],
+            dependencies: ['@googlemaps/js-api-loader', '@googlemaps/markerclusterer'],
         }),
     ],
     test: {

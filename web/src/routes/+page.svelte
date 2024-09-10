@@ -2,7 +2,7 @@
     import {createMutation, createQuery, useQueryClient} from '@tanstack/svelte-query';
     import {createObject, deleteObject, listObjects} from '$lib/api/object';
     import type {ListObjectsResponsePayload, Object} from '$lib/interfaces/object';
-    import {/*mapLoader, */ map, activeObjectInfo, activeMarker} from '$lib/stores/map';
+    import {/*mapLoader, */ map, activeObjectInfo, activeMarker, markers} from '$lib/stores/map';
     import Map from '$lib/components/map/map.svelte';
     import Marker from '$lib/components/map/marker.svelte';
     import UserMenu from '$lib/components/userMenu/userMenu.svelte';
@@ -16,6 +16,7 @@
     import type {Payload} from '$lib/interfaces/api';
     import type {UpdateObjectResponsePayload} from '$lib/interfaces/object.js';
     import CloseConfirmation from '$lib/components/objectDetails/closeConfirmation.svelte';
+    import {MarkerClusterer} from '@googlemaps/markerclusterer';
 
     interface MarkerItem {
         id: string;
@@ -171,6 +172,8 @@
     async function deleteExistingObject(id: string) {
         const result = await $deleteObjectMutation.mutateAsync({id});
         delete permanentMarkers[result.data.id];
+        markers.remove(result.data.id);
+        new MarkerClusterer({markers: Object.values($markers), map: $map});
         permanentMarkers = {...permanentMarkers};
         activeObjectInfo.reset();
         activeMarker.set(null);

@@ -1,12 +1,20 @@
 <script lang="ts">
     import {onMount, onDestroy} from 'svelte';
-    import {mapLoader, map, activeObjectInfo, activeMarker, dragTimeout} from '$lib/stores/map';
+    import {
+        mapLoader,
+        map,
+        activeObjectInfo,
+        activeMarker,
+        dragTimeout,
+        markers,
+    } from '$lib/stores/map';
     import {createQuery, useQueryClient} from '@tanstack/svelte-query';
     import {getObject} from '$lib/api/object';
     import {useRepositionMutation} from '$lib/api/mutation/reposition';
     import {getAddress} from '$lib/api/location';
     import type {Object} from '$lib/interfaces/object';
     import CloseConfirmation from '$lib/components/objectDetails/closeConfirmation.svelte';
+    import {MarkerClusterer} from '@googlemaps/markerclusterer';
 
     export let id: string | null = null;
     export let lat: string;
@@ -100,6 +108,12 @@
         icon.addEventListener('touchstart', () => handleClickStart('map-marker-draggable-mobile'));
         icon.addEventListener('mouseup', () => handleClickEnd('map-marker-draggable'));
         icon.addEventListener('touchend', () => handleClickEnd('map-marker-draggable-mobile'));
+
+        if (id) {
+            // only update clusterer on persistent markers
+            markers.add(id, marker);
+            new MarkerClusterer({markers: Object.values($markers), map: $map});
+        }
 
         setTimeout(
             () => (marker.content as HTMLDivElement).classList.remove('map-marker-appearing'),
