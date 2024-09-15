@@ -206,6 +206,10 @@ func importTags(line document.Line, object presenter.Object, user presenter.User
 
     tagIDs := make([]uuid.UUID, 0)
     for _, tag := range line.GetTags() {
+        if tag == "" {
+            continue
+        }
+
         tagPresenter, err := presenter.GetTagByName(tag)
         if err != nil {
             tagPresenter = presenter.NewTag()
@@ -232,6 +236,10 @@ func importPrivateTags(line document.Line, object presenter.Object, user present
 
     privateTagIDs := make([]uuid.UUID, 0)
     for _, privateTag := range line.GetPrivateTags() {
+        if privateTag == "" {
+            continue
+        }
+
         privateTagPresenter, err := presenter.GetPrivateTagByName(user, privateTag)
         if err != nil {
             privateTagPresenter = presenter.NewPrivateTag()
