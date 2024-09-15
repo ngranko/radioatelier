@@ -28,7 +28,10 @@
                 if (!value) {
                     return true;
                 }
-                return ['1', '2', '3'].includes($importInfo.preview[1][value]);
+                return (
+                    ['1', '2', '3'].includes($importInfo.preview[1][value]) ||
+                    $importInfo.preview[1][value] === ''
+                );
             }),
         isPublic: yup.number().nullable(),
         category: yup.number().required('Пожалуйста, выберите колонку'),
@@ -44,7 +47,10 @@
                         return true;
                     }
                     const regex = /^([а-яА-Я\w\s!,.\-–—()]+;\s?)*[а-яА-Я\w\s!,.\-–—()]+$/;
-                    return regex.test($importInfo.preview[1][value]);
+                    return (
+                        regex.test($importInfo.preview[1][value]) ||
+                        $importInfo.preview[1][value] === ''
+                    );
                 },
             ),
         privateTags: yup
@@ -58,7 +64,10 @@
                         return true;
                     }
                     const regex = /^([а-яА-Я\w\s!,.\-–—()]+;\s?)*[а-яА-Я\w\s!,.\-–—()]+$/;
-                    return regex.test($importInfo.preview[1][value]);
+                    return (
+                        regex.test($importInfo.preview[1][value]) ||
+                        $importInfo.preview[1][value] === ''
+                    );
                 },
             ),
         description: yup.number().nullable(),
