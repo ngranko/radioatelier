@@ -49,7 +49,11 @@
             {required}
             {placeholder}
         />
-        <button type="button" class="showPassword" on:click={handleShowPasswordClick}>
+        <button
+            type="button"
+            class="showPassword"
+            on:click|stopPropagation={handleShowPasswordClick}
+        >
             {#if isPlainPassword}
                 <i class="fa-regular fa-eye-slash"></i>
             {:else}

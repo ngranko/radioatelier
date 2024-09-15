@@ -79,7 +79,7 @@
                     new URL($importInfo.preview[1][value]);
                     return true;
                 } catch (e) {
-                    return false;
+                    return $importInfo.preview[1][value] === '';
                 }
             }),
     });
