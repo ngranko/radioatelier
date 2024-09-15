@@ -5,9 +5,15 @@
     import Progress from '$lib/components/userMenu/import/progress.svelte';
     import CloseConfirmation from '$lib/components/userMenu/import/closeConfirmation.svelte';
     import {importInfo} from '$lib/stores/import';
+    import {createQuery, useQueryClient} from '@tanstack/svelte-query';
+    import {listObjects} from '$lib/api/object';
+
+    const queryClient = useQueryClient();
 
     export let isOpen = false;
     let isConfirmationOpen = false;
+
+    const objects = createQuery({queryKey: ['objects'], queryFn: listObjects});
 
     function handleClose() {
         if ($importInfo.provider.isRunning()) {
@@ -23,6 +29,7 @@
             $importInfo.provider.cancel();
         }
         importInfo.reset();
+        queryClient.invalidateQueries({queryKey: ['objects']}).then(() => $objects.refetch());
     }
 </script>
 
