@@ -27,6 +27,7 @@
         top: 0;
         right: 0;
         margin: 16px;
+        color: colors.$black;
         z-index: 1;
     }
 
