@@ -2,6 +2,7 @@ package repository
 
 import (
     "github.com/google/uuid"
+    "gorm.io/gorm"
 
     "radioatelier/package/adapter/db/model"
     "radioatelier/package/infrastructure/db"
@@ -34,7 +35,10 @@ func (r *objectRepo) GetList(userID uuid.UUID) ([]model.Object, error) {
     err := r.client.
         Model(&model.Object{}).
         Joins("MapPoint").
-        Select("objects.id", "MapPoint.latitude", "MapPoint.longitude").
+        Preload("ObjectUser", func(db *gorm.DB) *gorm.DB {
+            return db.Where("user_id = ?", userID).Select("id", "object_id", "is_visited")
+        }).
+        Select("objects.id", "objects.is_removed", "MapPoint.latitude", "MapPoint.longitude").
         Where(&model.Object{IsPublic: true}).
         Or(&model.Object{CreatedBy: userID}).
         Find(&list).

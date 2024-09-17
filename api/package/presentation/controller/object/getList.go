@@ -18,6 +18,8 @@ type ListItem struct {
     ID        uuid.UUID `json:"id"`
     Latitude  string    `json:"lat"`
     Longitude string    `json:"lng"`
+    IsRemoved bool      `json:"isRemoved"`
+    IsVisited bool      `json:"isVisited"`
 }
 
 func GetList(w http.ResponseWriter, r *http.Request) {
@@ -31,10 +33,17 @@ func GetList(w http.ResponseWriter, r *http.Request) {
     }
 
     for _, object := range list {
+        isVisited := false
+        if len(object.GetModel().ObjectUser) > 0 {
+            isVisited = object.GetModel().ObjectUser[0].IsVisited
+        }
+
         objects = append(objects, ListItem{
             ID:        object.GetModel().ID,
             Latitude:  object.GetModel().MapPoint.Latitude,
             Longitude: object.GetModel().MapPoint.Longitude,
+            IsRemoved: object.GetModel().IsRemoved,
+            IsVisited: isVisited,
         })
     }
 

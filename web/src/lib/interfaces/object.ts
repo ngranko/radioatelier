@@ -35,6 +35,8 @@ export interface BareObject {
     id: string | null;
     lat: string;
     lng: string;
+    isRemoved: boolean;
+    isVisited: boolean;
 }
 
 export interface ObjectDetailsInfo {
@@ -52,10 +54,12 @@ export interface ListObjectsResponsePayload {
     objects: ObjectListItem[];
 }
 
-interface ObjectListItem {
+export interface ObjectListItem {
     id: string;
     lat: string;
     lng: string;
+    isRemoved: boolean;
+    isVisited: boolean;
 }
 
 export type GetObjectContext = [string, GetObjectInputs];

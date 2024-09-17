@@ -7,10 +7,13 @@
     import {getAddress} from '$lib/api/location';
     import type {Object} from '$lib/interfaces/object';
     import CloseConfirmation from '$lib/components/objectDetails/closeConfirmation.svelte';
+    import {clsx} from 'clsx';
 
     export let id: string | null = null;
     export let lat: string;
     export let lng: string;
+    export let isRemoved = false;
+    export let isVisited = false;
     export let initialActive = false;
     let marker: google.maps.marker.AdvancedMarkerElement;
     let skipClick = false;
@@ -74,9 +77,15 @@
 
         const icon = document.createElement('div');
         icon.innerHTML = '<i class="fa-solid fa-bolt" style="pointer-events:none;"></i>';
-        icon.className = initialActive
-            ? 'map-marker map-marker-appearing map-marker-active'
-            : 'map-marker map-marker-appearing';
+        icon.className = clsx([
+            'map-marker',
+            'map-marker-appearing',
+            {
+                'map-marker-active': initialActive,
+                'map-marker-visited': isVisited,
+                'map-marker-removed': isRemoved,
+            },
+        ]);
 
         const {AdvancedMarkerElement, CollisionBehavior} = await $mapLoader.importLibrary('marker');
 
@@ -176,6 +185,7 @@
         activeObjectInfo.update(value => ({
             ...value,
             object: {
+                ...(value.object as Object),
                 id: null,
                 lat: String(marker.position!.lat),
                 lng: String(marker.position!.lng),
@@ -206,7 +216,7 @@
                 isLoading: true,
                 isEditing: false,
                 detailsId: id!,
-                object: {id, lat, lng},
+                object: {id, lat, lng, isVisited, isRemoved},
             });
             $objectDetails.refetch();
         } else {
@@ -227,6 +237,8 @@
 <CloseConfirmation bind:isOpen={isConfirmationOpen} on:click={changeActiveMarker} />
 
 <style lang="scss">
+    @use '../../../styles/colors';
+
     :global(.map-marker) {
         width: 24px;
         height: 24px;
@@ -237,7 +249,7 @@
         border-radius: 50%;
         font-size: 14px;
         color: white;
-        background-color: black;
+        background-color: colors.$black;
         transition:
             transform 0.1s ease-in-out,
             opacity 0.1s ease-in-out;
@@ -245,6 +257,15 @@
 
     :global(.map-marker-active) {
         transform: translate(0, 50%) scale(1.2);
+    }
+
+    :global(.map-marker-visited) {
+        color: colors.$secondary;
+        text-shadow: 0 0 4px colors.$secondary;
+    }
+
+    :global(.map-marker-removed) {
+        opacity: 0.5;
     }
 
     :global(.map-marker-appearing) {

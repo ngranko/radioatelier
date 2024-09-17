@@ -1,7 +1,7 @@
 <script lang="ts">
     import {createMutation, createQuery, useQueryClient} from '@tanstack/svelte-query';
     import {createObject, deleteObject, listObjects} from '$lib/api/object';
-    import type {ListObjectsResponsePayload, Object} from '$lib/interfaces/object';
+    import type {ListObjectsResponsePayload, Object, ObjectListItem} from '$lib/interfaces/object';
     import {/*mapLoader, */ map, activeObjectInfo, activeMarker} from '$lib/stores/map';
     import Map from '$lib/components/map/map.svelte';
     import Marker from '$lib/components/map/marker.svelte';
@@ -17,15 +17,9 @@
     import type {UpdateObjectResponsePayload} from '$lib/interfaces/object.js';
     import CloseConfirmation from '$lib/components/objectDetails/closeConfirmation.svelte';
 
-    interface MarkerItem {
-        id: string;
-        lat: string;
-        lng: string;
-    }
-
     const client = useQueryClient();
 
-    let permanentMarkers: {[key: string]: MarkerItem} = {};
+    let permanentMarkers: {[key: string]: ObjectListItem} = {};
     let isConfirmationOpen = false;
     let savedLocation: Location | null = null;
 
@@ -190,7 +184,13 @@
             isLoading: false,
             isEditing: true,
             detailsId: new Date().getTime().toString(),
-            object: {id: null, lat: String(savedLocation!.lat), lng: String(savedLocation!.lng)},
+            object: {
+                id: null,
+                lat: String(savedLocation!.lat),
+                lng: String(savedLocation!.lng),
+                isVisited: false,
+                isRemoved: false,
+            },
         });
     }
 </script>
@@ -215,7 +215,13 @@
     <Map on:click={handleMapClick} />
     {#if $map}
         {#each Object.values(permanentMarkers) as marker (marker.id)}
-            <Marker id={marker.id} lat={marker.lat} lng={marker.lng} />
+            <Marker
+                id={marker.id}
+                lat={marker.lat}
+                lng={marker.lng}
+                isVisited={marker.isVisited}
+                isRemoved={marker.isRemoved}
+            />
         {/each}
 
         {#if $activeObjectInfo.object && !$activeObjectInfo.object.id}
