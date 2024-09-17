@@ -139,6 +139,7 @@
         padding: 8px 16px;
         transition: background-color 0.2s;
         text-align: left;
+        color: colors.$black;
         cursor: pointer;
 
         &:disabled {

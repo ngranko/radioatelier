@@ -32,6 +32,7 @@
         margin: 0;
         background: none;
         font-size: 26px;
+        color: colors.$black;
         cursor: pointer;
         transition: 0.2s;
 
