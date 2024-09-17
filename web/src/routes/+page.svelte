@@ -195,6 +195,21 @@
     }
 </script>
 
+<UserMenu />
+
+{#if $activeObjectInfo.object}
+    <ObjectDetails
+        initialValues={$activeObjectInfo.object}
+        key={$activeObjectInfo.detailsId}
+        isLoading={$activeObjectInfo.isLoading}
+        isEditing={$activeObjectInfo.isEditing}
+        on:save={handleSave}
+        on:close={handleClose}
+        on:delete={handleDelete}
+    />
+    <CloseConfirmation bind:isOpen={isConfirmationOpen} on:click={setActiveObject} />
+{/if}
+
 <div>
     <!--    <input id="pac-input" class="search" type="text" placeholder="Search Box" />-->
     <Map on:click={handleMapClick} />
@@ -214,21 +229,6 @@
         {/if}
     {/if}
 </div>
-
-<UserMenu />
-
-{#if $activeObjectInfo.object}
-    <ObjectDetails
-        initialValues={$activeObjectInfo.object}
-        key={$activeObjectInfo.detailsId}
-        isLoading={$activeObjectInfo.isLoading}
-        isEditing={$activeObjectInfo.isEditing}
-        on:save={handleSave}
-        on:close={handleClose}
-        on:delete={handleDelete}
-    />
-    <CloseConfirmation bind:isOpen={isConfirmationOpen} on:click={setActiveObject} />
-{/if}
 
 <!--<style>-->
 <!--    .search {-->

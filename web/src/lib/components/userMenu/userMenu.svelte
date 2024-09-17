@@ -27,7 +27,6 @@
         top: 0;
         right: 0;
         margin: 16px;
-        color: colors.$black;
         z-index: 1;
     }
 
@@ -44,6 +43,7 @@
         align-items: flex-end;
         overflow: hidden;
         cursor: pointer;
+        color: colors.$black;
         transition: background-color 0.2s;
 
         &:hover {
