@@ -1,5 +1,5 @@
 <script lang="ts">
-    import {onMount, createEventDispatcher} from 'svelte';
+    import {onMount, onDestroy, createEventDispatcher} from 'svelte';
     import {mapLoader, map, dragTimeout} from '$lib/stores/map';
     import {createMutation} from '@tanstack/svelte-query';
     import {getLocation} from '$lib/api/location';
@@ -10,6 +10,7 @@
     const loadedAt = Date.now();
     let clickTimeout: number | undefined;
     let isClicked = false;
+    let positionInterval: number | undefined;
 
     const dispatch = createEventDispatcher();
 
@@ -18,6 +19,8 @@
     });
 
     onMount(async () => {
+        positionInterval = setInterval(updateCurrentPosition, 5000);
+
         const {ControlPosition, event} = await $mapLoader.importLibrary('core');
 
         const center = await getCenter();
@@ -99,8 +102,12 @@
             console.error('error initialising map event listeners');
             console.error(e);
         }
+    });
 
-        updateCurrentPosition();
+    onDestroy(() => {
+        if (positionInterval) {
+            clearInterval(positionInterval);
+        }
     });
 
     async function getCenter(): Promise<Location> {
@@ -139,7 +146,7 @@
             },
             {
                 enableHighAccuracy: false,
-                maximumAge: Infinity,
+                timeout: 5000,
             },
         );
     }

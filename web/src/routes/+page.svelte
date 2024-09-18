@@ -16,6 +16,7 @@
     import type {Payload} from '$lib/interfaces/api';
     import type {UpdateObjectResponsePayload} from '$lib/interfaces/object.js';
     import CloseConfirmation from '$lib/components/objectDetails/closeConfirmation.svelte';
+    import LocationMarker from '$lib/components/map/locationMarker.svelte';
 
     const client = useQueryClient();
 
@@ -193,7 +194,24 @@
             },
         });
     }
+
+    function goToLastPosition() {
+        let position = {lat: 0, lng: 0};
+        if (localStorage.getItem('lastCenter')) {
+            position = JSON.parse(localStorage.getItem('lastCenter') as string);
+        }
+
+        if (position.lat === 0 && position.lng === 0) {
+            return;
+        }
+
+        $map.setCenter(position);
+    }
 </script>
+
+<button class="temp" on:click={goToLastPosition}>
+    <i class="fa-solid fa-location-arrow"></i>
+</button>
 
 <UserMenu />
 
@@ -213,6 +231,7 @@
 <div>
     <!--    <input id="pac-input" class="search" type="text" placeholder="Search Box" />-->
     <Map on:click={handleMapClick} />
+    <LocationMarker />
     {#if $map}
         {#each Object.values(permanentMarkers) as marker (marker.id)}
             <Marker
@@ -243,3 +262,26 @@
 <!--        right: 0;-->
 <!--    }-->
 <!--</style>-->
+
+<style lang="scss">
+    @use '../styles/colors';
+    @use '../styles/typography';
+
+    .temp {
+        @include typography.size-22;
+        position: absolute;
+        background-color: white;
+        border: none;
+        padding: 10px;
+        box-shadow: 0 0 2px rgba(0, 0, 0, 0.2);
+        bottom: 72px;
+        right: 10px;
+        color: colors.$primary;
+        z-index: 1;
+
+        & :global(i) {
+            display: block;
+            margin-bottom: -2px;
+        }
+    }
+</style>
