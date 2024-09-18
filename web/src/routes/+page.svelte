@@ -231,8 +231,8 @@
 <div>
     <!--    <input id="pac-input" class="search" type="text" placeholder="Search Box" />-->
     <Map on:click={handleMapClick} />
-    <LocationMarker />
     {#if $map}
+        <LocationMarker />
         {#each Object.values(permanentMarkers) as marker (marker.id)}
             <Marker
                 id={marker.id}
