@@ -197,8 +197,8 @@
 
     function goToLastPosition() {
         let position = {lat: 0, lng: 0};
-        if (localStorage.getItem('lastCenter')) {
-            position = JSON.parse(localStorage.getItem('lastCenter') as string);
+        if (localStorage.getItem('lastPosition')) {
+            position = JSON.parse(localStorage.getItem('lastPosition') as string);
         }
 
         if (position.lat === 0 && position.lng === 0) {
@@ -277,6 +277,7 @@
         bottom: 72px;
         right: 10px;
         color: colors.$primary;
+        cursor: pointer;
         z-index: 1;
 
         & :global(i) {
