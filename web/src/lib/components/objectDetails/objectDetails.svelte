@@ -103,6 +103,7 @@
     }
 
     .scroller {
+        overflow-x: hidden;
         overflow-y: auto;
         --webkit-overflow-scrolling: touch;
     }
