@@ -1,6 +1,13 @@
 <script lang="ts">
     import {onMount, onDestroy} from 'svelte';
-    import {mapLoader, map, activeObjectInfo, activeMarker, dragTimeout} from '$lib/stores/map';
+    import {
+        mapLoader,
+        map,
+        activeObjectInfo,
+        activeMarker,
+        dragTimeout,
+        markerList,
+    } from '$lib/stores/map';
     import {createQuery, useQueryClient} from '@tanstack/svelte-query';
     import {getObject} from '$lib/api/object';
     import {useRepositionMutation} from '$lib/api/mutation/reposition';
@@ -72,20 +79,20 @@
         }));
     }
 
+    $: if (marker) {
+        (marker.content as HTMLDivElement).className = getMarkerClassList();
+    }
+
+    $: {
+        console.log(id, lat, lng, isVisited, isRemoved);
+    }
+
     onMount(async () => {
         activeMarker.deactivate();
 
         const icon = document.createElement('div');
         icon.innerHTML = '<i class="fa-solid fa-bolt" style="pointer-events:none;"></i>';
-        icon.className = clsx([
-            'map-marker',
-            'map-marker-appearing',
-            {
-                'map-marker-active': initialActive,
-                'map-marker-visited': isVisited,
-                'map-marker-removed': isRemoved,
-            },
-        ]);
+        icon.className = getMarkerClassList();
 
         const {AdvancedMarkerElement, CollisionBehavior} = await $mapLoader.importLibrary('marker');
 
@@ -104,11 +111,26 @@
             collisionBehavior: CollisionBehavior.REQUIRED_AND_HIDES_OPTIONAL,
             gmpClickable: true,
         });
+
+        // if (
+        //     ($map.getBounds() as google.maps.LatLngBounds).contains({
+        //         lat: Number(lat),
+        //         lng: Number(lng),
+        //     })
+        // ) {
+        //     marker.map = $map;
+        // }
+
         marker.addListener('click', handleMarkerClick);
         icon.addEventListener('mousedown', () => handleClickStart('map-marker-draggable'));
         icon.addEventListener('touchstart', () => handleClickStart('map-marker-draggable-mobile'));
         icon.addEventListener('mouseup', () => handleClickEnd('map-marker-draggable'));
         icon.addEventListener('touchend', () => handleClickEnd('map-marker-draggable-mobile'));
+
+        if (id) {
+            console.log('id is set, adding a marker to the list');
+            markerList.updateMarker(id, {marker});
+        }
 
         setTimeout(
             () => (marker.content as HTMLDivElement).classList.remove('map-marker-appearing'),
@@ -162,6 +184,18 @@
         (marker.content as HTMLDivElement).classList.add('map-marker-exiting');
         setTimeout(() => (marker.map = null), 200);
     });
+
+    function getMarkerClassList() {
+        return clsx([
+            'map-marker',
+            'map-marker-appearing',
+            {
+                'map-marker-active': initialActive,
+                'map-marker-visited': isVisited,
+                'map-marker-removed': isRemoved,
+            },
+        ]);
+    }
 
     function updateObjectCoordinates() {
         if (id) {

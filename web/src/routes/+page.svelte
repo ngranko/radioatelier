@@ -1,8 +1,8 @@
 <script lang="ts">
     import {createMutation, createQuery, useQueryClient} from '@tanstack/svelte-query';
     import {createObject, deleteObject, listObjects} from '$lib/api/object';
-    import type {ListObjectsResponsePayload, Object, ObjectListItem} from '$lib/interfaces/object';
-    import {/*mapLoader, */ map, activeObjectInfo, activeMarker} from '$lib/stores/map';
+    import type {ListObjectsResponsePayload, Object} from '$lib/interfaces/object';
+    import {/*mapLoader, */ map, activeObjectInfo, activeMarker, markerList} from '$lib/stores/map';
     import Map from '$lib/components/map/map.svelte';
     import Marker from '$lib/components/map/marker.svelte';
     import UserMenu from '$lib/components/userMenu/userMenu.svelte';
@@ -20,7 +20,6 @@
 
     const client = useQueryClient();
 
-    let permanentMarkers: {[key: string]: ObjectListItem} = {};
     let isConfirmationOpen = false;
     let savedLocation: Location | null = null;
 
@@ -73,9 +72,7 @@
     }
 
     $: if ($objects.isSuccess) {
-        for (const object of $objects.data.data.objects) {
-            permanentMarkers[object.id] = object;
-        }
+        markerList.set($objects.data.data.objects);
     }
 
     // onMount(async () => {
@@ -135,7 +132,7 @@
             message: '',
             data: {object: result.data},
         });
-        permanentMarkers[result.data.id] = result.data;
+        markerList.addMarker(result.data);
         activeObjectInfo.reset();
     }
 
@@ -165,8 +162,7 @@
 
     async function deleteExistingObject(id: string) {
         const result = await $deleteObjectMutation.mutateAsync({id});
-        delete permanentMarkers[result.data.id];
-        permanentMarkers = {...permanentMarkers};
+        markerList.removeMarker(result.data.id);
         activeObjectInfo.reset();
         activeMarker.set(null);
     }
@@ -233,7 +229,7 @@
     <Map on:click={handleMapClick} />
     {#if $map}
         <LocationMarker />
-        {#each Object.values(permanentMarkers) as marker (marker.id)}
+        {#each Object.values($markerList) as marker (marker.id)}
             <Marker
                 id={marker.id}
                 lat={marker.lat}

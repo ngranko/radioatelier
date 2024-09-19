@@ -1,6 +1,6 @@
 <script lang="ts">
     import {onMount, onDestroy, createEventDispatcher} from 'svelte';
-    import {mapLoader, map, dragTimeout} from '$lib/stores/map';
+    import {mapLoader, map, dragTimeout, markerList} from '$lib/stores/map';
     import {createMutation} from '@tanstack/svelte-query';
     import {getLocation} from '$lib/api/location';
     import type {Location} from '$lib/interfaces/location';
@@ -11,6 +11,7 @@
     let clickTimeout: number | undefined;
     let isClicked = false;
     let positionInterval: number | undefined;
+    let boundTimeout: number | undefined;
 
     const dispatch = createEventDispatcher();
 
@@ -67,7 +68,7 @@
                         isClicked = true;
                         dispatch('click', {lat: event.latLng?.lat(), lng: event.latLng?.lng()});
                         clickTimeout = undefined;
-                    }, 200);
+                    }, 300);
                 }
             });
 
@@ -83,6 +84,12 @@
             });
 
             event.addListener($map, 'bounds_changed', function () {
+                if (boundTimeout) {
+                    clearTimeout(boundTimeout);
+                }
+                boundTimeout = setTimeout(() => {
+                    redrawMarkers();
+                }, 300);
                 dragTimeout.remove();
                 isInteracted = true;
             });
@@ -123,6 +130,25 @@
             clearInterval(positionInterval);
         }
     });
+
+    function redrawMarkers() {
+        if (!$map.getBounds()) {
+            return;
+        }
+
+        for (const marker of Object.values($markerList)) {
+            if (
+                !($map.getBounds() as google.maps.LatLngBounds).contains({
+                    lat: Number(marker.lat),
+                    lng: Number(marker.lng),
+                })
+            ) {
+                (marker.marker as google.maps.marker.AdvancedMarkerElement).map = null;
+            } else {
+                (marker.marker as google.maps.marker.AdvancedMarkerElement).map = $map;
+            }
+        }
+    }
 
     async function getCenter(): Promise<Location> {
         if (localStorage.getItem('lastCenter')) {

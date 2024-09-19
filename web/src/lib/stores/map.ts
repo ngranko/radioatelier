@@ -1,7 +1,8 @@
 import {readable, writable} from 'svelte/store';
 import {Loader} from '@googlemaps/js-api-loader';
-import type {ObjectDetailsInfo} from '$lib/interfaces/object';
+import type {MarkerListItem, ObjectDetailsInfo} from '$lib/interfaces/object';
 import config from '$lib/config';
+import type KeyVal from '$lib/interfaces/keyVal';
 
 export const mapLoader = readable<Loader>(undefined, function start(set) {
     set(
@@ -69,4 +70,60 @@ export const dragTimeout = {
             }
             return null;
         }),
+};
+
+const privateMarkerList = writable<KeyVal<MarkerListItem>>({});
+
+export const markerList = {
+    subscribe: privateMarkerList.subscribe,
+    set: (value: MarkerListItem[]) => {
+        privateMarkerList.update(oldValue => {
+            if (!Object.keys(oldValue).length) {
+                const result: KeyVal<MarkerListItem> = {};
+                for (const object of value) {
+                    result[object.id] = object;
+                }
+
+                return result;
+            }
+            return oldValue;
+        });
+    },
+    addMarker: (marker: MarkerListItem) => {
+        privateMarkerList.update(value => {
+            return {...value, [marker.id]: marker};
+        });
+    },
+    removeMarker: (id: string) => {
+        privateMarkerList.update(value => {
+            delete value[id];
+            return value;
+        });
+    },
+    updateMarker: (id: string, updatedFields: Partial<MarkerListItem>) => {
+        privateMarkerList.update(value => {
+            const marker = value[id];
+            if (marker) {
+                if (updatedFields.lat) {
+                    marker.lat = updatedFields.lat;
+                }
+                if (updatedFields.lng) {
+                    marker.lng = updatedFields.lng;
+                }
+                if (updatedFields.isVisited) {
+                    marker.isVisited = updatedFields.isVisited;
+                }
+                if (updatedFields.isRemoved) {
+                    marker.isRemoved = updatedFields.isRemoved;
+                }
+                if (updatedFields.marker) {
+                    if (marker.marker) {
+                        marker.marker.map = null;
+                    }
+                    marker.marker = updatedFields.marker;
+                }
+            }
+            return value;
+        });
+    },
 };

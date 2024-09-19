@@ -62,6 +62,10 @@ export interface ObjectListItem {
     isVisited: boolean;
 }
 
+export interface MarkerListItem extends ObjectListItem {
+    marker?: google.maps.marker.AdvancedMarkerElement;
+}
+
 export type GetObjectContext = [string, GetObjectInputs];
 
 export interface GetObjectInputs {
