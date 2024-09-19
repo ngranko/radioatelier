@@ -6,28 +6,16 @@
     let updateLocationInterval: number | undefined;
 
     onMount(async () => {
-        let position = {lat: 0, lng: 0};
-        if (localStorage.getItem('lastCenter')) {
-            position = JSON.parse(localStorage.getItem('lastCenter') as string);
-        }
-
-        if (position.lat === 0 && position.lng === 0) {
-            return;
-        }
-
         const icon = document.createElement('div');
         icon.innerHTML = '<i class="fa-solid fa-circle-dot"></i>';
         icon.className = 'current-location-marker';
-
-        console.log(icon);
 
         const {AdvancedMarkerElement, CollisionBehavior} = await $mapLoader.importLibrary('marker');
 
         marker = new AdvancedMarkerElement({
             map: $map,
-            position: {lat: position.lat, lng: position.lng},
             content: icon,
-            collisionBehavior: CollisionBehavior.REQUIRED_AND_HIDES_OPTIONAL,
+            collisionBehavior: CollisionBehavior.REQUIRED,
             gmpClickable: false,
         });
 
@@ -42,8 +30,8 @@
 
     function updateCurrentPosition() {
         let position = {lat: 0, lng: 0};
-        if (localStorage.getItem('lastCenter')) {
-            position = JSON.parse(localStorage.getItem('lastCenter') as string);
+        if (localStorage.getItem('lastPosition')) {
+            position = JSON.parse(localStorage.getItem('lastPosition') as string);
         }
 
         marker.position = {lat: position.lat, lng: position.lng};

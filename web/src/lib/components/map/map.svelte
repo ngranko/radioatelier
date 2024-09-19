@@ -87,6 +87,20 @@
                 isInteracted = true;
             });
 
+            event.addListener($map, 'center_changed', function () {
+                dragTimeout.remove();
+                isInteracted = true;
+
+                const center = $map.getCenter();
+                localStorage.setItem(
+                    'lastCenter',
+                    JSON.stringify({
+                        lat: (center as google.maps.LatLng).lat(),
+                        lng: (center as google.maps.LatLng).lng(),
+                    }),
+                );
+            });
+
             event.addListener($map, 'maptypeid_changed', function () {
                 isInteracted = true;
             });
@@ -115,6 +129,10 @@
             return JSON.parse(localStorage.getItem('lastCenter') as string);
         }
 
+        if (localStorage.getItem('lastPosition')) {
+            return JSON.parse(localStorage.getItem('lastPosition') as string);
+        }
+
         try {
             const result = await $location.mutateAsync();
             return result.location ?? {lat: 0, lng: 0};
@@ -130,7 +148,7 @@
         navigator.geolocation.getCurrentPosition(
             position => {
                 const center = {lat: position.coords.latitude, lng: position.coords.longitude};
-                localStorage.setItem('lastCenter', JSON.stringify(center));
+                localStorage.setItem('lastPosition', JSON.stringify(center));
                 console.log(center);
                 console.log('geolocation loaded in', Date.now() - loadedAt);
 
