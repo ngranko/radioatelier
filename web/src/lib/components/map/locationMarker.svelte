@@ -29,12 +29,17 @@
     });
 
     function updateCurrentPosition() {
-        let position = {lat: 0, lng: 0};
+        let position = {lat: 0, lng: 0, isCurrent: false};
         if (localStorage.getItem('lastPosition')) {
             position = JSON.parse(localStorage.getItem('lastPosition') as string);
         }
 
         marker.position = {lat: position.lat, lng: position.lng};
+        if (position.isCurrent) {
+            (marker.content as HTMLDivElement).classList.remove('current-location-marker-stale');
+        } else {
+            (marker.content as HTMLDivElement).classList.add('current-location-marker-stale');
+        }
     }
 </script>
 
@@ -46,7 +51,21 @@
         @include typography.size-20;
         width: 20px;
         height: 20px;
+        border-radius: 50%;
         transform: translate(0, 50%);
-        color: colors.$black;
+        color: colors.$primary;
+        box-shadow: 0 0 10px colors.$primary;
+        transition:
+            box-shadow 0.1s ease-in-out,
+            color 0.1s ease-in-out;
+
+        & :global(i) {
+            display: block;
+        }
+    }
+
+    :global(.current-location-marker-stale) {
+        color: colors.$darkgray;
+        box-shadow: 0 0 10px colors.$darkgray;
     }
 </style>

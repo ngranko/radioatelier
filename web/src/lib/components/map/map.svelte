@@ -147,9 +147,13 @@
     function updateCurrentPosition() {
         navigator.geolocation.getCurrentPosition(
             position => {
-                const center = {lat: position.coords.latitude, lng: position.coords.longitude};
-                localStorage.setItem('lastPosition', JSON.stringify(center));
-                console.log(center);
+                const location = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude,
+                    isCurrent: true,
+                };
+                localStorage.setItem('lastPosition', JSON.stringify(location));
+                console.log(location);
                 console.log('geolocation loaded in', Date.now() - loadedAt);
 
                 if (!isInteracted && $map) {
@@ -159,8 +163,12 @@
                     });
                 }
             },
-            position => {
-                console.log(position);
+            () => {
+                if (localStorage.getItem('lastPosition')) {
+                    const location = JSON.parse(localStorage.getItem('lastPosition') as string);
+                    location.isCurrent = false;
+                    localStorage.setItem('lastPosition', JSON.stringify(location));
+                }
             },
             {
                 enableHighAccuracy: false,
