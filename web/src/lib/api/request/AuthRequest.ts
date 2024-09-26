@@ -24,8 +24,10 @@ export default class AuthRequest<T = never> {
     }
 
     private async refreshTokenAndRestart(): Promise<T> {
-        const response = await refreshToken(RefreshToken.get() ?? '');
-        RefreshToken.set(response.data.refreshToken);
+        await navigator.locks.request('refresh_token', async () => {
+            const response = await refreshToken(RefreshToken.get() ?? '');
+            RefreshToken.set(response.data.refreshToken);
+        });
         return this.request.send();
     }
 }
