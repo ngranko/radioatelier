@@ -173,6 +173,7 @@
     function updateCurrentPosition() {
         navigator.permissions.query({name: 'geolocation'}).then(
             result => {
+                console.log(result.state);
                 if (result.state === 'granted') {
                     navigator.geolocation.getCurrentPosition(
                         position => {
