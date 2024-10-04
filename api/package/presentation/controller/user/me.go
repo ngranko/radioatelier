@@ -28,11 +28,14 @@ func Me(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    router.NewResponse().WithStatus(http.StatusOK).WithPayload(router.Payload{
-        Data: MePayloadData{
-            ID:    user.GetModel().ID,
-            Role:  user.GetModel().Role,
-            Email: user.GetModel().Email,
-        },
-    })
+    router.NewResponse().
+        WithStatus(http.StatusOK).
+        WithPayload(router.Payload{
+            Data: MePayloadData{
+                ID:    user.GetModel().ID,
+                Role:  user.GetModel().Role,
+                Email: user.GetModel().Email,
+            },
+        }).
+        Send(w)
 }

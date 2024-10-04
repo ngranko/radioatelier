@@ -23,6 +23,7 @@
 
     let isConfirmationOpen = false;
     let savedLocation: Location | null = null;
+    let consoleElement: HTMLElement;
 
     const createObjectMutation = createMutation({
         mutationFn: createObject,
@@ -78,7 +79,9 @@
 
     const meQuery = createQuery({queryKey: ['me'], queryFn: me});
     $: if ($meQuery.isSuccess && $meQuery.data.data.role === 'admin') {
-        import('eruda').then(eruda => eruda.default.init());
+        import('eruda').then(eruda =>
+            eruda.default.init({container: consoleElement, tool: ['console', 'elements']}),
+        );
     }
 
     // onMount(async () => {
@@ -210,6 +213,8 @@
         $map.setCenter(position);
     }
 </script>
+
+<div bind:this={consoleElement} />
 
 <button class="temp" on:click={goToLastPosition}>
     <i class="fa-solid fa-location-arrow"></i>
