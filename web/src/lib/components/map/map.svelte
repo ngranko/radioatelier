@@ -174,7 +174,7 @@
         navigator.permissions.query({name: 'geolocation'}).then(
             result => {
                 console.log(result.state);
-                if (result.state === 'granted') {
+                if (result.state === 'granted' || result.state === 'prompt') {
                     navigator.geolocation.getCurrentPosition(
                         position => {
                             const location = {
