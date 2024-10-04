@@ -83,7 +83,7 @@ func ConfigureRouter() *router.Router {
         r.Group(func(r *router.Router) {
             r.Use(middleware.VerifyAccessToken)
 
-            //	r.Get("/me", user.Me)
+            r.Get("/me", user.Me)
             r.Post("/password", user.ChangePassword)
             r.Post("/logout", user.LogOut)
         })

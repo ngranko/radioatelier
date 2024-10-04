@@ -17,6 +17,7 @@
     import type {UpdateObjectResponsePayload} from '$lib/interfaces/object.js';
     import CloseConfirmation from '$lib/components/objectDetails/closeConfirmation.svelte';
     import LocationMarker from '$lib/components/map/locationMarker.svelte';
+    import {me} from '$lib/api/user';
 
     const client = useQueryClient();
 
@@ -73,6 +74,11 @@
 
     $: if ($objects.isSuccess) {
         markerList.set($objects.data.data.objects);
+    }
+
+    const meQuery = createQuery({queryKey: ['me'], queryFn: me});
+    $: if ($meQuery.isSuccess && $meQuery.data.data.role === 'admin') {
+        import('eruda').then(eruda => eruda.default.init());
     }
 
     // onMount(async () => {

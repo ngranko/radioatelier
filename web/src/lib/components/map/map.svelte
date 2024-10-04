@@ -171,34 +171,51 @@
     }
 
     function updateCurrentPosition() {
-        navigator.geolocation.getCurrentPosition(
-            position => {
-                const location = {
-                    lat: position.coords.latitude,
-                    lng: position.coords.longitude,
-                    isCurrent: true,
-                };
-                localStorage.setItem('lastPosition', JSON.stringify(location));
-                console.log(location);
-                console.log('geolocation loaded in', Date.now() - loadedAt);
+        navigator.permissions.query({name: 'geolocation'}).then(
+            result => {
+                if (result.state === 'granted') {
+                    navigator.geolocation.getCurrentPosition(
+                        position => {
+                            const location = {
+                                lat: position.coords.latitude,
+                                lng: position.coords.longitude,
+                                isCurrent: true,
+                            };
+                            localStorage.setItem('lastPosition', JSON.stringify(location));
+                            console.log(location);
+                            console.log('geolocation loaded in', Date.now() - loadedAt);
 
-                if (!isInteracted && $map) {
-                    $map.setCenter({
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude,
-                    });
+                            if (!isInteracted && $map) {
+                                $map.setCenter({
+                                    lat: position.coords.latitude,
+                                    lng: position.coords.longitude,
+                                });
+                            }
+                        },
+                        error => {
+                            console.error(error);
+                            if (localStorage.getItem('lastPosition')) {
+                                const location = JSON.parse(
+                                    localStorage.getItem('lastPosition') as string,
+                                );
+                                location.isCurrent = false;
+                                localStorage.setItem('lastPosition', JSON.stringify(location));
+                            }
+                        },
+                        {
+                            enableHighAccuracy: false,
+                            timeout: 5000,
+                        },
+                    );
+                } else {
+                    console.error(
+                        'geolocation is not granted, browser location services are disabled',
+                    );
                 }
             },
-            () => {
-                if (localStorage.getItem('lastPosition')) {
-                    const location = JSON.parse(localStorage.getItem('lastPosition') as string);
-                    location.isCurrent = false;
-                    localStorage.setItem('lastPosition', JSON.stringify(location));
-                }
-            },
-            {
-                enableHighAccuracy: false,
-                timeout: 5000,
+            error => {
+                console.log('browser permission service unavailable');
+                console.error(error);
             },
         );
     }

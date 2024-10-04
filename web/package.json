@@ -48,6 +48,7 @@
 		"@zxcvbn-ts/language-common": "^3.0.4",
 		"@zxcvbn-ts/language-en": "^3.0.2",
 		"clsx": "^2.1.1",
+		"eruda": "^3.4.0",
 		"felte": "^1.2.14",
 		"svelecte": "^4.2.3",
 		"svelte-french-toast": "^1.2.0",
