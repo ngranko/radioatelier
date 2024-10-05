@@ -27,7 +27,7 @@
         const center = await getCenter();
 
         const mapOptions: google.maps.MapOptions = {
-            zoom: 15,
+            zoom: center.zoom ?? 15,
             center,
             mapId: '5b6e83dfb8822236',
             controlSize: 40,
@@ -104,6 +104,7 @@
                     JSON.stringify({
                         lat: (center as google.maps.LatLng).lat(),
                         lng: (center as google.maps.LatLng).lng(),
+                        zoom: $map.getZoom(),
                     }),
                 );
             });

@@ -19,4 +19,5 @@ export interface GetAddressResponseData {
 export interface Location {
     lat: number;
     lng: number;
+    zoom?: number;
 }
