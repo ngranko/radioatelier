@@ -22,23 +22,26 @@
         updateCurrentPosition(true);
         updateLocationInterval = setInterval(updateCurrentPosition, 1000);
 
-        console.log(window.DeviceOrientationEvent);
-        console.log(window.DeviceOrientationEvent.requestPermission);
+        setTimeout(() => {
+            console.log('trying to set up gyroscope data');
+            console.log(window.DeviceOrientationEvent);
+            console.log(window.DeviceOrientationEvent.requestPermission);
 
-        if (
-            window.DeviceOrientationEvent &&
-            typeof DeviceOrientationEvent.requestPermission === 'function'
-        ) {
-            console.log('DeviceOrientationEvent supported');
-            DeviceOrientationEvent.requestPermission()
-                .then(permissionState => {
-                    console.log(permissionState);
-                    window.addEventListener('deviceorientation', handleOrientation, true);
-                })
-                .catch(console.error);
-        } else {
-            console.warn('DeviceOrientationEvent not supported');
-        }
+            if (
+                window.DeviceOrientationEvent &&
+                typeof DeviceOrientationEvent.requestPermission === 'function'
+            ) {
+                console.log('DeviceOrientationEvent supported');
+                DeviceOrientationEvent.requestPermission()
+                    .then(permissionState => {
+                        console.log(permissionState);
+                        window.addEventListener('deviceorientation', handleOrientation, true);
+                    })
+                    .catch(console.error);
+            } else {
+                console.warn('DeviceOrientationEvent not supported');
+            }
+        }, 5000);
     });
 
     onDestroy(() => {
