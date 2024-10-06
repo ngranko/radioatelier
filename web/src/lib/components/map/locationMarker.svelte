@@ -35,6 +35,7 @@
         marker.content.classList.add('current-location-marker-oriented');
         window.addEventListener('deviceorientation', handleOrientation, true);
     } else {
+        marker.content.classList.remove('current-location-marker-oriented');
         window.removeEventListener('deviceorientation', handleOrientation, true);
     }
 
@@ -72,8 +73,8 @@
         color: colors.$primary;
         box-shadow: 0 0 10px colors.$primary;
         transition:
-            box-shadow 0.1s ease-in-out,
-            color 0.1s ease-in-out;
+            box-shadow 0.2s ease-in-out,
+            color 0.2s ease-in-out;
 
         & :global(i) {
             display: block;
