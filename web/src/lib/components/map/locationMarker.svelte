@@ -23,10 +23,6 @@
         updateLocationInterval = setInterval(updateCurrentPosition, 1000);
 
         setTimeout(() => {
-            console.log('trying to set up gyroscope data');
-            console.log(window.DeviceOrientationEvent);
-            console.log(window.DeviceOrientationEvent.requestPermission);
-
             if (
                 window.DeviceOrientationEvent &&
                 typeof DeviceOrientationEvent.requestPermission === 'function'
@@ -37,7 +33,10 @@
                         console.log(permissionState);
                         window.addEventListener('deviceorientation', handleOrientation, true);
                     })
-                    .catch(console.error);
+                    .catch(error => {
+                        console.error('error while requesting DeviceOrientationEvent permission');
+                        console.error(error);
+                    });
             } else {
                 console.warn('DeviceOrientationEvent not supported');
             }
