@@ -19,8 +19,8 @@
             gmpClickable: false,
         });
 
-        updateCurrentPosition();
-        updateLocationInterval = setInterval(updateCurrentPosition, 5000);
+        updateCurrentPosition(true);
+        updateLocationInterval = setInterval(updateCurrentPosition, 1000);
 
         if (
             window.DeviceOrientationEvent &&
@@ -49,14 +49,14 @@
         icon.style.transform = `translate(0, 50%), rotate(${event.alpha}deg)`;
     }
 
-    function updateCurrentPosition() {
+    function updateCurrentPosition(forceStale = false) {
         let position = {lat: 0, lng: 0, isCurrent: false};
         if (localStorage.getItem('lastPosition')) {
             position = JSON.parse(localStorage.getItem('lastPosition') as string);
         }
 
         marker.position = {lat: position.lat, lng: position.lng};
-        if (position.isCurrent) {
+        if (position.isCurrent || forceStale) {
             (marker.content as HTMLDivElement).classList.remove('current-location-marker-stale');
         } else {
             (marker.content as HTMLDivElement).classList.add('current-location-marker-stale');

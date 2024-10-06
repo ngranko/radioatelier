@@ -19,6 +19,7 @@
     });
 
     onMount(async () => {
+        updateCurrentPosition();
         positionInterval = setInterval(updateCurrentPosition, 5000);
 
         const {ControlPosition, event} = await $mapLoader.importLibrary('core');
