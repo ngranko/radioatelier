@@ -32,13 +32,13 @@
     });
 
     $: if (orientationEnabled) {
-        $marker.content.classList.add('current-location-marker-oriented');
+        marker.content.classList.add('current-location-marker-oriented');
         window.addEventListener('deviceorientation', handleOrientation, true);
     }
 
     function handleOrientation(event: DeviceOrientationEvent) {
         console.log(event.alpha);
-        $marker.content.style.transform = `translate(0, 50%), rotate(${event.alpha}deg)`;
+        marker.content.style.transform = `translate(0, 50%), rotate(${event.alpha}deg)`;
     }
 
     function updateCurrentPosition(forceStale = false) {
