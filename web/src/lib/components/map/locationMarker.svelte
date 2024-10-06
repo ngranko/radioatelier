@@ -75,7 +75,9 @@
         & :global(i) {
             display: block;
         }
+    }
 
+    :global(.current-location-marker-oriented) {
         &::before {
             content: '';
             position: absolute;
@@ -88,23 +90,10 @@
             opacity: 0.5;
             transition: opacity 0.1s ease-in-out;
         }
-    }
 
-    :global(.current-location-marker-oriented)::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        border-radius: 50%;
-        background-color: colors.$primary;
-        opacity: 0.5;
-        transition: opacity 0.1s ease-in-out;
-    }
-
-    :global(.current-location-marker-stale) {
-        color: colors.$darkgray;
-        box-shadow: 0 0 10px colors.$darkgray;
+        :global(.current-location-marker-stale) {
+            color: colors.$darkgray;
+            box-shadow: 0 0 10px colors.$darkgray;
+        }
     }
 </style>
