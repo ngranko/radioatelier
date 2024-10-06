@@ -37,8 +37,9 @@
     }
 
     function handleOrientation(event: DeviceOrientationEvent) {
-        console.log(event.alpha);
-        marker.content.style.transform = `translate(0, 50%) rotate(${event.alpha}deg)`;
+        const degrees = event.webkitCompassHeading ?? event.alpha;
+        console.log(degrees);
+        marker.content.style.transform = `translate(0, 50%) rotate(${degrees}deg)`;
     }
 
     function updateCurrentPosition(forceStale = false) {
