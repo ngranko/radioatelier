@@ -34,6 +34,8 @@
     $: if (orientationEnabled) {
         marker.content.classList.add('current-location-marker-oriented');
         window.addEventListener('deviceorientation', handleOrientation, true);
+    } else {
+        window.removeEventListener('deviceorientation', handleOrientation, true);
     }
 
     function handleOrientation(event: DeviceOrientationEvent) {
@@ -49,10 +51,10 @@
         }
 
         marker.position = {lat: position.lat, lng: position.lng};
-        if (position.isCurrent || forceStale) {
-            (marker.content as HTMLDivElement).classList.remove('current-location-marker-stale');
-        } else {
+        if (!position.isCurrent || forceStale) {
             (marker.content as HTMLDivElement).classList.add('current-location-marker-stale');
+        } else {
+            (marker.content as HTMLDivElement).classList.remove('current-location-marker-stale');
         }
     }
 </script>
@@ -81,19 +83,29 @@
     :global(.current-location-marker-oriented) {
         &::before {
             content: '';
+            box-sizing: border-box;
             position: absolute;
-            top: -50%;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            background-color: colors.$primary;
-            opacity: 0.5;
+            top: -1.5px;
+            left: 4px;
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+            transform: scaleY(1.5) rotate(45deg);
+            border-left: 5px solid colors.$primary;
+            border-top: 5px solid colors.$primary;
+            transform-origin: center;
+            box-shadow: 0 0 10px colors.$primary;
             transition: opacity 0.1s ease-in-out;
         }
+    }
 
-        :global(.current-location-marker-stale) {
-            color: colors.$darkgray;
+    :global(.current-location-marker-stale) {
+        color: colors.$darkgray;
+        box-shadow: 0 0 10px colors.$darkgray;
+
+        &::before {
+            border-left-color: colors.$darkgray;
+            border-top-color: colors.$darkgray;
             box-shadow: 0 0 10px colors.$darkgray;
         }
     }

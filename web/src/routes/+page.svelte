@@ -214,7 +214,12 @@
         $map.setCenter(position);
     }
 
-    function enableOrientation() {
+    function toggleOrientation() {
+        if (orientationEnabled) {
+            orientationEnabled = false;
+            return;
+        }
+
         if (
             window.DeviceOrientationEvent &&
             typeof DeviceOrientationEvent.requestPermission === 'function'
@@ -239,7 +244,7 @@
 
 <button
     class={orientationEnabled ? 'orientationButtonActive' : 'orientationButton'}
-    on:click={enableOrientation}
+    on:click={toggleOrientation}
 >
     <i class="fa-solid fa-compass"></i>
 </button>
