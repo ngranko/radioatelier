@@ -237,7 +237,10 @@
 
 <div bind:this={consoleElement} />
 
-<button class="orientationButton" on:click={enableOrientation}>
+<button
+    class={orientationEnabled ? 'orientationButtonActive' : 'orientationButton'}
+    on:click={enableOrientation}
+>
     <i class="fa-solid fa-compass"></i>
 </button>
 
@@ -310,17 +313,23 @@
         box-shadow: 0 0 2px rgba(0, 0, 0, 0.2);
         bottom: 120px;
         right: 10px;
-        color: colors.$primary;
+        color: colors.$darkgray;
         cursor: pointer;
         z-index: 1;
         display: flex;
         justify-content: center;
         align-items: center;
+        transition: color 0.2s;
 
         & :global(i) {
             display: block;
             margin-bottom: -2px;
         }
+    }
+
+    .orientationButtonActive {
+        @extend .orientationButton;
+        color: colors.$primary;
     }
 
     .positionButton {
