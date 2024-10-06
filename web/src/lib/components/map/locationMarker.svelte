@@ -19,9 +19,19 @@
             gmpClickable: false,
         });
 
+        updateCurrentPosition();
         updateLocationInterval = setInterval(updateCurrentPosition, 5000);
 
-        window.addEventListener('deviceorientation', handleOrientation, true);
+        if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+            DeviceOrientationEvent.requestPermission()
+                .then(permissionState => {
+                    console.log(permissionState);
+                    window.addEventListener('deviceorientation', handleOrientation, true);
+                })
+                .catch(console.error);
+        } else {
+            console.warn('DeviceOrientationEvent not supported');
+        }
     });
 
     onDestroy(() => {
