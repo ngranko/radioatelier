@@ -58,7 +58,6 @@
     }
 
     $: if ($objectAddress.isSuccess) {
-        console.log($objectAddress.data);
         activeObjectInfo.update(value => ({
             ...value,
             isLoading: false,
@@ -81,10 +80,6 @@
 
     $: if (marker) {
         (marker.content as HTMLDivElement).className = getMarkerClassList();
-    }
-
-    $: {
-        console.log(id, lat, lng, isVisited, isRemoved);
     }
 
     onMount(async () => {
@@ -128,7 +123,6 @@
         icon.addEventListener('touchend', () => handleClickEnd('map-marker-draggable-mobile'));
 
         if (id) {
-            console.log('id is set, adding a marker to the list');
             markerList.updateMarker(id, {marker});
         }
 

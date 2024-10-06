@@ -7,7 +7,6 @@
 
     let container: HTMLDivElement;
     let isInteracted = false;
-    const loadedAt = Date.now();
     let clickTimeout: number | undefined;
     let isClicked = false;
     let positionInterval: number | undefined;
@@ -172,6 +171,7 @@
     }
 
     function updateCurrentPosition() {
+        const startTime = Date.now();
         navigator.permissions.query({name: 'geolocation'}).then(
             result => {
                 console.log(result.state);
@@ -184,8 +184,7 @@
                                 isCurrent: true,
                             };
                             localStorage.setItem('lastPosition', JSON.stringify(location));
-                            console.log(location);
-                            console.log('geolocation loaded in', Date.now() - loadedAt);
+                            console.log('geolocation updated in', Date.now() - startTime);
 
                             if (!isInteracted && $map) {
                                 $map.setCenter({

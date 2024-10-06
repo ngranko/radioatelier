@@ -30,7 +30,6 @@
 
         toast.promise(
             $image.mutateAsync({id: initialValues.id as string, formData}).then(result => {
-                console.log(result);
                 initialValues.image = result.data.url;
             }),
             {
