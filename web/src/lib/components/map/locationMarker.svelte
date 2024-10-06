@@ -22,6 +22,9 @@
         updateCurrentPosition(true);
         updateLocationInterval = setInterval(updateCurrentPosition, 1000);
 
+        console.log(window.DeviceOrientationEvent);
+        console.log(window.DeviceOrientationEvent.requestPermission);
+
         if (
             window.DeviceOrientationEvent &&
             typeof DeviceOrientationEvent.requestPermission === 'function'
