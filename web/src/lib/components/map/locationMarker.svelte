@@ -32,12 +32,13 @@
     });
 
     $: if (orientationEnabled) {
+        $marker.content.classList.add('current-location-marker-oriented');
         window.addEventListener('deviceorientation', handleOrientation, true);
     }
 
     function handleOrientation(event: DeviceOrientationEvent) {
         console.log(event.alpha);
-        icon.style.transform = `translate(0, 50%), rotate(${event.alpha}deg)`;
+        $marker.content.style.transform = `translate(0, 50%), rotate(${event.alpha}deg)`;
     }
 
     function updateCurrentPosition(forceStale = false) {
@@ -74,6 +75,32 @@
         & :global(i) {
             display: block;
         }
+
+        &::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background-color: colors.$primary;
+            opacity: 0.5;
+            transition: opacity 0.1s ease-in-out;
+        }
+    }
+
+    :global(.current-location-marker-oriented)::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background-color: colors.$primary;
+        opacity: 0.5;
+        transition: opacity 0.1s ease-in-out;
     }
 
     :global(.current-location-marker-stale) {
