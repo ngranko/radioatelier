@@ -21,6 +21,7 @@
 
     const client = useQueryClient();
 
+    let orientationEnabled = false;
     let isConfirmationOpen = false;
     let savedLocation: Location | null = null;
     let consoleElement: HTMLElement;
@@ -212,11 +213,35 @@
 
         $map.setCenter(position);
     }
+
+    function enableOrientation() {
+        if (
+            window.DeviceOrientationEvent &&
+            typeof DeviceOrientationEvent.requestPermission === 'function'
+        ) {
+            console.log('DeviceOrientationEvent supported');
+            DeviceOrientationEvent.requestPermission()
+                .then(permissionState => {
+                    console.log(permissionState);
+                    orientationEnabled = true;
+                })
+                .catch(error => {
+                    console.error('error while requesting DeviceOrientationEvent permission');
+                    console.error(error);
+                });
+        } else {
+            console.warn('DeviceOrientationEvent not supported');
+        }
+    }
 </script>
 
 <div bind:this={consoleElement} />
 
-<button class="temp" on:click={goToLastPosition}>
+<button class="orientationButton" on:click={enableOrientation}>
+    <i class="fa-solid fa-compass"></i>
+</button>
+
+<button class="positionButton" on:click={goToLastPosition}>
     <i class="fa-solid fa-location-arrow"></i>
 </button>
 
@@ -239,7 +264,7 @@
     <!--    <input id="pac-input" class="search" type="text" placeholder="Search Box" />-->
     <Map on:click={handleMapClick} />
     {#if $map}
-        <LocationMarker />
+        <LocationMarker {orientationEnabled} />
         {#each Object.values($markerList) as marker (marker.id)}
             <Marker
                 id={marker.id}
@@ -274,18 +299,47 @@
     @use '../styles/colors';
     @use '../styles/typography';
 
-    .temp {
+    .orientationButton {
+        @include typography.size-20;
+        position: absolute;
+        width: 40px;
+        padding: 10px;
+        border: none;
+        border-radius: 2px;
+        background-color: white;
+        box-shadow: 0 0 2px rgba(0, 0, 0, 0.2);
+        bottom: 120px;
+        right: 10px;
+        color: colors.$primary;
+        cursor: pointer;
+        z-index: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        & :global(i) {
+            display: block;
+            margin-bottom: -2px;
+        }
+    }
+
+    .positionButton {
         @include typography.size-22;
         position: absolute;
-        background-color: white;
-        border: none;
+        width: 40px;
         padding: 10px;
+        border: none;
+        border-radius: 2px;
+        background-color: white;
         box-shadow: 0 0 2px rgba(0, 0, 0, 0.2);
         bottom: 72px;
         right: 10px;
         color: colors.$primary;
         cursor: pointer;
         z-index: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
 
         & :global(i) {
             display: block;

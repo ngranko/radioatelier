@@ -2,6 +2,8 @@
     import {onMount, onDestroy} from 'svelte';
     import {mapLoader, map} from '$lib/stores/map';
 
+    export let orientationEnabled: boolean;
+
     let marker: google.maps.marker.AdvancedMarkerElement;
     let updateLocationInterval: number | undefined;
 
@@ -21,26 +23,6 @@
 
         updateCurrentPosition(true);
         updateLocationInterval = setInterval(updateCurrentPosition, 1000);
-
-        setTimeout(() => {
-            if (
-                window.DeviceOrientationEvent &&
-                typeof DeviceOrientationEvent.requestPermission === 'function'
-            ) {
-                console.log('DeviceOrientationEvent supported');
-                DeviceOrientationEvent.requestPermission()
-                    .then(permissionState => {
-                        console.log(permissionState);
-                        window.addEventListener('deviceorientation', handleOrientation, true);
-                    })
-                    .catch(error => {
-                        console.error('error while requesting DeviceOrientationEvent permission');
-                        console.error(error);
-                    });
-            } else {
-                console.warn('DeviceOrientationEvent not supported');
-            }
-        }, 5000);
     });
 
     onDestroy(() => {
@@ -48,6 +30,10 @@
             clearInterval(updateLocationInterval);
         }
     });
+
+    $: if (orientationEnabled) {
+        window.addEventListener('deviceorientation', handleOrientation, true);
+    }
 
     function handleOrientation(event: DeviceOrientationEvent) {
         console.log(event.alpha);
