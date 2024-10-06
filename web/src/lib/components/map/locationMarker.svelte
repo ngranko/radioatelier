@@ -78,9 +78,7 @@
         & :global(i) {
             display: block;
         }
-    }
 
-    :global(.current-location-marker-oriented) {
         &::before {
             content: '';
             box-sizing: border-box;
@@ -96,6 +94,13 @@
             transform-origin: center;
             box-shadow: 0 0 10px colors.$primary;
             transition: opacity 0.1s ease-in-out;
+            opacity: 0;
+        }
+    }
+
+    :global(.current-location-marker-oriented) {
+        &::before {
+            opacity: 1;
         }
     }
 
