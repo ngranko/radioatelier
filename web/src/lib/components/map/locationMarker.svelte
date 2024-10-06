@@ -23,6 +23,7 @@
         updateLocationInterval = setInterval(updateCurrentPosition, 5000);
 
         if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+            console.log('DeviceOrientationEvent supported');
             DeviceOrientationEvent.requestPermission()
                 .then(permissionState => {
                     console.log(permissionState);
