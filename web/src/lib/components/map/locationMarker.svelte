@@ -20,6 +20,8 @@
         });
 
         updateLocationInterval = setInterval(updateCurrentPosition, 5000);
+
+        window.addEventListener('deviceorientation', handleOrientation, true);
     });
 
     onDestroy(() => {
@@ -27,6 +29,11 @@
             clearInterval(updateLocationInterval);
         }
     });
+
+    function handleOrientation(event: DeviceOrientationEvent) {
+        console.log(event.alpha);
+        icon.style.transform = `translate(0, 50%), rotate(${event.alpha}deg)`;
+    }
 
     function updateCurrentPosition() {
         let position = {lat: 0, lng: 0, isCurrent: false};
