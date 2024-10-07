@@ -35,7 +35,9 @@
         marker.content.classList.add('current-location-marker-oriented');
         window.addEventListener('deviceorientation', handleOrientation, true);
     } else {
-        marker.content.classList.remove('current-location-marker-oriented');
+        if (marker && marker.content) {
+            marker.content.classList.remove('current-location-marker-oriented');
+        }
         window.removeEventListener('deviceorientation', handleOrientation, true);
     }
 
