@@ -82,7 +82,7 @@
         id="isRemoved"
         name="isRemoved"
         bind:checked={initialValues.isRemoved}
-        label="Уничтожена"
+        label="Утрачена"
     />
 </div>
 {#if initialValues.isRemoved}

@@ -80,7 +80,7 @@
             {/if}
         {/if}
         {#if initialValues.isRemoved}
-            <div title="Уничтожена" class="flag">
+            <div title="Утрачена" class="flag">
                 <i class="fa-solid fa-ghost"></i>
             </div>
         {/if}

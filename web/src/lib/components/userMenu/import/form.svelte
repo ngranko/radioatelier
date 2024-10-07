@@ -297,7 +297,7 @@
         <FormSelect
             id="isRemoved"
             name="isRemoved"
-            label="Уничтожена"
+            label="Утрачена"
             placeholder="Не заполнять"
             bind:value={$data.isRemoved}
             options={$importInfo.preview[0].map((item, index) => ({value: index, text: item}))}
