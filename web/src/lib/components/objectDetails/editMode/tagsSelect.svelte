@@ -4,12 +4,14 @@
     import Svelecte from 'svelecte';
     import type {Payload} from '$lib/interfaces/api';
     import type {ListTagsResponsePayload, Tag} from '$lib/interfaces/tag';
+    import {createEventDispatcher} from 'svelte';
 
     const client = useQueryClient();
+    const dispatch = createEventDispatcher();
 
     export let id: string | undefined = undefined;
     export let name: string | undefined = undefined;
-    export let initialValue: Tag[] = [];
+    export let value: Tag[] = [];
 
     const createTagMutation = createMutation({
         mutationFn: createTag,
@@ -39,6 +41,7 @@
 <!-- TODO: add loading state -->
 {#if !$tags.isLoading}
     <Svelecte
+        on:change
         inputId={id}
         placeholder="Не выбраны"
         highlightFirstItem={false}
@@ -52,7 +55,7 @@
         }}
         options={$tags.data?.data.tags.sort((a, b) => a.name.localeCompare(b.name))}
         {name}
-        bind:value={initialValue}
+        bind:value
         valueAsObject={true}
         createHandler={handleCreate}
     />

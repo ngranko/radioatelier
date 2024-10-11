@@ -31,6 +31,7 @@
 <div class={classes}>
     {#if label}<label for={id} class="label">{label}</label>{/if}
     <Svelecte
+        on:change
         inputId={id}
         {name}
         bind:value

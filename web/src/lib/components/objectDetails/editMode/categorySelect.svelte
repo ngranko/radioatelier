@@ -40,6 +40,7 @@
 <!-- TODO: add loading state -->
 {#if !$categories.isLoading}
     <Svelecte
+        on:change
         inputId={id}
         placeholder="Не выбрана"
         highlightFirstItem={false}

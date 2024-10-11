@@ -9,7 +9,7 @@
 
     export let id: string | undefined = undefined;
     export let name: string | undefined = undefined;
-    export let initialValue: PrivateTag[] = [];
+    export let value: PrivateTag[] = [];
 
     const createTagMutation = createMutation({
         mutationFn: createPrivateTag,
@@ -40,6 +40,7 @@
 <!-- TODO: add loading state -->
 {#if !$tags.isLoading}
     <Svelecte
+        on:change
         inputId={id}
         placeholder="Не выбраны"
         highlightFirstItem={false}
@@ -53,7 +54,7 @@
         }}
         options={$tags.data?.data.tags.sort((a, b) => a.name.localeCompare(b.name))}
         {name}
-        bind:value={initialValue}
+        bind:value
         valueAsObject={true}
         createHandler={handleCreate}
     />
