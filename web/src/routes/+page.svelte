@@ -18,6 +18,7 @@
     import CloseConfirmation from '$lib/components/objectDetails/closeConfirmation.svelte';
     import LocationMarker from '$lib/components/map/locationMarker.svelte';
     import {me} from '$lib/api/user';
+    import {onMount} from 'svelte';
 
     const client = useQueryClient();
 
@@ -85,27 +86,29 @@
         );
     }
 
-    // onMount(async () => {
-    //     const {ControlPosition} = await $mapLoader.importLibrary('core');
-    //
-    //     // // Create the search box and link it to the UI element.
-    //     const input = document.getElementById('pac-input') as HTMLInputElement;
-    //     try {
-    //         console.log('initializing search box');
-    //         const placesLib = await $mapLoader.importLibrary('places');
-    //         console.log(placesLib);
-    //         const searchBox = new placesLib.SearchBox(input);
-    //
-    //         $map.controls[ControlPosition.TOP_RIGHT].push(input);
-    //
-    //         // Bias the SearchBox results towards current map's viewport.
-    //         $map.addListener('bounds_changed', () => {
-    //             searchBox.setBounds($map.getBounds() as google.maps.LatLngBounds);
-    //         });
-    //     } catch (e) {
-    //         console.error(e);
-    //     }
-    // });
+    onMount(() => {
+        // let's try it in case android allows to do it
+        toggleOrientation();
+        //     const {ControlPosition} = await $mapLoader.importLibrary('core');
+        //
+        //     // // Create the search box and link it to the UI element.
+        //     const input = document.getElementById('pac-input') as HTMLInputElement;
+        //     try {
+        //         console.log('initializing search box');
+        //         const placesLib = await $mapLoader.importLibrary('places');
+        //         console.log(placesLib);
+        //         const searchBox = new placesLib.SearchBox(input);
+        //
+        //         $map.controls[ControlPosition.TOP_RIGHT].push(input);
+        //
+        //         // Bias the SearchBox results towards current map's viewport.
+        //         $map.addListener('bounds_changed', () => {
+        //             searchBox.setBounds($map.getBounds() as google.maps.LatLngBounds);
+        //         });
+        //     } catch (e) {
+        //         console.error(e);
+        //     }
+    });
 
     function handleClose() {
         if (!$activeObjectInfo.object) {
