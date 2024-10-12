@@ -3,13 +3,13 @@
     import {createCategory, listCategories} from '$lib/api/category';
     import Svelecte from 'svelecte';
     import type {Payload} from '$lib/interfaces/api';
-    import type {Category, ListCategoriesResponsePayload} from '$lib/interfaces/category.js';
+    import type {ListCategoriesResponsePayload} from '$lib/interfaces/category.js';
 
     const client = useQueryClient();
 
     export let id: string | undefined = undefined;
     export let name: string | undefined = undefined;
-    export let value: Category | undefined;
+    export let value: string | undefined;
 
     const createCategoryMutation = createMutation({
         mutationFn: createCategory,
@@ -45,15 +45,12 @@
         placeholder="Не выбрана"
         highlightFirstItem={false}
         creatable={true}
-        valueField="id"
-        labelField="name"
         i18n={{
             createRowLabel: value => `Создать '${value}'`,
         }}
         options={$categories.data?.data.categories.sort((a, b) => a.name.localeCompare(b.name))}
         {name}
-        bind:value
-        valueAsObject={true}
+        {value}
         createHandler={handleCreate}
     />
 {/if}

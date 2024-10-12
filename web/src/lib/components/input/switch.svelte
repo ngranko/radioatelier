@@ -7,7 +7,7 @@
 
 <label for={id} class="label">
     <span class="switch">
-        <input type="checkbox" {id} {name} bind:checked value="1" />
+        <input type="checkbox" {id} {name} {checked} value="1" />
         <span class="slider" />
     </span>
     {label}

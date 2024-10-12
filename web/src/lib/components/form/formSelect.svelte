@@ -34,11 +34,12 @@
         on:change
         inputId={id}
         {name}
-        bind:value
+        {value}
         {options}
         {required}
         {placeholder}
         clearable={!required}
+        highlightFirstItem={false}
     />
     {#if error}
         <span class="errorMessage" transition:fade={{duration: 200, easing: cubicInOut}}>

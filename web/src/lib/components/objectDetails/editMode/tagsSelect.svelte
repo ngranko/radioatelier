@@ -3,7 +3,7 @@
     import {createTag, listTags} from '$lib/api/tag';
     import Svelecte from 'svelecte';
     import type {Payload} from '$lib/interfaces/api';
-    import type {ListTagsResponsePayload, Tag} from '$lib/interfaces/tag';
+    import type {ListTagsResponsePayload} from '$lib/interfaces/tag';
     import {createEventDispatcher} from 'svelte';
 
     const client = useQueryClient();
@@ -11,7 +11,9 @@
 
     export let id: string | undefined = undefined;
     export let name: string | undefined = undefined;
-    export let value: Tag[] = [];
+    export let value: string[] = [];
+
+    $: console.log(value);
 
     const createTagMutation = createMutation({
         mutationFn: createTag,
@@ -48,15 +50,12 @@
         creatable={true}
         multiple={true}
         clearable={true}
-        valueField="id"
-        labelField="name"
         i18n={{
             createRowLabel: value => `Создать '${value}'`,
         }}
         options={$tags.data?.data.tags.sort((a, b) => a.name.localeCompare(b.name))}
         {name}
-        bind:value
-        valueAsObject={true}
+        {value}
         createHandler={handleCreate}
     />
 {/if}

@@ -3,13 +3,13 @@
     import Svelecte from 'svelecte';
     import {createPrivateTag, listPrivateTags} from '$lib/api/privateTag';
     import type {Payload} from '$lib/interfaces/api';
-    import type {ListPrivateTagsResponsePayload, PrivateTag} from '$lib/interfaces/privateTag';
+    import type {ListPrivateTagsResponsePayload} from '$lib/interfaces/privateTag';
 
     const client = useQueryClient();
 
     export let id: string | undefined = undefined;
     export let name: string | undefined = undefined;
-    export let value: PrivateTag[] = [];
+    export let value: string[] = [];
 
     const createTagMutation = createMutation({
         mutationFn: createPrivateTag,
@@ -47,15 +47,12 @@
         creatable={true}
         multiple={true}
         clearable={true}
-        valueField="id"
-        labelField="name"
         i18n={{
             createRowLabel: value => `Создать '${value}'`,
         }}
         options={$tags.data?.data.tags.sort((a, b) => a.name.localeCompare(b.name))}
         {name}
-        bind:value
-        valueAsObject={true}
+        {value}
         createHandler={handleCreate}
     />
 {/if}

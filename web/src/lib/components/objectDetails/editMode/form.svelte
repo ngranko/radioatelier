@@ -45,30 +45,30 @@
     }
 
     function handleCategoryChange(event) {
-        setData('category', event.detail);
+        setData('category', event.detail.id);
         setIsDirty(true);
     }
 
     function handleTagsChange(event) {
-        setData('tags', event.detail);
+        setData(
+            'tags',
+            event.detail.map(item => item.id),
+        );
         setIsDirty(true);
     }
 
     function handlePrivateTagsChange(event) {
-        setData('privateTags', event.detail);
+        setData(
+            'privateTags',
+            event.detail.map(item => item.id),
+        );
         setIsDirty(true);
     }
 
     function handleSave(values: LooseObject) {
-        if (typeof values.category === 'string') {
-            values.category = initialValues.category;
-        }
-        if (values.tags.length > 0 && typeof values.tags[0] === 'string') {
-            values.tags = initialValues.tags;
-        }
-        if (values.privateTags.length > 0 && typeof values.privateTags[0] === 'string') {
-            values.privateTags = initialValues.privateTags;
-        }
+        values.category = {id: values.category};
+        values.tags = values.tags.map(item => ({id: item}));
+        values.privateTags = values.privateTags.map(item => ({id: item}));
 
         dispatch('save', values);
     }
@@ -119,20 +119,25 @@
         <CategorySelect
             id="category"
             name="category"
-            value={initialValues.category}
+            value={initialValues.category.id}
             on:change={handleCategoryChange}
         />
     </div>
     <div class="fieldLong">
         <label for="tags" class="label">Теги</label>
-        <TagsSelect id="tags" name="tags" value={initialValues.tags} on:change={handleTagsChange} />
+        <TagsSelect
+            id="tags"
+            name="tags"
+            value={initialValues.tags.map(item => item.id)}
+            on:change={handleTagsChange}
+        />
     </div>
     <div class="fieldLong">
         <label for="privateTags" class="label">Приватные теги</label>
         <PrivateTagsSelect
             id="privateTags"
             name="privateTags"
-            value={initialValues.privateTags}
+            value={initialValues.privateTags.map(item => item.id)}
             on:change={handlePrivateTagsChange}
         />
     </div>

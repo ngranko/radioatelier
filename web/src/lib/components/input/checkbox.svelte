@@ -7,11 +7,11 @@
 
 {#if label}
     <label for={id} class="label">
-        <input type="checkbox" {id} {name} value="1" class="element labelled" bind:checked />
+        <input type="checkbox" {id} {name} value="1" class="element labelled" {checked} />
         {label}
     </label>
 {:else}
-    <input type="checkbox" {id} {name} value="1" class="element" bind:checked />
+    <input type="checkbox" {id} {name} value="1" class="element" {checked} />
 {/if}
 
 <style lang="scss">
