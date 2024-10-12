@@ -42,6 +42,7 @@ export interface BareObject {
 export interface ObjectDetailsInfo {
     isLoading: boolean;
     isEditing: boolean;
+    isDirty: boolean;
     detailsId: string;
     object: Object | BareObject | null;
 }

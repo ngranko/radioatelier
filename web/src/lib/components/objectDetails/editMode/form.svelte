@@ -32,6 +32,10 @@
         extend: validator({schema}),
     });
 
+    $: if ($isDirty.valueOf()) {
+        activeObjectInfo.update(value => ({...value, isDirty: true}));
+    }
+
     function handleRatingChange(event) {
         if (event.detail === null) {
             setData('rating', '');
@@ -78,6 +82,7 @@
         activeObjectInfo.update(value => ({
             ...value,
             isEditing: false,
+            isDirty: false,
         }));
     }
 </script>

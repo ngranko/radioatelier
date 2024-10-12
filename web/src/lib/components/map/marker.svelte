@@ -48,6 +48,7 @@
         activeObjectInfo.set({
             isLoading: false,
             isEditing: false,
+            isDirty: false,
             detailsId: $objectDetails.data.data.object.id,
             object: $objectDetails.data.data.object,
         });
@@ -243,6 +244,7 @@
             activeObjectInfo.set({
                 isLoading: true,
                 isEditing: false,
+                isDirty: false,
                 detailsId: id!,
                 object: {id, lat, lng, isVisited, isRemoved},
             });
@@ -251,6 +253,7 @@
             activeObjectInfo.set({
                 isLoading: false,
                 isEditing: false,
+                isDirty: false,
                 detailsId: $objectDetails.data.data.object.id,
                 object: $objectDetails.data.data.object,
             });

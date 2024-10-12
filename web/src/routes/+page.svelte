@@ -15,7 +15,6 @@
     import {page} from '$app/stores';
     import type {Payload} from '$lib/interfaces/api';
     import type {UpdateObjectResponsePayload} from '$lib/interfaces/object.js';
-    import CloseConfirmation from '$lib/components/objectDetails/closeConfirmation.svelte';
     import LocationMarker from '$lib/components/map/locationMarker.svelte';
     import {me} from '$lib/api/user';
     import {onMount} from 'svelte';
@@ -23,7 +22,6 @@
     const client = useQueryClient();
 
     let orientationEnabled = false;
-    let isConfirmationOpen = false;
     let savedLocation: Location | null = null;
     let consoleElement: HTMLElement;
 
@@ -110,15 +108,6 @@
         //     }
     });
 
-    function handleClose() {
-        if (!$activeObjectInfo.object) {
-            return;
-        }
-
-        activeMarker.deactivate();
-        activeObjectInfo.reset();
-    }
-
     async function handleSave(event: CustomEvent<Object>) {
         if (!$activeObjectInfo.object) {
             return;
@@ -182,17 +171,10 @@
 
     function handleMapClick(event: CustomEvent<Location>) {
         savedLocation = {lat: event.detail.lat, lng: event.detail.lng};
-        if ($activeObjectInfo.isEditing) {
-            isConfirmationOpen = true;
-        } else {
-            setActiveObject();
-        }
-    }
-
-    function setActiveObject() {
         activeObjectInfo.set({
             isLoading: false,
             isEditing: true,
+            isDirty: false,
             detailsId: new Date().getTime().toString(),
             object: {
                 id: null,
@@ -265,10 +247,8 @@
         isLoading={$activeObjectInfo.isLoading}
         isEditing={$activeObjectInfo.isEditing}
         on:save={handleSave}
-        on:close={handleClose}
         on:delete={handleDelete}
     />
-    <CloseConfirmation bind:isOpen={isConfirmationOpen} on:click={setActiveObject} />
 {/if}
 
 <div>

@@ -13,6 +13,7 @@
         activeObjectInfo.update(value => ({
             ...value,
             isEditing: true,
+            isDirty: false,
         }));
     }
 

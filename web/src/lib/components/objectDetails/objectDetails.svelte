@@ -10,6 +10,8 @@
     import {uploadImage} from '$lib/api/object';
     import toast from 'svelte-french-toast';
     import CloseButton from '$lib/components/objectDetails/closeButton.svelte';
+    import {activeMarker, activeObjectInfo} from '$lib/stores/map';
+    import CloseConfirmation from '$lib/components/objectDetails/closeConfirmation.svelte';
 
     const dispatch = createEventDispatcher();
 
@@ -17,6 +19,8 @@
     export let initialValues: Partial<LooseObject>;
     export let isLoading: boolean = false;
     export let isEditing: boolean = false;
+
+    let isCloseConfirmationOpen = false;
 
     const image = createMutation({
         mutationFn: uploadImage,
@@ -40,14 +44,28 @@
         );
     }
 
+    function handleCloseClick() {
+        if ($activeObjectInfo.isDirty) {
+            isCloseConfirmationOpen = true;
+        } else {
+            handleClose();
+        }
+    }
+
     function handleClose() {
-        dispatch('close');
+        if (!$activeObjectInfo.object) {
+            return;
+        }
+
+        activeMarker.deactivate();
+        activeObjectInfo.reset();
     }
 </script>
 
+<div class="background" on:click={handleCloseClick} />
 <aside class="popup" transition:fly={{x: -100, duration: 200, easing: cubicInOut}}>
     <section class="header">
-        <CloseButton on:click={handleClose} />
+        <CloseButton on:click={handleCloseClick} />
     </section>
     {#key key}
         {#if isLoading}
@@ -71,9 +89,17 @@
         {/if}
     {/key}
 </aside>
+<CloseConfirmation bind:isOpen={isCloseConfirmationOpen} on:click={handleClose} />
 
 <style lang="scss">
     @use '../../../styles/colors';
+
+    .background {
+        position: fixed;
+        inset: 0;
+        background-color: transparent;
+        z-index: 1;
+    }
 
     .popup {
         position: absolute;
@@ -84,7 +110,7 @@
         height: calc(100dvh - 8px * 2);
         margin: 8px;
         border-radius: 10px;
-        z-index: 1;
+        z-index: 2;
         background-color: white;
     }
 

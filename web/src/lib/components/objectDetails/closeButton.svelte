@@ -1,25 +1,6 @@
-<script lang="ts">
-    import CloseConfirmation from '$lib/components/objectDetails/closeConfirmation.svelte';
-    import {createEventDispatcher} from 'svelte';
-    import {activeObjectInfo} from '$lib/stores/map';
-
-    const dispatch = createEventDispatcher();
-
-    let isDialogOpen = false;
-
-    function handleClick() {
-        if ($activeObjectInfo.isEditing) {
-            isDialogOpen = true;
-        } else {
-            dispatch('click');
-        }
-    }
-</script>
-
-<button class="close" on:click={handleClick}>
+<button class="close" on:click>
     <i class="fa-solid fa-xmark"></i>
 </button>
-<CloseConfirmation bind:isOpen={isDialogOpen} on:click />
 
 <style lang="scss">
     @use '../../../styles/colors';
