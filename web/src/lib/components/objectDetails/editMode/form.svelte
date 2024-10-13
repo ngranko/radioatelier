@@ -21,6 +21,9 @@
 
     export let initialValues: Partial<LooseObject>;
 
+    let tags = initialValues.tags?.map(item => item.id) ?? [];
+    let privateTags = initialValues.privateTags?.map(item => item.id) ?? [];
+
     const schema = yup.object({});
 
     const {form, data, errors, isSubmitting, reset, setData, isDirty, setIsDirty} = createForm<
@@ -49,26 +52,10 @@
         setIsDirty(true);
     }
 
-    function handleTagsChange(event) {
-        setData(
-            'tags',
-            event.detail.map(item => item.id),
-        );
-        setIsDirty(true);
-    }
-
-    function handlePrivateTagsChange(event) {
-        setData(
-            'privateTags',
-            event.detail.map(item => item.id),
-        );
-        setIsDirty(true);
-    }
-
     function handleSave(values: LooseObject) {
         values.category = {id: values.category};
-        values.tags = values.tags.map(item => ({id: item}));
-        values.privateTags = values.privateTags.map(item => ({id: item}));
+        values.tags = tags.map(item => ({id: item}));
+        values.privateTags = privateTags.map(item => ({id: item}));
 
         dispatch('save', values);
     }
@@ -125,21 +112,11 @@
     </div>
     <div class="fieldLong">
         <label for="tags" class="label">Теги</label>
-        <TagsSelect
-            id="tags"
-            name="tags"
-            value={initialValues.tags.map(item => item.id)}
-            on:change={handleTagsChange}
-        />
+        <TagsSelect id="tags" name="tags" bind:value={tags} />
     </div>
     <div class="fieldLong">
         <label for="privateTags" class="label">Приватные теги</label>
-        <PrivateTagsSelect
-            id="privateTags"
-            name="privateTags"
-            value={initialValues.privateTags.map(item => item.id)}
-            on:change={handlePrivateTagsChange}
-        />
+        <PrivateTagsSelect id="privateTags" name="privateTags" bind:value={privateTags} />
     </div>
     <div class="fieldLong">
         <label for="description" class="label">Информация</label>

@@ -147,6 +147,10 @@ func Create(w http.ResponseWriter, r *http.Request) {
         return
     }
 
+    category, _ := getCategory(obj)
+    tags, _ := getTags(obj)
+    privateTags, _ := getPrivateTags(obj, user)
+
     router.NewResponse().
         WithStatus(http.StatusOK).
         WithPayload(router.Payload{
@@ -167,9 +171,9 @@ func Create(w http.ResponseWriter, r *http.Request) {
                 IsPublic:        objModel.IsPublic,
                 IsVisited:       objectUserModel.IsVisited,
                 Rating:          objectUserModel.Rating,
-                Category:        payload.Category,
-                Tags:            payload.Tags,
-                PrivateTags:     payload.PrivateTags,
+                Category:        category,
+                Tags:            tags,
+                PrivateTags:     privateTags,
             },
         }).
         Send(w)

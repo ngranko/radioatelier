@@ -13,8 +13,6 @@
     export let name: string | undefined = undefined;
     export let value: string[] = [];
 
-    $: console.log(value);
-
     const createTagMutation = createMutation({
         mutationFn: createTag,
         onSuccess: ({data}) => {
@@ -55,7 +53,7 @@
         }}
         options={$tags.data?.data.tags.sort((a, b) => a.name.localeCompare(b.name))}
         {name}
-        {value}
+        bind:value
         createHandler={handleCreate}
     />
 {/if}

@@ -52,7 +52,7 @@
         }}
         options={$tags.data?.data.tags.sort((a, b) => a.name.localeCompare(b.name))}
         {name}
-        {value}
+        bind:value
         createHandler={handleCreate}
     />
 {/if}
