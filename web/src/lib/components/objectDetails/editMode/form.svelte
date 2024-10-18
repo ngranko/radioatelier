@@ -106,7 +106,7 @@
         <CategorySelect
             id="category"
             name="category"
-            value={initialValues.category.id}
+            value={initialValues.category?.id ?? ''}
             on:change={handleCategoryChange}
         />
     </div>
