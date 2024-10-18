@@ -147,6 +147,10 @@
             message: '',
             data: {object: result.data},
         });
+        markerList.updateMarker(result.data.id, {
+            isVisited: result.data.isVisited,
+            isRemoved: result.data.isRemoved,
+        });
         activeObjectInfo.reset();
     }
 

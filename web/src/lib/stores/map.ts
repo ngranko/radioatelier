@@ -112,11 +112,11 @@ export const markerList = {
                 if (updatedFields.lng) {
                     marker.lng = updatedFields.lng;
                 }
-                if (updatedFields.isVisited) {
-                    marker.isVisited = updatedFields.isVisited;
+                if (Object.hasOwn(updatedFields, 'isVisited')) {
+                    marker.isVisited = Boolean(updatedFields.isVisited);
                 }
-                if (updatedFields.isRemoved) {
-                    marker.isRemoved = updatedFields.isRemoved;
+                if (Object.hasOwn(updatedFields, 'isRemoved')) {
+                    marker.isRemoved = Boolean(updatedFields.isRemoved);
                 }
                 if (updatedFields.marker) {
                     if (marker.marker) {

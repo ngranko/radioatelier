@@ -79,8 +79,20 @@
         }));
     }
 
-    $: if (marker) {
-        (marker.content as HTMLDivElement).className = getMarkerClassList();
+    $: {
+        if (marker) {
+            if (isVisited) {
+                (marker.content as HTMLDivElement).classList.add('map-marker-visited');
+            } else {
+                (marker.content as HTMLDivElement).classList.remove('map-marker-visited');
+            }
+
+            if (isRemoved) {
+                (marker.content as HTMLDivElement).classList.add('map-marker-removed');
+            } else {
+                (marker.content as HTMLDivElement).classList.remove('map-marker-removed');
+            }
+        }
     }
 
     onMount(async () => {
@@ -107,15 +119,6 @@
             collisionBehavior: CollisionBehavior.REQUIRED_AND_HIDES_OPTIONAL,
             gmpClickable: true,
         });
-
-        // if (
-        //     ($map.getBounds() as google.maps.LatLngBounds).contains({
-        //         lat: Number(lat),
-        //         lng: Number(lng),
-        //     })
-        // ) {
-        //     marker.map = $map;
-        // }
 
         marker.addListener('click', handleMarkerClick);
         icon.addEventListener('mousedown', () => handleClickStart('map-marker-draggable'));
@@ -208,6 +211,10 @@
                 lng: String(marker.position!.lng),
             },
         });
+        $markerList.updateMarker(id!, {
+            lat: String(marker.position!.lat),
+            lng: String(marker.position!.lng),
+        });
     }
 
     function updateNewObjectCoordinates() {
@@ -220,6 +227,10 @@
                 lng: String(marker.position!.lng),
             },
         }));
+        $markerList.updateMarker(id!, {
+            lat: String(marker.position!.lat),
+            lng: String(marker.position!.lng),
+        });
     }
 
     function handleMarkerClick() {
