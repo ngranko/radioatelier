@@ -1,7 +1,5 @@
 <script lang="ts">
     import {clsx} from 'clsx';
-    import {cubicInOut} from 'svelte/easing';
-    import {fade} from 'svelte/transition';
     import Svelecte from 'svelecte';
 
     interface Option {
@@ -29,7 +27,7 @@
 </script>
 
 <div class={classes}>
-    {#if label}<label for={id} class="label">{label}</label>{/if}
+    <label for={id} class="label">{error ? error[0] : label}</label>
     <Svelecte
         on:change
         inputId={id}
@@ -41,11 +39,6 @@
         clearable={!required}
         highlightFirstItem={false}
     />
-    {#if error}
-        <span class="errorMessage" transition:fade={{duration: 200, easing: cubicInOut}}>
-            {error[0]}
-        </span>
-    {/if}
 </div>
 
 <style lang="scss">
@@ -54,13 +47,12 @@
 
     .field {
         position: relative;
-        margin-bottom: 24px;
         display: flex;
         flex-direction: column;
         align-items: stretch;
     }
 
-    :global(.svelecte .sv-control) {
+    :global(.svelecte.svelecte-control .sv-control) {
         --sv-min-height: 38px;
         border-color: colors.$gray;
     }
@@ -70,7 +62,7 @@
             color: colors.$danger;
         }
 
-        :global(.svelecte .sv-control) {
+        :global(.svelecte.svelecte-control .sv-control) {
             border-color: colors.$danger;
         }
     }
@@ -79,14 +71,5 @@
         @include typography.size-14;
         margin-bottom: 4px;
         transition: color 0.2s;
-    }
-
-    .errorMessage {
-        @include typography.size-14;
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        transform: translateY(100%);
-        color: colors.$danger;
     }
 </style>

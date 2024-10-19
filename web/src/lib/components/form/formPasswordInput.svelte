@@ -1,8 +1,6 @@
 <script lang="ts">
     import Input from '$lib/components/input/input.svelte';
     import {clsx} from 'clsx';
-    import {cubicInOut} from 'svelte/easing';
-    import {fade} from 'svelte/transition';
     import {type ComponentType, onMount} from 'svelte';
 
     export let id: string | undefined = undefined;
@@ -39,7 +37,7 @@
 </script>
 
 <div class={classes}>
-    {#if label}<label for={id} class="label">{label}</label>{/if}
+    <label for={id} class="label">{error ? error[0] : label}</label>
     <div class="inputContainer">
         <Input
             {id}
@@ -64,11 +62,6 @@
     {#if withStrengthIndicator && PasswordStrength}
         <PasswordStrength {value} />
     {/if}
-    {#if error}
-        <span class="errorMessage" transition:fade={{duration: 200, easing: cubicInOut}}>
-            {error[0]}
-        </span>
-    {/if}
 </div>
 
 <style lang="scss">
@@ -77,7 +70,6 @@
 
     .field {
         position: relative;
-        margin-bottom: 24px;
         display: flex;
         flex-direction: column;
         align-items: stretch;
@@ -119,14 +111,5 @@
         @include typography.size-14;
         margin-bottom: 4px;
         transition: color 0.2s;
-    }
-
-    .errorMessage {
-        @include typography.size-14;
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        transform: translateY(100%);
-        color: colors.$danger;
     }
 </style>

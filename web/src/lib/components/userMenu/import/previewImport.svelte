@@ -52,9 +52,11 @@
             </div>
         {/each}
         <div class="row">
-            {#each $importInfo.preview[0] as _, i}
-                <div class="cell">{i === 0 ? '...' : ''}</div>
-            {/each}
+            {#if $importInfo.preview.length > 0}
+                {#each $importInfo.preview[0] as _, i}
+                    <div class="cell">{i === 0 ? '...' : ''}</div>
+                {/each}
+            {/if}
         </div>
     </div>
     <div class="changeSeparator">

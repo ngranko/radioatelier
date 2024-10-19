@@ -10,12 +10,12 @@
     import {validator} from '@felte/validator-yup';
     import CategorySelect from '$lib/components/objectDetails/editMode/categorySelect.svelte';
     import PrivateTagsSelect from '$lib/components/objectDetails/editMode/privateTagsSelect.svelte';
-    import Textarea from '$lib/components/input/textarea.svelte';
     import Checkbox from '$lib/components/input/checkbox.svelte';
+    import FormInput from '$lib/components/form/formInput.svelte';
+    import FormTextarea from '$lib/components/form/formTextarea.svelte';
     import FormSelect from '$lib/components/form/formSelect.svelte';
     import TagsSelect from '$lib/components/objectDetails/editMode/tagsSelect.svelte';
     import Switch from '$lib/components/input/switch.svelte';
-    import Input from '$lib/components/input/input.svelte';
 
     const dispatch = createEventDispatcher();
 
@@ -24,7 +24,19 @@
     let tags = initialValues.tags?.map(item => item.id) ?? [];
     let privateTags = initialValues.privateTags?.map(item => item.id) ?? [];
 
-    const schema = yup.object({});
+    const schema = yup.object({
+        name: yup
+            .string()
+            .required('Пожалуйста, введите название')
+            .max(255, 'Слишком длинное название'),
+        category: yup.string().required('Пожалуйста, выберите категорию'),
+        address: yup.string().nullable().max(128, 'Слишком длинный адрес'),
+        city: yup.string().nullable().max(64, 'Слишком длинное название города'),
+        country: yup.string().nullable().max(64, 'Слишком длинное название страны'),
+        installedPeriod: yup.string().nullable().max(20, 'Слишком длинный период создания'),
+        removalPeriod: yup.string().nullable().max(20, 'Слишком длинный период пропажи'),
+        source: yup.string().nullable().url('Должна быть валидной ссылкой'),
+    });
 
     const {form, data, errors, isSubmitting, reset, setData, isDirty, setIsDirty} = createForm<
         yup.InferType<typeof schema>
@@ -81,8 +93,13 @@
     <input type="hidden" name="image" value={initialValues.image ?? ''} />
 
     <div class="fieldLong">
-        <label for="name" class="label">Название</label>
-        <Input id="name" name="name" value={initialValues.name ?? ''} />
+        <FormInput
+            id="name"
+            name="name"
+            value={initialValues.name ?? ''}
+            label="Название"
+            error={$errors.name}
+        />
     </div>
     <Checkbox id="isVisited" name="isVisited" checked={initialValues.isVisited} label="Посещена" />
     <FormSelect
@@ -97,49 +114,74 @@
             {value: '3', text: '🌟🌟🌟'},
         ]}
         on:change={handleRatingChange}
+        error={$errors.rating}
     />
     <div class="fieldLong">
         <Switch id="isPublic" name="isPublic" checked={initialValues.isPublic} label="Публичная" />
     </div>
     <div class="fieldLong">
-        <label for="category" class="label">Категория</label>
         <CategorySelect
             id="category"
             name="category"
             value={initialValues.category?.id ?? ''}
             on:change={handleCategoryChange}
+            error={$errors.category}
         />
     </div>
     <div class="fieldLong">
-        <label for="tags" class="label">Теги</label>
-        <TagsSelect id="tags" name="tags" bind:value={tags} />
+        <TagsSelect id="tags" name="tags" bind:value={tags} error={$errors.tags} />
     </div>
     <div class="fieldLong">
-        <label for="privateTags" class="label">Приватные теги</label>
-        <PrivateTagsSelect id="privateTags" name="privateTags" bind:value={privateTags} />
+        <PrivateTagsSelect
+            id="privateTags"
+            name="privateTags"
+            bind:value={privateTags}
+            error={$errors.privateTags}
+        />
     </div>
     <div class="fieldLong">
-        <label for="description" class="label">Информация</label>
-        <Textarea id="description" name="description" value={initialValues.description ?? ''} />
+        <FormTextarea
+            id="description"
+            name="description"
+            value={initialValues.description ?? ''}
+            label="Информация"
+            error={$errors.description}
+        />
     </div>
     <div class="fieldLong">
-        <label for="address" class="label">Адрес</label>
-        <Input id="address" name="address" value={initialValues.address ?? ''} />
+        <FormInput
+            id="address"
+            name="address"
+            value={initialValues.address ?? ''}
+            label="Адрес"
+            error={$errors.address}
+        />
     </div>
     <div class="fieldLong">
-        <label for="city" class="label">Город</label>
-        <Input id="city" name="city" value={initialValues.city ?? ''} />
+        <FormInput
+            id="city"
+            name="city"
+            value={initialValues.city ?? ''}
+            label="Город"
+            error={$errors.city}
+        />
     </div>
     <div class="fieldLong">
-        <label for="country" class="label">Страна</label>
-        <Input id="country" name="country" value={initialValues.country ?? ''} />
+        <FormInput
+            id="country"
+            name="country"
+            value={initialValues.country ?? ''}
+            label="Страна"
+            error={$errors.country}
+        />
     </div>
     <div class="fieldLong">
-        <label for="installedPeriod" class="label">Период создания</label>
-        <Input
+        <FormInput
             id="installedPeriod"
             name="installedPeriod"
             value={initialValues.installedPeriod ?? ''}
+            label="Период создания"
+            error={$errors.installedPeriod}
         />
     </div>
     <div class="removedCheckbox">
@@ -152,17 +194,23 @@
     </div>
     {#if data.isRemoved}
         <div class="field">
-            <label for="removalPeriod" class="label">Период пропажи</label>
-            <Input
+            <FormInput
                 id="removalPeriod"
                 name="removalPeriod"
                 value={initialValues.removalPeriod ?? ''}
+                label="Период пропажи"
+                error={$errors.removalPeriod}
             />
         </div>
     {/if}
     <div class="fieldLong">
-        <label for="source" class="label">Ссылка на источник</label>
-        <Input id="source" name="source" value={initialValues.source ?? ''} />
+        <FormInput
+            id="source"
+            name="source"
+            value={initialValues.source ?? ''}
+            label="Ссылка на источник"
+            error={$errors.source}
+        />
     </div>
     <div class="actions">
         <div class="save-button">

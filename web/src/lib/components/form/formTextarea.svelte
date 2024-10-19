@@ -1,5 +1,5 @@
 <script lang="ts">
-    import Input from '$lib/components/input/input.svelte';
+    import Textarea from '$lib/components/input/textarea.svelte';
     import {clsx} from 'clsx';
 
     export let id: string | undefined = undefined;
@@ -23,7 +23,7 @@
 
 <div class={classes}>
     <label for={id} class="label">{error ? error[0] : label}</label>
-    <Input {id} {type} {name} {value} {required} {placeholder} />
+    <Textarea {id} {type} {name} {value} {required} {placeholder} />
 </div>
 
 <style lang="scss">
@@ -32,6 +32,7 @@
 
     .field {
         position: relative;
+        //margin-bottom: 8px;
         display: flex;
         flex-direction: column;
         align-items: stretch;

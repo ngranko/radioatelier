@@ -89,10 +89,11 @@
         width: 280px;
         display: flex;
         flex-direction: column;
+        gap: 16px;
     }
 
     .actions {
-        margin-top: 16px;
+        margin-top: 8px;
 
         & :global(:first-child) {
             margin-right: 8px;

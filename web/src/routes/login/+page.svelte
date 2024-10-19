@@ -92,5 +92,10 @@
         max-width: 400px;
         display: flex;
         flex-direction: column;
+        gap: 16px;
+    }
+
+    .actions {
+        margin-top: 8px;
     }
 </style>

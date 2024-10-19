@@ -14,7 +14,7 @@
     }
 </script>
 
-<div class="container">
+<div class={`container ${$$props.class}`}>
     <button class="button" on:click|stopPropagation={handleClick}>
         <i class="fa-regular fa-circle-question"></i>
     </button>
