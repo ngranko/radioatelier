@@ -1,20 +1,16 @@
 <script lang="ts">
-    import {createMutation, createQuery, useQueryClient} from '@tanstack/svelte-query';
-    import {createObject, deleteObject, listObjects} from '$lib/api/object';
-    import type {ListObjectsResponsePayload, Object} from '$lib/interfaces/object';
-    import {/*mapLoader, */ map, activeObjectInfo, activeMarker, markerList} from '$lib/stores/map';
+    import {createQuery, useQueryClient} from '@tanstack/svelte-query';
+    import {listObjects} from '$lib/api/object';
+    import type {Object} from '$lib/interfaces/object';
+    import {/*mapLoader, */ map, activeObjectInfo, markerList} from '$lib/stores/map';
     import Map from '$lib/components/map/map.svelte';
     import Marker from '$lib/components/map/marker.svelte';
     import UserMenu from '$lib/components/userMenu/userMenu.svelte';
     import ObjectDetails from '$lib/components/objectDetails/objectDetails.svelte';
     import type {Location} from '$lib/interfaces/location';
-    import {updateObject} from '$lib/api/object.js';
-    import toast from 'svelte-french-toast';
     import RequestError from '$lib/errors/RequestError';
     import {goto} from '$app/navigation';
     import {page} from '$app/stores';
-    import type {Payload} from '$lib/interfaces/api';
-    import type {UpdateObjectResponsePayload} from '$lib/interfaces/object.js';
     import LocationMarker from '$lib/components/map/locationMarker.svelte';
     import {me} from '$lib/api/user';
     import {onMount} from 'svelte';
@@ -24,45 +20,6 @@
     let orientationEnabled = false;
     let savedLocation: Location | null = null;
     let consoleElement: HTMLElement;
-
-    const createObjectMutation = createMutation({
-        mutationFn: createObject,
-        onSuccess: ({data}) => {
-            const cachedListValue: Payload<ListObjectsResponsePayload> | undefined =
-                client.getQueryData(['objects']);
-            if (cachedListValue) {
-                client.setQueryData(['objects'], {
-                    data: {objects: [...cachedListValue.data.objects, data]},
-                });
-            }
-        },
-    });
-
-    const updateObjectMutation = createMutation({
-        mutationFn: updateObject,
-        onSuccess: ({data}) => {
-            const cachedValue: Payload<UpdateObjectResponsePayload> | undefined =
-                client.getQueryData(['object', {id: data.id}]);
-            if (cachedValue) {
-                client.setQueryData(['object', {id: data.id}], {
-                    data: {...cachedValue.data, ...data},
-                });
-            }
-        },
-    });
-
-    const deleteObjectMutation = createMutation({
-        mutationFn: deleteObject,
-        onSuccess: ({data}) => {
-            const cachedValue: Payload<ListObjectsResponsePayload> | undefined =
-                client.getQueryData(['objects']);
-            if (cachedValue) {
-                client.setQueryData(['objects'], {
-                    data: {objects: cachedValue.data.objects.filter(item => item.id != data.id)},
-                });
-            }
-        },
-    });
 
     const objects = createQuery({queryKey: ['objects'], queryFn: listObjects});
     $: if (
@@ -107,71 +64,6 @@
         //         console.error(e);
         //     }
     });
-
-    async function handleSave(event: CustomEvent<Object>) {
-        if (!$activeObjectInfo.object) {
-            return;
-        }
-
-        if (!event.detail.id) {
-            await toast.promise(createNewObject(event.detail), {
-                loading: 'Создаю...',
-                success: 'Точка создана!',
-                error: 'Не удалось создать точку',
-            });
-        } else {
-            await toast.promise(updateExistingObject(event.detail), {
-                loading: 'Обновляю...',
-                success: 'Точка обновлена!',
-                error: 'Не удалось обновить точку',
-            });
-        }
-    }
-
-    async function createNewObject(object: Object) {
-        const result = await $createObjectMutation.mutateAsync(object);
-        client.setQueryData(['object', {id: result.data.id}], {
-            message: '',
-            data: {object: result.data},
-        });
-        markerList.addMarker(result.data);
-        activeObjectInfo.reset();
-    }
-
-    async function updateExistingObject(object: Object) {
-        const result = await $updateObjectMutation.mutateAsync({
-            id: object.id,
-            updatedFields: object,
-        });
-        client.setQueryData(['object', {id: result.data.id}], {
-            message: '',
-            data: {object: result.data},
-        });
-        markerList.updateMarker(result.data.id, {
-            isVisited: result.data.isVisited,
-            isRemoved: result.data.isRemoved,
-        });
-        activeObjectInfo.reset();
-    }
-
-    async function handleDelete(event: CustomEvent<string>) {
-        if (!$activeObjectInfo.object || !event.detail) {
-            return;
-        }
-
-        await toast.promise(deleteExistingObject(event.detail), {
-            loading: 'Удаляю...',
-            success: 'Точка удалена!',
-            error: 'Не удалось удалить точку',
-        });
-    }
-
-    async function deleteExistingObject(id: string) {
-        const result = await $deleteObjectMutation.mutateAsync({id});
-        markerList.removeMarker(result.data.id);
-        activeObjectInfo.reset();
-        activeMarker.set(null);
-    }
 
     function handleMapClick(event: CustomEvent<Location>) {
         savedLocation = {lat: event.detail.lat, lng: event.detail.lng};
@@ -250,8 +142,6 @@
         key={$activeObjectInfo.detailsId}
         isLoading={$activeObjectInfo.isLoading}
         isEditing={$activeObjectInfo.isEditing}
-        on:save={handleSave}
-        on:delete={handleDelete}
     />
 {/if}
 

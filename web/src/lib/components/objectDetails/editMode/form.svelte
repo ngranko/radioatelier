@@ -1,10 +1,15 @@
 <script lang="ts">
     import {createEventDispatcher} from 'svelte';
-    import type {LooseObject} from '$lib/interfaces/object';
+    import type {
+        ListObjectsResponsePayload,
+        LooseObject,
+        Object,
+        UpdateObjectResponsePayload,
+    } from '$lib/interfaces/object';
     import PrimaryButton from '$lib/components/button/primaryButton.svelte';
     import DeleteButton from '$lib/components/objectDetails/editMode/deleteButton.svelte';
     import BackButton from '$lib/components/objectDetails/editMode/backButton.svelte';
-    import {activeObjectInfo} from '$lib/stores/map';
+    import {activeMarker, activeObjectInfo, markerList} from '$lib/stores/map';
     import {createForm} from 'felte';
     import * as yup from 'yup';
     import {validator} from '@felte/validator-yup';
@@ -16,13 +21,58 @@
     import FormSelect from '$lib/components/form/formSelect.svelte';
     import TagsSelect from '$lib/components/objectDetails/editMode/tagsSelect.svelte';
     import Switch from '$lib/components/input/switch.svelte';
+    import toast from 'svelte-french-toast';
+    import {createMutation, useQueryClient} from '@tanstack/svelte-query';
+    import {createObject, deleteObject, updateObject} from '$lib/api/object';
+    import type {Payload} from '$lib/interfaces/api';
+    import RequestError from '$lib/errors/RequestError';
 
+    const client = useQueryClient();
     const dispatch = createEventDispatcher();
 
     export let initialValues: Partial<LooseObject>;
 
     let tags = initialValues.tags?.map(item => item.id) ?? [];
     let privateTags = initialValues.privateTags?.map(item => item.id) ?? [];
+
+    const createObjectMutation = createMutation({
+        mutationFn: createObject,
+        onSuccess: ({data}) => {
+            const cachedListValue: Payload<ListObjectsResponsePayload> | undefined =
+                client.getQueryData(['objects']);
+            if (cachedListValue) {
+                client.setQueryData(['objects'], {
+                    data: {objects: [...cachedListValue.data.objects, data]},
+                });
+            }
+        },
+    });
+
+    const updateObjectMutation = createMutation({
+        mutationFn: updateObject,
+        onSuccess: ({data}) => {
+            const cachedValue: Payload<UpdateObjectResponsePayload> | undefined =
+                client.getQueryData(['object', {id: data.id}]);
+            if (cachedValue) {
+                client.setQueryData(['object', {id: data.id}], {
+                    data: {...cachedValue.data, ...data},
+                });
+            }
+        },
+    });
+
+    const deleteObjectMutation = createMutation({
+        mutationFn: deleteObject,
+        onSuccess: ({data}) => {
+            const cachedValue: Payload<ListObjectsResponsePayload> | undefined =
+                client.getQueryData(['objects']);
+            if (cachedValue) {
+                client.setQueryData(['objects'], {
+                    data: {objects: cachedValue.data.objects.filter(item => item.id != data.id)},
+                });
+            }
+        },
+    });
 
     const schema = yup.object({
         name: yup
@@ -64,16 +114,87 @@
         setIsDirty(true);
     }
 
-    function handleSave(values: LooseObject) {
+    async function handleSave(values: LooseObject) {
         values.category = {id: values.category};
         values.tags = tags.map(item => ({id: item}));
         values.privateTags = privateTags.map(item => ({id: item}));
 
-        dispatch('save', values);
+        if (!$activeObjectInfo.object) {
+            return;
+        }
+
+        if (!values.id) {
+            await toast.promise(createNewObject(values), {
+                loading: 'Создаю...',
+                success: 'Точка создана!',
+                error: 'Не удалось создать точку',
+            });
+        } else {
+            await toast.promise(updateExistingObject(values), {
+                loading: 'Обновляю...',
+                success: 'Точка обновлена!',
+                error: 'Не удалось обновить точку',
+            });
+        }
     }
 
-    function handleDelete() {
-        dispatch('delete', initialValues.id);
+    async function createNewObject(object: Object) {
+        try {
+            const result = await $createObjectMutation.mutateAsync(object);
+            client.setQueryData(['object', {id: result.data.id}], {
+                message: '',
+                data: {object: result.data},
+            });
+            markerList.addMarker(result.data);
+            activeObjectInfo.reset();
+        } catch (error) {
+            if (error instanceof RequestError && error.payload.errors) {
+                errors.set(error.payload.errors);
+            }
+            throw error;
+        }
+    }
+
+    async function updateExistingObject(object: Object) {
+        try {
+            const result = await $updateObjectMutation.mutateAsync({
+                id: object.id,
+                updatedFields: object,
+            });
+            client.setQueryData(['object', {id: result.data.id}], {
+                message: '',
+                data: {object: result.data},
+            });
+            markerList.updateMarker(result.data.id, {
+                isVisited: result.data.isVisited,
+                isRemoved: result.data.isRemoved,
+            });
+            activeObjectInfo.reset();
+        } catch (error) {
+            if (error instanceof RequestError && error.payload.errors) {
+                errors.set(error.payload.errors);
+            }
+            throw error;
+        }
+    }
+
+    async function handleDelete() {
+        if (!$activeObjectInfo.object || !initialValues.id) {
+            return;
+        }
+
+        await toast.promise(deleteExistingObject(initialValues.id), {
+            loading: 'Удаляю...',
+            success: 'Точка удалена!',
+            error: 'Не удалось удалить точку',
+        });
+    }
+
+    async function deleteExistingObject(id: string) {
+        const result = await $deleteObjectMutation.mutateAsync({id});
+        markerList.removeMarker(result.data.id);
+        activeObjectInfo.reset();
+        activeMarker.set(null);
     }
 
     function handleBack() {
