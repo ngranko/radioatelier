@@ -6,7 +6,7 @@
     import {createForm} from 'felte';
     import * as yup from 'yup';
     import {validator} from '@felte/validator-yup';
-    import Tooltip from '$lib/components/tooltip.svelte';
+    import Tooltip from '$lib/components/userMenu/import/tooltip.svelte';
     import {importInfo} from '$lib/stores/import';
 
     const dispatch = createEventDispatcher();
@@ -115,10 +115,11 @@
             required
             placeholder="Выберите колонку"
             bind:value={$data.coordinates}
-            options={$importInfo.preview[0]?.map((item, index) => ({value: index, text: item}))}
+            options={$importInfo.preview[0]?.map((item, index) => ({value: index, text: item})) ??
+                []}
             error={$errors.coordinates}
         />
-        <Tooltip class="fieldTooltip">
+        <Tooltip>
             Импорт понимает координаты в формате [широта,долгота]. Например: 41.8420113,-89.4859696.
             Пробел после запятой опционален.
         </Tooltip>
@@ -131,10 +132,11 @@
             required
             placeholder="Выберите колонку"
             bind:value={$data.name}
-            options={$importInfo.preview[0]?.map((item, index) => ({value: index, text: item}))}
+            options={$importInfo.preview[0]?.map((item, index) => ({value: index, text: item})) ??
+                []}
             error={$errors.name}
         />
-        <Tooltip class="fieldTooltip">
+        <Tooltip>
             Максимальная длина – 255 символов. Слишком длинные названия будут обрезаны.
         </Tooltip>
     </div>
@@ -145,12 +147,11 @@
             label="Посещена"
             placeholder="Выберите колонку"
             bind:value={$data.isVisited}
-            options={$importInfo.preview[0]?.map((item, index) => ({value: index, text: item}))}
+            options={$importInfo.preview[0]?.map((item, index) => ({value: index, text: item})) ??
+                []}
             error={$errors.isVisited}
         />
-        <Tooltip class="fieldTooltip">
-            Понимает значения 0 и 1. Остальные значения будут приведены к этим двум.
-        </Tooltip>
+        <Tooltip>Понимает значения 0 и 1. Остальные значения будут приведены к этим двум.</Tooltip>
     </div>
     <div class="fieldWrapper">
         <FormSelect
@@ -159,12 +160,11 @@
             label="Рейтинг"
             placeholder="Выберите колонку"
             bind:value={$data.rating}
-            options={$importInfo.preview[0]?.map((item, index) => ({value: index, text: item}))}
+            options={$importInfo.preview[0]?.map((item, index) => ({value: index, text: item})) ??
+                []}
             error={$errors.rating}
         />
-        <Tooltip class="fieldTooltip">
-            Может быть от 1 до 3. Любые другие значения будут проигнорированы.
-        </Tooltip>
+        <Tooltip>Может быть от 1 до 3. Любые другие значения будут проигнорированы.</Tooltip>
     </div>
     <div class="fieldWrapper">
         <FormSelect
@@ -173,12 +173,11 @@
             label="Публичная"
             placeholder="Выберите колонку"
             bind:value={$data.isPublic}
-            options={$importInfo.preview[0]?.map((item, index) => ({value: index, text: item}))}
+            options={$importInfo.preview[0]?.map((item, index) => ({value: index, text: item})) ??
+                []}
             error={$errors.isPublic}
         />
-        <Tooltip class="fieldTooltip">
-            Понимает значения 0 и 1. Остальные значения будут приведены к этим двум.
-        </Tooltip>
+        <Tooltip>Понимает значения 0 и 1. Остальные значения будут приведены к этим двум.</Tooltip>
     </div>
     <div class="fieldWrapper">
         <FormSelect
@@ -188,10 +187,11 @@
             required
             placeholder="Выберите колонку"
             bind:value={$data.category}
-            options={$importInfo.preview[0]?.map((item, index) => ({value: index, text: item}))}
+            options={$importInfo.preview[0]?.map((item, index) => ({value: index, text: item})) ??
+                []}
             error={$errors.category}
         />
-        <Tooltip class="fieldTooltip">
+        <Tooltip>
             Максимальная длина – 100 символов. Слишком длинные названия будут обрезаны.
         </Tooltip>
     </div>
@@ -202,12 +202,11 @@
             label="Фотография"
             placeholder="Не заполнять"
             bind:value={$data.image}
-            options={$importInfo.preview[0]?.map((item, index) => ({value: index, text: item}))}
+            options={$importInfo.preview[0]?.map((item, index) => ({value: index, text: item})) ??
+                []}
             error={$errors.image}
         />
-        <Tooltip class="fieldTooltip">
-            Может быть ссылкой на фотографию или base64-кодированным содержанием.
-        </Tooltip>
+        <Tooltip>Может быть ссылкой на фотографию или base64-кодированным содержанием.</Tooltip>
     </div>
     <div class="fieldWrapper">
         <FormSelect
@@ -216,10 +215,11 @@
             label="Теги"
             placeholder="Не заполнять"
             bind:value={$data.tags}
-            options={$importInfo.preview[0]?.map((item, index) => ({value: index, text: item}))}
+            options={$importInfo.preview[0]?.map((item, index) => ({value: index, text: item})) ??
+                []}
             error={$errors.tags}
         />
-        <Tooltip class="fieldTooltip">
+        <Tooltip>
             Список тегов, разделенных точкой с запятой. Например: tag1; tag2; tag3. Можно
             использовать пробелы и символы <code>!,.-()</code>
             . Максимальная длина каждого тега – 100 символов. Слишком длинные теги будут обрезаны
@@ -232,10 +232,11 @@
             label="Приватные теги"
             placeholder="Не заполнять"
             bind:value={$data.privateTags}
-            options={$importInfo.preview[0]?.map((item, index) => ({value: index, text: item}))}
+            options={$importInfo.preview[0]?.map((item, index) => ({value: index, text: item})) ??
+                []}
             error={$errors.privateTags}
         />
-        <Tooltip class="fieldTooltip">
+        <Tooltip>
             Список тегов, разделенных точкой с запятой. Например: tag1; tag2; tag3. Можно
             использовать пробелы и символы <code>!,.-()</code>
             . Максимальная длина каждого тега – 100 символов. Слишком длинные теги будут обрезаны
@@ -248,10 +249,11 @@
             label="Информация"
             placeholder="Не заполнять"
             bind:value={$data.description}
-            options={$importInfo.preview[0]?.map((item, index) => ({value: index, text: item}))}
+            options={$importInfo.preview[0]?.map((item, index) => ({value: index, text: item})) ??
+                []}
             error={$errors.description}
         />
-        <Tooltip class="fieldTooltip">Любая информация о точке.</Tooltip>
+        <Tooltip>Любая информация о точке.</Tooltip>
     </div>
     <div class="fieldWrapper">
         <FormSelect
@@ -260,12 +262,11 @@
             label="Адрес"
             placeholder="Не заполнять"
             bind:value={$data.address}
-            options={$importInfo.preview[0]?.map((item, index) => ({value: index, text: item}))}
+            options={$importInfo.preview[0]?.map((item, index) => ({value: index, text: item})) ??
+                []}
             error={$errors.address}
         />
-        <Tooltip class="fieldTooltip">
-            Максимальная длина – 128 символов. Слишком длинные адреса будут обрезаны.
-        </Tooltip>
+        <Tooltip>Максимальная длина – 128 символов. Слишком длинные адреса будут обрезаны.</Tooltip>
     </div>
     <div class="fieldWrapper">
         <FormSelect
@@ -274,12 +275,11 @@
             label="Город"
             placeholder="Не заполнять"
             bind:value={$data.city}
-            options={$importInfo.preview[0]?.map((item, index) => ({value: index, text: item}))}
+            options={$importInfo.preview[0]?.map((item, index) => ({value: index, text: item})) ??
+                []}
             error={$errors.city}
         />
-        <Tooltip class="fieldTooltip">
-            Максимальная длина – 64 символа. Слишком длинные названия будут обрезаны.
-        </Tooltip>
+        <Tooltip>Максимальная длина – 64 символа. Слишком длинные названия будут обрезаны.</Tooltip>
     </div>
     <div class="fieldWrapper">
         <FormSelect
@@ -288,12 +288,11 @@
             label="Страна"
             placeholder="Не заполнять"
             bind:value={$data.country}
-            options={$importInfo.preview[0]?.map((item, index) => ({value: index, text: item}))}
+            options={$importInfo.preview[0]?.map((item, index) => ({value: index, text: item})) ??
+                []}
             error={$errors.country}
         />
-        <Tooltip class="fieldTooltip">
-            Максимальная длина – 64 символа. Слишком длинные названия будут обрезаны.
-        </Tooltip>
+        <Tooltip>Максимальная длина – 64 символа. Слишком длинные названия будут обрезаны.</Tooltip>
     </div>
     <div class="fieldWrapper">
         <FormSelect
@@ -302,12 +301,11 @@
             label="Период создания"
             placeholder="Не заполнять"
             bind:value={$data.installedPeriod}
-            options={$importInfo.preview[0]?.map((item, index) => ({value: index, text: item}))}
+            options={$importInfo.preview[0]?.map((item, index) => ({value: index, text: item})) ??
+                []}
             error={$errors.installedPeriod}
         />
-        <Tooltip class="fieldTooltip">
-            Максимальная длина – 20 символов. Слишком длинные строки будут обрезаны.
-        </Tooltip>
+        <Tooltip>Максимальная длина – 20 символов. Слишком длинные строки будут обрезаны.</Tooltip>
     </div>
     <div class="fieldWrapper">
         <FormSelect
@@ -316,12 +314,11 @@
             label="Утрачена"
             placeholder="Не заполнять"
             bind:value={$data.isRemoved}
-            options={$importInfo.preview[0]?.map((item, index) => ({value: index, text: item}))}
+            options={$importInfo.preview[0]?.map((item, index) => ({value: index, text: item})) ??
+                []}
             error={$errors.isRemoved}
         />
-        <Tooltip class="fieldTooltip">
-            Понимает значения 0 и 1. Остальные значения будут приведены к этим двум.
-        </Tooltip>
+        <Tooltip>Понимает значения 0 и 1. Остальные значения будут приведены к этим двум.</Tooltip>
     </div>
     <div class="fieldWrapper">
         <FormSelect
@@ -330,12 +327,11 @@
             label="Период пропажи"
             placeholder="Не заполнять"
             bind:value={$data.removalPeriod}
-            options={$importInfo.preview[0]?.map((item, index) => ({value: index, text: item}))}
+            options={$importInfo.preview[0]?.map((item, index) => ({value: index, text: item})) ??
+                []}
             error={$errors.removalPeriod}
         />
-        <Tooltip class="fieldTooltip">
-            Максимальная длина – 20 символов. Слишком длинные строки будут обрезаны.
-        </Tooltip>
+        <Tooltip>Максимальная длина – 20 символов. Слишком длинные строки будут обрезаны.</Tooltip>
     </div>
     <div class="fieldWrapper">
         <FormSelect
@@ -344,12 +340,11 @@
             label="Ссылка на источник"
             placeholder="Не заполнять"
             bind:value={$data.source}
-            options={$importInfo.preview[0]?.map((item, index) => ({value: index, text: item}))}
+            options={$importInfo.preview[0]?.map((item, index) => ({value: index, text: item})) ??
+                []}
             error={$errors.source}
         />
-        <Tooltip class="fieldTooltip">
-            Должна быть валидной ссылкой, другие значения будут проигнорированы.
-        </Tooltip>
+        <Tooltip>Должна быть валидной ссылкой, другие значения будут проигнорированы.</Tooltip>
     </div>
     <div class="actions">
         <TextButton type="button" on:click={handleClose}>Отменить</TextButton>
@@ -366,10 +361,6 @@
         margin-bottom: 16px;
         display: flex;
         align-items: center;
-
-        & :global(.fieldTooltip) {
-            margin-top: 24px;
-        }
 
         & > :global(:first-child) {
             flex: 1;

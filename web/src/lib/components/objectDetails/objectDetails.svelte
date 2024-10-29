@@ -9,9 +9,10 @@
     import {createMutation} from '@tanstack/svelte-query';
     import {uploadImage} from '$lib/api/object';
     import toast from 'svelte-french-toast';
-    import CloseButton from '$lib/components/objectDetails/closeButton.svelte';
-    import {activeMarker, activeObjectInfo} from '$lib/stores/map';
+    import {activeMarker, activeObjectInfo, map} from '$lib/stores/map';
     import CloseConfirmation from '$lib/components/objectDetails/closeConfirmation.svelte';
+    import IconButton from '$lib/components/button/iconButton.svelte';
+    import {clsx} from 'clsx';
 
     const dispatch = createEventDispatcher();
 
@@ -44,6 +45,10 @@
         );
     }
 
+    function handleMinimizeClick() {
+        activeObjectInfo.update(value => ({...value, isMinimized: !value.isMinimized}));
+    }
+
     function handleCloseClick() {
         if ($activeObjectInfo.isDirty) {
             isCloseConfirmationOpen = true;
@@ -59,13 +64,22 @@
 
         activeMarker.deactivate();
         activeObjectInfo.reset();
+        $map.getStreetView().setVisible(false);
     }
 </script>
 
 <div class="background" on:click={handleCloseClick} />
-<aside class="popup" transition:fly={{x: -100, duration: 200, easing: cubicInOut}}>
+<aside
+    class={clsx(['popup', {minimized: $activeObjectInfo.isMinimized}])}
+    transition:fly={{x: -100, duration: 200, easing: cubicInOut}}
+>
     <section class="header">
-        <CloseButton on:click={handleCloseClick} />
+        <span class="headerTitle">{initialValues.name ?? ''}</span>
+        <IconButton
+            icon={`fa-solid ${$activeObjectInfo.isMinimized ? 'fa-chevron-up' : 'fa-chevron-down'}`}
+            on:click={handleMinimizeClick}
+        />
+        <IconButton icon="fa-solid fa-xmark" on:click={handleCloseClick} />
     </section>
     {#key key}
         {#if isLoading}
@@ -103,21 +117,42 @@
 
     .popup {
         position: absolute;
-        display: flex;
-        flex-direction: column;
+        bottom: 0;
         width: calc(100dvw - 8px * 2);
         max-width: 400px;
         height: calc(100dvh - 8px * 2);
         margin: 8px;
+        display: flex;
+        flex-direction: column;
         border-radius: 10px;
-        z-index: 2;
         background-color: white;
+        transition: height 0.2s;
+        z-index: 2;
+    }
+
+    .minimized {
+        height: 64px;
     }
 
     .header {
         display: flex;
-        justify-content: flex-end;
+        align-items: center;
         padding: 12px;
+        gap: 8px;
+    }
+
+    .headerTitle {
+        margin-right: 8px;
+        color: transparent;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        text-wrap: nowrap;
+        flex: 1;
+        transition: color 0.2s;
+
+        .minimized & {
+            color: colors.$black;
+        }
     }
 
     .loader {

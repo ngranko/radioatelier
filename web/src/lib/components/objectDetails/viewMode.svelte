@@ -1,8 +1,8 @@
 <script lang="ts">
     import type {LooseObject} from '$lib/interfaces/object';
-    import TextButton from '$lib/components/button/textButton.svelte';
-    import {activeObjectInfo} from '$lib/stores/map';
-    import DeleteButton from '$lib/components/objectDetails/editMode/deleteButton.svelte';
+    import {activeObjectInfo, map} from '$lib/stores/map';
+    import Flags from '$lib/components/objectDetails/flags.svelte';
+    import IconButton from '$lib/components/button/iconButton.svelte';
     import {createEventDispatcher} from 'svelte';
 
     const dispatch = createEventDispatcher();
@@ -17,8 +17,15 @@
         }));
     }
 
-    function handleDelete() {
-        dispatch('delete', initialValues.id);
+    function handleRouteClick() {
+        window.location = `https://www.google.com/maps/dir/?api=1&destination=${initialValues.lat},${initialValues.lng}&dir_action=navigate`;
+    }
+
+    function handleStreetViewClick() {
+        const pano = $map.getStreetView();
+        pano.setPosition(new google.maps.LatLng(initialValues.lat, initialValues.lng));
+        pano.setVisible(true);
+        activeObjectInfo.update(value => ({...value, isMinimized: true}));
     }
 
     function startsWithNumber(str: string): boolean {
@@ -42,6 +49,11 @@
 </script>
 
 <div class="preview">
+    <Flags
+        isPublic={initialValues.isPublic}
+        isVisited={initialValues.isVisited}
+        isRemoved={initialValues.isRemoved}
+    />
     {#if initialValues.rating}
         <div class="rating">
             {#if initialValues.rating === '1'}
@@ -65,26 +77,10 @@
             <span class="tag-private">{tag.name}</span>
         {/each}
     </div>
-    <div class="flags">
-        {#if initialValues.isPublic}
-            <div title="Публичная" class="flag">
-                <i class="fa-solid fa-lock-open"></i>
-            </div>
-        {:else}
-            <div title="Приватная" class="flag">
-                <i class="fa-solid fa-lock"></i>
-            </div>
-            {#if initialValues.isVisited}
-                <div title="Посещена" class="flag">
-                    <i class="fa-solid fa-person-walking-arrow-right"></i>
-                </div>
-            {/if}
-        {/if}
-        {#if initialValues.isRemoved}
-            <div title="Утрачена" class="flag">
-                <i class="fa-solid fa-ghost"></i>
-            </div>
-        {/if}
+    <div class="actions">
+        <IconButton icon="fa-solid fa-pen" on:click={handleEditClick} />
+        <IconButton icon="fa-solid fa-route" on:click={handleRouteClick} />
+        <IconButton icon="fa-solid fa-street-view" on:click={handleStreetViewClick} />
     </div>
     {#if initialValues.address || initialValues.city || initialValues.country}
         <p>
@@ -119,10 +115,6 @@
             </a>
         </p>
     {/if}
-    <div class="actions">
-        <TextButton on:click={handleEditClick}>Редактировать</TextButton>
-        <DeleteButton on:click={handleDelete} />
-    </div>
 </div>
 
 <style lang="scss">
@@ -131,6 +123,7 @@
     @use '../../../styles/typography';
 
     .preview {
+        position: relative;
         padding: 16px 24px 24px;
     }
 
@@ -169,26 +162,10 @@
         margin-top: 4px;
     }
 
-    .flags {
-        @include typography.size-22;
-        margin-top: 8px;
-        display: flex;
-    }
-
-    .flag {
-        width: 40px;
-        height: 40px;
-        margin-right: 16px;
-        border-radius: 50%;
-        background-color: colors.$lightgray;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
     .actions {
+        margin: 8px 0;
         display: flex;
-        justify-content: space-between;
+        gap: 16px;
     }
 
     .lowercase {

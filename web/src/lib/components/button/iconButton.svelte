@@ -4,17 +4,21 @@
 
     export let type: HTMLButtonAttributes['type'] = undefined;
     export let disabled: boolean = false;
-    export let modifier: 'primary' | 'secondary' | 'danger' = 'primary';
+    export let icon: string;
+    export let modifier: 'primary' | 'secondary' | 'danger' | undefined;
 
     const className = clsx({
         button: true,
         primary: modifier === 'primary',
         secondary: modifier === 'secondary',
         danger: modifier === 'danger',
+        [$$props.class]: $$props.class,
     });
 </script>
 
-<button {type} {disabled} class={className} on:click><slot /></button>
+<button {type} {disabled} class={className} on:click>
+    <i class={icon}></i>
+</button>
 
 <style lang="scss">
     @use 'sass:color';
@@ -22,44 +26,34 @@
     @use '../../../styles/typography';
 
     .button {
-        @include typography.brand-face;
+        @include typography.size-22;
+        width: 40px;
+        height: 40px;
+        margin: 0;
+        padding: 0;
         border: none;
-        background: none;
-        font-size: 16px;
+        border-radius: 50%;
+        background-color: colors.$lightgray;
+        display: flex;
+        justify-content: center;
+        align-items: center;
         transition: background-color 0.2s ease-in-out;
         cursor: pointer;
 
-        &:disabled {
-            color: colors.$gray;
-            cursor: default;
-
-            &:hover {
-                color: colors.$gray;
-            }
+        &:hover {
+            background-color: color.scale(colors.$lightgray, $lightness: -16%);
         }
     }
 
     .primary {
         color: colors.$primary;
-
-        &:hover {
-            color: color.scale(colors.$primary, $lightness: +16%);
-        }
     }
 
     .secondary {
         color: colors.$secondary;
-
-        &:hover {
-            color: color.scale(colors.$secondary, $lightness: +16%);
-        }
     }
 
     .danger {
         color: colors.$danger;
-
-        &:hover {
-            color: color.scale(colors.$danger, $lightness: +16%);
-        }
     }
 </style>

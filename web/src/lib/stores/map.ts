@@ -17,6 +17,7 @@ export const mapLoader = readable<Loader>(undefined, function start(set) {
 export const map = writable<google.maps.Map>(undefined);
 
 const {subscribe, set, update} = writable<ObjectDetailsInfo>({
+    isMinimized: false,
     isLoading: false,
     isEditing: false,
     isDirty: false,
@@ -27,7 +28,14 @@ const {subscribe, set, update} = writable<ObjectDetailsInfo>({
 export const activeObjectInfo = {
     subscribe,
     reset: () =>
-        set({isLoading: false, isEditing: false, isDirty: false, detailsId: '', object: null}),
+        set({
+            isMinimized: false,
+            isLoading: false,
+            isEditing: false,
+            isDirty: false,
+            detailsId: '',
+            object: null,
+        }),
     set,
     update,
 };

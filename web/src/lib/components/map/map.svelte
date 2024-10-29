@@ -1,6 +1,6 @@
 <script lang="ts">
     import {onMount, onDestroy, createEventDispatcher} from 'svelte';
-    import {mapLoader, map, dragTimeout, markerList} from '$lib/stores/map';
+    import {mapLoader, map, dragTimeout, markerList, activeObjectInfo} from '$lib/stores/map';
     import {createMutation} from '@tanstack/svelte-query';
     import {getLocation} from '$lib/api/location';
     import type {Location} from '$lib/interfaces/location';
@@ -51,6 +51,18 @@
             map.update(() => new Map(container, mapOptions));
         } catch (e) {
             console.error('error instantiating map');
+            console.error(e);
+        }
+
+        try {
+            $map.getStreetView().setOptions({fullscreenControl: false, addressControl: false});
+            $map.getStreetView().addListener('visible_changed', () => {
+                if (!$map.getStreetView().getVisible()) {
+                    activeObjectInfo.update(value => ({...value, isMinimized: false}));
+                }
+            });
+        } catch (e) {
+            console.error('error instantiating street view');
             console.error(e);
         }
 
@@ -172,7 +184,6 @@
     }
 
     function updateCurrentPosition() {
-        const startTime = Date.now();
         navigator.permissions.query({name: 'geolocation'}).then(
             result => {
                 console.log(result.state);
@@ -185,7 +196,6 @@
                                 isCurrent: true,
                             };
                             localStorage.setItem('lastPosition', JSON.stringify(location));
-                            console.log('geolocation updated in', Date.now() - startTime);
 
                             if (!isInteracted && $map) {
                                 $map.setCenter({

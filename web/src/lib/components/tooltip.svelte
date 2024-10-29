@@ -14,9 +14,9 @@
     }
 </script>
 
-<div class={`container ${$$props.class}`}>
-    <button class="button" on:click|stopPropagation={handleClick}>
-        <i class="fa-regular fa-circle-question"></i>
+<div class={`container ${$$props.class ?? ''}`}>
+    <button type="button" class="button" on:click|stopPropagation={handleClick}>
+        <slot name="button" />
     </button>
     {#if isOpen}
         <div class="tooltip" transition:fade={{duration: 200, easing: cubicInOut}}><slot /></div>
@@ -29,7 +29,6 @@
 
     .container {
         position: relative;
-        margin-left: 16px;
     }
 
     .button {
@@ -38,8 +37,7 @@
         height: 26px;
         padding: 0;
         border: none;
-        background: colors.$white;
-        color: colors.$darkgray;
+        background: none;
         text-align: center;
         cursor: pointer;
     }
@@ -51,7 +49,7 @@
         top: 50%;
         width: max-content;
         max-width: 244px;
-        padding: 16px;
+        padding: 8px 12px;
         border: 1px solid colors.$gray;
         border-radius: 6px;
         background: colors.$white;

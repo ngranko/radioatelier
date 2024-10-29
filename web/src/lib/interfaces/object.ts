@@ -40,6 +40,7 @@ export interface BareObject {
 }
 
 export interface ObjectDetailsInfo {
+    isMinimized: boolean;
     isLoading: boolean;
     isEditing: boolean;
     isDirty: boolean;

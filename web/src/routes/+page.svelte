@@ -145,32 +145,30 @@
     />
 {/if}
 
-<div>
-    <!--    <input id="pac-input" class="search" type="text" placeholder="Search Box" />-->
-    <Map on:click={handleMapClick} />
-    {#if $map}
-        <LocationMarker {orientationEnabled} />
-        {#each Object.values($markerList) as marker (marker.id)}
-            <Marker
-                id={marker.id}
-                lat={marker.lat}
-                lng={marker.lng}
-                isVisited={marker.isVisited}
-                isRemoved={marker.isRemoved}
-            />
-        {/each}
+<!--    <input id="pac-input" class="search" type="text" placeholder="Search Box" />-->
+<Map on:click={handleMapClick} />
+{#if $map}
+    <LocationMarker {orientationEnabled} />
+    {#each Object.values($markerList) as marker (marker.id)}
+        <Marker
+            id={marker.id}
+            lat={marker.lat}
+            lng={marker.lng}
+            isVisited={marker.isVisited}
+            isRemoved={marker.isRemoved}
+        />
+    {/each}
 
-        {#if $activeObjectInfo.object && !$activeObjectInfo.object.id}
-            {#key `${$activeObjectInfo.object.lat},${$activeObjectInfo.object.lng}`}
-                <Marker
-                    lat={$activeObjectInfo.object.lat}
-                    lng={$activeObjectInfo.object.lng}
-                    initialActive={true}
-                />
-            {/key}
-        {/if}
+    {#if $activeObjectInfo.object && !$activeObjectInfo.object.id}
+        {#key `${$activeObjectInfo.object.lat},${$activeObjectInfo.object.lng}`}
+            <Marker
+                lat={$activeObjectInfo.object.lat}
+                lng={$activeObjectInfo.object.lng}
+                initialActive={true}
+            />
+        {/key}
     {/if}
-</div>
+{/if}
 
 <!--<style>-->
 <!--    .search {-->
