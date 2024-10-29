@@ -4,6 +4,7 @@
     import Flags from '$lib/components/objectDetails/flags.svelte';
     import IconButton from '$lib/components/button/iconButton.svelte';
     import {createEventDispatcher} from 'svelte';
+    import toast from 'svelte-french-toast';
 
     const dispatch = createEventDispatcher();
 
@@ -22,10 +23,23 @@
     }
 
     function handleStreetViewClick() {
-        const pano = $map.getStreetView();
-        pano.setPosition(new google.maps.LatLng(initialValues.lat, initialValues.lng));
-        pano.setVisible(true);
-        activeObjectInfo.update(value => ({...value, isMinimized: true}));
+        const streetView = new google.maps.StreetViewService();
+        streetView
+            .getPanorama({
+                location: new google.maps.LatLng(initialValues.lat, initialValues.lng),
+                radius: 50,
+            })
+            .then(({data}: google.maps.StreetViewResponse) => {
+                const location = data.location!;
+                const pano = $map.getStreetView();
+                pano.setPano(location.pano as string);
+                pano.setVisible(true);
+                activeObjectInfo.update(value => ({...value, isMinimized: true}));
+            })
+            .catch(error => {
+                console.error(error);
+                toast.error('Нет панорамы для этой точки');
+            });
     }
 
     function startsWithNumber(str: string): boolean {
