@@ -53,6 +53,7 @@ func ConfigureRouter() *router.Router {
         r.Put("/{id}/position", object.Reposition)
         r.Post("/{id}/image", object.UploadImage)
         r.Delete("/{id}", object.Delete)
+        r.Get("/search", object.Search)
     })
 
     r.Route("/tag", func(r *router.Router) {

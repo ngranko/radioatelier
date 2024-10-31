@@ -12,6 +12,8 @@ import (
 
 var migrationList = []list.Migration{
     list.Migration202405230126,
+    list.Migration202410302139,
+    list.Migration202410310401,
 }
 
 func Run(client *db.Client) {

@@ -58,6 +58,21 @@ func GetObjectList(userID uuid.UUID) ([]Object, error) {
     return result, nil
 }
 
+func SearchObjects(query string, userLatitude string, userLongitude string, userID uuid.UUID) ([]Object, error) {
+    var result []Object
+    repo := repository.NewObjectRepository(db.Get())
+    list, err := repo.Search(query, userLatitude, userLongitude, userID)
+    if err != nil {
+        return nil, err
+    }
+
+    for _, objectModel := range list {
+        result = append(result, &objectPresenter{repository: repo, model: &objectModel})
+    }
+
+    return result, nil
+}
+
 func DeleteObjectByID(id uuid.UUID) error {
     return repository.NewObjectRepository(db.Get()).Delete(&model.Object{Base: model.Base{ID: id}})
 }
