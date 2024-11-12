@@ -313,7 +313,7 @@
             label="Утрачена"
         />
     </div>
-    {#if data.isRemoved}
+    {#if $data.isRemoved}
         <div class="field">
             <FormInput
                 id="removalPeriod"
