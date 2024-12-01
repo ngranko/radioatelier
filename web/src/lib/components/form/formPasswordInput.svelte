@@ -1,19 +1,32 @@
 <script lang="ts">
     import Input from '$lib/components/input/input.svelte';
     import {clsx} from 'clsx';
-    import {type ComponentType, onMount} from 'svelte';
+    import {type Component, onMount} from 'svelte';
 
-    export let id: string | undefined = undefined;
-    export let name: string | undefined = undefined;
-    export let value: string = '';
-    export let placeholder: string | undefined = undefined;
-    export let required = false;
-    export let label: string | undefined = undefined;
-    export let error: string[] | null | undefined = undefined;
-    export let withStrengthIndicator: boolean = false;
+    interface Props {
+        id?: string | undefined;
+        name?: string | undefined;
+        value?: string;
+        placeholder?: string | undefined;
+        required?: boolean;
+        label?: string | undefined;
+        error?: string[] | null | undefined;
+        withStrengthIndicator?: boolean;
+    }
 
-    let isPlainPassword: boolean = false;
-    let PasswordStrength: ComponentType;
+    let {
+        id = undefined,
+        name = undefined,
+        value = '',
+        placeholder = undefined,
+        required = false,
+        label = undefined,
+        error = undefined,
+        withStrengthIndicator = false,
+    }: Props = $props();
+
+    let isPlainPassword: boolean = $state(false);
+    let PasswordStrength: Component | undefined = $state();
 
     onMount(async () => {
         if (withStrengthIndicator) {
@@ -22,16 +35,16 @@
         }
     });
 
-    let classes: string;
-    let isError: boolean;
+    let isError: boolean = $derived(Boolean(error));
+    let classes: string = $derived(
+        clsx({
+            field: true,
+            error: isError,
+        }),
+    );
 
-    $: isError = Boolean(error);
-    $: classes = clsx({
-        field: true,
-        error: isError,
-    });
-
-    function handleShowPasswordClick() {
+    function handleShowPasswordClick(event: MouseEvent) {
+        event.stopPropagation();
         isPlainPassword = !isPlainPassword;
     }
 </script>
@@ -47,11 +60,7 @@
             {required}
             {placeholder}
         />
-        <button
-            type="button"
-            class="showPassword"
-            on:click|stopPropagation={handleShowPasswordClick}
-        >
+        <button type="button" class="showPassword" onclick={handleShowPasswordClick}>
             {#if isPlainPassword}
                 <i class="fa-regular fa-eye-slash"></i>
             {:else}

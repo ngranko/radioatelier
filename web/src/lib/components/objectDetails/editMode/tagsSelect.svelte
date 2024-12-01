@@ -4,25 +4,31 @@
     import Svelecte from 'svelecte';
     import type {Payload} from '$lib/interfaces/api';
     import type {ListTagsResponsePayload} from '$lib/interfaces/tag';
-    import {createEventDispatcher} from 'svelte';
     import {clsx} from 'clsx';
 
     const client = useQueryClient();
-    const dispatch = createEventDispatcher();
 
-    export let id: string | undefined = undefined;
-    export let name: string | undefined = undefined;
-    export let value: string[] = [];
-    export let error: string[] | null | undefined = undefined;
+    interface Props {
+        id: string | undefined;
+        name: string | undefined;
+        value: (string | undefined)[];
+        error?: string[] | null | undefined;
+    }
 
-    let classes: string;
-    let isError: boolean;
+    let {
+        id = undefined,
+        name = undefined,
+        value = $bindable([]),
+        error = undefined,
+    }: Props = $props();
 
-    $: isError = Boolean(error);
-    $: classes = clsx({
-        field: true,
-        error: isError,
-    });
+    let isError: boolean = $derived(Boolean(error));
+    let classes: string = $derived(
+        clsx({
+            field: true,
+            error: isError,
+        }),
+    );
 
     const createTagMutation = createMutation({
         mutationFn: createTag,
@@ -47,6 +53,10 @@
         const result = await $createTagMutation.mutateAsync({name: props.inputValue});
         return {id: result.data.id, name: result.data.name};
     }
+
+    function getCreateRowLabel(value: string) {
+        return `Создать '${value}'`;
+    }
 </script>
 
 <div class={classes}>
@@ -54,7 +64,6 @@
     <!-- TODO: add loading state -->
     {#if !$tags.isLoading}
         <Svelecte
-            on:change
             inputId={id}
             placeholder="Не выбраны"
             highlightFirstItem={false}
@@ -62,7 +71,7 @@
             multiple={true}
             clearable={true}
             i18n={{
-                createRowLabel: value => `Создать '${value}'`,
+                createRowLabel: getCreateRowLabel,
             }}
             options={$tags.data?.data.tags.sort((a, b) => a.name.localeCompare(b.name))}
             {name}

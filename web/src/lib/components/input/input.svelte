@@ -1,10 +1,21 @@
 <script lang="ts">
-    export let id: string | undefined = undefined;
-    export let name: string | undefined = undefined;
-    export let type: 'text' | 'email' | 'password' = 'text';
-    export let value: string = '';
-    export let placeholder: string | undefined = undefined;
-    export let required = false;
+    interface Props {
+        id?: string | undefined;
+        name?: string | undefined;
+        type?: 'text' | 'email' | 'password';
+        value?: string;
+        placeholder?: string | undefined;
+        required?: boolean;
+    }
+
+    let {
+        id = undefined,
+        name = undefined,
+        type = 'text',
+        value = '',
+        placeholder = undefined,
+        required = false,
+    }: Props = $props();
 </script>
 
 <input class="element" {type} {id} {name} {value} {placeholder} data-1p-ignore {required} />

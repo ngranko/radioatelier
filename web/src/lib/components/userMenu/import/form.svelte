@@ -2,14 +2,19 @@
     import FormSelect from '$lib/components/form/formSelect.svelte';
     import TextButton from '$lib/components/button/textButton.svelte';
     import PrimaryButton from '$lib/components/button/primaryButton.svelte';
-    import {createEventDispatcher} from 'svelte';
     import {createForm} from 'felte';
     import * as yup from 'yup';
     import {validator} from '@felte/validator-yup';
     import Tooltip from '$lib/components/userMenu/import/tooltip.svelte';
     import {importInfo} from '$lib/stores/import';
+    import type {ImportMappings} from '$lib/interfaces/import';
 
-    const dispatch = createEventDispatcher();
+    interface Props {
+        onSubmit(values: ImportMappings): void;
+        onClose(): void;
+    }
+
+    const {onSubmit, onClose}: Props = $props();
 
     const schema = yup.object({
         coordinates: yup
@@ -20,9 +25,10 @@
                 return regex.test($importInfo.preview[1][value]);
             }),
         name: yup.number().required('Пожалуйста, выберите колонку'),
-        isVisited: yup.number().nullable(),
+        isVisited: yup.number().defined().nullable(),
         rating: yup
             .number()
+            .defined()
             .nullable()
             .test('validRating', 'Рейтинг может быть от 1 до 3', value => {
                 if (!value) {
@@ -33,11 +39,12 @@
                     $importInfo.preview[1][value] === ''
                 );
             }),
-        isPublic: yup.number().nullable(),
+        isPublic: yup.number().defined().nullable(),
         category: yup.number().required('Пожалуйста, выберите колонку'),
-        image: yup.number().nullable(),
+        image: yup.number().defined().nullable(),
         tags: yup
             .number()
+            .defined()
             .nullable()
             .test(
                 'validFormat',
@@ -55,6 +62,7 @@
             ),
         privateTags: yup
             .number()
+            .defined()
             .nullable()
             .test(
                 'validFormat',
@@ -70,15 +78,16 @@
                     );
                 },
             ),
-        description: yup.number().nullable(),
-        address: yup.number().nullable(),
-        city: yup.number().nullable(),
-        country: yup.number().nullable(),
-        installedPeriod: yup.number().nullable(),
-        isRemoved: yup.number().nullable(),
-        removalPeriod: yup.number().nullable(),
+        description: yup.number().defined().nullable(),
+        address: yup.number().defined().nullable(),
+        city: yup.number().defined().nullable(),
+        country: yup.number().defined().nullable(),
+        installedPeriod: yup.number().defined().nullable(),
+        isRemoved: yup.number().defined().nullable(),
+        removalPeriod: yup.number().defined().nullable(),
         source: yup
             .number()
+            .defined()
             .nullable()
             .test('isUrl', 'Должно быть ссылкой', (value: number | null | undefined) => {
                 if (!value) {
@@ -94,15 +103,15 @@
     });
 
     const {form, data, errors, isSubmitting, reset} = createForm<yup.InferType<typeof schema>>({
-        onSubmit: async (values: unknown) => {
-            dispatch('submit', values);
+        onSubmit: (values: ImportMappings) => {
+            onSubmit(values);
         },
         extend: validator({schema}),
     });
 
     function handleClose() {
         reset();
-        dispatch('close');
+        onClose();
     }
 </script>
 
@@ -347,7 +356,7 @@
         <Tooltip>Должна быть валидной ссылкой, другие значения будут проигнорированы.</Tooltip>
     </div>
     <div class="actions">
-        <TextButton type="button" on:click={handleClose}>Отменить</TextButton>
+        <TextButton type="button" onClick={handleClose}>Отменить</TextButton>
         <span class="import">
             <PrimaryButton disabled={$isSubmitting.valueOf()}>Импортировать</PrimaryButton>
         </span>

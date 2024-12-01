@@ -3,12 +3,13 @@
     import {activeObjectInfo, map} from '$lib/stores/map';
     import Flags from '$lib/components/objectDetails/flags.svelte';
     import IconButton from '$lib/components/button/iconButton.svelte';
-    import {createEventDispatcher} from 'svelte';
     import toast from 'svelte-french-toast';
 
-    const dispatch = createEventDispatcher();
+    interface Props {
+        initialValues: Partial<LooseObject>;
+    }
 
-    export let initialValues: Partial<LooseObject>;
+    let {initialValues}: Props = $props();
 
     function handleEditClick() {
         activeObjectInfo.update(value => ({
@@ -19,14 +20,17 @@
     }
 
     function handleRouteClick() {
-        window.location = `https://www.google.com/maps/dir/?api=1&destination=${initialValues.lat},${initialValues.lng}&dir_action=navigate`;
+        window.location.href = `https://www.google.com/maps/dir/?api=1&destination=${initialValues.lat},${initialValues.lng}&dir_action=navigate`;
     }
 
     function handleStreetViewClick() {
         const streetView = new google.maps.StreetViewService();
         streetView
             .getPanorama({
-                location: new google.maps.LatLng(initialValues.lat, initialValues.lng),
+                location: new google.maps.LatLng(
+                    Number(initialValues.lat),
+                    Number(initialValues.lng),
+                ),
                 radius: 50,
             })
             .then(({data}: google.maps.StreetViewResponse) => {
@@ -64,9 +68,9 @@
 
 <div class="preview">
     <Flags
-        isPublic={initialValues.isPublic}
-        isVisited={initialValues.isVisited}
-        isRemoved={initialValues.isRemoved}
+        isPublic={initialValues.isPublic ?? false}
+        isVisited={initialValues.isVisited ?? false}
+        isRemoved={initialValues.isRemoved ?? false}
     />
     {#if initialValues.rating}
         <div class="rating">
@@ -84,17 +88,17 @@
     <div class="category">{initialValues.category?.name ?? ''}</div>
     <h1 class="name">{initialValues.name}</h1>
     <div class="tags">
-        {#each initialValues.tags?.sort((a, b) => a.name.localeCompare(b.name)) ?? [] as tag}
+        {#each initialValues.tags?.sort( (a, b) => (a.name && b.name ? a.name.localeCompare(b.name) : 0), ) ?? [] as tag}
             <span class="tag">{tag.name}</span>
         {/each}
-        {#each initialValues.privateTags?.sort((a, b) => a.name.localeCompare(b.name)) ?? [] as tag}
+        {#each initialValues.privateTags?.sort( (a, b) => (a.name && b.name ? a.name.localeCompare(b.name) : 0), ) ?? [] as tag}
             <span class="tag-private">{tag.name}</span>
         {/each}
     </div>
     <div class="actions">
-        <IconButton icon="fa-solid fa-pen" on:click={handleEditClick} />
-        <IconButton icon="fa-solid fa-route" on:click={handleRouteClick} />
-        <IconButton icon="fa-solid fa-street-view" on:click={handleStreetViewClick} />
+        <IconButton icon="fa-solid fa-pen" onClick={handleEditClick} />
+        <IconButton icon="fa-solid fa-route" onClick={handleRouteClick} />
+        <IconButton icon="fa-solid fa-street-view" onClick={handleStreetViewClick} />
     </div>
     {#if initialValues.address || initialValues.city || initialValues.country}
         <p>

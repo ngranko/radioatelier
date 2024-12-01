@@ -1,18 +1,22 @@
 <script lang="ts">
-    import {onMount, onDestroy, createEventDispatcher} from 'svelte';
+    import {onMount, onDestroy} from 'svelte';
     import {mapLoader, map, dragTimeout, markerList, activeObjectInfo} from '$lib/stores/map';
     import {createMutation} from '@tanstack/svelte-query';
     import {getLocation} from '$lib/api/location';
     import type {Location} from '$lib/interfaces/location';
 
-    let container: HTMLDivElement;
+    interface Props {
+        onClick(location: Location): void;
+    }
+
+    let {onClick}: Props = $props();
+
+    let container: HTMLDivElement | undefined = $state();
     let isInteracted = false;
     let clickTimeout: number | undefined;
     let isClicked = false;
     let positionInterval: number | undefined;
     let boundTimeout: number | undefined;
-
-    const dispatch = createEventDispatcher();
 
     const location = createMutation({
         mutationFn: getLocation,
@@ -48,7 +52,7 @@
 
         try {
             const {Map} = await $mapLoader.importLibrary('maps');
-            map.update(() => new Map(container, mapOptions));
+            map.update(() => new Map(container!, mapOptions));
         } catch (e) {
             console.error('error instantiating map');
             console.error(e);
@@ -78,7 +82,7 @@
 
                     clickTimeout = setTimeout(() => {
                         isClicked = true;
-                        dispatch('click', {lat: event.latLng?.lat(), lng: event.latLng?.lng()});
+                        onClick({lat: event.latLng?.lat() ?? 0, lng: event.latLng?.lng() ?? 0});
                         clickTimeout = undefined;
                     }, 300);
                 }

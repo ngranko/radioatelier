@@ -30,7 +30,11 @@
             ),
     });
 
-    export let isDialogOpen = false;
+    interface Props {
+        isDialogOpen?: boolean;
+    }
+
+    let {isDialogOpen = $bindable(false)}: Props = $props();
 
     const {form, data, errors, isSubmitting, reset} = createForm<yup.InferType<typeof schema>>({
         onSubmit: async (values: ChangePasswordFormInputs) =>
@@ -79,7 +83,7 @@
         />
         <div class="actions">
             <PrimaryButton disabled={$isSubmitting.valueOf()}>Сменить</PrimaryButton>
-            <TextButton type="button" on:click={handleDialogClose}>Отменить</TextButton>
+            <TextButton type="button" onClick={handleDialogClose}>Отменить</TextButton>
         </div>
     </form>
 </Dialog>

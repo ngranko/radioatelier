@@ -7,29 +7,44 @@
         text: string;
     }
 
-    export let id: string | undefined = undefined;
-    export let name: string | undefined = undefined;
-    export let value: string | number | null | undefined = '';
-    export let options: Option[] = [];
-    export let placeholder: string | undefined = undefined;
-    export let required = false;
-    export let label: string | undefined = undefined;
-    export let error: string[] | null | undefined = undefined;
+    interface Props {
+        id?: string | undefined;
+        name?: string | undefined;
+        value?: string | number | null | undefined;
+        options?: Option[];
+        placeholder?: string | undefined;
+        required?: boolean;
+        label?: string;
+        error?: string[] | null;
+        onChange?(value: string): void;
+    }
 
-    let classes: string;
-    let isError: boolean;
+    let {
+        id = undefined,
+        name = undefined,
+        value = '',
+        options = [],
+        placeholder = undefined,
+        required = false,
+        label = undefined,
+        error = undefined,
+        onChange,
+    }: Props = $props();
 
-    $: isError = Boolean(error);
-    $: classes = clsx({
-        field: true,
-        error: isError,
-    });
+    let isError: boolean = $derived(Boolean(error));
+    let classes: string = $derived(
+        clsx({
+            field: true,
+            error: isError,
+        }),
+    );
 </script>
 
 <div class={classes}>
     <label for={id} class="label">{error ? error[0] : label}</label>
     <Svelecte
         on:change
+        {onChange}
         inputId={id}
         {name}
         {value}

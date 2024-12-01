@@ -1,8 +1,17 @@
 <script lang="ts">
+    import { stopPropagation } from 'svelte/legacy';
+
     import {fade} from 'svelte/transition';
     import {cubicInOut} from 'svelte/easing';
+    interface Props {
+        button?: import('svelte').Snippet;
+        children?: import('svelte').Snippet;
+        [key: string]: any
+    }
 
-    let isOpen = false;
+    let { ...props }: Props = $props();
+
+    let isOpen = $state(false);
 
     function handleClick() {
         isOpen = !isOpen;
@@ -14,12 +23,12 @@
     }
 </script>
 
-<div class={`container ${$$props.class ?? ''}`}>
-    <button type="button" class="button" on:click|stopPropagation={handleClick}>
-        <slot name="button" />
+<div class={`container ${props.class ?? ''}`}>
+    <button type="button" class="button" onclick={stopPropagation(handleClick)}>
+        {@render props.button?.()}
     </button>
     {#if isOpen}
-        <div class="tooltip" transition:fade={{duration: 200, easing: cubicInOut}}><slot /></div>
+        <div class="tooltip" transition:fade={{duration: 200, easing: cubicInOut}}>{@render props.children?.()}</div>
     {/if}
 </div>
 

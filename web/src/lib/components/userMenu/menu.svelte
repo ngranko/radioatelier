@@ -8,15 +8,19 @@
     import Loader from '$lib/components/loader.svelte';
     import ImportDialog from '$lib/components/userMenu/import/importDialog.svelte';
     import {goto} from '$app/navigation';
-    import {type ComponentType, createEventDispatcher} from 'svelte';
+    import {type Component} from 'svelte';
     import toast from 'svelte-french-toast';
 
-    const dispatch = createEventDispatcher();
+    interface Props {
+        onClose(): void;
+    }
 
-    let isImportDialogOpen = false;
-    let isDialogOpen = false;
-    let isDialogLoading = false;
-    let PasswordChange: ComponentType;
+    let {onClose}: Props = $props();
+
+    let isImportDialogOpen = $state(false);
+    let isDialogOpen = $state(false);
+    let isDialogLoading = $state(false);
+    let PasswordChange: Component | undefined = $state();
 
     const invalidateTokenMutation = createMutation({
         mutationFn: invalidateToken,
@@ -55,23 +59,19 @@
     function handleLogoutClick() {
         $logoutMutation.mutate();
     }
-
-    function handleClose() {
-        dispatch('close');
-    }
 </script>
 
-<div class="backdrop" role="none" on:click={handleClose} />
+<div class="backdrop" role="none" onclick={onClose}></div>
 <div class="userMenu" transition:fly={{y: 32, duration: 200, easing: cubicInOut}}>
-    <button class="userMenuButton" on:click={handleChangePasswordClick}>
+    <button class="userMenuButton" onclick={handleChangePasswordClick}>
         <i class="fa-solid fa-key"></i>
         Сменить пароль
     </button>
-    <button class="userMenuButton" on:click={handleImportClick}>
+    <button class="userMenuButton" onclick={handleImportClick}>
         <i class="fa-solid fa-file-import"></i>
         Импорт точек
     </button>
-    <button class="userMenuButton" on:click={handleLogoutClick}>
+    <button class="userMenuButton" onclick={handleLogoutClick}>
         <i class="fa-solid fa-sign-out-alt"></i>
         Выйти
     </button>

@@ -1,20 +1,23 @@
 <script lang="ts">
     import {cubicInOut} from 'svelte/easing';
     import {fade} from 'svelte/transition';
-    import {createEventDispatcher} from 'svelte';
     import {portal} from 'svelte-portal';
 
-    const dispatch = createEventDispatcher();
+    interface Props {
+        isOpen?: boolean;
+        children?: import('svelte').Snippet;
+        onClose(): void;
+    }
 
-    export let isOpen: boolean = false;
+    let {isOpen = $bindable(false), children, onClose}: Props = $props();
 
-    let dialogRef: HTMLElement;
+    let dialogRef: HTMLElement | undefined = $state();
 
     function handleClose(event: Event) {
-        if (dialogRef.contains(event.target as Node)) {
+        if (dialogRef?.contains(event.target as Node)) {
             return;
         }
-        dispatch('close');
+        onClose();
     }
 </script>
 
@@ -22,12 +25,12 @@
     <div
         class="backdrop"
         role="none"
-        on:click={handleClose}
+        onclick={handleClose}
         transition:fade={{duration: 200, easing: cubicInOut}}
         use:portal={'#portal'}
     >
         <div bind:this={dialogRef} role="document" class="dialog">
-            <slot />
+            {@render children?.()}
         </div>
     </div>
 {/if}

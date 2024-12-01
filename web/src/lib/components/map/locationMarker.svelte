@@ -2,9 +2,17 @@
     import {onMount, onDestroy} from 'svelte';
     import {mapLoader, map} from '$lib/stores/map';
 
-    export let orientationEnabled: boolean;
+    interface Props {
+        orientationEnabled: boolean;
+    }
 
-    let marker: google.maps.marker.AdvancedMarkerElement;
+    interface DeviceOrientationEventExtended extends DeviceOrientationEvent {
+        webkitCompassHeading?: number;
+    }
+
+    let {orientationEnabled}: Props = $props();
+
+    let marker: google.maps.marker.AdvancedMarkerElement | undefined = $state();
     let updateLocationInterval: number | undefined;
 
     onMount(async () => {
@@ -31,23 +39,21 @@
         }
     });
 
-    $: if (orientationEnabled) {
-        marker.content.classList.add('current-location-marker-oriented');
-        window.addEventListener('deviceorientation', handleOrientation, true);
-    } else {
-        if (marker && marker.content) {
-            marker.content.classList.remove('current-location-marker-oriented');
+    function handleOrientation(event: DeviceOrientationEventExtended) {
+        if (!marker) {
+            return;
         }
-        window.removeEventListener('deviceorientation', handleOrientation, true);
-    }
 
-    function handleOrientation(event: DeviceOrientationEvent) {
         const degrees = event.webkitCompassHeading ? event.webkitCompassHeading - 180 : event.alpha;
         console.log(degrees);
-        marker.content.style.transform = `translate(0, 50%) rotate(${degrees}deg)`;
+        marker.style.transform = `translate(0, 50%) rotate(${degrees}deg)`;
     }
 
     function updateCurrentPosition(forceStale = false) {
+        if (!marker) {
+            return;
+        }
+
         let position = {lat: 0, lng: 0, isCurrent: false};
         if (localStorage.getItem('lastPosition')) {
             position = JSON.parse(localStorage.getItem('lastPosition') as string);
@@ -60,6 +66,23 @@
             (marker.content as HTMLDivElement).classList.remove('current-location-marker-stale');
         }
     }
+    $effect(() => {
+        if (orientationEnabled) {
+            if (marker && marker.content) {
+                (marker.content as HTMLDivElement).classList.add(
+                    'current-location-marker-oriented',
+                );
+            }
+            window.addEventListener('deviceorientation', handleOrientation, true);
+        } else {
+            if (marker && marker.content) {
+                (marker.content as HTMLDivElement).classList.remove(
+                    'current-location-marker-oriented',
+                );
+            }
+            window.removeEventListener('deviceorientation', handleOrientation, true);
+        }
+    });
 </script>
 
 <style lang="scss">

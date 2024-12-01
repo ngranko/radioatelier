@@ -1,4 +1,9 @@
-import {METHOD_DELETE, METHOD_GET, STATUS_REQUEST_ERROR, STATUS_SERVER_ERROR,} from '$lib/api/constants';
+import {
+    METHOD_DELETE,
+    METHOD_GET,
+    STATUS_REQUEST_ERROR,
+    STATUS_SERVER_ERROR,
+} from '$lib/api/constants';
 import type {HttpMethod} from '$lib/interfaces/http';
 import type KeyVal from '$lib/interfaces/keyVal';
 import RequestError from '$lib/errors/RequestError';

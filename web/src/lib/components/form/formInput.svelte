@@ -2,23 +2,35 @@
     import Input from '$lib/components/input/input.svelte';
     import {clsx} from 'clsx';
 
-    export let id: string | undefined = undefined;
-    export let name: string | undefined = undefined;
-    export let type: 'text' | 'email' | 'password' = 'text';
-    export let value: string = '';
-    export let placeholder: string | undefined = undefined;
-    export let required = false;
-    export let label: string | undefined = undefined;
-    export let error: string[] | null | undefined = undefined;
+    interface Props {
+        id?: string | undefined;
+        name?: string | undefined;
+        type?: 'text' | 'email' | 'password';
+        value?: string;
+        placeholder?: string | undefined;
+        required?: boolean;
+        label?: string | undefined;
+        error?: string[] | null | undefined;
+    }
 
-    let classes: string;
-    let isError: boolean;
+    let {
+        id = undefined,
+        name = undefined,
+        type = 'text',
+        value = '',
+        placeholder = undefined,
+        required = false,
+        label = undefined,
+        error = undefined,
+    }: Props = $props();
 
-    $: isError = Boolean(error);
-    $: classes = clsx({
-        field: true,
-        error: isError,
-    });
+    let isError: boolean = $derived(Boolean(error));
+    let classes: string = $derived(
+        clsx({
+            field: true,
+            error: isError,
+        }),
+    );
 </script>
 
 <div class={classes}>

@@ -1,32 +1,44 @@
 <script lang="ts">
     import Tooltip from '$lib/components/tooltip.svelte';
 
-    export let isPublic: boolean;
-    export let isVisited: boolean;
-    export let isRemoved: boolean;
+    interface Props {
+        isPublic: boolean;
+        isVisited: boolean;
+        isRemoved: boolean;
+    }
+
+    let {isPublic, isVisited, isRemoved}: Props = $props();
 </script>
 
 <span class="flags">
     {#if isPublic}
         <Tooltip>
-            <i class="fa-solid fa-lock-open" slot="button"></i>
+            {#snippet button()}
+                <i class="fa-solid fa-lock-open"></i>
+            {/snippet}
             Публичная
         </Tooltip>
     {:else}
         <Tooltip>
-            <i class="fa-solid fa-lock" slot="button"></i>
+            {#snippet button()}
+                <i class="fa-solid fa-lock"></i>
+            {/snippet}
             Приватная
         </Tooltip>
     {/if}
     {#if isVisited}
         <Tooltip>
-            <i class="fa-solid fa-person-circle-check" slot="button"></i>
+            {#snippet button()}
+                <i class="fa-solid fa-person-circle-check"></i>
+            {/snippet}
             Посещена
         </Tooltip>
     {/if}
     {#if isRemoved}
         <Tooltip>
-            <i class="fa-solid fa-ghost" slot="button"></i>
+            {#snippet button()}
+                <i class="fa-solid fa-ghost"></i>
+            {/snippet}
             Утрачена
         </Tooltip>
     {/if}

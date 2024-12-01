@@ -1,14 +1,18 @@
 <script lang="ts">
-    export let id: string | undefined = undefined;
-    export let name: string | undefined = undefined;
-    export let checked = false;
-    export let label: string | undefined = undefined;
+    interface Props {
+        id?: string | undefined;
+        name?: string | undefined;
+        checked?: boolean;
+        label?: string | undefined;
+    }
+
+    let {id = undefined, name = undefined, checked = false, label = undefined}: Props = $props();
 </script>
 
 <label for={id} class="label">
     <span class="switch">
         <input type="checkbox" {id} {name} {checked} value="1" />
-        <span class="slider" />
+        <span class="slider"></span>
     </span>
     {label}
 </label>

@@ -1,18 +1,26 @@
 <script lang="ts">
-    import {createEventDispatcher} from 'svelte';
     import {fade} from 'svelte/transition';
     import {cubicInOut} from 'svelte/easing';
 
-    const dispatch = createEventDispatcher();
+    interface Props {
+        id?: string | undefined;
+        name?: string | undefined;
+        value?: string | undefined;
+        disabled?: boolean;
+        onChange(file: File): void;
+    }
 
-    export let id: string | undefined = undefined;
-    export let name: string | undefined = undefined;
-    export let value: string | undefined = undefined;
-    export let disabled: boolean = false;
+    let {
+        id = undefined,
+        name = undefined,
+        value = $bindable(undefined),
+        disabled = false,
+        onChange,
+    }: Props = $props();
 
-    let isPreviewOpen = false;
+    let isPreviewOpen = $state(false);
 
-    let imageUploadRef: HTMLInputElement;
+    let imageUploadRef: HTMLInputElement | undefined = $state();
 
     function handleImageChange(event: Event) {
         const file = (event.target as HTMLInputElement).files?.[0];
@@ -22,11 +30,11 @@
             return;
         }
 
-        dispatch('change', file);
+        onChange(file);
     }
 
     function handleUploadClick() {
-        imageUploadRef.click();
+        imageUploadRef?.click();
     }
 
     function handleRemoveClick() {
@@ -51,15 +59,16 @@
         type="button"
         class="display"
         style="background-image:url('{value && value.length ? value : '/image_empty.jpg'}')"
-        on:click={handleOpen}
-    />
+        onclick={handleOpen}
+        aria-label="Изображение"
+    ></button>
     {#if !disabled}
         <div class="actions">
-            <button type="button" class="button" on:click={handleUploadClick}>
+            <button type="button" class="button" onclick={handleUploadClick}>
                 {value ? 'Сменить изображение' : 'Загрузить изображение'}
             </button>
             {#if value}
-                <button type="button" class="button-delete" on:click={handleRemoveClick}>
+                <button type="button" class="button-delete" onclick={handleRemoveClick}>
                     Удалить изображение
                 </button>
             {/if}
@@ -72,14 +81,14 @@
         {id}
         type="file"
         accept="image/jpeg,image/png"
-        on:change={handleImageChange}
+        onchange={handleImageChange}
         {disabled}
     />
 
     {#if isPreviewOpen}
         <button
             class="overlay"
-            on:click={handleClose}
+            onclick={handleClose}
             transition:fade={{duration: 200, easing: cubicInOut}}
             type="button"
         >

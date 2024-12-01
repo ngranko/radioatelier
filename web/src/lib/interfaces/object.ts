@@ -2,12 +2,9 @@ import type {Category} from '$lib/interfaces/category';
 import type {Tag} from '$lib/interfaces/tag';
 import type {PrivateTag} from '$lib/interfaces/privateTag';
 
-interface BaseObject {
+interface TaxonomlessObject {
     name: string;
     description: string;
-    category: Category;
-    tags: Tag[];
-    privateTags: PrivateTag[];
     lat: string;
     lng: string;
     address: string;
@@ -23,12 +20,25 @@ interface BaseObject {
     rating: string;
 }
 
+interface BaseObject extends TaxonomlessObject {
+    category: Partial<Category>;
+    tags: Partial<Tag>[];
+    privateTags: Partial<PrivateTag>[];
+}
+
 export interface Object extends BaseObject {
     id: string;
 }
 
 export interface LooseObject extends BaseObject {
     id: string | null;
+}
+
+export interface FormObject extends TaxonomlessObject {
+    id: string | null;
+    category: string;
+    tags: string[];
+    privateTags: string[];
 }
 
 export interface BareObject {

@@ -1,10 +1,18 @@
-<script>
+<script lang="ts">
     import Tooltip from '$lib/components/tooltip.svelte';
+
+    interface Props {
+        children?: import('svelte').Snippet;
+    }
+
+    let {children}: Props = $props();
 </script>
 
 <Tooltip class="importFieldTooltip">
-    <i class="fa-regular fa-circle-question" slot="button"></i>
-    <slot />
+    {#snippet button()}
+        <i class="fa-regular fa-circle-question"></i>
+    {/snippet}
+    {@render children?.()}
 </Tooltip>
 
 <style lang="scss">

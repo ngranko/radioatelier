@@ -1,19 +1,21 @@
-<script>
+<script lang="ts">
     import TextButton from '$lib/components/button/textButton.svelte';
     import Dialog from '$lib/components/dialog.svelte';
-    import {createEventDispatcher} from 'svelte';
 
-    const dispatch = createEventDispatcher();
+    interface Props {
+        isOpen?: boolean;
+        onClick(): void;
+    }
 
-    export let isOpen = false;
+    let {isOpen = $bindable(false), onClick}: Props = $props();
 
-    function handleCancel() {
+    function handleClose() {
         isOpen = false;
     }
 
     function handleConfirm() {
-        handleCancel();
-        dispatch('click');
+        handleClose();
+        onClick();
     }
 </script>
 
@@ -21,11 +23,9 @@
     <p>Вы действительно хотите выйти из редактирования точки?</p>
     <p>Изменения не будут сохранены</p>
     <div class="actions">
-        <TextButton type="button" on:click={handleCancel}>Отменить</TextButton>
+        <TextButton type="button" onClick={handleClose}>Отменить</TextButton>
         <span class="close">
-            <TextButton type="button" modifier="danger" on:click={handleConfirm}>
-                Закрыть
-            </TextButton>
+            <TextButton type="button" modifier="danger" onClick={handleConfirm}>Закрыть</TextButton>
         </span>
     </div>
 </Dialog>

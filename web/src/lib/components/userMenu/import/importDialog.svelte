@@ -10,8 +10,12 @@
 
     const queryClient = useQueryClient();
 
-    export let isOpen = false;
-    let isConfirmationOpen = false;
+    interface Props {
+        isOpen?: boolean;
+    }
+
+    let {isOpen = $bindable(false)}: Props = $props();
+    let isConfirmationOpen = $state(false);
 
     const objects = createQuery({queryKey: ['objects'], queryFn: listObjects});
 
@@ -33,16 +37,16 @@
     }
 </script>
 
-<Dialog bind:isOpen on:close={handleClose}>
+<Dialog bind:isOpen onClose={handleClose}>
     {#if $importInfo.currentStep === 1}
-        <UploadFile on:close={handleClose} />
+        <UploadFile onClose={handleClose} />
     {:else if $importInfo.currentStep === 2}
-        <PreviewImport on:close={handleClose} />
+        <PreviewImport onClose={handleClose} />
     {:else if $importInfo.currentStep === 3}
-        <Progress on:close={handleClose} />
+        <Progress onClose={handleClose} />
     {/if}
 </Dialog>
-<CloseConfirmation bind:isOpen={isConfirmationOpen} on:click={doClose} />
+<CloseConfirmation bind:isOpen={isConfirmationOpen} onClick={doClose} />
 
 <style lang="scss">
     @use '../../../../styles/colors';

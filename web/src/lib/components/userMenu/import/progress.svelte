@@ -1,13 +1,12 @@
 <script lang="ts">
     import {importInfo} from '$lib/stores/import';
-    import {createEventDispatcher} from 'svelte';
     import TextButton from '$lib/components/button/textButton.svelte';
 
-    const dispatch = createEventDispatcher();
-
-    function handleClose() {
-        dispatch('close');
+    interface Props {
+        onClose(): void;
     }
+
+    let {onClose}: Props = $props();
 
     function handleReset(event: Event) {
         event.stopPropagation();
@@ -19,7 +18,7 @@
     {#if $importInfo.status === 'in progress'}
         <h2>Подождите, импортирую точки</h2>
         <div class="percentage">{$importInfo.percentage}%</div>
-        <TextButton on:click={handleClose}>Отменить</TextButton>
+        <TextButton onClick={onClose}>Отменить</TextButton>
     {:else if $importInfo.status === 'success'}
         <h2>Импорт завершен!</h2>
         <div>{$importInfo.resultText}</div>
@@ -40,15 +39,15 @@
             {/each}
         {/if}
         <div class="actions">
-            <TextButton on:click={handleReset}>Импортировать другой файл</TextButton>
-            <TextButton on:click={handleClose}>Закрыть</TextButton>
+            <TextButton onClick={handleReset}>Импортировать другой файл</TextButton>
+            <TextButton onClick={onClose}>Закрыть</TextButton>
         </div>
     {:else if $importInfo.status === 'error'}
         <h2>Во время импорта произошла ошибка</h2>
         <div>{$importInfo.globalError}</div>
         <div class="actions">
-            <TextButton on:click={handleReset}>Импортировать другой файл</TextButton>
-            <TextButton on:click={handleClose}>Закрыть</TextButton>
+            <TextButton onClick={handleReset}>Импортировать другой файл</TextButton>
+            <TextButton onClick={onClose}>Закрыть</TextButton>
         </div>
     {/if}
 </div>

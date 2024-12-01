@@ -1,8 +1,7 @@
 <script lang="ts">
-    import {createQuery, useQueryClient} from '@tanstack/svelte-query';
+    import {createQuery} from '@tanstack/svelte-query';
     import {listObjects} from '$lib/api/object';
-    import type {Object} from '$lib/interfaces/object';
-    import {/*mapLoader, */ map, activeObjectInfo, markerList} from '$lib/stores/map';
+    import {map, activeObjectInfo, markerList} from '$lib/stores/map';
     import Map from '$lib/components/map/map.svelte';
     import Marker from '$lib/components/map/marker.svelte';
     import UserMenu from '$lib/components/userMenu/userMenu.svelte';
@@ -15,67 +14,59 @@
     import {me} from '$lib/api/user';
     import {onMount} from 'svelte';
 
-    const client = useQueryClient();
+    interface DeviceOrientationEventMaybeExtended extends DeviceOrientationEvent {
+        requestPermission?(): Promise<'granted' | 'denied'>;
+    }
 
-    let orientationEnabled = false;
-    let savedLocation: Location | null = null;
-    let consoleElement: HTMLElement;
+    interface DeviceOrientationEventExtended extends DeviceOrientationEvent {
+        requestPermission(): Promise<'granted' | 'denied'>;
+    }
+
+    let orientationEnabled = $state(false);
+    let consoleElement: HTMLElement | undefined = $state();
 
     const objects = createQuery({queryKey: ['objects'], queryFn: listObjects});
-    $: if (
-        $objects.isError &&
-        $objects.error instanceof RequestError &&
-        $objects.error.isAuthorizationError()
-    ) {
-        goto(`/login?ref=${encodeURIComponent($page.url.pathname)}`);
-    }
+    $effect(() => {
+        if (
+            $objects.isError &&
+            $objects.error instanceof RequestError &&
+            $objects.error.isAuthorizationError()
+        ) {
+            goto(`/login?ref=${encodeURIComponent($page.url.pathname)}`);
+        }
+    });
 
-    $: if ($objects.isSuccess) {
-        markerList.set($objects.data.data.objects);
-    }
+    $effect(() => {
+        if ($objects.isSuccess) {
+            markerList.set($objects.data.data.objects);
+        }
+    });
 
     const meQuery = createQuery({queryKey: ['me'], queryFn: me});
-    $: if ($meQuery.isSuccess && $meQuery.data.data.role === 'admin') {
-        import('eruda').then(eruda =>
-            eruda.default.init({container: consoleElement, tool: ['console', 'elements']}),
-        );
-    }
+    $effect(() => {
+        if ($meQuery.isSuccess && $meQuery.data.data.role === 'admin') {
+            import('eruda').then(eruda =>
+                eruda.default.init({container: consoleElement, tool: ['console', 'elements']}),
+            );
+        }
+    });
 
     onMount(() => {
         // let's try it in case android allows to do it
         toggleOrientation();
-        //     const {ControlPosition} = await $mapLoader.importLibrary('core');
-        //
-        //     // // Create the search box and link it to the UI element.
-        //     const input = document.getElementById('pac-input') as HTMLInputElement;
-        //     try {
-        //         console.log('initializing search box');
-        //         const placesLib = await $mapLoader.importLibrary('places');
-        //         console.log(placesLib);
-        //         const searchBox = new placesLib.SearchBox(input);
-        //
-        //         $map.controls[ControlPosition.TOP_RIGHT].push(input);
-        //
-        //         // Bias the SearchBox results towards current map's viewport.
-        //         $map.addListener('bounds_changed', () => {
-        //             searchBox.setBounds($map.getBounds() as google.maps.LatLngBounds);
-        //         });
-        //     } catch (e) {
-        //         console.error(e);
-        //     }
     });
 
-    function handleMapClick(event: CustomEvent<Location>) {
-        savedLocation = {lat: event.detail.lat, lng: event.detail.lng};
+    function handleMapClick(location: Location) {
         activeObjectInfo.set({
             isLoading: false,
+            isMinimized: false,
             isEditing: true,
             isDirty: false,
             detailsId: new Date().getTime().toString(),
             object: {
                 id: null,
-                lat: String(savedLocation!.lat),
-                lng: String(savedLocation!.lng),
+                lat: String(location.lat),
+                lng: String(location.lng),
                 isVisited: false,
                 isRemoved: false,
             },
@@ -103,15 +94,17 @@
 
         if (
             window.DeviceOrientationEvent &&
-            typeof DeviceOrientationEvent.requestPermission === 'function'
+            typeof (window.DeviceOrientationEvent as unknown as DeviceOrientationEventMaybeExtended)
+                .requestPermission === 'function'
         ) {
             console.log('DeviceOrientationEvent supported');
-            DeviceOrientationEvent.requestPermission()
-                .then(permissionState => {
+            (window.DeviceOrientationEvent as unknown as DeviceOrientationEventExtended)
+                .requestPermission()
+                .then((permissionState: string) => {
                     console.log(permissionState);
                     orientationEnabled = true;
                 })
-                .catch(error => {
+                .catch((error: unknown) => {
                     console.error('error while requesting DeviceOrientationEvent permission');
                     console.error(error);
                 });
@@ -121,16 +114,17 @@
     }
 </script>
 
-<div bind:this={consoleElement} />
+<div bind:this={consoleElement}></div>
 
 <button
     class={orientationEnabled ? 'orientationButtonActive' : 'orientationButton'}
-    on:click={toggleOrientation}
+    onclick={toggleOrientation}
+    aria-label="Toggle orientation"
 >
     <i class="fa-solid fa-compass"></i>
 </button>
 
-<button class="positionButton" on:click={goToLastPosition}>
+<button class="positionButton" onclick={goToLastPosition} aria-label="Go to last position">
     <i class="fa-solid fa-location-arrow"></i>
 </button>
 
@@ -146,7 +140,7 @@
 {/if}
 
 <!--    <input id="pac-input" class="search" type="text" placeholder="Search Box" />-->
-<Map on:click={handleMapClick} />
+<Map onClick={handleMapClick} />
 {#if $map}
     <LocationMarker {orientationEnabled} />
     {#each Object.values($markerList) as marker (marker.id)}

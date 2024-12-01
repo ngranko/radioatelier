@@ -1,19 +1,21 @@
-<script>
+<script lang="ts">
     import TextButton from '$lib/components/button/textButton.svelte';
     import Dialog from '$lib/components/dialog.svelte';
-    import {createEventDispatcher} from 'svelte';
 
-    const dispatch = createEventDispatcher();
+    interface Props {
+        isOpen?: boolean;
+        onClick(): void;
+    }
 
-    export let isOpen = false;
+    let {isOpen = $bindable(false), onClick}: Props = $props();
 
-    function handleCancel() {
+    function handleClose() {
         isOpen = false;
     }
 
     function handleConfirm() {
-        handleCancel();
-        dispatch('click');
+        handleClose();
+        onClick();
     }
 </script>
 
@@ -21,11 +23,9 @@
     <p>Вы действительно хотите закрыть окно?</p>
     <p>Текущий импорт будет отменен, но уже обработанные точки не будут удалены</p>
     <div class="actions">
-        <TextButton type="button" on:click={handleCancel}>Остаться</TextButton>
+        <TextButton type="button" onClick={handleClose}>Остаться</TextButton>
         <span class="close">
-            <TextButton type="button" modifier="danger" on:click={handleConfirm}>
-                Закрыть
-            </TextButton>
+            <TextButton type="button" modifier="danger" onClick={handleConfirm}>Закрыть</TextButton>
         </span>
     </div>
 </Dialog>

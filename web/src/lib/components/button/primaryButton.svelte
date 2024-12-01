@@ -1,10 +1,23 @@
 <script lang="ts">
+    import type {Snippet} from 'svelte';
     import type {HTMLButtonAttributes} from 'svelte/elements';
     import {clsx} from 'clsx';
 
-    export let type: HTMLButtonAttributes['type'] = undefined;
-    export let disabled: boolean = false;
-    export let modifier: 'primary' | 'secondary' | 'danger' = 'primary';
+    interface Props {
+        type?: HTMLButtonAttributes['type'];
+        disabled?: boolean;
+        modifier?: 'primary' | 'secondary' | 'danger';
+        children?: Snippet;
+        onClick?(): void;
+    }
+
+    let {
+        type = undefined,
+        disabled = false,
+        modifier = 'primary',
+        children,
+        onClick,
+    }: Props = $props();
 
     const className = clsx({
         button: true,
@@ -14,7 +27,7 @@
     });
 </script>
 
-<button {type} {disabled} class={className} on:click><slot /></button>
+<button {type} {disabled} class={className} onclick={onClick}>{@render children?.()}</button>
 
 <style lang="scss">
     @use 'sass:color';

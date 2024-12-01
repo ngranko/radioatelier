@@ -2,21 +2,36 @@
     import type {HTMLButtonAttributes} from 'svelte/elements';
     import {clsx} from 'clsx';
 
-    export let type: HTMLButtonAttributes['type'] = undefined;
-    export let disabled: boolean = false;
-    export let icon: string;
-    export let modifier: 'primary' | 'secondary' | 'danger' | undefined;
+    interface Props {
+        type?: HTMLButtonAttributes['type'];
+        disabled?: boolean;
+        icon: string;
+        modifier?: 'primary' | 'secondary' | 'danger';
+        ariaLabel?: string;
+        className?: string;
+        onClick?(): void;
+    }
 
-    const className = clsx({
+    let {
+        type = undefined,
+        disabled = false,
+        icon,
+        modifier,
+        ariaLabel,
+        className,
+        onClick,
+    }: Props = $props();
+
+    const classNames = clsx({
         button: true,
         primary: modifier === 'primary',
         secondary: modifier === 'secondary',
         danger: modifier === 'danger',
-        [$$props.class]: $$props.class,
+        [className!]: className,
     });
 </script>
 
-<button {type} {disabled} class={className} on:click>
+<button {type} {disabled} class={classNames} onclick={onClick} aria-label={ariaLabel}>
     <i class={icon}></i>
 </button>
 

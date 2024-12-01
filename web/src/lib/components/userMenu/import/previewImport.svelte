@@ -6,15 +6,14 @@
     import Svelecte from 'svelecte';
     import type {ImportMappings} from '$lib/interfaces/import';
     import {importInfo} from '$lib/stores/import';
-    import {createEventDispatcher} from 'svelte';
 
-    const dispatch = createEventDispatcher();
+    interface Props {
+        onClose(): void;
+    }
+
+    let {onClose}: Props = $props();
 
     const preview = createMutation({mutationFn: extractPreview});
-
-    function handleClose() {
-        dispatch('close');
-    }
 
     async function handleSeparatorChange() {
         try {
@@ -32,9 +31,7 @@
         }
     }
 
-    function handleImport(event: CustomEvent<ImportMappings>) {
-        const values = event.detail;
-
+    function handleImport(values: ImportMappings) {
         $importInfo.provider.start($importInfo.id, $importInfo.separator, values);
         importInfo.update(value => ({...value, currentStep: 3, status: 'in progress'}));
     }
@@ -77,7 +74,7 @@
         />
     </div>
     <h3>Импортировать колонки</h3>
-    <Form on:close={handleClose} on:submit={handleImport} />
+    <Form {onClose} onSubmit={handleImport} />
 </div>
 
 <style lang="scss">

@@ -8,19 +8,23 @@
 
     const client = useQueryClient();
 
-    export let id: string | undefined = undefined;
-    export let name: string | undefined = undefined;
-    export let value: string | undefined;
-    export let error: string[] | null | undefined = undefined;
+    interface Props {
+        id?: string | undefined;
+        name?: string | undefined;
+        value: string | undefined;
+        error?: string[] | null | undefined;
+        onChange(value: string): void;
+    }
 
-    let classes: string;
-    let isError: boolean;
+    let {id = undefined, name = undefined, value, error = undefined, onChange}: Props = $props();
 
-    $: isError = Boolean(error);
-    $: classes = clsx({
-        field: true,
-        error: isError,
-    });
+    let isError: boolean = $derived(Boolean(error));
+    let classes: string = $derived(
+        clsx({
+            field: true,
+            error: isError,
+        }),
+    );
 
     const createCategoryMutation = createMutation({
         mutationFn: createCategory,
@@ -53,7 +57,7 @@
     <!-- TODO: add loading state -->
     {#if !$categories.isLoading}
         <Svelecte
-            on:change
+            {onChange}
             inputId={id}
             placeholder="Не выбрана"
             highlightFirstItem={false}

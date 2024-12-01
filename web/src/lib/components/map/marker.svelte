@@ -1,4 +1,6 @@
 <script lang="ts">
+    import {run} from 'svelte/legacy';
+
     import {onMount, onDestroy} from 'svelte';
     import {
         mapLoader,
@@ -16,17 +18,28 @@
     import CloseConfirmation from '$lib/components/objectDetails/closeConfirmation.svelte';
     import {clsx} from 'clsx';
 
-    export let id: string | null = null;
-    export let lat: string;
-    export let lng: string;
-    export let isRemoved = false;
-    export let isVisited = false;
-    export let initialActive = false;
-    let marker: google.maps.marker.AdvancedMarkerElement;
+    interface Props {
+        id?: string | null;
+        lat: string;
+        lng: string;
+        isRemoved?: boolean;
+        isVisited?: boolean;
+        initialActive?: boolean;
+    }
+
+    let {
+        id = null,
+        lat,
+        lng,
+        isRemoved = false,
+        isVisited = false,
+        initialActive = false,
+    }: Props = $props();
+    let marker: google.maps.marker.AdvancedMarkerElement | undefined = $state();
     let skipClick = false;
     let isDragged = false;
     let mouseMoveListener: google.maps.MapsEventListener | null = null;
-    let isConfirmationOpen = false;
+    let isConfirmationOpen = $state(false);
 
     const client = useQueryClient();
 
@@ -44,42 +57,51 @@
 
     const reposition = useRepositionMutation(client);
 
-    $: if ($objectDetails.isSuccess) {
-        activeObjectInfo.set({
-            isLoading: false,
-            isEditing: false,
-            isDirty: false,
-            detailsId: $objectDetails.data.data.object.id,
-            object: $objectDetails.data.data.object,
-        });
-    }
+    run(() => {
+        if ($objectDetails.isSuccess) {
+            activeObjectInfo.set({
+                isLoading: false,
+                isEditing: false,
+                isMinimized: false,
+                isDirty: false,
+                detailsId: $objectDetails.data.data.object.id,
+                object: $objectDetails.data.data.object,
+            });
+        }
+    });
 
-    $: if ($objectDetails.isError) {
-        console.error($objectDetails.error);
-    }
+    $effect(() => {
+        if ($objectDetails.isError) {
+            console.error($objectDetails.error);
+        }
+    });
 
-    $: if ($objectAddress.isSuccess) {
-        activeObjectInfo.update(value => ({
-            ...value,
-            isLoading: false,
-            object: {
-                ...(value.object as Object),
-                address: $objectAddress.data?.data.address ?? '',
-                city: $objectAddress.data?.data.city ?? '',
-                country: $objectAddress.data?.data.country ?? '',
-            },
-        }));
-    }
+    $effect(() => {
+        if ($objectAddress.isSuccess) {
+            activeObjectInfo.update(value => ({
+                ...value,
+                isLoading: false,
+                object: {
+                    ...(value.object as Object),
+                    address: $objectAddress.data?.data.address ?? '',
+                    city: $objectAddress.data?.data.city ?? '',
+                    country: $objectAddress.data?.data.country ?? '',
+                },
+            }));
+        }
+    });
 
-    $: if ($objectAddress.isError) {
-        console.error($objectAddress.error);
-        activeObjectInfo.update(value => ({
-            ...value,
-            isLoading: false,
-        }));
-    }
+    $effect(() => {
+        if ($objectAddress.isError) {
+            console.error($objectAddress.error);
+            activeObjectInfo.update(value => ({
+                ...value,
+                isLoading: false,
+            }));
+        }
+    });
 
-    $: {
+    $effect(() => {
         if (marker) {
             if (isVisited) {
                 (marker.content as HTMLDivElement).classList.add('map-marker-visited');
@@ -93,7 +115,7 @@
                 (marker.content as HTMLDivElement).classList.remove('map-marker-removed');
             }
         }
-    }
+    });
 
     onMount(async () => {
         activeMarker.deactivate();
@@ -131,7 +153,7 @@
         }
 
         setTimeout(
-            () => (marker.content as HTMLDivElement).classList.remove('map-marker-appearing'),
+            () => (marker?.content as HTMLDivElement).classList.remove('map-marker-appearing'),
             200,
         );
 
@@ -145,7 +167,9 @@
                         'mousemove',
                         function (evant: google.maps.MapMouseEvent) {
                             isDragged = true;
-                            marker.position = evant.latLng;
+                            if (marker) {
+                                marker.position = evant.latLng;
+                            }
                         },
                     );
 
@@ -179,8 +203,8 @@
     });
 
     onDestroy(() => {
-        (marker.content as HTMLDivElement).classList.add('map-marker-exiting');
-        setTimeout(() => (marker.map = null), 200);
+        (marker?.content as HTMLDivElement).classList.add('map-marker-exiting');
+        setTimeout(() => (marker!.map = null), 200);
     });
 
     function getMarkerClassList() {
@@ -207,13 +231,13 @@
         await $reposition.mutateAsync({
             id: id!,
             updatedFields: {
-                lat: String(marker.position!.lat),
-                lng: String(marker.position!.lng),
+                lat: String(marker!.position!.lat),
+                lng: String(marker!.position!.lng),
             },
         });
-        $markerList.updateMarker(id!, {
-            lat: String(marker.position!.lat),
-            lng: String(marker.position!.lng),
+        markerList.updateMarker(id!, {
+            lat: String(marker!.position!.lat),
+            lng: String(marker!.position!.lng),
         });
     }
 
@@ -223,13 +247,13 @@
             object: {
                 ...(value.object as Object),
                 id: null,
-                lat: String(marker.position!.lat),
-                lng: String(marker.position!.lng),
+                lat: String(marker!.position!.lat),
+                lng: String(marker!.position!.lng),
             },
         }));
-        $markerList.updateMarker(id!, {
-            lat: String(marker.position!.lat),
-            lng: String(marker.position!.lng),
+        markerList.updateMarker(id!, {
+            lat: String(marker!.position!.lat),
+            lng: String(marker!.position!.lng),
         });
     }
 
@@ -255,6 +279,7 @@
             activeObjectInfo.set({
                 isLoading: true,
                 isEditing: false,
+                isMinimized: false,
                 isDirty: false,
                 detailsId: id!,
                 object: {id, lat, lng, isVisited, isRemoved},
@@ -264,6 +289,7 @@
             activeObjectInfo.set({
                 isLoading: false,
                 isEditing: false,
+                isMinimized: false,
                 isDirty: false,
                 detailsId: $objectDetails.data.data.object.id,
                 object: $objectDetails.data.data.object,
@@ -271,7 +297,7 @@
         }
 
         activeMarker.deactivate();
-        activeMarker.set(marker);
+        activeMarker.set(marker!);
         activeMarker.activate();
     }
 </script>

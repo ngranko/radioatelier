@@ -1,6 +1,6 @@
 <script lang="ts">
-    import {createEventDispatcher} from 'svelte';
     import type {
+        FormObject,
         ListObjectsResponsePayload,
         LooseObject,
         Object,
@@ -28,12 +28,19 @@
     import RequestError from '$lib/errors/RequestError';
 
     const client = useQueryClient();
-    const dispatch = createEventDispatcher();
 
-    export let initialValues: Partial<LooseObject>;
+    interface Props {
+        initialValues: Partial<LooseObject>;
+    }
 
-    let tags = initialValues.tags?.map(item => item.id) ?? [];
-    let privateTags = initialValues.privateTags?.map(item => item.id) ?? [];
+    interface ErrorPayload {
+        errors: Record<string, string>;
+    }
+
+    let {initialValues}: Props = $props();
+
+    let tags = $state(initialValues.tags?.map(item => item.id) ?? ['']);
+    let privateTags = $state(initialValues.privateTags?.map(item => item.id) ?? ['']);
 
     const createObjectMutation = createMutation({
         mutationFn: createObject,
@@ -75,62 +82,75 @@
     });
 
     const schema = yup.object({
+        id: yup.string().defined().nullable(),
+        lat: yup.string().required(),
+        lng: yup.string().required(),
+        image: yup.string().required(),
+        isPublic: yup.boolean().required(),
+        isVisited: yup.boolean().required(),
+        rating: yup.string().required().oneOf(['', '1', '2', '3']),
         name: yup
             .string()
             .required('Пожалуйста, введите название')
             .max(255, 'Слишком длинное название'),
+        description: yup.string().required(),
         category: yup.string().required('Пожалуйста, выберите категорию'),
-        address: yup.string().nullable().max(128, 'Слишком длинный адрес'),
-        city: yup.string().nullable().max(64, 'Слишком длинное название города'),
-        country: yup.string().nullable().max(64, 'Слишком длинное название страны'),
-        installedPeriod: yup.string().nullable().max(20, 'Слишком длинный период создания'),
-        removalPeriod: yup.string().nullable().max(20, 'Слишком длинный период пропажи'),
-        source: yup.string().nullable().url('Должна быть валидной ссылкой'),
+        tags: yup.array().required(),
+        privateTags: yup.array().required(),
+        address: yup.string().required().max(128, 'Слишком длинный адрес'),
+        city: yup.string().required().max(64, 'Слишком длинное название города'),
+        country: yup.string().required().max(64, 'Слишком длинное название страны'),
+        installedPeriod: yup.string().required().max(20, 'Слишком длинный период создания'),
+        isRemoved: yup.boolean().required(),
+        removalPeriod: yup.string().required().max(20, 'Слишком длинный период пропажи'),
+        source: yup.string().required().url('Должна быть валидной ссылкой'),
     });
 
     const {form, data, errors, isSubmitting, reset, setData, isDirty, setIsDirty} = createForm<
         yup.InferType<typeof schema>
     >({
-        onSubmit: async (values: LooseObject) => {
+        onSubmit: (values: FormObject) => {
             handleSave(values);
         },
         extend: validator({schema}),
     });
 
-    $: if ($isDirty.valueOf()) {
-        activeObjectInfo.update(value => ({...value, isDirty: true}));
-    }
-
-    function handleRatingChange(event) {
-        if (event.detail === null) {
-            setData('rating', '');
+    $effect(() => {
+        if ($isDirty.valueOf()) {
+            activeObjectInfo.update(value => ({...value, isDirty: true}));
         }
-        setData('rating', event.detail.value);
+    });
+
+    function handleRatingChange(rating: string) {
+        setData('rating', rating);
         setIsDirty(true);
     }
 
-    function handleCategoryChange(event) {
-        setData('category', event.detail.id);
+    function handleCategoryChange(category: string) {
+        setData('category', category);
         setIsDirty(true);
     }
 
-    async function handleSave(values: LooseObject) {
-        values.category = {id: values.category};
-        values.tags = tags.map(item => ({id: item}));
-        values.privateTags = privateTags.map(item => ({id: item}));
+    async function handleSave(values: FormObject) {
+        const object = {
+            ...values,
+            category: {id: values.category},
+            tags: tags.map(item => ({id: item})),
+            privateTags: privateTags.map(item => ({id: item})),
+        };
 
         if (!$activeObjectInfo.object) {
             return;
         }
 
-        if (!values.id) {
-            await toast.promise(createNewObject(values), {
+        if (!object.id) {
+            await toast.promise(createNewObject(object), {
                 loading: 'Создаю...',
                 success: 'Точка создана!',
                 error: 'Не удалось создать точку',
             });
         } else {
-            await toast.promise(updateExistingObject(values), {
+            await toast.promise(updateExistingObject(object as Object), {
                 loading: 'Обновляю...',
                 success: 'Точка обновлена!',
                 error: 'Не удалось обновить точку',
@@ -138,7 +158,7 @@
         }
     }
 
-    async function createNewObject(object: Object) {
+    async function createNewObject(object: LooseObject) {
         try {
             const result = await $createObjectMutation.mutateAsync(object);
             client.setQueryData(['object', {id: result.data.id}], {
@@ -148,8 +168,8 @@
             markerList.addMarker(result.data);
             activeObjectInfo.reset();
         } catch (error) {
-            if (error instanceof RequestError && error.payload.errors) {
-                errors.set(error.payload.errors);
+            if (error instanceof RequestError && (error.payload as ErrorPayload).errors) {
+                errors.set((error.payload as ErrorPayload).errors);
             }
             throw error;
         }
@@ -170,9 +190,9 @@
                 isRemoved: result.data.isRemoved,
             });
             activeObjectInfo.reset();
-        } catch (error) {
-            if (error instanceof RequestError && error.payload.errors) {
-                errors.set(error.payload.errors);
+        } catch (error: unknown) {
+            if (error instanceof RequestError && (error.payload as ErrorPayload).errors) {
+                errors.set((error.payload as ErrorPayload).errors);
             }
             throw error;
         }
@@ -234,7 +254,7 @@
             {value: '2', text: '⭐⭐'},
             {value: '3', text: '🌟🌟🌟'},
         ]}
-        on:change={handleRatingChange}
+        onChange={handleRatingChange}
         error={$errors.rating}
     />
     <div class="fieldLong">
@@ -245,7 +265,7 @@
             id="category"
             name="category"
             value={initialValues.category?.id ?? ''}
-            on:change={handleCategoryChange}
+            onChange={handleCategoryChange}
             error={$errors.category}
         />
     </div>
@@ -340,9 +360,9 @@
             </PrimaryButton>
         </div>
         {#if initialValues.id}
-            <BackButton isConfirmationRequired={$isDirty.valueOf()} on:click={handleBack} />
-            <span class="flexer" />
-            <DeleteButton on:click={handleDelete} />
+            <BackButton isConfirmationRequired={$isDirty.valueOf()} onClick={handleBack} />
+            <span class="flexer"></span>
+            <DeleteButton onClick={handleDelete} />
         {/if}
     </div>
 </form>
@@ -388,11 +408,6 @@
     .fieldLong {
         @extend .field;
         grid-column: 1 / -1;
-    }
-
-    .label {
-        @include typography.size-14;
-        margin-bottom: 4px;
     }
 
     .removedCheckbox {

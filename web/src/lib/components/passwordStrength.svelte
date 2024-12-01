@@ -8,23 +8,26 @@
     const SCORE_HIGH = 3;
     const SCORE_VERY_HIGH = 4;
 
-    export let value: string = '';
+    interface Props {
+        value?: string;
+    }
 
-    let passwordScore: Number;
-    let classNames: string;
+    let {value = ''}: Props = $props();
 
-    $: passwordScore = getPasswordScore(value);
-    $: classNames = clsx({
-        base: true,
-        veryLow: passwordScore === SCORE_VERY_LOW,
-        low: passwordScore === SCORE_LOW,
-        medium: passwordScore === SCORE_MEDIUM,
-        high: passwordScore === SCORE_HIGH,
-        veryHigh: passwordScore === SCORE_VERY_HIGH,
-    });
+    let passwordScore: Number = $derived(getPasswordScore(value));
+    let classNames: string = $derived(
+        clsx({
+            base: true,
+            veryLow: passwordScore === SCORE_VERY_LOW,
+            low: passwordScore === SCORE_LOW,
+            medium: passwordScore === SCORE_MEDIUM,
+            high: passwordScore === SCORE_HIGH,
+            veryHigh: passwordScore === SCORE_VERY_HIGH,
+        }),
+    );
 </script>
 
-<div class={classNames} />
+<div class={classNames}></div>
 
 <style lang="scss">
     @use '../../styles/colors';

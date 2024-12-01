@@ -1,8 +1,17 @@
 <script lang="ts">
-    export let id: string | undefined = undefined;
-    export let name: string | undefined = undefined;
-    export let checked: boolean | undefined = false;
-    export let label: string | undefined = undefined;
+    interface Props {
+        id?: string | undefined;
+        name?: string | undefined;
+        checked?: boolean | undefined;
+        label?: string | undefined;
+    }
+
+    let {
+        id = undefined,
+        name = undefined,
+        checked = false,
+        label = undefined
+    }: Props = $props();
 </script>
 
 {#if label}

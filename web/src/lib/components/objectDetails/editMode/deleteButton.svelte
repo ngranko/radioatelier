@@ -2,7 +2,13 @@
     import TextButton from '$lib/components/button/textButton.svelte';
     import Dialog from '$lib/components/dialog.svelte';
 
-    let isDialogOpen = false;
+    interface Props {
+        onClick(): void;
+    }
+
+    let {onClick}: Props = $props();
+
+    let isDialogOpen = $state(false);
 
     function handleDialogOpen() {
         isDialogOpen = true;
@@ -13,13 +19,13 @@
     }
 </script>
 
-<TextButton type="button" modifier="danger" on:click={handleDialogOpen}>Удалить</TextButton>
+<TextButton type="button" modifier="danger" onClick={handleDialogOpen}>Удалить</TextButton>
 <Dialog isOpen={isDialogOpen}>
     <p>Вы действительно хотите удалить точку?</p>
     <div class="actions">
-        <TextButton type="button" on:click={handleClose}>Отменить</TextButton>
+        <TextButton type="button" onClick={handleClose}>Отменить</TextButton>
         <span class="delete">
-            <TextButton type="button" modifier="danger" on:click>Удалить</TextButton>
+            <TextButton type="button" modifier="danger" {onClick}>Удалить</TextButton>
         </span>
     </div>
 </Dialog>

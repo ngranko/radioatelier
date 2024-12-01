@@ -5,11 +5,14 @@
     import toast from 'svelte-french-toast';
     import {extractPreview, uploadFile} from '$lib/api/import';
     import {importInfo} from '$lib/stores/import';
-    import {createEventDispatcher} from 'svelte';
 
-    const dispatch = createEventDispatcher();
+    interface Props {
+        onClose(): void;
+    }
 
-    let uploadRef: HTMLInputElement;
+    let {onClose}: Props = $props();
+
+    let uploadRef: HTMLInputElement | undefined = $state();
 
     const uploadFileMutation = createMutation({
         mutationFn: uploadFile,
@@ -21,7 +24,7 @@
     const preview = createMutation({mutationFn: extractPreview});
 
     function handleClick() {
-        uploadRef.click();
+        uploadRef?.click();
     }
 
     async function handleFileChange(event: Event) {
@@ -54,10 +57,6 @@
         await $uploadFileMutation.mutateAsync({formData});
         return $preview.mutateAsync({id: $importInfo.id, separator: $importInfo.separator});
     }
-
-    function handleClose() {
-        dispatch('close');
-    }
 </script>
 
 <div class="root">
@@ -67,10 +66,10 @@
         class="upload"
         type="file"
         accept="text/csv"
-        on:change={handleFileChange}
+        onchange={handleFileChange}
     />
-    <PrimaryButton on:click={handleClick}>Выбрать файл</PrimaryButton>
-    <TextButton on:click={handleClose}>Отменить</TextButton>
+    <PrimaryButton onClick={handleClick}>Выбрать файл</PrimaryButton>
+    <TextButton onClick={onClose}>Отменить</TextButton>
 </div>
 
 <style lang="scss">

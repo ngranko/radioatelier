@@ -1,5 +1,4 @@
 <script lang="ts">
-    import {createEventDispatcher} from 'svelte';
     import {fly} from 'svelte/transition';
     import {cubicInOut} from 'svelte/easing';
     import type {LooseObject} from '$lib/interfaces/object';
@@ -14,22 +13,22 @@
     import IconButton from '$lib/components/button/iconButton.svelte';
     import {clsx} from 'clsx';
 
-    const dispatch = createEventDispatcher();
+    interface Props {
+        key: string;
+        initialValues: Partial<LooseObject>;
+        isLoading?: boolean;
+        isEditing?: boolean;
+    }
 
-    export let key: string;
-    export let initialValues: Partial<LooseObject>;
-    export let isLoading: boolean = false;
-    export let isEditing: boolean = false;
+    let {key, initialValues = $bindable(), isLoading = false, isEditing = false}: Props = $props();
 
-    let isCloseConfirmationOpen = false;
+    let isCloseConfirmationOpen = $state(false);
 
     const image = createMutation({
         mutationFn: uploadImage,
     });
 
-    function handleImageChange(event: CustomEvent<File>) {
-        const file = event.detail;
-
+    function handleImageChange(file: File) {
         const formData = new FormData();
         formData.append('file', file);
 
@@ -68,7 +67,7 @@
     }
 </script>
 
-<div class="background" on:click={handleCloseClick} />
+<div class="background" onclick={handleCloseClick}></div>
 <aside
     class={clsx(['popup', {minimized: $activeObjectInfo.isMinimized}])}
     transition:fly={{x: -100, duration: 200, easing: cubicInOut}}
@@ -77,9 +76,9 @@
         <span class="headerTitle">{initialValues.name ?? ''}</span>
         <IconButton
             icon={`fa-solid ${$activeObjectInfo.isMinimized ? 'fa-chevron-up' : 'fa-chevron-down'}`}
-            on:click={handleMinimizeClick}
+            onClick={handleMinimizeClick}
         />
-        <IconButton icon="fa-solid fa-xmark" on:click={handleCloseClick} />
+        <IconButton icon="fa-solid fa-xmark" onClick={handleCloseClick} />
     </section>
     {#key key}
         {#if isLoading}
@@ -90,20 +89,20 @@
                 <div class="image-uploader">
                     <ImageUpload
                         bind:value={initialValues.image}
-                        on:change={handleImageChange}
+                        onChange={handleImageChange}
                         disabled={!isEditing}
                     />
                 </div>
                 {#if isEditing}
-                    <Form {initialValues} on:save on:delete />
+                    <Form {initialValues} />
                 {:else}
-                    <ViewMode {initialValues} on:delete />
+                    <ViewMode {initialValues} />
                 {/if}
             </div>
         {/if}
     {/key}
 </aside>
-<CloseConfirmation bind:isOpen={isCloseConfirmationOpen} on:click={handleClose} />
+<CloseConfirmation bind:isOpen={isCloseConfirmationOpen} onClick={handleClose} />
 
 <style lang="scss">
     @use '../../../styles/colors';

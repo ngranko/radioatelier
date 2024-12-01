@@ -1,7 +1,7 @@
 <script lang="ts">
     import Menu from '$lib/components/userMenu/menu.svelte';
 
-    let isOpen = false;
+    let isOpen = $state(false);
 
     function handleMenuClick() {
         isOpen = !isOpen;
@@ -9,11 +9,11 @@
 </script>
 
 <div class="user">
-    <button class="userButton" on:click={handleMenuClick}>
+    <button class="userButton" onclick={handleMenuClick} aria-label="Показать меню">
         <i class="fa-solid fa-user-ninja"></i>
     </button>
     {#if isOpen}
-        <Menu on:close={handleMenuClick} />
+        <Menu onClose={handleMenuClick} />
     {/if}
 </div>
 

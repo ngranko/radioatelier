@@ -8,6 +8,12 @@
     import config from '$lib/config';
     import {Toaster} from 'svelte-french-toast';
     import {onMount} from 'svelte';
+    import type {Snippet} from 'svelte';
+    interface Props {
+        children?: Snippet;
+    }
+
+    let {children}: Props = $props();
 
     const queryClient = new QueryClient({
         defaultOptions: {
@@ -30,7 +36,7 @@
 </script>
 
 <QueryClientProvider client={queryClient}>
-    <slot />
+    {@render children?.()}
     <Toaster />
-    <div id="portal" />
+    <div id="portal"></div>
 </QueryClientProvider>
