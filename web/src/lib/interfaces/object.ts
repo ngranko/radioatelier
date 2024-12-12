@@ -4,26 +4,26 @@ import type {PrivateTag} from '$lib/interfaces/privateTag';
 
 interface TaxonomlessObject {
     name: string;
-    description: string;
+    description?: string;
     lat: string;
     lng: string;
-    address: string;
-    city: string;
-    country: string;
-    installedPeriod: string;
+    address?: string;
+    city?: string;
+    country?: string;
+    installedPeriod?: string;
     isRemoved: boolean;
-    removalPeriod: string;
-    source: string;
-    image: string;
+    removalPeriod?: string;
+    source?: string;
+    image?: string;
     isPublic: boolean;
     isVisited: boolean;
-    rating: string;
+    rating?: string;
 }
 
 interface BaseObject extends TaxonomlessObject {
-    category: Partial<Category>;
-    tags: Partial<Tag>[];
-    privateTags: Partial<PrivateTag>[];
+    category: Pick<Category, 'id'>;
+    tags: Pick<Tag, 'id'>[];
+    privateTags: Pick<PrivateTag, 'id'>[];
 }
 
 export interface Object extends BaseObject {
@@ -32,13 +32,6 @@ export interface Object extends BaseObject {
 
 export interface LooseObject extends BaseObject {
     id: string | null;
-}
-
-export interface FormObject extends TaxonomlessObject {
-    id: string | null;
-    category: string;
-    tags: string[];
-    privateTags: string[];
 }
 
 export interface BareObject {

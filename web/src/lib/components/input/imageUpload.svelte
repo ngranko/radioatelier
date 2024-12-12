@@ -13,7 +13,7 @@
     let {
         id = undefined,
         name = undefined,
-        value = $bindable(undefined),
+        value = $bindable(),
         disabled = false,
         onChange,
     }: Props = $props();

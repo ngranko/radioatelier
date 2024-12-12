@@ -16,13 +16,13 @@
         required?: boolean;
         label?: string;
         error?: string[] | null;
-        onChange?(value: string): void;
+        onChange?(value: unknown): void;
     }
 
     let {
         id = undefined,
         name = undefined,
-        value = '',
+        value = $bindable(),
         options = [],
         placeholder = undefined,
         required = false,
@@ -43,11 +43,10 @@
 <div class={classes}>
     <label for={id} class="label">{error ? error[0] : label}</label>
     <Svelecte
-        on:change
         {onChange}
         inputId={id}
         {name}
-        {value}
+        bind:value
         {options}
         {required}
         {placeholder}

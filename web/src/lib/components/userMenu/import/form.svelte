@@ -102,11 +102,30 @@
             }),
     });
 
-    const {form, data, errors, isSubmitting, reset} = createForm<yup.InferType<typeof schema>>({
+    const {form, data, errors, isSubmitting, reset} = createForm<ImportMappings>({
         onSubmit: (values: ImportMappings) => {
             onSubmit(values);
         },
-        extend: validator({schema}),
+        extend: validator({schema}) as never,
+        initialValues: {
+            coordinates: null,
+            name: null,
+            isVisited: null,
+            rating: null,
+            isPublic: null,
+            category: null,
+            image: null,
+            tags: null,
+            privateTags: null,
+            description: null,
+            address: null,
+            city: null,
+            country: null,
+            installedPeriod: null,
+            isRemoved: null,
+            removalPeriod: null,
+            source: null,
+        },
     });
 
     function handleClose() {
@@ -154,7 +173,7 @@
             id="isVisited"
             name="isVisited"
             label="Посещена"
-            placeholder="Выберите колонку"
+            placeholder="Не заполнять"
             bind:value={$data.isVisited}
             options={$importInfo.preview[0]?.map((item, index) => ({value: index, text: item})) ??
                 []}
@@ -167,7 +186,7 @@
             id="rating"
             name="rating"
             label="Рейтинг"
-            placeholder="Выберите колонку"
+            placeholder="Не заполнять"
             bind:value={$data.rating}
             options={$importInfo.preview[0]?.map((item, index) => ({value: index, text: item})) ??
                 []}
@@ -180,7 +199,7 @@
             id="isPublic"
             name="isPublic"
             label="Публичная"
-            placeholder="Выберите колонку"
+            placeholder="Не заполнять"
             bind:value={$data.isPublic}
             options={$importInfo.preview[0]?.map((item, index) => ({value: index, text: item})) ??
                 []}

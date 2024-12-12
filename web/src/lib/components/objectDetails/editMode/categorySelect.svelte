@@ -3,7 +3,7 @@
     import {createCategory, listCategories} from '$lib/api/category';
     import Svelecte from 'svelecte';
     import type {Payload} from '$lib/interfaces/api';
-    import type {ListCategoriesResponsePayload} from '$lib/interfaces/category.js';
+    import type {Category, ListCategoriesResponsePayload} from '$lib/interfaces/category.js';
     import {clsx} from 'clsx';
 
     const client = useQueryClient();
@@ -13,7 +13,7 @@
         name?: string | undefined;
         value: string | undefined;
         error?: string[] | null | undefined;
-        onChange(value: string): void;
+        onChange(value: Category): void;
     }
 
     let {id = undefined, name = undefined, value, error = undefined, onChange}: Props = $props();
@@ -50,6 +50,10 @@
         const result = await $createCategoryMutation.mutateAsync({name: props.inputValue});
         return {id: result.data.id, name: result.data.name};
     }
+
+    function getCreateRowLabel(value: string) {
+        return `Создать '${value}'`;
+    }
 </script>
 
 <div class={classes}>
@@ -63,7 +67,7 @@
             highlightFirstItem={false}
             creatable={true}
             i18n={{
-                createRowLabel: value => `Создать '${value}'`,
+                createRowLabel: getCreateRowLabel,
             }}
             options={$categories.data?.data.categories.sort((a, b) => a.name.localeCompare(b.name))}
             {name}

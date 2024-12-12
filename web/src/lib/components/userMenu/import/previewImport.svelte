@@ -63,7 +63,7 @@
         <Svelecte
             bind:value={$importInfo.separator}
             inputId="separator"
-            on:change={handleSeparatorChange}
+            onChange={handleSeparatorChange}
             options={[
                 {value: ';', text: ';'},
                 {value: ',', text: ','},

@@ -3,30 +3,25 @@
     import {createTag, listTags} from '$lib/api/tag';
     import Svelecte from 'svelecte';
     import type {Payload} from '$lib/interfaces/api';
-    import type {ListTagsResponsePayload} from '$lib/interfaces/tag';
+    import type {ListTagsResponsePayload, Tag} from '$lib/interfaces/tag';
     import {clsx} from 'clsx';
 
     const client = useQueryClient();
 
     interface Props {
-        id: string | undefined;
-        name: string | undefined;
-        value: (string | undefined)[];
-        error?: string[] | null | undefined;
+        id?: string;
+        name?: string;
+        value?: (string | undefined)[];
+        error: any[] | null;
+        onChange?(value: Tag[]): void;
     }
 
-    let {
-        id = undefined,
-        name = undefined,
-        value = $bindable([]),
-        error = undefined,
-    }: Props = $props();
+    let {id = undefined, name = undefined, value = [], error = null, onChange}: Props = $props();
 
-    let isError: boolean = $derived(Boolean(error));
     let classes: string = $derived(
         clsx({
             field: true,
-            error: isError,
+            error: hasError(),
         }),
     );
 
@@ -44,6 +39,33 @@
 
     const tags = createQuery({queryKey: ['tags'], queryFn: listTags});
 
+    function hasError(): boolean {
+        if (!error) {
+            return false;
+        }
+
+        for (const item of error) {
+            if (item.id?.length > 0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    function getErrorMessage(): string | undefined {
+        if (!error) {
+            return undefined;
+        }
+
+        for (const item of error) {
+            if (item.id?.length > 0) {
+                return item.id[0];
+            }
+        }
+        return undefined;
+    }
+
     async function handleCreate(props: {
         inputValue: string;
         valueField: string;
@@ -60,10 +82,11 @@
 </script>
 
 <div class={classes}>
-    <label for={id} class="label">{error ? error[0] : 'Теги'}</label>
+    <label for={id} class="label">{getErrorMessage() ?? 'Теги'}</label>
     <!-- TODO: add loading state -->
     {#if !$tags.isLoading}
         <Svelecte
+            {onChange}
             inputId={id}
             placeholder="Не выбраны"
             highlightFirstItem={false}
@@ -75,7 +98,7 @@
             }}
             options={$tags.data?.data.tags.sort((a, b) => a.name.localeCompare(b.name))}
             {name}
-            bind:value
+            {value}
             createHandler={handleCreate}
         />
     {/if}

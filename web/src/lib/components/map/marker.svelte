@@ -1,6 +1,4 @@
 <script lang="ts">
-    import {run} from 'svelte/legacy';
-
     import {onMount, onDestroy} from 'svelte';
     import {
         mapLoader,
@@ -57,7 +55,7 @@
 
     const reposition = useRepositionMutation(client);
 
-    run(() => {
+    $effect(() => {
         if ($objectDetails.isSuccess) {
             activeObjectInfo.set({
                 isLoading: false,
@@ -68,9 +66,7 @@
                 object: $objectDetails.data.data.object,
             });
         }
-    });
 
-    $effect(() => {
         if ($objectDetails.isError) {
             console.error($objectDetails.error);
         }
@@ -89,9 +85,7 @@
                 },
             }));
         }
-    });
 
-    $effect(() => {
         if ($objectAddress.isError) {
             console.error($objectAddress.error);
             activeObjectInfo.update(value => ({
@@ -138,7 +132,7 @@
             map: $map,
             position: {lat: Number(lat), lng: Number(lng)},
             content: icon,
-            collisionBehavior: CollisionBehavior.REQUIRED_AND_HIDES_OPTIONAL,
+            collisionBehavior: CollisionBehavior.REQUIRED,
             gmpClickable: true,
         });
 
@@ -302,7 +296,7 @@
     }
 </script>
 
-<CloseConfirmation bind:isOpen={isConfirmationOpen} on:click={changeActiveMarker} />
+<CloseConfirmation bind:isOpen={isConfirmationOpen} onClick={changeActiveMarker} />
 
 <style lang="scss">
     @use '../../../styles/colors';

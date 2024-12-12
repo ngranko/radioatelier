@@ -1,6 +1,5 @@
 <script lang="ts">
     import type {
-        FormObject,
         ListObjectsResponsePayload,
         LooseObject,
         Object,
@@ -26,6 +25,8 @@
     import {createObject, deleteObject, updateObject} from '$lib/api/object';
     import type {Payload} from '$lib/interfaces/api';
     import RequestError from '$lib/errors/RequestError';
+    import type {Category} from '$lib/interfaces/category';
+    import type {Tag} from '$lib/interfaces/tag';
 
     const client = useQueryClient();
 
@@ -37,10 +38,12 @@
         errors: Record<string, string>;
     }
 
-    let {initialValues}: Props = $props();
+    interface Rating {
+        value: string;
+        text: string;
+    }
 
-    let tags = $state(initialValues.tags?.map(item => item.id) ?? ['']);
-    let privateTags = $state(initialValues.privateTags?.map(item => item.id) ?? ['']);
+    let {initialValues}: Props = $props();
 
     const createObjectMutation = createMutation({
         mutationFn: createObject,
@@ -85,35 +88,41 @@
         id: yup.string().defined().nullable(),
         lat: yup.string().required(),
         lng: yup.string().required(),
-        image: yup.string().required(),
+        image: yup.string(),
         isPublic: yup.boolean().required(),
         isVisited: yup.boolean().required(),
-        rating: yup.string().required().oneOf(['', '1', '2', '3']),
+        rating: yup.string().oneOf(['', '1', '2', '3']),
         name: yup
             .string()
             .required('Пожалуйста, введите название')
             .max(255, 'Слишком длинное название'),
-        description: yup.string().required(),
-        category: yup.string().required('Пожалуйста, выберите категорию'),
+        description: yup.string(),
+        category: yup
+            .object({id: yup.string().required('Пожалуйста, выберите категорию')})
+            .required('Пожалуйста, выберите категорию'),
         tags: yup.array().required(),
         privateTags: yup.array().required(),
-        address: yup.string().required().max(128, 'Слишком длинный адрес'),
-        city: yup.string().required().max(64, 'Слишком длинное название города'),
-        country: yup.string().required().max(64, 'Слишком длинное название страны'),
-        installedPeriod: yup.string().required().max(20, 'Слишком длинный период создания'),
+        address: yup.string().max(128, 'Слишком длинный адрес'),
+        city: yup.string().max(64, 'Слишком длинное название города'),
+        country: yup.string().max(64, 'Слишком длинное название страны'),
+        installedPeriod: yup.string().max(20, 'Слишком длинный период создания'),
         isRemoved: yup.boolean().required(),
-        removalPeriod: yup.string().required().max(20, 'Слишком длинный период пропажи'),
-        source: yup.string().required().url('Должна быть валидной ссылкой'),
+        removalPeriod: yup.string().max(20, 'Слишком длинный период утраты'),
+        source: yup.string().url('Должна быть валидной ссылкой'),
     });
 
     const {form, data, errors, isSubmitting, reset, setData, isDirty, setIsDirty} = createForm<
         yup.InferType<typeof schema>
     >({
-        onSubmit: (values: FormObject) => {
+        onSubmit: (values: LooseObject) => {
             handleSave(values);
         },
         extend: validator({schema}),
+        initialValues: initialValues,
     });
+
+    let tags: Tag[] = $state([]);
+    let privateTags: Tag[] = $state([]);
 
     $effect(() => {
         if ($isDirty.valueOf()) {
@@ -121,29 +130,52 @@
         }
     });
 
-    function handleRatingChange(rating: string) {
-        setData('rating', rating);
+    function getSelectedTagValues(items: Tag[], fallback?: Pick<Tag, 'id'>[]): string[] {
+        if (items.length) {
+            return items.map(item => item.id);
+        }
+
+        if (fallback) {
+            return fallback.map(item => item.id);
+        }
+
+        return [];
+    }
+
+    function handleRatingChange(rating: Rating) {
+        setData('rating', rating.value);
         setIsDirty(true);
     }
 
-    function handleCategoryChange(category: string) {
+    function handleCategoryChange(category: Category) {
         setData('category', category);
         setIsDirty(true);
     }
 
-    async function handleSave(values: FormObject) {
-        const object = {
+    function handleTagsChange(items: Tag[]) {
+        tags = items;
+        setData('tags', tags);
+        setIsDirty(true);
+    }
+
+    function handlePrivateTagsChange(items: Tag[]) {
+        privateTags = items;
+        setData('privateTags', privateTags);
+        setIsDirty(true);
+    }
+
+    async function handleSave(values: LooseObject) {
+        const object: LooseObject = {
             ...values,
-            category: {id: values.category},
-            tags: tags.map(item => ({id: item})),
-            privateTags: privateTags.map(item => ({id: item})),
+            tags: tags.length ? tags : (initialValues.tags ?? []),
+            privateTags: privateTags.length ? privateTags : (initialValues.privateTags ?? []),
         };
 
         if (!$activeObjectInfo.object) {
             return;
         }
 
-        if (!object.id) {
+        if (!values.id) {
             await toast.promise(createNewObject(object), {
                 loading: 'Создаю...',
                 success: 'Точка создана!',
@@ -234,13 +266,7 @@
     <input type="hidden" name="image" value={initialValues.image ?? ''} />
 
     <div class="fieldLong">
-        <FormInput
-            id="name"
-            name="name"
-            value={initialValues.name ?? ''}
-            label="Название"
-            error={$errors.name}
-        />
+        <FormInput id="name" name="name" label="Название" error={$errors.name} />
     </div>
     <Checkbox id="isVisited" name="isVisited" checked={initialValues.isVisited} label="Посещена" />
     <FormSelect
@@ -248,7 +274,6 @@
         name="rating"
         label="Рейтинг"
         placeholder="Выберите"
-        value={initialValues.rating}
         options={[
             {value: '1', text: '⭐️'},
             {value: '2', text: '⭐⭐'},
@@ -266,92 +291,67 @@
             name="category"
             value={initialValues.category?.id ?? ''}
             onChange={handleCategoryChange}
-            error={$errors.category}
+            error={$errors.category?.id}
         />
     </div>
     <div class="fieldLong">
-        <TagsSelect id="tags" name="tags" bind:value={tags} error={$errors.tags} />
+        <TagsSelect
+            id="tags"
+            name="tags"
+            value={getSelectedTagValues(tags, initialValues.tags)}
+            error={$errors.tags}
+            onChange={handleTagsChange}
+        />
     </div>
     <div class="fieldLong">
         <PrivateTagsSelect
             id="privateTags"
             name="privateTags"
-            bind:value={privateTags}
+            value={getSelectedTagValues(privateTags, initialValues.privateTags)}
             error={$errors.privateTags}
+            onChange={handlePrivateTagsChange}
         />
     </div>
     <div class="fieldLong">
         <FormTextarea
             id="description"
             name="description"
-            value={initialValues.description ?? ''}
             label="Информация"
             error={$errors.description}
         />
     </div>
     <div class="fieldLong">
-        <FormInput
-            id="address"
-            name="address"
-            value={initialValues.address ?? ''}
-            label="Адрес"
-            error={$errors.address}
-        />
+        <FormInput id="address" name="address" label="Адрес" error={$errors.address} />
     </div>
     <div class="fieldLong">
-        <FormInput
-            id="city"
-            name="city"
-            value={initialValues.city ?? ''}
-            label="Город"
-            error={$errors.city}
-        />
+        <FormInput id="city" name="city" label="Город" error={$errors.city} />
     </div>
     <div class="fieldLong">
-        <FormInput
-            id="country"
-            name="country"
-            value={initialValues.country ?? ''}
-            label="Страна"
-            error={$errors.country}
-        />
+        <FormInput id="country" name="country" label="Страна" error={$errors.country} />
     </div>
     <div class="fieldLong">
         <FormInput
             id="installedPeriod"
             name="installedPeriod"
-            value={initialValues.installedPeriod ?? ''}
             label="Период создания"
             error={$errors.installedPeriod}
         />
     </div>
     <div class="removedCheckbox">
-        <Checkbox
-            id="isRemoved"
-            name="isRemoved"
-            checked={initialValues.isRemoved}
-            label="Утрачена"
-        />
+        <Checkbox id="isRemoved" name="isRemoved" label="Утрачена" />
     </div>
     {#if $data.isRemoved}
         <div class="field">
             <FormInput
                 id="removalPeriod"
                 name="removalPeriod"
-                value={initialValues.removalPeriod ?? ''}
                 label="Период пропажи"
                 error={$errors.removalPeriod}
             />
         </div>
     {/if}
     <div class="fieldLong">
-        <FormInput
-            id="source"
-            name="source"
-            value={initialValues.source ?? ''}
-            label="Ссылка на источник"
-            error={$errors.source}
-        />
+        <FormInput id="source" name="source" label="Ссылка на источник" error={$errors.source} />
     </div>
     <div class="actions">
         <div class="save-button">
