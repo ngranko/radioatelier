@@ -3,7 +3,7 @@
     import {activeObjectInfo, map} from '$lib/stores/map';
     import Flags from '$lib/components/objectDetails/flags.svelte';
     import IconButton from '$lib/components/button/iconButton.svelte';
-    import toast from 'svelte-french-toast';
+    import toast from 'svelte-5-french-toast';
 
     interface Props {
         initialValues: Partial<LooseObject>;

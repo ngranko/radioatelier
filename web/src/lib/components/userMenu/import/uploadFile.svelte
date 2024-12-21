@@ -2,7 +2,7 @@
     import PrimaryButton from '$lib/components/button/primaryButton.svelte';
     import TextButton from '$lib/components/button/textButton.svelte';
     import {createMutation} from '@tanstack/svelte-query';
-    import toast from 'svelte-french-toast';
+    import toast from 'svelte-5-french-toast';
     import {extractPreview, uploadFile} from '$lib/api/import';
     import {importInfo} from '$lib/stores/import';
 
