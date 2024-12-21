@@ -179,6 +179,18 @@
     @use '../styles/colors';
     @use '../styles/typography';
 
+    .menu {
+        position: absolute;
+        top: 16px;
+        left: 16px;
+        right: 16px;
+        display: flex;
+        gap: 16px;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 1;
+    }
+
     .orientationButton {
         @include typography.size-20;
         position: absolute;
