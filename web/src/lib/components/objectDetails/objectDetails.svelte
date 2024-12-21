@@ -7,7 +7,7 @@
     import ImageUpload from '$lib/components/input/imageUpload.svelte';
     import {createMutation} from '@tanstack/svelte-query';
     import {uploadImage} from '$lib/api/object';
-    import toast from 'svelte-french-toast';
+    import toast from 'svelte-5-french-toast';
     import {activeMarker, activeObjectInfo, map} from '$lib/stores/map';
     import CloseConfirmation from '$lib/components/objectDetails/closeConfirmation.svelte';
     import IconButton from '$lib/components/button/iconButton.svelte';

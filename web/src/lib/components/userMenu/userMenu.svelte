@@ -8,7 +8,7 @@
     }
 </script>
 
-<div class="user">
+<div>
     <button class="userButton" onclick={handleMenuClick} aria-label="Показать меню">
         <i class="fa-solid fa-user-ninja"></i>
     </button>
@@ -22,15 +22,8 @@
     @use '../../../styles/colors';
     @use '../../../styles/typography';
 
-    .user {
-        position: absolute;
-        top: 0;
-        right: 0;
-        margin: 16px;
-        z-index: 1;
-    }
-
     .userButton {
+        position: relative;
         width: 40px;
         height: 40px;
         background: color.scale(colors.$primary, $lightness: +70%);
@@ -45,6 +38,7 @@
         cursor: pointer;
         color: colors.$black;
         transition: background-color 0.2s;
+        z-index: 2;
 
         &:hover {
             background-color: color.scale(colors.$primary, $lightness: +60%);

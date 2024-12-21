@@ -10,7 +10,7 @@
     import {isPasswordAcceptable} from '$lib/services/passwordStrength';
     import RequestError from '$lib/errors/RequestError';
     import type {Payload} from '$lib/interfaces/api';
-    import toast from 'svelte-french-toast';
+    import toast from 'svelte-5-french-toast';
     import {validator} from '@felte/validator-yup';
     import * as yup from 'yup';
     import type {TestContext} from 'yup';

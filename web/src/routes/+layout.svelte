@@ -6,7 +6,7 @@
     import ServerError from '$lib/errors/ServerError';
     import {STATUS_TOO_MANY_REQUESTS} from '$lib/api/constants';
     import config from '$lib/config';
-    import {Toaster} from 'svelte-french-toast';
+    import {Toaster} from 'svelte-5-french-toast';
     import {onMount} from 'svelte';
     import type {Snippet} from 'svelte';
     interface Props {

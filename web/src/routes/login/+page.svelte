@@ -12,7 +12,7 @@
     import RequestError from '$lib/errors/RequestError';
     import type {Payload} from '$lib/interfaces/api';
     import type {ChangePasswordFormErrors} from '$lib/interfaces/user';
-    import toast from 'svelte-french-toast';
+    import toast from 'svelte-5-french-toast';
     import * as yup from 'yup';
     import {validator} from '@felte/validator-yup';
 

@@ -1,7 +1,7 @@
 <script lang="ts">
     import Form from '$lib/components/userMenu/import/form.svelte';
     import {createMutation} from '@tanstack/svelte-query';
-    import toast from 'svelte-french-toast';
+    import toast from 'svelte-5-french-toast';
     import {extractPreview} from '$lib/api/import';
     import Svelecte from 'svelecte';
     import type {ImportMappings} from '$lib/interfaces/import';

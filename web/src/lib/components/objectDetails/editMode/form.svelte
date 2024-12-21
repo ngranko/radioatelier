@@ -20,7 +20,7 @@
     import FormSelect from '$lib/components/form/formSelect.svelte';
     import TagsSelect from '$lib/components/objectDetails/editMode/tagsSelect.svelte';
     import Switch from '$lib/components/input/switch.svelte';
-    import toast from 'svelte-french-toast';
+    import toast from 'svelte-5-french-toast';
     import {createMutation, useQueryClient} from '@tanstack/svelte-query';
     import {createObject, deleteObject, updateObject} from '$lib/api/object';
     import type {Payload} from '$lib/interfaces/api';

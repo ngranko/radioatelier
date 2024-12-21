@@ -9,7 +9,7 @@
     import ImportDialog from '$lib/components/userMenu/import/importDialog.svelte';
     import {goto} from '$app/navigation';
     import {type Component} from 'svelte';
-    import toast from 'svelte-french-toast';
+    import toast from 'svelte-5-french-toast';
 
     interface Props {
         onClose(): void;
