@@ -128,7 +128,10 @@
     <i class="fa-solid fa-location-arrow"></i>
 </button>
 
-<UserMenu />
+<div class="menu">
+    <div></div>
+    <UserMenu />
+</div>
 
 {#if $activeObjectInfo.object}
     <ObjectDetails
