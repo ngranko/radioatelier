@@ -10,6 +10,7 @@
     import {goto} from '$app/navigation';
     import {type Component} from 'svelte';
     import toast from 'svelte-5-french-toast';
+    import {activeObjectInfo, map, markerList} from '$lib/stores/map';
 
     interface Props {
         onClose(): void;
@@ -26,6 +27,11 @@
         mutationFn: invalidateToken,
         onSuccess() {
             RefreshToken.del();
+            activeObjectInfo.reset();
+            markerList.clear();
+            map.set(undefined);
+            localStorage.removeItem('lastCenter');
+            localStorage.removeItem('lastPosition');
             goto(`/login`);
         },
     });

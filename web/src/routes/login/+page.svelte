@@ -1,5 +1,5 @@
 <script lang="ts">
-    import {createMutation} from '@tanstack/svelte-query';
+    import {createMutation, useQueryClient} from '@tanstack/svelte-query';
     import type {LoginFormInputs, LoginResponsePayload} from '$lib/interfaces/auth';
     import {login} from '$lib/api/auth';
     import RefreshToken from '$lib/api/auth/refreshToken';
@@ -16,6 +16,8 @@
     import * as yup from 'yup';
     import {validator} from '@felte/validator-yup';
 
+    const queryClient = useQueryClient();
+
     const mutation = createMutation({
         mutationFn: login,
     });
@@ -27,8 +29,10 @@
 
     const {form, errors, isSubmitting} = createForm<yup.InferType<typeof schema>>({
         onSubmit: async (values: LoginFormInputs) => await $mutation.mutateAsync(values),
-        onSuccess: async result => {
+        onSuccess: async (result: unknown) => {
+            console.log('logged in');
             RefreshToken.set((result as LoginResponsePayload).data.refreshToken);
+            queryClient.clear();
             const ref = $page.url.searchParams.get('ref');
             await goto(ref ?? '/');
         },

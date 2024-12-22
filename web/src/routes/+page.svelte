@@ -83,7 +83,9 @@
             return;
         }
 
-        $map.setCenter(position);
+        if ($map) {
+            $map.setCenter(position);
+        }
     }
 
     function toggleOrientation() {

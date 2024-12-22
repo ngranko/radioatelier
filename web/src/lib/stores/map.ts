@@ -14,7 +14,7 @@ export const mapLoader = readable<Loader>(undefined, function start(set) {
     );
 });
 
-export const map = writable<google.maps.Map>(undefined);
+export const map = writable<google.maps.Map | undefined>(undefined);
 
 const {subscribe, set, update} = writable<ObjectDetailsInfo>({
     isMinimized: false,
@@ -135,5 +135,8 @@ export const markerList = {
             }
             return value;
         });
+    },
+    clear: () => {
+        privateMarkerList.set([] as unknown as KeyVal<MarkerListItem>);
     },
 };

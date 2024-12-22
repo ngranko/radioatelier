@@ -63,7 +63,9 @@
 
         activeMarker.deactivate();
         activeObjectInfo.reset();
-        $map.getStreetView().setVisible(false);
+        if ($map) {
+            $map.getStreetView().setVisible(false);
+        }
     }
 </script>
 
