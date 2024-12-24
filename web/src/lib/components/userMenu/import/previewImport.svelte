@@ -74,7 +74,9 @@
         />
     </div>
     <h3>Импортировать колонки</h3>
-    <Form {onClose} onSubmit={handleImport} />
+    {#key $importInfo.separator}
+        <Form {onClose} onSubmit={handleImport} />
+    {/key}
 </div>
 
 <style lang="scss">

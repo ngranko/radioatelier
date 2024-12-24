@@ -143,8 +143,10 @@
             required
             placeholder="Выберите колонку"
             bind:value={$data.coordinates}
-            options={$importInfo.preview[0]?.map((item, index) => ({value: index, text: item})) ??
-                []}
+            options={$importInfo.preview[0]?.map((item, index) => ({
+                value: index,
+                text: item,
+            })) ?? []}
             error={$errors.coordinates}
         />
         <Tooltip>
