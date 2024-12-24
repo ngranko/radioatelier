@@ -87,16 +87,13 @@ const privateMarkerList = writable<KeyVal<MarkerListItem>>({});
 export const markerList = {
     subscribe: privateMarkerList.subscribe,
     set: (value: MarkerListItem[]) => {
-        privateMarkerList.update(oldValue => {
-            if (!Object.keys(oldValue).length) {
-                const result: KeyVal<MarkerListItem> = {};
-                for (const object of value) {
-                    result[object.id] = object;
-                }
-
-                return result;
+        privateMarkerList.update(() => {
+            const result: KeyVal<MarkerListItem> = {};
+            for (const object of value) {
+                result[object.id] = object;
             }
-            return oldValue;
+
+            return result;
         });
     },
     addMarker: (marker: MarkerListItem) => {
