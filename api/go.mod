@@ -1,6 +1,7 @@
 module radioatelier
 
 go 1.22.0
+toolchain go1.23.7
 
 require (
 	github.com/essentialkaos/translit/v2 v2.1.3
@@ -18,9 +19,9 @@ require (
 	github.com/samber/slog-zerolog/v2 v2.3.0
 	github.com/thanhpk/randstr v1.0.6
 	github.com/trustelem/zxcvbn v1.0.1
-	golang.org/x/crypto v0.31.0
+	golang.org/x/crypto v0.35.0
 	golang.org/x/image v0.18.0
-	golang.org/x/text v0.21.0
+	golang.org/x/text v0.22.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gorm.io/driver/mysql v1.5.6
 	gorm.io/gorm v1.25.10
@@ -50,6 +51,6 @@ require (
 	go.opentelemetry.io/otel v1.19.0 // indirect
 	go.opentelemetry.io/otel/trace v1.19.0 // indirect
 	golang.org/x/exp v0.0.0-20230522175609-2e198f4a06a1 // indirect
-	golang.org/x/net v0.33.0 // indirect
-	golang.org/x/sys v0.28.0 // indirect
+	golang.org/x/net v0.36.0 // indirect
+	golang.org/x/sys v0.30.0 // indirect
 )
