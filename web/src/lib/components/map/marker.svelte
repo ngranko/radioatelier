@@ -136,7 +136,7 @@
             gmpClickable: true,
         });
 
-        marker.addListener('click', handleMarkerClick);
+        marker.addListener('gmp-click', handleMarkerClick);
         icon.addEventListener('mousedown', () => handleClickStart('map-marker-draggable'));
         icon.addEventListener('touchstart', () => handleClickStart('map-marker-draggable-mobile'));
         icon.addEventListener('mouseup', () => handleClickEnd('map-marker-draggable'));
