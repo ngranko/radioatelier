@@ -127,6 +127,7 @@
 
     .button {
         @include typography.brand-face;
+        color: colors.$black;
     }
 
     .button-delete {

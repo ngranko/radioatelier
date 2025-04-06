@@ -58,6 +58,10 @@
         &:hover {
             background-color: color.scale(colors.$lightgray, $lightness: -16%);
         }
+
+        & :global(i) {
+            color: colors.$black;
+        }
     }
 
     .primary {
