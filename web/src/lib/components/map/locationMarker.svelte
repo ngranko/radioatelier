@@ -45,7 +45,7 @@
         }
 
         const degrees = event.webkitCompassHeading ? event.webkitCompassHeading : event.alpha;
-        marker.style.transform = `translate(0, 50%) rotate(${degrees}deg)`;
+        // marker.style.transform = `translate(0, 50%) rotate(${degrees}deg)`;
     }
 
     function updateCurrentPosition(forceStale = false) {
@@ -66,9 +66,7 @@
         }
     }
     $effect(() => {
-        console.log('got into effect');
         if (orientationEnabled) {
-            console.log('orientation enabled');
             if (marker && marker.content) {
                 (marker.content as HTMLDivElement).classList.add(
                     'current-location-marker-oriented',
@@ -76,7 +74,6 @@
             }
             window.addEventListener('deviceorientation', handleOrientation, true);
         } else {
-            console.log('orientation not enabled');
             if (marker && marker.content) {
                 (marker.content as HTMLDivElement).classList.remove(
                     'current-location-marker-oriented',
