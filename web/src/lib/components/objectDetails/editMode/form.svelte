@@ -125,7 +125,8 @@
     let privateTags: Tag[] = $state([]);
 
     $effect(() => {
-        console.log(errors);
+        console.log('errors:');
+        console.log($errors);
     });
 
     $effect(() => {
