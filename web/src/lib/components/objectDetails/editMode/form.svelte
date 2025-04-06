@@ -107,7 +107,7 @@
         country: yup.string().max(64, 'Слишком длинное название страны'),
         installedPeriod: yup.string().max(20, 'Слишком длинный период создания'),
         isRemoved: yup.boolean().required(),
-        removalPeriod: yup.string().nullable().optional().max(20, 'Слишком длинный период утраты'),
+        removalPeriod: yup.string().max(20, 'Слишком длинный период утраты'),
         source: yup.string().url('Должна быть валидной ссылкой'),
     });
 
@@ -123,6 +123,10 @@
 
     let tags: Tag[] = $state([]);
     let privateTags: Tag[] = $state([]);
+
+    $effect(() => {
+        console.log(errors);
+    });
 
     $effect(() => {
         if ($isDirty.valueOf()) {
@@ -165,6 +169,8 @@
     }
 
     async function handleSave(values: LooseObject) {
+        console.log('save');
+        console.log(values);
         const object: LooseObject = {
             ...values,
             tags: tags.length ? tags : (initialValues.tags ?? []),
