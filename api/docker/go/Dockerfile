@@ -1,4 +1,4 @@
-FROM golang:1.22-alpine AS base
+FROM golang:1.23-alpine AS base
 WORKDIR /radioatelier
 RUN apk add git
 COPY . .
@@ -11,7 +11,7 @@ ENTRYPOINT CompileDaemon --build="go build -o radioatelier package/main.go" --co
 FROM base AS build
 RUN go build -o radioatelier package/main.go
 
-FROM alpine:3.17 AS prod
+FROM alpine:3.19 AS prod
 WORKDIR /radioatelier
 RUN apk add --no-cache tzdata
 COPY --from=build /radioatelier/radioatelier .
