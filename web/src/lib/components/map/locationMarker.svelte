@@ -44,7 +44,7 @@
             return;
         }
 
-        const degrees = event.webkitCompassHeading ? event.webkitCompassHeading - 180 : event.alpha;
+        const degrees = event.webkitCompassHeading ? event.webkitCompassHeading : event.alpha;
         console.log(degrees);
         marker.style.transform = `translate(0, 50%) rotate(${degrees}deg)`;
     }
