@@ -107,7 +107,7 @@
         country: yup.string().max(64, 'Слишком длинное название страны'),
         installedPeriod: yup.string().max(20, 'Слишком длинный период создания'),
         isRemoved: yup.boolean().required(),
-        removalPeriod: yup.string().max(20, 'Слишком длинный период утраты'),
+        removalPeriod: yup.string().nullable().optional().max(20, 'Слишком длинный период утраты'),
         source: yup.string().url('Должна быть валидной ссылкой'),
     });
 
