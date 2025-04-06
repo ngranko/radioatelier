@@ -46,7 +46,7 @@
 
         const degrees = event.webkitCompassHeading ? event.webkitCompassHeading : event.alpha;
         console.log(degrees);
-        marker.style.transform = `rotate(${degrees}deg)`;
+        marker.style.transform = `translate(0, 50%) rotate(${degrees}deg)`;
     }
 
     function updateCurrentPosition(forceStale = false) {
@@ -91,6 +91,7 @@
 
     :global(.current-location-marker) {
         @include typography.size-20;
+        position: relative;
         width: 20px;
         height: 20px;
         border-radius: 50%;
