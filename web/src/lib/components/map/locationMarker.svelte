@@ -45,7 +45,7 @@
         }
 
         const degrees = event.webkitCompassHeading ? event.webkitCompassHeading : event.alpha;
-        // marker.style.transform = `translate(0, 50%) rotate(${degrees}deg)`;
+        (marker.content as HTMLElement).style.transform = `translate(0, 50%) rotate(${degrees}deg)`;
     }
 
     function updateCurrentPosition(forceStale = false) {
