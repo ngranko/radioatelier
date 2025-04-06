@@ -1,6 +1,6 @@
-import type {Category} from '$lib/interfaces/category';
-import type {Tag} from '$lib/interfaces/tag';
-import type {PrivateTag} from '$lib/interfaces/privateTag';
+import type {FuzzyCategory} from '$lib/interfaces/category';
+import type {FuzzyTag} from '$lib/interfaces/tag';
+import type {FuzzyPrivateTag} from '$lib/interfaces/privateTag';
 
 interface TaxonomlessObject {
     name: string;
@@ -21,9 +21,9 @@ interface TaxonomlessObject {
 }
 
 interface BaseObject extends TaxonomlessObject {
-    category: Pick<Category, 'id'>;
-    tags: Pick<Tag, 'id'>[];
-    privateTags: Pick<PrivateTag, 'id'>[];
+    category: FuzzyCategory;
+    tags: FuzzyTag[];
+    privateTags: FuzzyPrivateTag[];
 }
 
 export interface Object extends BaseObject {

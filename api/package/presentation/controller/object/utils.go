@@ -31,7 +31,7 @@ func getTags(object presenter.Object) ([]Tag, error) {
         return []Tag{}, err
     }
 
-    var tagsResult []Tag
+    tagsResult := []Tag{}
     for _, tag := range tags {
         tagsResult = append(tagsResult, Tag{ID: tag.GetModel().ID, Name: tag.GetModel().Name})
     }
@@ -45,7 +45,7 @@ func getPrivateTags(object presenter.Object, user presenter.User) ([]Tag, error)
         return []Tag{}, err
     }
 
-    var privateTagsResult []Tag
+    privateTagsResult := []Tag{}
     for _, privateTag := range privateTags {
         privateTagsResult = append(privateTagsResult, Tag{ID: privateTag.GetModel().ID, Name: privateTag.GetModel().Name})
     }

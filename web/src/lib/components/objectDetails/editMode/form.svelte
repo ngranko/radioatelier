@@ -125,11 +125,6 @@
     let privateTags: Tag[] = $state([]);
 
     $effect(() => {
-        console.log('errors:');
-        console.log($errors);
-    });
-
-    $effect(() => {
         if ($isDirty.valueOf()) {
             activeObjectInfo.update(value => ({...value, isDirty: true}));
         }

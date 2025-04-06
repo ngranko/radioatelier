@@ -12,3 +12,8 @@ export interface PrivateTag {
     id: string;
     name: string;
 }
+
+export interface FuzzyPrivateTag {
+    id: string;
+    name?: string;
+}

@@ -12,3 +12,8 @@ export interface Category {
     id: string;
     name: string;
 }
+
+export interface FuzzyCategory {
+    id: string;
+    name?: string;
+}
