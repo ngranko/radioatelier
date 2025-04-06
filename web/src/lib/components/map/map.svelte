@@ -37,6 +37,7 @@
             controlSize: 40,
             // I can always enable it if I see that I need it< but for now let's leave as little controls as I can
             mapTypeControl: false,
+            cameraControl: false,
             // mapTypeControlOptions: {
             //     style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
             //     mapTypeIds: ["roadmap", "satellite"],
