@@ -45,6 +45,7 @@
 </span>
 
 <style lang="scss">
+    @use '../../../styles/colors';
     @use '../../../styles/typography';
 
     .flags {
@@ -53,6 +54,10 @@
         top: 16px;
         right: 24px;
         display: flex;
+
+        & > * {
+            color: colors.$black;
+        }
 
         & > :global(:not(:first-child)) {
             margin-left: 8px;
