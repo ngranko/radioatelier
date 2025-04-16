@@ -55,7 +55,7 @@
         right: 24px;
         display: flex;
 
-        & > * {
+        i {
             color: colors.$black;
         }
 
