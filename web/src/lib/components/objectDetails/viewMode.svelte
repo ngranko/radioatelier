@@ -35,10 +35,12 @@
             })
             .then(({data}: google.maps.StreetViewResponse) => {
                 const location = data.location!;
-                const pano = $map.getStreetView();
-                pano.setPano(location.pano as string);
-                pano.setVisible(true);
-                activeObjectInfo.update(value => ({...value, isMinimized: true}));
+                if ($map) {
+                    const pano = $map.getStreetView();
+                    pano.setPano(location.pano as string);
+                    pano.setVisible(true);
+                    activeObjectInfo.update(value => ({...value, isMinimized: true}));
+                }
             })
             .catch(error => {
                 console.error(error);

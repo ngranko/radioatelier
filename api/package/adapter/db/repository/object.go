@@ -3,7 +3,6 @@ package repository
 import (
     "github.com/google/uuid"
     "gorm.io/gorm"
-    "gorm.io/gorm/clause"
 
     "radioatelier/package/adapter/db/model"
     "radioatelier/package/infrastructure/db"
@@ -23,7 +22,6 @@ type Object interface {
     SetTags(object *model.Object, tags []uuid.UUID) error
     GetPrivateTags(object *model.Object, user *model.User) ([]*model.PrivateTag, error)
     SetPrivateTags(object *model.Object, user *model.User, tags []uuid.UUID) error
-    Search(query string, userLatitude string, userLongitude string, userID uuid.UUID) ([]model.Object, error)
 }
 
 func NewObjectRepository(client *db.Client) Object {
@@ -116,29 +114,4 @@ func (r *objectRepo) SetPrivateTags(object *model.Object, user *model.User, tags
         tagList = append(tagList, model.PrivateTag{Base: model.Base{ID: tag}})
     }
     return r.client.Model(object).Association("PrivateTags").Append(&tagList)
-}
-
-func (r *objectRepo) Search(query string, userLatitude string, userLongitude string, userID uuid.UUID) ([]model.Object, error) {
-    var list []model.Object
-    err := r.client.
-        Model(&model.Object{}).
-        Joins("MapPoint", r.client.Select("latitude", "longitude", "address", "city", "country")).
-        Joins("Category", r.client.Select("name")).
-        Select("objects.id", "objects.name").
-        Where(r.client.Where(&model.Object{IsPublic: true}).
-            Or(&model.Object{CreatedBy: userID})).
-        Where(r.client.Where("MATCH(objects.name) against(? in natural language mode)", query).
-            Or("MATCH(MapPoint.address, MapPoint.city, MapPoint.country) against(? in natural language mode)", query)).
-        Clauses(clause.OrderBy{
-            Expression: clause.Expr{
-                SQL:                "(MATCH(objects.name) against(? in natural language mode) + MATCH(MapPoint.address, MapPoint.city, MapPoint.country) against(? in natural language mode)) desc, ((MapPoint.latitude - ?) * (MapPoint.latitude - ?)) + ((MapPoint.longitude - ?) * (MapPoint.longitude - ?)) asc",
-                Vars:               []interface{}{query, query, userLatitude, userLatitude, userLongitude, userLongitude},
-                WithoutParentheses: true,
-            },
-        }).
-        Limit(10).
-        Find(&list).
-        Error
-
-    return list, err
 }

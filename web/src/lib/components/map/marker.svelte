@@ -120,7 +120,12 @@
 
         const {AdvancedMarkerElement, CollisionBehavior} = await $mapLoader.importLibrary('marker');
 
-        if (id === null) {
+        if (
+            id === null &&
+            !$activeObjectInfo.object!.address &&
+            !$activeObjectInfo.object!.city &&
+            !$activeObjectInfo.object!.country
+        ) {
             void $objectAddress.refetch();
             activeObjectInfo.update(value => ({
                 ...value,
@@ -157,7 +162,7 @@
                     const {event} = await $mapLoader.importLibrary('core');
 
                     mouseMoveListener = event.addListener(
-                        $map,
+                        $map!,
                         'mousemove',
                         function (evant: google.maps.MapMouseEvent) {
                             isDragged = true;
@@ -168,7 +173,7 @@
                     );
 
                     icon.classList.add(className);
-                    $map.set('draggable', false);
+                    $map!.set('draggable', false);
                     if ('vibrate' in navigator) {
                         navigator.vibrate(100);
                     }
@@ -179,7 +184,7 @@
 
         async function handleClickEnd(className: string) {
             dragTimeout.remove();
-            $map.set('draggable', true);
+            $map!.set('draggable', true);
 
             if (mouseMoveListener) {
                 const {event} = await $mapLoader.importLibrary('core');
@@ -253,6 +258,7 @@
 
     function handleMarkerClick() {
         if ($activeObjectInfo.object && $activeObjectInfo.object.id === id) {
+            // TODO: probably not needed anymore, check later
             return;
         }
 
@@ -262,6 +268,7 @@
         }
 
         if ($activeObjectInfo.isEditing) {
+            // TODO: probably not needed anymore, check later
             isConfirmationOpen = true;
         } else {
             changeActiveMarker();

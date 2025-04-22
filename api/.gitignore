@@ -8,6 +8,7 @@ docker-compose.*.yml
 
 /radioatelier
 /docker/mysql/data
+/docker/manticore/data
 
 /assets/keys/*
 !.gitkeep

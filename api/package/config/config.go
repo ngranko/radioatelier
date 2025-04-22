@@ -20,6 +20,7 @@ type Config struct {
     ImageResolutionLimit int
     ProjectLocale        string
     MySQL                MySQLConfig
+    Manticore            ManticoreConfig
     Notion               NotionConfig
     WebSocket            WebSocketConfig
 }
@@ -29,6 +30,12 @@ type MySQLConfig struct {
     User string
     Pass string
     Name string
+}
+
+type ManticoreConfig struct {
+    Host  string
+    Port  int
+    Table string
 }
 
 type NotionConfig struct {
@@ -61,6 +68,11 @@ func init() {
             User: os.Getenv("DB_USER"),
             Pass: os.Getenv("DB_PASS"),
             Name: os.Getenv("DB_NAME"),
+        },
+        Manticore: ManticoreConfig{
+            Host:  os.Getenv("MANTICORE_HOST"),
+            Port:  transformations.StringToInt(os.Getenv("MANTICORE_PORT"), 9308),
+            Table: os.Getenv("MANTICORE_TABLE"),
         },
         Notion: NotionConfig{
             Token:       os.Getenv("NOTION_TOKEN"),

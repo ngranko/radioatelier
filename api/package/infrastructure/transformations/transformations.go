@@ -23,6 +23,15 @@ func StringToInt(val string, fallback int) int {
     return intval
 }
 
+func StringToFloat(val string, fallback float64) float64 {
+    floatval, err := strconv.ParseFloat(val, 64)
+    if err != nil {
+        return fallback
+    }
+
+    return floatval
+}
+
 func LowercaseFirst(s string) string {
     if len(s) == 0 {
         return s

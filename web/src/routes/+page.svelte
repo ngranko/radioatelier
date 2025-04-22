@@ -13,6 +13,7 @@
     import LocationMarker from '$lib/components/map/locationMarker.svelte';
     import {me} from '$lib/api/user';
     import {onMount} from 'svelte';
+    import Search from '$lib/components/search/search.svelte';
 
     interface DeviceOrientationEventMaybeExtended extends DeviceOrientationEvent {
         requestPermission?(): Promise<'granted' | 'denied'>;
@@ -131,7 +132,11 @@
 </button>
 
 <div class="menu">
-    <div></div>
+    {#if $meQuery.isSuccess && $meQuery.data.data.role === 'admin'}
+        <Search />
+    {:else}
+        <div></div>
+    {/if}
     <UserMenu />
 </div>
 
@@ -144,7 +149,6 @@
     />
 {/if}
 
-<!--    <input id="pac-input" class="search" type="text" placeholder="Search Box" />-->
 <Map onClick={handleMapClick} />
 {#if $map}
     <LocationMarker {orientationEnabled} />
@@ -168,14 +172,6 @@
         {/key}
     {/if}
 {/if}
-
-<!--<style>-->
-<!--    .search {-->
-<!--        margin: 16px;-->
-<!--        position: relative;-->
-<!--        right: 0;-->
-<!--    }-->
-<!--</style>-->
 
 <style lang="scss">
     @use '../styles/colors';

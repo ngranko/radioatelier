@@ -36,8 +36,12 @@ export interface LooseObject extends BaseObject {
 
 export interface BareObject {
     id: string | null;
+    name?: string;
     lat: string;
     lng: string;
+    address?: string;
+    city?: string;
+    country?: string;
     isRemoved: boolean;
     isVisited: boolean;
 }
@@ -110,4 +114,40 @@ export interface UploadImageInputs {
 
 export interface UploadImagePayloadData {
     url: string;
+}
+
+export interface SearchItem {
+    id: string;
+    name: string;
+    categoryName: string;
+    latitude: string;
+    longitude: string;
+    address: string;
+    city: string;
+    country: string;
+}
+
+export interface SearchResponsePayload {
+    items: SearchItem[];
+    hasMore: boolean;
+    offset: number;
+    nextPageToken: string;
+}
+
+export type SearchPreviewContext = [string, SearchPreviewInputs];
+
+export interface SearchPreviewInputs {
+    query: string;
+    latitude: string;
+    longitude: string;
+}
+
+export type SearchContext = [string, SearchInputs];
+
+export interface SearchInputs {
+    query: string;
+    latitude: string;
+    longitude: string;
+    offset: number;
+    pageToken: string;
 }

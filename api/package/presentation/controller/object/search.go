@@ -1,33 +1,19 @@
 package object
 
 import (
-    "fmt"
     "log/slog"
     "net/http"
 
-    "github.com/google/uuid"
-
     "radioatelier/package/adapter/auth/accessToken"
-    "radioatelier/package/adapter/google"
+    "radioatelier/package/adapter/search/model"
+    "radioatelier/package/adapter/search/repository"
     "radioatelier/package/infrastructure/logger"
     "radioatelier/package/infrastructure/router"
-    "radioatelier/package/usecase/presenter"
+    "radioatelier/package/infrastructure/search"
+    "radioatelier/package/infrastructure/transformations"
 )
 
-type SearchPayloadData struct {
-    Objects []ResultItem `json:"objects"`
-}
-
-type ResultItem struct {
-    ID           uuid.UUID `json:"id"`
-    Name         string    `json:"name"`
-    CategoryName string    `json:"categoryName"`
-    Latitude     string    `json:"latitude"`
-    Longitude    string    `json:"longitude"`
-    Address      string    `json:"address"`
-    City         string    `json:"city"`
-    Country      string    `json:"country"`
-}
+type SearchPayloadData = model.SearchResults
 
 func Search(w http.ResponseWriter, r *http.Request) {
     token := r.Context().Value("Token").(accessToken.AccessToken)
@@ -35,61 +21,38 @@ func Search(w http.ResponseWriter, r *http.Request) {
     query := router.GetQueryParam(r, "query")
     latitude := router.GetQueryParam(r, "lat")
     longitude := router.GetQueryParam(r, "lng")
+    offset := transformations.StringToInt(router.GetQueryParam(r, "offset"), 0)
+    pageToken := router.GetQueryParam(r, "pageToken")
 
-    list, err := presenter.SearchObjects(query, latitude, longitude, token.UserID())
+    logger.GetZerolog().Info("searching for", slog.String("query", query), slog.String("latitude", latitude), slog.String("longitude", longitude))
+
+    repo := repository.NewSearchRepository(search.Get())
+
+    id := token.UserID()
+    localResults, err := repo.SearchLocal(query, latitude, longitude, id, offset, 20)
     if err != nil {
         router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
         return
     }
 
-    var result []ResultItem
-    for _, item := range list {
-        result = append(result, ResultItem{
-            ID:           item.GetModel().ID,
-            Name:         item.GetModel().Name,
-            CategoryName: item.GetModel().Category.Name,
-            Latitude:     item.GetModel().MapPoint.Latitude,
-            Longitude:    item.GetModel().MapPoint.Longitude,
-            Address:      item.GetModel().MapPoint.Address,
-            City:         item.GetModel().MapPoint.City,
-            Country:      item.GetModel().MapPoint.Country,
-        })
-    }
-
-    googleResult, err := google.TextSearch(query, latitude, longitude)
-    if err == nil {
-        for _, item := range googleResult.Results {
-            result = append(result, ResultItem{
-                ID:           uuid.Nil,
-                Name:         item.Name,
-                CategoryName: item.Types[0],
-                Latitude:     fmt.Sprintf("%f", item.Geometry.Location.Lat),
-                Longitude:    fmt.Sprintf("%f", item.Geometry.Location.Lng),
-                Address:      getStreetAddress(item),
-                City:         google.FindAddressComponent(item.AddressComponents, "locality"),
-                Country:      google.FindAddressComponent(item.AddressComponents, "country"),
-            })
-        }
-    } else {
+    googleResults, err := repo.SearchGoogle(query, latitude, longitude, 20, pageToken)
+    if err != nil {
         logger.GetZerolog().Warn("failed to search in google", slog.Any("error", err))
     }
-
-    logger.GetZerolog().Info("result", slog.Any("result", googleResult))
 
     router.NewResponse().
         WithStatus(http.StatusOK).
         WithPayload(router.Payload{
-            Data: SearchPayloadData{
-                Objects: result,
-            },
+            Data: combineResults(localResults, googleResults),
         }).
         Send(w)
 }
 
-func getStreetAddress(place google.Place) string {
-    streetAddress := google.ComposeStreetAddress(place.AddressComponents)
-    if streetAddress == "" {
-        return place.FormattedAddress
-    }
-    return streetAddress
+func combineResults(localResults model.SearchResults, googleResults model.SearchResults) model.SearchResults {
+    results := model.SearchResults{}
+    results.Items = append(localResults.Items, googleResults.Items...)
+    results.HasMore = localResults.HasMore || googleResults.HasMore
+    results.Offset = localResults.Offset
+    results.NextPageToken = googleResults.NextPageToken
+    return results
 }

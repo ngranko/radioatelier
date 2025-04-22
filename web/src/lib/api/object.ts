@@ -11,6 +11,9 @@ import type {
     ListObjectsResponsePayload,
     RepositionObjectInputs,
     RepositionObjectResponsePayload,
+    SearchContext,
+    SearchPreviewContext,
+    SearchResponsePayload,
     UpdateObjectInputs,
     UpdateObjectResponsePayload,
     UploadImageInputs,
@@ -66,4 +69,26 @@ export async function deleteObject(
     values: DeleteObjectInputs,
 ): Promise<Payload<DeleteObjectPayloadData>> {
     return new AuthRequest(new JsonRequest(`/api/object/${values.id}`, METHOD_DELETE)).send();
+}
+
+export async function searchPreview({
+    queryKey: [_key, {query, latitude, longitude}],
+}: QueryFunctionContext<SearchPreviewContext>): Promise<Payload<SearchResponsePayload>> {
+    return new AuthRequest(
+        new JsonRequest(
+            `/api/object/search/preview?query=${encodeURIComponent(query)}&lat=${latitude}&lng=${longitude}`,
+            METHOD_GET,
+        ),
+    ).send();
+}
+
+export async function search({
+    queryKey: [_key, {query, latitude, longitude, offset, pageToken}],
+}: QueryFunctionContext<SearchContext>): Promise<Payload<SearchResponsePayload>> {
+    return new AuthRequest(
+        new JsonRequest(
+            `/api/object/search?query=${encodeURIComponent(query)}&lat=${latitude}&lng=${longitude}&offset=${offset}&pageToken=${pageToken}`,
+            METHOD_GET,
+        ),
+    ).send();
 }
