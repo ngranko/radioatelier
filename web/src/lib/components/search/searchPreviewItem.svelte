@@ -1,5 +1,5 @@
 <script lang="ts">
-    import {map, activeObjectInfo, pointList} from '$lib/stores/map';
+    import {activeObjectInfo, pointList} from '$lib/stores/map';
     import SearchItemCard from './searchItemCard.svelte';
     import {setCenter} from '$lib/services/map/map.svelte';
     import type {SearchItem} from '$lib/interfaces/object';
