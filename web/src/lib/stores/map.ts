@@ -1,6 +1,6 @@
 import {readable, writable} from 'svelte/store';
 import {Loader} from '@googlemaps/js-api-loader';
-import type {MarkerListItem, ObjectDetailsInfo} from '$lib/interfaces/object';
+import type {PointListItem, ObjectDetailsInfo} from '$lib/interfaces/object';
 import config from '$lib/config';
 import type KeyVal from '$lib/interfaces/keyVal';
 
@@ -82,58 +82,122 @@ export const dragTimeout = {
         }),
 };
 
-const privateMarkerList = writable<KeyVal<MarkerListItem>>({});
+const privatePointList = writable<KeyVal<PointListItem>>({});
 
-export const markerList = {
-    subscribe: privateMarkerList.subscribe,
-    set: (value: MarkerListItem[]) => {
-        privateMarkerList.update(() => {
-            const result: KeyVal<MarkerListItem> = {};
-            for (const object of value) {
-                result[object.id] = object;
+export const pointList = {
+    subscribe: privatePointList.subscribe,
+    set: (value: PointListItem[]) => {
+        privatePointList.update(() => {
+            const result: KeyVal<PointListItem> = {};
+            for (const point of value) {
+                result[point.object.id] = point;
             }
 
             return result;
         });
     },
-    addMarker: (marker: MarkerListItem) => {
-        privateMarkerList.update(value => {
-            return {...value, [marker.id]: marker};
+    add: (point: PointListItem) => {
+        privatePointList.update(value => {
+            return {...value, [point.object.id]: point};
         });
     },
-    removeMarker: (id: string) => {
-        privateMarkerList.update(value => {
+    remove: (id: string) => {
+        privatePointList.update(value => {
             delete value[id];
             return value;
         });
     },
-    updateMarker: (id: string, updatedFields: Partial<MarkerListItem>) => {
-        privateMarkerList.update(value => {
-            const marker = value[id];
-            if (marker) {
-                if (updatedFields.lat) {
-                    marker.lat = updatedFields.lat;
-                }
-                if (updatedFields.lng) {
-                    marker.lng = updatedFields.lng;
-                }
-                if (Object.hasOwn(updatedFields, 'isVisited')) {
-                    marker.isVisited = Boolean(updatedFields.isVisited);
-                }
-                if (Object.hasOwn(updatedFields, 'isRemoved')) {
-                    marker.isRemoved = Boolean(updatedFields.isRemoved);
+    update: (id: string, updatedFields: Partial<PointListItem>) => {
+        privatePointList.update(value => {
+            const point = value[id];
+            if (point) {
+                if (updatedFields.object) {
+                    point.object = updatedFields.object;
                 }
                 if (updatedFields.marker) {
-                    if (marker.marker) {
-                        marker.marker.map = null;
+                    if (point.marker) {
+                        point.marker.map = null;
                     }
-                    marker.marker = updatedFields.marker;
+                    point.marker = updatedFields.marker;
+                }
+            }
+            return value;
+        });
+    },
+    updateCoordinates: (id: string, lat: string, lng: string) => {
+        privatePointList.update(value => {
+            const point = value[id];
+            if (point) {
+                point.object.lat = lat;
+                point.object.lng = lng;
+            }
+            return value;
+        });
+    },
+    clear: () => {
+        privatePointList.set([] as unknown as KeyVal<PointListItem>);
+    },
+};
+
+const privateSearchPointList = writable<KeyVal<PointListItem>>({});
+
+export const searchPointList = {
+    subscribe: privateSearchPointList.subscribe,
+    set: (value: PointListItem[]) => {
+        privateSearchPointList.update(() => {
+            const result: KeyVal<PointListItem> = {};
+            for (const point of value) {
+                result[point.object.id] = point;
+            }
+
+            return result;
+        });
+    },
+    add: (point: PointListItem) => {
+        privateSearchPointList.update(value => {
+            return {...value, [point.object.id]: point};
+        });
+    },
+    remove: (id: string) => {
+        privateSearchPointList.update(value => {
+            delete value[id];
+            return value;
+        });
+    },
+    update: (id: string, updatedFields: Partial<PointListItem>) => {
+        privateSearchPointList.update(value => {
+            const point = value[id];
+            if (point) {
+                if (updatedFields.object) {
+                    point.object = updatedFields.object;
+                }
+                if (updatedFields.marker) {
+                    privatePointList.update(value => {
+                        if (value[id].marker) {
+                            value[id].marker.map = null;
+                        }
+                        return value;
+                    });
+                    if (point.marker) {
+                        point.marker.map = null;
+                    }
+                    point.marker = updatedFields.marker;
                 }
             }
             return value;
         });
     },
     clear: () => {
-        privateMarkerList.set([] as unknown as KeyVal<MarkerListItem>);
+        privateSearchPointList.update(searchPoints => {
+            for (const id in searchPoints) {
+                privatePointList.update(points => {
+                    if (points[id].marker && searchPoints[id].marker) {
+                        points[id].marker.map = searchPoints[id].marker.map;
+                    }
+                    return points;
+                });
+            }
+            return [] as unknown as KeyVal<PointListItem>;
+        });
     },
 };

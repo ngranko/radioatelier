@@ -1,6 +1,13 @@
 <script lang="ts">
     import {onMount, onDestroy} from 'svelte';
-    import {mapLoader, map, dragTimeout, markerList, activeObjectInfo} from '$lib/stores/map';
+    import {
+        mapLoader,
+        map,
+        dragTimeout,
+        activeObjectInfo,
+        pointList,
+        searchPointList,
+    } from '$lib/stores/map';
     import {createMutation} from '@tanstack/svelte-query';
     import {getLocation} from '$lib/api/location';
     import type {Location} from '$lib/interfaces/location';
@@ -154,16 +161,18 @@
             return;
         }
 
-        for (const marker of Object.values($markerList)) {
+        for (const point of Object.values($pointList)) {
             if (
                 !($map.getBounds() as google.maps.LatLngBounds).contains({
-                    lat: Number(marker.lat),
-                    lng: Number(marker.lng),
+                    lat: Number(point.object.lat),
+                    lng: Number(point.object.lng),
                 })
             ) {
-                (marker.marker as google.maps.marker.AdvancedMarkerElement).map = null;
+                point.marker!.map = null;
             } else {
-                (marker.marker as google.maps.marker.AdvancedMarkerElement).map = $map;
+                if (!$searchPointList[point.object.id]) {
+                    point.marker!.map = $map;
+                }
             }
         }
     }

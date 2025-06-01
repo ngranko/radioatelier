@@ -6,7 +6,7 @@
         activeObjectInfo,
         activeMarker,
         dragTimeout,
-        markerList,
+        searchPointList,
     } from '$lib/stores/map';
     import {createQuery, useQueryClient} from '@tanstack/svelte-query';
     import {getObject} from '$lib/api/object';
@@ -15,6 +15,8 @@
     import type {Object} from '$lib/interfaces/object';
     import CloseConfirmation from '$lib/components/objectDetails/closeConfirmation.svelte';
     import {clsx} from 'clsx';
+    import {pointList} from '$lib/stores/map.js';
+    import {setDraggable} from '$lib/services/map/map.svelte';
 
     interface Props {
         id?: string | null;
@@ -23,6 +25,10 @@
         isRemoved?: boolean;
         isVisited?: boolean;
         initialActive?: boolean;
+        icon: string;
+        color: string;
+        isDraggable?: boolean;
+        source: 'map' | 'list' | 'search';
     }
 
     let {
@@ -32,6 +38,10 @@
         isRemoved = false,
         isVisited = false,
         initialActive = false,
+        icon,
+        color,
+        isDraggable = false,
+        source,
     }: Props = $props();
     let marker: google.maps.marker.AdvancedMarkerElement | undefined = $state();
     let skipClick = false;
@@ -114,9 +124,10 @@
     onMount(async () => {
         activeMarker.deactivate();
 
-        const icon = document.createElement('div');
-        icon.innerHTML = '<i class="fa-solid fa-bolt" style="pointer-events:none;"></i>';
-        icon.className = getMarkerClassList();
+        const iconElement = document.createElement('div');
+        iconElement.style.backgroundColor = color;
+        iconElement.innerHTML = `<i class="${icon}" style="pointer-events:none;"></i>`;
+        iconElement.className = getMarkerClassList();
 
         const {AdvancedMarkerElement, CollisionBehavior} = await $mapLoader.importLibrary('marker');
 
@@ -136,19 +147,33 @@
         marker = new AdvancedMarkerElement({
             map: $map,
             position: {lat: Number(lat), lng: Number(lng)},
-            content: icon,
+            content: iconElement,
             collisionBehavior: CollisionBehavior.REQUIRED,
             gmpClickable: true,
+            zIndex: source === 'search' ? 1 : 0,
         });
 
         marker.addListener('gmp-click', handleMarkerClick);
-        icon.addEventListener('mousedown', () => handleClickStart('map-marker-draggable'));
-        icon.addEventListener('touchstart', () => handleClickStart('map-marker-draggable-mobile'));
-        icon.addEventListener('mouseup', () => handleClickEnd('map-marker-draggable'));
-        icon.addEventListener('touchend', () => handleClickEnd('map-marker-draggable-mobile'));
 
-        if (id) {
-            markerList.updateMarker(id, {marker});
+        if (isDraggable) {
+            iconElement.addEventListener('mousedown', () =>
+                handleClickStart('map-marker-draggable'),
+            );
+            iconElement.addEventListener('touchstart', () =>
+                handleClickStart('map-marker-draggable-mobile'),
+            );
+            iconElement.addEventListener('mouseup', () => handleClickEnd('map-marker-draggable'));
+            iconElement.addEventListener('touchend', () =>
+                handleClickEnd('map-marker-draggable-mobile'),
+            );
+        }
+
+        if (source === 'list') {
+            pointList.update(id!, {marker});
+        }
+
+        if (source === 'search') {
+            searchPointList.update(id!, {marker});
         }
 
         setTimeout(
@@ -172,10 +197,10 @@
                         },
                     );
 
-                    icon.classList.add(className);
-                    $map!.set('draggable', false);
+                    iconElement.classList.add(className);
+                    setDraggable(false);
                     if ('vibrate' in navigator) {
-                        navigator.vibrate(100);
+                        navigator.vibrate(10);
                     }
                     skipClick = true;
                 }, 500),
@@ -184,7 +209,7 @@
 
         async function handleClickEnd(className: string) {
             dragTimeout.remove();
-            $map!.set('draggable', true);
+            setDraggable(true);
 
             if (mouseMoveListener) {
                 const {event} = await $mapLoader.importLibrary('core');
@@ -197,7 +222,7 @@
                 updateObjectCoordinates();
             }
 
-            icon.classList.remove(className);
+            iconElement.classList.remove(className);
         }
     });
 
@@ -234,12 +259,14 @@
                 lng: String(marker!.position!.lng),
             },
         });
-        markerList.updateMarker(id!, {
-            lat: String(marker!.position!.lat),
-            lng: String(marker!.position!.lng),
-        });
+        pointList.updateCoordinates(
+            id!,
+            String(marker!.position!.lat),
+            String(marker!.position!.lng),
+        );
     }
 
+    // TODO: probably not needed anymore as you cannot drag markers while details are open
     function updateNewObjectCoordinates() {
         activeObjectInfo.update(value => ({
             ...value,
@@ -250,10 +277,11 @@
                 lng: String(marker!.position!.lng),
             },
         }));
-        markerList.updateMarker(id!, {
-            lat: String(marker!.position!.lat),
-            lng: String(marker!.position!.lng),
-        });
+        pointList.updateCoordinates(
+            id!,
+            String(marker!.position!.lat),
+            String(marker!.position!.lng),
+        );
     }
 
     function handleMarkerClick() {
@@ -318,7 +346,6 @@
         border-radius: 50%;
         font-size: 14px;
         color: white;
-        background-color: colors.$black;
         transition:
             transform 0.1s ease-in-out,
             opacity 0.1s ease-in-out;

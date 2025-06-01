@@ -71,7 +71,8 @@ export interface ObjectListItem {
     isVisited: boolean;
 }
 
-export interface MarkerListItem extends ObjectListItem {
+export interface PointListItem {
+    object: ObjectListItem | Object;
     marker?: google.maps.marker.AdvancedMarkerElement;
 }
 
@@ -120,18 +121,18 @@ export interface SearchItem {
     id: string;
     name: string;
     categoryName: string;
-    latitude: string;
-    longitude: string;
+    lat: string;
+    lng: string;
     address: string;
     city: string;
     country: string;
+    type: 'local' | 'google';
 }
 
-export interface SearchResponsePayload {
+export interface SearchLocalResponsePayload {
     items: SearchItem[];
     hasMore: boolean;
     offset: number;
-    nextPageToken: string;
 }
 
 export type SearchPreviewContext = [string, SearchPreviewInputs];
@@ -142,12 +143,15 @@ export interface SearchPreviewInputs {
     longitude: string;
 }
 
-export type SearchContext = [string, SearchInputs];
+export type SearchLocalContext = [string, SearchLocalInputs];
 
-export interface SearchInputs {
+export interface SearchLocalInputs {
     query: string;
     latitude: string;
     longitude: string;
-    offset: number;
-    pageToken: string;
+}
+
+export interface MapPlaceable {
+    lat: string;
+    lng: string;
 }

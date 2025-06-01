@@ -11,9 +11,9 @@ import type {
     ListObjectsResponsePayload,
     RepositionObjectInputs,
     RepositionObjectResponsePayload,
-    SearchContext,
+    SearchLocalContext,
     SearchPreviewContext,
-    SearchResponsePayload,
+    SearchLocalResponsePayload,
     UpdateObjectInputs,
     UpdateObjectResponsePayload,
     UploadImageInputs,
@@ -73,7 +73,7 @@ export async function deleteObject(
 
 export async function searchPreview({
     queryKey: [_key, {query, latitude, longitude}],
-}: QueryFunctionContext<SearchPreviewContext>): Promise<Payload<SearchResponsePayload>> {
+}: QueryFunctionContext<SearchPreviewContext>): Promise<Payload<SearchLocalResponsePayload>> {
     return new AuthRequest(
         new JsonRequest(
             `/api/object/search/preview?query=${encodeURIComponent(query)}&lat=${latitude}&lng=${longitude}`,
@@ -82,12 +82,13 @@ export async function searchPreview({
     ).send();
 }
 
-export async function search({
-    queryKey: [_key, {query, latitude, longitude, offset, pageToken}],
-}: QueryFunctionContext<SearchContext>): Promise<Payload<SearchResponsePayload>> {
+export async function searchLocal({
+    queryKey: [_key, {query, latitude, longitude}],
+    pageParam = 0,
+}: QueryFunctionContext<SearchLocalContext, number>): Promise<Payload<SearchLocalResponsePayload>> {
     return new AuthRequest(
         new JsonRequest(
-            `/api/object/search?query=${encodeURIComponent(query)}&lat=${latitude}&lng=${longitude}&offset=${offset}&pageToken=${pageToken}`,
+            `/api/object/search/local?query=${encodeURIComponent(query)}&lat=${latitude}&lng=${longitude}&offset=${pageParam}`,
             METHOD_GET,
         ),
     ).send();

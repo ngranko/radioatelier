@@ -1,9 +1,10 @@
 <script lang="ts">
     import type {LooseObject} from '$lib/interfaces/object';
-    import {activeObjectInfo, map} from '$lib/stores/map';
+    import {activeObjectInfo} from '$lib/stores/map';
     import Flags from '$lib/components/objectDetails/flags.svelte';
     import IconButton from '$lib/components/button/iconButton.svelte';
     import toast from 'svelte-5-french-toast';
+    import {getStreetView} from '$lib/services/map/map.svelte';
 
     interface Props {
         initialValues: Partial<LooseObject>;
@@ -24,28 +25,10 @@
     }
 
     function handleStreetViewClick() {
-        const streetView = new google.maps.StreetViewService();
-        streetView
-            .getPanorama({
-                location: new google.maps.LatLng(
-                    Number(initialValues.lat),
-                    Number(initialValues.lng),
-                ),
-                radius: 50,
-            })
-            .then(({data}: google.maps.StreetViewResponse) => {
-                const location = data.location!;
-                if ($map) {
-                    const pano = $map.getStreetView();
-                    pano.setPano(location.pano as string);
-                    pano.setVisible(true);
-                    activeObjectInfo.update(value => ({...value, isMinimized: true}));
-                }
-            })
-            .catch(error => {
-                console.error(error);
-                toast.error('Нет панорамы для этой точки');
-            });
+        getStreetView(Number(initialValues.lat), Number(initialValues.lng)).catch(error => {
+            console.error(error);
+            toast.error('Нет панорамы для этой точки');
+        });
     }
 
     function startsWithNumber(str: string): boolean {

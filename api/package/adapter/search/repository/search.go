@@ -35,7 +35,7 @@ func NewSearchRepository(client *search.Client) Search {
 
 func (r *searchRepo) SearchLocal(query string, latitude string, longitude string, userID uuid.UUID, offset int, limit int) (model.SearchResults, error) {
     body := fmt.Sprintf(
-        "select object_id, name, address, city, country, latitude, longitude, category_name, weight() as weight, GEODIST(%f, %f, latitude, longitude, {in=degrees, out=km}) as distance from radioatelier where match('%s') and (created_by = '%s' or is_public = true) order by weight() desc, distance asc limit %d, %d",
+        "select object_id, name, address, city, country, latitude, longitude, category_name, weight() as weight, GEODIST(%f, %f, latitude, longitude, {in=degrees, out=km}) as distance from radioatelier where match('%s*') and (created_by = '%s' or is_public = true) order by weight() desc, distance asc limit %d, %d",
         transformations.StringToFloat(latitude, 0),
         transformations.StringToFloat(longitude, 0),
         query,
@@ -78,6 +78,7 @@ func (r *searchRepo) SearchGoogle(query string, latitude string, longitude strin
             Address:      getStreetAddress(item),
             City:         google.FindAddressComponent(item.AddressComponents, "locality"),
             Country:      google.FindAddressComponent(item.AddressComponents, "country"),
+            Type:         model.SearchItemTypeGoogle,
         })
     }
     results.HasMore = googleResults.NextPageToken != ""
@@ -97,6 +98,7 @@ func (r *searchRepo) SearchCoordinates(latitude string, longitude string) (model
             Address:      "",
             City:         "",
             Country:      "",
+            Type:         model.SearchItemTypeLocal,
         }},
     }, nil
 }
@@ -124,7 +126,7 @@ func parseRawManticoreResults(raw *openapi.SqlResponse) (model.ManticoreResults,
 }
 
 func convertManticoreToFinalResults(manticoreResults model.ManticoreResults, offset int, limit int) model.SearchResults {
-    results := model.SearchResults{Offset: offset + limit}
+    results := model.SearchResults{Offset: offset + limit, Items: []model.SearchItem{}}
     for i, hit := range manticoreResults.Hits.Hits {
         if i >= limit {
             results.HasMore = true
@@ -140,6 +142,7 @@ func convertManticoreToFinalResults(manticoreResults model.ManticoreResults, off
             Address:      hit.Source.Address,
             City:         hit.Source.City,
             Country:      hit.Source.Country,
+            Type:         model.SearchItemTypeLocal,
         })
     }
 

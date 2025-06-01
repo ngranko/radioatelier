@@ -51,9 +51,14 @@ func SearchPreview(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    googleResults, err := repo.SearchGoogle(query, latitude, longitude, 2, "")
+    googleResults, err := repo.SearchGoogle(query, latitude, longitude, 3, "")
     if err == nil {
-        for _, item := range googleResults.Items {
+        for index, item := range googleResults.Items {
+            if index >= 2 {
+                results.HasMore = true
+                break
+            }
+
             results.Items = append(results.Items, item)
         }
     } else {

@@ -8,7 +8,7 @@
     import PrimaryButton from '$lib/components/button/primaryButton.svelte';
     import DeleteButton from '$lib/components/objectDetails/editMode/deleteButton.svelte';
     import BackButton from '$lib/components/objectDetails/editMode/backButton.svelte';
-    import {activeMarker, activeObjectInfo, markerList} from '$lib/stores/map';
+    import {activeMarker, activeObjectInfo, pointList, searchPointList} from '$lib/stores/map';
     import {createForm} from 'felte';
     import * as yup from 'yup';
     import {validator} from '@felte/validator-yup';
@@ -199,7 +199,7 @@
                 message: '',
                 data: {object: result.data},
             });
-            markerList.addMarker(result.data);
+            pointList.add({object: result.data});
             activeObjectInfo.reset();
         } catch (error) {
             if (error instanceof RequestError && (error.payload as ErrorPayload).errors) {
@@ -219,10 +219,8 @@
                 message: '',
                 data: {object: result.data},
             });
-            markerList.updateMarker(result.data.id, {
-                isVisited: result.data.isVisited,
-                isRemoved: result.data.isRemoved,
-            });
+            pointList.update(result.data.id, {object: result.data});
+            searchPointList.update(result.data.id, {object: result.data});
             activeObjectInfo.reset();
         } catch (error: unknown) {
             if (error instanceof RequestError && (error.payload as ErrorPayload).errors) {
@@ -246,7 +244,7 @@
 
     async function deleteExistingObject(id: string) {
         const result = await $deleteObjectMutation.mutateAsync({id});
-        markerList.removeMarker(result.data.id);
+        pointList.remove(result.data.id);
         activeObjectInfo.reset();
         activeMarker.set(null);
     }

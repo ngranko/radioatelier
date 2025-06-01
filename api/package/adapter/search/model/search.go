@@ -38,12 +38,20 @@ type SearchResults struct {
 }
 
 type SearchItem struct {
-    ID           *string `json:"id"`
-    Name         string  `json:"name"`
-    CategoryName string  `json:"categoryName"`
-    Latitude     string  `json:"latitude"`
-    Longitude    string  `json:"longitude"`
-    Address      string  `json:"address"`
-    City         string  `json:"city"`
-    Country      string  `json:"country"`
+    ID           *string        `json:"id"`
+    Name         string         `json:"name"`
+    CategoryName string         `json:"categoryName"`
+    Latitude     string         `json:"lat"`
+    Longitude    string         `json:"lng"`
+    Address      string         `json:"address"`
+    City         string         `json:"city"`
+    Country      string         `json:"country"`
+    Type         SearchItemType `json:"type"`
 }
+
+type SearchItemType string
+
+const (
+    SearchItemTypeLocal  SearchItemType = "local"
+    SearchItemTypeGoogle                = "google"
+)

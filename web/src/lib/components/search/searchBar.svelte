@@ -1,5 +1,6 @@
 <script lang="ts">
     import ClearButton from '$lib/components/search/clearButton.svelte';
+    import {searchPointList} from '$lib/stores/map';
 
     let {query = $bindable()} = $props();
 
@@ -19,35 +20,19 @@
         query = '';
         val = '';
         inputRef!.value = '';
+        searchPointList.clear();
     }
 </script>
 
-<div class="container">
-    <input type="text" placeholder="Искать..." oninput={handleInput} bind:this={inputRef} />
+<div class="relative z-1">
+    <input
+        type="text"
+        placeholder="Искать..."
+        oninput={handleInput}
+        bind:this={inputRef}
+        class="font-branding text-base relative w-full h-full pt-2 pr-10 pb-2 pl-4 border-none rounded-4xl bg-white shadow-sm"
+    />
     {#if val}
         <ClearButton onClick={handleClearClick} />
     {/if}
 </div>
-
-<style lang="scss">
-    @use '../../../styles/colors';
-    @use '../../../styles/typography';
-
-    .container {
-        position: relative;
-        z-index: 1;
-    }
-
-    input {
-        @include typography.brand-face;
-        @include typography.size-16;
-        position: relative;
-        width: 100%;
-        height: 100%;
-        padding: 10px 42px 10px 18px;
-        border: none;
-        border-radius: 40px;
-        background-color: white;
-        box-shadow: 0 0 2px colors.$transparentBlack;
-    }
-</style>

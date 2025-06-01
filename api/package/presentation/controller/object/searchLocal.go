@@ -15,16 +15,15 @@ import (
 
 type SearchPayloadData = model.SearchResults
 
-func Search(w http.ResponseWriter, r *http.Request) {
+func SearchLocal(w http.ResponseWriter, r *http.Request) {
     token := r.Context().Value("Token").(accessToken.AccessToken)
 
     query := router.GetQueryParam(r, "query")
     latitude := router.GetQueryParam(r, "lat")
     longitude := router.GetQueryParam(r, "lng")
     offset := transformations.StringToInt(router.GetQueryParam(r, "offset"), 0)
-    pageToken := router.GetQueryParam(r, "pageToken")
 
-    logger.GetZerolog().Info("searching for", slog.String("query", query), slog.String("latitude", latitude), slog.String("longitude", longitude))
+    logger.GetZerolog().Info("local search", slog.String("query", query), slog.String("latitude", latitude), slog.String("longitude", longitude))
 
     repo := repository.NewSearchRepository(search.Get())
 
@@ -35,24 +34,10 @@ func Search(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    googleResults, err := repo.SearchGoogle(query, latitude, longitude, 20, pageToken)
-    if err != nil {
-        logger.GetZerolog().Warn("failed to search in google", slog.Any("error", err))
-    }
-
     router.NewResponse().
         WithStatus(http.StatusOK).
         WithPayload(router.Payload{
-            Data: combineResults(localResults, googleResults),
+            Data: localResults,
         }).
         Send(w)
-}
-
-func combineResults(localResults model.SearchResults, googleResults model.SearchResults) model.SearchResults {
-    results := model.SearchResults{}
-    results.Items = append(localResults.Items, googleResults.Items...)
-    results.HasMore = localResults.HasMore || googleResults.HasMore
-    results.Offset = localResults.Offset
-    results.NextPageToken = googleResults.NextPageToken
-    return results
 }

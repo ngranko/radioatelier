@@ -1,7 +1,7 @@
 <script lang="ts">
     import {createQuery} from '@tanstack/svelte-query';
     import {listObjects} from '$lib/api/object';
-    import {map, activeObjectInfo, markerList} from '$lib/stores/map';
+    import {map, activeObjectInfo, pointList, searchPointList} from '$lib/stores/map.js';
     import Map from '$lib/components/map/map.svelte';
     import Marker from '$lib/components/map/marker.svelte';
     import UserMenu from '$lib/components/userMenu/userMenu.svelte';
@@ -39,7 +39,7 @@
 
     $effect(() => {
         if ($objects.isSuccess) {
-            markerList.set($objects.data.data.objects);
+            pointList.set($objects.data.data.objects.map(object => ({object})));
         }
     });
 
@@ -152,13 +152,28 @@
 <Map onClick={handleMapClick} />
 {#if $map}
     <LocationMarker {orientationEnabled} />
-    {#each Object.values($markerList) as marker (marker.id)}
+    {#each Object.values($pointList) as point (point.object.id)}
         <Marker
-            id={marker.id}
-            lat={marker.lat}
-            lng={marker.lng}
-            isVisited={marker.isVisited}
-            isRemoved={marker.isRemoved}
+            id={point.object.id}
+            lat={point.object.lat}
+            lng={point.object.lng}
+            isVisited={point.object.isVisited}
+            isRemoved={point.object.isRemoved}
+            isDraggable
+            icon="fa-solid fa-bolt"
+            color="black"
+            source="list"
+        />
+    {/each}
+
+    {#each Object.values($searchPointList) as point (point.object.id)}
+        <Marker
+            id={point.object.id}
+            lat={point.object.lat}
+            lng={point.object.lng}
+            icon="fa-solid fa-magnifying-glass"
+            color="red"
+            source="search"
         />
     {/each}
 
@@ -168,6 +183,9 @@
                 lat={$activeObjectInfo.object.lat}
                 lng={$activeObjectInfo.object.lng}
                 initialActive={true}
+                icon="fa-solid fa-seedling"
+                color="black"
+                source="map"
             />
         {/key}
     {/if}
