@@ -23,7 +23,7 @@
         <Tabs.Content value="local">
             <div class="h-[calc(100dvh-100px-16px)]">
                 <SearchResultsLocal
-                    query="Витр"
+                    {query}
                     {latitude}
                     {longitude}
                     isActive={currentTab === 'local'}
@@ -31,12 +31,7 @@
             </div>
         </Tabs.Content>
         <Tabs.Content value="google">
-            <SearchResultsLocal
-                query="витраж2"
-                {latitude}
-                {longitude}
-                isActive={currentTab === 'google'}
-            />
+            <SearchResultsLocal {query} {latitude} {longitude} isActive={currentTab === 'google'} />
         </Tabs.Content>
     </Tabs.Root>
 </aside>
