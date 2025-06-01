@@ -1,19 +1,18 @@
 FROM node:22.9-alpine AS pre-build
 WORKDIR /app
+COPY package*.json ./
+RUN npm ci
 COPY . .
-RUN npm install --legacy-peer-deps
 
 FROM pre-build AS build
 RUN npm run build
-
-FROM node:22.9-alpine AS pre-prod
-WORKDIR /app
-COPY --from=build /app/package.json .
-COPY --from=build /app/package-lock.json .
-COPY --from=build /app/build .
-RUN npm install --omit=dev
+RUN npm prune --production
 
 FROM node:22.9-alpine AS prod
 WORKDIR /app
-COPY --from=pre-prod /app .
-CMD ["node", "index.js"]
+COPY --from=build /app/build build/
+COPY --from=build /app/node_modules node_modules/
+COPY package.json .
+EXPOSE 3000
+ENV NODE_ENV=production
+CMD [ "node", "build" ]

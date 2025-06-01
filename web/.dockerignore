@@ -1,7 +1,6 @@
 .git
 .githooks
 .idea
-.svelte-kit
 build
 docker
 node_modules

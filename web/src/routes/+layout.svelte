@@ -2,6 +2,7 @@
     import {browser} from '$app/environment';
     import {QueryClient, QueryClientProvider} from '@tanstack/svelte-query';
     import '../styles/global.scss';
+    import '../styles/app.css';
     import type RequestError from '$lib/errors/RequestError';
     import ServerError from '$lib/errors/ServerError';
     import {STATUS_TOO_MANY_REQUESTS} from '$lib/api/constants';
