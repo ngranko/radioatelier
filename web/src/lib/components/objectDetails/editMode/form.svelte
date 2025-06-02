@@ -220,7 +220,19 @@
                 data: {object: result.data},
             });
             pointList.update(result.data.id, {object: result.data});
-            searchPointList.update(result.data.id, {object: result.data});
+            searchPointList.update(result.data.id, {
+                object: {
+                    id: result.data.id,
+                    name: result.data.name,
+                    lat: result.data.lat,
+                    lng: result.data.lng,
+                    categoryName: result.data.category.name ?? '',
+                    address: result.data.address,
+                    city: result.data.city,
+                    country: result.data.country,
+                    type: 'local',
+                },
+            });
             activeObjectInfo.reset();
         } catch (error: unknown) {
             if (error instanceof RequestError && (error.payload as ErrorPayload).errors) {

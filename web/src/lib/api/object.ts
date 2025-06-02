@@ -11,8 +11,8 @@ import type {
     ListObjectsResponsePayload,
     RepositionObjectInputs,
     RepositionObjectResponsePayload,
-    SearchLocalContext,
-    SearchPreviewContext,
+    SearchContext,
+    SearchGoogleResponsePayload,
     SearchLocalResponsePayload,
     UpdateObjectInputs,
     UpdateObjectResponsePayload,
@@ -73,7 +73,7 @@ export async function deleteObject(
 
 export async function searchPreview({
     queryKey: [_key, {query, latitude, longitude}],
-}: QueryFunctionContext<SearchPreviewContext>): Promise<Payload<SearchLocalResponsePayload>> {
+}: QueryFunctionContext<SearchContext>): Promise<Payload<SearchLocalResponsePayload>> {
     return new AuthRequest(
         new JsonRequest(
             `/api/object/search/preview?query=${encodeURIComponent(query)}&lat=${latitude}&lng=${longitude}`,
@@ -85,10 +85,22 @@ export async function searchPreview({
 export async function searchLocal({
     queryKey: [_key, {query, latitude, longitude}],
     pageParam = 0,
-}: QueryFunctionContext<SearchLocalContext, number>): Promise<Payload<SearchLocalResponsePayload>> {
+}: QueryFunctionContext<SearchContext, number>): Promise<Payload<SearchLocalResponsePayload>> {
     return new AuthRequest(
         new JsonRequest(
             `/api/object/search/local?query=${encodeURIComponent(query)}&lat=${latitude}&lng=${longitude}&offset=${pageParam}`,
+            METHOD_GET,
+        ),
+    ).send();
+}
+
+export async function searchGoogle({
+    queryKey: [_key, {query, latitude, longitude}],
+    pageParam = '',
+}: QueryFunctionContext<SearchContext, string>): Promise<Payload<SearchGoogleResponsePayload>> {
+    return new AuthRequest(
+        new JsonRequest(
+            `/api/object/search/google?query=${encodeURIComponent(query)}&lat=${latitude}&lng=${longitude}&token=${pageParam}`,
             METHOD_GET,
         ),
     ).send();

@@ -1,6 +1,6 @@
 import {readable, writable} from 'svelte/store';
 import {Loader} from '@googlemaps/js-api-loader';
-import type {PointListItem, ObjectDetailsInfo} from '$lib/interfaces/object';
+import type {PointListItem, ObjectDetailsInfo, SearchPointListItem} from '$lib/interfaces/object';
 import config from '$lib/config';
 import type KeyVal from '$lib/interfaces/keyVal';
 
@@ -135,27 +135,22 @@ export const pointList = {
         });
     },
     clear: () => {
-        privatePointList.set([] as unknown as KeyVal<PointListItem>);
+        privatePointList.set({});
     },
 };
 
-const privateSearchPointList = writable<KeyVal<PointListItem>>({});
+const privateSearchPointList = writable<KeyVal<SearchPointListItem>>({});
 
 export const searchPointList = {
     subscribe: privateSearchPointList.subscribe,
-    set: (value: PointListItem[]) => {
+    set: (value: SearchPointListItem[]) => {
         privateSearchPointList.update(() => {
-            const result: KeyVal<PointListItem> = {};
+            const result: KeyVal<SearchPointListItem> = {};
             for (const point of value) {
-                result[point.object.id] = point;
+                result[point.object.id ?? window.crypto.randomUUID()] = point;
             }
 
             return result;
-        });
-    },
-    add: (point: PointListItem) => {
-        privateSearchPointList.update(value => {
-            return {...value, [point.object.id]: point};
         });
     },
     remove: (id: string) => {
@@ -164,7 +159,7 @@ export const searchPointList = {
             return value;
         });
     },
-    update: (id: string, updatedFields: Partial<PointListItem>) => {
+    update: (id: string, updatedFields: Partial<SearchPointListItem>) => {
         privateSearchPointList.update(value => {
             const point = value[id];
             if (point) {
@@ -173,7 +168,7 @@ export const searchPointList = {
                 }
                 if (updatedFields.marker) {
                     privatePointList.update(value => {
-                        if (value[id].marker) {
+                        if (value[id] && value[id].marker) {
                             value[id].marker.map = null;
                         }
                         return value;
@@ -191,13 +186,13 @@ export const searchPointList = {
         privateSearchPointList.update(searchPoints => {
             for (const id in searchPoints) {
                 privatePointList.update(points => {
-                    if (points[id].marker && searchPoints[id].marker) {
+                    if (points[id] && points[id].marker && searchPoints[id].marker) {
                         points[id].marker.map = searchPoints[id].marker.map;
                     }
                     return points;
                 });
             }
-            return [] as unknown as KeyVal<PointListItem>;
+            return {};
         });
     },
 };

@@ -4,6 +4,7 @@
     import {portal} from 'svelte-portal';
     import * as Tabs from '$lib/components/ui/tabs/index.js';
     import SearchResultsLocal from './searchResultsLocal.svelte';
+    import SearchResultsGoogle from './searchResultsGoogle.svelte';
 
     let {query, latitude, longitude} = $props();
 
@@ -31,7 +32,12 @@
             </div>
         </Tabs.Content>
         <Tabs.Content value="google">
-            <SearchResultsLocal {query} {latitude} {longitude} isActive={currentTab === 'google'} />
+            <SearchResultsGoogle
+                {query}
+                {latitude}
+                {longitude}
+                isActive={currentTab === 'google'}
+            />
         </Tabs.Content>
     </Tabs.Root>
 </aside>

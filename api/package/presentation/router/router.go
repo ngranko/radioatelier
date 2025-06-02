@@ -54,7 +54,7 @@ func ConfigureRouter() *router.Router {
         r.Post("/{id}/image", object.UploadImage)
         r.Delete("/{id}", object.Delete)
         r.Get("/search/local", object.SearchLocal)
-        r.Get("/search/google", object.SearchLocal)
+        r.Get("/search/google", object.SearchGoogle)
         r.Get("/search/preview", object.SearchPreview)
     })
 

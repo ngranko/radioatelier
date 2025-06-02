@@ -72,7 +72,7 @@ export interface ObjectListItem {
 }
 
 export interface PointListItem {
-    object: ObjectListItem | Object;
+    object: ObjectListItem;
     marker?: google.maps.marker.AdvancedMarkerElement;
 }
 
@@ -117,15 +117,20 @@ export interface UploadImagePayloadData {
     url: string;
 }
 
+export interface SearchPointListItem {
+    object: SearchItem;
+    marker?: google.maps.marker.AdvancedMarkerElement;
+}
+
 export interface SearchItem {
     id: string;
     name: string;
     categoryName: string;
     lat: string;
     lng: string;
-    address: string;
-    city: string;
-    country: string;
+    address?: string;
+    city?: string;
+    country?: string;
     type: 'local' | 'google';
 }
 
@@ -135,17 +140,15 @@ export interface SearchLocalResponsePayload {
     offset: number;
 }
 
-export type SearchPreviewContext = [string, SearchPreviewInputs];
-
-export interface SearchPreviewInputs {
-    query: string;
-    latitude: string;
-    longitude: string;
+export interface SearchGoogleResponsePayload {
+    items: SearchItem[];
+    hasMore: boolean;
+    nextPageToken: string;
 }
 
-export type SearchLocalContext = [string, SearchLocalInputs];
+export type SearchContext = [string, SearchInputs];
 
-export interface SearchLocalInputs {
+export interface SearchInputs {
     query: string;
     latitude: string;
     longitude: string;

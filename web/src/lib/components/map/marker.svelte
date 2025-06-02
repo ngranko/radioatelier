@@ -127,8 +127,6 @@
     });
 
     onMount(async () => {
-        activeMarker.deactivate();
-
         const iconElement = document.createElement('div');
         iconElement.style.backgroundColor = color;
         iconElement.innerHTML = `<i class="${icon}" style="pointer-events:none;"></i>`;
@@ -138,9 +136,10 @@
 
         if (
             id === null &&
-            !$activeObjectInfo.object!.address &&
-            !$activeObjectInfo.object!.city &&
-            !$activeObjectInfo.object!.country
+            $activeObjectInfo.object &&
+            !$activeObjectInfo.object.address &&
+            !$activeObjectInfo.object.city &&
+            !$activeObjectInfo.object.country
         ) {
             void $objectAddress.refetch();
             activeObjectInfo.update(value => ({
@@ -249,11 +248,7 @@
     }
 
     function updateObjectCoordinates() {
-        if (id) {
-            updateExistingObjectCoordinates();
-        } else {
-            updateNewObjectCoordinates();
-        }
+        updateExistingObjectCoordinates();
     }
 
     async function updateExistingObjectCoordinates() {
@@ -271,66 +266,48 @@
         );
     }
 
-    // TODO: probably not needed anymore as you cannot drag markers while details are open
-    function updateNewObjectCoordinates() {
-        activeObjectInfo.update(value => ({
-            ...value,
-            object: {
-                ...(value.object as Object),
-                id: null,
-                lat: String(marker!.position!.lat),
-                lng: String(marker!.position!.lng),
-            },
-        }));
-        pointList.updateCoordinates(
-            id!,
-            String(marker!.position!.lat),
-            String(marker!.position!.lng),
-        );
-    }
-
     function handleMarkerClick() {
-        if ($activeObjectInfo.object && $activeObjectInfo.object.id === id) {
-            // TODO: probably not needed anymore, check later
-            return;
-        }
-
         if (skipClick) {
             skipClick = false;
             return;
         }
 
-        if ($activeObjectInfo.isEditing) {
-            // TODO: probably not needed anymore, check later
-            isConfirmationOpen = true;
-        } else {
-            changeActiveMarker();
-        }
+        changeActiveMarker();
     }
 
     function changeActiveMarker() {
-        if (!$objectDetails.isSuccess) {
-            activeObjectInfo.set({
-                isLoading: true,
-                isEditing: false,
-                isMinimized: false,
-                isDirty: false,
-                detailsId: id!,
-                object: {id, lat, lng, isVisited, isRemoved},
-            });
-            $objectDetails.refetch();
-        } else {
+        if (source === 'search' && $searchPointList[id!].object.id === null) {
             activeObjectInfo.set({
                 isLoading: false,
                 isEditing: false,
                 isMinimized: false,
                 isDirty: false,
-                detailsId: $objectDetails.data.data.object.id,
-                object: $objectDetails.data.data.object,
+                detailsId: id!,
+                object: {...$searchPointList[id!].object, isVisited, isRemoved},
             });
+        } else {
+            if (!$objectDetails.isSuccess) {
+                activeObjectInfo.set({
+                    isLoading: true,
+                    isEditing: false,
+                    isMinimized: false,
+                    isDirty: false,
+                    detailsId: id!,
+                    object: {id, lat, lng, isVisited, isRemoved},
+                });
+                $objectDetails.refetch();
+            } else {
+                activeObjectInfo.set({
+                    isLoading: false,
+                    isEditing: false,
+                    isMinimized: false,
+                    isDirty: false,
+                    detailsId: $objectDetails.data.data.object.id,
+                    object: $objectDetails.data.data.object,
+                });
+            }
         }
 
-        activeMarker.deactivate();
         activeMarker.set(marker!);
         activeMarker.activate();
     }

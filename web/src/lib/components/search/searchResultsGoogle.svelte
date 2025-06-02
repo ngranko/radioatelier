@@ -1,6 +1,6 @@
 <script lang="ts">
     import {createInfiniteQuery} from '@tanstack/svelte-query';
-    import {searchLocal} from '$lib/api/object';
+    import {searchGoogle} from '$lib/api/object';
     import SearchPreviewItem from './searchPreviewItem.svelte';
     import LoadMoreButton from './loadMoreButton.svelte';
     import {searchPointList} from '$lib/stores/map';
@@ -9,12 +9,13 @@
     let {query, latitude, longitude, isActive} = $props();
 
     const searchResults = createInfiniteQuery({
-        queryKey: ['searchLocal', {query, latitude, longitude}],
+        queryKey: ['searchGoogle', {query, latitude, longitude}],
         // TODO: I have no idea why there is a typing error there, but it works
-        queryFn: searchLocal,
+        queryFn: searchGoogle,
         enabled: isActive,
-        getNextPageParam: lastPage => (lastPage.data.hasMore ? lastPage.data.offset : undefined),
-        initialPageParam: 0,
+        getNextPageParam: lastPage =>
+            lastPage.data.hasMore ? lastPage.data.nextPageToken : undefined,
+        initialPageParam: '',
     });
 
     $effect(() => {

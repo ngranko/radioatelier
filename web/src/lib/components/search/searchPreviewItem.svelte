@@ -18,7 +18,7 @@
             activeObjectInfo.set({
                 isLoading: false,
                 isMinimized: false,
-                isEditing: true,
+                isEditing: !Boolean(object.id),
                 isDirty: false,
                 detailsId: object.id ?? new Date().getTime().toString(),
                 object: {

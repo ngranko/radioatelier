@@ -60,7 +60,7 @@ func (r *searchRepo) SearchLocal(query string, latitude string, longitude string
 }
 
 func (r *searchRepo) SearchGoogle(query string, latitude string, longitude string, limit int, pageToken string) (model.SearchResults, error) {
-    results := model.SearchResults{}
+    results := model.SearchResults{Items: []model.SearchItem{}}
 
     googleResults, err := google.TextSearch(query, latitude, longitude, limit, pageToken)
     if err != nil {
