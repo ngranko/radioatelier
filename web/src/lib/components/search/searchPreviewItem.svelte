@@ -10,7 +10,7 @@
 
     let {object}: Props = $props();
 
-    function handleObjectClick() {
+    function handleClick() {
         setCenter(Number(object.lat), Number(object.lng));
         if (object.id && $pointList[object.id]) {
             google.maps.event.trigger($pointList[object.id].marker!, 'gmp-click');
@@ -37,4 +37,4 @@
     }
 </script>
 
-<SearchItemCard {object} onClick={handleObjectClick} />
+<SearchItemCard {object} onClick={handleClick} />

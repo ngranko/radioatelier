@@ -39,6 +39,10 @@ export function setDraggable(isDraggable: boolean) {
 }
 
 export function fitMarkerList(objects: MapPlaceable[]) {
+    if (objects.length === 0) {
+        return;
+    }
+
     map.subscribe(value => {
         if (value) {
             const latlngbounds = new google.maps.LatLngBounds();

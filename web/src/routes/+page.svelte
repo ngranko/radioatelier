@@ -27,6 +27,7 @@
     let consoleElement: HTMLElement | undefined = $state();
 
     const objects = createQuery({queryKey: ['objects'], queryFn: listObjects});
+    // TODO: isAuthorizationError is needed for all queries and mutations currently/ Or I need to extend the refresh token validity period on each refresh
     $effect(() => {
         if (
             $objects.isError &&
@@ -166,11 +167,11 @@
         />
     {/each}
 
-    {#each Object.values($searchPointList) as point (point.object.id)}
+    {#each Object.keys($searchPointList) as id (id)}
         <Marker
-            id={point.object.id}
-            lat={point.object.lat}
-            lng={point.object.lng}
+            {id}
+            lat={$searchPointList[id].object.lat}
+            lng={$searchPointList[id].object.lng}
             icon="fa-solid fa-magnifying-glass"
             color="red"
             source="search"

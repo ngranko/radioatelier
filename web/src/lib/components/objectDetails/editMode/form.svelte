@@ -245,6 +245,8 @@
     async function deleteExistingObject(id: string) {
         const result = await $deleteObjectMutation.mutateAsync({id});
         pointList.remove(result.data.id);
+        searchPointList.remove(result.data.id);
+        // TODO: remove object from search request cache
         activeObjectInfo.reset();
         activeMarker.set(null);
     }
