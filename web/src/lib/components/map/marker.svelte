@@ -66,7 +66,12 @@
     const reposition = useRepositionMutation(client);
 
     $effect(() => {
-        if ($objectDetails.isSuccess) {
+        // isLoading check is needed here because otherwise creating a duplicate marker for an object that was already open before will immediately trigger the details to open (TSK-286)
+        if (
+            $activeObjectInfo.isLoading &&
+            $objectDetails.isSuccess &&
+            $activeObjectInfo.detailsId === $objectDetails.data.data.object.id
+        ) {
             activeObjectInfo.set({
                 isLoading: false,
                 isEditing: false,
