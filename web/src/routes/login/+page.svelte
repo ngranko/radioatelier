@@ -47,13 +47,13 @@
     });
 </script>
 
-<section class="login-page">
-    <div class="title">
-        <img src="/logo.svg" class="logo" alt="logo" />
+<section class="h-screen p-6 flex flex-col items-center justify-center">
+    <div class="flex gap-3 text-3xl w-full max-w-sm mb-10">
+        <img src="/logo.svg" class="h-8" alt="logo" />
         <span class="separator">.</span>
         <span class="name">архив</span>
     </div>
-    <form class="form" use:form>
+    <form class="w-full max-w-sm flex flex-col gap-4" use:form>
         <FormInput id="email" name="email" required label="email" error={$errors.email} />
         <FormPasswordInput
             id="password"
@@ -62,44 +62,8 @@
             label="пароль"
             error={$errors.password}
         />
-        <div class="actions">
+        <div class="mt-2">
             <PrimaryButton disabled={$isSubmitting.valueOf()}>Войти</PrimaryButton>
         </div>
     </form>
 </section>
-
-<style lang="scss">
-    @use '../../styles/typography';
-
-    .login-page {
-        height: 100dvh;
-        padding: 24px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-    }
-
-    .title {
-        @include typography.size-32;
-        width: 100%;
-        max-width: 400px;
-        margin-bottom: 40px;
-    }
-
-    .logo {
-        height: 32px;
-    }
-
-    .form {
-        width: 100%;
-        max-width: 400px;
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-    }
-
-    .actions {
-        margin-top: 8px;
-    }
-</style>
