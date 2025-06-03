@@ -30,7 +30,6 @@
     const {form, errors, isSubmitting} = createForm<yup.InferType<typeof schema>>({
         onSubmit: async (values: LoginFormInputs) => await $mutation.mutateAsync(values),
         onSuccess: async (result: unknown) => {
-            console.log('logged in');
             RefreshToken.set((result as LoginResponsePayload).data.refreshToken);
             queryClient.clear();
             const ref = $page.url.searchParams.get('ref');

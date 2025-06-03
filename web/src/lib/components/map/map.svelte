@@ -200,7 +200,6 @@
     function updateCurrentPosition() {
         navigator.permissions.query({name: 'geolocation'}).then(
             result => {
-                console.log(result.state);
                 if (result.state === 'granted' || result.state === 'prompt') {
                     navigator.geolocation.getCurrentPosition(
                         position => {
@@ -240,7 +239,7 @@
                 }
             },
             error => {
-                console.log('browser permission service unavailable');
+                console.error('browser permission service unavailable');
                 console.error(error);
             },
         );

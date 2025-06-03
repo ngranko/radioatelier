@@ -9,10 +9,6 @@
 
     let {query, latitude, longitude, onLoadMoreClick} = $props();
 
-    $effect(() => {
-        console.log(query);
-    });
-
     const previewObjects = createQuery({
         queryKey: ['searchPreview', {query, latitude, longitude}],
         queryFn: searchPreview,

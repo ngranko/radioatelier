@@ -165,8 +165,6 @@
     }
 
     async function handleSave(values: LooseObject) {
-        console.log('save');
-        console.log(values);
         const object: LooseObject = {
             ...values,
             tags: tags.length ? tags : (initialValues.tags ?? []),

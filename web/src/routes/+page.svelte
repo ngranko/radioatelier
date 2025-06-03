@@ -101,11 +101,9 @@
             typeof (window.DeviceOrientationEvent as unknown as DeviceOrientationEventMaybeExtended)
                 .requestPermission === 'function'
         ) {
-            console.log('DeviceOrientationEvent supported');
             (window.DeviceOrientationEvent as unknown as DeviceOrientationEventExtended)
                 .requestPermission()
-                .then((permissionState: string) => {
-                    console.log(permissionState);
+                .then(() => {
                     orientationEnabled = true;
                 })
                 .catch((error: unknown) => {

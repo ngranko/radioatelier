@@ -31,6 +31,7 @@
 
     onMount(() => {
         if (location.pathname !== '/login') {
+            // TODO: check user session
             console.log('not login');
         }
     });
