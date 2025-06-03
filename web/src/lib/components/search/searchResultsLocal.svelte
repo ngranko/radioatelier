@@ -1,10 +1,10 @@
 <script lang="ts">
     import {createInfiniteQuery} from '@tanstack/svelte-query';
     import {searchLocal} from '$lib/api/object';
-    import SearchPreviewItem from './searchPreviewItem.svelte';
     import LoadMoreButton from './loadMoreButton.svelte';
     import {searchPointList} from '$lib/stores/map';
     import {fitMarkerList} from '$lib/services/map/map.svelte';
+    import SearchResultsItem from './searchResultsItem.svelte';
 
     let {query, latitude, longitude, isActive} = $props();
 
@@ -47,10 +47,8 @@
         <div>Error</div>
     {/if}
     {#if $searchResults.isSuccess}
-        {#each $searchResults.data.pages
-            .map(page => page.data.items)
-            .reduce((acc, val) => acc.concat(val), []) as object}
-            <SearchPreviewItem {object} />
+        {#each Object.keys($searchPointList) as id (id)}
+            <SearchResultsItem {id} object={$searchPointList[id].object} />
         {/each}
         {#if $searchResults.data.pages[$searchResults.data.pages.length - 1].data.hasMore}
             <LoadMoreButton onLoadMoreClick={handleLoadMoreClick} />

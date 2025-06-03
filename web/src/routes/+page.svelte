@@ -172,7 +172,9 @@
             {id}
             lat={$searchPointList[id].object.lat}
             lng={$searchPointList[id].object.lng}
-            icon="fa-solid fa-magnifying-glass"
+            icon={$searchPointList[id].object.type === 'local'
+                ? 'fa-solid fa-magnifying-glass'
+                : 'fa-brands fa-google'}
             color="red"
             source="search"
         />
