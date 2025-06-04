@@ -181,7 +181,7 @@
         }
 
         setTimeout(
-            () => (marker?.content as HTMLDivElement).classList.remove('map-marker-appearing'),
+            () => (marker?.content as HTMLDivElement).classList.remove('animate-popin'),
             200,
         );
 
@@ -231,14 +231,14 @@
     });
 
     onDestroy(() => {
-        (marker?.content as HTMLDivElement).classList.add('map-marker-exiting');
+        (marker?.content as HTMLDivElement).classList.add('animate-popout');
         setTimeout(() => (marker!.map = null), 200);
     });
 
     function getMarkerClassList() {
         return clsx([
             'map-marker',
-            'map-marker-appearing',
+            'animate-popin',
             {
                 'map-marker-active': initialActive,
                 'map-marker-visited': isVisited,
@@ -346,21 +346,6 @@
         opacity: 0.5;
     }
 
-    :global(.map-marker-appearing) {
-        animation-name: popIn;
-        animation-iteration-count: 1;
-        animation-duration: 0.2s;
-        animation-timing-function: cubic-bezier(0.92, 0.18, 0.8, 0.71);
-    }
-
-    :global(.map-marker-exiting) {
-        animation-name: popIn;
-        animation-direction: reverse;
-        animation-iteration-count: 1;
-        animation-duration: 0.2s;
-        animation-timing-function: cubic-bezier(0.92, 0.18, 0.8, 0.71);
-    }
-
     :global(.map-marker-draggable) {
         opacity: 0.5;
         transform: translate(0, 50%) scale(1.2);
@@ -369,14 +354,5 @@
     :global(.map-marker-draggable-mobile) {
         opacity: 0.5;
         transform: translate(0, -100%) scale(1.2);
-    }
-
-    @keyframes -global-popIn {
-        0% {
-            transform: translate(0, 50%) scale(0);
-        }
-        100% {
-            transform: translate(0, 50%) scale(1);
-        }
     }
 </style>

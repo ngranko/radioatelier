@@ -111,6 +111,9 @@
   --color-sidebar-ring: var(--sidebar-ring);
 
   --font-branding: sofia-pro, sans-serif;
+
+  --animate-popin: popIn 0.2s cubic-bezier(0.92, 0.18, 0.8, 0.71) 1;
+  --animate-popout: popIn 0.2s cubic-bezier(0.92, 0.18, 0.8, 0.71) 1 reverse;
 }
 
 @layer base {
@@ -119,5 +122,14 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@keyframes popIn {
+  0% {
+    transform: translate(0, 50%) scale(0);
+  }
+  100% {
+    transform: translate(0, 50%) scale(1);
   }
 }
