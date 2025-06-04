@@ -38,7 +38,7 @@ export function setDraggable(isDraggable: boolean) {
     });
 }
 
-export function fitMarkerList(objects: MapPlaceable[]) {
+export function fitMarkerList(objects: MapPlaceable[], currentCenter?: MapPlaceable) {
     if (objects.length === 0) {
         return;
     }
@@ -46,11 +46,19 @@ export function fitMarkerList(objects: MapPlaceable[]) {
     map.subscribe(value => {
         if (value) {
             const latlngbounds = new google.maps.LatLngBounds();
+            if (currentCenter) {
+                latlngbounds.extend(
+                    new google.maps.LatLng(Number(currentCenter.lat), Number(currentCenter.lng)),
+                );
+            }
+
             for (const object of objects) {
                 latlngbounds.extend(new google.maps.LatLng(Number(object.lat), Number(object.lng)));
             }
-            value.setCenter(latlngbounds.getCenter());
-            value.fitBounds(latlngbounds);
+            value.fitBounds(
+                latlngbounds,
+                document.body.clientWidth > 640 ? {left: 424, top: 24, bottom: 24, right: 24} : 0,
+            );
         }
     });
 }

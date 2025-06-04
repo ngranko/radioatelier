@@ -32,12 +32,14 @@
             </div>
         </Tabs.Content>
         <Tabs.Content value="google">
-            <SearchResultsGoogle
-                {query}
-                {latitude}
-                {longitude}
-                isActive={currentTab === 'google'}
-            />
+            <div class="h-[calc(100dvh-100px-16px)]">
+                <SearchResultsGoogle
+                    {query}
+                    {latitude}
+                    {longitude}
+                    isActive={currentTab === 'google'}
+                />
+            </div>
         </Tabs.Content>
     </Tabs.Root>
 </aside>
