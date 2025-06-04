@@ -5,8 +5,8 @@
 </script>
 
 <button
-    class="load-more w-full p-2 pt-1 bg-transparent hover:bg-gray-100 border-none text-left cursor-pointer transition-colors"
+    class="load-more w-full pb-2 pl-3 pr-3 pt-1 bg-transparent hover:bg-gray-100 border-none rounded-b-lg text-left cursor-pointer transition-colors"
     onclick={onLoadMoreClick}
 >
-    <TextButton>Больше результатов</TextButton>
+    <TextButton>больше результатов</TextButton>
 </button>

@@ -29,6 +29,7 @@
         background: color.scale(colors.$primary, $lightness: +70%);
         border: none;
         border-radius: 50%;
+        margin: 8px;
         padding: 0;
         font-size: 30px;
         display: flex;

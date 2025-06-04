@@ -13,33 +13,27 @@
     }
 </script>
 
-<div class="container">
-    <SearchBar bind:query />
-    {#if query && $map && !isResultsShown}
-        {#key query}
-            <SearchPreview
-                {query}
-                latitude={$map.getCenter().lat().toString()}
-                longitude={$map.getCenter().lng().toString()}
-                onLoadMoreClick={showFullResults}
-            />
-        {/key}
-    {/if}
-    {#if query && $map && isResultsShown}
-        {#key query}
-            <SearchResults
-                {query}
-                latitude={$map.getCenter().lat().toString()}
-                longitude={$map.getCenter().lng().toString()}
-            />
-        {/key}
-    {/if}
+<div class="w-full max-w-sm p-2">
+    <div class="relative">
+        <SearchBar bind:query />
+        {#if query && $map && !isResultsShown}
+            {#key query}
+                <SearchPreview
+                    {query}
+                    latitude={$map.getCenter().lat().toString()}
+                    longitude={$map.getCenter().lng().toString()}
+                    onLoadMoreClick={showFullResults}
+                />
+            {/key}
+        {/if}
+        {#if query && $map && isResultsShown}
+            {#key query}
+                <SearchResults
+                    {query}
+                    latitude={$map.getCenter().lat().toString()}
+                    longitude={$map.getCenter().lng().toString()}
+                />
+            {/key}
+        {/if}
+    </div>
 </div>
-
-<style lang="scss">
-    .container {
-        position: relative;
-        width: 100%;
-        max-width: 384px;
-    }
-</style>

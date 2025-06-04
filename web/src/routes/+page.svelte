@@ -198,9 +198,9 @@
 
     .menu {
         position: absolute;
-        top: 16px;
-        left: 16px;
-        right: 16px;
+        top: 8px;
+        left: 8px;
+        right: 8px;
         display: flex;
         gap: 16px;
         justify-content: space-between;

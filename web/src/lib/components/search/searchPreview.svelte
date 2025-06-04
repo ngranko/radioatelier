@@ -46,7 +46,7 @@
         width: 100%;
         top: 0;
         padding-top: 42px;
-        border-radius: 24px 24px 10px 10px;
+        border-radius: 24px 24px 8px 8px;
         background-color: colors.$white;
         box-shadow: 0 0 2px colors.$transparentBlack;
     }
