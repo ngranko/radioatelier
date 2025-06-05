@@ -6,7 +6,7 @@
     interface Props {
         isOpen?: boolean;
         children?: import('svelte').Snippet;
-        onClose(): void;
+        onClose?(): void;
     }
 
     let {isOpen = $bindable(false), children, onClose}: Props = $props();
@@ -17,7 +17,9 @@
         if (dialogRef?.contains(event.target as Node)) {
             return;
         }
-        onClose();
+        if (onClose) {
+            onClose();
+        }
     }
 </script>
 
