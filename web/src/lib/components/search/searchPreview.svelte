@@ -23,14 +23,17 @@
 
 <!-- only show preview if there's no active object, otherwise it will cover a part of a map on mobile even if the details dialog is minimized -->
 {#if !$activeObjectInfo.detailsId}
-    <div class="container" transition:fade={{duration: 200, easing: cubicInOut}}>
+    <div
+        class="container absolute w-full top-0 pt-10.5 rounded-t-3xl rounded-b-lg bg-white shadow-sm"
+        transition:fade={{duration: 200, easing: cubicInOut}}
+    >
         {#if $previewObjects.isLoading}
             <div class="loader">Loading...</div>
         {:else if $previewObjects.isError}
-            <div class="error">Что-то пошло не так</div>
+            <div class="pt-2 pr-4 pb-2 pl-4 opacity-75">Что-то пошло не так</div>
         {:else if $previewObjects.data}
             {#if $previewObjects.data.data.items.length === 0}
-                <div class="empty">Ничего не найдено</div>
+                <div class="pt-2 pr-4 pb-2 pl-4 opacity-75">Ничего не найдено</div>
             {/if}
 
             {#each $previewObjects.data.data.items as object}
@@ -43,27 +46,3 @@
         {/if}
     </div>
 {/if}
-
-<style lang="scss">
-    @use '../../../styles/colors';
-
-    .container {
-        position: absolute;
-        width: 100%;
-        top: 0;
-        padding-top: 42px;
-        border-radius: 24px 24px 8px 8px;
-        background-color: colors.$white;
-        box-shadow: 0 0 2px colors.$transparentBlack;
-    }
-
-    .error {
-        padding: 8px 16px;
-        opacity: 0.75;
-    }
-
-    .empty {
-        padding: 8px 16px;
-        opacity: 0.75;
-    }
-</style>
