@@ -14,6 +14,7 @@
             searchState.query = (evt.target as HTMLInputElement).value;
             searchState.lat = $map!.getCenter()!.lat().toString();
             searchState.lng = $map!.getCenter()!.lng().toString();
+            timeout = undefined;
         }, 400);
     }
 
@@ -24,6 +25,8 @@
         searchState.isResultsShown = false;
         val = '';
         inputRef!.value = '';
+        clearTimeout(timeout);
+        timeout = undefined;
         searchPointList.clear();
     }
 </script>
