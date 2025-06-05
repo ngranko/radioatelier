@@ -6,13 +6,19 @@
     import {fade} from 'svelte/transition';
     import {activeObjectInfo} from '$lib/stores/map';
     import LoadMoreButton from './loadMoreButton.svelte';
-
-    let {query, latitude, longitude, onLoadMoreClick} = $props();
+    import {searchState} from '$lib/components/search/search.svelte.ts';
 
     const previewObjects = createQuery({
-        queryKey: ['searchPreview', {query, latitude, longitude}],
+        queryKey: [
+            'searchPreview',
+            {query: searchState.query, latitude: searchState.lat, longitude: searchState.lng},
+        ],
         queryFn: searchPreview,
     });
+
+    function handleLoadMoreClick() {
+        searchState.isResultsShown = true;
+    }
 </script>
 
 <!-- only show preview if there's no active object, otherwise it will cover a part of a map on mobile even if the details dialog is minimized -->
@@ -32,7 +38,7 @@
             {/each}
 
             {#if $previewObjects.data.data.hasMore}
-                <LoadMoreButton {onLoadMoreClick} />
+                <LoadMoreButton onLoadMoreClick={handleLoadMoreClick} />
             {/if}
         {/if}
     </div>

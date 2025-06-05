@@ -5,11 +5,15 @@
     import {searchPointList} from '$lib/stores/map';
     import {fitMarkerList} from '$lib/services/map/map.svelte';
     import SearchResultsItem from './searchResultsItem.svelte';
+    import {searchState} from '$lib/components/search/search.svelte.ts';
 
-    let {query, latitude, longitude, isActive} = $props();
+    let {isActive} = $props();
 
     const searchResults = createInfiniteQuery({
-        queryKey: ['searchGoogle', {query, latitude, longitude}],
+        queryKey: [
+            'searchGoogle',
+            {query: searchState.query, latitude: searchState.lat, longitude: searchState.lng},
+        ],
         // TODO: I have no idea why there is a typing error there, but it works
         queryFn: searchGoogle,
         enabled: isActive,
@@ -31,7 +35,7 @@
                 .reduce((acc, val) => acc.concat(val), []);
             searchPointList.set(objects.map(item => ({object: item})));
 
-            fitMarkerList(objects, {lat: latitude, lng: longitude});
+            fitMarkerList(objects, {lat: searchState.lat, lng: searchState.lng});
         }
     });
 

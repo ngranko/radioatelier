@@ -1,8 +1,7 @@
 <script lang="ts">
     import ClearButton from '$lib/components/search/clearButton.svelte';
-    import {searchPointList} from '$lib/stores/map';
-
-    let {query = $bindable()} = $props();
+    import {map, searchPointList} from '$lib/stores/map';
+    import {searchState} from '$lib/components/search/search.svelte.ts';
 
     let inputRef: HTMLInputElement | undefined = $state();
     let val: string = $state('');
@@ -12,12 +11,17 @@
         val = (evt.target as HTMLInputElement).value;
         clearTimeout(timeout);
         timeout = setTimeout(() => {
-            query = (evt.target as HTMLInputElement).value;
+            searchState.query = (evt.target as HTMLInputElement).value;
+            searchState.lat = $map!.getCenter()!.lat().toString();
+            searchState.lng = $map!.getCenter()!.lng().toString();
         }, 400);
     }
 
     function handleClearClick() {
-        query = '';
+        searchState.query = '';
+        searchState.lat = '';
+        searchState.lng = '';
+        searchState.isResultsShown = false;
         val = '';
         inputRef!.value = '';
         searchPointList.clear();

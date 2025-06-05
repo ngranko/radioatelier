@@ -3,36 +3,20 @@
     import SearchPreview from '$lib/components/search/searchPreview.svelte';
     import SearchResults from '$lib/components/search/searchResults.svelte';
     import {map} from '$lib/stores/map';
-
-    let query = $state('');
-    let isResultsShown = $state(false);
-
-    // TODO: need a way to reset this variable, otherwise if a user searches for something, then closes the search and then searches again – we skip the preview stage and go straight to details
-    function showFullResults() {
-        isResultsShown = true;
-    }
+    import {searchState} from '$lib/components/search/search.svelte.ts';
 </script>
 
 <div class="w-full max-w-sm p-2">
     <div class="relative">
-        <SearchBar bind:query />
-        {#if query && $map && !isResultsShown}
-            {#key query}
-                <SearchPreview
-                    {query}
-                    latitude={$map.getCenter().lat().toString()}
-                    longitude={$map.getCenter().lng().toString()}
-                    onLoadMoreClick={showFullResults}
-                />
+        <SearchBar />
+        {#if searchState.query && $map && !searchState.isResultsShown}
+            {#key searchState.query}
+                <SearchPreview />
             {/key}
         {/if}
-        {#if query && $map && isResultsShown}
-            {#key query}
-                <SearchResults
-                    {query}
-                    latitude={$map.getCenter().lat().toString()}
-                    longitude={$map.getCenter().lng().toString()}
-                />
+        {#if searchState.query && $map && searchState.isResultsShown}
+            {#key searchState.query}
+                <SearchResults />
             {/key}
         {/if}
     </div>

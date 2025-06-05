@@ -6,8 +6,6 @@
     import SearchResultsLocal from './searchResultsLocal.svelte';
     import SearchResultsGoogle from './searchResultsGoogle.svelte';
 
-    let {query, latitude, longitude} = $props();
-
     let currentTab = $state('local');
 </script>
 
@@ -23,22 +21,12 @@
         </Tabs.List>
         <Tabs.Content value="local">
             <div class="h-[calc(100dvh-100px-16px)]">
-                <SearchResultsLocal
-                    {query}
-                    {latitude}
-                    {longitude}
-                    isActive={currentTab === 'local'}
-                />
+                <SearchResultsLocal isActive={currentTab === 'local'} />
             </div>
         </Tabs.Content>
         <Tabs.Content value="google">
             <div class="h-[calc(100dvh-100px-16px)]">
-                <SearchResultsGoogle
-                    {query}
-                    {latitude}
-                    {longitude}
-                    isActive={currentTab === 'google'}
-                />
+                <SearchResultsGoogle isActive={currentTab === 'google'} />
             </div>
         </Tabs.Content>
     </Tabs.Root>
