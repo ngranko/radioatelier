@@ -256,7 +256,9 @@
         const result = await $deleteObjectMutation.mutateAsync({id});
         pointList.remove(result.data.id);
         searchPointList.remove(result.data.id);
-        // TODO: remove object from search request cache
+        await client.invalidateQueries({
+            queryKey: ['searchLocal'],
+        });
         activeObjectInfo.reset();
         activeMarker.set(null);
     }
