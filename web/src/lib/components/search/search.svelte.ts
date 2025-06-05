@@ -1,1 +1,7 @@
-export const searchState = $state({query: '', lat: '', lng: '', isResultsShown: false});
+export const searchState = $state({
+    query: '',
+    lat: '',
+    lng: '',
+    isResultsShown: false,
+    isResultsMinimized: false,
+});

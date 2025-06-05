@@ -5,26 +5,41 @@
     import * as Tabs from '$lib/components/ui/tabs/index.js';
     import SearchResultsLocal from './searchResultsLocal.svelte';
     import SearchResultsGoogle from './searchResultsGoogle.svelte';
+    import {searchState} from '$lib/components/search/search.svelte.ts';
+    import {clsx} from 'clsx';
+    import MinimizeButton from './minimizeButton.svelte';
 
     let currentTab = $state('local');
+    let classes: string = $state('');
+
+    $effect(() => {
+        classes = clsx({
+            'absolute top-0 w-[calc(100vw-16px)] max-w-sm m-2 pt-14 rounded-lg bg-white overflow-hidden transition-[height]': true,
+            'h-[calc(100dvh-16px)]': !searchState.isResultsMinimized,
+            'h-25': searchState.isResultsMinimized,
+        });
+    });
 </script>
 
 <aside
-    class="absolute bottom-0 w-[calc(100vw-16px)] max-w-sm h-[calc(100dvh-16px)] m-2 pt-14 rounded-lg bg-white transition-[height]"
+    class={classes}
     transition:fly={{x: -100, duration: 200, easing: cubicInOut}}
     use:portal={'#portal'}
 >
     <Tabs.Root bind:value={currentTab}>
-        <Tabs.List class="w-[calc(100%-16px)] mr-2 ml-2">
-            <Tabs.Trigger value="local">Локально</Tabs.Trigger>
-            <Tabs.Trigger value="google">Google</Tabs.Trigger>
-        </Tabs.List>
-        <Tabs.Content value="local">
+        <div class="flex justify-between items-center gap-2 mr-2 ml-2">
+            <Tabs.List class="min-w-1/2">
+                <Tabs.Trigger value="local">Локально</Tabs.Trigger>
+                <Tabs.Trigger value="google">Google</Tabs.Trigger>
+            </Tabs.List>
+            <MinimizeButton />
+        </div>
+        <Tabs.Content value="local" class="border-t border-t-gray-200 border-solid">
             <div class="h-[calc(100dvh-100px-16px)]">
                 <SearchResultsLocal isActive={currentTab === 'local'} />
             </div>
         </Tabs.Content>
-        <Tabs.Content value="google">
+        <Tabs.Content value="google" class="border-t border-t-gray-200 border-solid">
             <div class="h-[calc(100dvh-100px-16px)]">
                 <SearchResultsGoogle isActive={currentTab === 'google'} />
             </div>
