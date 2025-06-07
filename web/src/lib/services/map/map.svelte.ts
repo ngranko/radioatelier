@@ -57,7 +57,9 @@ export function fitMarkerList(objects: MapPlaceable[], currentCenter?: MapPlacea
             }
             value.fitBounds(
                 latlngbounds,
-                document.body.clientWidth > 640 ? {left: 424, top: 24, bottom: 24, right: 24} : 0,
+                document.body.clientWidth > 640
+                    ? {left: 424, top: 24, bottom: 24, right: 24}
+                    : {left: 24, top: 132, bottom: 24, right: 24},
             );
         }
     });
