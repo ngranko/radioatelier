@@ -114,7 +114,7 @@
         position: fixed;
         inset: 0;
         background-color: transparent;
-        z-index: 1;
+        z-index: 2;
     }
 
     .popup {
@@ -129,7 +129,7 @@
         border-radius: 10px;
         background-color: white;
         transition: height 0.2s;
-        z-index: 2;
+        z-index: 3;
     }
 
     .minimized {

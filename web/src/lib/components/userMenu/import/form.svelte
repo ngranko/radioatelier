@@ -397,7 +397,7 @@
         }
 
         & > :global(:last-child) {
-            z-index: 1;
+            z-index: 2;
         }
     }
 
@@ -411,7 +411,7 @@
         display: flex;
         justify-content: flex-end;
         background-color: colors.$white;
-        z-index: 1;
+        z-index: 2;
     }
 
     .import {

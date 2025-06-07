@@ -14,7 +14,7 @@
 
     $effect(() => {
         classes = clsx({
-            'absolute top-0 w-[calc(100vw-16px)] max-w-sm m-2 pt-14 rounded-lg bg-white overflow-hidden transition-[height]': true,
+            'absolute top-0 w-[calc(100vw-16px)] max-w-sm m-2 pt-14 rounded-lg bg-white overflow-hidden transition-[height] z-1': true,
             'h-[calc(100dvh-16px)]': !searchState.isResultsMinimized,
             'h-25': searchState.isResultsMinimized,
         });
@@ -36,12 +36,16 @@
         </div>
         <Tabs.Content value="local" class="border-t border-t-gray-200 border-solid">
             <div class="h-[calc(100dvh-100px-16px)]">
-                <SearchResultsLocal isActive={currentTab === 'local'} />
+                {#key `${searchState.lat}:${searchState.lng}`}
+                    <SearchResultsLocal isActive={currentTab === 'local'} />
+                {/key}
             </div>
         </Tabs.Content>
         <Tabs.Content value="google" class="border-t border-t-gray-200 border-solid">
             <div class="h-[calc(100dvh-100px-16px)]">
-                <SearchResultsGoogle isActive={currentTab === 'google'} />
+                {#key `${searchState.lat}:${searchState.lng}`}
+                    <SearchResultsGoogle isActive={currentTab === 'google'} />
+                {/key}
             </div>
         </Tabs.Content>
     </Tabs.Root>

@@ -131,7 +131,7 @@
 </button>
 
 <div class="menu">
-    {#if $meQuery.isSuccess && $meQuery.data.data.role === 'admin'}
+    {#if $map && $meQuery.isSuccess && $meQuery.data.data.role === 'admin'}
         <Search />
     {:else}
         <div></div>
@@ -205,7 +205,6 @@
         gap: 16px;
         justify-content: space-between;
         align-items: center;
-        z-index: 1;
     }
 
     .orientationButton {
