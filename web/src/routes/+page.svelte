@@ -131,7 +131,7 @@
 </button>
 
 <div class="menu">
-    {#if $map && $meQuery.isSuccess && $meQuery.data.data.role === 'admin'}
+    {#if $map}
         <Search />
     {:else}
         <div></div>
