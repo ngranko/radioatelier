@@ -26,19 +26,6 @@
             }),
         name: yup.number().required('Пожалуйста, выберите колонку'),
         isVisited: yup.number().defined().nullable(),
-        rating: yup
-            .number()
-            .defined()
-            .nullable()
-            .test('validRating', 'Рейтинг может быть от 1 до 3', value => {
-                if (!value) {
-                    return true;
-                }
-                return (
-                    ['1', '2', '3'].includes($importInfo.preview[1][value]) ||
-                    $importInfo.preview[1][value] === ''
-                );
-            }),
         isPublic: yup.number().defined().nullable(),
         category: yup.number().required('Пожалуйста, выберите колонку'),
         image: yup.number().defined().nullable(),
@@ -111,7 +98,6 @@
             coordinates: null,
             name: null,
             isVisited: null,
-            rating: null,
             isPublic: null,
             category: null,
             image: null,
@@ -182,19 +168,6 @@
             error={$errors.isVisited}
         />
         <Tooltip>Понимает значения 0 и 1. Остальные значения будут приведены к этим двум.</Tooltip>
-    </div>
-    <div class="fieldWrapper">
-        <FormSelect
-            id="rating"
-            name="rating"
-            label="Рейтинг"
-            placeholder="Не заполнять"
-            bind:value={$data.rating}
-            options={$importInfo.preview[0]?.map((item, index) => ({value: index, text: item})) ??
-                []}
-            error={$errors.rating}
-        />
-        <Tooltip>Может быть от 1 до 3. Любые другие значения будут проигнорированы.</Tooltip>
     </div>
     <div class="fieldWrapper">
         <FormSelect

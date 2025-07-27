@@ -7,7 +7,6 @@ import (
 type ObjectUser struct {
     Base
     IsVisited bool      `gorm:"type:tinyint(1);not null;default:0"`
-    Rating    string    `gorm:"type:char(4)"`
     UserID    uuid.UUID `gorm:"type:char(36);not null"`
     User      User      `gorm:"constraint:OnDelete:CASCADE"`
     ObjectID  uuid.UUID `gorm:"type:char(36);not null"`

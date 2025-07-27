@@ -18,10 +18,10 @@
 </script>
 
 <div
-    class="fixed top-29 sm:top-2 left-1/2 transform-[translateX(-50%)] z-1"
+    class="fixed top-29 left-1/2 z-1 transform-[translateX(-50%)] sm:top-2"
     transition:fade={{duration: 200, easing: cubicInOut}}
 >
-    <Button variant="default" class="bg-sky-600 hover:bg-sky-500" onclick={handleClick}>
+    <Button variant="default" class="bg-sky-600 hover:bg-sky-700" onclick={handleClick}>
         Искать в этой области
     </Button>
 </div>

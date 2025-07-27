@@ -58,7 +58,6 @@ export interface ImportMappings {
     isRemoved: number | null;
     removalPeriod: number | null;
     source: number | null;
-    rating: number | null;
     isVisited: number | null;
 }
 

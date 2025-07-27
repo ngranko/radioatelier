@@ -1,8 +1,8 @@
-import {readable, writable} from 'svelte/store';
-import {Loader} from '@googlemaps/js-api-loader';
-import type {PointListItem, ObjectDetailsInfo, SearchPointListItem} from '$lib/interfaces/object';
 import config from '$lib/config';
 import type KeyVal from '$lib/interfaces/keyVal';
+import type {ObjectDetailsInfo, PointListItem, SearchPointListItem} from '$lib/interfaces/object';
+import {Loader} from '@googlemaps/js-api-loader';
+import {readable, writable} from 'svelte/store';
 
 export const mapLoader = readable<Loader>(undefined, function start(set) {
     set(

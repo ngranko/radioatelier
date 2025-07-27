@@ -22,7 +22,6 @@ type ImportMappings struct {
     Coordinates     int  `json:"coordinates" validate:"number"`
     Name            int  `json:"name" validate:"number"`
     IsVisited       *int `json:"isVisited"`
-    Rating          *int `json:"rating"`
     IsPublic        *int `json:"isPublic"`
     Category        int  `json:"category" validate:"number"`
     Image           *int `json:"image"`

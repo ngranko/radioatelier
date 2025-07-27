@@ -17,7 +17,6 @@ type Line interface {
     GetLongitude() string
     GetName() string
     GetIsVisited() bool
-    GetRating() string
     GetIsPublic() bool
     GetCategory() string
     GetImage() string
@@ -58,14 +57,6 @@ func (l *line) GetIsVisited() bool {
     result := false
     if l.mappings.IsVisited != nil {
         result = transformations.StringToBool(l.raw[*l.mappings.IsVisited], false)
-    }
-    return result
-}
-
-func (l *line) GetRating() string {
-    result := ""
-    if l.mappings.Rating != nil {
-        result = l.raw[*l.mappings.Rating]
     }
     return result
 }

@@ -1,6 +1,6 @@
 import type {FuzzyCategory} from '$lib/interfaces/category';
-import type {FuzzyTag} from '$lib/interfaces/tag';
 import type {FuzzyPrivateTag} from '$lib/interfaces/privateTag';
+import type {FuzzyTag} from '$lib/interfaces/tag';
 
 interface TaxonomlessObject {
     name: string;
@@ -17,7 +17,6 @@ interface TaxonomlessObject {
     image?: string;
     isPublic: boolean;
     isVisited: boolean;
-    rating?: string;
 }
 
 interface BaseObject extends TaxonomlessObject {

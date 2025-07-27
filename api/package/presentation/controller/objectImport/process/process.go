@@ -181,18 +181,11 @@ func importObject(line document.Line, mapPoint presenter.MapPoint, category pres
 }
 
 func importObjectUser(line document.Line, object presenter.Object, user presenter.User) (presenter.ObjectUser, *types.LineFeedback) {
-    rating := line.GetRating()
-    res := validator.Get().ValidateVar(rating, "max=0|oneof=1 2 3")
-    if !res.IsValid() {
-        rating = ""
-    }
-
     objectUser := presenter.NewObjectUser()
     objectUserModel := objectUser.GetModel()
     objectUserModel.ObjectID = object.GetModel().ID
     objectUserModel.UserID = user.GetModel().ID
     objectUserModel.IsVisited = line.GetIsVisited()
-    objectUserModel.Rating = rating
     err := objectUser.Create()
     if err != nil {
         return nil, &types.LineFeedback{Text: "не удалось создать приватные данные о точке", Severity: "warning"}

@@ -26,7 +26,6 @@ type UpdateInput struct {
     Image           string   `json:"image"`
     IsPublic        bool     `json:"isPublic"`
     IsVisited       bool     `json:"isVisited"`
-    Rating          string   `json:"rating" validate:"max=0|oneof=1 2 3"`
     Category        Category `json:"category"`
     Tags            []Tag    `json:"tags"`
     PrivateTags     []Tag    `json:"privateTags"`
@@ -48,7 +47,6 @@ type UpdatePayloadData struct {
     Image           string    `json:"image"`
     IsPublic        bool      `json:"isPublic"`
     IsVisited       bool      `json:"isVisited"`
-    Rating          string    `json:"rating"`
     Category        Category  `json:"category"`
     Tags            []Tag     `json:"tags"`
     PrivateTags     []Tag     `json:"privateTags"`
@@ -163,7 +161,6 @@ func Update(w http.ResponseWriter, r *http.Request) {
     objectUserModel.ObjectID = object.GetModel().ID
     objectUserModel.UserID = user.GetModel().ID
     objectUserModel.IsVisited = payload.IsVisited
-    objectUserModel.Rating = payload.Rating
     if objectUserModel.ID == uuid.Nil {
         err = objectUser.Create()
     } else {
@@ -197,7 +194,6 @@ func Update(w http.ResponseWriter, r *http.Request) {
                 Image:           objModel.Image,
                 IsPublic:        objModel.IsPublic,
                 IsVisited:       objectUserModel.IsVisited,
-                Rating:          objectUserModel.Rating,
                 Category:        category,
                 Tags:            tags,
                 PrivateTags:     privateTags,

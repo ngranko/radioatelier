@@ -157,21 +157,25 @@
     });
 
     function redrawMarkers() {
-        if (!$map.getBounds()) {
+        if (!$map!.getBounds()) {
             return;
         }
 
         for (const point of Object.values($pointList)) {
             if (
-                !($map.getBounds() as google.maps.LatLngBounds).contains({
+                !($map!.getBounds() as google.maps.LatLngBounds).contains({
                     lat: Number(point.object.lat),
                     lng: Number(point.object.lng),
                 })
             ) {
-                point.marker!.map = null;
+                if (point.marker) {
+                    point.marker.map = null;
+                }
             } else {
                 if (!$searchPointList[point.object.id]) {
-                    point.marker!.map = $map;
+                    if (point.marker) {
+                        point.marker.map = $map;
+                    }
                 }
             }
         }

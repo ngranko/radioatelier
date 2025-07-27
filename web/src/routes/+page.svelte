@@ -9,7 +9,7 @@
     import type {Location} from '$lib/interfaces/location';
     import RequestError from '$lib/errors/RequestError';
     import {goto} from '$app/navigation';
-    import {page} from '$app/stores';
+    import {page} from '$app/state';
     import LocationMarker from '$lib/components/map/locationMarker.svelte';
     import {me} from '$lib/api/user';
     import {onMount} from 'svelte';
@@ -23,6 +23,7 @@
         requestPermission(): Promise<'granted' | 'denied'>;
     }
 
+    let isListSet = false;
     let orientationEnabled = $state(false);
     let consoleElement: HTMLElement | undefined = $state();
 
@@ -34,13 +35,14 @@
             $objects.error instanceof RequestError &&
             $objects.error.isAuthorizationError()
         ) {
-            goto(`/login?ref=${encodeURIComponent($page.url.pathname)}`);
+            goto(`/login?ref=${encodeURIComponent(page.url.pathname)}`);
         }
     });
 
     $effect(() => {
-        if ($objects.isSuccess) {
+        if ($objects.isSuccess && !isListSet) {
             pointList.set($objects.data.data.objects.map(object => ({object})));
+            isListSet = true;
         }
     });
 

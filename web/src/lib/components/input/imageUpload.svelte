@@ -1,6 +1,7 @@
 <script lang="ts">
     import {fade} from 'svelte/transition';
     import {cubicInOut} from 'svelte/easing';
+    import {Button} from '$lib/components/ui/button';
 
     interface Props {
         id?: string | undefined;
@@ -54,30 +55,42 @@
     }
 </script>
 
-<div class="root">
+<div class="relative w-full overflow-hidden rounded-lg border-2 border-gray-300 bg-gray-50">
     <button
         type="button"
-        class="display"
+        class="block aspect-2/1 w-full border-none bg-cover bg-center bg-no-repeat"
         style="background-image:url('{value && value.length ? value : '/image_empty.jpg'}')"
         onclick={handleOpen}
         aria-label="Изображение"
     ></button>
     {#if !disabled}
-        <div class="actions">
-            <button type="button" class="button" onclick={handleUploadClick}>
-                {value ? 'Сменить изображение' : 'Загрузить изображение'}
-            </button>
+        <div class="absolute right-3 bottom-3 flex gap-3">
+            <Button
+                variant="secondary"
+                size="icon"
+                class="text-base text-black hover:bg-gray-200"
+                onclick={handleUploadClick}
+                aria-label="Загрузить изображение"
+            >
+                <i class="fa-solid fa-arrow-up-from-bracket"></i>
+            </Button>
             {#if value}
-                <button type="button" class="button-delete" onclick={handleRemoveClick}>
-                    Удалить изображение
-                </button>
+                <Button
+                    variant="secondary"
+                    size="icon"
+                    class="text-destructive text-base"
+                    onclick={handleRemoveClick}
+                    aria-label="Удалить изображение"
+                >
+                    <i class="fa-solid fa-trash"></i>
+                </Button>
             {/if}
         </div>
     {/if}
     <input type="hidden" {name} {value} />
     <input
         bind:this={imageUploadRef}
-        class="imageUpload"
+        class="hidden"
         {id}
         type="file"
         accept="image/jpeg,image/png"
@@ -87,74 +100,12 @@
 
     {#if isPreviewOpen}
         <button
-            class="overlay"
+            class="fixed inset-0 z-10 flex items-center justify-center border-none bg-black/50"
             onclick={handleClose}
             transition:fade={{duration: 200, easing: cubicInOut}}
             type="button"
         >
-            <img class="preview" src={value} alt="Изображение" />
+            <img class="max-h-full max-w-full" src={value} alt="Изображение" />
         </button>
     {/if}
 </div>
-
-<style lang="scss">
-    @use '../../../styles/colors';
-    @use '../../../styles/typography';
-
-    .root {
-        position: relative;
-    }
-
-    .display {
-        display: block;
-        width: 100%;
-        aspect-ratio: 2 / 1;
-        border: none;
-        background-size: contain;
-        background-position: center;
-        background-repeat: no-repeat;
-        cursor: pointer;
-    }
-
-    .actions {
-        position: absolute;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        display: flex;
-        justify-content: space-between;
-    }
-
-    .button {
-        @include typography.brand-face;
-        color: colors.$black;
-    }
-
-    .button-delete {
-        @include typography.brand-face;
-        color: colors.$danger;
-    }
-
-    .imageUpload {
-        display: none;
-    }
-
-    .overlay {
-        position: fixed;
-        top: 0;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        border: none;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        background: rgba(0, 0, 0, 0.5);
-        z-index: 10;
-    }
-
-    .preview {
-        max-width: 100%;
-        max-height: 100%;
-    }
-</style>

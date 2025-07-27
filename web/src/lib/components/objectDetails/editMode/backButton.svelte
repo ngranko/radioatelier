@@ -1,6 +1,6 @@
 <script lang="ts">
     import CloseConfirmation from '$lib/components/objectDetails/closeConfirmation.svelte';
-    import TextButton from '$lib/components/button/textButton.svelte';
+    import {Button} from '$lib/components/ui/button';
 
     interface Props {
         isConfirmationRequired?: boolean;
@@ -20,5 +20,5 @@
     }
 </script>
 
-<TextButton type="button" onClick={handleClick}>Назад</TextButton>
+<Button variant="ghost" onclick={handleClick}>Назад</Button>
 <CloseConfirmation bind:isOpen={isDialogOpen} {onClick} />

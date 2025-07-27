@@ -18,14 +18,6 @@
 
     let {id = undefined, name = undefined, value, error = undefined, onChange}: Props = $props();
 
-    let isError: boolean = $derived(Boolean(error));
-    let classes: string = $derived(
-        clsx({
-            field: true,
-            error: isError,
-        }),
-    );
-
     const createCategoryMutation = createMutation({
         mutationFn: createCategory,
         onSuccess: ({data}) => {
@@ -56,60 +48,21 @@
     }
 </script>
 
-<div class={classes}>
-    <label for={id} class="label">{error ? error[0] : 'Категория'}</label>
-    <!-- TODO: add loading state -->
-    {#if !$categories.isLoading}
-        <Svelecte
-            {onChange}
-            inputId={id}
-            placeholder="Не выбрана"
-            highlightFirstItem={false}
-            creatable={true}
-            i18n={{
-                createRowLabel: getCreateRowLabel,
-            }}
-            options={$categories.data?.data.categories.sort((a, b) => a.name.localeCompare(b.name))}
-            {name}
-            {value}
-            createHandler={handleCreate}
-        />
-    {/if}
-</div>
-
-<style lang="scss">
-    @use '../../../../styles/colors';
-    @use '../../../../styles/typography';
-
-    .field {
-        position: relative;
-        display: flex;
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    :global(.creatable-row) {
-        @include typography.brand-face;
-    }
-
-    :global(.svelecte.svelecte-control .sv-control) {
-        --sv-min-height: 38px;
-        border-color: colors.$gray;
-    }
-
-    .error {
-        & label {
-            color: colors.$danger;
-        }
-
-        :global(.svelecte.svelecte-control .sv-control) {
-            border-color: colors.$danger;
-        }
-    }
-
-    .label {
-        @include typography.size-14;
-        margin-bottom: 4px;
-        transition: color 0.2s;
-    }
-</style>
+<!-- TODO: add loading state -->
+{#if !$categories.isLoading}
+    <Svelecte
+        {onChange}
+        inputId={id}
+        placeholder="Не выбрана"
+        highlightFirstItem={false}
+        creatable={true}
+        i18n={{
+            createRowLabel: getCreateRowLabel,
+        }}
+        options={$categories.data?.data.categories.sort((a, b) => a.name.localeCompare(b.name))}
+        {name}
+        {value}
+        createHandler={handleCreate}
+        controlClass={clsx({'transition-colors': true, 'sv-control-error': error})}
+    />
+{/if}

@@ -30,7 +30,6 @@ type Object struct {
     Image           string    `json:"image"`
     IsPublic        bool      `json:"isPublic"`
     IsVisited       bool      `json:"isVisited"`
-    Rating          string    `json:"rating"`
     Category        Category  `json:"category"`
     Tags            []Tag     `json:"tags"`
     PrivateTags     []Tag     `json:"privateTags"`
@@ -111,7 +110,6 @@ func GetDetails(w http.ResponseWriter, r *http.Request) {
                     Image:           object.GetModel().Image,
                     IsPublic:        object.GetModel().IsPublic,
                     IsVisited:       objectUser.GetModel().IsVisited,
-                    Rating:          objectUser.GetModel().Rating,
                     Category:        category,
                     Tags:            tags,
                     PrivateTags:     privateTags,

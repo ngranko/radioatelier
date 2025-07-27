@@ -10,7 +10,7 @@
     let {isPublic, isVisited, isRemoved}: Props = $props();
 </script>
 
-<span class="flags">
+<span class="flex gap-1">
     {#if isPublic}
         <Tooltip>
             {#snippet button()}
@@ -43,24 +43,3 @@
         </Tooltip>
     {/if}
 </span>
-
-<style lang="scss">
-    @use '../../../styles/colors';
-    @use '../../../styles/typography';
-
-    .flags {
-        @include typography.size-20;
-        position: absolute;
-        top: 16px;
-        right: 24px;
-        display: flex;
-
-        i {
-            color: colors.$black;
-        }
-
-        & > :global(:not(:first-child)) {
-            margin-left: 8px;
-        }
-    }
-</style>

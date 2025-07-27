@@ -66,18 +66,9 @@
         align-items: stretch;
     }
 
-    :global(.svelecte.svelecte-control .sv-control) {
-        --sv-min-height: 38px;
-        border-color: colors.$gray;
-    }
-
     .error {
         & label {
             color: colors.$danger;
-        }
-
-        :global(.svelecte.svelecte-control .sv-control) {
-            border-color: colors.$danger;
         }
     }
 

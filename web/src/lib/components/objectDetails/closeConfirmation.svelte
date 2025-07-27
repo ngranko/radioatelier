@@ -1,6 +1,6 @@
 <script lang="ts">
-    import TextButton from '$lib/components/button/textButton.svelte';
     import Dialog from '$lib/components/dialog.svelte';
+    import {Button} from '$lib/components/ui/button';
 
     interface Props {
         isOpen?: boolean;
@@ -20,23 +20,16 @@
 </script>
 
 <Dialog {isOpen}>
-    <p>Вы действительно хотите выйти из редактирования точки?</p>
-    <p>Изменения не будут сохранены</p>
-    <div class="actions">
-        <TextButton type="button" onClick={handleClose}>Отменить</TextButton>
-        <span class="close">
-            <TextButton type="button" modifier="danger" onClick={handleConfirm}>Закрыть</TextButton>
-        </span>
+    <div class="mb-2">Вы действительно хотите выйти из редактирования точки?</div>
+    <div>Изменения не будут сохранены</div>
+    <div class="mt-4 flex justify-end gap-2">
+        <Button variant="ghost" onclick={handleClose}>Отменить</Button>
+        <Button
+            variant="ghost"
+            class="text-destructive hover:text-destructive"
+            onclick={handleConfirm}
+        >
+            Закрыть
+        </Button>
     </div>
 </Dialog>
-
-<style lang="scss">
-    .actions {
-        display: flex;
-        justify-content: flex-end;
-    }
-
-    .close {
-        margin-left: 8px;
-    }
-</style>

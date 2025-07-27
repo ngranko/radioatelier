@@ -5,28 +5,30 @@
         Object,
         UpdateObjectResponsePayload,
     } from '$lib/interfaces/object';
-    import PrimaryButton from '$lib/components/button/primaryButton.svelte';
     import DeleteButton from '$lib/components/objectDetails/editMode/deleteButton.svelte';
     import BackButton from '$lib/components/objectDetails/editMode/backButton.svelte';
     import {activeMarker, activeObjectInfo, pointList, searchPointList} from '$lib/stores/map';
     import {createForm} from 'felte';
-    import * as yup from 'yup';
-    import {validator} from '@felte/validator-yup';
+    import * as zod from 'zod';
+    import {validator} from '@felte/validator-zod';
     import CategorySelect from '$lib/components/objectDetails/editMode/categorySelect.svelte';
     import PrivateTagsSelect from '$lib/components/objectDetails/editMode/privateTagsSelect.svelte';
-    import Checkbox from '$lib/components/input/checkbox.svelte';
-    import FormInput from '$lib/components/form/formInput.svelte';
-    import FormTextarea from '$lib/components/form/formTextarea.svelte';
-    import FormSelect from '$lib/components/form/formSelect.svelte';
     import TagsSelect from '$lib/components/objectDetails/editMode/tagsSelect.svelte';
-    import Switch from '$lib/components/input/switch.svelte';
     import toast from 'svelte-5-french-toast';
     import {createMutation, useQueryClient} from '@tanstack/svelte-query';
-    import {createObject, deleteObject, updateObject} from '$lib/api/object';
+    import {createObject, deleteObject, updateObject, uploadImage} from '$lib/api/object';
     import type {Payload} from '$lib/interfaces/api';
     import RequestError from '$lib/errors/RequestError';
-    import type {Category} from '$lib/interfaces/category';
-    import type {Tag} from '$lib/interfaces/tag';
+    import type {Category, FuzzyCategory} from '$lib/interfaces/category';
+    import type {FuzzyTag, Tag} from '$lib/interfaces/tag';
+    import ImageUpload from '$lib/components/input/imageUpload.svelte';
+    import {Button} from '$lib/components/ui/button';
+    import {Input} from '$lib/components/ui/input';
+    import ErrorableLabel from '$lib/components/errorableLabel.svelte';
+    import {Separator} from '$lib/components/ui/separator';
+    import {Checkbox} from '$lib/components/ui/checkbox';
+    import type {FuzzyPrivateTag} from '$lib/interfaces/privateTag.ts';
+    import {Textarea} from '$lib/components/ui/textarea';
 
     const client = useQueryClient();
 
@@ -36,11 +38,6 @@
 
     interface ErrorPayload {
         errors: Record<string, string>;
-    }
-
-    interface Rating {
-        value: string;
-        text: string;
     }
 
     let {initialValues}: Props = $props();
@@ -84,35 +81,59 @@
         },
     });
 
-    const schema = yup.object({
-        id: yup.string().defined().nullable(),
-        lat: yup.string().required(),
-        lng: yup.string().required(),
-        image: yup.string(),
-        isPublic: yup.boolean().required(),
-        isVisited: yup.boolean().required(),
-        rating: yup.string().oneOf(['', '1', '2', '3']),
-        name: yup
+    const image = createMutation({
+        mutationFn: uploadImage,
+    });
+
+    const schema = zod.object({
+        id: zod.string().nullable(),
+        lat: zod.string().nonempty(),
+        lng: zod.string().nonempty(),
+        image: zod.string().optional(),
+        isPublic: zod.boolean(),
+        isVisited: zod.boolean(),
+        name: zod
             .string()
-            .required('Пожалуйста, введите название')
+            .nonempty('Пожалуйста, введите название')
             .max(255, 'Слишком длинное название'),
-        description: yup.string(),
-        category: yup
-            .object({id: yup.string().required('Пожалуйста, выберите категорию')})
-            .required('Пожалуйста, выберите категорию'),
-        tags: yup.array().required(),
-        privateTags: yup.array().required(),
-        address: yup.string().max(128, 'Слишком длинный адрес'),
-        city: yup.string().max(64, 'Слишком длинное название города'),
-        country: yup.string().max(64, 'Слишком длинное название страны'),
-        installedPeriod: yup.string().max(20, 'Слишком длинный период создания'),
-        isRemoved: yup.boolean().required(),
-        removalPeriod: yup.string().max(20, 'Слишком длинный период утраты'),
-        source: yup.string().url('Должна быть валидной ссылкой'),
+        description: zod.string().optional(),
+        category: zod.custom<FuzzyCategory>(
+            (arg: FuzzyCategory) => arg && Object.hasOwn(arg, 'id') && arg.id.length > 0,
+            'Пожалуйста, выберите категорию',
+        ),
+        tags: zod.array(
+            zod.preprocess(
+                val => {
+                    if (typeof val === 'string') {
+                        return {id: val};
+                    }
+                    return val;
+                },
+                zod.object({id: zod.string().nonempty()}),
+            ),
+        ),
+        privateTags: zod.array(
+            zod.preprocess(
+                val => {
+                    if (typeof val === 'string') {
+                        return {id: val};
+                    }
+                    return val;
+                },
+                zod.object({id: zod.string().nonempty()}),
+            ),
+        ),
+        address: zod.string().max(128, 'Слишком длинный адрес').optional(),
+        city: zod.string().max(64, 'Слишком длинное название города').optional(),
+        country: zod.string().max(64, 'Слишком длинное название страны').optional(),
+        installedPeriod: zod.string().max(20, 'Слишком длинный период создания').optional(),
+        isRemoved: zod.boolean(),
+        removalPeriod: zod.string().max(20, 'Слишком длинный период утраты').optional(),
+        source: zod.string().url('Должна быть валидной ссылкой').or(zod.literal('')),
     });
 
     const {form, data, errors, isSubmitting, reset, setData, isDirty, setIsDirty} = createForm<
-        yup.InferType<typeof schema>
+        zod.infer<typeof schema>
     >({
         onSubmit: (values: LooseObject) => {
             handleSave(values);
@@ -121,31 +142,14 @@
         initialValues: initialValues,
     });
 
-    let tags: Tag[] = $state([]);
-    let privateTags: Tag[] = $state([]);
+    let tags: FuzzyTag[] = $state(initialValues.tags ?? []);
+    let privateTags: FuzzyPrivateTag[] = $state(initialValues.privateTags ?? []);
 
     $effect(() => {
         if ($isDirty.valueOf()) {
             activeObjectInfo.update(value => ({...value, isDirty: true}));
         }
     });
-
-    function getSelectedTagValues(items: Tag[], fallback?: Pick<Tag, 'id'>[]): string[] {
-        if (items.length) {
-            return items.map(item => item.id);
-        }
-
-        if (fallback) {
-            return fallback.map(item => item.id);
-        }
-
-        return [];
-    }
-
-    function handleRatingChange(rating: Rating) {
-        setData('rating', rating.value);
-        setIsDirty(true);
-    }
 
     function handleCategoryChange(category: Category) {
         setData('category', category);
@@ -167,8 +171,8 @@
     async function handleSave(values: LooseObject) {
         const object: LooseObject = {
             ...values,
-            tags: tags.length ? tags : (initialValues.tags ?? []),
-            privateTags: privateTags.length ? privateTags : (initialValues.privateTags ?? []),
+            tags,
+            privateTags,
         };
 
         if (!$activeObjectInfo.object) {
@@ -198,7 +202,13 @@
                 data: {object: result.data},
             });
             pointList.add({object: result.data});
-            activeObjectInfo.reset();
+            activeObjectInfo.update(value => ({
+                ...value,
+                object: result.data,
+                detailsId: result.data.id,
+                isEditing: false,
+                isDirty: false,
+            }));
         } catch (error) {
             if (error instanceof RequestError && (error.payload as ErrorPayload).errors) {
                 errors.set((error.payload as ErrorPayload).errors);
@@ -231,7 +241,12 @@
                     type: 'local',
                 },
             });
-            activeObjectInfo.reset();
+            activeObjectInfo.update(value => ({
+                ...value,
+                object: result.data,
+                isEditing: false,
+                isDirty: false,
+            }));
         } catch (error: unknown) {
             if (error instanceof RequestError && (error.payload as ErrorPayload).errors) {
                 errors.set((error.payload as ErrorPayload).errors);
@@ -271,161 +286,195 @@
             isDirty: false,
         }));
     }
+
+    function handleImageChange(file: File) {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        console.log('uploading new image');
+
+        toast.promise(
+            $image.mutateAsync({id: initialValues.id as string, formData}).then(result => {
+                console.log(result);
+                $data.image = result.data.url;
+            }),
+            {
+                loading: 'Загружаю...',
+                success: 'Фото загружено!',
+                error: 'Не удалось загрузить фото',
+            },
+        );
+    }
+
+    function handleIsVisitedChange() {
+        $data.isVisited = !$data.isVisited;
+    }
+
+    function handleIsRemovedChange() {
+        $data.isRemoved = !$data.isRemoved;
+    }
+
+    function handleIsPublicChange() {
+        $data.isPublic = !$data.isPublic;
+    }
 </script>
 
-<form class="form" use:form>
-    <input type="hidden" name="id" value={initialValues.id} />
-    <input type="hidden" name="lat" value={initialValues.lat} />
-    <input type="hidden" name="lng" value={initialValues.lng} />
-    <input type="hidden" name="image" value={initialValues.image ?? ''} />
-
-    <div class="fieldLong">
-        <FormInput id="name" name="name" label="Название" error={$errors.name} />
-    </div>
-    <Checkbox id="isVisited" name="isVisited" checked={initialValues.isVisited} label="Посещена" />
-    <FormSelect
-        id="rating"
-        name="rating"
-        label="Рейтинг"
-        placeholder="Выберите"
-        options={[
-            {value: '1', text: '⭐️'},
-            {value: '2', text: '⭐⭐'},
-            {value: '3', text: '🌟🌟🌟'},
-        ]}
-        onChange={handleRatingChange}
-        error={$errors.rating}
-    />
-    <div class="fieldLong">
-        <Switch id="isPublic" name="isPublic" checked={initialValues.isPublic} label="Публичная" />
-    </div>
-    <div class="fieldLong">
-        <CategorySelect
-            id="category"
-            name="category"
-            value={initialValues.category?.id ?? ''}
-            onChange={handleCategoryChange}
-            error={$errors.category?.id}
-        />
-    </div>
-    <div class="fieldLong">
-        <TagsSelect
-            id="tags"
-            name="tags"
-            value={getSelectedTagValues(tags, initialValues.tags)}
-            error={$errors.tags}
-            onChange={handleTagsChange}
-        />
-    </div>
-    <div class="fieldLong">
-        <PrivateTagsSelect
-            id="privateTags"
-            name="privateTags"
-            value={getSelectedTagValues(privateTags, initialValues.privateTags)}
-            error={$errors.privateTags}
-            onChange={handlePrivateTagsChange}
-        />
-    </div>
-    <div class="fieldLong">
-        <FormTextarea
-            id="description"
-            name="description"
-            label="Информация"
-            error={$errors.description}
-        />
-    </div>
-    <div class="fieldLong">
-        <FormInput id="address" name="address" label="Адрес" error={$errors.address} />
-    </div>
-    <div class="fieldLong">
-        <FormInput id="city" name="city" label="Город" error={$errors.city} />
-    </div>
-    <div class="fieldLong">
-        <FormInput id="country" name="country" label="Страна" error={$errors.country} />
-    </div>
-    <div class="fieldLong">
-        <FormInput
-            id="installedPeriod"
-            name="installedPeriod"
-            label="Период создания"
-            error={$errors.installedPeriod}
-        />
-    </div>
-    <div class="removedCheckbox">
-        <Checkbox id="isRemoved" name="isRemoved" label="Утрачена" />
-    </div>
-    {#if $data.isRemoved}
-        <div class="field">
-            <FormInput
-                id="removalPeriod"
-                name="removalPeriod"
-                label="Период пропажи"
-                error={$errors.removalPeriod}
-            />
-        </div>
-    {/if}
-    <div class="fieldLong">
-        <FormInput id="source" name="source" label="Ссылка на источник" error={$errors.source} />
-    </div>
-    <div class="actions">
-        <div class="save-button">
-            <PrimaryButton type="submit" disabled={$isSubmitting.valueOf()}>
-                Сохранить
-            </PrimaryButton>
-        </div>
+<form use:form>
+    <div class="flex items-center justify-between gap-3 border-b bg-gray-50/50 px-4 py-2.5">
+        <Button type="submit" disabled={$isSubmitting.valueOf()} class="px-6 text-base">
+            Сохранить
+        </Button>
         {#if initialValues.id}
             <BackButton isConfirmationRequired={$isDirty.valueOf()} onClick={handleBack} />
-            <span class="flexer"></span>
+            <span class="flex-1"></span>
             <DeleteButton onClick={handleDelete} />
         {/if}
     </div>
+    <div class="h-[calc(100vh-8px*2-57px*2)] overflow-x-hidden overflow-y-auto p-4">
+        <div class="mb-6">
+            <ImageUpload name="image" bind:value={$data.image} onChange={handleImageChange} />
+        </div>
+        <Input type="hidden" name="id" value={initialValues.id} />
+        <Input type="hidden" name="lat" value={initialValues.lat} />
+        <Input type="hidden" name="lng" value={initialValues.lng} />
+        <div class="grid flex-1 grid-cols-2 content-start gap-x-4 gap-y-3">
+            <div class="col-span-full">
+                <ErrorableLabel for="name" class="mb-1" error={$errors.name}>
+                    название
+                </ErrorableLabel>
+                <Input type="text" id="name" name="name" data-1p-ignore />
+            </div>
+
+            <Separator class="col-span-full mt-2" />
+
+            <div class="flex items-center space-x-2">
+                <Checkbox
+                    id="isVisited"
+                    name="isVisited"
+                    value="1"
+                    checked={initialValues.isVisited}
+                    onCheckedChange={handleIsVisitedChange}
+                />
+                <ErrorableLabel for="isVisited" error={$errors.isVisited}>посещена</ErrorableLabel>
+            </div>
+            <div class="flex items-center space-x-2">
+                <Checkbox
+                    id="isRemoved"
+                    name="isRemoved"
+                    value="1"
+                    checked={initialValues.isRemoved}
+                    onCheckedChange={handleIsRemovedChange}
+                />
+                <ErrorableLabel for="isRemoved" error={$errors.isRemoved}>утрачена</ErrorableLabel>
+            </div>
+            <div class="flex items-center space-x-2">
+                <Checkbox
+                    id="isPublic"
+                    name="isPublic"
+                    value="1"
+                    checked={initialValues.isPublic}
+                    onCheckedChange={handleIsPublicChange}
+                />
+                <ErrorableLabel for="isPublic" error={$errors.isPublic}>публичная</ErrorableLabel>
+            </div>
+
+            <Separator class="col-span-full mt-2" />
+
+            <div class="col-span-full">
+                <ErrorableLabel
+                    for="category"
+                    class="mb-1"
+                    error={$errors.category as unknown as string[]}
+                >
+                    категория
+                </ErrorableLabel>
+                <CategorySelect
+                    id="category"
+                    name="category"
+                    value={initialValues.category?.id ?? ''}
+                    onChange={handleCategoryChange}
+                    error={$errors.category as unknown as string[]}
+                />
+            </div>
+            <div class="col-span-full">
+                <ErrorableLabel for="tags" class="mb-1" error={$errors.tags as unknown as string[]}>
+                    теги
+                </ErrorableLabel>
+                <TagsSelect
+                    id="tags"
+                    name="tags"
+                    value={tags.map(item => item.id)}
+                    error={$errors.tags}
+                    onChange={handleTagsChange}
+                />
+            </div>
+            <div class="col-span-full">
+                <ErrorableLabel
+                    for="tags"
+                    class="mb-1"
+                    error={$errors.privateTags as unknown as string[]}
+                >
+                    приватные теги
+                </ErrorableLabel>
+                <PrivateTagsSelect
+                    id="privateTags"
+                    name="privateTags"
+                    value={privateTags.map(item => item.id)}
+                    error={$errors.privateTags}
+                    onChange={handlePrivateTagsChange}
+                />
+            </div>
+
+            <Separator class="col-span-full mt-2" />
+
+            <div class="col-span-full">
+                <ErrorableLabel for="address" class="mb-1" error={$errors.address}>
+                    адрес
+                </ErrorableLabel>
+                <Input type="text" id="address" name="address" />
+            </div>
+            <div class="col-span-1">
+                <ErrorableLabel for="city" class="mb-1" error={$errors.city}>город</ErrorableLabel>
+                <Input type="text" id="city" name="city" />
+            </div>
+            <div class="col-span-1">
+                <ErrorableLabel for="country" class="mb-1" error={$errors.country}>
+                    страна
+                </ErrorableLabel>
+                <Input type="text" id="country" name="country" />
+            </div>
+
+            <Separator class="col-span-full mt-2" />
+
+            <div class="col-span-1">
+                <ErrorableLabel for="installedPeriod" class="mb-1" error={$errors.installedPeriod}>
+                    период создания
+                </ErrorableLabel>
+                <Input type="text" id="installedPeriod" name="installedPeriod" />
+            </div>
+            {#if $data.isRemoved}
+                <div class="col-span-1">
+                    <ErrorableLabel for="removalPeriod" class="mb-1" error={$errors.removalPeriod}>
+                        период пропажи
+                    </ErrorableLabel>
+                    <Input type="text" id="removalPeriod" name="removalPeriod" />
+                </div>
+            {/if}
+
+            <Separator class="col-span-full mt-2" />
+
+            <div class="col-span-full">
+                <ErrorableLabel for="description" class="mb-1" error={$errors.description}>
+                    информация
+                </ErrorableLabel>
+                <Textarea id="description" name="description" class="resize-y" />
+            </div>
+            <div class="col-span-full">
+                <ErrorableLabel for="source" class="mb-1" error={$errors.source}>
+                    ссылка на источник
+                </ErrorableLabel>
+                <Input type="text" id="source" name="source" />
+            </div>
+        </div>
+    </div>
 </form>
-
-<style lang="scss">
-    @use '../../../../styles/colors';
-    @use '../../../../styles/typography';
-
-    .form {
-        padding: 0 24px;
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        grid-gap: 16px;
-        align-content: flex-start;
-        flex: 1;
-    }
-
-    .actions {
-        position: sticky;
-        display: flex;
-        bottom: 0;
-        padding-top: 8px;
-        padding-bottom: 24px;
-        border-top: 1px solid colors.$gray;
-        background-color: white;
-        grid-column: 1 / -1;
-    }
-
-    .save-button {
-        margin-right: 8px;
-    }
-
-    .flexer {
-        flex: 1;
-    }
-
-    .field {
-        display: flex;
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .fieldLong {
-        @extend .field;
-        grid-column: 1 / -1;
-    }
-
-    .removedCheckbox {
-        height: 62.1px;
-        display: flex;
-    }
-</style>
