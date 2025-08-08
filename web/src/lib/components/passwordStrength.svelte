@@ -17,66 +17,14 @@
     let passwordScore: Number = $derived(getPasswordScore(value));
     let classNames: string = $derived(
         clsx({
-            base: true,
-            veryLow: passwordScore === SCORE_VERY_LOW,
-            low: passwordScore === SCORE_LOW,
-            medium: passwordScore === SCORE_MEDIUM,
-            high: passwordScore === SCORE_HIGH,
-            veryHigh: passwordScore === SCORE_VERY_HIGH,
+            'w-full h-0.5 mt-2 flex rounded-sm bg-gray-100 after:block after:duration-200 after:ease-in-out': true,
+            'after:bg-destructive after:w-1/20': passwordScore === SCORE_VERY_LOW,
+            'after:bg-destructive after:w-1/4': passwordScore === SCORE_LOW,
+            'after:bg-sky-600 after:w-1/2': passwordScore === SCORE_MEDIUM,
+            'after:bg-sky-600 after:w-3/4': passwordScore === SCORE_HIGH,
+            'after:bg-sky-600 after:w-full': passwordScore === SCORE_VERY_HIGH,
         }),
     );
 </script>
 
 <div class={classNames}></div>
-
-<style lang="scss">
-    @use '../../styles/colors';
-
-    .base {
-        width: 100%;
-        height: 2px;
-        margin-top: 8px;
-        border-radius: 5px;
-        display: flex;
-        background: colors.$lightgray;
-
-        &::after {
-            display: block;
-            content: '';
-            background: colors.$primary;
-            transition: 0.2s ease-in-out;
-        }
-    }
-
-    .veryLow {
-        &::after {
-            background: colors.$danger;
-            width: 5%;
-        }
-    }
-
-    .low {
-        &::after {
-            background: colors.$danger;
-            width: 25%;
-        }
-    }
-
-    .medium {
-        &::after {
-            width: 50%;
-        }
-    }
-
-    .high {
-        &::after {
-            width: 75%;
-        }
-    }
-
-    .veryHigh {
-        &::after {
-            width: 100%;
-        }
-    }
-</style>

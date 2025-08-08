@@ -72,7 +72,7 @@
             label="Пароль"
             value={$data.password}
             error={$errors.password}
-            withStrengthIndicator
+            withStrengthIndicator={true}
         />
         <FormPasswordInput
             id="passwordConfirm"

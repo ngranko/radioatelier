@@ -1,6 +1,7 @@
 <script lang="ts">
     import * as Dialog from '$lib/components/ui/dialog';
     import {Button, buttonVariants} from '$lib/components/ui/button';
+    import {clsx} from 'clsx';
 
     interface Props {
         isConfirmationRequired?: boolean;
@@ -12,8 +13,14 @@
 
 {#if isConfirmationRequired}
     <Dialog.Root>
-        <Dialog.Trigger type="button" class={buttonVariants({variant: 'ghost'})}>
-            Назад
+        <Dialog.Trigger
+            type="button"
+            class={clsx([
+                buttonVariants({variant: 'ghost', size: 'icon'}),
+                'h-8 w-8 text-lg hover:bg-gray-100',
+            ])}
+        >
+            <i class="fa-solid fa-xmark"></i>
         </Dialog.Trigger>
         <Dialog.Content>
             <Dialog.Header>
@@ -35,5 +42,7 @@
         </Dialog.Content>
     </Dialog.Root>
 {:else}
-    <Button variant="ghost" onclick={onClick}>Назад</Button>
+    <Button variant="ghost" size="icon" class="h-8 w-8 text-lg hover:bg-gray-100" onclick={onClick}>
+        <i class="fa-solid fa-xmark"></i>
+    </Button>
 {/if}

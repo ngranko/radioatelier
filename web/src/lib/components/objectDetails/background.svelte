@@ -12,9 +12,7 @@
 
 {#if isConfirmationRequired}
     <Dialog.Root>
-        <Dialog.Trigger type="button" class={buttonVariants({variant: 'ghost'})}>
-            Назад
-        </Dialog.Trigger>
+        <Dialog.Trigger class="fixed inset-0 z-2 bg-transparent"></Dialog.Trigger>
         <Dialog.Content>
             <Dialog.Header>
                 <Dialog.Title>Вы действительно хотите выйти из редактирования точки?</Dialog.Title>
@@ -35,5 +33,5 @@
         </Dialog.Content>
     </Dialog.Root>
 {:else}
-    <Button variant="ghost" onclick={onClick}>Назад</Button>
+    <div class="fixed inset-0 z-2 bg-transparent" onclick={onClick}></div>
 {/if}
