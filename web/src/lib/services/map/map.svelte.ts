@@ -1,5 +1,5 @@
-import {activeObjectInfo, map} from '$lib/stores/map';
 import type {MapPlaceable} from '$lib/interfaces/object';
+import {activeObjectInfo, map} from '$lib/stores/map';
 
 export function getStreetView(lat: number, lng: number) {
     const streetView = new google.maps.StreetViewService();

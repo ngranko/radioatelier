@@ -3,9 +3,9 @@
     import {
         mapLoader,
         map,
+        markerManager,
         activeObjectInfo,
         activeMarker,
-        dragTimeout,
         searchPointList,
     } from '$lib/stores/map';
     import {createQuery, useQueryClient} from '@tanstack/svelte-query';
@@ -13,8 +13,6 @@
     import {useRepositionMutation} from '$lib/api/mutation/reposition';
     import {getAddress} from '$lib/api/location';
     import type {Object} from '$lib/interfaces/object';
-    import CloseConfirmation from '$lib/components/objectDetails/closeConfirmation.svelte';
-    import {clsx} from 'clsx';
     import {pointList} from '$lib/stores/map.js';
     import {setDraggable} from '$lib/services/map/map.svelte';
 
@@ -37,17 +35,19 @@
         lng,
         isRemoved = false,
         isVisited = false,
-        initialActive = false,
         icon,
         color,
         isDraggable = false,
         source,
     }: Props = $props();
+
+    let markerId: string | undefined = $state();
     let marker: google.maps.marker.AdvancedMarkerElement | undefined = $state();
     let skipClick = false;
     let isDragged = false;
     let mouseMoveListener: google.maps.MapsEventListener | null = null;
-    let isConfirmationOpen = $state(false);
+    let boundsListener: google.maps.MapsEventListener | null = null;
+    let markerElement: HTMLDivElement | undefined = $state();
 
     const client = useQueryClient();
 
@@ -66,6 +66,22 @@
     const reposition = useRepositionMutation(client);
 
     $effect(() => {
+        if (!marker) {
+            return;
+        }
+
+        // Update marker appearance based on state
+        if (markerElement) {
+            markerElement.classList.toggle('map-marker-visited', isVisited);
+            markerElement.classList.toggle('map-marker-removed', isRemoved);
+        }
+    });
+
+    $effect(() => {
+        if (!marker) {
+            return;
+        }
+
         // isLoading check is needed here because otherwise creating a duplicate marker for an object that was already open before will immediately trigger the details to open (TSK-286)
         if (
             $activeObjectInfo.isLoading &&
@@ -88,6 +104,10 @@
     });
 
     $effect(() => {
+        if (!marker) {
+            return;
+        }
+
         if ($objectAddress.isSuccess) {
             activeObjectInfo.update(value => ({
                 ...value,
@@ -110,29 +130,39 @@
         }
     });
 
-    $effect(() => {
-        if (marker) {
-            if (isVisited) {
-                (marker.content as HTMLDivElement).classList.add('map-marker-visited');
-            } else {
-                (marker.content as HTMLDivElement).classList.remove('map-marker-visited');
-            }
-
-            if (isRemoved) {
-                (marker.content as HTMLDivElement).classList.add('map-marker-removed');
-            } else {
-                (marker.content as HTMLDivElement).classList.remove('map-marker-removed');
-            }
-        }
+    onMount(async () => {
+        await createMarker();
     });
 
-    onMount(async () => {
-        const iconElement = document.createElement('div');
-        iconElement.style.backgroundColor = color;
-        iconElement.innerHTML = `<i class="${icon}" style="pointer-events:none;"></i>`;
-        iconElement.className = getMarkerClassList();
+    async function createMarker() {
+        const position = {lat: Number(lat), lng: Number(lng)};
 
-        const {AdvancedMarkerElement, CollisionBehavior} = await $mapLoader.importLibrary('marker');
+        // For map-clicked markers, pass a unique ID to avoid cache conflicts
+        markerId = source === 'map' ? `map-${Date.now()}-${Math.random()}` : id!;
+
+        marker = await $markerManager!.createMarker(markerId, position, {
+            icon,
+            color,
+            isDraggable,
+            source,
+            onClick: handleMarkerClick,
+            onDragStart: handleClickStart,
+            onDragEnd: handleClickEnd,
+            onDragMove: event => {
+                isDragged = true;
+                if (marker) {
+                    marker.position = event.latLng;
+                }
+            },
+        });
+
+        if (source === 'list') {
+            pointList.update(id!, {marker});
+        }
+
+        if (source === 'search') {
+            searchPointList.update(id!, {marker});
+        }
 
         if (
             id === null &&
@@ -147,105 +177,54 @@
                 isLoading: true,
             }));
         }
+    }
 
-        marker = new AdvancedMarkerElement({
-            map: $map,
-            position: {lat: Number(lat), lng: Number(lng)},
-            content: iconElement,
-            collisionBehavior: CollisionBehavior.REQUIRED,
-            gmpClickable: true,
-            zIndex: source === 'search' ? 1 : 0,
-        });
+    async function handleClickStart() {
+        const {event} = await $mapLoader.importLibrary('core');
 
-        marker.addListener('gmp-click', handleMarkerClick);
-
-        if (isDraggable) {
-            iconElement.addEventListener('mousedown', () =>
-                handleClickStart('map-marker-draggable'),
-            );
-            iconElement.addEventListener('touchstart', () =>
-                handleClickStart('map-marker-draggable-mobile'),
-            );
-            iconElement.addEventListener('mouseup', () => handleClickEnd('map-marker-draggable'));
-            iconElement.addEventListener('touchend', () =>
-                handleClickEnd('map-marker-draggable-mobile'),
-            );
-        }
-
-        if (source === 'list') {
-            pointList.update(id!, {marker});
-        }
-
-        if (source === 'search') {
-            searchPointList.update(id!, {marker});
-        }
-
-        setTimeout(
-            () => (marker?.content as HTMLDivElement).classList.remove('animate-popin'),
-            200,
+        mouseMoveListener = event.addListener(
+            $map!,
+            'mousemove',
+            function (evant: google.maps.MapMouseEvent) {
+                isDragged = true;
+                if (marker) {
+                    marker.position = evant.latLng;
+                }
+            },
         );
 
-        function handleClickStart(className: string) {
-            dragTimeout.set(
-                setTimeout(async () => {
-                    const {event} = await $mapLoader.importLibrary('core');
+        setDraggable(false);
+        if ('vibrate' in navigator) {
+            navigator.vibrate(10);
+        }
+        skipClick = true;
+    }
 
-                    mouseMoveListener = event.addListener(
-                        $map!,
-                        'mousemove',
-                        function (evant: google.maps.MapMouseEvent) {
-                            isDragged = true;
-                            if (marker) {
-                                marker.position = evant.latLng;
-                            }
-                        },
-                    );
+    async function handleClickEnd() {
+        setDraggable(true);
 
-                    iconElement.classList.add(className);
-                    setDraggable(false);
-                    if ('vibrate' in navigator) {
-                        navigator.vibrate(10);
-                    }
-                    skipClick = true;
-                }, 500),
-            );
+        if (mouseMoveListener) {
+            const {event} = await $mapLoader.importLibrary('core');
+            event.removeListener(mouseMoveListener);
+            mouseMoveListener = null;
         }
 
-        async function handleClickEnd(className: string) {
-            dragTimeout.remove();
-            setDraggable(true);
-
-            if (mouseMoveListener) {
-                const {event} = await $mapLoader.importLibrary('core');
-                event.removeListener(mouseMoveListener);
-                mouseMoveListener = null;
-            }
-
-            if (isDragged) {
-                isDragged = false;
-                updateObjectCoordinates();
-            }
-
-            iconElement.classList.remove(className);
+        if (isDragged) {
+            isDragged = false;
+            updateObjectCoordinates();
         }
-    });
+    }
 
     onDestroy(() => {
-        (marker?.content as HTMLDivElement).classList.add('animate-popout');
-        setTimeout(() => (marker!.map = null), 200);
-    });
+        // Cleanup bounds listener
+        if (boundsListener) {
+            google.maps.event.removeListener(boundsListener);
+        }
 
-    function getMarkerClassList() {
-        return clsx([
-            'map-marker',
-            'animate-popin',
-            {
-                'map-marker-active': initialActive,
-                'map-marker-visited': isVisited,
-                'map-marker-removed': isRemoved,
-            },
-        ]);
-    }
+        if ($markerManager) {
+            $markerManager.removeMarker(markerId!);
+        }
+    });
 
     function updateObjectCoordinates() {
         updateExistingObjectCoordinates();
@@ -312,8 +291,6 @@
         activeMarker.activate();
     }
 </script>
-
-<CloseConfirmation bind:isOpen={isConfirmationOpen} onClick={changeActiveMarker} />
 
 <style lang="scss">
     @use '../../../styles/colors';

@@ -3,6 +3,7 @@ import type KeyVal from '$lib/interfaces/keyVal';
 import type {ObjectDetailsInfo, PointListItem, SearchPointListItem} from '$lib/interfaces/object';
 import {Loader} from '@googlemaps/js-api-loader';
 import {readable, writable} from 'svelte/store';
+import {MarkerManager} from '$lib/services/map/markerManager';
 
 export const mapLoader = readable<Loader>(undefined, function start(set) {
     set(
@@ -15,6 +16,9 @@ export const mapLoader = readable<Loader>(undefined, function start(set) {
 });
 
 export const map = writable<google.maps.Map | undefined>(undefined);
+
+// Marker manager for optimized rendering
+export const markerManager = writable<MarkerManager | undefined>(undefined);
 
 const {subscribe, set, update} = writable<ObjectDetailsInfo>({
     isMinimized: false,

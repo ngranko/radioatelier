@@ -3,14 +3,15 @@
     import {
         mapLoader,
         map,
+        markerManager,
         dragTimeout,
         activeObjectInfo,
         pointList,
-        searchPointList,
     } from '$lib/stores/map';
     import {createMutation} from '@tanstack/svelte-query';
     import {getLocation} from '$lib/api/location';
     import type {Location} from '$lib/interfaces/location';
+    import {MarkerManager} from '$lib/services/map/markerManager';
 
     interface Props {
         onClick(location: Location): void;
@@ -23,7 +24,9 @@
     let clickTimeout: number | undefined;
     let isClicked = false;
     let positionInterval: number | undefined;
-    let boundTimeout: number | undefined;
+    let isDoubleTapHold = false;
+    let lastTapTime = 0;
+    let tapCount = 0;
 
     const location = createMutation({
         mutationFn: getLocation,
@@ -42,7 +45,7 @@
             center,
             mapId: '5b6e83dfb8822236',
             controlSize: 40,
-            // I can always enable it if I see that I need it< but for now let's leave as little controls as I can
+            // I can always enable it if I see that I need it, but for now let's leave as little controls as I can
             mapTypeControl: false,
             cameraControl: false,
             // mapTypeControlOptions: {
@@ -60,90 +63,183 @@
 
         try {
             const {Map} = await $mapLoader.importLibrary('maps');
-            map.update(() => new Map(container!, mapOptions));
+            const mapInstance = new Map(container!, mapOptions);
+
+            // Initialize marker manager for optimized rendering
+            const manager = new MarkerManager({
+                maxVisibleMarkers: 1000,
+            });
+            await manager.initialize(mapInstance, $mapLoader);
+            markerManager.set(manager);
+
+            map.update(() => mapInstance);
         } catch (e) {
             console.error('error instantiating map');
             console.error(e);
         }
 
         try {
-            $map.getStreetView().setOptions({fullscreenControl: false, addressControl: false});
-            $map.getStreetView().addListener('visible_changed', () => {
-                if (!$map.getStreetView().getVisible()) {
-                    activeObjectInfo.update(value => ({...value, isMinimized: false}));
-                }
-            });
+            if ($map) {
+                $map.getStreetView().setOptions({fullscreenControl: false, addressControl: false});
+                $map.getStreetView().addListener('visible_changed', () => {
+                    if ($map && !$map.getStreetView().getVisible()) {
+                        activeObjectInfo.update(value => ({...value, isMinimized: false}));
+                    }
+                });
+            }
         } catch (e) {
             console.error('error instantiating street view');
             console.error(e);
         }
 
         try {
-            event.addListener($map, 'click', function (event: google.maps.MapMouseEvent) {
-                isInteracted = true;
-
-                if ((event.domEvent as MouseEvent | TouchEvent).detail === 1) {
-                    isClicked = false;
-                    if (clickTimeout) {
-                        return;
+            if ($map) {
+                // Add bounds change listener to update marker visibility
+                event.addListener($map, 'bounds_changed', () => {
+                    if ($markerManager) {
+                        $markerManager.triggerViewportUpdate($pointList);
                     }
+                });
 
-                    clickTimeout = setTimeout(() => {
-                        isClicked = true;
-                        onClick({lat: event.latLng?.lat() ?? 0, lng: event.latLng?.lng() ?? 0});
+                event.addListener($map, 'click', function (event: google.maps.MapMouseEvent) {
+                    isInteracted = true;
+
+                    const domEvent = event.domEvent as MouseEvent | TouchEvent;
+
+                    // Handle touch events for mobile
+                    if (domEvent instanceof TouchEvent) {
+                        const currentTime = new Date().getTime();
+                        const tapLength = currentTime - lastTapTime;
+
+                        if (tapLength < 500 && tapLength > 0) {
+                            tapCount++;
+                        } else {
+                            tapCount = 1;
+                        }
+                        lastTapTime = currentTime;
+
+                        // Single tap - add marker after delay
+                        if (tapCount === 1) {
+                            isClicked = false;
+                            if (clickTimeout) {
+                                return;
+                            }
+
+                            clickTimeout = setTimeout(() => {
+                                if (tapCount === 1 && !isDoubleTapHold) {
+                                    isClicked = true;
+                                    onClick({
+                                        lat: event.latLng?.lat() ?? 0,
+                                        lng: event.latLng?.lng() ?? 0,
+                                    });
+                                }
+                                clickTimeout = undefined;
+                            }, 300);
+                        }
+
+                        // Double tap - zoom in
+                        if (tapCount === 2) {
+                            clearTimeout(clickTimeout);
+                            clickTimeout = undefined;
+                            isClicked = false;
+                            isDoubleTapHold = true;
+
+                            // Start listening for hold gesture
+                            const touchStartTime = currentTime;
+                            const touchStartY = domEvent.touches[0].clientY;
+                            let initialZoom = $map?.getZoom() ?? 15;
+
+                            const touchMoveHandler = (moveEvent: TouchEvent) => {
+                                if (isDoubleTapHold && $map) {
+                                    const currentY = moveEvent.touches[0].clientY;
+                                    const deltaY = touchStartY - currentY;
+                                    const zoomDelta = deltaY / 100; // Adjust sensitivity
+                                    const newZoom = Math.max(
+                                        1,
+                                        Math.min(20, initialZoom + zoomDelta),
+                                    );
+                                    $map.setZoom(newZoom);
+                                }
+                            };
+
+                            const touchEndHandler = () => {
+                                isDoubleTapHold = false;
+                                tapCount = 0;
+                                document.removeEventListener('touchmove', touchMoveHandler);
+                                document.removeEventListener('touchend', touchEndHandler);
+                            };
+
+                            document.addEventListener('touchmove', touchMoveHandler);
+                            document.addEventListener('touchend', touchEndHandler);
+
+                            // Reset tap count after a delay
+                            setTimeout(() => {
+                                tapCount = 0;
+                            }, 500);
+                        }
+                    } else {
+                        // Handle mouse events (desktop)
+                        if (domEvent.detail === 1) {
+                            isClicked = false;
+                            if (clickTimeout) {
+                                return;
+                            }
+
+                            clickTimeout = setTimeout(() => {
+                                isClicked = true;
+                                onClick({
+                                    lat: event.latLng?.lat() ?? 0,
+                                    lng: event.latLng?.lng() ?? 0,
+                                });
+                                clickTimeout = undefined;
+                            }, 300);
+                        }
+                    }
+                });
+
+                event.addListener($map, 'dblclick', function (event: google.maps.MapMouseEvent) {
+                    const domEvent = event.domEvent as MouseEvent | TouchEvent;
+
+                    // Only handle mouse double-click, touch is handled above
+                    if (!(domEvent instanceof TouchEvent)) {
+                        if (isClicked && $map) {
+                            // event.stop() doesn't work for some reason, so adding this awesome crutch
+                            $map.set('disableDoubleClickZoom', true);
+                            isClicked = false;
+                            return;
+                        }
+                        clearTimeout(clickTimeout);
                         clickTimeout = undefined;
-                    }, 300);
-                }
-            });
+                    }
+                });
 
-            event.addListener($map, 'dblclick', function () {
-                if (isClicked) {
-                    // event.stop() doesn't work for some reason, so adding this awesome crutch
-                    $map.set('disableDoubleClickZoom', true);
-                    isClicked = false;
-                    return;
-                }
-                clearTimeout(clickTimeout);
-                clickTimeout = undefined;
-            });
+                event.addListener($map, 'center_changed', function () {
+                    dragTimeout.remove();
+                    isInteracted = true;
 
-            event.addListener($map, 'bounds_changed', function () {
-                if (boundTimeout) {
-                    clearTimeout(boundTimeout);
-                }
-                boundTimeout = setTimeout(() => {
-                    redrawMarkers();
-                }, 300);
-                dragTimeout.remove();
-                isInteracted = true;
-            });
+                    const center = $map.getCenter();
+                    localStorage.setItem(
+                        'lastCenter',
+                        JSON.stringify({
+                            lat: (center as google.maps.LatLng).lat(),
+                            lng: (center as google.maps.LatLng).lng(),
+                            zoom: $map.getZoom(),
+                        }),
+                    );
+                });
 
-            event.addListener($map, 'center_changed', function () {
-                dragTimeout.remove();
-                isInteracted = true;
+                event.addListener($map, 'maptypeid_changed', function () {
+                    isInteracted = true;
+                });
 
-                const center = $map.getCenter();
-                localStorage.setItem(
-                    'lastCenter',
-                    JSON.stringify({
-                        lat: (center as google.maps.LatLng).lat(),
-                        lng: (center as google.maps.LatLng).lng(),
-                        zoom: $map.getZoom(),
-                    }),
-                );
-            });
+                event.addListener($map, 'resize', function () {
+                    isInteracted = true;
+                });
 
-            event.addListener($map, 'maptypeid_changed', function () {
-                isInteracted = true;
-            });
-
-            event.addListener($map, 'resize', function () {
-                isInteracted = true;
-            });
-
-            event.addListener($map, 'rightclick', function () {
-                isInteracted = true;
-            });
+                event.addListener($map, 'rightclick', function () {
+                    isInteracted = true;
+                });
+            }
         } catch (e) {
             console.error('error initialising map event listeners');
             console.error(e);
@@ -154,32 +250,12 @@
         if (positionInterval) {
             clearInterval(positionInterval);
         }
+
+        // Cleanup marker manager
+        if ($markerManager) {
+            $markerManager.destroy();
+        }
     });
-
-    function redrawMarkers() {
-        if (!$map!.getBounds()) {
-            return;
-        }
-
-        for (const point of Object.values($pointList)) {
-            if (
-                !($map!.getBounds() as google.maps.LatLngBounds).contains({
-                    lat: Number(point.object.lat),
-                    lng: Number(point.object.lng),
-                })
-            ) {
-                if (point.marker) {
-                    point.marker.map = null;
-                }
-            } else {
-                if (!$searchPointList[point.object.id]) {
-                    if (point.marker) {
-                        point.marker.map = $map;
-                    }
-                }
-            }
-        }
-    }
 
     async function getCenter(): Promise<Location> {
         if (localStorage.getItem('lastCenter')) {
@@ -213,13 +289,6 @@
                                 isCurrent: true,
                             };
                             localStorage.setItem('lastPosition', JSON.stringify(location));
-
-                            if (!isInteracted && $map) {
-                                $map.setCenter({
-                                    lat: position.coords.latitude,
-                                    lng: position.coords.longitude,
-                                });
-                            }
                         },
                         error => {
                             console.error(error);
