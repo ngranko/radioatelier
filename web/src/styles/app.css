@@ -145,11 +145,39 @@ html {
     }
 }
 
+@layer utilities {
+    .marker-dragging {
+        opacity: 0.5;
+        scale: 1.2;
+        box-shadow: 0 0 0 16px color-mix(in srgb, var(--primary) 20%, transparent), 0 0 0 24px color-mix(in srgb, var(--primary) 10%, transparent);
+        cursor: grabbing;
+        position: relative;
+    }
+
+    .marker-dragging::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        box-shadow: 0 0 0 16px color-mix(in srgb, var(--primary) 20%, transparent);
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    .marker-dragging::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        box-shadow: 0 0 0 24px color-mix(in srgb, var(--primary) 10%, transparent);
+        animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+    }
+}
+
 @keyframes popIn {
     0% {
-        transform: translate(0, 50%) scale(0);
+        scale: 0;
     }
     100% {
-        transform: translate(0, 50%) scale(1);
+        scale: 1;
     }
 }

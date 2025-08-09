@@ -52,14 +52,14 @@ export const activeMarker = {
     deactivate: () =>
         privateActiveMarker.update(value => {
             if (value) {
-                (value.content as HTMLElement).classList.remove('map-marker-active');
+                (value.content as HTMLElement).classList.remove('scale-120');
             }
             return value;
         }),
     activate: () =>
         privateActiveMarker.update(value => {
             if (value) {
-                (value.content as HTMLElement).classList.add('map-marker-active');
+                (value.content as HTMLElement).classList.add('scale-120');
             }
             return value;
         }),

@@ -162,7 +162,7 @@
             isRemoved={point.object.isRemoved}
             isDraggable
             icon="fa-solid fa-bolt"
-            color="black"
+            color="#000000"
             source="list"
         />
     {/each}
@@ -175,7 +175,7 @@
             icon={$searchPointList[id].object.type === 'local'
                 ? 'fa-solid fa-magnifying-glass'
                 : 'fa-brands fa-google'}
-            color="red"
+            color="#dc2626"
             source="search"
         />
     {/each}
@@ -187,7 +187,7 @@
                 lng={$activeObjectInfo.object.lng}
                 initialActive={true}
                 icon="fa-solid fa-seedling"
-                color="black"
+                color="#000000"
                 source="map"
             />
         {/key}

@@ -37,7 +37,7 @@
         placeholder="Искать..."
         oninput={handleInput}
         bind:this={inputRef}
-        class="font-branding text-base relative w-full h-full pt-2 pr-10 pb-2 pl-4 border-none rounded-4xl bg-white shadow-sm"
+        class="relative h-full w-full rounded-4xl border-none bg-white pt-2 pr-10 pb-2 pl-4 shadow-sm"
     />
     {#if val}
         <ClearButton onClick={handleClearClick} />

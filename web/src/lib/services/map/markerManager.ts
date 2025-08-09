@@ -37,7 +37,6 @@ export class MarkerManager {
             onClick?(): void;
             onDragStart?(): void;
             onDragEnd?(): void;
-            onDragMove?(event: google.maps.MapMouseEvent): void;
         },
     ): Promise<google.maps.marker.AdvancedMarkerElement> {
         // Check if marker already exists in cache
@@ -52,7 +51,8 @@ export class MarkerManager {
         const iconElement = document.createElement('div');
         iconElement.style.backgroundColor = options.color;
         iconElement.innerHTML = `<i class="${options.icon}" style="pointer-events:none;"></i>`;
-        iconElement.className = 'map-marker animate-popin';
+        iconElement.className =
+            'w-6 h-6 translate-y-1/2 flex justify-center items-center rounded-full text-sm text-white transition-transform transition-opacity duration-100 ease-in-out animate-popin';
 
         // Create marker
         const marker = new AdvancedMarkerElement({
@@ -75,9 +75,7 @@ export class MarkerManager {
                     dragTimeout.set(
                         setTimeout(async () => {
                             options.onDragStart!();
-                            marker.content.classList.add(
-                                'w-6 h-6 bg-green-600 rounded-full flex items-center justify-center text-white shadow-lg transition-all duration-200 cursor-grabbing relative before:absolute before:inset-0 before:rounded-full before:shadow-[0_0_0_16px_rgba(34,197,94,0.2)] before:animate-pulse after:absolute after:inset-0 after:rounded-full after:shadow-[0_0_0_24px_rgba(34,197,94,0.1)] after:animate-ping',
-                            );
+                            marker.content.classList.add('marker-dragging');
                         }, 500),
                     );
                 }
@@ -87,7 +85,7 @@ export class MarkerManager {
                     dragTimeout.set(
                         setTimeout(async () => {
                             options.onDragStart!();
-                            marker.content.classList.add('map-marker-draggable-mobile');
+                            marker.content.classList.add('marker-dragging');
                         }, 500),
                     );
                 }
@@ -96,16 +94,14 @@ export class MarkerManager {
                 if (options.onDragEnd) {
                     dragTimeout.remove();
                     options.onDragEnd();
-                    marker.content.classList.remove(
-                        'w-6 h-6 bg-green-600 rounded-full flex items-center justify-center text-white shadow-lg transition-all duration-200 cursor-grabbing relative before:absolute before:inset-0 before:rounded-full before:shadow-[0_0_0_16px_rgba(34,197,94,0.2)] before:animate-pulse after:absolute after:inset-0 after:rounded-full after:shadow-[0_0_0_24px_rgba(34,197,94,0.1)] after:animate-ping',
-                    );
+                    marker.content.classList.remove('marker-dragging');
                 }
             });
             iconElement.addEventListener('touchend', () => {
                 if (options.onDragEnd) {
                     dragTimeout.remove();
                     options.onDragEnd();
-                    marker.content.classList.remove('map-marker-draggable-mobile');
+                    marker.content.classList.remove('marker-dragging');
                 }
             });
         }
