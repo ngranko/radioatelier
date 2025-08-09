@@ -16,13 +16,13 @@ type TextSearchResponse struct {
 }
 
 type Place struct {
-    ID                     string             `json:"id"`
-    DisplayName            LocalizedText      `json:"displayName"`
-    Types                  []string           `json:"types"`
-    PrimaryType            string             `json:"primaryType"`
-    PrimaryTypeDisplayName LocalizedText      `json:"primaryTypeDisplayName"`
-    FormattedAddress       string             `json:"formattedAddress"`
-    AddressComponents      []AddressComponent `json:"addressComponents"`
+    ID                     string                  `json:"id"`
+    DisplayName            LocalizedText           `json:"displayName"`
+    Types                  []string                `json:"types"`
+    PrimaryType            string                  `json:"primaryType"`
+    PrimaryTypeDisplayName LocalizedText           `json:"primaryTypeDisplayName"`
+    FormattedAddress       string                  `json:"formattedAddress"`
+    AddressComponents      []PlaceAddressComponent `json:"addressComponents"`
     Location               struct {
         Lat float64 `json:"latitude"`
         Lng float64 `json:"longitude"`
@@ -39,16 +39,55 @@ type LocalizedText struct {
 
 type GeocodeResponse struct {
     Results []struct {
-        AddressComponents []AddressComponent `json:"address_components"`
-        FormattedAddress  string             `json:"formatted_address"`
-        PlaceID           string             `json:"place_id"`
+        AddressComponents []GeocodingAddressComponent `json:"address_components"`
+        FormattedAddress  string                      `json:"formatted_address"`
+        PlaceID           string                      `json:"place_id"`
     } `json:"results"`
 }
 
-type AddressComponent struct {
-    LongName  string   `json:"longText" json:"long_name"`
-    ShortName string   `json:"shortText" json:"short_name"`
+type PlaceAddressComponent struct {
+    LongName  string   `json:"longText"`
+    ShortName string   `json:"shortText"`
     Types     []string `json:"types"`
+}
+
+type GeocodingAddressComponent struct {
+    LongName  string   `json:"long_name"`
+    ShortName string   `json:"short_name"`
+    Types     []string `json:"types"`
+}
+
+// AddressComponentProvider interface allows different address component types to be used interchangeably
+type AddressComponentProvider interface {
+    GetLongName() string
+    GetShortName() string
+    GetTypes() []string
+}
+
+// Implement the interface for PlaceAddressComponent
+func (p PlaceAddressComponent) GetLongName() string {
+    return p.LongName
+}
+
+func (p PlaceAddressComponent) GetShortName() string {
+    return p.ShortName
+}
+
+func (p PlaceAddressComponent) GetTypes() []string {
+    return p.Types
+}
+
+// Implement the interface for GeocodingAddressComponent
+func (g GeocodingAddressComponent) GetLongName() string {
+    return g.LongName
+}
+
+func (g GeocodingAddressComponent) GetShortName() string {
+    return g.ShortName
+}
+
+func (g GeocodingAddressComponent) GetTypes() []string {
+    return g.Types
 }
 
 func TextSearch(query string, latitude string, longitude string, limit int, pageToken string) (TextSearchResponse, error) {

@@ -4,19 +4,19 @@ import (
     "slices"
 )
 
-func FindAddressComponent(components []AddressComponent, componentType string) string {
-    index := slices.IndexFunc(components, func(item AddressComponent) bool {
-        return slices.Contains(item.Types, componentType)
+func FindAddressComponent[T AddressComponentProvider](components []T, componentType string) string {
+    index := slices.IndexFunc(components, func(item T) bool {
+        return slices.Contains(item.GetTypes(), componentType)
     })
 
     if index == -1 {
         return ""
     }
-    return components[index].LongName
+    return components[index].GetLongName()
 }
 
-func ComposeStreetAddress(components []AddressComponent) string {
-    streetNumber := FindAddressComponent(components, "street_number")
+func ComposeStreetAddress[T AddressComponentProvider](components []T) string {
+    streetNumber := FindAddressComponent[T](components, "street_number")
     route := FindAddressComponent(components, "route")
 
     if len(streetNumber) == 0 {
