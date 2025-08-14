@@ -11,3 +11,18 @@ export type WithoutChild<T> = T extends { child?: any } ? Omit<T, "child"> : T;
 export type WithoutChildren<T> = T extends { children?: any } ? Omit<T, "children"> : T;
 export type WithoutChildrenOrChild<T> = WithoutChildren<WithoutChild<T>>;
 export type WithElementRef<T, U extends HTMLElement = HTMLElement> = T & { ref?: U | null };
+
+export function throttle(fn: Function, delay: number) {
+    let isThr = false;
+
+    return function (...args) {
+        if (!isThr) {
+            fn.apply(this, args);
+            isThr = true;
+
+            setTimeout(() => {
+                isThr = false;
+            }, delay);
+        }
+    };
+}

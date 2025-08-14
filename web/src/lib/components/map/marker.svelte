@@ -141,7 +141,7 @@
         const position = {lat: Number(lat), lng: Number(lng)};
 
         // For map-clicked markers, pass a unique ID to avoid cache conflicts
-        markerId = source === 'map' ? `map-${Date.now()}-${Math.random()}` : id!;
+        markerId = id ?? `map-${Date.now()}-${Math.random()}`;
 
         marker = await $markerManager!.createMarker(markerId, position, {
             icon,

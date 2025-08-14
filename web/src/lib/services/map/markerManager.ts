@@ -1,4 +1,3 @@
-import type {PointListItem} from '$lib/interfaces/object';
 import {dragTimeout} from '$lib/stores/map.ts';
 
 export interface MarkerManagerOptions {
@@ -12,6 +11,15 @@ export class MarkerManager {
     private options: MarkerManagerOptions;
     private visibleMarkers = new Set<string>();
     private markerCache = new Map<string, google.maps.marker.AdvancedMarkerElement>();
+    private markerSources = new Map<string, 'map' | 'list' | 'search'>();
+    private replacedMarkers = new Map<
+        string,
+        {
+            marker: google.maps.marker.AdvancedMarkerElement;
+            source: 'map' | 'list' | 'search';
+            wasVisible: boolean;
+        }
+    >();
 
     constructor(options: MarkerManagerOptions = {}) {
         this.options = {
@@ -40,8 +48,34 @@ export class MarkerManager {
         },
     ): Promise<google.maps.marker.AdvancedMarkerElement> {
         // Check if marker already exists in cache
-        if (this.markerCache.has(id)) {
-            return this.markerCache.get(id)!;
+        const existingMarker = this.markerCache.get(id);
+        const existingSource = this.markerSources.get(id);
+
+        // If this is a search marker and there's an existing non-search marker,
+        // we need to replace it. If it's a regular marker and there's already a search marker,
+        // we should return the existing search marker.
+        if (existingMarker) {
+            if (options.source === 'search' && existingSource !== 'search') {
+                // Search marker should replace existing marker
+                // Store the replaced marker for later restoration
+                if (existingSource) {
+                    existingMarker.map = null;
+                    const wasVisible = this.visibleMarkers.has(id);
+                    this.replacedMarkers.set(id, {
+                        marker: existingMarker,
+                        source: existingSource,
+                        wasVisible,
+                    });
+                }
+                this.removeMarkerFromCache(id);
+            } else if (options.source !== 'search' && existingSource === 'search') {
+                // Regular marker should not replace search marker
+                // TODO: create a regular marker and place it into the replacedMarkers map
+                return existingMarker;
+            } else if (existingSource === options.source) {
+                // Same source, return existing marker
+                return existingMarker;
+            }
         }
 
         const {AdvancedMarkerElement, CollisionBehavior} =
@@ -106,11 +140,12 @@ export class MarkerManager {
             });
         }
 
-        // Cache the marker
+        // Cache the marker and track its source
         this.markerCache.set(id, marker);
+        this.markerSources.set(id, options.source);
 
         // For map-clicked markers, show them immediately
-        if (options.source === 'map') {
+        if (options.source === 'map' || options.source === 'search') {
             this.visibleMarkers.add(id);
             marker.map = this.map;
         }
@@ -155,10 +190,10 @@ export class MarkerManager {
         }
     }
 
-    removeMarker(id: string): boolean {
+    removeMarker(id: string) {
         const marker = this.markerCache.get(id);
         if (!marker) {
-            return false;
+            return;
         }
 
         // Add removal animation before hiding
@@ -167,19 +202,58 @@ export class MarkerManager {
             markerElement.classList.add('animate-popout');
             setTimeout(() => {
                 marker.map = null;
-                this.markerCache.delete(id);
-                this.visibleMarkers.delete(id);
+                this.removeMarkerFromCache(id);
+                this.maybeRestoreReplacedMarker(id);
                 markerElement.classList.remove('animate-popout');
             }, 200);
         } else {
             marker.map = null;
-            this.markerCache.delete(id);
-            this.visibleMarkers.delete(id);
+            this.removeMarkerFromCache(id);
+            this.maybeRestoreReplacedMarker(id);
         }
-        return true;
     }
 
-    updateMarkersInViewport(pointList: Record<string, PointListItem>) {
+    private maybeRestoreReplacedMarker(id: string) {
+        const replacedMarker = this.replacedMarkers.get(id);
+        if (!replacedMarker) {
+            return;
+        }
+
+        // Restore the replaced marker
+        this.markerCache.set(id, replacedMarker.marker);
+        this.markerSources.set(id, replacedMarker.source);
+        this.replacedMarkers.delete(id);
+
+        // For now always showing restored markers
+        // TODO: come up with a better solution
+        this.visibleMarkers.add(id);
+        replacedMarker.marker.map = this.map;
+    }
+
+    // Check if a marker is a search marker
+    isSearchMarker(id: string): boolean {
+        return this.markerSources.get(id) === 'search';
+    }
+
+    // Check if a marker exists in cache
+    hasMarker(id: string): boolean {
+        return this.markerCache.has(id);
+    }
+
+    // Get the source of a marker
+    getMarkerSource(id: string): 'map' | 'list' | 'search' | undefined {
+        return this.markerSources.get(id);
+    }
+
+    private removeMarkerFromCache(id: string) {
+        this.markerCache.delete(id);
+        this.markerSources.delete(id);
+        this.visibleMarkers.delete(id);
+    }
+
+    private updateMarkersInViewport(
+        markers: Map<string, google.maps.marker.AdvancedMarkerElement>,
+    ) {
         if (!this.map || !this.map.getBounds()) {
             return;
         }
@@ -189,7 +263,7 @@ export class MarkerManager {
         const maxMarkers = this.options.maxVisibleMarkers!;
 
         // Group markers into clusters based on proximity
-        const clusters = this.groupMarkersIntoClusters(pointList, bounds, zoom);
+        const clusters = this.groupMarkersIntoClusters(markers, bounds, zoom);
 
         // Sort clusters by size (largest first) and distance from center
         const sortedClusters = this.sortClustersByPriority(clusters, bounds);
@@ -239,19 +313,19 @@ export class MarkerManager {
         }
 
         // Update marker visibility
-        for (const id of Object.keys(pointList)) {
+        for (const id of markers.keys()) {
             const shouldBeVisible = visibleIds.has(id);
             this.updateMarkerVisibility(id, shouldBeVisible);
         }
     }
 
     // Method to trigger viewport update from external sources
-    triggerViewportUpdate(pointList: Record<string, PointListItem>) {
-        this.updateMarkersInViewport(pointList);
+    triggerViewportUpdate() {
+        this.updateMarkersInViewport(this.markerCache);
     }
 
     private groupMarkersIntoClusters(
-        pointList: Record<string, PointListItem>,
+        markers: Map<string, google.maps.marker.AdvancedMarkerElement>,
         bounds: google.maps.LatLngBounds,
         zoom: number,
     ): Array<{center: google.maps.LatLngLiteral; markers: string[]; size: number}> {
@@ -265,10 +339,10 @@ export class MarkerManager {
         // Get all markers in viewport
         const viewportMarkers: Array<{id: string; position: google.maps.LatLngLiteral}> = [];
 
-        for (const [id, point] of Object.entries(pointList)) {
+        for (const [id, marker] of markers.entries()) {
             const position = {
-                lat: Number(point.object.lat),
-                lng: Number(point.object.lng),
+                lat: Number(marker.position?.lat),
+                lng: Number(marker.position?.lng),
             };
 
             if (bounds.contains(position)) {
@@ -371,5 +445,7 @@ export class MarkerManager {
         });
         this.markerCache.clear();
         this.visibleMarkers.clear();
+        this.markerSources.clear();
+        this.replacedMarkers.clear();
     }
 }

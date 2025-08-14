@@ -1,9 +1,9 @@
 import config from '$lib/config';
 import type KeyVal from '$lib/interfaces/keyVal';
 import type {ObjectDetailsInfo, PointListItem, SearchPointListItem} from '$lib/interfaces/object';
+import {MarkerManager} from '$lib/services/map/markerManager';
 import {Loader} from '@googlemaps/js-api-loader';
 import {readable, writable} from 'svelte/store';
-import {MarkerManager} from '$lib/services/map/markerManager';
 
 export const mapLoader = readable<Loader>(undefined, function start(set) {
     set(
@@ -187,16 +187,6 @@ export const searchPointList = {
         });
     },
     clear: () => {
-        privateSearchPointList.update(searchPoints => {
-            for (const id in searchPoints) {
-                privatePointList.update(points => {
-                    if (points[id] && points[id].marker && searchPoints[id].marker) {
-                        points[id].marker.map = searchPoints[id].marker.map;
-                    }
-                    return points;
-                });
-            }
-            return {};
-        });
+        privateSearchPointList.set({});
     },
 };

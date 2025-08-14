@@ -1,17 +1,11 @@
 <script lang="ts">
     import {onMount, onDestroy} from 'svelte';
-    import {
-        mapLoader,
-        map,
-        markerManager,
-        dragTimeout,
-        activeObjectInfo,
-        pointList,
-    } from '$lib/stores/map';
+    import {mapLoader, map, markerManager, dragTimeout, activeObjectInfo} from '$lib/stores/map';
     import {createMutation} from '@tanstack/svelte-query';
     import {getLocation} from '$lib/api/location';
     import type {Location} from '$lib/interfaces/location';
     import {MarkerManager} from '$lib/services/map/markerManager';
+    import {throttle} from '$lib/utils';
 
     interface Props {
         onClick(location: Location): void;
@@ -95,11 +89,16 @@
         try {
             if ($map) {
                 // Add bounds change listener to update marker visibility
-                event.addListener($map, 'bounds_changed', () => {
-                    if ($markerManager) {
-                        $markerManager.triggerViewportUpdate($pointList);
-                    }
-                });
+                // TODO: should I move that to marker manager?
+                event.addListener(
+                    $map,
+                    'bounds_changed',
+                    throttle(() => {
+                        if ($markerManager) {
+                            $markerManager.triggerViewportUpdate();
+                        }
+                    }, 50),
+                );
 
                 event.addListener($map, 'click', function (event: google.maps.MapMouseEvent) {
                     isInteracted = true;
