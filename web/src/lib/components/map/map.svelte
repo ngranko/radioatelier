@@ -72,6 +72,7 @@
                 }
             };
 
+            // TODO (@nikita): this is a hack to fix the map not showing up on the first load, come up with a better solution
             // Try immediately
             triggerInitialUpdate();
 
@@ -104,13 +105,6 @@
 
         try {
             if ($map) {
-                // Add map load listener to ensure initial viewport update
-                event.addListener($map, 'idle', () => {
-                    if ($markerManager) {
-                        $markerManager.triggerViewportUpdate();
-                    }
-                });
-
                 // Add bounds change listener to update marker visibility
                 // TODO: should I move that to marker manager?
                 event.addListener(
