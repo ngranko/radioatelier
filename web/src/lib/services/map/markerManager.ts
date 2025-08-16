@@ -65,14 +65,9 @@ export class MarkerManager {
             onDragEnd?(): void;
         },
     ): google.maps.marker.AdvancedMarkerElement | null {
-        // Store marker data for lazy loading
+        // Use lazy loading for all list markers for consistent behavior and better performance
         const isLazy = (this.options.enableLazyLoading ?? true) && options.source === 'list';
-        this.markerData.set(id, {
-            position,
-            options,
-            isLazy
-        });
-
+        
         // Check if marker already exists in cache
         const existingMarker = this.markerCache.get(id);
         const existingSource = this.markerSources.get(id);
@@ -102,13 +97,20 @@ export class MarkerManager {
             }
         }
 
+        // Store marker data
+        this.markerData.set(id, {
+            position,
+            options,
+            isLazy
+        });
+
         // For lazy markers, just store data and return null
         if (isLazy) {
             this.markerSources.set(id, options.source);
             return null; // No DOM created yet
         }
 
-        // For non-lazy markers (map, search), create DOM immediately
+        // For non-lazy markers, create DOM immediately
         return this.createMarkerDOM(id, position, options);
     }
 
@@ -244,6 +246,23 @@ export class MarkerManager {
                 this.visibleMarkers.add(id);
                 newMarker.map = this.map;
 
+                // Trigger events to notify marker component that lazy marker is now available
+                window.dispatchEvent(new CustomEvent('marker-available', { 
+                    detail: { 
+                        markerId: id,
+                        marker: newMarker
+                    } 
+                }));
+
+                // Also trigger a style update event with current state
+                window.dispatchEvent(new CustomEvent('marker-style-update', { 
+                    detail: { 
+                        markerId: id,
+                        isVisited: markerData.options.isVisited,
+                        isRemoved: markerData.options.isRemoved
+                    } 
+                }));
+
                 setTimeout(() => {
                     markerElement.classList.remove('animate-popin');
                 }, 200);
@@ -368,7 +387,8 @@ export class MarkerManager {
                 continue;
             }
             
-            if (bounds.contains(markerData.position)) {
+            // Process all lazy markers
+            if (markerData.isLazy && bounds.contains(markerData.position)) {
                 allMarkersInViewport.push({id, position: markerData.position});
             }
         }
@@ -379,11 +399,22 @@ export class MarkerManager {
         // Sort clusters by size (largest first) and distance from center
         const sortedClusters = this.sortClustersByPriority(clusters, bounds);
 
-        // Show all markers in viewport (no limit)
+        // Show markers with a reasonable limit for performance
+        const maxVisibleMarkers = 500; // Reasonable limit for smooth performance
         const visibleIds = new Set<string>();
+        let markerCount = 0;
+        
         for (const cluster of sortedClusters) {
+            if (markerCount >= maxVisibleMarkers) {
+                break;
+            }
+            
             for (const markerId of cluster.markers) {
+                if (markerCount >= maxVisibleMarkers) {
+                    break;
+                }
                 visibleIds.add(markerId);
+                markerCount++;
             }
         }
 
@@ -397,6 +428,13 @@ export class MarkerManager {
 
     // Method to trigger viewport update from external sources
     triggerViewportUpdate() {
+        // Ensure map is ready before updating viewport
+        if (!this.map || !this.map.getBounds()) {
+            // Map not ready, try again in a moment
+            setTimeout(() => this.triggerViewportUpdate(), 100);
+            return;
+        }
+        
         this.updateMarkersInViewport(this.markerCache);
     }
 

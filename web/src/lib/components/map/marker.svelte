@@ -64,6 +64,7 @@
 
     const reposition = useRepositionMutation(client);
 
+    // Update marker appearance when marker is available or state changes
     $effect(() => {
         if (!marker || !marker.content) {
             return;
@@ -71,6 +72,16 @@
 
         // Update marker appearance based on state
         calculateStateStyles();
+    });
+
+    // Additional effect to handle when marker becomes available (for lazy markers)
+    $effect(() => {
+        if (marker && marker.content) {
+            // Apply styles immediately when marker becomes available
+            setTimeout(() => {
+                calculateStateStyles();
+            }, 10);
+        }
     });
 
     $effect(() => {
@@ -135,6 +146,49 @@
 
     onMount(() => {
         createMarker();
+
+        // Event listener for when lazy markers become available
+        const handleMarkerAvailable = (event: CustomEvent) => {
+            if (event.detail.markerId === markerId) {
+                marker = event.detail.marker;
+
+                // Update the point list with the new marker
+                if (source === 'list') {
+                    pointList.update(id!, {marker});
+                }
+                if (source === 'search') {
+                    searchPointList.update(id!, {marker});
+                }
+
+                // Apply styles immediately
+                setTimeout(() => {
+                    calculateStateStyles();
+                }, 10);
+            }
+        };
+
+        // Event listener for style updates (needed for lazy markers in large datasets)
+        const handleMarkerStyleUpdate = (event: CustomEvent) => {
+            if (event.detail.markerId === markerId) {
+                // For lazy markers, the marker might not be available yet
+                // The styles will be applied when the marker becomes available via the effect
+                if (marker) {
+                    calculateStateStyles();
+                }
+            }
+        };
+
+        window.addEventListener('marker-available', handleMarkerAvailable as EventListener);
+        window.addEventListener('marker-style-update', handleMarkerStyleUpdate as EventListener);
+
+        // Cleanup listener on destroy
+        return () => {
+            window.removeEventListener('marker-available', handleMarkerAvailable as EventListener);
+            window.removeEventListener(
+                'marker-style-update',
+                handleMarkerStyleUpdate as EventListener,
+            );
+        };
     });
 
     function createMarker() {
@@ -152,8 +206,15 @@
             onDragStart: handleClickStart,
             onDragEnd: handleClickEnd,
         });
-        
+
         marker = createdMarker || null;
+
+        // Test: Force style calculation after marker creation
+        if (marker) {
+            setTimeout(() => {
+                calculateStateStyles();
+            }, 100);
+        }
 
         // Handle lazy markers (marker might be null)
         if (marker) {

@@ -67,11 +67,24 @@
             map.update(() => mapInstance);
 
             // Trigger initial viewport update to show markers
-            setTimeout(() => {
-                if (manager) {
+            // Use multiple fallbacks to ensure markers are shown
+            const triggerInitialUpdate = () => {
+                if (manager && $map && $map.getBounds()) {
                     manager.triggerViewportUpdate();
                 }
-            }, 100);
+            };
+
+            // Try immediately
+            triggerInitialUpdate();
+
+            // Try after a short delay
+            setTimeout(triggerInitialUpdate, 100);
+
+            // Try after map is fully loaded
+            setTimeout(triggerInitialUpdate, 500);
+
+            // Try after a longer delay as final fallback
+            setTimeout(triggerInitialUpdate, 1000);
         } catch (e) {
             console.error('error instantiating map');
             console.error(e);
@@ -93,6 +106,13 @@
 
         try {
             if ($map) {
+                // Add map load listener to ensure initial viewport update
+                event.addListener($map, 'idle', () => {
+                    if ($markerManager) {
+                        $markerManager.triggerViewportUpdate();
+                    }
+                });
+
                 // Add bounds change listener to update marker visibility
                 // TODO: should I move that to marker manager?
                 event.addListener(
