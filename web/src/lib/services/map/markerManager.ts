@@ -4,6 +4,7 @@ export interface MarkerManagerOptions {
     viewportPadding?: number;
     lazyLoadThreshold?: number; // Number of markers before enabling lazy loading
     enableLazyLoading?: boolean; // Enable lazy DOM creation for large datasets
+    chunkSize?: number; // Number of markers to process per animation frame
 }
 
 export class MarkerManager {
@@ -546,7 +547,7 @@ export class MarkerManager {
                 // Multiple markers in this grid cell, create cluster
                 const gridMarkers = markers.filter(m => markerIds.includes(m.id));
                 const center = this.calculateClusterCenter(markerIds, markers);
-                
+
                 clusters.push({
                     center,
                     markers: markerIds,
