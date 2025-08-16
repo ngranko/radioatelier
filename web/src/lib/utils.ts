@@ -12,10 +12,10 @@ export type WithoutChildren<T> = T extends { children?: any } ? Omit<T, "childre
 export type WithoutChildrenOrChild<T> = WithoutChildren<WithoutChild<T>>;
 export type WithElementRef<T, U extends HTMLElement = HTMLElement> = T & { ref?: U | null };
 
-export function throttle(fn: Function, delay: number) {
+export function throttle<T extends (...args: any[]) => any>(fn: T, delay: number): (...args: Parameters<T>) => void {
     let isThr = false;
 
-    return function (...args) {
+    return function (this: any, ...args: Parameters<T>) {
         if (!isThr) {
             fn.apply(this, args);
             isThr = true;
