@@ -12,11 +12,14 @@ export class MarkerManager {
     private visibleMarkers = new Set<string>();
     private markerCache = new Map<string, google.maps.marker.AdvancedMarkerElement>();
     private markerSources = new Map<string, 'map' | 'list' | 'search'>();
-    private markerData = new Map<string, {
-        position: google.maps.LatLngLiteral;
-        options: any;
-        isLazy: boolean; // Whether this marker should use lazy DOM creation
-    }>();
+    private markerData = new Map<
+        string,
+        {
+            position: google.maps.LatLngLiteral;
+            options: any;
+            isLazy: boolean; // Whether this marker should use lazy DOM creation
+        }
+    >();
     private replacedMarkers = new Map<
         string,
         {
@@ -25,26 +28,31 @@ export class MarkerManager {
             wasVisible: boolean;
         }
     >();
-    
+
     // Pre-loaded marker library components
     private advancedMarkerElement?: typeof google.maps.marker.AdvancedMarkerElement;
     private collisionBehavior?: typeof google.maps.CollisionBehavior;
+
+    // Update tracking for chunked processing
+    private updateInProgress = false;
 
     constructor(options: MarkerManagerOptions = {}) {
         this.options = {
             viewportPadding: 0.1,
             lazyLoadThreshold: 500,
             enableLazyLoading: true,
+            chunkSize: 50, // Process 50 markers per animation frame
             ...options,
         };
     }
 
     async initialize(map: google.maps.Map, mapLoader: any) {
         this.map = map;
-        
+
         // Pre-load marker library components - CRITICAL PERFORMANCE OPTIMIZATION
         try {
-            const {AdvancedMarkerElement, CollisionBehavior} = await mapLoader.importLibrary('marker');
+            const {AdvancedMarkerElement, CollisionBehavior} =
+                await mapLoader.importLibrary('marker');
             this.advancedMarkerElement = AdvancedMarkerElement;
             this.collisionBehavior = CollisionBehavior;
         } catch (error) {
@@ -67,7 +75,7 @@ export class MarkerManager {
     ): google.maps.marker.AdvancedMarkerElement | null {
         // Use lazy loading for all list markers for consistent behavior and better performance
         const isLazy = (this.options.enableLazyLoading ?? true) && options.source === 'list';
-        
+
         // Check if marker already exists in cache
         const existingMarker = this.markerCache.get(id);
         const existingSource = this.markerSources.get(id);
@@ -101,7 +109,7 @@ export class MarkerManager {
         this.markerData.set(id, {
             position,
             options,
-            isLazy
+            isLazy,
         });
 
         // For lazy markers, just store data and return null
@@ -126,7 +134,7 @@ export class MarkerManager {
             onClick?(): void;
             onDragStart?(): void;
             onDragEnd?(): void;
-        }
+        },
     ): google.maps.marker.AdvancedMarkerElement {
         // Use pre-loaded marker components
         if (!this.advancedMarkerElement || !this.collisionBehavior) {
@@ -161,7 +169,7 @@ export class MarkerManager {
                     dragTimeout.set(
                         setTimeout(async () => {
                             options.onDragStart!();
-                            marker.content!.classList.add('marker-dragging');
+                            (marker.content as HTMLElement).classList.add('marker-dragging');
                         }, 500),
                     );
                 }
@@ -171,7 +179,7 @@ export class MarkerManager {
                     dragTimeout.set(
                         setTimeout(async () => {
                             options.onDragStart!();
-                            marker.content!.classList.add('marker-dragging');
+                            (marker.content as HTMLElement).classList.add('marker-dragging');
                         }, 500),
                     );
                 }
@@ -180,14 +188,14 @@ export class MarkerManager {
                 if (options.onDragEnd) {
                     dragTimeout.remove();
                     options.onDragEnd();
-                    marker.content!.classList.remove('marker-dragging');
+                    (marker.content as HTMLElement).classList.remove('marker-dragging');
                 }
             });
             iconElement.addEventListener('touchend', () => {
                 if (options.onDragEnd) {
                     dragTimeout.remove();
                     options.onDragEnd();
-                    marker.content!.classList.remove('marker-dragging');
+                    (marker.content as HTMLElement).classList.remove('marker-dragging');
                 }
             });
         }
@@ -221,7 +229,7 @@ export class MarkerManager {
     // Show marker (create DOM if lazy, or just show if exists)
     showMarker(id: string) {
         const marker = this.markerCache.get(id);
-        
+
         if (marker) {
             // Marker already exists, just show it
             const markerElement = marker.content as HTMLElement;
@@ -239,7 +247,7 @@ export class MarkerManager {
                 // Create DOM for lazy marker
                 const newMarker = this.createMarkerDOM(id, markerData.position, markerData.options);
                 this.markerCache.set(id, newMarker);
-                
+
                 // Show the newly created marker
                 const markerElement = newMarker.content as HTMLElement;
                 markerElement.classList.add('animate-popin');
@@ -247,21 +255,25 @@ export class MarkerManager {
                 newMarker.map = this.map;
 
                 // Trigger events to notify marker component that lazy marker is now available
-                window.dispatchEvent(new CustomEvent('marker-available', { 
-                    detail: { 
-                        markerId: id,
-                        marker: newMarker
-                    } 
-                }));
+                window.dispatchEvent(
+                    new CustomEvent('marker-available', {
+                        detail: {
+                            markerId: id,
+                            marker: newMarker,
+                        },
+                    }),
+                );
 
                 // Also trigger a style update event with current state
-                window.dispatchEvent(new CustomEvent('marker-style-update', { 
-                    detail: { 
-                        markerId: id,
-                        isVisited: markerData.options.isVisited,
-                        isRemoved: markerData.options.isRemoved
-                    } 
-                }));
+                window.dispatchEvent(
+                    new CustomEvent('marker-style-update', {
+                        detail: {
+                            markerId: id,
+                            isVisited: markerData.options.isVisited,
+                            isRemoved: markerData.options.isRemoved,
+                        },
+                    }),
+                );
 
                 setTimeout(() => {
                     markerElement.classList.remove('animate-popin');
@@ -386,7 +398,7 @@ export class MarkerManager {
             if (markers.has(id)) {
                 continue;
             }
-            
+
             // Process all lazy markers
             if (markerData.isLazy && bounds.contains(markerData.position)) {
                 allMarkersInViewport.push({id, position: markerData.position});
@@ -403,12 +415,12 @@ export class MarkerManager {
         const maxVisibleMarkers = 500; // Reasonable limit for smooth performance
         const visibleIds = new Set<string>();
         let markerCount = 0;
-        
+
         for (const cluster of sortedClusters) {
             if (markerCount >= maxVisibleMarkers) {
                 break;
             }
-            
+
             for (const markerId of cluster.markers) {
                 if (markerCount >= maxVisibleMarkers) {
                     break;
@@ -418,12 +430,40 @@ export class MarkerManager {
             }
         }
 
-        // Update marker visibility for all markers (cached and lazy)
-        const allMarkerIds = new Set([...markers.keys(), ...this.markerData.keys()]);
-        for (const id of allMarkerIds) {
-            const shouldBeVisible = visibleIds.has(id);
-            this.updateMarkerVisibility(id, shouldBeVisible);
-        }
+        // Process marker visibility updates in chunks using requestAnimationFrame
+        this.processMarkerVisibilityUpdates(visibleIds, markers);
+    }
+
+    private processMarkerVisibilityUpdates(
+        visibleIds: Set<string>,
+        markers: Map<string, google.maps.marker.AdvancedMarkerElement>,
+    ) {
+        const allMarkerIds = Array.from(new Set([...markers.keys(), ...this.markerData.keys()]));
+        const chunkSize = this.options.chunkSize || 50; // Use configured chunk size
+        let currentIndex = 0;
+
+        const processChunk = () => {
+            const endIndex = Math.min(currentIndex + chunkSize, allMarkerIds.length);
+
+            for (let i = currentIndex; i < endIndex; i++) {
+                const id = allMarkerIds[i];
+                const shouldBeVisible = visibleIds.has(id);
+                this.updateMarkerVisibility(id, shouldBeVisible);
+            }
+
+            currentIndex = endIndex;
+
+            // Continue processing if there are more markers
+            if (currentIndex < allMarkerIds.length) {
+                requestAnimationFrame(processChunk);
+            } else {
+                // Update complete, reset flag
+                this.updateInProgress = false;
+            }
+        };
+
+        // Start processing chunks
+        requestAnimationFrame(processChunk);
     }
 
     // Method to trigger viewport update from external sources
@@ -434,12 +474,23 @@ export class MarkerManager {
             setTimeout(() => this.triggerViewportUpdate(), 100);
             return;
         }
-        
+
+        // Prevent overlapping updates
+        if (this.updateInProgress) {
+            // Schedule another update after current one completes
+            setTimeout(() => this.triggerViewportUpdate(), 50);
+            return;
+        }
+
+        this.updateInProgress = true;
         this.updateMarkersInViewport(this.markerCache);
     }
 
     // Optimized clustering with spatial indexing
-    private createSpatialIndex(markers: Array<{id: string; position: google.maps.LatLngLiteral}>, gridSize: number) {
+    private createSpatialIndex(
+        markers: Array<{id: string; position: google.maps.LatLngLiteral}>,
+        gridSize: number,
+    ) {
         const spatialIndex = new Map<string, string[]>();
 
         for (const marker of markers) {
@@ -469,7 +520,7 @@ export class MarkerManager {
 
     private groupMarkersWithSpatialIndex(
         markers: Array<{id: string; position: google.maps.LatLngLiteral}>,
-        clusterRadius: number
+        clusterRadius: number,
     ): Array<{center: google.maps.LatLngLiteral; markers: string[]; size: number}> {
         const clusters: Array<{
             center: google.maps.LatLngLiteral;

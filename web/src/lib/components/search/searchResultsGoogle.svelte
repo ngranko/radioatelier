@@ -1,6 +1,7 @@
 <script lang="ts">
     import {createInfiniteQuery} from '@tanstack/svelte-query';
     import {searchGoogle} from '$lib/api/object';
+    import type {SearchContext} from '$lib/interfaces/object';
     import LoadMoreButton from './loadMoreButton.svelte';
     import {searchPointList} from '$lib/stores/map';
     import {fitMarkerList} from '$lib/services/map/map.svelte';
@@ -13,8 +14,7 @@
         queryKey: [
             'searchGoogle',
             {query: searchState.query, latitude: searchState.lat, longitude: searchState.lng},
-        ],
-        // TODO: I have no idea why there is a typing error there, but it works
+        ] satisfies SearchContext,
         queryFn: searchGoogle,
         enabled: isActive,
         getNextPageParam: lastPage =>
