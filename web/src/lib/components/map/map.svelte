@@ -14,13 +14,11 @@
     let {onClick}: Props = $props();
 
     let container: HTMLDivElement | undefined = $state();
-    let isInteracted = false;
     let clickTimeout: number | undefined;
-    let isClicked = false;
     let positionInterval: number | undefined;
-    let isDoubleTapHold = false;
-    let lastTapTime = 0;
-    let tapCount = 0;
+    let lastClickTapTime = 0;
+    let clickTapCount = 0;
+    let isInZoomMode = false;
 
     const location = createMutation({
         mutationFn: getLocation,
@@ -126,120 +124,147 @@
                 );
 
                 event.addListener($map, 'click', function (event: google.maps.MapMouseEvent) {
-                    isInteracted = true;
+                    if (isInZoomMode) {
+                        return;
+                    }
 
-                    const domEvent = event.domEvent as MouseEvent | TouchEvent;
-
-                    // Handle touch events for mobile
-                    if (domEvent instanceof TouchEvent) {
-                        const currentTime = new Date().getTime();
-                        const tapLength = currentTime - lastTapTime;
-
-                        if (tapLength < 500 && tapLength > 0) {
-                            tapCount++;
-                        } else {
-                            tapCount = 1;
-                        }
-                        lastTapTime = currentTime;
-
-                        // Single tap - add marker after delay
-                        if (tapCount === 1) {
-                            isClicked = false;
-                            if (clickTimeout) {
-                                return;
-                            }
-
-                            clickTimeout = setTimeout(() => {
-                                if (tapCount === 1 && !isDoubleTapHold) {
-                                    isClicked = true;
-                                    onClick({
-                                        lat: event.latLng?.lat() ?? 0,
-                                        lng: event.latLng?.lng() ?? 0,
-                                    });
-                                }
-                                clickTimeout = undefined;
-                            }, 300);
+                    if (clickTapCount === 1) {
+                        if (clickTimeout) {
+                            return;
                         }
 
-                        // Double tap - zoom in
-                        if (tapCount === 2) {
-                            clearTimeout(clickTimeout);
-                            clickTimeout = undefined;
-                            isClicked = false;
-                            isDoubleTapHold = true;
-
-                            // Start listening for hold gesture
-                            const touchStartTime = currentTime;
-                            const touchStartY = domEvent.touches[0].clientY;
-                            let initialZoom = $map?.getZoom() ?? 15;
-
-                            const touchMoveHandler = (moveEvent: TouchEvent) => {
-                                if (isDoubleTapHold && $map) {
-                                    const currentY = moveEvent.touches[0].clientY;
-                                    const deltaY = touchStartY - currentY;
-                                    const zoomDelta = deltaY / 100; // Adjust sensitivity
-                                    const newZoom = Math.max(
-                                        1,
-                                        Math.min(20, initialZoom + zoomDelta),
-                                    );
-                                    $map.setZoom(newZoom);
-                                }
-                            };
-
-                            const touchEndHandler = () => {
-                                isDoubleTapHold = false;
-                                tapCount = 0;
-                                document.removeEventListener('touchmove', touchMoveHandler);
-                                document.removeEventListener('touchend', touchEndHandler);
-                            };
-
-                            document.addEventListener('touchmove', touchMoveHandler);
-                            document.addEventListener('touchend', touchEndHandler);
-
-                            // Reset tap count after a delay
-                            setTimeout(() => {
-                                tapCount = 0;
-                            }, 500);
-                        }
-                    } else {
-                        // Handle mouse events (desktop)
-                        if (domEvent.detail === 1) {
-                            isClicked = false;
-                            if (clickTimeout) {
-                                return;
-                            }
-
-                            clickTimeout = setTimeout(() => {
-                                isClicked = true;
+                        clickTimeout = setTimeout(() => {
+                            if (clickTapCount === 1 && !isInZoomMode) {
                                 onClick({
                                     lat: event.latLng?.lat() ?? 0,
                                     lng: event.latLng?.lng() ?? 0,
                                 });
-                                clickTimeout = undefined;
-                            }, 300);
-                        }
+                            }
+                            clickTimeout = undefined;
+                        }, 300);
                     }
                 });
 
-                event.addListener($map, 'dblclick', function (event: google.maps.MapMouseEvent) {
-                    const domEvent = event.domEvent as MouseEvent | TouchEvent;
+                document.addEventListener('mousedown', event => {
+                    const currentTime = Date.now();
 
-                    // Only handle mouse double-click, touch is handled above
-                    if (!(domEvent instanceof TouchEvent)) {
-                        if (isClicked && $map) {
-                            // event.stop() doesn't work for some reason, so adding this awesome crutch
-                            $map.set('disableDoubleClickZoom', true);
-                            isClicked = false;
-                            return;
+                    // Check if this is a double-click
+                    if (currentTime - lastClickTapTime < 300) {
+                        clickTapCount++;
+
+                        if (clickTapCount === 2) {
+                            // Clear any pending marker creation
+                            clearTimeout(clickTimeout);
+                            clickTimeout = undefined;
+
+                            // Start zoom mode immediately
+                            isInZoomMode = true;
+
+                            let initialY = event.clientY;
+                            let initialZoom = $map?.getZoom() ?? 15;
+
+                            const mouseMoveHandler = throttle((moveEvent: MouseEvent) => {
+                                if (moveEvent.buttons === 1 && isInZoomMode && $map) {
+                                    updateZoomLevel(initialY, moveEvent.clientY, initialZoom);
+                                }
+                            }, 16); // ~60fps (1000ms / 60fps = ~16ms)
+
+                            const mouseUpHandler = () => {
+                                isInZoomMode = false;
+                                document.removeEventListener('mousemove', mouseMoveHandler);
+                                document.removeEventListener('mouseup', mouseUpHandler);
+                            };
+
+                            document.addEventListener('mousemove', mouseMoveHandler);
+                            document.addEventListener('mouseup', mouseUpHandler);
+
+                            // Reset click count
+                            clickTapCount = 0;
                         }
-                        clearTimeout(clickTimeout);
-                        clickTimeout = undefined;
+                    } else {
+                        clickTapCount = 1;
                     }
+
+                    lastClickTapTime = currentTime;
                 });
+
+                document.addEventListener(
+                    'touchstart',
+                    event => {
+                        // Only handle if it's a single touch
+                        if (event.touches.length === 1) {
+                            const currentTime = new Date().getTime();
+
+                            if (currentTime - lastClickTapTime < 500) {
+                                clickTapCount++;
+
+                                // Double tap detected - start listening for hold gesture
+                                if (clickTapCount === 2) {
+                                    clearTimeout(clickTimeout);
+                                    clickTimeout = undefined;
+
+                                    isInZoomMode = true;
+
+                                    let initialY = event.touches[0].clientY;
+                                    let initialZoom = $map?.getZoom() ?? 15;
+
+                                    const touchMoveHandler = throttle((moveEvent: TouchEvent) => {
+                                        if (isInZoomMode && $map) {
+                                            // Prevent default map dragging
+                                            moveEvent.preventDefault();
+                                            moveEvent.stopPropagation();
+
+                                            updateZoomLevel(
+                                                initialY,
+                                                moveEvent.touches[0].clientY,
+                                                initialZoom,
+                                            );
+                                        }
+                                    }, 16); // ~60fps
+
+                                    const touchEndHandler = () => {
+                                        isInZoomMode = false;
+                                        clickTapCount = 0;
+                                        document.removeEventListener('touchmove', touchMoveHandler);
+                                        document.removeEventListener('touchend', touchEndHandler);
+
+                                        // Reset zoom mode state after a delay to prevent interference
+                                        setTimeout(() => {
+                                            isInZoomMode = false;
+                                        }, 100);
+                                    };
+
+                                    document.addEventListener('touchmove', touchMoveHandler);
+                                    document.addEventListener('touchend', touchEndHandler);
+
+                                    // Reset tap count after a delay
+                                    setTimeout(() => {
+                                        clickTapCount = 0;
+                                    }, 500);
+                                }
+                            } else {
+                                clickTapCount = 1;
+                            }
+                            lastClickTapTime = currentTime;
+                        }
+                    },
+                    {passive: true},
+                );
+
+                function updateZoomLevel(initialY: number, currentY: number, initialZoom: number) {
+                    if (!$map) {
+                        return;
+                    }
+
+                    const deltaY = initialY - currentY;
+                    const zoomDelta = deltaY / 50;
+                    const newZoom = Math.max(1, Math.min(20, initialZoom + zoomDelta));
+
+                    $map.setZoom(newZoom);
+                }
 
                 event.addListener($map, 'center_changed', function () {
                     dragTimeout.remove();
-                    isInteracted = true;
 
                     const center = $map.getCenter();
                     localStorage.setItem(
@@ -250,18 +275,6 @@
                             zoom: $map.getZoom(),
                         }),
                     );
-                });
-
-                event.addListener($map, 'maptypeid_changed', function () {
-                    isInteracted = true;
-                });
-
-                event.addListener($map, 'resize', function () {
-                    isInteracted = true;
-                });
-
-                event.addListener($map, 'rightclick', function () {
-                    isInteracted = true;
                 });
             }
         } catch (e) {

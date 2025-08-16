@@ -42,7 +42,7 @@
     }: Props = $props();
 
     let markerId: string | undefined = $state();
-    let marker: google.maps.marker.AdvancedMarkerElement | null = $state();
+    let marker: google.maps.marker.AdvancedMarkerElement | null = $state(null);
     let skipClick = false;
     let isDragged = false;
     let mouseMoveListener: google.maps.MapsEventListener | null = null;
@@ -152,14 +152,6 @@
             if (event.detail.markerId === markerId) {
                 marker = event.detail.marker;
 
-                // Update the point list with the new marker
-                if (source === 'list') {
-                    pointList.update(id!, {marker});
-                }
-                if (source === 'search') {
-                    searchPointList.update(id!, {marker});
-                }
-
                 // Apply styles immediately
                 setTimeout(() => {
                     calculateStateStyles();
@@ -214,22 +206,6 @@
             setTimeout(() => {
                 calculateStateStyles();
             }, 100);
-        }
-
-        // Handle lazy markers (marker might be null)
-        if (marker) {
-            if (source === 'list') {
-                pointList.update(id!, {marker});
-            }
-
-            if (source === 'search') {
-                searchPointList.update(id!, {marker});
-            }
-        } else {
-            // Lazy marker - store reference for later
-            if (source === 'list') {
-                pointList.update(id!, {marker: undefined});
-            }
         }
 
         if (
