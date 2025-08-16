@@ -60,13 +60,18 @@
             const mapInstance = new Map(container!, mapOptions);
 
             // Initialize marker manager for optimized rendering
-            const manager = new MarkerManager({
-                maxVisibleMarkers: 1000,
-            });
+            const manager = new MarkerManager();
             await manager.initialize(mapInstance, $mapLoader);
             markerManager.set(manager);
 
             map.update(() => mapInstance);
+
+            // Trigger initial viewport update to show markers
+            setTimeout(() => {
+                if (manager) {
+                    manager.triggerViewportUpdate();
+                }
+            }, 100);
         } catch (e) {
             console.error('error instantiating map');
             console.error(e);

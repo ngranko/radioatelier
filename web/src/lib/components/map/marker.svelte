@@ -42,7 +42,7 @@
     }: Props = $props();
 
     let markerId: string | undefined = $state();
-    let marker: google.maps.marker.AdvancedMarkerElement | undefined = $state();
+    let marker: google.maps.marker.AdvancedMarkerElement | null = $state();
     let skipClick = false;
     let isDragged = false;
     let mouseMoveListener: google.maps.MapsEventListener | null = null;
@@ -133,17 +133,17 @@
         }
     });
 
-    onMount(async () => {
-        await createMarker();
+    onMount(() => {
+        createMarker();
     });
 
-    async function createMarker() {
+    function createMarker() {
         const position = {lat: Number(lat), lng: Number(lng)};
 
         // For map-clicked markers, pass a unique ID to avoid cache conflicts
         markerId = id ?? `map-${Date.now()}-${Math.random()}`;
 
-        marker = await $markerManager!.createMarker(markerId, position, {
+        const createdMarker = $markerManager!.createMarker(markerId, position, {
             icon,
             color,
             isDraggable,
@@ -152,13 +152,23 @@
             onDragStart: handleClickStart,
             onDragEnd: handleClickEnd,
         });
+        
+        marker = createdMarker || null;
 
-        if (source === 'list') {
-            pointList.update(id!, {marker});
-        }
+        // Handle lazy markers (marker might be null)
+        if (marker) {
+            if (source === 'list') {
+                pointList.update(id!, {marker});
+            }
 
-        if (source === 'search') {
-            searchPointList.update(id!, {marker});
+            if (source === 'search') {
+                searchPointList.update(id!, {marker});
+            }
+        } else {
+            // Lazy marker - store reference for later
+            if (source === 'list') {
+                pointList.update(id!, {marker: undefined});
+            }
         }
 
         if (
