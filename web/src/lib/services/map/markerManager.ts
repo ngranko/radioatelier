@@ -6,6 +6,7 @@ export interface MarkerManagerOptions {
     enableLazyLoading?: boolean; // Enable lazy DOM creation for large datasets
     chunkSize?: number; // Number of markers to process per animation frame
     maxVisibleMarkers?: number; // Maximum markers to display on screen at once
+    enableProfiling?: boolean; // Enable verbose profiling of redraw pipeline
 }
 
 export class MarkerManager {
@@ -38,6 +39,44 @@ export class MarkerManager {
     // Update tracking for chunked processing
     private updateInProgress = false;
 
+    // Profiling state
+    private profilingEnabled = false;
+    private currentProfile:
+        | ({
+            startedAt: number;
+            timings: {
+                total: number;
+                updateMarkersInViewport: number;
+                scanCached: number;
+                scanLazy: number;
+                clustering: number;
+                sorting: number;
+                selection: number;
+                visibilityUpdates: number;
+            };
+            counts: {
+                cachedMarkers: number;
+                lazyMarkers: number;
+                inViewportAll: number;
+                clusters: number;
+                selectedVisible: number;
+                toggledVisibility: number;
+                shown: number;
+                hidden: number;
+                domCreated: number;
+                domCreatedLazy: number;
+            };
+            chunks: {
+                count: number;
+                totalProcessed: number;
+                avgSize: number;
+            };
+        }
+        | null) = null;
+    private lastProfile:
+        | (typeof this.currentProfile extends null ? never : NonNullable<typeof this.currentProfile>)
+        | null = null;
+
     constructor(options: MarkerManagerOptions = {}) {
         this.options = {
             viewportPadding: 0.1,
@@ -47,6 +86,76 @@ export class MarkerManager {
             maxVisibleMarkers: 50, // Reduced limit to force pruning for testing
             ...options,
         };
+        this.profilingEnabled = !!this.options.enableProfiling;
+    }
+
+    setProfilingEnabled(enabled: boolean) {
+        this.profilingEnabled = enabled;
+    }
+
+    getLastProfile() {
+        return this.lastProfile;
+    }
+
+    private startProfile() {
+        if (!this.profilingEnabled) return;
+        this.currentProfile = {
+            startedAt: performance.now(),
+            timings: {
+                total: 0,
+                updateMarkersInViewport: 0,
+                scanCached: 0,
+                scanLazy: 0,
+                clustering: 0,
+                sorting: 0,
+                selection: 0,
+                visibilityUpdates: 0,
+            },
+            counts: {
+                cachedMarkers: 0,
+                lazyMarkers: 0,
+                inViewportAll: 0,
+                clusters: 0,
+                selectedVisible: 0,
+                toggledVisibility: 0,
+                shown: 0,
+                hidden: 0,
+                domCreated: 0,
+                domCreatedLazy: 0,
+            },
+            chunks: {
+                count: 0,
+                totalProcessed: 0,
+                avgSize: 0,
+            },
+        };
+    }
+
+    private endProfile() {
+        if (!this.profilingEnabled || !this.currentProfile) return;
+        this.currentProfile.timings.total = performance.now() - this.currentProfile.startedAt;
+        this.currentProfile.chunks.avgSize = this.currentProfile.chunks.count
+            ? this.currentProfile.chunks.totalProcessed / this.currentProfile.chunks.count
+            : 0;
+        this.lastProfile = this.currentProfile;
+
+        // Concise summary log
+        console.log('[MarkerManager][Profile] Summary:', {
+            totalMs: Math.round(this.currentProfile.timings.total),
+            updateMarkersInViewportMs: Math.round(
+                this.currentProfile.timings.updateMarkersInViewport,
+            ),
+            scanCachedMs: Math.round(this.currentProfile.timings.scanCached),
+            scanLazyMs: Math.round(this.currentProfile.timings.scanLazy),
+            clusteringMs: Math.round(this.currentProfile.timings.clustering),
+            sortingMs: Math.round(this.currentProfile.timings.sorting),
+            selectionMs: Math.round(this.currentProfile.timings.selection),
+            visibilityUpdatesMs: Math.round(this.currentProfile.timings.visibilityUpdates),
+            counts: this.currentProfile.counts,
+            chunks: this.currentProfile.chunks,
+        });
+
+        this.currentProfile = null;
     }
 
     async initialize(map: google.maps.Map, mapLoader: any) {
@@ -144,6 +253,8 @@ export class MarkerManager {
             throw new Error('Marker library not initialized. Call initialize() first.');
         }
 
+        const creationStart = this.profilingEnabled ? performance.now() : 0;
+
         // Create marker element with proper class list
         const iconElement = document.createElement('div');
         iconElement.style.backgroundColor = options.color;
@@ -159,6 +270,13 @@ export class MarkerManager {
             gmpClickable: true,
             zIndex: options.source === 'search' ? 1 : 0,
         });
+
+        if (this.profilingEnabled && this.currentProfile) {
+            this.currentProfile.counts.domCreated++;
+            if (options.source === 'list') {
+                this.currentProfile.counts.domCreatedLazy++;
+            }
+        }
 
         // Add click listener
         if (options.onClick) {
@@ -218,10 +336,18 @@ export class MarkerManager {
             iconElement.classList.remove('animate-popin');
         }, 200);
 
+        if (this.profilingEnabled && this.currentProfile) {
+            // Count createMarkerDOM time within DOM creation if desired later
+            void creationStart; // placeholder to avoid unused var if profiling off
+        }
+
         return marker;
     }
 
     updateMarkerVisibility(id: string, isVisible: boolean) {
+        if (this.profilingEnabled && this.currentProfile) {
+            this.currentProfile.counts.toggledVisibility++;
+        }
         if (isVisible && !this.visibleMarkers.has(id)) {
             this.showMarker(id);
         } else if (!isVisible && this.visibleMarkers.has(id)) {
@@ -240,6 +366,10 @@ export class MarkerManager {
             this.visibleMarkers.add(id);
             marker.map = this.map;
 
+            if (this.profilingEnabled && this.currentProfile) {
+                this.currentProfile.counts.shown++;
+            }
+
             setTimeout(() => {
                 markerElement.classList.remove('animate-popin');
             }, 200);
@@ -256,6 +386,10 @@ export class MarkerManager {
                 markerElement.classList.add('animate-popin');
                 this.visibleMarkers.add(id);
                 newMarker.map = this.map;
+
+                if (this.profilingEnabled && this.currentProfile) {
+                    this.currentProfile.counts.shown++;
+                }
 
                 // Trigger events to notify marker component that lazy marker is now available
                 window.dispatchEvent(
@@ -307,6 +441,10 @@ export class MarkerManager {
             }, 200);
         } else {
             marker.map = null;
+        }
+
+        if (this.profilingEnabled && this.currentProfile) {
+            this.currentProfile.counts.hidden++;
         }
     }
 
@@ -378,6 +516,8 @@ export class MarkerManager {
             return;
         }
 
+        const sectionStart = this.profilingEnabled ? performance.now() : 0;
+
         const bounds = this.map.getBounds() as google.maps.LatLngBounds;
         const zoom = this.map.getZoom() || 0;
 
@@ -385,6 +525,7 @@ export class MarkerManager {
         const allMarkersInViewport: Array<{id: string; position: google.maps.LatLngLiteral}> = [];
 
         // Add cached markers in viewport
+        const scanCachedStart = this.profilingEnabled ? performance.now() : 0;
         for (const [id, marker] of markers.entries()) {
             const position = {
                 lat: Number(marker.position?.lat),
@@ -394,8 +535,13 @@ export class MarkerManager {
                 allMarkersInViewport.push({id, position});
             }
         }
+        if (this.profilingEnabled && this.currentProfile) {
+            this.currentProfile.timings.scanCached = performance.now() - scanCachedStart;
+            this.currentProfile.counts.cachedMarkers = markers.size;
+        }
 
         // Add lazy markers in viewport
+        const scanLazyStart = this.profilingEnabled ? performance.now() : 0;
         for (const [id, markerData] of this.markerData.entries()) {
             // Skip if already in cache (handled above)
             if (markers.has(id)) {
@@ -407,12 +553,26 @@ export class MarkerManager {
                 allMarkersInViewport.push({id, position: markerData.position});
             }
         }
+        if (this.profilingEnabled && this.currentProfile) {
+            this.currentProfile.timings.scanLazy = performance.now() - scanLazyStart;
+            this.currentProfile.counts.lazyMarkers = this.markerData.size;
+        }
 
         // Group markers into clusters based on proximity
+        const clusteringStart = this.profilingEnabled ? performance.now() : 0;
         const clusters = this.groupMarkersIntoClusters(allMarkersInViewport, bounds, zoom);
+        if (this.profilingEnabled && this.currentProfile) {
+            this.currentProfile.timings.clustering = performance.now() - clusteringStart;
+            this.currentProfile.counts.inViewportAll = allMarkersInViewport.length;
+            this.currentProfile.counts.clusters = clusters.length;
+        }
 
         // Sort clusters by size (largest first) and distance from center
+        const sortingStart = this.profilingEnabled ? performance.now() : 0;
         const sortedClusters = this.sortClustersByPriority(clusters, bounds);
+        if (this.profilingEnabled && this.currentProfile) {
+            this.currentProfile.timings.sorting = performance.now() - sortingStart;
+        }
 
         // Debug logging to see clustering and pruning in action
         console.log(
@@ -449,6 +609,7 @@ export class MarkerManager {
                 `[MarkerManager] Pruning required: ${totalMarkersInViewport} > ${maxVisibleMarkers} limit`,
             );
             // Intelligent pruning: allocate markers based on cluster size
+            const selectionStart = this.profilingEnabled ? performance.now() : 0;
             for (const cluster of sortedClusters) {
                 if (totalMarkersSelected >= maxVisibleMarkers) {
                     break;
@@ -500,15 +661,30 @@ export class MarkerManager {
                     totalMarkersSelected++;
                 }
             }
+            if (this.profilingEnabled && this.currentProfile) {
+                this.currentProfile.timings.selection = performance.now() - selectionStart;
+            }
+        }
+
+        if (this.profilingEnabled && this.currentProfile) {
+            this.currentProfile.counts.selectedVisible = visibleIds.size;
         }
 
         // Process marker visibility updates in chunks using requestAnimationFrame
-        this.processMarkerVisibilityUpdates(visibleIds, markers);
+        const visibilityStart = this.profilingEnabled ? performance.now() : 0;
+        this.processMarkerVisibilityUpdates(visibleIds, markers, () => {
+            if (this.profilingEnabled && this.currentProfile) {
+                this.currentProfile.timings.visibilityUpdates = performance.now() - visibilityStart;
+                this.currentProfile.timings.updateMarkersInViewport = performance.now() - sectionStart;
+            }
+            this.endProfile();
+        });
     }
 
     private processMarkerVisibilityUpdates(
         visibleIds: Set<string>,
         markers: Map<string, google.maps.marker.AdvancedMarkerElement>,
+        onComplete?: () => void,
     ) {
         const allMarkerIds = Array.from(new Set([...markers.keys(), ...this.markerData.keys()]));
         const chunkSize = this.options.chunkSize || 50; // Use configured chunk size
@@ -523,6 +699,11 @@ export class MarkerManager {
                 this.updateMarkerVisibility(id, shouldBeVisible);
             }
 
+            if (this.profilingEnabled && this.currentProfile) {
+                this.currentProfile.chunks.count++;
+                this.currentProfile.chunks.totalProcessed += endIndex - currentIndex;
+            }
+
             currentIndex = endIndex;
 
             // Continue processing if there are more markers
@@ -531,6 +712,7 @@ export class MarkerManager {
             } else {
                 // Update complete, reset flag
                 this.updateInProgress = false;
+                if (onComplete) onComplete();
             }
         };
 
@@ -552,6 +734,10 @@ export class MarkerManager {
             // Schedule another update after current one completes
             setTimeout(() => this.triggerViewportUpdate(), 50);
             return;
+        }
+
+        if (this.profilingEnabled) {
+            this.startProfile();
         }
 
         this.updateInProgress = true;
