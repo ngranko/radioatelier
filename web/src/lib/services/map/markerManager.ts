@@ -5,6 +5,7 @@ export interface MarkerManagerOptions {
     lazyLoadThreshold?: number; // Number of markers before enabling lazy loading
     enableLazyLoading?: boolean; // Enable lazy DOM creation for large datasets
     chunkSize?: number; // Number of markers to process per animation frame
+    maxVisibleMarkers?: number; // Maximum markers to display on screen at once
 }
 
 export class MarkerManager {
@@ -43,6 +44,7 @@ export class MarkerManager {
             lazyLoadThreshold: 500,
             enableLazyLoading: true,
             chunkSize: 50, // Process 50 markers per animation frame
+            maxVisibleMarkers: 50, // Reduced limit to force pruning for testing
             ...options,
         };
     }
@@ -412,22 +414,91 @@ export class MarkerManager {
         // Sort clusters by size (largest first) and distance from center
         const sortedClusters = this.sortClustersByPriority(clusters, bounds);
 
-        // Show markers with a reasonable limit for performance
-        const maxVisibleMarkers = 500; // Reasonable limit for smooth performance
+        // Debug logging to see clustering and pruning in action
+        console.log(
+            `[MarkerManager] Zoom: ${zoom}, Total markers in viewport: ${allMarkersInViewport.length}`,
+        );
+        console.log(`[MarkerManager] Clusters created: ${clusters.length}`);
+
+        const clusterSizes = clusters.map(c => c.size).sort((a, b) => b - a);
+        console.log(`[MarkerManager] Cluster sizes:`, clusterSizes.slice(0, 10)); // Top 10 largest clusters
+
+        // Intelligent cluster-based pruning based on cluster size
+        const maxVisibleMarkers = this.options.maxVisibleMarkers || 100;
         const visibleIds = new Set<string>();
-        let markerCount = 0;
+        let totalMarkersSelected = 0;
 
-        for (const cluster of sortedClusters) {
-            if (markerCount >= maxVisibleMarkers) {
-                break;
+        // Calculate total markers in all clusters
+        const totalMarkersInViewport = sortedClusters.reduce(
+            (sum, cluster) => sum + cluster.size,
+            0,
+        );
+
+        // If we have fewer markers than the limit, show all
+        if (totalMarkersInViewport <= maxVisibleMarkers) {
+            console.log(
+                `[MarkerManager] Showing all ${totalMarkersInViewport} markers (under limit)`,
+            );
+            for (const cluster of sortedClusters) {
+                for (const markerId of cluster.markers) {
+                    visibleIds.add(markerId);
+                }
             }
-
-            for (const markerId of cluster.markers) {
-                if (markerCount >= maxVisibleMarkers) {
+        } else {
+            console.log(
+                `[MarkerManager] Pruning required: ${totalMarkersInViewport} > ${maxVisibleMarkers} limit`,
+            );
+            // Intelligent pruning: allocate markers based on cluster size
+            for (const cluster of sortedClusters) {
+                if (totalMarkersSelected >= maxVisibleMarkers) {
                     break;
                 }
-                visibleIds.add(markerId);
-                markerCount++;
+
+                // Calculate how many markers to show from this cluster
+                const clusterRatio = cluster.size / totalMarkersInViewport;
+                const baseMarkersToShow = Math.max(1, Math.floor(clusterRatio * maxVisibleMarkers));
+
+                // Apply aggressive pruning based on cluster size
+                let markersToShow: number;
+
+                if (cluster.size <= 20) {
+                    // Small clusters: show most markers
+                    markersToShow = Math.max(1, Math.floor(cluster.size * 0.8)); // 80%
+                } else if (cluster.size <= 50) {
+                    // Medium clusters: show fewer markers
+                    markersToShow = Math.max(1, Math.floor(cluster.size * 0.5)); // 50%
+                } else if (cluster.size <= 100) {
+                    // Large clusters: show even fewer
+                    markersToShow = Math.max(1, Math.floor(cluster.size * 0.25)); // 25%
+                } else if (cluster.size <= 500) {
+                    // Very large clusters: show minimal markers
+                    markersToShow = Math.max(1, Math.floor(cluster.size * 0.1)); // 10%
+                } else {
+                    // Massive clusters: show only a few representative markers
+                    markersToShow = Math.max(1, Math.floor(cluster.size * 0.05)); // 5%
+                }
+
+                const actualMarkersToShow = Math.min(
+                    markersToShow,
+                    cluster.size,
+                    maxVisibleMarkers - totalMarkersSelected,
+                );
+
+                console.log(
+                    `[MarkerManager] Cluster size ${cluster.size}: showing ${actualMarkersToShow} markers (${Math.round((actualMarkersToShow / cluster.size) * 100)}%)`,
+                );
+
+                // Select markers from this cluster (prioritize by distance from center)
+                const clusterMarkers = this.selectMarkersFromCluster(
+                    cluster.markers,
+                    actualMarkersToShow,
+                    bounds,
+                );
+
+                for (const markerId of clusterMarkers) {
+                    visibleIds.add(markerId);
+                    totalMarkersSelected++;
+                }
             }
         }
 
@@ -487,6 +558,64 @@ export class MarkerManager {
         this.updateMarkersInViewport(this.markerCache);
     }
 
+    // Select the best markers from a cluster based on distance from center
+    private selectMarkersFromCluster(
+        markerIds: string[],
+        count: number,
+        bounds: google.maps.LatLngBounds,
+    ): string[] {
+        if (markerIds.length <= count) {
+            return markerIds; // Return all if we need all or fewer
+        }
+
+        const mapCenter = bounds.getCenter();
+        const centerPosition = {
+            lat: mapCenter.lat(),
+            lng: mapCenter.lng(),
+        };
+
+        // Get marker positions and calculate distances
+        const markersWithDistances = markerIds.map(id => {
+            let position: google.maps.LatLngLiteral;
+
+            // Check if marker is in cache
+            const cachedMarker = this.markerCache.get(id);
+            if (cachedMarker) {
+                position = {
+                    lat: Number(cachedMarker.position?.lat),
+                    lng: Number(cachedMarker.position?.lng),
+                };
+            } else {
+                // Check if marker is in lazy data
+                const lazyData = this.markerData.get(id);
+                if (lazyData) {
+                    position = lazyData.position;
+                } else {
+                    return {id, distance: Infinity}; // Skip if not found
+                }
+            }
+
+            const distance = this.calculateDistance(position, centerPosition);
+            return {id, distance};
+        });
+
+        // Sort by distance (closest first) and take the requested count
+        return markersWithDistances
+            .sort((a, b) => a.distance - b.distance)
+            .slice(0, count)
+            .map(marker => marker.id);
+    }
+
+    // Cleanup method
+    destroy() {
+        this.markerCache.clear();
+        this.markerData.clear();
+        this.markerSources.clear();
+        this.visibleMarkers.clear();
+        this.replacedMarkers.clear();
+        this.map = null;
+    }
+
     // Optimized clustering with spatial indexing
     private createSpatialIndex(
         markers: Array<{id: string; position: google.maps.LatLngLiteral}>,
@@ -513,7 +642,20 @@ export class MarkerManager {
         bounds: google.maps.LatLngBounds,
         zoom: number,
     ): Array<{center: google.maps.LatLngLiteral; markers: string[]; size: number}> {
-        const clusterRadius = Math.max(0.001, 0.01 / Math.pow(2, zoom - 10)); // Adjust based on zoom level
+        // More aggressive clustering radius that creates visible clusters
+        let clusterRadius: number;
+
+        if (zoom <= 10) {
+            clusterRadius = 0.1; // Very large clusters at low zoom
+        } else if (zoom <= 12) {
+            clusterRadius = 0.05; // Large clusters
+        } else if (zoom <= 14) {
+            clusterRadius = 0.02; // Medium clusters
+        } else if (zoom <= 16) {
+            clusterRadius = 0.01; // Small clusters
+        } else {
+            clusterRadius = 0.005; // Very small clusters at high zoom
+        }
 
         // Always use spatial indexing - it's faster for all dataset sizes
         return this.groupMarkersWithSpatialIndex(markers, clusterRadius);
@@ -618,15 +760,5 @@ export class MarkerManager {
             lat: totalLat / clusterMarkers.length,
             lng: totalLng / clusterMarkers.length,
         };
-    }
-
-    destroy() {
-        this.markerCache.forEach(marker => {
-            marker.map = null;
-        });
-        this.markerCache.clear();
-        this.visibleMarkers.clear();
-        this.markerSources.clear();
-        this.replacedMarkers.clear();
     }
 }
