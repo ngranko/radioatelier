@@ -58,7 +58,8 @@
             const mapInstance = new Map(container!, mapOptions);
 
             // Initialize marker manager for optimized rendering
-            const manager = new MarkerManager();
+            const profiling = new URLSearchParams(window.location.search).has('profileMarkers');
+            const manager = new MarkerManager({ enableProfiling: profiling });
             await manager.initialize(mapInstance, $mapLoader);
             markerManager.set(manager);
 
