@@ -654,11 +654,13 @@ export class MarkerManager {
         // 2) Cluster in-grid, then apply hybrid pruning
         const center = bounds.getCenter();
         const centerPosition = {lat: center.lat(), lng: center.lng()};
+        const zoom = this.map?.getZoom() || 0;
         const clusterStart = this.profilingEnabled ? performance.now() : 0;
         const clusteredVisibleIds = this.hybridClusterAndSelectIds(
             allMarkersInViewport,
             centerPosition,
             bounds,
+            zoom,
         );
         if (this.profilingEnabled && this.currentProfile) {
             this.currentProfile.timings.clustering = performance.now() - clusterStart;
@@ -725,6 +727,7 @@ export class MarkerManager {
         markers: Array<{id: string; position: google.maps.LatLngLiteral}>,
         center: google.maps.LatLngLiteral,
         bounds: google.maps.LatLngBounds,
+        zoom: number,
     ): Set<string> {
         const maxVisibleMarkers = this.options.maxVisibleMarkers || 200;
         const smallMax = this.options.smallClusterMaxSize ?? 3;
@@ -736,8 +739,10 @@ export class MarkerManager {
         const ne = bounds.getNorthEast();
         const latSpan = Math.max(1e-6, ne.lat() - sw.lat());
         const lngSpan = Math.max(1e-6, ne.lng() - sw.lng());
-        const cellLat = latSpan / 20; // 20x20 coarse grid
-        const cellLng = lngSpan / 20;
+        // Make grid resolution depend on zoom to avoid constant cell changes while dragging
+        const gridDiv = Math.max(10, Math.min(30, Math.round(zoom + 8))); // ~18-28 cells
+        const cellLat = latSpan / gridDiv;
+        const cellLng = lngSpan / gridDiv;
 
         const grid = new Map<string, Array<{id: string; position: google.maps.LatLngLiteral}>>();
         for (const m of markers) {
@@ -790,7 +795,10 @@ export class MarkerManager {
                 .map(m => m.id)
                 .sort()
                 .join(',');
-            const clusterKey = `${minLat.toFixed(5)}:${minLng.toFixed(5)}:${maxLat.toFixed(5)}:${maxLng.toFixed(5)}|${cluster.length}`;
+            // Include coarse grid cell key to reduce churn while dragging slightly
+            const gx0 = Math.floor((minLng - sw.lng()) / cellLng);
+            const gy0 = Math.floor((minLat - sw.lat()) / cellLat);
+            const clusterKey = `${gx0}:${gy0}|${minLat.toFixed(4)}:${minLng.toFixed(4)}:${maxLat.toFixed(4)}:${maxLng.toFixed(4)}|${cluster.length}`;
             const cached = this.clusterSelectionCache.get(clusterKey);
             let picks: string[] | null = null;
             if (cached && cached.membersKey === membersKey) {
