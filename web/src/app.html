@@ -9,7 +9,7 @@
 		<link rel="manifest" href="%sveltekit.assets%/favicon/site.webmanifest">
 		<meta name="msapplication-TileColor" content="#0e1621">
 		<meta name="theme-color" content="#0e1621">
-		<meta name="viewport" content="width=device-width" />
+
 
 		<meta property="og:title" content="Радиоателье"/>
 		<meta property="og:url" content="https://radioatelier.one"/>
@@ -26,6 +26,25 @@
 		<link rel="stylesheet" href="https://use.typekit.net/pps7ann.css">
 
 		<script src="https://kit.fontawesome.com/5f2ce4df4c.js" crossorigin="anonymous"></script>
+
+		<script>
+			// Disable page-level pinch-zoom and double-tap zoom (iOS/Android)
+			(function() {
+				var lastTouchEnd = 0;
+				document.addEventListener('touchend', function(event) {
+					var now = Date.now();
+					if (now - lastTouchEnd <= 300) {
+						event.preventDefault();
+					}
+					lastTouchEnd = now;
+				}, { passive: false });
+
+				// iOS Safari specific: prevent viewport pinch gestures
+				document.addEventListener('gesturestart', function(event) { event.preventDefault(); }, { passive: false });
+				document.addEventListener('gesturechange', function(event) { event.preventDefault(); }, { passive: false });
+				document.addEventListener('gestureend', function(event) { event.preventDefault(); }, { passive: false });
+			})();
+		</script>
 
 		%sveltekit.head%
 	</head>
