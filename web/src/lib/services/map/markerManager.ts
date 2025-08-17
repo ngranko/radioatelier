@@ -438,18 +438,18 @@ export class MarkerManager {
         }
 
         const markerElement = marker.content as HTMLElement;
-        this.visibleMarkers.delete(id);
+            this.visibleMarkers.delete(id);
 
-        // Add removal animation before hiding
-        if (markerElement) {
-            markerElement.classList.add('animate-popout');
-            setTimeout(() => {
+            // Add removal animation before hiding
+            if (markerElement) {
+                markerElement.classList.add('animate-popout');
+                setTimeout(() => {
+                    marker.map = null;
+                    markerElement.classList.remove('animate-popout');
+                }, 200);
+            } else {
                 marker.map = null;
-                markerElement.classList.remove('animate-popout');
-            }, 200);
-        } else {
-            marker.map = null;
-        }
+            }
 
         if (this.profilingEnabled && this.currentProfile) {
             this.currentProfile.counts.hidden++;
@@ -603,6 +603,27 @@ export class MarkerManager {
         return visibleIds;
     }
 
+    // Expose fast viewport positions for overlays (uses numeric bounds check)
+    getViewportPositionsForOverlay(): Array<{lat: number; lng: number; color?: string}> {
+        if (!this.map || !this.map.getBounds()) return [];
+        const bounds = this.map.getBounds() as google.maps.LatLngBounds;
+        const sw = bounds.getSouthWest();
+        const ne = bounds.getNorthEast();
+        const minLat = sw.lat();
+        const minLng = sw.lng();
+        const maxLat = ne.lat();
+        const maxLng = ne.lng();
+        const out: Array<{lat: number; lng: number; color?: string}> = [];
+
+        for (const [id, data] of this.markerData.entries()) {
+            const {lat, lng} = data.position;
+            if (lat >= minLat && lat <= maxLat && lng >= minLng && lng <= maxLng) {
+                out.push({lat, lng, color: data.options?.color});
+            }
+        }
+        return out;
+    }
+
     private updateMarkersInViewport(
         markers: Map<string, google.maps.marker.AdvancedMarkerElement>,
     ) {
@@ -721,9 +742,9 @@ export class MarkerManager {
             const shouldBeVisible = visibleIds.has(id);
             const isVisible = this.visibleMarkers.has(id);
             if (shouldBeVisible !== isVisible) {
-                this.updateMarkerVisibility(id, shouldBeVisible);
-            }
+            this.updateMarkerVisibility(id, shouldBeVisible);
         }
+    }
 
         // Restore original methods
         if (skipAnimations) {

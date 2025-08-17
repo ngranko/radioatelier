@@ -20,6 +20,75 @@
     let clickTapCount = 0;
     let isInZoomMode = false;
 
+    // Canvas overlay for non-interactive marker dots
+    let overlayCanvas: HTMLCanvasElement | null = null;
+    let overlayCtx: CanvasRenderingContext2D | null = null;
+    let overlayNeedsResize = true;
+
+    function ensureOverlay(container: HTMLDivElement) {
+        if (overlayCanvas) return;
+        overlayCanvas = document.createElement('canvas');
+        overlayCanvas.style.position = 'absolute';
+        overlayCanvas.style.top = '0';
+        overlayCanvas.style.left = '0';
+        overlayCanvas.style.width = '100%';
+        overlayCanvas.style.height = '100%';
+        overlayCanvas.style.pointerEvents = 'none';
+        container.appendChild(overlayCanvas);
+        overlayCtx = overlayCanvas.getContext('2d');
+        overlayNeedsResize = true;
+    }
+
+    function resizeOverlay() {
+        if (!overlayCanvas || !container) return;
+        const dpr = window.devicePixelRatio || 1;
+        const rect = container.getBoundingClientRect();
+        const width = Math.floor(rect.width * dpr);
+        const height = Math.floor(rect.height * dpr);
+        if (overlayCanvas.width !== width || overlayCanvas.height !== height) {
+            overlayCanvas.width = width;
+            overlayCanvas.height = height;
+            overlayNeedsResize = true;
+        }
+        if (overlayCtx) overlayCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function lonLatToPixel(lat: number, lng: number): { x: number; y: number } | null {
+        if (!$map) return null;
+        const projection = $map.getProjection?.();
+        if (!projection) return null;
+        const bounds = $map.getBounds();
+        if (!bounds) return null;
+        const topRight = projection.fromLatLngToPoint(bounds.getNorthEast());
+        const bottomLeft = projection.fromLatLngToPoint(bounds.getSouthWest());
+        const scale = Math.pow(2, $map.getZoom() || 0);
+        const point = projection.fromLatLngToPoint(new google.maps.LatLng(lat, lng));
+        return {
+            x: (point!.x - bottomLeft!.x) * scale,
+            y: (point!.y - topRight!.y) * scale,
+        };
+    }
+
+    function drawOverlayDots() {
+        if (!overlayCtx || !overlayCanvas) return;
+        if (!$markerManager || !$map) return;
+        resizeOverlay();
+        const ctx = overlayCtx;
+        ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+        const points = $markerManager.getViewportPositionsForOverlay();
+        if (!points.length) return;
+        ctx.save();
+        ctx.fillStyle = '#007aff33';
+        for (const p of points) {
+            const pixel = lonLatToPixel(p.lat, p.lng);
+            if (!pixel) continue;
+            ctx.beginPath();
+            ctx.arc(pixel.x, pixel.y, 3, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.restore();
+    }
+
     const location = createMutation({
         mutationFn: getLocation,
     });
@@ -55,6 +124,7 @@
 
         try {
             const {Map} = await $mapLoader.importLibrary('maps');
+            const {event} = await $mapLoader.importLibrary('core');
             const mapInstance = new Map(container!, mapOptions);
 
             // Initialize marker manager for optimized rendering
@@ -69,6 +139,8 @@
             markerManager.set(manager);
 
             map.update(() => mapInstance);
+            ensureOverlay(container!);
+            drawOverlayDots();
 
             // Trigger initial viewport update to show markers
             // Use multiple fallbacks to ensure markers are shown
@@ -120,8 +192,11 @@
                         if ($markerManager) {
                             $markerManager.triggerViewportUpdate();
                         }
+                        drawOverlayDots();
                     }, 50),
                 );
+                event.addListener($map, 'zoom_changed', () => drawOverlayDots());
+                event.addListener($map, 'drag', () => drawOverlayDots());
 
                 event.addListener($map, 'click', function (event: google.maps.MapMouseEvent) {
                     if (isInZoomMode) {
