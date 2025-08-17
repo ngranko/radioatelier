@@ -7,6 +7,7 @@ export interface MarkerManagerOptions {
     chunkSize?: number; // Number of markers to process per animation frame
     maxVisibleMarkers?: number; // Maximum markers to display on screen at once
     enableProfiling?: boolean; // Enable verbose profiling of redraw pipeline
+    lazyCreatePerFrame?: number; // Max number of lazy DOM creations per frame
 }
 
 export class MarkerManager {
@@ -84,7 +85,8 @@ export class MarkerManager {
             lazyLoadThreshold: 500,
             enableLazyLoading: true,
             chunkSize: 50, // Process 50 markers per animation frame
-            maxVisibleMarkers: 200, // Reasonable limit for smooth performance
+            maxVisibleMarkers: 1000,
+            lazyCreatePerFrame: 8, // Limit expensive DOM creations per frame
             ...options,
         };
         this.profilingEnabled = !!this.options.enableProfiling;
@@ -664,10 +666,36 @@ export class MarkerManager {
         const processChunk = () => {
             const endIndex = Math.min(currentIndex + chunkSize, allMarkerIds.length);
 
+            // Batching: attach/detach map references in micro-batches to reduce layout thrash
+            const toShow: string[] = [];
+            const toHide: string[] = [];
+
             for (let i = currentIndex; i < endIndex; i++) {
                 const id = allMarkerIds[i];
                 const shouldBeVisible = visibleIds.has(id);
-                this.updateMarkerVisibility(id, shouldBeVisible);
+                if (shouldBeVisible) toShow.push(id);
+                else toHide.push(id);
+            }
+
+            // First, hide markers (cheap: map=null), then show (may create DOM)
+            for (const id of toHide) {
+                this.updateMarkerVisibility(id, false);
+            }
+
+            // Limit expensive DOM creations per frame
+            const maxCreates = this.options.lazyCreatePerFrame || 8;
+            let created = 0;
+            for (const id of toShow) {
+                if (created >= maxCreates) break;
+                this.updateMarkerVisibility(id, true);
+                created++;
+            }
+
+            // Defer remaining shows to next frame by pushing them back into the queue
+            if (created < toShow.length) {
+                const remaining = toShow.slice(created);
+                // Insert remaining ids right after current window so they are picked next
+                allMarkerIds.splice(endIndex, 0, ...remaining);
             }
 
             if (this.profilingEnabled && this.currentProfile) {
