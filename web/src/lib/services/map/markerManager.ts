@@ -49,17 +49,18 @@ export class MarkerManager {
                 updateMarkersInViewport: number;
                 scanCached: number;
                 scanLazy: number;
-                clustering: number;
                 sorting: number;
                 selection: number;
+                planVisibility: number;
                 visibilityUpdates: number;
             };
             counts: {
                 cachedMarkers: number;
                 lazyMarkers: number;
                 inViewportAll: number;
-                clusters: number;
                 selectedVisible: number;
+                plannedShow: number;
+                plannedHide: number;
                 toggledVisibility: number;
                 shown: number;
                 hidden: number;
@@ -106,17 +107,18 @@ export class MarkerManager {
                 updateMarkersInViewport: 0,
                 scanCached: 0,
                 scanLazy: 0,
-                clustering: 0,
                 sorting: 0,
                 selection: 0,
+                planVisibility: 0,
                 visibilityUpdates: 0,
             },
             counts: {
                 cachedMarkers: 0,
                 lazyMarkers: 0,
                 inViewportAll: 0,
-                clusters: 0,
                 selectedVisible: 0,
+                plannedShow: 0,
+                plannedHide: 0,
                 toggledVisibility: 0,
                 shown: 0,
                 hidden: 0,
@@ -147,9 +149,9 @@ export class MarkerManager {
             ),
             scanCachedMs: Math.round(this.currentProfile.timings.scanCached),
             scanLazyMs: Math.round(this.currentProfile.timings.scanLazy),
-            clusteringMs: Math.round(this.currentProfile.timings.clustering),
             sortingMs: Math.round(this.currentProfile.timings.sorting),
             selectionMs: Math.round(this.currentProfile.timings.selection),
+            planVisibilityMs: Math.round(this.currentProfile.timings.planVisibility),
             visibilityUpdatesMs: Math.round(this.currentProfile.timings.visibilityUpdates),
             counts: this.currentProfile.counts,
             chunks: this.currentProfile.chunks,
@@ -509,22 +511,14 @@ export class MarkerManager {
         this.visibleMarkers.delete(id);
     }
 
-    private updateMarkersInViewport(
+    // --- Viewport pipeline helpers ---
+    private collectMarkersInViewport(
         markers: Map<string, google.maps.marker.AdvancedMarkerElement>,
-    ) {
-        if (!this.map || !this.map.getBounds()) {
-            return;
-        }
-
-        const sectionStart = this.profilingEnabled ? performance.now() : 0;
-
-        const bounds = this.map.getBounds() as google.maps.LatLngBounds;
-        const zoom = this.map.getZoom() || 0;
-
-        // Get all markers (both cached and lazy) that are in the viewport
+        bounds: google.maps.LatLngBounds,
+    ): Array<{id: string; position: google.maps.LatLngLiteral}> {
         const allMarkersInViewport: Array<{id: string; position: google.maps.LatLngLiteral}> = [];
 
-        // Add cached markers in viewport
+        // Cached markers
         const scanCachedStart = this.profilingEnabled ? performance.now() : 0;
         for (const [id, marker] of markers.entries()) {
             const position = {
@@ -540,15 +534,10 @@ export class MarkerManager {
             this.currentProfile.counts.cachedMarkers = markers.size;
         }
 
-        // Add lazy markers in viewport
+        // Lazy markers
         const scanLazyStart = this.profilingEnabled ? performance.now() : 0;
         for (const [id, markerData] of this.markerData.entries()) {
-            // Skip if already in cache (handled above)
-            if (markers.has(id)) {
-                continue;
-            }
-
-            // Process all lazy markers
+            if (markers.has(id)) continue; // already captured above
             if (markerData.isLazy && bounds.contains(markerData.position)) {
                 allMarkersInViewport.push({id, position: markerData.position});
             }
@@ -558,55 +547,90 @@ export class MarkerManager {
             this.currentProfile.counts.lazyMarkers = this.markerData.size;
         }
 
-        // Simple approach: show all markers in viewport, but limit total visible markers
-        const maxVisibleMarkers = this.options.maxVisibleMarkers || 200;
-        const visibleIds = new Set<string>();
+        return allMarkersInViewport;
+    }
 
-        // Sort markers by distance from center for better prioritization
-        const mapCenter = bounds.getCenter();
-        const centerPosition = {
-            lat: mapCenter.lat(),
-            lng: mapCenter.lng(),
-        };
-
+    private sortMarkersByDistance(
+        markers: Array<{id: string; position: google.maps.LatLngLiteral}>,
+        center: google.maps.LatLngLiteral,
+    ): Array<{id: string; position: google.maps.LatLngLiteral}> {
         const sortingStart = this.profilingEnabled ? performance.now() : 0;
-        const sortedMarkers = allMarkersInViewport.sort((a, b) => {
-            const distanceA = this.calculateDistance(a.position, centerPosition);
-            const distanceB = this.calculateDistance(b.position, centerPosition);
-            return distanceA - distanceB; // Closest first
+        const sorted = markers.sort((a, b) => {
+            const distanceA = this.calculateDistance(a.position, center);
+            const distanceB = this.calculateDistance(b.position, center);
+            return distanceA - distanceB;
         });
         if (this.profilingEnabled && this.currentProfile) {
             this.currentProfile.timings.sorting = performance.now() - sortingStart;
+            this.currentProfile.counts.inViewportAll = sorted.length;
         }
+        return sorted;
+    }
 
-        if (this.profilingEnabled && this.currentProfile) {
-            this.currentProfile.counts.inViewportAll = sortedMarkers.length;
-        }
-
-        // If we have fewer markers than the limit, show all
+    private pickVisibleIds(
+        sortedMarkers: Array<{id: string; position: google.maps.LatLngLiteral}>,
+        maxVisibleMarkers: number,
+    ): Set<string> {
         const selectionStart = this.profilingEnabled ? performance.now() : 0;
+        const visibleIds = new Set<string>();
         if (sortedMarkers.length <= maxVisibleMarkers) {
             for (const marker of sortedMarkers) {
                 visibleIds.add(marker.id);
             }
-            if (this.profilingEnabled && this.currentProfile) {
-                this.currentProfile.timings.selection = performance.now() - selectionStart;
-            }
         } else {
-            // Take the closest N markers
             for (let i = 0; i < maxVisibleMarkers; i++) {
                 visibleIds.add(sortedMarkers[i].id);
             }
-            if (this.profilingEnabled && this.currentProfile) {
-                this.currentProfile.timings.selection = performance.now() - selectionStart;
-            }
         }
-
         if (this.profilingEnabled && this.currentProfile) {
+            this.currentProfile.timings.selection = performance.now() - selectionStart;
             this.currentProfile.counts.selectedVisible = visibleIds.size;
         }
+        return visibleIds;
+    }
 
-        // Process marker visibility updates in chunks using requestAnimationFrame
+    private updateMarkersInViewport(
+        markers: Map<string, google.maps.marker.AdvancedMarkerElement>,
+    ) {
+        if (!this.map || !this.map.getBounds()) {
+            return;
+        }
+
+        const sectionStart = this.profilingEnabled ? performance.now() : 0;
+        const bounds = this.map.getBounds() as google.maps.LatLngBounds;
+
+        // 1) Collect all viewport markers (cached + lazy)
+        const allMarkersInViewport = this.collectMarkersInViewport(markers, bounds);
+
+        // 2) Sort by distance from center
+        const center = bounds.getCenter();
+        const centerPosition = {lat: center.lat(), lng: center.lng()};
+        const sortedMarkers = this.sortMarkersByDistance(allMarkersInViewport, centerPosition);
+
+        // 3) Pick visible ids up to max limit
+        const maxVisibleMarkers = this.options.maxVisibleMarkers || 200;
+        const visibleIds = this.pickVisibleIds(sortedMarkers, maxVisibleMarkers);
+
+        // 4) Plan visibility changes (diff current vs target) for profiling
+        const planStart = this.profilingEnabled ? performance.now() : 0;
+        let plannedShow = 0;
+        let plannedHide = 0;
+        const allMarkerIds = new Set<string>([...markers.keys(), ...this.markerData.keys()]);
+        for (const id of allMarkerIds) {
+            const currentlyVisible = this.visibleMarkers.has(id);
+            const shouldBeVisible = visibleIds.has(id);
+            if (currentlyVisible !== shouldBeVisible) {
+                if (shouldBeVisible) plannedShow++;
+                else plannedHide++;
+            }
+        }
+        if (this.profilingEnabled && this.currentProfile) {
+            this.currentProfile.timings.planVisibility = performance.now() - planStart;
+            this.currentProfile.counts.plannedShow = plannedShow;
+            this.currentProfile.counts.plannedHide = plannedHide;
+        }
+
+        // 5) Process marker visibility updates in chunks using requestAnimationFrame
         const visibilityStart = this.profilingEnabled ? performance.now() : 0;
         this.processMarkerVisibilityUpdates(visibleIds, markers, () => {
             if (this.profilingEnabled && this.currentProfile) {
@@ -622,7 +646,18 @@ export class MarkerManager {
         markers: Map<string, google.maps.marker.AdvancedMarkerElement>,
         onComplete?: () => void,
     ) {
-        const allMarkerIds = Array.from(new Set([...markers.keys(), ...this.markerData.keys()]));
+        // Only toggle markers whose visibility state would change
+        const idsNeedingToggle: string[] = [];
+        const fullSet = new Set<string>([...markers.keys(), ...this.markerData.keys()]);
+        for (const id of fullSet) {
+            const shouldBeVisible = visibleIds.has(id);
+            const currentlyVisible = this.visibleMarkers.has(id);
+            if (shouldBeVisible !== currentlyVisible) {
+                idsNeedingToggle.push(id);
+            }
+        }
+
+        const allMarkerIds = idsNeedingToggle;
         const chunkSize = this.options.chunkSize || 50; // Use configured chunk size
         let currentIndex = 0;
 
@@ -692,103 +727,6 @@ export class MarkerManager {
         this.map = null;
     }
 
-    // Optimized clustering with spatial indexing
-    private createSpatialIndex(
-        markers: Array<{id: string; position: google.maps.LatLngLiteral}>,
-        gridSize: number,
-    ) {
-        const spatialIndex = new Map<string, string[]>();
-
-        for (const marker of markers) {
-            const gridX = Math.floor(marker.position.lng / gridSize);
-            const gridY = Math.floor(marker.position.lat / gridSize);
-            const gridKey = `${gridX},${gridY}`;
-
-            if (!spatialIndex.has(gridKey)) {
-                spatialIndex.set(gridKey, []);
-            }
-            spatialIndex.get(gridKey)!.push(marker.id);
-        }
-
-        return spatialIndex;
-    }
-
-    private groupMarkersIntoClusters(
-        markers: Array<{id: string; position: google.maps.LatLngLiteral}>,
-        bounds: google.maps.LatLngBounds,
-        zoom: number,
-    ): Array<{center: google.maps.LatLngLiteral; markers: string[]; size: number}> {
-        const clusterRadius = Math.max(0.001, 0.01 / Math.pow(2, zoom - 10)); // Adjust based on zoom level
-
-        // Always use spatial indexing - it's faster for all dataset sizes
-        return this.groupMarkersWithSpatialIndex(markers, clusterRadius);
-    }
-
-    private groupMarkersWithSpatialIndex(
-        markers: Array<{id: string; position: google.maps.LatLngLiteral}>,
-        clusterRadius: number,
-    ): Array<{center: google.maps.LatLngLiteral; markers: string[]; size: number}> {
-        const clusters: Array<{
-            center: google.maps.LatLngLiteral;
-            markers: string[];
-            size: number;
-        }> = [];
-
-        // Create spatial index with smaller grid for clustering
-        const gridSize = clusterRadius * 2;
-        const spatialIndex = this.createSpatialIndex(markers, gridSize);
-
-        // Process each grid cell
-        for (const [gridKey, markerIds] of spatialIndex.entries()) {
-            if (markerIds.length === 1) {
-                // Single marker, no clustering needed
-                const marker = markers.find(m => m.id === markerIds[0])!;
-                clusters.push({
-                    center: marker.position,
-                    markers: markerIds,
-                    size: 1,
-                });
-            } else {
-                // Multiple markers in this grid cell, create cluster
-                const gridMarkers = markers.filter(m => markerIds.includes(m.id));
-                const center = this.calculateClusterCenter(markerIds, markers);
-
-                clusters.push({
-                    center,
-                    markers: markerIds,
-                    size: markerIds.length,
-                });
-            }
-        }
-
-        return clusters;
-    }
-
-    private sortClustersByPriority(
-        clusters: Array<{center: google.maps.LatLngLiteral; markers: string[]; size: number}>,
-        bounds: google.maps.LatLngBounds,
-    ): Array<{center: google.maps.LatLngLiteral; markers: string[]; size: number}> {
-        const mapCenter = bounds.getCenter();
-
-        return clusters.sort((a, b) => {
-            // First priority: smaller clusters (individual markers first)
-            if (a.size !== b.size) {
-                return a.size - b.size;
-            }
-
-            // Second priority: closer to map center
-            const distanceA = this.calculateDistance(a.center, {
-                lat: mapCenter.lat(),
-                lng: mapCenter.lng(),
-            });
-            const distanceB = this.calculateDistance(b.center, {
-                lat: mapCenter.lat(),
-                lng: mapCenter.lng(),
-            });
-            return distanceA - distanceB;
-        });
-    }
-
     private calculateDistance(
         pos1: google.maps.LatLngLiteral,
         pos2: google.maps.LatLngLiteral,
@@ -806,22 +744,5 @@ export class MarkerManager {
         return 6371 * c; // Earth's radius in km
     }
 
-    private calculateClusterCenter(
-        markerIds: string[],
-        allMarkers: Array<{id: string; position: google.maps.LatLngLiteral}>,
-    ): google.maps.LatLngLiteral {
-        const clusterMarkers = allMarkers.filter(m => markerIds.includes(m.id));
-
-        if (clusterMarkers.length === 0) {
-            return {lat: 0, lng: 0};
-        }
-
-        const totalLat = clusterMarkers.reduce((sum, m) => sum + m.position.lat, 0);
-        const totalLng = clusterMarkers.reduce((sum, m) => sum + m.position.lng, 0);
-
-        return {
-            lat: totalLat / clusterMarkers.length,
-            lng: totalLng / clusterMarkers.length,
-        };
-    }
+    // --- end viewport helpers ---
 }
