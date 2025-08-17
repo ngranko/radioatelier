@@ -7,7 +7,9 @@ export interface MarkerManagerOptions {
     chunkSize?: number; // Number of markers to process per animation frame
     maxVisibleMarkers?: number; // Maximum markers to display on screen at once
     enableProfiling?: boolean; // Enable verbose profiling of redraw pipeline
-    lazyCreatePerFrame?: number; // Max number of lazy DOM creations per frame
+    animationsEnabled?: boolean; // Enable marker CSS animations
+    smallBatchThreshold?: number; // Apply all toggles in one frame if under this
+    bulkAnimationThreshold?: number; // Disable animations when many toggles
 }
 
 export class MarkerManager {
@@ -85,8 +87,10 @@ export class MarkerManager {
             lazyLoadThreshold: 500,
             enableLazyLoading: true,
             chunkSize: 50, // Process 50 markers per animation frame
-            maxVisibleMarkers: 1000,
-            lazyCreatePerFrame: 8, // Limit expensive DOM creations per frame
+            maxVisibleMarkers: 200,
+            animationsEnabled: true,
+            smallBatchThreshold: 200,
+            bulkAnimationThreshold: 150,
             ...options,
         };
         this.profilingEnabled = !!this.options.enableProfiling;
@@ -522,13 +526,19 @@ export class MarkerManager {
 
         // Cached markers
         const scanCachedStart = this.profilingEnabled ? performance.now() : 0;
+        // Numeric bounds check (faster than repeatedly calling bounds.contains)
+        const sw = bounds.getSouthWest();
+        const ne = bounds.getNorthEast();
+        const minLat = sw.lat();
+        const minLng = sw.lng();
+        const maxLat = ne.lat();
+        const maxLng = ne.lng();
+
         for (const [id, marker] of markers.entries()) {
-            const position = {
-                lat: Number(marker.position?.lat),
-                lng: Number(marker.position?.lng),
-            };
-            if (bounds.contains(position)) {
-                allMarkersInViewport.push({id, position});
+            const lat = Number(marker.position?.lat);
+            const lng = Number(marker.position?.lng);
+            if (lat >= minLat && lat <= maxLat && lng >= minLng && lng <= maxLng) {
+                allMarkersInViewport.push({id, position: {lat, lng}});
             }
         }
         if (this.profilingEnabled && this.currentProfile) {
@@ -540,7 +550,9 @@ export class MarkerManager {
         const scanLazyStart = this.profilingEnabled ? performance.now() : 0;
         for (const [id, markerData] of this.markerData.entries()) {
             if (markers.has(id)) continue; // already captured above
-            if (markerData.isLazy && bounds.contains(markerData.position)) {
+            const lat = markerData.position.lat;
+            const lng = markerData.position.lng;
+            if (markerData.isLazy && lat >= minLat && lat <= maxLat && lng >= minLng && lng <= maxLng) {
                 allMarkersInViewport.push({id, position: markerData.position});
             }
         }
@@ -613,6 +625,13 @@ export class MarkerManager {
         const maxVisibleMarkers = this.options.maxVisibleMarkers || 200;
         const visibleIds = this.pickVisibleIds(sortedMarkers, maxVisibleMarkers);
 
+        // Determine batch strategy and animation policy
+        const totalKnown = this.markerCache.size + this.markerData.size;
+        const smallBatchThreshold = this.options.smallBatchThreshold ?? 200;
+        const bulkAnimationThreshold = this.options.bulkAnimationThreshold ?? 150;
+        const plannedToggles = Math.min(totalKnown, Math.abs(visibleIds.size - this.visibleMarkers.size));
+        const disableAnimationsForBulk = plannedToggles > bulkAnimationThreshold;
+
         // 4) Plan visibility changes (diff current vs target) for profiling
         const planStart = this.profilingEnabled ? performance.now() : 0;
         let plannedShow = 0;
@@ -634,6 +653,20 @@ export class MarkerManager {
 
         // 5) Process marker visibility updates in chunks using requestAnimationFrame
         const visibilityStart = this.profilingEnabled ? performance.now() : 0;
+        if (plannedToggles <= smallBatchThreshold) {
+            // Apply all toggles in one frame for small batches
+            requestAnimationFrame(() => {
+                this.processMarkerVisibilityBatch(visibleIds, markers, disableAnimationsForBulk);
+                if (this.profilingEnabled && this.currentProfile) {
+                    this.currentProfile.timings.visibilityUpdates = performance.now() - visibilityStart;
+                    this.currentProfile.timings.updateMarkersInViewport = performance.now() - sectionStart;
+                }
+                this.updateInProgress = false;
+                this.endProfile();
+            });
+            return;
+        }
+
         this.processMarkerVisibilityUpdates(visibleIds, markers, () => {
             if (this.profilingEnabled && this.currentProfile) {
                 this.currentProfile.timings.visibilityUpdates = performance.now() - visibilityStart;
@@ -643,59 +676,79 @@ export class MarkerManager {
         });
     }
 
+    // Apply visibility changes immediately (single frame), with optional animation suppression
+    private processMarkerVisibilityBatch(
+        visibleIds: Set<string>,
+        markers: Map<string, google.maps.marker.AdvancedMarkerElement>,
+        disableAnimations: boolean,
+    ) {
+        const originalAnimationsEnabled = this.options.animationsEnabled !== false;
+        const skipAnimations = disableAnimations && originalAnimationsEnabled;
+
+        // Temporarily disable animations by skipping class toggles
+        const prevShow = this.showMarker;
+        const prevHide = this.hideMarker;
+        if (skipAnimations) {
+            this.showMarker = (id: string) => {
+                const marker = this.markerCache.get(id);
+                if (marker) {
+                    this.visibleMarkers.add(id);
+                    marker.map = this.map;
+                    if (this.profilingEnabled && this.currentProfile) this.currentProfile.counts.shown++;
+                } else {
+                    const data = this.markerData.get(id);
+                    if (data?.isLazy) {
+                        const newMarker = this.createMarkerDOM(id, data.position, data.options);
+                        this.markerCache.set(id, newMarker);
+                        this.visibleMarkers.add(id);
+                        newMarker.map = this.map;
+                        if (this.profilingEnabled && this.currentProfile) this.currentProfile.counts.shown++;
+                    }
+                }
+            };
+            this.hideMarker = (id: string) => {
+                const marker = this.markerCache.get(id);
+                if (!marker) return;
+                this.visibleMarkers.delete(id);
+                marker.map = null;
+                if (this.profilingEnabled && this.currentProfile) this.currentProfile.counts.hidden++;
+            };
+        }
+
+        // Apply diff
+        const allIds = new Set<string>([...markers.keys(), ...this.markerData.keys()]);
+        for (const id of allIds) {
+            const shouldBeVisible = visibleIds.has(id);
+            const isVisible = this.visibleMarkers.has(id);
+            if (shouldBeVisible !== isVisible) {
+                this.updateMarkerVisibility(id, shouldBeVisible);
+            }
+        }
+
+        // Restore original methods
+        if (skipAnimations) {
+            this.showMarker = prevShow;
+            this.hideMarker = prevHide;
+        }
+    }
+
     private processMarkerVisibilityUpdates(
         visibleIds: Set<string>,
         markers: Map<string, google.maps.marker.AdvancedMarkerElement>,
         onComplete?: () => void,
     ) {
-        // Only toggle markers whose visibility state would change
-        const idsNeedingToggle: string[] = [];
-        const fullSet = new Set<string>([...markers.keys(), ...this.markerData.keys()]);
-        for (const id of fullSet) {
-            const shouldBeVisible = visibleIds.has(id);
-            const currentlyVisible = this.visibleMarkers.has(id);
-            if (shouldBeVisible !== currentlyVisible) {
-                idsNeedingToggle.push(id);
-            }
-        }
-
-        const allMarkerIds = idsNeedingToggle;
+        // Process all known ids to avoid sequential reveal side-effects
+        const allMarkerIds = Array.from(new Set([...markers.keys(), ...this.markerData.keys()]));
         const chunkSize = this.options.chunkSize || 50; // Use configured chunk size
         let currentIndex = 0;
 
         const processChunk = () => {
             const endIndex = Math.min(currentIndex + chunkSize, allMarkerIds.length);
 
-            // Batching: attach/detach map references in micro-batches to reduce layout thrash
-            const toShow: string[] = [];
-            const toHide: string[] = [];
-
             for (let i = currentIndex; i < endIndex; i++) {
                 const id = allMarkerIds[i];
                 const shouldBeVisible = visibleIds.has(id);
-                if (shouldBeVisible) toShow.push(id);
-                else toHide.push(id);
-            }
-
-            // First, hide markers (cheap: map=null), then show (may create DOM)
-            for (const id of toHide) {
-                this.updateMarkerVisibility(id, false);
-            }
-
-            // Limit expensive DOM creations per frame
-            const maxCreates = this.options.lazyCreatePerFrame || 8;
-            let created = 0;
-            for (const id of toShow) {
-                if (created >= maxCreates) break;
-                this.updateMarkerVisibility(id, true);
-                created++;
-            }
-
-            // Defer remaining shows to next frame by pushing them back into the queue
-            if (created < toShow.length) {
-                const remaining = toShow.slice(created);
-                // Insert remaining ids right after current window so they are picked next
-                allMarkerIds.splice(endIndex, 0, ...remaining);
+                this.updateMarkerVisibility(id, shouldBeVisible);
             }
 
             if (this.profilingEnabled && this.currentProfile) {

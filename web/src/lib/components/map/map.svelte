@@ -58,8 +58,13 @@
             const mapInstance = new Map(container!, mapOptions);
 
             // Initialize marker manager for optimized rendering
-            const profiling = new URLSearchParams(window.location.search).has('profileMarkers');
-            const manager = new MarkerManager({ enableProfiling: profiling });
+            const qs = new URLSearchParams(window.location.search);
+            const profiling = qs.has('profileMarkers');
+            const disableLazy = qs.has('noLazy'); // Use ?noLazy to disable lazy loading
+            const manager = new MarkerManager({
+                enableProfiling: profiling,
+                enableLazyLoading: !disableLazy,
+            });
             await manager.initialize(mapInstance, $mapLoader);
             markerManager.set(manager);
 
