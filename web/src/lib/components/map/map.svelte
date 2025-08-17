@@ -19,75 +19,8 @@
     let lastClickTapTime = 0;
     let clickTapCount = 0;
     let isInZoomMode = false;
-
-    // Canvas overlay for non-interactive marker dots
-    let overlayCanvas: HTMLCanvasElement | null = null;
-    let overlayCtx: CanvasRenderingContext2D | null = null;
-    let overlayNeedsResize = true;
-
-    function ensureOverlay(container: HTMLDivElement) {
-        if (overlayCanvas) return;
-        overlayCanvas = document.createElement('canvas');
-        overlayCanvas.style.position = 'absolute';
-        overlayCanvas.style.top = '0';
-        overlayCanvas.style.left = '0';
-        overlayCanvas.style.width = '100%';
-        overlayCanvas.style.height = '100%';
-        overlayCanvas.style.pointerEvents = 'none';
-        container.appendChild(overlayCanvas);
-        overlayCtx = overlayCanvas.getContext('2d');
-        overlayNeedsResize = true;
-    }
-
-    function resizeOverlay() {
-        if (!overlayCanvas || !container) return;
-        const dpr = window.devicePixelRatio || 1;
-        const rect = container.getBoundingClientRect();
-        const width = Math.floor(rect.width * dpr);
-        const height = Math.floor(rect.height * dpr);
-        if (overlayCanvas.width !== width || overlayCanvas.height !== height) {
-            overlayCanvas.width = width;
-            overlayCanvas.height = height;
-            overlayNeedsResize = true;
-        }
-        if (overlayCtx) overlayCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    }
-
-    function lonLatToPixel(lat: number, lng: number): { x: number; y: number } | null {
-        if (!$map) return null;
-        const projection = $map.getProjection?.();
-        if (!projection) return null;
-        const bounds = $map.getBounds();
-        if (!bounds) return null;
-        const topRight = projection.fromLatLngToPoint(bounds.getNorthEast());
-        const bottomLeft = projection.fromLatLngToPoint(bounds.getSouthWest());
-        const scale = Math.pow(2, $map.getZoom() || 0);
-        const point = projection.fromLatLngToPoint(new google.maps.LatLng(lat, lng));
-        return {
-            x: (point!.x - bottomLeft!.x) * scale,
-            y: (point!.y - topRight!.y) * scale,
-        };
-    }
-
-    function drawOverlayDots() {
-        if (!overlayCtx || !overlayCanvas) return;
-        if (!$markerManager || !$map) return;
-        resizeOverlay();
-        const ctx = overlayCtx;
-        ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
-        const points = $markerManager.getViewportPositionsForOverlay();
-        if (!points.length) return;
-        ctx.save();
-        ctx.fillStyle = '#007aff33';
-        for (const p of points) {
-            const pixel = lonLatToPixel(p.lat, p.lng);
-            if (!pixel) continue;
-            ctx.beginPath();
-            ctx.arc(pixel.x, pixel.y, 3, 0, Math.PI * 2);
-            ctx.fill();
-        }
-        ctx.restore();
-    }
+    let debugVisible = false;
+    let debugEl: HTMLDivElement | null = null;
 
     const location = createMutation({
         mutationFn: getLocation,
@@ -131,6 +64,7 @@
             const qs = new URLSearchParams(window.location.search);
             const profiling = qs.has('profileMarkers');
             const disableLazy = qs.has('noLazy'); // Use ?noLazy to disable lazy loading
+            debugVisible = qs.has('debugMarkers');
             const manager = new MarkerManager({
                 enableProfiling: profiling,
                 enableLazyLoading: !disableLazy,
@@ -139,8 +73,6 @@
             markerManager.set(manager);
 
             map.update(() => mapInstance);
-            ensureOverlay(container!);
-            drawOverlayDots();
 
             // Trigger initial viewport update to show markers
             // Use multiple fallbacks to ensure markers are shown
@@ -162,6 +94,9 @@
 
             // Try after a longer delay as final fallback
             setTimeout(triggerInitialUpdate, 1000);
+
+            // Render debug if requested
+            renderDebug();
         } catch (e) {
             console.error('error instantiating map');
             console.error(e);
@@ -192,11 +127,9 @@
                         if ($markerManager) {
                             $markerManager.triggerViewportUpdate();
                         }
-                        drawOverlayDots();
+                        renderDebug();
                     }, 50),
                 );
-                event.addListener($map, 'zoom_changed', () => drawOverlayDots());
-                event.addListener($map, 'drag', () => drawOverlayDots());
 
                 event.addListener($map, 'click', function (event: google.maps.MapMouseEvent) {
                     if (isInZoomMode) {
@@ -368,6 +301,97 @@
             $markerManager.destroy();
         }
     });
+
+    function renderDebug() {
+        if (!debugVisible || !$markerManager) return;
+        if (!debugEl) {
+            debugEl = document.createElement('div');
+            debugEl.style.position = 'absolute';
+            debugEl.style.top = '8px';
+            debugEl.style.right = '8px';
+            debugEl.style.zIndex = '1000';
+            debugEl.style.background = 'rgba(0,0,0,0.7)';
+            debugEl.style.color = 'white';
+            debugEl.style.padding = '8px';
+            debugEl.style.borderRadius = '6px';
+            debugEl.style.maxWidth = '320px';
+            container?.appendChild(debugEl);
+        }
+        const opts = $markerManager.getOptions();
+        const last = $markerManager.getLastProfile();
+        debugEl!.innerHTML = `
+<div style="font-weight:600;margin-bottom:6px;">Markers Debug</div>
+<div style="display:flex;gap:6px;flex-wrap:wrap;">
+  <label style="display:flex;gap:4px;align-items:center;">maxVisible
+    <input type="number" value="${opts.maxVisibleMarkers ?? 200}" data-k="maxVisibleMarkers" style="width:80px;background:#222;color:#fff;border:1px solid #444;border-radius:4px;padding:2px 4px;" />
+  </label>
+  <label style="display:flex;gap:4px;align-items:center;">chunkSize
+    <input type="number" value="${opts.chunkSize ?? 50}" data-k="chunkSize" style="width:80px;background:#222;color:#fff;border:1px solid #444;border-radius:4px;padding:2px 4px;" />
+  </label>
+  <label style="display:flex;gap:4px;align-items:center;">smallCluster
+    <input type="number" value="${opts.smallClusterMaxSize ?? 3}" data-k="smallClusterMaxSize" style="width:80px;background:#222;color:#fff;border:1px solid #444;border-radius:4px;padding:2px 4px;" />
+  </label>
+  <label style="display:flex;gap:4px;align-items:center;">subgridFactor
+    <input type="number" step="0.1" value="${opts.clusterSubgridFactor ?? 0.5}" data-k="clusterSubgridFactor" style="width:80px;background:#222;color:#fff;border:1px solid #444;border-radius:4px;padding:2px 4px;" />
+  </label>
+  <label style="display:flex;gap:4px;align-items:center;">maxPerCluster
+    <input type="number" value="${opts.maxMarkersPerCluster ?? 50}" data-k="maxMarkersPerCluster" style="width:90px;background:#222;color:#fff;border:1px solid #444;border-radius:4px;padding:2px 4px;" />
+  </label>
+  <label style="display:flex;gap:4px;align-items:center;">profiling
+    <input type="checkbox" ${opts.enableProfiling ? 'checked' : ''} data-k="enableProfiling" />
+  </label>
+</div>
+<div style="margin-top:6px;font-size:12px;line-height:1.4;white-space:pre-wrap;">${
+            last
+                ? JSON.stringify(
+                      {
+                          totalMs: Math.round(last.timings.total),
+                          scanCachedMs: Math.round(last.timings.scanCached),
+                          scanLazyMs: Math.round(last.timings.scanLazy),
+                          sortingMs: Math.round(last.timings.sorting),
+                          selectionMs: Math.round(last.timings.selection),
+                          planVisibilityMs: Math.round(last.timings.planVisibility),
+                          visibilityUpdatesMs: Math.round(last.timings.visibilityUpdates),
+                          counts: last.counts,
+                          chunks: last.chunks,
+                      },
+                      null,
+                      2,
+                  )
+                : 'no profile yet'
+        }</div>
+`;
+
+        const inputs = debugEl!.querySelectorAll('input');
+        inputs.forEach(inp => {
+            inp.onchange = () => {
+                const key = (inp as HTMLInputElement).dataset.k as any;
+                let val: any = (inp as HTMLInputElement).value;
+                if (inp.type === 'number') {
+                    val = inp.step && inp.step.includes('.') ? parseFloat(val) : parseInt(val);
+                }
+                if (inp.type === 'checkbox') {
+                    val = (inp as HTMLInputElement).checked;
+                }
+                if ($markerManager) {
+                    // Map UI keys to options
+                    const mapping: Record<string, string> = {
+                        maxVisibleMarkers: 'maxVisibleMarkers',
+                        chunkSize: 'chunkSize',
+                        smallClusterMaxSize: 'smallClusterMaxSize',
+                        clusterSubgridFactor: 'clusterSubgridFactor',
+                        maxMarkersPerCluster: 'maxMarkersPerCluster',
+                        enableProfiling: 'enableProfiling',
+                    };
+                    const optKey = mapping[key] as keyof ReturnType<
+                        typeof $markerManager.getOptions
+                    >;
+                    $markerManager.updateOptions({[optKey]: val} as any);
+                    setTimeout(renderDebug, 0);
+                }
+            };
+        });
+    }
 
     async function getCenter(): Promise<Location> {
         if (localStorage.getItem('lastCenter')) {

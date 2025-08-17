@@ -10,6 +10,9 @@ export interface MarkerManagerOptions {
     animationsEnabled?: boolean; // Enable marker CSS animations
     smallBatchThreshold?: number; // Apply all toggles in one frame if under this
     bulkAnimationThreshold?: number; // Disable animations when many toggles
+    smallClusterMaxSize?: number; // Clusters up to this size render fully
+    clusterSubgridFactor?: number; // Sub-grid factor for pruning within large clusters
+    maxMarkersPerCluster?: number; // Hard cap per large cluster after pruning
 }
 
 export class MarkerManager {
@@ -52,6 +55,7 @@ export class MarkerManager {
                 updateMarkersInViewport: number;
                 scanCached: number;
                 scanLazy: number;
+                clustering: number;
                 sorting: number;
                 selection: number;
                 planVisibility: number;
@@ -61,6 +65,10 @@ export class MarkerManager {
                 cachedMarkers: number;
                 lazyMarkers: number;
                 inViewportAll: number;
+                clusters: number;
+                largeClusters: number;
+                selectedAfterCluster: number;
+                selectedAfterTrim: number;
                 selectedVisible: number;
                 plannedShow: number;
                 plannedHide: number;
@@ -91,6 +99,9 @@ export class MarkerManager {
             animationsEnabled: true,
             smallBatchThreshold: 200,
             bulkAnimationThreshold: 150,
+            smallClusterMaxSize: 3,
+            clusterSubgridFactor: 0.5,
+            maxMarkersPerCluster: 50,
             ...options,
         };
         this.profilingEnabled = !!this.options.enableProfiling;
@@ -104,6 +115,19 @@ export class MarkerManager {
         return this.lastProfile;
     }
 
+    getOptions(): MarkerManagerOptions {
+        return {...this.options};
+    }
+
+    updateOptions(partial: Partial<MarkerManagerOptions>) {
+        this.options = {
+            ...this.options,
+            ...partial,
+        };
+        // Re-render according to new rules
+        this.triggerViewportUpdate();
+    }
+
     private startProfile() {
         if (!this.profilingEnabled) return;
         this.currentProfile = {
@@ -113,6 +137,7 @@ export class MarkerManager {
                 updateMarkersInViewport: 0,
                 scanCached: 0,
                 scanLazy: 0,
+                clustering: 0,
                 sorting: 0,
                 selection: 0,
                 planVisibility: 0,
@@ -122,6 +147,10 @@ export class MarkerManager {
                 cachedMarkers: 0,
                 lazyMarkers: 0,
                 inViewportAll: 0,
+                clusters: 0,
+                largeClusters: 0,
+                selectedAfterCluster: 0,
+                selectedAfterTrim: 0,
                 selectedVisible: 0,
                 plannedShow: 0,
                 plannedHide: 0,
@@ -155,6 +184,7 @@ export class MarkerManager {
             ),
             scanCachedMs: Math.round(this.currentProfile.timings.scanCached),
             scanLazyMs: Math.round(this.currentProfile.timings.scanLazy),
+            clusteringMs: Math.round(this.currentProfile.timings.clustering),
             sortingMs: Math.round(this.currentProfile.timings.sorting),
             selectionMs: Math.round(this.currentProfile.timings.selection),
             planVisibilityMs: Math.round(this.currentProfile.timings.planVisibility),
@@ -603,26 +633,7 @@ export class MarkerManager {
         return visibleIds;
     }
 
-    // Expose fast viewport positions for overlays (uses numeric bounds check)
-    getViewportPositionsForOverlay(): Array<{lat: number; lng: number; color?: string}> {
-        if (!this.map || !this.map.getBounds()) return [];
-        const bounds = this.map.getBounds() as google.maps.LatLngBounds;
-        const sw = bounds.getSouthWest();
-        const ne = bounds.getNorthEast();
-        const minLat = sw.lat();
-        const minLng = sw.lng();
-        const maxLat = ne.lat();
-        const maxLng = ne.lng();
-        const out: Array<{lat: number; lng: number; color?: string}> = [];
-
-        for (const [id, data] of this.markerData.entries()) {
-            const {lat, lng} = data.position;
-            if (lat >= minLat && lat <= maxLat && lng >= minLng && lng <= maxLng) {
-                out.push({lat, lng, color: data.options?.color});
-            }
-        }
-        return out;
-    }
+    // (overlay positions helper removed)
 
     private updateMarkersInViewport(
         markers: Map<string, google.maps.marker.AdvancedMarkerElement>,
@@ -637,14 +648,20 @@ export class MarkerManager {
         // 1) Collect all viewport markers (cached + lazy)
         const allMarkersInViewport = this.collectMarkersInViewport(markers, bounds);
 
-        // 2) Sort by distance from center
+        // 2) Cluster in-grid, then apply hybrid pruning
         const center = bounds.getCenter();
         const centerPosition = {lat: center.lat(), lng: center.lng()};
-        const sortedMarkers = this.sortMarkersByDistance(allMarkersInViewport, centerPosition);
-
-        // 3) Pick visible ids up to max limit
-        const maxVisibleMarkers = this.options.maxVisibleMarkers || 200;
-        const visibleIds = this.pickVisibleIds(sortedMarkers, maxVisibleMarkers);
+        const clusterStart = this.profilingEnabled ? performance.now() : 0;
+        const clusteredVisibleIds = this.hybridClusterAndSelectIds(
+            allMarkersInViewport,
+            centerPosition,
+            bounds,
+        );
+        if (this.profilingEnabled && this.currentProfile) {
+            this.currentProfile.timings.clustering = performance.now() - clusterStart;
+            this.currentProfile.counts.selectedAfterCluster = clusteredVisibleIds.size;
+        }
+        const visibleIds = clusteredVisibleIds;
 
         // Determine batch strategy and animation policy
         const totalKnown = this.markerCache.size + this.markerData.size;
@@ -695,6 +712,116 @@ export class MarkerManager {
             }
             this.endProfile();
         });
+    }
+
+    // Hybrid clustering:
+    // - Build coarse grid clusters
+    // - If cluster size <= smallClusterMaxSize: render all
+    // - Else: subdivide area and select representatives by proximity to subcell centers
+    private hybridClusterAndSelectIds(
+        markers: Array<{id: string; position: google.maps.LatLngLiteral}>,
+        center: google.maps.LatLngLiteral,
+        bounds: google.maps.LatLngBounds,
+    ): Set<string> {
+        const maxVisibleMarkers = this.options.maxVisibleMarkers || 200;
+        const smallMax = this.options.smallClusterMaxSize ?? 3;
+        const subFactor = this.options.clusterSubgridFactor ?? 0.5;
+        const maxPerCluster = this.options.maxMarkersPerCluster ?? 50;
+
+        // Grid size relative to viewport extent
+        const sw = bounds.getSouthWest();
+        const ne = bounds.getNorthEast();
+        const latSpan = Math.max(1e-6, ne.lat() - sw.lat());
+        const lngSpan = Math.max(1e-6, ne.lng() - sw.lng());
+        const cellLat = latSpan / 20; // 20x20 coarse grid
+        const cellLng = lngSpan / 20;
+
+        const grid = new Map<string, Array<{id: string; position: google.maps.LatLngLiteral}>>();
+        for (const m of markers) {
+            const gx = Math.floor((m.position.lng - sw.lng()) / cellLng);
+            const gy = Math.floor((m.position.lat - sw.lat()) / cellLat);
+            const key = `${gx}:${gy}`;
+            if (!grid.has(key)) grid.set(key, []);
+            grid.get(key)!.push(m);
+        }
+
+        const selected = new Set<string>();
+        if (this.profilingEnabled && this.currentProfile) {
+            this.currentProfile.counts.clusters = grid.size;
+        }
+
+        for (const cluster of grid.values()) {
+            if (cluster.length <= smallMax) {
+                for (const m of cluster) selected.add(m.id);
+                continue;
+            }
+            if (this.profilingEnabled && this.currentProfile) {
+                this.currentProfile.counts.largeClusters++;
+            }
+
+            // Subdivide cluster area
+            let minLat = Infinity,
+                maxLat = -Infinity,
+                minLng = Infinity,
+                maxLng = -Infinity;
+            for (const m of cluster) {
+                if (m.position.lat < minLat) minLat = m.position.lat;
+                if (m.position.lat > maxLat) maxLat = m.position.lat;
+                if (m.position.lng < minLng) minLng = m.position.lng;
+                if (m.position.lng > maxLng) maxLng = m.position.lng;
+            }
+            const subLat = Math.max(1e-6, (maxLat - minLat) * subFactor);
+            const subLng = Math.max(1e-6, (maxLng - minLng) * subFactor);
+
+            const subgrid = new Map<string, Array<{id: string; position: google.maps.LatLngLiteral}>>();
+            for (const m of cluster) {
+                const sx = Math.floor((m.position.lng - minLng) / subLng);
+                const sy = Math.floor((m.position.lat - minLat) / subLat);
+                const k = `${sx}:${sy}`;
+                if (!subgrid.has(k)) subgrid.set(k, []);
+                subgrid.get(k)!.push(m);
+            }
+
+            // From each subcell, pick nearest to subcell center
+            const picks: string[] = [];
+            for (const [k, list] of subgrid.entries()) {
+                const [sxStr, syStr] = k.split(':');
+                const sx = Number(sxStr);
+                const sy = Number(syStr);
+                const cx = minLng + (sx + 0.5) * subLng;
+                const cy = minLat + (sy + 0.5) * subLat;
+                let bestId = list[0].id;
+                let bestDist = Infinity;
+                for (const m of list) {
+                    const d = this.calculateDistance(m.position, {lat: cy, lng: cx});
+                    if (d < bestDist) {
+                        bestDist = d;
+                        bestId = m.id;
+                    }
+                }
+                picks.push(bestId);
+            }
+
+            // Hard cap per cluster to avoid overdraw
+            for (const id of picks.slice(0, maxPerCluster)) selected.add(id);
+        }
+
+        // If still over maxVisibleMarkers, trim by distance to map center
+        if (selected.size > maxVisibleMarkers) {
+            const arr = Array.from(selected);
+            arr.sort((a, b) => {
+                const pa = markers.find(m => m.id === a)!.position;
+                const pb = markers.find(m => m.id === b)!.position;
+                return this.calculateDistance(pa, center) - this.calculateDistance(pb, center);
+            });
+            const trimmed = new Set(arr.slice(0, maxVisibleMarkers));
+            if (this.profilingEnabled && this.currentProfile) {
+                this.currentProfile.counts.selectedAfterTrim = trimmed.size;
+            }
+            return trimmed;
+        }
+
+        return selected;
     }
 
     // Apply visibility changes immediately (single frame), with optional animation suppression
