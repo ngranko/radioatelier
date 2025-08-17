@@ -45,6 +45,9 @@ export class MarkerManager {
     // Update tracking for chunked processing
     private updateInProgress = false;
 
+    // Cluster selection cache to stabilize visible picks within clusters
+    private clusterSelectionCache = new Map<string, { selectedIds: string[]; membersKey: string }>();
+
     // Profiling state
     private profilingEnabled = false;
     private currentProfile:
@@ -782,24 +785,37 @@ export class MarkerManager {
                 subgrid.get(k)!.push(m);
             }
 
-            // From each subcell, pick nearest to subcell center
-            const picks: string[] = [];
-            for (const [k, list] of subgrid.entries()) {
-                const [sxStr, syStr] = k.split(':');
-                const sx = Number(sxStr);
-                const sy = Number(syStr);
-                const cx = minLng + (sx + 0.5) * subLng;
-                const cy = minLat + (sy + 0.5) * subLat;
-                let bestId = list[0].id;
-                let bestDist = Infinity;
-                for (const m of list) {
-                    const d = this.calculateDistance(m.position, {lat: cy, lng: cx});
-                    if (d < bestDist) {
-                        bestDist = d;
-                        bestId = m.id;
+            // Cache key for cluster membership to keep picks stable while dragging
+            const membersKey = cluster
+                .map(m => m.id)
+                .sort()
+                .join(',');
+            const clusterKey = `${minLat.toFixed(5)}:${minLng.toFixed(5)}:${maxLat.toFixed(5)}:${maxLng.toFixed(5)}|${cluster.length}`;
+            const cached = this.clusterSelectionCache.get(clusterKey);
+            let picks: string[] | null = null;
+            if (cached && cached.membersKey === membersKey) {
+                picks = cached.selectedIds.slice(0);
+            }
+            if (!picks) {
+                picks = [];
+                for (const [k, list] of subgrid.entries()) {
+                    const [sxStr, syStr] = k.split(':');
+                    const sx = Number(sxStr);
+                    const sy = Number(syStr);
+                    const cx = minLng + (sx + 0.5) * subLng;
+                    const cy = minLat + (sy + 0.5) * subLat;
+                    let bestId = list[0].id;
+                    let bestDist = Infinity;
+                    for (const m of list) {
+                        const d = this.calculateDistance(m.position, {lat: cy, lng: cx});
+                        if (d < bestDist) {
+                            bestDist = d;
+                            bestId = m.id;
+                        }
                     }
+                    picks.push(bestId);
                 }
-                picks.push(bestId);
+                this.clusterSelectionCache.set(clusterKey, {selectedIds: picks.slice(0), membersKey});
             }
 
             // Hard cap per cluster to avoid overdraw
