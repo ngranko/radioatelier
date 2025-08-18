@@ -1,4 +1,5 @@
 import {dragTimeout} from '$lib/stores/map.ts';
+import {getRasterIcon, makeCircleSvgDataUrl} from '$lib/services/map/iconRaster';
 
 export interface MarkerManagerOptions {
     viewportPadding?: number;
@@ -41,6 +42,9 @@ export class MarkerManager {
     // Pre-loaded marker library components
     private advancedMarkerElement?: typeof google.maps.marker.AdvancedMarkerElement;
     private collisionBehavior?: typeof google.maps.CollisionBehavior;
+
+    // Rendering mode flag
+    private useRasterIcons = false;
 
     // Update tracking for chunked processing
     private updateInProgress = false;
@@ -211,6 +215,12 @@ export class MarkerManager {
         } catch (error) {
             console.error('Failed to pre-load marker library:', error);
         }
+
+        // Toggle raster mode via query parameter ?raster
+        try {
+            const qs = new URLSearchParams(window.location.search);
+            this.useRasterIcons = qs.has('raster');
+        } catch {}
     }
 
     createMarker(
@@ -296,17 +306,46 @@ export class MarkerManager {
 
         const creationStart = this.profilingEnabled ? performance.now() : 0;
 
-        // Create marker element with proper class list
-        const iconElement = document.createElement('div');
-        iconElement.style.backgroundColor = options.color;
-        iconElement.innerHTML = `<i class="${options.icon}" style="pointer-events:none;"></i>`;
-        iconElement.className =
-            'w-6 h-6 translate-y-1/2 flex justify-center items-center rounded-full text-sm text-white transition-transform transition-opacity duration-100 ease-in-out animate-popin';
+        // Create marker content element
+        let contentEl: HTMLElement;
+        if (this.useRasterIcons) {
+            // Wrap the image and visually anchor at bottom via translate-y-1/2
+            const wrapper = document.createElement('div');
+            wrapper.className = 'w-6 h-6 translate-y-1/2 rounded-full flex justify-center items-center transition-transform transition-opacity duration-100 ease-in-out animate-popin';
+            wrapper.style.overflow = 'visible';
+            wrapper.style.backgroundColor = options.color;
+            const img = document.createElement('img');
+            img.alt = 'marker';
+            img.draggable = false;
+            img.style.display = 'block';
+            img.style.width = '24px';
+            img.style.height = '24px';
+            img.style.borderRadius = '9999px';
+            img.style.pointerEvents = 'none';
+            // Immediate placeholder to avoid broken image flash
+            img.src = makeCircleSvgDataUrl(options.color, 24);
+            void getRasterIcon({iconClass: options.icon, color: options.color, sizePx: 24}).then(
+                icon => {
+                    img.src = icon.url;
+                },
+            );
+            wrapper.appendChild(img);
+            contentEl = wrapper;
+        } else {
+            const iconElement = document.createElement('div');
+            iconElement.className =
+                'w-6 h-6 translate-y-1/2 flex justify-center items-center rounded-full transition-transform transition-opacity duration-100 ease-in-out animate-popin';
+            iconElement.style.overflow = 'visible';
+            iconElement.style.backgroundColor = options.color;
+            iconElement.classList.add('text-sm', 'text-white');
+            iconElement.innerHTML = `<i class="${options.icon}" style="pointer-events:none;"></i>`;
+            contentEl = iconElement;
+        }
 
         // Create marker using pre-loaded components
         const marker = new this.advancedMarkerElement({
             position,
-            content: iconElement,
+            content: contentEl,
             collisionBehavior: this.collisionBehavior.REQUIRED,
             gmpClickable: true,
             zIndex: options.source === 'search' ? 1 : 0,
@@ -326,7 +365,7 @@ export class MarkerManager {
 
         // Add drag listeners if needed
         if (options.isDraggable) {
-            iconElement.addEventListener('mousedown', () => {
+            contentEl.addEventListener('mousedown', () => {
                 if (options.onDragStart) {
                     dragTimeout.set(
                         setTimeout(async () => {
@@ -336,7 +375,7 @@ export class MarkerManager {
                     );
                 }
             });
-            iconElement.addEventListener('touchstart', () => {
+            contentEl.addEventListener('touchstart', () => {
                 if (options.onDragStart) {
                     dragTimeout.set(
                         setTimeout(async () => {
@@ -346,14 +385,14 @@ export class MarkerManager {
                     );
                 }
             });
-            iconElement.addEventListener('mouseup', () => {
+            contentEl.addEventListener('mouseup', () => {
                 if (options.onDragEnd) {
                     dragTimeout.remove();
                     options.onDragEnd();
                     (marker.content as HTMLElement).classList.remove('marker-dragging');
                 }
             });
-            iconElement.addEventListener('touchend', () => {
+            contentEl.addEventListener('touchend', () => {
                 if (options.onDragEnd) {
                     dragTimeout.remove();
                     options.onDragEnd();
@@ -374,7 +413,7 @@ export class MarkerManager {
 
         // Remove animation class after delay
         setTimeout(() => {
-            iconElement.classList.remove('animate-popin');
+            contentEl.classList.remove('animate-popin');
         }, 200);
 
         if (this.profilingEnabled && this.currentProfile) {

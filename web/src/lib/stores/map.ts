@@ -53,13 +53,17 @@ export const activeMarker = {
         privateActiveMarker.update(value => {
             if (value) {
                 (value.content as HTMLElement).classList.remove('scale-120');
+                (value.content as HTMLElement).classList.remove('duration-100');
             }
             return value;
         }),
     activate: () =>
         privateActiveMarker.update(value => {
             if (value) {
-                (value.content as HTMLElement).classList.add('scale-120');
+                (value.content as HTMLElement).classList.add('duration-100');
+                requestAnimationFrame(() => {
+                    (value.content as HTMLElement).classList.add('scale-120');
+                });
             }
             return value;
         }),
