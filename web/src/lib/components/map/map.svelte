@@ -118,18 +118,13 @@
 
         try {
             if ($map) {
-                // Add bounds change listener to update marker visibility
-                // TODO: should I move that to marker manager?
-                event.addListener(
-                    $map,
-                    'bounds_changed',
-                    throttle(() => {
-                        if ($markerManager) {
-                            $markerManager.triggerViewportUpdate();
-                        }
-                        renderDebug();
-                    }, 50),
-                );
+                // Update markers only after interactions finish
+                event.addListener($map, 'idle', () => {
+                    if ($markerManager) {
+                        $markerManager.triggerViewportUpdate();
+                    }
+                    renderDebug();
+                });
 
                 event.addListener($map, 'click', function (event: google.maps.MapMouseEvent) {
                     if (isInZoomMode) {
