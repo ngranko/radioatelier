@@ -5,6 +5,7 @@
     import Form from '$lib/components/objectDetails/editMode/form.svelte';
     import ViewMode from '$lib/components/objectDetails/viewMode/viewMode.svelte';
     import {activeMarker, activeObjectInfo, map} from '$lib/stores/map';
+    import {deckEnabled} from '$lib/stores/map';
     import {clsx} from 'clsx';
     import {Button} from '$lib/components/ui/button';
     import CloseButton from './closeButton.svelte';
@@ -33,6 +34,10 @@
         activeObjectInfo.reset();
         if ($map) {
             $map.getStreetView().setVisible(false);
+        }
+        // Reset deck active highlight
+        if ($deckEnabled) {
+            window.dispatchEvent(new CustomEvent('deck-clear-active'));
         }
     }
 </script>

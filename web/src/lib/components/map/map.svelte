@@ -1,11 +1,20 @@
 <script lang="ts">
     import {onMount, onDestroy} from 'svelte';
-    import {mapLoader, map, markerManager, dragTimeout, activeObjectInfo} from '$lib/stores/map';
+    import {
+        mapLoader,
+        map,
+        markerManager,
+        dragTimeout,
+        activeObjectInfo,
+        deckEnabled,
+    } from '$lib/stores/map';
     import {createMutation} from '@tanstack/svelte-query';
     import {getLocation} from '$lib/api/location';
     import type {Location} from '$lib/interfaces/location';
     import {MarkerManager} from '$lib/services/map/markerManager';
     import {throttle} from '$lib/utils';
+    import {pointList, searchPointList} from '$lib/stores/map';
+    import {getObject} from '$lib/api/object';
 
     interface Props {
         onClick(location: Location): void;
@@ -19,8 +28,146 @@
     let lastClickTapTime = 0;
     let clickTapCount = 0;
     let isInZoomMode = false;
-    let debugVisible = false;
-    let debugEl: HTMLDivElement | null = null;
+    let suppressNextMapClick = false;
+    let swallowNextDomClick = false;
+    let lastDeckClickMs = 0;
+    let deckOverlay: any = null; // set after dynamic import on client
+    let ScatterplotLayerClass: any = null;
+    let selectedDeckId: string | null = null;
+
+    async function buildDeckLayer() {
+        if (!deckOverlay || !$deckEnabled) return;
+        const items = Object.values($pointList);
+        const deckDataNormal = items.map(p => ({
+            id: p.object.id,
+            position: [Number(p.object.lng), Number(p.object.lat)],
+            isVisited: p.object.isVisited,
+            isRemoved: p.object.isRemoved,
+            isActive: selectedDeckId === p.object.id,
+            isSearch: false,
+        }));
+        const deckDataSearch = Object.keys($searchPointList).map(id => ({
+            id,
+            position: [
+                Number($searchPointList[id].object.lng),
+                Number($searchPointList[id].object.lat),
+            ],
+            isVisited: false,
+            isRemoved: false,
+            isActive: selectedDeckId === id,
+            isSearch: true,
+        }));
+        const deckData = [...deckDataNormal, ...deckDataSearch];
+
+        // Scatterplot fallback
+        const layer = new ScatterplotLayerClass({
+            id: 'objects-layer',
+            data: deckData,
+            getPosition: (d: any) => d.position,
+            radiusUnits: 'pixels',
+            getRadius: (d: any) => (d.isActive ? 6 : 4),
+            transitions: {getRadius: {duration: 100}},
+            pickable: true,
+            stroked: true,
+            getFillColor: (d: any) =>
+                d.isRemoved ? [0, 0, 0, 128] : d.isSearch ? [220, 38, 38, 255] : [0, 0, 0, 255],
+            getLineColor: (d: any) => (d.isVisited ? [16, 185, 129, 255] : [0, 0, 0, 0]),
+            getLineWidth: (d: any) => (d.isVisited ? 2 : 0),
+            lineWidthUnits: 'pixels',
+            parameters: {depthTest: false, depthMask: false},
+            onClick: async (info: any) => {
+                // simulate marker click flow
+                const object = info?.object;
+                if (!object) return;
+                // Prevent base map click handler from creating a new point
+                suppressNextMapClick = true;
+                swallowNextDomClick = true;
+                lastDeckClickMs = Date.now();
+                if (clickTimeout) {
+                    clearTimeout(clickTimeout);
+                    clickTimeout = undefined;
+                }
+                const se = info?.sourceEvent;
+                try {
+                    se?.stopImmediatePropagation?.();
+                    se?.stopPropagation?.();
+                    se?.preventDefault?.();
+                } catch {}
+                const id = object.id as string;
+                const point = $pointList[id];
+                const isSearch = object.isSearch as boolean;
+                if (!point && !isSearch) return;
+                selectedDeckId = id;
+                buildDeckLayer();
+                if (isSearch) {
+                    // For search items, open with available info immediately
+                    const s = $searchPointList[id].object;
+                    activeObjectInfo.set({
+                        isLoading: false,
+                        isEditing: false,
+                        isMinimized: false,
+                        isDirty: false,
+                        detailsId: id,
+                        object: {
+                            id: null,
+                            name: s.name,
+                            lat: s.lat,
+                            lng: s.lng,
+                            address: s.address,
+                            city: s.city,
+                            country: s.country,
+                            isVisited: false,
+                            isRemoved: false,
+                        },
+                    });
+                } else {
+                    activeObjectInfo.set({
+                        isLoading: true,
+                        isEditing: false,
+                        isMinimized: false,
+                        isDirty: false,
+                        detailsId: id,
+                        object: {
+                            id,
+                            lat: String(object.position[1]),
+                            lng: String(object.position[0]),
+                            isVisited: object.isVisited,
+                            isRemoved: object.isRemoved,
+                        },
+                    });
+                    try {
+                        const payload = await getObject({queryKey: ['object', {id}]} as any);
+                        activeObjectInfo.set({
+                            isLoading: false,
+                            isEditing: false,
+                            isMinimized: false,
+                            isDirty: false,
+                            detailsId: payload.data.object.id,
+                            object: payload.data.object,
+                        });
+                    } catch (e) {
+                        // On error, clear loading state but keep basic info
+                        activeObjectInfo.update(v => ({...v, isLoading: false}));
+                    }
+                }
+            },
+        } as any);
+        deckOverlay.setProps({layers: [layer]});
+    }
+
+    // Rebuild deck layer when data or toggle changes (covers initial data load before any map move)
+    $effect(() => {
+        if ($deckEnabled && deckOverlay && ScatterplotLayerClass) {
+            const hasData = Object.keys($pointList).length > 0;
+            if (hasData) buildDeckLayer();
+        }
+    });
+    $effect(() => {
+        // If deck layer is toggled off after init, clear layers; if toggled on, force idle update soon
+        if (deckOverlay && !$deckEnabled) {
+            deckOverlay.setProps({layers: []});
+        }
+    });
 
     const location = createMutation({
         mutationFn: getLocation,
@@ -60,11 +207,22 @@
             const {event} = await $mapLoader.importLibrary('core');
             const mapInstance = new Map(container!, mapOptions);
 
-            // Initialize marker manager for optimized rendering
+            // Swallow the very next native click after a deck pick (capture phase)
+            const swallowClickIfNeeded = (e: Event) => {
+                if (swallowNextDomClick) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    swallowNextDomClick = false;
+                }
+            };
+            container?.addEventListener('click', swallowClickIfNeeded, true);
+            container?.addEventListener('mousedown', swallowClickIfNeeded, true);
+            container?.addEventListener('mouseup', swallowClickIfNeeded, true);
+
             const qs = new URLSearchParams(window.location.search);
             const profiling = qs.has('profileMarkers');
-            const disableLazy = qs.has('noLazy'); // Use ?noLazy to disable lazy loading
-            debugVisible = qs.has('debugMarkers');
+            const disableLazy = qs.has('noLazy');
+
             const manager = new MarkerManager({
                 enableProfiling: profiling,
                 enableLazyLoading: !disableLazy,
@@ -73,6 +231,29 @@
             markerManager.set(manager);
 
             map.update(() => mapInstance);
+
+            try {
+                const [{GoogleMapsOverlay}, layers] = await Promise.all([
+                    // @ts-ignore - local ambient module declarations
+                    import('@deck.gl/google-maps'),
+                    // @ts-ignore - local ambient module declarations
+                    import('@deck.gl/layers'),
+                ]);
+                ScatterplotLayerClass = (layers as any).ScatterplotLayer;
+                // interleaved: false -> use OverlayView above basemap/3D buildings
+                deckOverlay = new GoogleMapsOverlay({interleaved: false});
+                deckOverlay.setMap(mapInstance);
+                // Build initial layer immediately and with a few fallbacks
+                await buildDeckLayer();
+                // Fallback timers in case the overlay view attaches after a frame
+                setTimeout(buildDeckLayer, 50);
+                setTimeout(buildDeckLayer, 200);
+                setTimeout(buildDeckLayer, 500);
+                // Also update once tiles are loaded
+                event.addListener(mapInstance, 'tilesloaded', () => buildDeckLayer());
+            } catch (e) {
+                console.warn('Deck.gl overlay failed to initialize; continuing without it.', e);
+            }
 
             // Trigger initial viewport update to show markers
             // Use multiple fallbacks to ensure markers are shown
@@ -94,9 +275,6 @@
 
             // Try after a longer delay as final fallback
             setTimeout(triggerInitialUpdate, 1000);
-
-            // Render debug if requested
-            renderDebug();
         } catch (e) {
             console.error('error instantiating map');
             console.error(e);
@@ -118,15 +296,42 @@
 
         try {
             if ($map) {
+                // Zoom-based switching between deck scatter (low zoom) and Advanced markers (high zoom)
+                const ZOOM_THRESHOLD = 10;
+
                 // Update markers only after interactions finish
                 event.addListener($map, 'idle', () => {
+                    console.log($map.getZoom());
+
+                    const currentZoom = $map?.getZoom() ?? 15;
+                    const shouldUseDeck = currentZoom <= ZOOM_THRESHOLD;
+                    deckEnabled.set(shouldUseDeck);
+
                     if ($markerManager) {
                         $markerManager.triggerViewportUpdate();
                     }
-                    renderDebug();
+
+                    // Update Deck.gl layer with current points (fast WebGL rendering)
+                    if (shouldUseDeck) {
+                        console.log('deck activated');
+                        buildDeckLayer();
+                    } else if (deckOverlay) {
+                        console.log('deck deactivated');
+                        deckOverlay.setProps({layers: []});
+                    }
                 });
 
                 event.addListener($map, 'click', function (event: google.maps.MapMouseEvent) {
+                    // Hard guard: if deck is enabled and we just handled a deck click, ignore this
+                    if ($deckEnabled && (suppressNextMapClick || swallowNextDomClick)) {
+                        suppressNextMapClick = false;
+                        swallowNextDomClick = false;
+                        return;
+                    }
+                    if (suppressNextMapClick) {
+                        suppressNextMapClick = false;
+                        return;
+                    }
                     if (isInZoomMode) {
                         return;
                     }
@@ -137,6 +342,11 @@
                         }
 
                         clickTimeout = setTimeout(() => {
+                            // If a deck click happened recently, skip creating a new point
+                            if ($deckEnabled && Date.now() - lastDeckClickMs < 500) {
+                                clickTimeout = undefined;
+                                return;
+                            }
                             if (clickTapCount === 1 && !isInZoomMode) {
                                 onClick({
                                     lat: event.latLng?.lat() ?? 0,
@@ -296,97 +506,6 @@
             $markerManager.destroy();
         }
     });
-
-    function renderDebug() {
-        if (!debugVisible || !$markerManager) return;
-        if (!debugEl) {
-            debugEl = document.createElement('div');
-            debugEl.style.position = 'absolute';
-            debugEl.style.top = '8px';
-            debugEl.style.right = '8px';
-            debugEl.style.zIndex = '1000';
-            debugEl.style.background = 'rgba(0,0,0,0.7)';
-            debugEl.style.color = 'white';
-            debugEl.style.padding = '8px';
-            debugEl.style.borderRadius = '6px';
-            debugEl.style.maxWidth = '320px';
-            container?.appendChild(debugEl);
-        }
-        const opts = $markerManager.getOptions();
-        const last = $markerManager.getLastProfile();
-        debugEl!.innerHTML = `
-<div style="font-weight:600;margin-bottom:6px;">Markers Debug</div>
-<div style="display:flex;gap:6px;flex-wrap:wrap;">
-  <label style="display:flex;gap:4px;align-items:center;">maxVisible
-    <input type="number" value="${opts.maxVisibleMarkers ?? 200}" data-k="maxVisibleMarkers" style="width:80px;background:#222;color:#fff;border:1px solid #444;border-radius:4px;padding:2px 4px;" />
-  </label>
-  <label style="display:flex;gap:4px;align-items:center;">chunkSize
-    <input type="number" value="${opts.chunkSize ?? 50}" data-k="chunkSize" style="width:80px;background:#222;color:#fff;border:1px solid #444;border-radius:4px;padding:2px 4px;" />
-  </label>
-  <label style="display:flex;gap:4px;align-items:center;">smallCluster
-    <input type="number" value="${opts.smallClusterMaxSize ?? 3}" data-k="smallClusterMaxSize" style="width:80px;background:#222;color:#fff;border:1px solid #444;border-radius:4px;padding:2px 4px;" />
-  </label>
-  <label style="display:flex;gap:4px;align-items:center;">subgridFactor
-    <input type="number" step="0.1" value="${opts.clusterSubgridFactor ?? 0.5}" data-k="clusterSubgridFactor" style="width:80px;background:#222;color:#fff;border:1px solid #444;border-radius:4px;padding:2px 4px;" />
-  </label>
-  <label style="display:flex;gap:4px;align-items:center;">maxPerCluster
-    <input type="number" value="${opts.maxMarkersPerCluster ?? 50}" data-k="maxMarkersPerCluster" style="width:90px;background:#222;color:#fff;border:1px solid #444;border-radius:4px;padding:2px 4px;" />
-  </label>
-  <label style="display:flex;gap:4px;align-items:center;">profiling
-    <input type="checkbox" ${opts.enableProfiling ? 'checked' : ''} data-k="enableProfiling" />
-  </label>
-</div>
-<div style="margin-top:6px;font-size:12px;line-height:1.4;white-space:pre-wrap;">${
-            last
-                ? JSON.stringify(
-                      {
-                          totalMs: Math.round(last.timings.total),
-                          scanCachedMs: Math.round(last.timings.scanCached),
-                          scanLazyMs: Math.round(last.timings.scanLazy),
-                          sortingMs: Math.round(last.timings.sorting),
-                          selectionMs: Math.round(last.timings.selection),
-                          planVisibilityMs: Math.round(last.timings.planVisibility),
-                          visibilityUpdatesMs: Math.round(last.timings.visibilityUpdates),
-                          counts: last.counts,
-                          chunks: last.chunks,
-                      },
-                      null,
-                      2,
-                  )
-                : 'no profile yet'
-        }</div>
-`;
-
-        const inputs = debugEl!.querySelectorAll('input');
-        inputs.forEach(inp => {
-            inp.onchange = () => {
-                const key = (inp as HTMLInputElement).dataset.k as any;
-                let val: any = (inp as HTMLInputElement).value;
-                if (inp.type === 'number') {
-                    val = inp.step && inp.step.includes('.') ? parseFloat(val) : parseInt(val);
-                }
-                if (inp.type === 'checkbox') {
-                    val = (inp as HTMLInputElement).checked;
-                }
-                if ($markerManager) {
-                    // Map UI keys to options
-                    const mapping: Record<string, string> = {
-                        maxVisibleMarkers: 'maxVisibleMarkers',
-                        chunkSize: 'chunkSize',
-                        smallClusterMaxSize: 'smallClusterMaxSize',
-                        clusterSubgridFactor: 'clusterSubgridFactor',
-                        maxMarkersPerCluster: 'maxMarkersPerCluster',
-                        enableProfiling: 'enableProfiling',
-                    };
-                    const optKey = mapping[key] as keyof ReturnType<
-                        typeof $markerManager.getOptions
-                    >;
-                    $markerManager.updateOptions({[optKey]: val} as any);
-                    setTimeout(renderDebug, 0);
-                }
-            };
-        });
-    }
 
     async function getCenter(): Promise<Location> {
         if (localStorage.getItem('lastCenter')) {

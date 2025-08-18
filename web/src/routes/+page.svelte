@@ -1,7 +1,13 @@
 <script lang="ts">
     import {createQuery} from '@tanstack/svelte-query';
     import {listObjects} from '$lib/api/object';
-    import {map, activeObjectInfo, pointList, searchPointList} from '$lib/stores/map.js';
+    import {
+        map,
+        activeObjectInfo,
+        pointList,
+        searchPointList,
+        deckEnabled,
+    } from '$lib/stores/map.js';
     import Map from '$lib/components/map/map.svelte';
     import Marker from '$lib/components/map/marker.svelte';
     import UserMenu from '$lib/components/userMenu/userMenu.svelte';
@@ -153,32 +159,36 @@
 <Map onClick={handleMapClick} />
 {#if $map}
     <LocationMarker {orientationEnabled} />
-    {#each Object.values($pointList) as point (point.object.id)}
-        <Marker
-            id={point.object.id}
-            lat={point.object.lat}
-            lng={point.object.lng}
-            isVisited={point.object.isVisited}
-            isRemoved={point.object.isRemoved}
-            isDraggable
-            icon="fa-solid fa-bolt"
-            color="#000000"
-            source="list"
-        />
-    {/each}
+    {#if !$deckEnabled}
+        {#each Object.values($pointList) as point (point.object.id)}
+            <Marker
+                id={point.object.id}
+                lat={point.object.lat}
+                lng={point.object.lng}
+                isVisited={point.object.isVisited}
+                isRemoved={point.object.isRemoved}
+                isDraggable
+                icon="fa-solid fa-bolt"
+                color="#000000"
+                source="list"
+            />
+        {/each}
+    {/if}
 
-    {#each Object.keys($searchPointList) as id (id)}
-        <Marker
-            {id}
-            lat={$searchPointList[id].object.lat}
-            lng={$searchPointList[id].object.lng}
-            icon={$searchPointList[id].object.type === 'local'
-                ? 'fa-solid fa-magnifying-glass'
-                : 'fa-brands fa-google'}
-            color="#dc2626"
-            source="search"
-        />
-    {/each}
+    {#if !$deckEnabled}
+        {#each Object.keys($searchPointList) as id (id)}
+            <Marker
+                {id}
+                lat={$searchPointList[id].object.lat}
+                lng={$searchPointList[id].object.lng}
+                icon={$searchPointList[id].object.type === 'local'
+                    ? 'fa-solid fa-magnifying-glass'
+                    : 'fa-brands fa-google'}
+                color="#dc2626"
+                source="search"
+            />
+        {/each}
+    {/if}
 
     {#if $activeObjectInfo.object && !$activeObjectInfo.object.id}
         {#key `${$activeObjectInfo.object.lat},${$activeObjectInfo.object.lng}`}

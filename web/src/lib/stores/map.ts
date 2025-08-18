@@ -17,8 +17,9 @@ export const mapLoader = readable<Loader>(undefined, function start(set) {
 
 export const map = writable<google.maps.Map | undefined>(undefined);
 
-// Marker manager for optimized rendering
 export const markerManager = writable<MarkerManager | undefined>(undefined);
+
+export const deckEnabled = writable<boolean>(false);
 
 const {subscribe, set, update} = writable<ObjectDetailsInfo>({
     isMinimized: false,
