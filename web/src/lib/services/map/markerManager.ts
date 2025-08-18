@@ -654,19 +654,10 @@ export class MarkerManager {
         // 2) Cluster in-grid, then apply hybrid pruning
         const center = bounds.getCenter();
         const centerPosition = {lat: center.lat(), lng: center.lng()};
-        const zoom = this.map?.getZoom() || 0;
-        const clusterStart = this.profilingEnabled ? performance.now() : 0;
-        const clusteredVisibleIds = this.hybridClusterAndSelectIds(
-            allMarkersInViewport,
-            centerPosition,
-            bounds,
-            zoom,
-        );
-        if (this.profilingEnabled && this.currentProfile) {
-            this.currentProfile.timings.clustering = performance.now() - clusterStart;
-            this.currentProfile.counts.selectedAfterCluster = clusteredVisibleIds.size;
-        }
-        const visibleIds = clusteredVisibleIds;
+        // Distance-sort and simple pick (reverting unstable clustering)
+        const sortedMarkers = this.sortMarkersByDistance(allMarkersInViewport, centerPosition);
+        const maxVisibleMarkers = this.options.maxVisibleMarkers || 200;
+        const visibleIds = this.pickVisibleIds(sortedMarkers, maxVisibleMarkers);
 
         // Determine batch strategy and animation policy
         const totalKnown = this.markerCache.size + this.markerData.size;
