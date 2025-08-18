@@ -1,5 +1,5 @@
-import {dragTimeout} from '$lib/stores/map.ts';
 import {getRasterIcon, makeCircleSvgDataUrl} from '$lib/services/map/iconRaster';
+import {dragTimeout} from '$lib/stores/map.ts';
 
 export interface MarkerManagerOptions {
     viewportPadding?: number;
@@ -50,50 +50,50 @@ export class MarkerManager {
     private updateInProgress = false;
 
     // Cluster selection cache to stabilize visible picks within clusters
-    private clusterSelectionCache = new Map<string, { selectedIds: string[]; membersKey: string }>();
+    private clusterSelectionCache = new Map<string, {selectedIds: string[]; membersKey: string}>();
 
     // Profiling state
     private profilingEnabled = false;
-    private currentProfile:
-        | ({
-            startedAt: number;
-            timings: {
-                total: number;
-                updateMarkersInViewport: number;
-                scanCached: number;
-                scanLazy: number;
-                clustering: number;
-                sorting: number;
-                selection: number;
-                planVisibility: number;
-                visibilityUpdates: number;
-            };
-            counts: {
-                cachedMarkers: number;
-                lazyMarkers: number;
-                inViewportAll: number;
-                clusters: number;
-                largeClusters: number;
-                selectedAfterCluster: number;
-                selectedAfterTrim: number;
-                selectedVisible: number;
-                plannedShow: number;
-                plannedHide: number;
-                toggledVisibility: number;
-                shown: number;
-                hidden: number;
-                domCreated: number;
-                domCreatedLazy: number;
-            };
-            chunks: {
-                count: number;
-                totalProcessed: number;
-                avgSize: number;
-            };
-        }
-        | null) = null;
+    private currentProfile: {
+        startedAt: number;
+        timings: {
+            total: number;
+            updateMarkersInViewport: number;
+            scanCached: number;
+            scanLazy: number;
+            clustering: number;
+            sorting: number;
+            selection: number;
+            planVisibility: number;
+            visibilityUpdates: number;
+        };
+        counts: {
+            cachedMarkers: number;
+            lazyMarkers: number;
+            inViewportAll: number;
+            clusters: number;
+            largeClusters: number;
+            selectedAfterCluster: number;
+            selectedAfterTrim: number;
+            selectedVisible: number;
+            plannedShow: number;
+            plannedHide: number;
+            toggledVisibility: number;
+            shown: number;
+            hidden: number;
+            domCreated: number;
+            domCreatedLazy: number;
+        };
+        chunks: {
+            count: number;
+            totalProcessed: number;
+            avgSize: number;
+        };
+    } | null = null;
     private lastProfile:
-        | (typeof this.currentProfile extends null ? never : NonNullable<typeof this.currentProfile>)
+        | (typeof this.currentProfile extends null
+              ? never
+              : NonNullable<typeof this.currentProfile>)
         | null = null;
 
     constructor(options: MarkerManagerOptions = {}) {
@@ -102,7 +102,7 @@ export class MarkerManager {
             lazyLoadThreshold: 500,
             enableLazyLoading: true,
             chunkSize: 50, // Process 50 markers per animation frame
-            maxVisibleMarkers: 200,
+            maxVisibleMarkers: 1000,
             animationsEnabled: true,
             smallBatchThreshold: 200,
             bulkAnimationThreshold: 150,
@@ -311,7 +311,8 @@ export class MarkerManager {
         if (this.useRasterIcons) {
             // Wrap the image and visually anchor at bottom via translate-y-1/2
             const wrapper = document.createElement('div');
-            wrapper.className = 'w-6 h-6 translate-y-1/2 rounded-full flex justify-center items-center transition-transform transition-opacity duration-100 ease-in-out animate-popin';
+            wrapper.className =
+                'w-6 h-6 translate-y-1/2 rounded-full flex justify-center items-center transition-transform transition-opacity duration-100 ease-in-out animate-popin';
             wrapper.style.overflow = 'visible';
             wrapper.style.backgroundColor = options.color;
             const img = document.createElement('img');
@@ -510,18 +511,18 @@ export class MarkerManager {
         }
 
         const markerElement = marker.content as HTMLElement;
-            this.visibleMarkers.delete(id);
+        this.visibleMarkers.delete(id);
 
-            // Add removal animation before hiding
-            if (markerElement) {
-                markerElement.classList.add('animate-popout');
-                setTimeout(() => {
-                    marker.map = null;
-                    markerElement.classList.remove('animate-popout');
-                }, 200);
-            } else {
+        // Add removal animation before hiding
+        if (markerElement) {
+            markerElement.classList.add('animate-popout');
+            setTimeout(() => {
                 marker.map = null;
-            }
+                markerElement.classList.remove('animate-popout');
+            }, 200);
+        } else {
+            marker.map = null;
+        }
 
         if (this.profilingEnabled && this.currentProfile) {
             this.currentProfile.counts.hidden++;
@@ -624,7 +625,13 @@ export class MarkerManager {
             if (markers.has(id)) continue; // already captured above
             const lat = markerData.position.lat;
             const lng = markerData.position.lng;
-            if (markerData.isLazy && lat >= minLat && lat <= maxLat && lng >= minLng && lng <= maxLng) {
+            if (
+                markerData.isLazy &&
+                lat >= minLat &&
+                lat <= maxLat &&
+                lng >= minLng &&
+                lng <= maxLng
+            ) {
                 allMarkersInViewport.push({id, position: markerData.position});
             }
         }
@@ -702,7 +709,10 @@ export class MarkerManager {
         const totalKnown = this.markerCache.size + this.markerData.size;
         const smallBatchThreshold = this.options.smallBatchThreshold ?? 200;
         const bulkAnimationThreshold = this.options.bulkAnimationThreshold ?? 150;
-        const plannedToggles = Math.min(totalKnown, Math.abs(visibleIds.size - this.visibleMarkers.size));
+        const plannedToggles = Math.min(
+            totalKnown,
+            Math.abs(visibleIds.size - this.visibleMarkers.size),
+        );
         const disableAnimationsForBulk = plannedToggles > bulkAnimationThreshold;
 
         // 4) Plan visibility changes (diff current vs target) for profiling
@@ -731,8 +741,10 @@ export class MarkerManager {
             requestAnimationFrame(() => {
                 this.processMarkerVisibilityBatch(visibleIds, markers, disableAnimationsForBulk);
                 if (this.profilingEnabled && this.currentProfile) {
-                    this.currentProfile.timings.visibilityUpdates = performance.now() - visibilityStart;
-                    this.currentProfile.timings.updateMarkersInViewport = performance.now() - sectionStart;
+                    this.currentProfile.timings.visibilityUpdates =
+                        performance.now() - visibilityStart;
+                    this.currentProfile.timings.updateMarkersInViewport =
+                        performance.now() - sectionStart;
                 }
                 this.updateInProgress = false;
                 this.endProfile();
@@ -743,7 +755,8 @@ export class MarkerManager {
         this.processMarkerVisibilityUpdates(visibleIds, markers, () => {
             if (this.profilingEnabled && this.currentProfile) {
                 this.currentProfile.timings.visibilityUpdates = performance.now() - visibilityStart;
-                this.currentProfile.timings.updateMarkersInViewport = performance.now() - sectionStart;
+                this.currentProfile.timings.updateMarkersInViewport =
+                    performance.now() - sectionStart;
             }
             this.endProfile();
         });
@@ -793,7 +806,7 @@ export class MarkerManager {
             }
 
             // Subdivide fixed cell area for stable picks
-            const [gxStr, gyStr] = cellKey.split(":");
+            const [gxStr, gyStr] = cellKey.split(':');
             const gx = Number(gxStr);
             const gy = Number(gyStr);
             const minLng = gx * cellLng - 180;
@@ -803,7 +816,10 @@ export class MarkerManager {
             const subLat = Math.max(1e-6, (maxLat - minLat) * subFactor);
             const subLng = Math.max(1e-6, (maxLng - minLng) * subFactor);
 
-            const subgrid = new Map<string, Array<{id: string; position: google.maps.LatLngLiteral}>>();
+            const subgrid = new Map<
+                string,
+                Array<{id: string; position: google.maps.LatLngLiteral}>
+            >();
             for (const m of cluster) {
                 const sx = Math.floor((m.position.lng - minLng) / subLng);
                 const sy = Math.floor((m.position.lat - minLat) / subLat);
@@ -843,7 +859,10 @@ export class MarkerManager {
                     }
                     picks.push(bestId);
                 }
-                this.clusterSelectionCache.set(clusterKey, {selectedIds: picks.slice(0), membersKey});
+                this.clusterSelectionCache.set(clusterKey, {
+                    selectedIds: picks.slice(0),
+                    membersKey,
+                });
             }
 
             // Hard cap per cluster to avoid overdraw
@@ -886,7 +905,8 @@ export class MarkerManager {
                 if (marker) {
                     this.visibleMarkers.add(id);
                     marker.map = this.map;
-                    if (this.profilingEnabled && this.currentProfile) this.currentProfile.counts.shown++;
+                    if (this.profilingEnabled && this.currentProfile)
+                        this.currentProfile.counts.shown++;
                 } else {
                     const data = this.markerData.get(id);
                     if (data?.isLazy) {
@@ -894,7 +914,8 @@ export class MarkerManager {
                         this.markerCache.set(id, newMarker);
                         this.visibleMarkers.add(id);
                         newMarker.map = this.map;
-                        if (this.profilingEnabled && this.currentProfile) this.currentProfile.counts.shown++;
+                        if (this.profilingEnabled && this.currentProfile)
+                            this.currentProfile.counts.shown++;
                     }
                 }
             };
@@ -903,7 +924,8 @@ export class MarkerManager {
                 if (!marker) return;
                 this.visibleMarkers.delete(id);
                 marker.map = null;
-                if (this.profilingEnabled && this.currentProfile) this.currentProfile.counts.hidden++;
+                if (this.profilingEnabled && this.currentProfile)
+                    this.currentProfile.counts.hidden++;
             };
         }
 
@@ -913,9 +935,9 @@ export class MarkerManager {
             const shouldBeVisible = visibleIds.has(id);
             const isVisible = this.visibleMarkers.has(id);
             if (shouldBeVisible !== isVisible) {
-            this.updateMarkerVisibility(id, shouldBeVisible);
+                this.updateMarkerVisibility(id, shouldBeVisible);
+            }
         }
-    }
 
         // Restore original methods
         if (skipAnimations) {
@@ -987,8 +1009,6 @@ export class MarkerManager {
         this.updateInProgress = true;
         this.updateMarkersInViewport(this.markerCache);
     }
-
-
 
     // Cleanup method
     destroy() {
