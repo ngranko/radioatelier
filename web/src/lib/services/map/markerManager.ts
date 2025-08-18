@@ -734,20 +734,15 @@ export class MarkerManager {
         const subFactor = this.options.clusterSubgridFactor ?? 0.5;
         const maxPerCluster = this.options.maxMarkersPerCluster ?? 50;
 
-        // Grid size relative to viewport extent
-        const sw = bounds.getSouthWest();
-        const ne = bounds.getNorthEast();
-        const latSpan = Math.max(1e-6, ne.lat() - sw.lat());
-        const lngSpan = Math.max(1e-6, ne.lng() - sw.lng());
-        // Make grid resolution depend on zoom to avoid constant cell changes while dragging
-        const gridDiv = Math.max(10, Math.min(30, Math.round(zoom + 8))); // ~18-28 cells
-        const cellLat = latSpan / gridDiv;
-        const cellLng = lngSpan / gridDiv;
+        // World-fixed grid derived from zoom (stable while panning)
+        const gridDiv = Math.max(16, Math.min(64, Math.round(zoom * 2 + 12)));
+        const cellLng = 360 / gridDiv; // -180..180
+        const cellLat = 170 / gridDiv; // approx -85..85 to avoid poles distortion
 
         const grid = new Map<string, Array<{id: string; position: google.maps.LatLngLiteral}>>();
         for (const m of markers) {
-            const gx = Math.floor((m.position.lng - sw.lng()) / cellLng);
-            const gy = Math.floor((m.position.lat - sw.lat()) / cellLat);
+            const gx = Math.floor((m.position.lng + 180) / cellLng);
+            const gy = Math.floor((m.position.lat + 85) / cellLat);
             const key = `${gx}:${gy}`;
             if (!grid.has(key)) grid.set(key, []);
             grid.get(key)!.push(m);
@@ -758,7 +753,7 @@ export class MarkerManager {
             this.currentProfile.counts.clusters = grid.size;
         }
 
-        for (const cluster of grid.values()) {
+        for (const [cellKey, cluster] of grid.entries()) {
             if (cluster.length <= smallMax) {
                 for (const m of cluster) selected.add(m.id);
                 continue;
@@ -767,17 +762,14 @@ export class MarkerManager {
                 this.currentProfile.counts.largeClusters++;
             }
 
-            // Subdivide cluster area
-            let minLat = Infinity,
-                maxLat = -Infinity,
-                minLng = Infinity,
-                maxLng = -Infinity;
-            for (const m of cluster) {
-                if (m.position.lat < minLat) minLat = m.position.lat;
-                if (m.position.lat > maxLat) maxLat = m.position.lat;
-                if (m.position.lng < minLng) minLng = m.position.lng;
-                if (m.position.lng > maxLng) maxLng = m.position.lng;
-            }
+            // Subdivide fixed cell area for stable picks
+            const [gxStr, gyStr] = cellKey.split(":");
+            const gx = Number(gxStr);
+            const gy = Number(gyStr);
+            const minLng = gx * cellLng - 180;
+            const maxLng = minLng + cellLng;
+            const minLat = gy * cellLat - 85;
+            const maxLat = minLat + cellLat;
             const subLat = Math.max(1e-6, (maxLat - minLat) * subFactor);
             const subLng = Math.max(1e-6, (maxLng - minLng) * subFactor);
 
@@ -795,10 +787,8 @@ export class MarkerManager {
                 .map(m => m.id)
                 .sort()
                 .join(',');
-            // Include coarse grid cell key to reduce churn while dragging slightly
-            const gx0 = Math.floor((minLng - sw.lng()) / cellLng);
-            const gy0 = Math.floor((minLat - sw.lat()) / cellLat);
-            const clusterKey = `${gx0}:${gy0}|${minLat.toFixed(4)}:${minLng.toFixed(4)}:${maxLat.toFixed(4)}:${maxLng.toFixed(4)}|${cluster.length}`;
+            // Use fixed cell and zoom as part of cache key
+            const clusterKey = `${gx}:${gy}:z${zoom}|${cluster.length}`;
             const cached = this.clusterSelectionCache.get(clusterKey);
             let picks: string[] | null = null;
             if (cached && cached.membersKey === membersKey) {
