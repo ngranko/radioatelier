@@ -96,18 +96,6 @@
             const {event} = await $mapLoader.importLibrary('core');
             const mapInstance = new Map(container!, mapOptions);
 
-            // Swallow the very next native click after a deck pick (capture phase)
-            // const swallowClickIfNeeded = (e: Event) => {
-            //     if (swallowNextDomClick) {
-            //         e.stopPropagation();
-            //         e.preventDefault();
-            //         swallowNextDomClick = false;
-            //     }
-            // };
-            // container?.addEventListener('click', swallowClickIfNeeded, true);
-            // container?.addEventListener('mousedown', swallowClickIfNeeded, true);
-            // container?.addEventListener('mouseup', swallowClickIfNeeded, true);
-
             const qs = new URLSearchParams(window.location.search);
             const profiling = qs.has('profileMarkers');
             const disableLazy = qs.has('noLazy');
@@ -130,11 +118,6 @@
                 setTimeout(() => deckController?.rebuild(computeDeckItems()), 50);
                 setTimeout(() => deckController?.rebuild(computeDeckItems()), 200);
                 setTimeout(() => deckController?.rebuild(computeDeckItems()), 500);
-                // Also update once tiles are loaded
-                // TODO: probably need to update on center changed, not on tiles loaded. Or do I need to redraw it at all?
-                event.addListener(mapInstance, 'tilesloaded', () =>
-                    deckController?.rebuild(computeDeckItems()),
-                );
             } catch (e) {
                 console.warn('Deck.gl overlay failed to initialize; continuing without it.', e);
             }
@@ -270,12 +253,4 @@
     });
 </script>
 
-<div class="map" bind:this={container}></div>
-
-<style>
-    .map {
-        width: 100%;
-        height: 100dvh;
-        touch-action: none;
-    }
-</style>
+<div class="w-full h-dvh touch-none" bind:this={container}></div>
