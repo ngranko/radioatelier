@@ -34,6 +34,7 @@
     let selectedDeckId: string | null = null;
 
     let deckController: DeckOverlayController | null = null;
+    const DECK_ZOOM_THRESHOLD = 10;
 
     const location = createMutation({
         mutationFn: getLocation,
@@ -66,6 +67,7 @@
     onMount(async () => {
         positionInterval = startPositionPolling(5000);
 
+        const {Map} = await $mapLoader.importLibrary('maps');
         const {ControlPosition, event} = await $mapLoader.importLibrary('core');
 
         const center = await getInitialCenter($location);
@@ -92,8 +94,6 @@
         };
 
         try {
-            const {Map} = await $mapLoader.importLibrary('maps');
-            const {event} = await $mapLoader.importLibrary('core');
             const mapInstance = new Map(container!, mapOptions);
 
             const qs = new URLSearchParams(window.location.search);
@@ -112,36 +112,24 @@
             try {
                 deckController = new DeckOverlayController(mapInstance);
                 await deckController.init();
-                deckController.setEnabled(true);
-                deckController.rebuild(computeDeckItems());
-                // Fallback timers in case the overlay view attaches after a frame
-                setTimeout(() => deckController?.rebuild(computeDeckItems()), 50);
-                setTimeout(() => deckController?.rebuild(computeDeckItems()), 200);
-                setTimeout(() => deckController?.rebuild(computeDeckItems()), 500);
+                if (shouldUseDeck()) {
+                    deckController.setEnabled(true);
+                    deckController.rebuild(computeDeckItems());
+                    // Ensure a single update after the first idle when overlay view is attached
+                    event.addListenerOnce(mapInstance, 'idle', () =>
+                        deckController?.rebuild(computeDeckItems()),
+                    );
+                }
             } catch (e) {
                 console.warn('Deck.gl overlay failed to initialize; continuing without it.', e);
             }
 
-            // Trigger initial viewport update to show markers
-            // Use multiple fallbacks to ensure markers are shown
-            const triggerInitialUpdate = () => {
-                if (manager && $map && $map.getBounds()) {
+            // Trigger initial viewport update once when the map first becomes idle
+            event.addListenerOnce(mapInstance, 'idle', () => {
+                if (manager && $map) {
                     manager.triggerViewportUpdate();
                 }
-            };
-
-            // TODO (@nikita): this is a hack to fix the map not showing up on the first load, come up with a better solution
-            // Try immediately
-            triggerInitialUpdate();
-
-            // Try after a short delay
-            setTimeout(triggerInitialUpdate, 100);
-
-            // Try after map is fully loaded
-            setTimeout(triggerInitialUpdate, 500);
-
-            // Try after a longer delay as final fallback
-            setTimeout(triggerInitialUpdate, 1000);
+            });
         } catch (e) {
             console.error('error instantiating map');
             console.error(e);
@@ -163,26 +151,17 @@
 
         try {
             if ($map) {
-                // Zoom-based switching between deck scatter (low zoom) and Advanced markers (high zoom)
-                const ZOOM_THRESHOLD = 10;
-
-                // Update markers only after interactions finish
                 event.addListener($map, 'idle', () => {
-                    const currentZoom = $map?.getZoom() ?? 15;
-                    const shouldUseDeck = currentZoom <= ZOOM_THRESHOLD;
-                    deckEnabled.set(shouldUseDeck);
-
-                    if ($markerManager) {
-                        $markerManager.triggerViewportUpdate();
-                    }
-
-                    // Update Deck.gl layer with current points (fast WebGL rendering)
-                    if (shouldUseDeck) {
-                        deckController?.setEnabled(true);
-                        deckController?.rebuild(computeDeckItems());
+                    if (shouldUseDeck()) {
+                        if (!$deckEnabled) {
+                            deckController?.setEnabled(true);
+                            deckController?.rebuild(computeDeckItems());
+                        }
                     } else {
                         deckController?.setEnabled(false);
+                        $markerManager?.triggerViewportUpdate();
                     }
+                    deckEnabled.set(shouldUseDeck());
                 });
 
                 event.addListener($map, 'click', function (event: google.maps.MapMouseEvent) {
@@ -240,6 +219,10 @@
         }
     });
 
+    function shouldUseDeck(): boolean {
+        return ($map?.getZoom() ?? 15) <= DECK_ZOOM_THRESHOLD;
+    }
+
     onDestroy(() => {
         if (positionInterval) {
             stopPositionPolling(positionInterval);
@@ -253,4 +236,4 @@
     });
 </script>
 
-<div class="w-full h-dvh touch-none" bind:this={container}></div>
+<div class="h-dvh w-full touch-none" bind:this={container}></div>
