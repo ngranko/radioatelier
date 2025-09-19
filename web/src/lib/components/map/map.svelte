@@ -97,11 +97,9 @@
             const mapInstance = new Map(container!, mapOptions);
 
             const qs = new URLSearchParams(window.location.search);
-            const profiling = qs.has('profileMarkers');
             const disableLazy = qs.has('noLazy');
 
             const manager = new MarkerManager({
-                enableProfiling: profiling,
                 enableLazyLoading: !disableLazy,
             });
             await manager.initialize(mapInstance, $mapLoader);
@@ -113,6 +111,8 @@
                 deckController = new DeckOverlayController(mapInstance);
                 await deckController.init();
                 if (shouldUseDeck()) {
+                    // Ensure DOM markers are not visible when entering Deck mode on init
+                    manager.hideAllImmediately();
                     deckController.setEnabled(true);
                     deckController.rebuild(computeDeckItems());
                     // Ensure a single update after the first idle when overlay view is attached
@@ -154,6 +154,8 @@
                 event.addListener($map, 'idle', () => {
                     if (shouldUseDeck()) {
                         if (!$deckEnabled) {
+                            // Hide all DOM markers immediately to avoid flash when switching to Deck
+                            $markerManager?.hideAllImmediately();
                             deckController?.setEnabled(true);
                             deckController?.rebuild(computeDeckItems());
                         }
@@ -161,7 +163,6 @@
                         deckController?.setEnabled(false);
                         $markerManager?.triggerViewportUpdate();
                     }
-                    deckEnabled.set(shouldUseDeck());
                 });
 
                 event.addListener($map, 'click', function (event: google.maps.MapMouseEvent) {

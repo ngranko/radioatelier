@@ -1,3 +1,5 @@
+import { deckEnabled } from '$lib/stores/map';
+
 export type DeckItem = {
     id: string;
     position: [number, number]; // [lng, lat]
@@ -40,6 +42,7 @@ export class DeckOverlayController {
     // TODO: don't like this function, it's semi-useless, but is required to avoid errors
     setEnabled(enabled: boolean) {
         this.enabled = enabled;
+        deckEnabled.set(enabled);
         if (!this.isReady()) {
             return;
         }
