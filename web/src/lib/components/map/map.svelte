@@ -20,6 +20,7 @@
         stopPositionPolling,
     } from '$lib/services/map/geolocation';
     import {PointerDragZoomController} from '$lib/services/map/pointerDragZoom';
+    import config from '$lib/config';
 
     interface Props {
         onClick(location: Location): void;
@@ -34,7 +35,6 @@
     let selectedDeckId: string | null = null;
 
     let deckController: DeckOverlayController | null = null;
-    const DECK_ZOOM_THRESHOLD = 10;
 
     const location = createMutation({
         mutationFn: getLocation,
@@ -52,18 +52,6 @@
         return [...items];
     }
 
-    // Rebuild deck layer when data or toggle changes (covers initial data load before any map move)
-    $effect(() => {
-        if ($deckEnabled && deckController?.isReady()) {
-            const hasData = Object.keys($pointList).length > 0;
-            if (hasData) {
-                deckController.rebuild(computeDeckItems());
-            }
-        } else if (deckController && !$deckEnabled) {
-            deckController.setEnabled(false);
-        }
-    });
-
     onMount(async () => {
         positionInterval = startPositionPolling(5000);
 
@@ -75,7 +63,7 @@
         const mapOptions: google.maps.MapOptions = {
             zoom: center.zoom ?? 15,
             center,
-            mapId: '5b6e83dfb8822236',
+            mapId: config.googleMapsId,
             controlSize: 40,
             // I can always enable it if I see that I need it, but for now let's leave as little controls as I can
             mapTypeControl: false,
@@ -152,14 +140,13 @@
         try {
             if ($map) {
                 event.addListener($map, 'idle', () => {
-                    if (shouldUseDeck()) {
-                        if (!$deckEnabled) {
-                            // Hide all DOM markers immediately to avoid flash when switching to Deck
-                            $markerManager?.hideAllImmediately();
-                            deckController?.setEnabled(true);
-                            deckController?.rebuild(computeDeckItems());
-                        }
-                    } else {
+                    if (shouldUseDeck() && !$deckEnabled) {
+                        $markerManager?.hideAllImmediately();
+                        deckController?.setEnabled(true);
+                        deckController?.rebuild(computeDeckItems());
+                    }
+
+                    if (!shouldUseDeck()) {
                         deckController?.setEnabled(false);
                         $markerManager?.triggerViewportUpdate();
                     }
@@ -221,7 +208,7 @@
     });
 
     function shouldUseDeck(): boolean {
-        return ($map?.getZoom() ?? 15) <= DECK_ZOOM_THRESHOLD;
+        return ($map?.getZoom() ?? 15) <= config.deckZoomThreshold;
     }
 
     onDestroy(() => {
