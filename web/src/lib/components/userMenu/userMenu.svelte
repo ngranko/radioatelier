@@ -39,7 +39,7 @@
         cursor: pointer;
         color: colors.$black;
         transition: background-color 0.2s;
-        z-index: 3;
+        z-index: 2;
 
         &:hover {
             background-color: color.scale(colors.$primary, $lightness: +60%);
