@@ -1,6 +1,6 @@
 <script lang="ts">
     import * as Dialog from '$lib/components/ui/dialog';
-    import {Button, buttonVariants} from '$lib/components/ui/button';
+    import {Button} from '$lib/components/ui/button';
 
     interface Props {
         isConfirmationRequired?: boolean;
@@ -33,5 +33,5 @@
         </Dialog.Content>
     </Dialog.Root>
 {:else}
-    <div class="fixed inset-0 z-2 bg-transparent" onclick={onClick}></div>
+    <div class="fixed inset-0 z-1 bg-transparent" onclick={onClick}></div>
 {/if}
