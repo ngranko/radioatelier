@@ -42,7 +42,7 @@
     class={clsx([
         'absolute bottom-0 z-3 m-2 flex w-[calc(100dvw-8px*2)] max-w-100 flex-col rounded-lg bg-white transition-[height]',
         {
-            'h-14': $activeObjectInfo.isMinimized,
+            'h-14 overflow-hidden': $activeObjectInfo.isMinimized,
             'h-[calc(100dvh-8px*2)]': !$activeObjectInfo.isMinimized,
         },
     ])}
