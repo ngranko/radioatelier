@@ -1,13 +1,6 @@
 <script lang="ts">
     import {onMount, onDestroy} from 'svelte';
-    import {
-        mapLoader,
-        map,
-        markerManager,
-        dragTimeout,
-        activeObjectInfo,
-        deckEnabled,
-    } from '$lib/stores/map';
+    import {mapLoader, map, markerManager, dragTimeout, deckEnabled} from '$lib/stores/map';
     import {createMutation} from '@tanstack/svelte-query';
     import {getLocation} from '$lib/api/location';
     import type {Location} from '$lib/interfaces/location';
@@ -21,6 +14,7 @@
     } from '$lib/services/map/geolocation';
     import {PointerDragZoomController} from '$lib/services/map/pointerDragZoom';
     import config from '$lib/config';
+    import StreetView from './streetView.svelte';
 
     interface Props {
         onClick(location: Location): void;
@@ -56,35 +50,26 @@
         positionInterval = startPositionPolling(5000);
 
         const {Map} = await $mapLoader.importLibrary('maps');
-        const {ControlPosition, event} = await $mapLoader.importLibrary('core');
+        const {event} = await $mapLoader.importLibrary('core');
 
         const center = await getInitialCenter($location);
+        const qs = new URLSearchParams(window.location.search);
 
         const mapOptions: google.maps.MapOptions = {
             zoom: center.zoom ?? 15,
             center,
             mapId: config.googleMapsId,
             controlSize: 40,
-            // I can always enable it if I see that I need it, but for now let's leave as little controls as I can
             mapTypeControl: false,
             cameraControl: false,
-            // mapTypeControlOptions: {
-            //     style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
-            //     mapTypeIds: ["roadmap", "satellite"],
-            //     position: google.maps.ControlPosition.RIGHT_BOTTOM,
-            // },
             fullscreenControl: false,
             zoomControl: false,
-            streetViewControlOptions: {
-                position: ControlPosition.RIGHT_BOTTOM,
-            },
             clickableIcons: false,
         };
 
         try {
             const mapInstance = new Map(container!, mapOptions);
 
-            const qs = new URLSearchParams(window.location.search);
             const disableLazy = qs.has('noLazy');
 
             const manager = new MarkerManager({
@@ -120,20 +105,6 @@
             });
         } catch (e) {
             console.error('error instantiating map');
-            console.error(e);
-        }
-
-        try {
-            if ($map) {
-                $map.getStreetView().setOptions({fullscreenControl: false, addressControl: false});
-                $map.getStreetView().addListener('visible_changed', () => {
-                    if ($map && !$map.getStreetView().getVisible()) {
-                        activeObjectInfo.update(value => ({...value, isMinimized: false}));
-                    }
-                });
-            }
-        } catch (e) {
-            console.error('error instantiating street view');
             console.error(e);
         }
 
@@ -221,7 +192,9 @@
             $markerManager.destroy();
         }
         deckController?.destroy();
+        map.set(undefined);
     });
 </script>
 
 <div class="h-dvh w-full touch-none" bind:this={container}></div>
+<StreetView />
