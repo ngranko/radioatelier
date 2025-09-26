@@ -21,17 +21,13 @@ export class PointerDragZoomController {
     attachDoubleTapDragZoom(element: HTMLElement) {
         let lastTapTime = 0;
         let tapCount = 0;
-        // Track active touch pointer ids without relying on ES2015 Set to satisfy strict linters
-        const activeTouchPointers: {[pointerId: number]: true} = {};
+        // Track only the count of active touch contacts (simpler than per-id bookkeeping)
         let activeTouchCount = 0;
 
         const onPointerDown = (event: PointerEvent) => {
             // Apply multi-touch guard only for touch inputs.
             if (event.pointerType === 'touch') {
-                if (!activeTouchPointers[event.pointerId]) {
-                    activeTouchPointers[event.pointerId] = true;
-                    activeTouchCount++;
-                }
+                activeTouchCount++;
                 const isMultiTouch = activeTouchCount > 1;
                 if (isMultiTouch || !event.isPrimary) {
                     tapCount = 0;
@@ -65,12 +61,9 @@ export class PointerDragZoomController {
         }, 16); // ~60fps
 
         const endGesture = (event: PointerEvent) => {
-            // Keep active touch pointer bookkeeping in sync even if no active zoom gesture
+            // Keep active touch count in sync even if no active zoom gesture
             if (event.pointerType === 'touch') {
-                if (activeTouchPointers[event.pointerId]) {
-                    delete activeTouchPointers[event.pointerId];
-                    activeTouchCount = Math.max(0, activeTouchCount - 1);
-                }
+                activeTouchCount = Math.max(0, activeTouchCount - 1);
             }
             if (!this.isActive || event.pointerId !== this.activePointerId) {
                 return;
