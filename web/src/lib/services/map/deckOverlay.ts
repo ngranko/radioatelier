@@ -1,11 +1,10 @@
-import { deckEnabled } from '$lib/stores/map';
+import {deckEnabled} from '$lib/stores/map';
 
 export type DeckItem = {
     id: string;
-    position: [number, number]; // [lng, lat]
+    position: [number, number];
     isVisited: boolean;
     isRemoved: boolean;
-    isActive: boolean;
     isSearch: boolean;
 };
 
@@ -46,7 +45,7 @@ export class DeckOverlayController {
 
         this.enabled = enabled;
         deckEnabled.set(enabled);
-        
+
         if (!enabled) {
             this.overlay.setProps({layers: []});
         }
@@ -62,12 +61,10 @@ export class DeckOverlayController {
             data: items,
             getPosition: (d: any) => d.position,
             radiusUnits: 'pixels',
-            getRadius: (d: any) => (d.isActive ? 6 : 4),
+            getRadius: 4,
             transitions: {getRadius: {duration: 100}},
-            pickable: true,
             stroked: true,
-            getFillColor: (d: any) =>
-                d.isRemoved ? [0, 0, 0, 128] : d.isSearch ? [220, 38, 38, 255] : [0, 0, 0, 255],
+            getFillColor: (d: any) => (d.isRemoved ? [0, 0, 0, 128] : [0, 0, 0, 255]),
             getLineColor: (d: any) => (d.isVisited ? [16, 185, 129, 255] : [0, 0, 0, 0]),
             getLineWidth: (d: any) => (d.isVisited ? 2 : 0),
             lineWidthUnits: 'pixels',
