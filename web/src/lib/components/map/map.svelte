@@ -94,7 +94,7 @@
         try {
             if ($map) {
                 event.addListener($map, 'idle', () => {
-                    if (shouldUseDeck() && !$deckEnabled) {
+                    if (shouldUseDeck() && !$deckEnabled && deckController) {
                         $markerManager?.hideAllImmediately();
                         deckController?.setEnabled(true);
                         deckController?.rebuild(computeDeckItems());
@@ -168,8 +168,9 @@
         }
 
         try {
-            deckController = new DeckOverlayController($map!);
-            await deckController.init();
+            const controller = new DeckOverlayController($map!);
+            await controller.init();
+            deckController = controller;
             if (shouldUseDeck()) {
                 // Ensure DOM markers are not visible when entering Deck mode on init
                 $markerManager.hideAllImmediately();
@@ -181,6 +182,8 @@
                 );
             }
         } catch (e) {
+            deckController = null;
+            deckEnabled.set(false);
             console.warn('Deck.gl overlay failed to initialize; continuing without it.', e);
         }
     }
