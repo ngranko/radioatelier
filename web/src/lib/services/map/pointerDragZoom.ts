@@ -1,4 +1,4 @@
-import {throttle} from '../../utils';
+import {throttle} from '$lib/utils.js';
 
 export type PointerDragZoomOptions = {
     getZoom(): number;
