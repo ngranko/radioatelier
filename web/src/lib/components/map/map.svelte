@@ -26,7 +26,6 @@
     let clickTimeout: number | undefined;
     let positionInterval: number | undefined;
     let isInZoomMode = false;
-    let selectedDeckId: string | null = null;
 
     let deckController: DeckOverlayController | null = null;
 
@@ -40,7 +39,6 @@
             position: [Number(p.object.lng), Number(p.object.lat)] as [number, number],
             isVisited: p.object.isVisited,
             isRemoved: p.object.isRemoved,
-            isActive: selectedDeckId === p.object.id,
             isSearch: false,
         }));
         return [...items];
@@ -80,22 +78,7 @@
 
             map.update(() => mapInstance);
 
-            try {
-                deckController = new DeckOverlayController(mapInstance);
-                await deckController.init();
-                if (shouldUseDeck()) {
-                    // Ensure DOM markers are not visible when entering Deck mode on init
-                    manager.hideAllImmediately();
-                    deckController.setEnabled(true);
-                    deckController.rebuild(computeDeckItems());
-                    // Ensure a single update after the first idle when overlay view is attached
-                    event.addListenerOnce(mapInstance, 'idle', () =>
-                        deckController?.rebuild(computeDeckItems()),
-                    );
-                }
-            } catch (e) {
-                console.warn('Deck.gl overlay failed to initialize; continuing without it.', e);
-            }
+            await initDeckOverlay();
 
             // Trigger initial viewport update once when the map first becomes idle
             event.addListenerOnce(mapInstance, 'idle', () => {
@@ -177,6 +160,30 @@
             console.error(e);
         }
     });
+
+    async function initDeckOverlay() {
+        if (!$map || !$markerManager) {
+            console.log('map or marker manager is not set, cannot init deck');
+            return;
+        }
+
+        try {
+            deckController = new DeckOverlayController($map!);
+            await deckController.init();
+            if (shouldUseDeck()) {
+                // Ensure DOM markers are not visible when entering Deck mode on init
+                $markerManager.hideAllImmediately();
+                deckController.setEnabled(true);
+                deckController.rebuild(computeDeckItems());
+                // Ensure a single update after the first idle when overlay view is attached
+                google.maps.event.addListenerOnce($map, 'idle', () =>
+                    deckController?.rebuild(computeDeckItems()),
+                );
+            }
+        } catch (e) {
+            console.warn('Deck.gl overlay failed to initialize; continuing without it.', e);
+        }
+    }
 
     function shouldUseDeck(): boolean {
         return ($map?.getZoom() ?? 15) <= config.deckZoomThreshold;
