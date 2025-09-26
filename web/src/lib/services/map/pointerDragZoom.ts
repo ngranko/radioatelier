@@ -21,8 +21,19 @@ export class PointerDragZoomController {
     attachDoubleTapDragZoom(element: HTMLElement) {
         let lastTapTime = 0;
         let tapCount = 0;
+        let activeTouchCount = 0;
 
         const onPointerDown = (event: PointerEvent) => {
+            if (event.pointerType === 'touch') {
+                activeTouchCount++;
+                const isMultiTouch = activeTouchCount > 1;
+                if (isMultiTouch || !event.isPrimary) {
+                    tapCount = 0;
+                    lastTapTime = 0;
+                    return;
+                }
+            }
+
             const now = Date.now();
             tapCount = now - lastTapTime < 500 ? tapCount + 1 : 1;
             lastTapTime = now;
@@ -48,9 +59,14 @@ export class PointerDragZoomController {
         }, 16); // ~60fps
 
         const endGesture = (event: PointerEvent) => {
+            if (event.pointerType === 'touch') {
+                activeTouchCount = Math.max(0, activeTouchCount - 1);
+            }
+
             if (!this.isActive || event.pointerId !== this.activePointerId) {
                 return;
             }
+
             this.activePointerId = null;
             this.end();
             try {
