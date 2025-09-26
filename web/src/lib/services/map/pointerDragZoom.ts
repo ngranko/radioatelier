@@ -1,33 +1,4 @@
-// Lightweight throttle to limit pointermove handling frequency without external deps
-function throttle<T extends (...args: any[]) => void>(fn: T, wait: number): T {
-    let lastInvokeMs = 0;
-    let timeoutId: number | undefined;
-    let lastArgs: any[] | undefined;
-    let lastThis: any;
-
-    const invoke = () => {
-        lastInvokeMs = Date.now();
-        timeoutId = undefined;
-        fn.apply(lastThis, lastArgs as any[]);
-    };
-
-    return function throttled(this: any, ...args: any[]) {
-        const now = Date.now();
-        const remaining = wait - (now - lastInvokeMs);
-        lastArgs = args;
-        lastThis = this;
-
-        if (remaining <= 0 || remaining > wait) {
-            if (timeoutId !== undefined) {
-                clearTimeout(timeoutId);
-                timeoutId = undefined;
-            }
-            invoke();
-        } else if (timeoutId === undefined) {
-            timeoutId = window.setTimeout(invoke, remaining);
-        }
-    } as unknown as T;
-}
+import {throttle} from '../../utils';
 
 export type PointerDragZoomOptions = {
     getZoom(): number;
@@ -55,23 +26,18 @@ export class PointerDragZoomController {
         let activeTouchCount = 0;
 
         const onPointerDown = (event: PointerEvent) => {
-            // Only consider touch input for double-tap detection
-            if (event.pointerType !== 'touch') {
-                return;
-            }
-
-            // Track active touch pointers to detect multi-touch (pinch/zoom)
-            if (!activeTouchPointers[event.pointerId]) {
-                activeTouchPointers[event.pointerId] = true;
-                activeTouchCount++;
-            }
-            const isMultiTouch = activeTouchCount > 1;
-
-            // Ignore and reset any double-tap logic when multiple touches are present
-            if (isMultiTouch || !event.isPrimary) {
-                tapCount = 0;
-                lastTapTime = 0;
-                return; // allow pinch/other gestures to propagate to underlying handlers
+            // Apply multi-touch guard only for touch inputs.
+            if (event.pointerType === 'touch') {
+                if (!activeTouchPointers[event.pointerId]) {
+                    activeTouchPointers[event.pointerId] = true;
+                    activeTouchCount++;
+                }
+                const isMultiTouch = activeTouchCount > 1;
+                if (isMultiTouch || !event.isPrimary) {
+                    tapCount = 0;
+                    lastTapTime = 0;
+                    return; // allow pinch/other gestures to propagate
+                }
             }
 
             const now = Date.now();
