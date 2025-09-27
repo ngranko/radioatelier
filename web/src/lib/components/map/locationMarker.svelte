@@ -27,6 +27,7 @@
             content: icon,
             collisionBehavior: CollisionBehavior.REQUIRED,
             gmpClickable: false,
+            zIndex: 10,
         });
 
         updateCurrentPosition(true);
