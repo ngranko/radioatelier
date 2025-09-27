@@ -7,6 +7,7 @@
     import {MarkerManager} from '$lib/services/map/markerManager';
     import {pointList} from '$lib/stores/map';
     import {DeckOverlayController, type DeckItem} from '$lib/services/map/deckOverlay';
+    import {computeDeckItems, initDeckOverlay, shouldUseDeck} from '$lib/services/map/deckOverlayManager.svelte';
     import {
         getInitialCenter,
         startPositionPolling,
@@ -26,34 +27,61 @@
     let clickTimeout: number | undefined;
     let positionInterval: number | undefined;
     let isInZoomMode = false;
-
     let deckController: DeckOverlayController | null = null;
 
     const location = createMutation({
         mutationFn: getLocation,
     });
 
-    function computeDeckItems(): DeckItem[] {
-        const items = Object.values($pointList).map(p => ({
-            id: p.object.id,
-            position: [Number(p.object.lng), Number(p.object.lat)] as [number, number],
-            isVisited: p.object.isVisited,
-            isRemoved: p.object.isRemoved,
-            isSearch: false,
-        }));
-        return [...items];
-    }
-
     onMount(async () => {
         positionInterval = startPositionPolling(5000);
 
-        const {Map} = await $mapLoader.importLibrary('maps');
         const {event} = await $mapLoader.importLibrary('core');
 
-        const center = await getInitialCenter($location);
-        const qs = new URLSearchParams(window.location.search);
+        try {
+            const mapInstance = await initMap();
+            markerManager.set(await initMarkerManager(mapInstance));
+            map.set(mapInstance);
+            deckController = await initDeckOverlay();
 
-        const mapOptions: google.maps.MapOptions = {
+            // Trigger initial viewport update once when the map first becomes idle
+            event.addListenerOnce(mapInstance, 'idle', () => {
+                if ($markerManager && $map && !$deckEnabled) {
+                    $markerManager.triggerViewportUpdate();
+                }
+            });
+        } catch (e) {
+            console.error('error instantiating map');
+            console.error(e);
+        }
+
+        try {
+            initListeners();
+
+            new PointerDragZoomController({
+                getZoom: () => $map?.getZoom() ?? 15,
+                setZoom: zoom => $map?.setZoom(zoom),
+                onStart: () => {
+                    clearTimeout(clickTimeout);
+                    clickTimeout = undefined;
+                    isInZoomMode = true;
+                },
+                onEnd: () => {
+                    isInZoomMode = false;
+                },
+            }).attachDoubleTapDragZoom(container!);
+        } catch (e) {
+            console.error('error initialising map event listeners');
+            console.error(e);
+        }
+    });
+
+    async function initMap(): Promise<google.maps.Map> {
+        const {Map} = await $mapLoader.importLibrary('maps');
+
+        const center = await getInitialCenter($location);
+
+        const mapInstance = new Map(container!, {
             zoom: center.zoom ?? 15,
             center,
             mapId: config.googleMapsId,
@@ -63,133 +91,86 @@
             fullscreenControl: false,
             zoomControl: false,
             clickableIcons: false,
-        };
+        });
 
-        try {
-            const mapInstance = new Map(container!, mapOptions);
+        return mapInstance;
+    }
 
-            const disableLazy = qs.has('noLazy');
+    async function initMarkerManager(mapInstance: google.maps.Map): Promise<MarkerManager> {
+        const qs = new URLSearchParams(window.location.search);
 
-            const manager = new MarkerManager({
-                enableLazyLoading: !disableLazy,
-            });
-            await manager.initialize(mapInstance, $mapLoader);
-            markerManager.set(manager);
+        const disableLazy = qs.has('noLazy');
 
-            map.update(() => mapInstance);
+        const manager = new MarkerManager({
+            enableLazyLoading: !disableLazy,
+        });
+        await manager.initialize(mapInstance, $mapLoader);
+        return manager;
+    }
 
-            await initDeckOverlay();
-
-            // Trigger initial viewport update once when the map first becomes idle
-            event.addListenerOnce(mapInstance, 'idle', () => {
-                if (manager && $map) {
-                    manager.triggerViewportUpdate();
-                }
-            });
-        } catch (e) {
-            console.error('error instantiating map');
-            console.error(e);
-        }
-
-        try {
-            if ($map) {
-                event.addListener($map, 'idle', () => {
-                    if (shouldUseDeck() && !$deckEnabled && deckController) {
-                        $markerManager?.hideAllImmediately();
-                        deckController?.setEnabled(true);
-                        deckController?.rebuild(computeDeckItems());
-                    }
-
-                    if (!shouldUseDeck()) {
-                        deckController?.setEnabled(false);
-                        $markerManager?.triggerViewportUpdate();
-                    }
-                });
-
-                event.addListener($map, 'click', function (event: google.maps.MapMouseEvent) {
-                    // if deck is enabled then we are quite zoomed out, so there's no need to allow marker creation
-                    // as it will just lead to more complexity on marker handler (we create a marker as a dom marker,
-                    // but immediately need to transfer it to deck)
-                    if ($deckEnabled) {
-                        return;
-                    }
-                    if (isInZoomMode) {
-                        return;
-                    }
-
-                    clickTimeout = setTimeout(() => {
-                        if (!isInZoomMode) {
-                            onClick({
-                                lat: event.latLng?.lat() ?? 0,
-                                lng: event.latLng?.lng() ?? 0,
-                            });
-                        }
-                        clickTimeout = undefined;
-                    }, 300);
-                });
-
-                new PointerDragZoomController({
-                    getZoom: () => $map?.getZoom() ?? 15,
-                    setZoom: zoom => $map?.setZoom(zoom),
-                    onStart: () => {
-                        clearTimeout(clickTimeout);
-                        clickTimeout = undefined;
-                        isInZoomMode = true;
-                    },
-                    onEnd: () => {
-                        isInZoomMode = false;
-                    },
-                }).attachDoubleTapDragZoom(container!);
-
-                event.addListener($map, 'center_changed', function () {
-                    dragTimeout.remove();
-
-                    const center = $map.getCenter();
-                    localStorage.setItem(
-                        'lastCenter',
-                        JSON.stringify({
-                            lat: (center as google.maps.LatLng).lat(),
-                            lng: (center as google.maps.LatLng).lng(),
-                            zoom: $map.getZoom(),
-                        }),
-                    );
-                });
-            }
-        } catch (e) {
-            console.error('error initialising map event listeners');
-            console.error(e);
-        }
-    });
-
-    async function initDeckOverlay() {
-        if (!$map || !$markerManager) {
-            console.log('map or marker manager is not set, cannot init deck');
+    function initListeners() {
+        if (!$map) {
             return;
         }
 
-        try {
-            const controller = new DeckOverlayController($map!);
-            await controller.init();
-            deckController = controller;
-            if (shouldUseDeck()) {
-                // Ensure DOM markers are not visible when entering Deck mode on init
-                $markerManager.hideAllImmediately();
-                deckController.setEnabled(true);
-                deckController.rebuild(computeDeckItems());
-                // Ensure a single update after the first idle when overlay view is attached
-                google.maps.event.addListenerOnce($map, 'idle', () =>
-                    deckController?.rebuild(computeDeckItems()),
-                );
-            }
-        } catch (e) {
-            deckController = null;
-            deckEnabled.set(false);
-            console.warn('Deck.gl overlay failed to initialize; continuing without it.', e);
+        google.maps.event.addListener($map, 'idle', handleIdle);
+        google.maps.event.addListener($map, 'click', handleClick);
+        google.maps.event.addListener($map, 'center_changed', handleCenterChanged);
+    }
+
+    function handleIdle() {
+        if (shouldUseDeck($map!) && !$deckEnabled && deckController) {
+            $markerManager?.hideAllImmediately();
+            deckController.setEnabled(true);
+            deckController.rebuild(computeDeckItems($pointList));
+        }
+
+        if (!shouldUseDeck($map!)) {
+            deckController?.setEnabled(false);
+            $markerManager?.triggerViewportUpdate();
         }
     }
 
-    function shouldUseDeck(): boolean {
-        return ($map?.getZoom() ?? 15) <= config.deckZoomThreshold;
+    function handleClick(event: google.maps.MapMouseEvent) {
+        if ($deckEnabled || isInZoomMode) {
+            return;
+        }
+
+        clickTimeout = setTimeout(() => {
+            if (!isInZoomMode) {
+                onClick({
+                    lat: event.latLng?.lat() ?? 0,
+                    lng: event.latLng?.lng() ?? 0,
+                });
+            }
+            clickTimeout = undefined;
+        }, 300);
+    }
+
+    function handleCenterChanged() {
+        if (!$map) {
+            return;
+        }
+
+        dragTimeout.remove();
+
+        const center = $map.getCenter();
+        localStorage.setItem(
+            'lastCenter',
+            JSON.stringify({
+                lat: (center as google.maps.LatLng).lat(),
+                lng: (center as google.maps.LatLng).lng(),
+                zoom: $map.getZoom(),
+            }),
+        );
+    }
+
+    function cleanupListeners() {
+        if (!$map) {
+            return;
+        }
+
+        google.maps.event.clearInstanceListeners($map);
     }
 
     onDestroy(() => {
@@ -197,10 +178,8 @@
             stopPositionPolling(positionInterval);
         }
 
-        // Cleanup marker manager
-        if ($markerManager) {
-            $markerManager.destroy();
-        }
+        cleanupListeners();
+        $markerManager?.destroy();
         deckController?.destroy();
         map.set(undefined);
     });
