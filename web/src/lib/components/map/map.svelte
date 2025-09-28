@@ -94,8 +94,8 @@
     }
 
     async function initMarkerManager(mapInstance: google.maps.Map): Promise<MarkerManager> {
-        const manager = new MarkerManager();
-        await manager.initialize(mapInstance, mapState.loader);
+        const manager = new MarkerManager(mapInstance);
+        await manager.initialize(mapState.loader);
         return manager;
     }
 

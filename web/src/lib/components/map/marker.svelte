@@ -11,7 +11,7 @@
     import {getAddress} from '$lib/api/location';
     import type {Object} from '$lib/interfaces/object';
     import {pointList} from '$lib/stores/map.js';
-    import {setDraggable} from '$lib/services/map/marker.svelte';
+    import {setDraggable} from '$lib/services/map/map.svelte';
     import { mapState } from '$lib/state/map.svelte';
 
     interface Props {

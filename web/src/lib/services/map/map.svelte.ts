@@ -8,6 +8,12 @@ export function setCenter(lat: number, lng: number) {
     }
 }
 
+export function setDraggable(isDraggable: boolean) {
+    if (mapState.map) {
+        mapState.map.set('draggable', isDraggable);
+    }
+}
+
 export function fitMarkerList(objects: MapPlaceable[], currentCenter?: MapPlaceable) {
     if (objects.length === 0) {
         return;

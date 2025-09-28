@@ -1,4 +1,4 @@
-import {dragTimeout} from '$lib/stores/map.ts';
+import { Marker } from './marker';
 
 export interface MarkerManagerOptions {
     chunkSize: number; // Number of markers to process per animation frame
@@ -7,36 +7,34 @@ export interface MarkerManagerOptions {
 }
 
 export class MarkerManager {
-    private map: google.maps.Map | null = null;
+    private map: google.maps.Map;
     private options: MarkerManagerOptions;
     private visibleMarkers = new Set<string>();
-    private markerCache = new Map<string, google.maps.marker.AdvancedMarkerElement>();
+    private markerCache = new Map<string, Marker>();
     private markerSources = new Map<string, 'map' | 'list' | 'search'>();
     private markerData = new Map<
         string,
         {
             position: google.maps.LatLngLiteral;
             options: any;
-            isLazy: boolean; // Whether this marker should use lazy DOM creation
+            isLazy: boolean;
         }
     >();
-    private replacedMarkers = new Map<
+private replacedMarkers = new Map<
         string,
         {
-            marker: google.maps.marker.AdvancedMarkerElement;
+            marker: Marker;
             source: 'map' | 'list' | 'search';
             wasVisible: boolean;
         }
     >();
 
-    private advancedMarkerElement?: typeof google.maps.marker.AdvancedMarkerElement;
-    private collisionBehavior?: typeof google.maps.CollisionBehavior;
-
     private updateInProgress = false;
     private pendingViewportUpdate = false;
     private suppressUpdates = false;
 
-    public constructor(options: Partial<MarkerManagerOptions> = {}) {
+    public constructor(map: google.maps.Map, options: Partial<MarkerManagerOptions> = {}) {
+        this.map = map;
         this.options = {
             chunkSize: 50,
             maxVisibleMarkers: 1000,
@@ -45,14 +43,9 @@ export class MarkerManager {
         };
     }
     
-    public async initialize(map: google.maps.Map, mapLoader: any) {
-        this.map = map;
-        
+    public async initialize(mapLoader: any) {
         try {
-            const {AdvancedMarkerElement, CollisionBehavior} =
             await mapLoader.importLibrary('marker');
-            this.advancedMarkerElement = AdvancedMarkerElement;
-            this.collisionBehavior = CollisionBehavior;
         } catch (error) {
             console.error('Failed to pre-load marker library:', error);
         }
@@ -73,29 +66,29 @@ export class MarkerManager {
     ): google.maps.marker.AdvancedMarkerElement | null {
         const isLazy = options.source === 'list';
         
-        const existingMarker = this.markerCache.get(id);
+        const existingMarkerNew = this.markerCache.get(id);
         const existingSource = this.markerSources.get(id);
         
         // If this is a search marker and there's an existing non-search marker,
         // we need to replace it. If it's a regular marker and there's already a search marker,
         // we should return the existing search marker.
-        if (existingMarker) {
+        if (existingMarkerNew) {
             if (options.source === 'search' && existingSource !== 'search') {
                 // Search marker should replace existing marker
                 if (existingSource) {
-                    existingMarker.map = null;
+                    existingMarkerNew.hide();
                     const wasVisible = this.visibleMarkers.has(id);
                     this.replacedMarkers.set(id, {
-                        marker: existingMarker,
+                        marker: existingMarkerNew,
                         source: existingSource,
                         wasVisible,
                     });
                 }
                 this.removeMarkerFromCache(id);
             } else if (options.source !== 'search' && existingSource === 'search') {
-                return existingMarker;
+                return existingMarkerNew.getRaw()!;
             } else if (existingSource === options.source) {
-                return existingMarker;
+                return existingMarkerNew.getRaw()!;
             }
         }
         
@@ -111,7 +104,7 @@ export class MarkerManager {
             return null;
         }
         
-        return this.createMarkerDOM(id, position, options);
+        return this.createMarkerDOM(id, position, options).getRaw()!;
     }
     
     private createMarkerDOM(
@@ -126,65 +119,15 @@ export class MarkerManager {
             onDragStart?(): void;
             onDragEnd?(): void;
         },
-    ): google.maps.marker.AdvancedMarkerElement {
-        if (!this.advancedMarkerElement || !this.collisionBehavior) {
-            throw new Error('Marker library not initialized. Call initialize() first.');
-        }
-        
-        let contentEl: HTMLElement;
-        const iconElement = document.createElement('div');
-        iconElement.className =
-        'w-6 h-6 translate-y-1/2 flex justify-center items-center rounded-full transition-transform transition-opacity duration-100 ease-in-out animate-popin text-sm text-white';
-        iconElement.style.backgroundColor = options.color;
-        const iconEl = document.createElement('i');
-        for (const cls of options.icon.split(/\s+/).filter(Boolean)) {
-            iconEl.classList.add(cls);
-        }
-        iconElement.appendChild(iconEl);
-        contentEl = iconElement;
-        const marker = new this.advancedMarkerElement({
-            position,
-            content: contentEl,
-            collisionBehavior: this.collisionBehavior.REQUIRED,
-            gmpClickable: true,
-            zIndex: options.source === 'search' ? 1 : 0,
-        });
-        
-        if (options.onClick) {
-            marker.addListener('gmp-click', options.onClick);
-        }
-        
-        if (options.isDraggable) {
-            contentEl.addEventListener('pointerdown', () => {
-                if (options.onDragStart) {
-                    dragTimeout.set(
-                        setTimeout(async () => {
-                            options.onDragStart!();
-                            (marker.content as HTMLElement).classList.add('marker-dragging');
-                        }, 500),
-                    );
-                }
-            });
-            contentEl.addEventListener('pointerup', () => {
-                if (options.onDragEnd) {
-                    dragTimeout.remove();
-                    options.onDragEnd();
-                    this.markerData.set(id, {...this.markerData.get(id)!, position: marker.position as google.maps.LatLngLiteral});
-                    (marker.content as HTMLElement).classList.remove('marker-dragging');
-                }
-            });
-        }
+    ): Marker {
+        const marker = new Marker(this.map, position);
+        marker.create(options);
         
         this.markerCache.set(id, marker);
         this.markerSources.set(id, options.source);
         
         if (options.source === 'map' || options.source === 'search') {
-            this.visibleMarkers.add(id);
-            marker.map = this.map;
-
-            setTimeout(() => {
-                contentEl.classList.remove('animate-popin');
-            }, 200);
+            this.scheduleViewportUpdate();
         }
         
         return marker;
@@ -205,7 +148,10 @@ export class MarkerManager {
         this.suppressUpdates = true;
 
         for (const id of Array.from(this.visibleMarkers)) {
-            this.hideMarker(id);
+            const marker = this.markerCache.get(id);
+            if (marker) {
+                marker.hide();
+            }
         }
     }
 
@@ -224,24 +170,15 @@ export class MarkerManager {
     public showMarker(id: string) {
         const marker = this.markerCache.get(id);
 
-        if (marker) {
-            const markerElement = marker.content as HTMLElement;
-            markerElement.classList.add('animate-popin');
-            marker.map = this.map;
+        if (marker && marker.getRaw()) {
+            marker.show();
             this.visibleMarkers.add(id);
-
-            setTimeout(() => {
-                markerElement.classList.remove('animate-popin');
-            }, 200);
         } else {
+
             const markerData = this.markerData.get(id);
             if (markerData?.isLazy) {
                 const newMarker = this.createMarkerDOM(id, markerData.position, markerData.options);
-                this.markerCache.set(id, newMarker);
-
-                const markerElement = newMarker.content as HTMLElement;
-                markerElement.classList.add('animate-popin');
-                newMarker.map = this.map;
+                newMarker.show();
                 this.visibleMarkers.add(id);
 
                 // TODO: there seems to be a lot of coupling between marker.svelte and this class with those two events, refactor it
@@ -249,7 +186,7 @@ export class MarkerManager {
                     new CustomEvent('marker-available', {
                         detail: {
                             markerId: id,
-                            marker: newMarker,
+                            marker: newMarker.getRaw()!,
                         },
                     }),
                 );
@@ -264,31 +201,18 @@ export class MarkerManager {
                         },
                     }),
                 );
-
-                setTimeout(() => {
-                    markerElement.classList.remove('animate-popin');
-                }, 200);
             }
         }
     }
-
-    // this function hides a marker without an animation because we do it when a marker either moves
-    // out of viewport bounds (in which case we don't see it, so no need for an animation), or if we
-    // hide all markers while moving to deck overlay, in which case an animation causes weird jitter,
-    // so for now it is sipler to just hide without animation.
-    // There is an edge-case where a marker can be out of viewport only partially, in which case the lack
-    // of animation will be visible, but I'm willing to live with that for now
-    // TODO: Consider implementing true lazy loading (DOM destruction/recreation) if memory usage becomes an issue.
-    // Current approach: DOM caching for better performance and smooth UX
     public hideMarker(id: string) {
         this.visibleMarkers.delete(id);
 
         const marker = this.markerCache.get(id);
-        if (!marker || !marker.map) {
+        if (!marker) {
             return;
         }
 
-        marker.map = null;
+        marker.hide();
     }
 
     public removeMarker(id: string) {
@@ -297,20 +221,10 @@ export class MarkerManager {
             return;
         }
 
-        const markerElement = marker.content as HTMLElement;
-        if (markerElement) {
-            markerElement.classList.add('animate-popout');
-            setTimeout(() => {
-                marker.map = null;
-                this.removeMarkerFromCache(id);
-                this.maybeRestoreReplacedMarker(id);
-                markerElement.classList.remove('animate-popout');
-            }, 200);
-        } else {
-            marker.map = null;
+        marker.remove(() => {
             this.removeMarkerFromCache(id);
             this.maybeRestoreReplacedMarker(id);
-        }
+        });
     }
 
     private maybeRestoreReplacedMarker(id: string) {
@@ -323,10 +237,11 @@ export class MarkerManager {
         this.markerSources.set(id, replacedMarker.source);
         this.replacedMarkers.delete(id);
 
-        // For now always showing restored markers
-        // TODO: come up with a better solution
+        // TODO: for now always show the marker, but need to come up with a bettr solution, because this one leads to some errors
         this.visibleMarkers.add(id);
-        replacedMarker.marker.map = this.map;
+        replacedMarker.marker.show();
+
+        // this.scheduleViewportUpdate();
     }
 
     private removeMarkerFromCache(id: string) {
@@ -451,7 +366,6 @@ export class MarkerManager {
         this.markerSources.clear();
         this.visibleMarkers.clear();
         this.replacedMarkers.clear();
-        this.map = null;
     }
 
     private calculateDistance(
