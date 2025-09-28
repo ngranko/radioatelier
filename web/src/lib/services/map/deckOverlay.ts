@@ -29,7 +29,7 @@ export class DeckOverlayController {
     }
 
     isReady(): boolean {
-        return this.overlay;
+        return Boolean(this.overlay);
     }
 
     setEnabled(enabled: boolean) {

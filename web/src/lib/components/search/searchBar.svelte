@@ -12,9 +12,13 @@
         val = (evt.target as HTMLInputElement).value;
         clearTimeout(timeout);
         timeout = setTimeout(() => {
+            if (!mapState.map) {
+                timeout = undefined;
+                return;
+            }
             searchState.query = (evt.target as HTMLInputElement).value;
-            searchState.lat = mapState.map!.getCenter()!.lat().toString();
-            searchState.lng = mapState.map!.getCenter()!.lng().toString();
+            searchState.lat = mapState.map.getCenter()!.lat().toString();
+            searchState.lng = mapState.map.getCenter()!.lng().toString();
             timeout = undefined;
         }, 400);
     }
