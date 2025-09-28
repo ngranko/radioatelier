@@ -6,8 +6,12 @@
     import type {Location} from '$lib/interfaces/location';
     import {MarkerManager} from '$lib/services/map/markerManager';
     import {pointList} from '$lib/stores/map';
-    import {DeckOverlayController, type DeckItem} from '$lib/services/map/deckOverlay';
-    import {computeDeckItems, initDeckOverlay, shouldUseDeck} from '$lib/services/map/deckOverlayManager.svelte';
+    import {DeckOverlayController} from '$lib/services/map/deckOverlay';
+    import {
+        computeDeckItems,
+        initDeckOverlay,
+        shouldUseDeck,
+    } from '$lib/services/map/deckOverlayManager.svelte';
     import {
         getInitialCenter,
         startPositionPolling,
@@ -36,20 +40,14 @@
     onMount(async () => {
         positionInterval = startPositionPolling(5000);
 
-        const {event} = await $mapLoader.importLibrary('core');
-
         try {
             const mapInstance = await initMap();
             markerManager.set(await initMarkerManager(mapInstance));
             map.set(mapInstance);
             deckController = await initDeckOverlay();
-
-            // Trigger initial viewport update once when the map first becomes idle
-            event.addListenerOnce(mapInstance, 'idle', () => {
-                if ($markerManager && $map && !$deckEnabled) {
-                    $markerManager.triggerViewportUpdate();
-                }
-            });
+            if (!$deckEnabled) {
+                $markerManager!.scheduleViewportUpdate();
+            }
         } catch (e) {
             console.error('error instantiating map');
             console.error(e);
@@ -81,7 +79,7 @@
 
         const center = await getInitialCenter($location);
 
-        const mapInstance = new Map(container!, {
+        return new Map(container!, {
             zoom: center.zoom ?? 15,
             center,
             mapId: config.googleMapsId,
@@ -92,18 +90,10 @@
             zoomControl: false,
             clickableIcons: false,
         });
-
-        return mapInstance;
     }
 
     async function initMarkerManager(mapInstance: google.maps.Map): Promise<MarkerManager> {
-        const qs = new URLSearchParams(window.location.search);
-
-        const disableLazy = qs.has('noLazy');
-
-        const manager = new MarkerManager({
-            enableLazyLoading: !disableLazy,
-        });
+        const manager = new MarkerManager();
         await manager.initialize(mapInstance, $mapLoader);
         return manager;
     }
@@ -120,14 +110,15 @@
 
     function handleIdle() {
         if (shouldUseDeck($map!) && !$deckEnabled && deckController) {
-            $markerManager?.hideAllImmediately();
+            $markerManager?.disableMarkers();
             deckController.setEnabled(true);
             deckController.rebuild(computeDeckItems($pointList));
         }
 
-        if (!shouldUseDeck($map!)) {
+        if (!shouldUseDeck($map!) || !deckController) {
             deckController?.setEnabled(false);
-            $markerManager?.triggerViewportUpdate();
+            $markerManager?.enableMarkers();
+            $markerManager?.scheduleViewportUpdate();
         }
     }
 
