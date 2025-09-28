@@ -20,6 +20,10 @@
     import {me} from '$lib/api/user';
     import {onMount} from 'svelte';
     import Search from '$lib/components/search/search.svelte';
+    import { webgl2Adapter } from '@luma.gl/webgl';
+
+    // this is needed to avoid deck.gl error
+    webgl2Adapter;
 
     interface DeviceOrientationEventMaybeExtended extends DeviceOrientationEvent {
         requestPermission?(): Promise<'granted' | 'denied'>;

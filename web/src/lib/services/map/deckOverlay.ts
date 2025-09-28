@@ -1,4 +1,6 @@
 import {deckEnabled} from '$lib/stores/map';
+import {GoogleMapsOverlay} from '@deck.gl/google-maps';
+import {ScatterplotLayer} from '@deck.gl/layers';
 
 export type DeckItem = {
     id: string;
@@ -11,7 +13,6 @@ export type DeckItem = {
 export class DeckOverlayController {
     private map: google.maps.Map;
     private overlay: any | null = null;
-    private ScatterplotLayerClass: any | null = null;
     private enabled = true;
 
     constructor(map: google.maps.Map) {
@@ -20,13 +21,6 @@ export class DeckOverlayController {
 
     async init() {
         try {
-            const [{GoogleMapsOverlay}, layers] = await Promise.all([
-                // @ts-ignore - local ambient module declarations
-                import('@deck.gl/google-maps'),
-                // @ts-ignore - local ambient module declarations
-                import('@deck.gl/layers'),
-            ]);
-            this.ScatterplotLayerClass = layers.ScatterplotLayer;
             this.overlay = new GoogleMapsOverlay({interleaved: false});
             this.overlay.setMap(this.map);
         } catch (e) {
@@ -35,7 +29,7 @@ export class DeckOverlayController {
     }
 
     isReady(): boolean {
-        return this.overlay && this.ScatterplotLayerClass;
+        return this.overlay;
     }
 
     setEnabled(enabled: boolean) {
@@ -56,7 +50,7 @@ export class DeckOverlayController {
             return;
         }
 
-        const layer = new this.ScatterplotLayerClass({
+        const layer = new ScatterplotLayer({
             id: 'objects-layer',
             data: items,
             getPosition: (d: any) => d.position,
@@ -81,6 +75,5 @@ export class DeckOverlayController {
             } catch {}
         }
         this.overlay = null;
-        this.ScatterplotLayerClass = null;
     }
 }

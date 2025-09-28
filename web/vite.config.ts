@@ -9,7 +9,7 @@ export default defineConfig({
         sveltekit(),
         cjsInterop({
             // Add broken npm package here
-            dependencies: ['@googlemaps/js-api-loader', '@deck.gl/layers', '@deck.gl/google-maps'],
+            dependencies: ['@googlemaps/js-api-loader', '@mapbox/tiny-sdf'],
         }),
     ],
     test: {
