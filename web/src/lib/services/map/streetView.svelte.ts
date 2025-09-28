@@ -1,4 +1,5 @@
-import {activeObjectInfo, map} from '$lib/stores/map';
+import { mapState } from '$lib/state/map.svelte';
+import {activeObjectInfo} from '$lib/stores/map';
 
 export function getStreetView(lat: number, lng: number) {
     const streetView = new google.maps.StreetViewService();
@@ -8,14 +9,12 @@ export function getStreetView(lat: number, lng: number) {
             radius: 30,
         })
         .then(({data}: google.maps.StreetViewResponse) => {
-            map.subscribe(value => {
-                const location = data.location!;
-                if (value) {
-                    const pano = value.getStreetView();
-                    pano.setPano(location.pano as string);
-                    pano.setVisible(true);
-                    activeObjectInfo.update(value => ({...value, isMinimized: true}));
-                }
-            });
+            const location = data.location!;
+            if (mapState.map) {
+                const pano = mapState.map.getStreetView();
+                pano.setPano(location.pano as string);
+                pano.setVisible(true);
+                activeObjectInfo.update(value => ({...value, isMinimized: true}));
+            }
         });
 }

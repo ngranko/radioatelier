@@ -1,7 +1,8 @@
 <script lang="ts">
     import ClearButton from '$lib/components/search/clearButton.svelte';
-    import {map, searchPointList} from '$lib/stores/map';
+    import {searchPointList} from '$lib/stores/map';
     import {searchState} from '$lib/components/search/search.svelte.ts';
+    import { mapState } from '$lib/state/map.svelte';
 
     let inputRef: HTMLInputElement | undefined = $state();
     let val: string = $state('');
@@ -12,8 +13,8 @@
         clearTimeout(timeout);
         timeout = setTimeout(() => {
             searchState.query = (evt.target as HTMLInputElement).value;
-            searchState.lat = $map!.getCenter()!.lat().toString();
-            searchState.lng = $map!.getCenter()!.lng().toString();
+            searchState.lat = mapState.map!.getCenter()!.lat().toString();
+            searchState.lng = mapState.map!.getCenter()!.lng().toString();
             timeout = undefined;
         }, 400);
     }

@@ -1,6 +1,7 @@
 <script lang="ts">
     import {onMount, onDestroy} from 'svelte';
-    import {mapLoader, map, markerManager, dragTimeout, deckEnabled} from '$lib/stores/map';
+    import {dragTimeout} from '$lib/stores/map';
+    import {mapState} from '$lib/state/map.svelte';
     import {createMutation} from '@tanstack/svelte-query';
     import {getLocation} from '$lib/api/location';
     import type {Location} from '$lib/interfaces/location';
@@ -42,11 +43,11 @@
 
         try {
             const mapInstance = await initMap();
-            markerManager.set(await initMarkerManager(mapInstance));
-            map.set(mapInstance);
+            mapState.markerManager = await initMarkerManager(mapInstance);
+            mapState.map = mapInstance;
             deckController = await initDeckOverlay();
-            if (!$deckEnabled) {
-                $markerManager!.scheduleViewportUpdate();
+            if (!mapState.deckEnabled) {
+                mapState.markerManager!.scheduleViewportUpdate();
             }
         } catch (e) {
             console.error('error instantiating map');
@@ -57,8 +58,8 @@
             initListeners();
 
             new PointerDragZoomController({
-                getZoom: () => $map?.getZoom() ?? 15,
-                setZoom: zoom => $map?.setZoom(zoom),
+                getZoom: () => mapState.map?.getZoom() ?? 15,
+                setZoom: zoom => mapState.map?.setZoom(zoom),
                 onStart: () => {
                     clearTimeout(clickTimeout);
                     clickTimeout = undefined;
@@ -75,7 +76,7 @@
     });
 
     async function initMap(): Promise<google.maps.Map> {
-        const {Map} = await $mapLoader.importLibrary('maps');
+        const {Map} = await mapState.loader.importLibrary('maps');
 
         const center = await getInitialCenter($location);
 
@@ -94,36 +95,38 @@
 
     async function initMarkerManager(mapInstance: google.maps.Map): Promise<MarkerManager> {
         const manager = new MarkerManager();
-        await manager.initialize(mapInstance, $mapLoader);
+        await manager.initialize(mapInstance, mapState.loader);
         return manager;
     }
 
     function initListeners() {
-        if (!$map) {
+        if (!mapState.map) {
             return;
         }
 
-        google.maps.event.addListener($map, 'idle', handleIdle);
-        google.maps.event.addListener($map, 'click', handleClick);
-        google.maps.event.addListener($map, 'center_changed', handleCenterChanged);
+        google.maps.event.addListener(mapState.map, 'idle', handleIdle);
+        google.maps.event.addListener(mapState.map, 'click', handleClick);
+        google.maps.event.addListener(mapState.map, 'center_changed', handleCenterChanged);
     }
 
     function handleIdle() {
-        if (shouldUseDeck($map!) && !$deckEnabled && deckController) {
-            $markerManager?.disableMarkers();
+        if (shouldUseDeck(mapState.map!) && !mapState.deckEnabled && deckController) {
+            mapState.markerManager?.disableMarkers();
             deckController.setEnabled(true);
             deckController.rebuild(computeDeckItems($pointList));
+            mapState.deckEnabled = true;
         }
 
-        if (!shouldUseDeck($map!) || !deckController) {
+        if (!shouldUseDeck(mapState.map!) || !deckController) {
             deckController?.setEnabled(false);
-            $markerManager?.enableMarkers();
-            $markerManager?.scheduleViewportUpdate();
+            mapState.markerManager?.enableMarkers();
+            mapState.markerManager?.scheduleViewportUpdate();
+            mapState.deckEnabled = false;
         }
     }
 
     function handleClick(event: google.maps.MapMouseEvent) {
-        if ($deckEnabled || isInZoomMode) {
+        if (mapState.deckEnabled || isInZoomMode) {
             return;
         }
 
@@ -139,29 +142,29 @@
     }
 
     function handleCenterChanged() {
-        if (!$map) {
+        if (!mapState.map) {
             return;
         }
 
         dragTimeout.remove();
 
-        const center = $map.getCenter();
+        const center = mapState.map.getCenter();
         localStorage.setItem(
             'lastCenter',
             JSON.stringify({
                 lat: (center as google.maps.LatLng).lat(),
                 lng: (center as google.maps.LatLng).lng(),
-                zoom: $map.getZoom(),
+                zoom: mapState.map.getZoom(),
             }),
         );
     }
 
     function cleanupListeners() {
-        if (!$map) {
+        if (!mapState.map) {
             return;
         }
 
-        google.maps.event.clearInstanceListeners($map);
+        google.maps.event.clearInstanceListeners(mapState.map);
     }
 
     onDestroy(() => {
@@ -170,9 +173,9 @@
         }
 
         cleanupListeners();
-        $markerManager?.destroy();
+        mapState.markerManager?.destroy();
         deckController?.destroy();
-        map.set(undefined);
+        mapState.map = undefined;
     });
 </script>
 

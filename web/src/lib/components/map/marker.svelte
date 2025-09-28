@@ -1,9 +1,6 @@
 <script lang="ts">
     import {onMount, onDestroy} from 'svelte';
     import {
-        mapLoader,
-        map,
-        markerManager,
         activeObjectInfo,
         activeMarker,
         searchPointList,
@@ -15,6 +12,7 @@
     import type {Object} from '$lib/interfaces/object';
     import {pointList} from '$lib/stores/map.js';
     import {setDraggable} from '$lib/services/map/marker.svelte';
+    import { mapState } from '$lib/state/map.svelte';
 
     interface Props {
         id?: string | null;
@@ -189,7 +187,7 @@
         // For map-clicked markers, pass a unique ID to avoid cache conflicts
         markerId = id ?? `map-${Date.now()}-${Math.random()}`;
 
-        const createdMarker = $markerManager!.createMarker(markerId, position, {
+        const createdMarker = mapState.markerManager!.createMarker(markerId, position, {
             icon,
             color,
             isDraggable,
@@ -374,10 +372,10 @@
     }
 
     async function handleClickStart() {
-        const {event} = await $mapLoader.importLibrary('core');
+        const {event} = await mapState.loader.importLibrary('core');
 
         mouseMoveListener = event.addListener(
-            $map!,
+            mapState.map!,
             'mousemove',
             function (event: google.maps.MapMouseEvent) {
                 isDragged = true;
@@ -398,7 +396,7 @@
         setDraggable(true);
 
         if (mouseMoveListener) {
-            const {event} = await $mapLoader.importLibrary('core');
+            const {event} = await mapState.loader.importLibrary('core');
             event.removeListener(mouseMoveListener);
             mouseMoveListener = null;
         }
@@ -415,8 +413,8 @@
             google.maps.event.removeListener(boundsListener);
         }
 
-        if ($markerManager) {
-            $markerManager.removeMarker(markerId!);
+        if (mapState.markerManager) {
+            mapState.markerManager.removeMarker(markerId!);
         }
     });
 

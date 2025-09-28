@@ -1,4 +1,4 @@
-import {deckEnabled} from '$lib/stores/map';
+import {mapState} from '$lib/state/map.svelte';
 import {GoogleMapsOverlay} from '@deck.gl/google-maps';
 import {ScatterplotLayer} from '@deck.gl/layers';
 
@@ -38,7 +38,7 @@ export class DeckOverlayController {
         }
 
         this.enabled = enabled;
-        deckEnabled.set(enabled);
+        mapState.deckEnabled = enabled;
 
         if (!enabled) {
             this.overlay.setProps({layers: []});

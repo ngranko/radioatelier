@@ -1,9 +1,7 @@
-import {map} from '$lib/stores/map';
+import { mapState } from '$lib/state/map.svelte';
 
 export function setDraggable(isDraggable: boolean) {
-    map.subscribe(value => {
-        if (value) {
-            value.set('draggable', isDraggable);
-        }
-    });
+    if (mapState.map) {
+        mapState.map.set('draggable', isDraggable);
+    }
 }

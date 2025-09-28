@@ -2,10 +2,10 @@
     import SearchBar from '$lib/components/search/searchBar.svelte';
     import SearchPreview from '$lib/components/search/searchPreview.svelte';
     import SearchResults from '$lib/components/search/searchResults.svelte';
-    import {map} from '$lib/stores/map';
     import {searchState} from '$lib/components/search/search.svelte.ts';
     import {onDestroy, onMount} from 'svelte';
     import SearchAreaButton from './searchAreaButton.svelte';
+    import { mapState } from '$lib/state/map.svelte';
 
     let centerLat = $state('');
     let centerLng = $state('');
@@ -13,12 +13,12 @@
 
     onMount(() => {
         updateCenter();
-        listener = $map!.addListener('dragend', updateCenter);
+        listener = mapState.map!.addListener('dragend', updateCenter);
     });
 
     function updateCenter() {
-        centerLat = $map!.getCenter()!.lat().toString();
-        centerLng = $map!.getCenter()!.lng().toString();
+        centerLat = mapState.map!.getCenter()!.lat().toString();
+        centerLng = mapState.map!.getCenter()!.lng().toString();
     }
 
     onDestroy(() => {

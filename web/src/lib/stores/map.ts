@@ -1,25 +1,6 @@
-import config from '$lib/config';
 import type KeyVal from '$lib/interfaces/keyVal';
 import type {ObjectDetailsInfo, PointListItem, SearchPointListItem} from '$lib/interfaces/object';
-import {MarkerManager} from '$lib/services/map/markerManager';
-import {Loader} from '@googlemaps/js-api-loader';
-import {readable, writable} from 'svelte/store';
-
-export const mapLoader = readable<Loader>(undefined, function start(set) {
-    set(
-        new Loader({
-            apiKey: config.googleMapsApiKey,
-            version: 'weekly',
-            libraries: ['places', 'marker'],
-        }),
-    );
-});
-
-export const map = writable<google.maps.Map | undefined>(undefined);
-
-export const markerManager = writable<MarkerManager | undefined>(undefined);
-
-export const deckEnabled = writable<boolean>(false);
+import {writable} from 'svelte/store';
 
 const {subscribe, set, update} = writable<ObjectDetailsInfo>({
     isMinimized: false,

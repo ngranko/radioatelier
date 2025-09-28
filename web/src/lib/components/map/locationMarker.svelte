@@ -1,6 +1,6 @@
 <script lang="ts">
     import {onMount, onDestroy} from 'svelte';
-    import {mapLoader, map} from '$lib/stores/map';
+    import {mapState} from '$lib/state/map.svelte';
 
     interface Props {
         orientationEnabled: boolean;
@@ -20,10 +20,10 @@
         icon.innerHTML = '<i class="fa-solid fa-circle-dot"></i>';
         icon.className = 'current-location-marker';
 
-        const {AdvancedMarkerElement, CollisionBehavior} = await $mapLoader.importLibrary('marker');
+        const {AdvancedMarkerElement, CollisionBehavior} = await mapState.loader.importLibrary('marker');
 
         marker = new AdvancedMarkerElement({
-            map: $map,
+            map: mapState.map,
             content: icon,
             collisionBehavior: CollisionBehavior.REQUIRED,
             gmpClickable: false,
