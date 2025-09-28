@@ -4,10 +4,12 @@ export class Marker {
     private position: google.maps.LatLngLiteral;
     private map: google.maps.Map | null = null;
     private marker?: google.maps.marker.AdvancedMarkerElement;
+    public source: 'map' | 'list' | 'search';
 
-    public constructor(map: google.maps.Map, position: google.maps.LatLngLiteral) {
+    public constructor(map: google.maps.Map, position: google.maps.LatLngLiteral, source: 'map' | 'list' | 'search') {
         this.map = map;
         this.position = position;
+        this.source = source;
     }
 
     public getRaw() {
@@ -18,11 +20,10 @@ export class Marker {
         options: {
             icon: string;
             color: string;
-            source: 'map' | 'list' | 'search';
             isDraggable?: boolean;
             onClick?(): void;
             onDragStart?(): void;
-            onDragEnd?(): void;
+            onDragEnd?(newPosition: google.maps.LatLngLiteral): void;
         },
     ): this {
         if (!google.maps.marker.AdvancedMarkerElement || !google.maps.CollisionBehavior) {
@@ -45,7 +46,7 @@ export class Marker {
             content: contentEl,
             collisionBehavior: google.maps.CollisionBehavior.REQUIRED,
             gmpClickable: true,
-            zIndex: options.source === 'search' ? 1 : 0,
+            zIndex: this.source === 'search' ? 1 : 0,
         });
         
         if (options.onClick) {
@@ -66,20 +67,12 @@ export class Marker {
             contentEl.addEventListener('pointerup', () => {
                 if (options.onDragEnd) {
                     dragTimeout.remove();
-                    options.onDragEnd();
-                    // this.markerData.set(id, {...this.markerData.get(id)!, position: marker.position as google.maps.LatLngLiteral});
+                    options.onDragEnd(this.marker!.position as google.maps.LatLngLiteral);
+                    this.position = this.marker!.position as google.maps.LatLngLiteral;
                     (this.marker?.content as HTMLElement).classList.remove('marker-dragging');
                 }
             });
         }
-        
-        // if (options.source === 'map' || options.source === 'search') {
-        //     this.marker.map = this.map;
-
-        //     setTimeout(() => {
-        //         contentEl.classList.remove('animate-popin');
-        //     }, 200);
-        // }
         
         return this;
     }
