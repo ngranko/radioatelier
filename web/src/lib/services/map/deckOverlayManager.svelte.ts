@@ -20,9 +20,9 @@ export async function initDeckOverlay(): Promise<DeckOverlayController | null> {
     try {
         await controller.init();
         if (shouldUseDeck(mapInstance)) {
-            markerManagerInstance.disableMarkers();
-            controller.setEnabled(true);
             controller.rebuild(computeDeckItems(pointListSnapshot));
+            controller.setEnabled(true);
+            markerManagerInstance.disableMarkers();
         }
     } catch (e) {
         controller = null;
