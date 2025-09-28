@@ -136,9 +136,12 @@ export class MarkerManager {
         iconElement.className =
         'w-6 h-6 translate-y-1/2 flex justify-center items-center rounded-full transition-transform transition-opacity duration-100 ease-in-out animate-popin text-sm text-white';
         iconElement.style.backgroundColor = options.color;
-        iconElement.innerHTML = `<i class="${options.icon}"></i>`;
+        const iconEl = document.createElement('i');
+        for (const cls of options.icon.split(/\s+/).filter(Boolean)) {
+            iconEl.classList.add(cls);
+        }
+        iconElement.appendChild(iconEl);
         contentEl = iconElement;
-        
         const marker = new this.advancedMarkerElement({
             position,
             content: contentEl,
