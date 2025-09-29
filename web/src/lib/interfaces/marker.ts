@@ -1,4 +1,4 @@
-export interface markerOptions {
+export interface MarkerOptions {
     icon: string;
     color: string;
     isDraggable?: boolean;
@@ -6,6 +6,7 @@ export interface markerOptions {
     onClick?(): void;
     onDragStart?(): void;
     onDragEnd?(newPosition: google.maps.LatLngLiteral): void;
+    onCreated?(): void;
 }
 
 export type MarkerSource = 'map' | 'list' | 'search';

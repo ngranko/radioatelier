@@ -1,3 +1,4 @@
+import type { MarkerOptions } from '$lib/interfaces/marker';
 import { Marker } from './marker';
 
 export interface MarkerManagerOptions {
@@ -41,16 +42,8 @@ private replacedMarkers = new Map<
     public addMarker(
         id: string,
         position: google.maps.LatLngLiteral,
-        options: {
-            icon: string;
-            color: string;
-            isDraggable?: boolean;
-            source: 'map' | 'list' | 'search';
-            onClick?(): void;
-            onDragStart?(): void;
-            onDragEnd?(): void;
-        },
-    ): google.maps.marker.AdvancedMarkerElement | null {
+        options: MarkerOptions,
+    ): Marker | null {
         const isLazy = options.source === 'list';
         
         const existingMarker = this.markerCache.get(id);
@@ -65,20 +58,21 @@ private replacedMarkers = new Map<
                 this.replacedMarkers.set(id, existingMarker);
                 this.removeMarkerFromCache(id);
             } else if (options.source !== 'search' && existingMarker.getSource() === 'search') {
-                return existingMarker.getRaw()!;
+                return existingMarker;
             } else if (existingMarker.getSource() === options.source) {
-                return existingMarker.getRaw()!;
+                return existingMarker;
             }
         }
         
-        this.markerCache.set(id, new Marker(this.map, position, options));
+        const bareMarker = new Marker(this.map, position, options);
+        this.markerCache.set(id, bareMarker);
         
         if (isLazy) {
             this.scheduleViewportUpdate();
-            return null;
+            return bareMarker;
         }
         
-        return this.createMarker(id).getRaw()!;
+        return this.createMarker(id);
     }
     
     private createMarker(id: string): Marker {
@@ -143,16 +137,6 @@ private replacedMarkers = new Map<
             const newMarker = this.createMarker(id);
             newMarker.show();
             this.visibleMarkers.add(id);
-
-            // TODO: there seems to be a lot of coupling between marker.svelte and this class with those two events, refactor it
-            window.dispatchEvent(
-                new CustomEvent('marker-available', {
-                    detail: {
-                        markerId: id,
-                        marker: newMarker.getRaw()!,
-                    },
-                }),
-            );
         }
     }
     public hideMarker(id: string) {

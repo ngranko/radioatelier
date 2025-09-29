@@ -1,4 +1,4 @@
-import type { markerOptions, MarkerSource } from '$lib/interfaces/marker';
+import type { MarkerOptions, MarkerSource } from '$lib/interfaces/marker';
 import {dragTimeout} from '$lib/stores/map.ts';
 
 export class Marker {
@@ -7,13 +7,20 @@ export class Marker {
     public constructor(
         private map: google.maps.Map,
         private position: google.maps.LatLngLiteral,
-        private options: markerOptions,
+        private options: MarkerOptions,
     ) {
         //
     }
 
     public getPosition(): google.maps.LatLngLiteral {
         return this.position;
+    }
+
+    public setPosition(position: google.maps.LatLngLiteral) {
+        this.position = position;
+        if (this.marker) {
+            this.marker.position = position;
+        }
     }
 
     public getSource(): MarkerSource {
@@ -71,10 +78,13 @@ export class Marker {
                 if (this.options.onDragEnd) {
                     dragTimeout.remove();
                     this.options.onDragEnd(this.marker!.position as google.maps.LatLngLiteral);
-                    this.position = this.marker!.position as google.maps.LatLngLiteral;
                     (this.marker?.content as HTMLElement).classList.remove('marker-dragging');
                 }
             });
+        }
+
+        if (this.options.onCreated) {
+            this.options.onCreated();
         }
         
         return this;
