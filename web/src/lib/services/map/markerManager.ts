@@ -11,24 +11,9 @@ export class MarkerManager {
     private options: MarkerManagerOptions;
     private visibleMarkers = new Set<string>();
     private markerCache = new Map<string, Marker>();
-    private markerData = new Map<
-        string,
-        {
-            position: google.maps.LatLngLiteral;
-            options: any;
-            isLazy: boolean;
-        }
-    >();
 private replacedMarkers = new Map<
         string,
-        {
-            marker: Marker;
-            data: {
-                position: google.maps.LatLngLiteral;
-                options: any;
-                isLazy: boolean;
-            };
-        }
+        Marker
     >();
 
     private updateInProgress = false;
@@ -53,7 +38,7 @@ private replacedMarkers = new Map<
         }
     }
     
-    public createMarker(
+    public addMarker(
         id: string,
         position: google.maps.LatLngLiteral,
         options: {
@@ -74,60 +59,37 @@ private replacedMarkers = new Map<
         // we need to replace it. If it's a regular marker and there's already a search marker,
         // we should return the existing search marker.
         if (existingMarker) {
-            if (options.source === 'search' && existingMarker.source !== 'search') {
+            if (options.source === 'search' && existingMarker.getSource() !== 'search') {
                 // Search marker should replace existing marker
                 existingMarker.hide();
-                this.replacedMarkers.set(id, {
-                    marker: existingMarker,
-                    data: this.markerData.get(id)!,
-                });
+                this.replacedMarkers.set(id, existingMarker);
                 this.removeMarkerFromCache(id);
-            } else if (options.source !== 'search' && existingMarker.source === 'search') {
+            } else if (options.source !== 'search' && existingMarker.getSource() === 'search') {
                 return existingMarker.getRaw()!;
-            } else if (existingMarker.source === options.source) {
+            } else if (existingMarker.getSource() === options.source) {
                 return existingMarker.getRaw()!;
             }
         }
         
-        this.markerData.set(id, {
-            position,
-            options,
-            isLazy,
-        });
+        this.markerCache.set(id, new Marker(this.map, position, options));
         
         if (isLazy) {
             this.scheduleViewportUpdate();
             return null;
         }
         
-        return this.createMarkerDOM(id, position, options).getRaw()!;
+        return this.createMarker(id).getRaw()!;
     }
     
-    private createMarkerDOM(
-        id: string,
-        position: google.maps.LatLngLiteral,
-        options: {
-            icon: string;
-            color: string;
-            source: 'map' | 'list' | 'search';
-            isDraggable?: boolean;
-            onClick?(): void;
-            onDragStart?(): void;
-            onDragEnd?(): void;
-        },
-    ): Marker {
-        const marker = new Marker(this.map, position, options.source);
-
-        const onDragEnd = (newPosition: google.maps.LatLngLiteral) => {
-            options.onDragEnd?.();
-            this.markerData.set(id, {...this.markerData.get(id)!, position: newPosition});
-        };
+    private createMarker(id: string): Marker {
+        const marker = this.markerCache.get(id);
+        if (!marker) {
+            throw new Error('Marker not found');
+        }
         
-        marker.create({...options, onDragEnd});
+        marker.create();
         
-        this.markerCache.set(id, marker);
-        
-        if (marker.source === 'map' || marker.source === 'search') {
+        if (marker.getSource() === 'map' || marker.getSource() === 'search') {
             this.scheduleViewportUpdate();
         }
         
@@ -170,39 +132,27 @@ private replacedMarkers = new Map<
 
     public showMarker(id: string) {
         const marker = this.markerCache.get(id);
+        if (!marker) {
+            throw new Error('Marker not found');
+        }
 
-        if (marker && marker.getRaw()) {
+        if (marker.isCreated()) {
             marker.show();
             this.visibleMarkers.add(id);
         } else {
+            const newMarker = this.createMarker(id);
+            newMarker.show();
+            this.visibleMarkers.add(id);
 
-            const markerData = this.markerData.get(id);
-            if (markerData?.isLazy) {
-                const newMarker = this.createMarkerDOM(id, markerData.position, markerData.options);
-                newMarker.show();
-                this.visibleMarkers.add(id);
-
-                // TODO: there seems to be a lot of coupling between marker.svelte and this class with those two events, refactor it
-                window.dispatchEvent(
-                    new CustomEvent('marker-available', {
-                        detail: {
-                            markerId: id,
-                            marker: newMarker.getRaw()!,
-                        },
-                    }),
-                );
-
-                // Also trigger a style update event with current state
-                window.dispatchEvent(
-                    new CustomEvent('marker-style-update', {
-                        detail: {
-                            markerId: id,
-                            isVisited: markerData.options.isVisited,
-                            isRemoved: markerData.options.isRemoved,
-                        },
-                    }),
-                );
-            }
+            // TODO: there seems to be a lot of coupling between marker.svelte and this class with those two events, refactor it
+            window.dispatchEvent(
+                new CustomEvent('marker-available', {
+                    detail: {
+                        markerId: id,
+                        marker: newMarker.getRaw()!,
+                    },
+                }),
+            );
         }
     }
     public hideMarker(id: string) {
@@ -234,19 +184,13 @@ private replacedMarkers = new Map<
             return;
         }
 
-        this.markerCache.set(id, replacedMarker.marker);
-        this.markerData.set(id, replacedMarker.data);
+        this.markerCache.set(id, replacedMarker);
         this.replacedMarkers.delete(id);
 
-        // TODO: for now always show the marker, but need to come up with a bettr solution, because this one leads to some errors
-        this.visibleMarkers.add(id);
-        replacedMarker.marker.show();
-
-        // this.scheduleViewportUpdate();
+        this.scheduleViewportUpdate();
     }
 
     private removeMarkerFromCache(id: string) {
-        this.markerData.delete(id);
         this.markerCache.delete(id);
         this.visibleMarkers.delete(id);
     }
@@ -256,9 +200,9 @@ private replacedMarkers = new Map<
     ): Array<{id: string; position: google.maps.LatLngLiteral}> {
         const allMarkersInViewport: Array<{id: string; position: google.maps.LatLngLiteral}> = [];
 
-        for (const [id, markerData] of this.markerData.entries()) {
-            if (bounds.contains(markerData.position)) {
-                allMarkersInViewport.push({id, position: markerData.position});
+        for (const [id, markerData] of this.markerCache.entries()) {
+            if (bounds.contains(markerData.getPosition())) {
+                allMarkersInViewport.push({id, position: markerData.getPosition()});
             }
         }
 
@@ -312,7 +256,7 @@ private replacedMarkers = new Map<
             return;
         }
 
-        const allMarkerIds = Array.from(this.markerData.keys());
+        const allMarkerIds = Array.from(this.markerCache.keys());
         let currentIndex = 0;
 
         const processChunk = () => {
@@ -362,7 +306,6 @@ private replacedMarkers = new Map<
     // Cleanup method
     public destroy() {
         this.markerCache.clear();
-        this.markerData.clear();
         this.visibleMarkers.clear();
         this.replacedMarkers.clear();
     }

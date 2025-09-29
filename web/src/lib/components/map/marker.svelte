@@ -157,27 +157,11 @@
             }
         };
 
-        // Event listener for style updates (needed for lazy markers in large datasets)
-        const handleMarkerStyleUpdate = (event: CustomEvent) => {
-            if (event.detail.markerId === markerId) {
-                // For lazy markers, the marker might not be available yet
-                // The styles will be applied when the marker becomes available via the effect
-                if (marker) {
-                    calculateStateStyles();
-                }
-            }
-        };
-
         window.addEventListener('marker-available', handleMarkerAvailable as EventListener);
-        window.addEventListener('marker-style-update', handleMarkerStyleUpdate as EventListener);
 
         // Cleanup listener on destroy
         return () => {
             window.removeEventListener('marker-available', handleMarkerAvailable as EventListener);
-            window.removeEventListener(
-                'marker-style-update',
-                handleMarkerStyleUpdate as EventListener,
-            );
         };
     });
 
@@ -187,7 +171,7 @@
         // For map-clicked markers, pass a unique ID to avoid cache conflicts
         markerId = id ?? `map-${Date.now()}-${Math.random()}`;
 
-        const createdMarker = mapState.markerManager!.createMarker(markerId, position, {
+        const createdMarker = mapState.markerManager!.addMarker(markerId, position, {
             icon,
             color,
             isDraggable,
