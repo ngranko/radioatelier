@@ -1,5 +1,6 @@
 import type KeyVal from '$lib/interfaces/keyVal';
 import type {ObjectDetailsInfo, PointListItem, SearchPointListItem} from '$lib/interfaces/object';
+import type { Marker } from '$lib/services/map/marker';
 import {writable} from 'svelte/store';
 
 const {subscribe, set, update} = writable<ObjectDetailsInfo>({
@@ -26,25 +27,25 @@ export const activeObjectInfo = {
     update,
 };
 
-const privateActiveMarker = writable<google.maps.marker.AdvancedMarkerElement | null>(null);
+const privateActiveMarker = writable<Marker | null>(null);
 
 export const activeMarker = {
     subscribe: privateActiveMarker.subscribe,
     set: privateActiveMarker.set,
     deactivate: () =>
         privateActiveMarker.update(value => {
-            if (value) {
-                (value.content as HTMLElement).classList.remove('scale-120');
-                (value.content as HTMLElement).classList.remove('duration-100');
+            if (value && value.getRaw()) {
+                (value.getRaw()!.content as HTMLElement).classList.remove('scale-120');
+                (value.getRaw()!.content as HTMLElement).classList.remove('duration-100');
             }
             return value;
         }),
     activate: () =>
         privateActiveMarker.update(value => {
-            if (value) {
-                (value.content as HTMLElement).classList.add('duration-100');
+            if (value && value.getRaw()) {
+                (value.getRaw()!.content as HTMLElement).classList.add('duration-100');
                 requestAnimationFrame(() => {
-                    (value.content as HTMLElement).classList.add('scale-120');
+                    (value.getRaw()!.content as HTMLElement).classList.add('scale-120');
                 });
             }
             return value;

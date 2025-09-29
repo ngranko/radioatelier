@@ -36,7 +36,7 @@ export class Marker {
     }
     
     public create(): this {
-        if (!google.maps.marker.AdvancedMarkerElement || !google.maps.CollisionBehavior) {
+        if (!google.maps.marker || !google.maps.marker.AdvancedMarkerElement || !google.maps.CollisionBehavior) {
             throw new Error('Marker manager library not initialized');
         }
         

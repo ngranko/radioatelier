@@ -303,7 +303,7 @@
             }
         }
 
-        activeMarker.set(marker!.getRaw()!);
+        activeMarker.set(marker);
         activeMarker.activate();
     }
 </script>
