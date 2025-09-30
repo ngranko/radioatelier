@@ -10,3 +10,5 @@ export interface MarkerOptions {
 }
 
 export type MarkerSource = 'map' | 'list' | 'search';
+
+export type MarkerId = string;

@@ -30,7 +30,7 @@ export function getContrastingColor(baseColor: string): string {
     return defaultGreen;
 }
 
-function hexToRgb(hex: string): {r: number; g: number; b: number} {
+export function hexToRgb(hex: string): {r: number; g: number; b: number} {
     let h = hex.replace('#', '');
     if (h.length === 3) {
         h = h

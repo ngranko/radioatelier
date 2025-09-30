@@ -1,8 +1,8 @@
-import type { MarkerOptions, MarkerSource } from '$lib/interfaces/marker';
-import {dragTimeout} from '$lib/stores/map.ts';
+import type {MarkerOptions, MarkerSource} from '$lib/interfaces/marker';
 
 export class Marker {
     private marker?: google.maps.marker.AdvancedMarkerElement;
+    private listenerReference: {onPointerDown(): void, onPointerUp(): void} | undefined;
 
     public constructor(
         private map: google.maps.Map,
@@ -27,6 +27,38 @@ export class Marker {
         return this.options.source;
     }
 
+    public getColor(): string {
+        return this.options.color;
+    }
+
+    public getMap(): google.maps.Map {
+        return this.map;
+    }
+
+    public isDraggable(): boolean {
+        return Boolean(this.options.isDraggable);
+    }
+
+    public getOnClick(): (() => void) | undefined {
+        return this.options.onClick;
+    }
+
+    public getOnDragStart(): (() => void) | undefined {
+        return this.options.onDragStart;
+    }
+
+    public getOnDragEnd(): ((pos: google.maps.LatLngLiteral) => void) | undefined {
+        return this.options.onDragEnd;
+    }
+
+    public getOnCreated(): (() => void) | undefined {
+        return this.options.onCreated;
+    }
+
+    public getIcon(): string {
+        return this.options.icon;
+    }
+
     public isCreated(): boolean {
         return Boolean(this.marker);
     }
@@ -34,71 +66,30 @@ export class Marker {
     public getRaw() {
         return this.marker;
     }
-    
-    public create(): this {
-        if (!google.maps.marker || !google.maps.marker.AdvancedMarkerElement || !google.maps.CollisionBehavior) {
-            throw new Error('Marker manager library not initialized');
-        }
-        
-        let contentEl: HTMLElement;
-        const iconElement = document.createElement('div');
-        iconElement.className =
-        'w-6 h-6 translate-y-1/2 flex justify-center items-center rounded-full transition-transform transition-opacity duration-100 ease-in-out animate-popin text-sm text-white';
-        iconElement.style.backgroundColor = this.options.color;
-        const iconEl = document.createElement('i');
-        for (const cls of this.options.icon.split(/\s+/).filter(Boolean)) {
-            iconEl.classList.add(cls);
-        }
-        iconElement.appendChild(iconEl);
-        contentEl = iconElement;
-        this.marker = new google.maps.marker.AdvancedMarkerElement({
-            position: this.position,
-            content: contentEl,
-            collisionBehavior: google.maps.CollisionBehavior.REQUIRED,
-            gmpClickable: true,
-            zIndex: this.options.source === 'search' ? 1 : 0,
-        });
-        
-        if (this.options.onClick) {
-            this.marker.addListener('gmp-click', this.options.onClick);
-        }
-        
-        if (this.options.isDraggable) {
-            contentEl.addEventListener('pointerdown', () => {
-                if (this.options.onDragStart) {
-                    dragTimeout.set(
-                        setTimeout(async () => {
-                            this.options.onDragStart!();
-                            (this.marker?.content as HTMLElement).classList.add('marker-dragging');
-                        }, 500),
-                    );
-                }
-            });
-            contentEl.addEventListener('pointerup', () => {
-                if (this.options.onDragEnd) {
-                    dragTimeout.remove();
-                    this.options.onDragEnd(this.marker!.position as google.maps.LatLngLiteral);
-                    (this.marker?.content as HTMLElement).classList.remove('marker-dragging');
-                }
-            });
-        }
 
-        if (this.options.onCreated) {
-            this.options.onCreated();
-        }
-        
-        return this;
+    public setRaw(raw: google.maps.marker.AdvancedMarkerElement) {
+        this.marker = raw;
+    }
+
+    public getListenerReference() {
+        return this.listenerReference;
+    }
+
+    public setListenerReference(listeners?: {onPointerDown(): void, onPointerUp(): void}) {
+        this.listenerReference = listeners;
+    }
+
+    public create() {
+        this.options.onCreated?.();
     }
 
     public show() {
-        if (this.marker) {
-            const markerElement = this.marker.content as HTMLElement;
-            markerElement.classList.add('animate-popin');
-            this.marker.map = this.map;
+        if (!this.marker) {
+            return;
+        }
 
-            setTimeout(() => {
-                markerElement.classList.remove('animate-popin');
-            }, 200);
+        if (!this.marker.map) {
+            this.marker.map = this.map;
         }
     }
 
@@ -123,24 +114,9 @@ export class Marker {
             return;
         }
 
-        const markerElement = this.marker.content as HTMLElement;
-        if (markerElement) {
-            markerElement.classList.add('animate-popout');
-            setTimeout(() => {
-                if (!this.marker) {
-                    return;
-                }
-                this.marker.map = null;
-                this.marker = undefined;
-                markerElement.classList.remove('animate-popout');
-                onSuccess();
-            }, 200);
-        } else {
-            this.marker.map = null;
-            this.marker = undefined;
-            onSuccess();
-        }
-
-        // TODO: ideally I should probably remove event listeners here as well
+        this.listenerReference = undefined;
+        this.marker.map = null;
+        this.marker = undefined;
+        onSuccess();
     }
 }

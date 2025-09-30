@@ -6,13 +6,6 @@
     import {getLocation} from '$lib/api/location';
     import type {Location} from '$lib/interfaces/location';
     import {MarkerManager} from '$lib/services/map/markerManager';
-    import {pointList} from '$lib/stores/map';
-    import {DeckOverlayController} from '$lib/services/map/deckOverlay';
-    import {
-        computeDeckItems,
-        initDeckOverlay,
-        shouldUseDeck,
-    } from '$lib/services/map/deckOverlayManager.svelte';
     import {
         getInitialCenter,
         startPositionPolling,
@@ -32,7 +25,6 @@
     let clickTimeout: number | undefined;
     let positionInterval: number | undefined;
     let isInZoomMode = false;
-    let deckController: DeckOverlayController | null = null;
 
     const location = createMutation({
         mutationFn: getLocation,
@@ -45,10 +37,7 @@
             const mapInstance = await initMap();
             mapState.markerManager = await initMarkerManager(mapInstance);
             mapState.map = mapInstance;
-            deckController = await initDeckOverlay();
-            if (!mapState.deckEnabled) {
-                mapState.markerManager!.scheduleViewportUpdate();
-            }
+            mapState.markerManager!.scheduleViewportUpdate();
         } catch (e) {
             console.error('error instantiating map');
             console.error(e);
@@ -94,7 +83,7 @@
     }
 
     async function initMarkerManager(mapInstance: google.maps.Map): Promise<MarkerManager> {
-        const manager = new MarkerManager(mapInstance);
+        const manager = new MarkerManager(mapInstance, {renderer: shouldUseDeck(mapInstance) ? 'deck' : 'dom'});
         await manager.initialize(mapState.loader);
         return manager;
     }
@@ -110,19 +99,8 @@
     }
 
     function handleIdle() {
-        if (shouldUseDeck(mapState.map!) && !mapState.deckEnabled && deckController) {
-            mapState.markerManager?.disableMarkers();
-            deckController.setEnabled(true);
-            deckController.rebuild(computeDeckItems($pointList));
-            mapState.deckEnabled = true;
-        }
-
-        if (!shouldUseDeck(mapState.map!) || !deckController) {
-            deckController?.setEnabled(false);
-            mapState.markerManager?.enableMarkers();
-            mapState.markerManager?.scheduleViewportUpdate();
-            mapState.deckEnabled = false;
-        }
+        mapState.markerManager?.setRendererMode(shouldUseDeck(mapState.map!) ? 'deck' : 'dom');
+        mapState.markerManager?.scheduleViewportUpdate();
     }
 
     function handleClick(event: google.maps.MapMouseEvent) {
@@ -167,6 +145,10 @@
         google.maps.event.clearInstanceListeners(mapState.map);
     }
 
+    function shouldUseDeck(map: google.maps.Map): boolean {
+    return (map.getZoom() ?? 15) <= config.deckZoomThreshold;
+}
+
     onDestroy(() => {
         if (positionInterval) {
             stopPositionPolling(positionInterval);
@@ -174,7 +156,6 @@
 
         cleanupListeners();
         mapState.markerManager?.destroy();
-        deckController?.destroy();
         mapState.map = undefined;
     });
 </script>
