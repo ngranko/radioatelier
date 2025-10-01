@@ -1,6 +1,5 @@
 <script lang="ts">
     import {onMount, onDestroy} from 'svelte';
-    import {dragTimeout} from '$lib/stores/map';
     import {mapState} from '$lib/state/map.svelte';
     import {createMutation} from '@tanstack/svelte-query';
     import {getLocation} from '$lib/api/location';
@@ -14,6 +13,7 @@
     import {PointerDragZoomController} from '$lib/services/map/pointerDragZoom';
     import config from '$lib/config';
     import StreetView from './streetView.svelte';
+    import { removeDragTimeout } from '$lib/state/marker.svelte';
 
     interface Props {
         onClick(location: Location): void;
@@ -124,7 +124,7 @@
             return;
         }
 
-        dragTimeout.remove();
+        removeDragTimeout();
 
         const center = mapState.map.getCenter();
         localStorage.setItem(

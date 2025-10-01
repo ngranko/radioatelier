@@ -52,27 +52,6 @@ export const activeMarker = {
         }),
 };
 
-const privateDragTimeout = writable<number | null>(null);
-
-export const dragTimeout = {
-    subscribe: privateDragTimeout.subscribe,
-    set: (timeout: number) => {
-        privateDragTimeout.update(value => {
-            if (value) {
-                clearTimeout(value);
-            }
-            return timeout;
-        });
-    },
-    remove: () =>
-        privateDragTimeout.update(value => {
-            if (value) {
-                clearTimeout(value);
-            }
-            return null;
-        }),
-};
-
 const privatePointList = writable<KeyVal<PointListItem>>({});
 
 export const pointList = {

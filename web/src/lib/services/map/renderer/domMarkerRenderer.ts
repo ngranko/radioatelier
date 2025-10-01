@@ -1,3 +1,4 @@
+import { removeDragTimeout, setDragTimeout } from '$lib/state/marker.svelte';
 import type {Marker} from '../marker';
 import type {MarkerRenderer} from './markerRenderer';
 
@@ -35,7 +36,7 @@ export class DomMarkerRenderer implements MarkerRenderer {
         const raw = marker.getRaw();
         if (!raw) {
             return;
-        };
+        }
 
         const element = raw.content as HTMLElement;
         element.classList.add('animate-popin');
@@ -88,7 +89,7 @@ export class DomMarkerRenderer implements MarkerRenderer {
                 const start = marker.getOnDragStart();
                 if (start) {
                     // Delay to distinguish click vs drag intent
-                    (window as any).dragTimeout?.set?.(
+                    setDragTimeout(
                         setTimeout(() => {
                             start();
                             (raw.content as HTMLElement).classList.add('marker-dragging');
@@ -100,7 +101,7 @@ export class DomMarkerRenderer implements MarkerRenderer {
             const onPointerUp = () => {
                 const end = marker.getOnDragEnd();
                 if (end) {
-                    (window as any).dragTimeout?.remove?.();
+                    removeDragTimeout();
                     end(raw.position as google.maps.LatLngLiteral);
                     (raw.content as HTMLElement).classList.remove('marker-dragging');
                 }
