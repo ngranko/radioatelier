@@ -4,6 +4,11 @@ import {ScatterplotLayer} from '@deck.gl/layers';
 import type {Marker} from '../marker';
 import type {MarkerRenderer} from './markerRenderer';
 
+interface DeckPointInfo {
+    position: [number, number];
+    color: [number, number, number];
+}
+
 export class DeckOverlayRenderer implements MarkerRenderer {
     private overlay: GoogleMapsOverlay;
     private allMarkers = new Set<Marker>();
@@ -61,18 +66,20 @@ export class DeckOverlayRenderer implements MarkerRenderer {
     }
 
     private render() {
-        const data = Array.from(this.allMarkers).map(marker => {
+        const data: DeckPointInfo[] = Array.from(this.allMarkers).map(marker => {
             const pos = marker.getPosition();
-            const colorHex = (marker as any).getColor ? (marker as any).getColor() : '#000000';
-            const {r, g, b} = hexToRgb(colorHex);
-            return {position: [pos.lng, pos.lat], color: [r, g, b] as [number, number, number]};
+            const {r, g, b} = hexToRgb(marker.getColor());
+            return {
+                position: [pos.lng, pos.lat],
+                color: [r, g, b] as [number, number, number],
+            };
         });
 
         const layer = new ScatterplotLayer({
             id: 'markers-scatterplot',
             data,
-            getPosition: d => (d as any).position,
-            getFillColor: d => (d as any).color,
+            getPosition: (d: DeckPointInfo) => d.position,
+            getFillColor: (d: DeckPointInfo) => d.color,
             // TODO: no isVisited/isRemoved support for deck for now
             radiusUnits: 'pixels',
             getRadius: 6,
