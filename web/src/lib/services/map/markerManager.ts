@@ -1,8 +1,8 @@
 import type {MarkerId, MarkerOptions} from '$lib/interfaces/marker';
 import {Marker} from './marker';
 import {MarkerRepository} from './markerRepository';
-import {DeckOverlayRenderer} from './renderer/deckOverlayRenderer';
 import {DomMarkerRenderer} from './renderer/domMarkerRenderer';
+import {HybridMarkerRenderer} from './renderer/hybridMarkerRenderer';
 import type {MarkerRenderer} from './renderer/markerRenderer';
 import {UpdateScheduler} from './updateScheduler';
 import {ViewportIndex} from './viewportIndex';
@@ -38,7 +38,7 @@ export class MarkerManager {
         };
 
         this.isDeck = this.options.renderer === 'deck';
-        this.renderer = this.isDeck ? new DeckOverlayRenderer(this.map) : new DomMarkerRenderer();
+        this.renderer = this.isDeck ? new HybridMarkerRenderer(this.map) : new DomMarkerRenderer();
         this.visibilityEngine = new VisibilityEngine(
             this.repo,
             {chunkSize: this.options.chunkSize},
@@ -123,7 +123,7 @@ export class MarkerManager {
         this.disableMarkers();
 
         this.renderer.destroy();
-        this.renderer = this.isDeck ? new DeckOverlayRenderer(this.map) : new DomMarkerRenderer();
+        this.renderer = this.isDeck ? new HybridMarkerRenderer(this.map) : new DomMarkerRenderer();
         this.visibilityEngine.setRenderer(this.renderer);
 
         this.renderer.syncAll(this.repo.values());
