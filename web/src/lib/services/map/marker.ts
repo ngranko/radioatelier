@@ -3,13 +3,16 @@ import type {MarkerOptions, MarkerSource} from '$lib/interfaces/marker';
 export class Marker {
     private marker?: google.maps.marker.AdvancedMarkerElement;
     private listenerReference: {onPointerDown(): void, onPointerUp(): void} | undefined;
+    private isVisited = false;
+    private isRemoved = false;
 
     public constructor(
         private map: google.maps.Map,
         private position: google.maps.LatLngLiteral,
         private options: MarkerOptions,
     ) {
-        //
+        this.isVisited = Boolean(options.isVisited);
+        this.isRemoved = Boolean(options.isRemoved);
     }
 
     public getPosition(): google.maps.LatLngLiteral {
@@ -47,7 +50,7 @@ export class Marker {
         return this.options.onDragStart;
     }
 
-    public getOnDragEnd(): ((pos: google.maps.LatLngLiteral) => void) | undefined {
+    public getOnDragEnd(): (() => void) | undefined {
         return this.options.onDragEnd;
     }
 
@@ -57,6 +60,19 @@ export class Marker {
 
     public getIcon(): string {
         return this.options.icon;
+    }
+
+    public getState() {
+        return {isVisited: this.isVisited, isRemoved: this.isRemoved};
+    }
+
+    public setState(update: {isVisited?: boolean; isRemoved?: boolean}) {
+        if (update.isVisited !== undefined) {
+            this.isVisited = update.isVisited;
+        }
+        if (update.isRemoved !== undefined) {
+            this.isRemoved = update.isRemoved;
+        }
     }
 
     public isCreated(): boolean {

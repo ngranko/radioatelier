@@ -66,10 +66,10 @@
     const reposition = useRepositionMutation(client);
 
     $effect(() => {
-        if (!marker || !markerDomReady) {
+        if (!markerId || !mapState.markerManager) {
             return;
         }
-        calculateStateStyles(isVisited, isRemoved, color);
+        mapState.markerManager.updateMarkerState(markerId, {isVisited, isRemoved});
     });
 
     $effect(() => {
@@ -165,30 +165,6 @@
                 ...value,
                 isLoading: true,
             }));
-        }
-    }
-
-    function calculateStateStyles(currentVisited: boolean, currentRemoved: boolean, currentColor: string) {
-        if (!marker || !marker.isCreated()) {
-            return;
-        }
-
-        const markerContent = marker.getRaw()!.content as HTMLElement;
-
-        // Remove existing classes first to avoid duplicates
-        markerContent.classList.remove('opacity-50');
-
-        // Add appropriate classes based on state
-        if (currentVisited) {
-            const contrastingColor = getContrastingColor(currentColor);
-            // Apply border using box-shadow to avoid changing element size
-            markerContent.style.boxShadow = `0 0 0 4px ${contrastingColor}`;
-        } else {
-            // Remove border when not visited
-            markerContent.style.removeProperty('box-shadow');
-        }
-        if (currentRemoved) {
-            markerContent.classList.add('opacity-50');
         }
     }
 

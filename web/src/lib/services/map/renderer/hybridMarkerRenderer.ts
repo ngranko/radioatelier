@@ -54,6 +54,14 @@ export class HybridMarkerRenderer implements MarkerRenderer {
         }
     }
 
+    public applyState(marker: Marker): void {
+        if (marker.getSource() === 'search') {
+            this.dom.applyState(marker);
+        } else {
+            this.deck.applyState(marker);
+        }
+    }
+
     public destroy(): void {
         this.dom.destroy();
         this.deck.destroy();

@@ -31,6 +31,10 @@ export function getContrastingColor(baseColor: string): string {
 }
 
 export function hexToRgb(hex: string): {r: number; g: number; b: number} {
+    if (!/^#?[0-9A-Fa-f]{3}([0-9A-Fa-f]{3})?$/.test(hex)) {
+        throw new Error(`Invalid hex color: ${hex}`);
+    }
+
     let h = hex.replace('#', '');
     if (h.length === 3) {
         h = h

@@ -48,6 +48,10 @@ export class DeckOverlayRenderer implements MarkerRenderer {
         }
     }
 
+    public applyState(marker: Marker): void {
+        // No-op; all markers rendered in one deck.gl layer
+    }
+
     public destroy(): void {
         this.allMarkers.clear();
         this.overlay.setProps({layers: []});

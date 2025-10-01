@@ -1,4 +1,5 @@
 import { removeDragTimeout, setDragTimeout } from '$lib/state/marker.svelte';
+import { getContrastingColor } from '$lib/services/colorConverter';
 import type {Marker} from '../marker';
 import type {MarkerRenderer} from './markerRenderer';
 
@@ -25,6 +26,7 @@ export class DomMarkerRenderer implements MarkerRenderer {
             marker.setRaw(raw);
             this.attachEvents(marker);
             marker.create();
+            this.applyState(marker);
         }
     }
 
@@ -38,6 +40,7 @@ export class DomMarkerRenderer implements MarkerRenderer {
             return;
         }
 
+        this.applyState(marker);
         const element = raw.content as HTMLElement;
         element.classList.add('animate-popin');
         setTimeout(() => {
@@ -102,7 +105,7 @@ export class DomMarkerRenderer implements MarkerRenderer {
                 const end = marker.getOnDragEnd();
                 if (end) {
                     removeDragTimeout();
-                    end(raw.position as google.maps.LatLngLiteral);
+                    end();
                     (raw.content as HTMLElement).classList.remove('marker-dragging');
                 }
             };
@@ -128,6 +131,25 @@ export class DomMarkerRenderer implements MarkerRenderer {
             element.removeEventListener('pointerdown', listenerReference.onPointerDown);
             element.removeEventListener('pointerup', listenerReference.onPointerUp);
             marker.setListenerReference(undefined);
+        }
+    }
+
+    public applyState(marker: Marker): void {
+        const {isVisited, isRemoved} = marker.getState();
+        const element = marker.getRaw()?.content as HTMLElement;
+        if (!element) {
+            return;
+        }
+
+        element.classList.remove('opacity-50');
+        element.style.removeProperty('box-shadow');
+
+        if (isVisited) {
+            const borderColor = getContrastingColor(marker.getColor());
+            element.style.boxShadow = `0 0 0 4px ${borderColor}`;
+        }
+        if (isRemoved) {
+            element.classList.add('opacity-50');
         }
     }
 }

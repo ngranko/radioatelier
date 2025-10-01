@@ -1,4 +1,4 @@
-import type {MarkerId, MarkerOptions} from '$lib/interfaces/marker';
+import type {MarkerId, MarkerOptions, MarkerStateUpdate} from '$lib/interfaces/marker';
 import {Marker} from './marker';
 import {MarkerRepository} from './markerRepository';
 import {DomMarkerRenderer} from './renderer/domMarkerRenderer';
@@ -145,6 +145,16 @@ export class MarkerManager {
                 this.scheduleViewportUpdate();
             }
         });
+    }
+
+    public updateMarkerState(id: MarkerId, update: MarkerStateUpdate) {
+        const marker = this.repo.get(id);
+        if (!marker) {
+            return;
+        }
+
+        marker.setState(update);
+        this.renderer.applyState(marker);
     }
 
     private updateMarkersInViewport() {
