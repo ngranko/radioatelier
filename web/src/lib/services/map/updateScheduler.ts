@@ -1,5 +1,6 @@
 export class UpdateScheduler {
     private updateInProgress = false;
+    private shouldUpdate = false;
     private pendingViewportUpdate = false;
     private suppressUpdates = false;
 
@@ -25,17 +26,22 @@ export class UpdateScheduler {
             return;
         }
         if (this.updateInProgress) {
-            this.pendingViewportUpdate = true;
+            this.shouldUpdate = true;
             return;
         }
 
         this.updateInProgress = true;
-        this.triggerFn();
+        try {
+            this.triggerFn();
+        } catch (e) {
+            console.error('error updating viewport');
+            console.error(e);
+        }
     }
 
     public complete() {
         this.updateInProgress = false;
-        if (this.pendingViewportUpdate && !this.suppressUpdates) {
+        if (this.shouldUpdate && !this.suppressUpdates) {
             this.schedule();
         }
     }
@@ -46,7 +52,7 @@ export class UpdateScheduler {
 
     public enable() {
         this.suppressUpdates = false;
-        if (this.pendingViewportUpdate && !this.updateInProgress) {
+        if (this.shouldUpdate && !this.updateInProgress) {
             this.schedule();
         }
     }
