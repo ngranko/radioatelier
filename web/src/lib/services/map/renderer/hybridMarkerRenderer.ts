@@ -1,7 +1,7 @@
-import type {Marker} from '../marker';
-import type {MarkerRenderer} from './markerRenderer';
-import {DomMarkerRenderer} from './domMarkerRenderer';
-import {DeckOverlayRenderer} from './deckOverlayRenderer';
+import type {Marker} from '$lib/services/map/marker';
+import type {MarkerRenderer} from '$lib/services/map/renderer/markerRenderer';
+import {DomMarkerRenderer} from '$lib/services/map/renderer/domMarkerRenderer';
+import {DeckOverlayRenderer} from '$lib/services/map/renderer/deckOverlayRenderer';
 
 export class HybridMarkerRenderer implements MarkerRenderer {
     private dom = new DomMarkerRenderer();

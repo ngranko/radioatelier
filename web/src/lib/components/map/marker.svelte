@@ -15,7 +15,6 @@
     import { mapState } from '$lib/state/map.svelte';
     import {Marker as MarkerObject} from '$lib/services/map/marker';
     import type { MarkerSource } from '$lib/interfaces/marker';
-    import { getContrastingColor } from '$lib/services/colorConverter';
 
     interface Props {
         id?: string | null;
@@ -47,7 +46,6 @@
     let skipClick = false;
     let isDragged = false;
     let mouseMoveListener: google.maps.MapsEventListener | null = null;
-    let markerDomReady = $state(false);
 
     const client = useQueryClient();
 
@@ -107,10 +105,6 @@
     });
 
     $effect(() => {
-        if (!marker) {
-            return;
-        }
-
         if ($objectAddress.isSuccess) {
             activeObjectInfo.update(value => ({
                 ...value,
@@ -154,9 +148,8 @@
             isDraggable,
             source,
             onClick: handleMarkerClick,
-            onDragStart: handleClickStart,
-            onDragEnd: handleClickEnd,
-            onCreated: handleCreated,
+            onDragStart: handleDragStart,
+            onDragEnd: handleDragEnd,
         });
 
         if (source === 'map') {
@@ -168,20 +161,7 @@
         }
     }
 
-    async function handleClickStart() {
-        const {event} = await mapState.loader.importLibrary('core');
-
-        mouseMoveListener = event.addListener(
-            mapState.map!,
-            'mousemove',
-            function (event: google.maps.MapMouseEvent) {
-                isDragged = true;
-                if (marker) {
-                    marker.setPosition({lat: event.latLng!.lat(), lng: event.latLng!.lng()});
-                }
-            },
-        );
-
+    async function handleDragStart() {
         setDraggable(false);
         if ('vibrate' in navigator) {
             navigator.vibrate(10);
@@ -189,23 +169,9 @@
         skipClick = true;
     }
 
-    async function handleClickEnd() {
+    async function handleDragEnd() {
         setDraggable(true);
-
-        if (mouseMoveListener) {
-            const {event} = await mapState.loader.importLibrary('core');
-            event.removeListener(mouseMoveListener);
-            mouseMoveListener = null;
-        }
-
-        if (isDragged) {
-            isDragged = false;
-            updateObjectCoordinates();
-        }
-    }
-
-    function handleCreated() {
-        markerDomReady = true;
+        updateObjectCoordinates();
     }
 
     onDestroy(() => {

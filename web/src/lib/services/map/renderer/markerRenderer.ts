@@ -1,4 +1,4 @@
-import type {Marker} from '../marker';
+import type {Marker} from '$lib/services/map/marker';
 
 export interface MarkerRenderer {
     ensureCreated(marker: Marker): void;

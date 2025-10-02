@@ -158,12 +158,12 @@ export class MarkerManager {
     }
 
     private updateMarkersInViewport() {
-        if (!this.map.getBounds() || this.scheduler.isSuppressed) {
+        const bounds = this.map.getBounds();
+        if (!bounds || this.scheduler.isSuppressed) {
             this.scheduler.complete();
             return;
         }
 
-        const bounds = this.map.getBounds() as google.maps.LatLngBounds;
         const candidates = this.viewportIndex.collect(bounds, this.repo);
         const center = bounds.getCenter();
         const centerPosition = {lat: center.lat(), lng: center.lng()};

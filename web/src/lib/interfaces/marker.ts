@@ -8,7 +8,6 @@ export interface MarkerOptions {
     onClick?(): void;
     onDragStart?(): void;
     onDragEnd?(): void;
-    onCreated?(): void;
 }
 
 export type MarkerSource = 'map' | 'list' | 'search';

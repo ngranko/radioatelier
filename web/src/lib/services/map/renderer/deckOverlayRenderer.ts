@@ -1,8 +1,8 @@
 import {hexToRgb} from '$lib/services/colorConverter';
 import {GoogleMapsOverlay} from '@deck.gl/google-maps';
 import {ScatterplotLayer} from '@deck.gl/layers';
-import type {Marker} from '../marker';
-import type {MarkerRenderer} from './markerRenderer';
+import type {Marker} from '$lib/services/map/marker';
+import type {MarkerRenderer} from '$lib/services/map/renderer/markerRenderer';
 
 interface DeckPointInfo {
     position: [number, number];

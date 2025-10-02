@@ -2,7 +2,10 @@ import type {MarkerOptions, MarkerSource} from '$lib/interfaces/marker';
 
 export class Marker {
     private marker?: google.maps.marker.AdvancedMarkerElement;
-    private listenerReference: {onPointerDown(): void, onPointerUp(): void} | undefined;
+    public pointerDownListener?: () => void;
+    public pointerMoveListener?: google.maps.MapsEventListener;
+    public pointerUpListener?: () => void;
+    public isDragged = false;
     private isVisited = false;
     private isRemoved = false;
 
@@ -54,10 +57,6 @@ export class Marker {
         return this.options.onDragEnd;
     }
 
-    public getOnCreated(): (() => void) | undefined {
-        return this.options.onCreated;
-    }
-
     public getIcon(): string {
         return this.options.icon;
     }
@@ -87,16 +86,8 @@ export class Marker {
         this.marker = raw;
     }
 
-    public getListenerReference() {
-        return this.listenerReference;
-    }
-
-    public setListenerReference(listeners?: {onPointerDown(): void, onPointerUp(): void}) {
-        this.listenerReference = listeners;
-    }
-
     public create() {
-        this.options.onCreated?.();
+        // No-op
     }
 
     public show() {
@@ -130,7 +121,9 @@ export class Marker {
             return;
         }
 
-        this.listenerReference = undefined;
+        this.pointerDownListener = undefined;
+        this.pointerMoveListener = undefined;
+        this.pointerUpListener = undefined;
         this.marker.map = null;
         this.marker = undefined;
         onSuccess();
