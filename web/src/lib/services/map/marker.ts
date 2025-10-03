@@ -2,6 +2,7 @@ import type {MarkerOptions, MarkerSource} from '$lib/interfaces/marker';
 
 export class Marker {
     private marker?: google.maps.marker.AdvancedMarkerElement;
+    public clickListener?: google.maps.MapsEventListener;
     public pointerDownListener?: () => void;
     public pointerMoveListener?: google.maps.MapsEventListener;
     public pointerUpListener?: () => void;
@@ -23,10 +24,29 @@ export class Marker {
     }
 
     public setPosition(position: google.maps.LatLngLiteral) {
-        this.position = position;
         if (this.marker) {
             this.marker.position = position;
         }
+    }
+
+    public commitPosition() {
+        if (!this.marker || !this.marker.position) {
+            return;
+        }
+
+        let position = this.marker.position;
+        if (position instanceof google.maps.LatLng) {
+            position = position.toJSON();
+        }
+
+        this.position = position;
+    }
+
+    public revertPosition() {
+        if (!this.marker) {
+            return;
+        }
+        this.marker.position = this.position;
     }
 
     public getSource(): MarkerSource {

@@ -15,6 +15,7 @@
     import { mapState } from '$lib/state/map.svelte';
     import {Marker as MarkerObject} from '$lib/services/map/marker';
     import type { MarkerSource } from '$lib/interfaces/marker';
+    import toast from 'svelte-5-french-toast';
 
     interface Props {
         id?: string | null;
@@ -44,8 +45,6 @@
     let markerId: string | undefined = $state();
     let marker: MarkerObject | null = $state(null);
     let skipClick = false;
-    let isDragged = false;
-    let mouseMoveListener: google.maps.MapsEventListener | null = null;
 
     const client = useQueryClient();
 
@@ -171,7 +170,12 @@
 
     async function handleDragEnd() {
         setDraggable(true);
-        updateObjectCoordinates();
+
+        await toast.promise(updateObjectCoordinates(), {
+            loading: 'Обновляю...',
+            success: 'Позиция обновлена!',
+            error: 'Не удалось обновить позицию',
+        });
     }
 
     onDestroy(() => {
@@ -189,18 +193,24 @@
             return;
         }
 
-        await $reposition.mutateAsync({
-            id: id!,
-            updatedFields: {
-                lat: String(marker.getPosition().lat),
-                lng: String(marker.getPosition().lng),
-            },
-        });
-        pointList.updateCoordinates(
-            id!,
-            String(marker.getPosition().lat),
-            String(marker.getPosition().lng),
-        );
+        try {
+            await $reposition.mutateAsync({
+                id: id!,
+                updatedFields: {
+                    lat: String(marker.getPosition().lat),
+                    lng: String(marker.getPosition().lng),
+                },
+            });
+            marker.commitPosition();
+            pointList.updateCoordinates(
+                id!,
+                String(marker.getPosition().lat),
+                String(marker.getPosition().lng),
+            );
+        } catch (error) {
+            marker.revertPosition();
+            throw error;
+        }
     }
 
     function handleMarkerClick() {
