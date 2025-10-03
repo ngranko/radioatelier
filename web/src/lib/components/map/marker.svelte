@@ -11,7 +11,6 @@
     import {getAddress} from '$lib/api/location';
     import type {Object} from '$lib/interfaces/object';
     import {pointList} from '$lib/stores/map.js';
-    import {setDraggable} from '$lib/services/map/map.svelte';
     import { mapState } from '$lib/state/map.svelte';
     import {Marker as MarkerObject} from '$lib/services/map/marker';
     import type { MarkerSource } from '$lib/interfaces/marker';
@@ -44,7 +43,6 @@
 
     let markerId: string | undefined = $state();
     let marker: MarkerObject | null = $state(null);
-    let skipClick = false;
 
     const client = useQueryClient();
 
@@ -147,7 +145,6 @@
             isDraggable,
             source,
             onClick: handleMarkerClick,
-            onDragStart: handleDragStart,
             onDragEnd: handleDragEnd,
         });
 
@@ -160,17 +157,7 @@
         }
     }
 
-    async function handleDragStart() {
-        setDraggable(false);
-        if ('vibrate' in navigator) {
-            navigator.vibrate(10);
-        }
-        skipClick = true;
-    }
-
     async function handleDragEnd() {
-        setDraggable(true);
-
         await toast.promise(updateObjectCoordinates(), {
             loading: 'Обновляю...',
             success: 'Позиция обновлена!',
@@ -214,11 +201,6 @@
     }
 
     function handleMarkerClick() {
-        if (skipClick) {
-            skipClick = false;
-            return;
-        }
-
         changeActiveMarker();
     }
 
