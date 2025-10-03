@@ -64,7 +64,7 @@ export class VisibilityEngine {
         requestAnimationFrame(processChunk);
     }
 
-    private show(id: MarkerId) {
+    public show(id: MarkerId) {
         const marker = this.repo.get(id);
         if (!marker) {
             return;

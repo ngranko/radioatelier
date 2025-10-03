@@ -4,20 +4,20 @@ import type { Marker } from '$lib/services/map/marker';
 export class Styler {
     public apply(marker: Marker) {
         const {isVisited, isRemoved} = marker.getState();
-        const markerContent = marker.getRaw()?.content as HTMLElement;
-        if (!markerContent) {
+        const markerContent = marker.getRaw()?.content;
+        if (!markerContent || !(markerContent instanceof HTMLElement)) {
             return;
         }
 
-        this.applyVisited(marker, markerContent, isVisited);
+        this.applyVisited(markerContent, isVisited, marker.getColor());
         this.applyRemoved(markerContent, isRemoved);
     }
 
-    private applyVisited(marker: Marker, markerContent: HTMLElement, isVisited: boolean) {
+    private applyVisited(markerContent: HTMLElement, isVisited: boolean, markerColor: string) {
         markerContent.style.removeProperty('box-shadow');
 
         if (isVisited) {
-            const borderColor = getContrastingColor(marker.getColor());
+            const borderColor = getContrastingColor(markerColor);
             markerContent.style.boxShadow = `0 0 0 4px ${borderColor}`;
         }
     }

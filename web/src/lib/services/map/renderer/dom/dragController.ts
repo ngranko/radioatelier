@@ -25,27 +25,34 @@ export class DragController {
     }
 
     private attachPointerDown(marker: Marker): void {
-        const raw = marker.getRaw();
-        if (!raw) {
+        const markerContent = marker.getRaw()?.content;
+        if (!markerContent || !(markerContent instanceof HTMLElement)) {
             return;
         }
         
+        if (marker.pointerDownListener) {
+            markerContent.removeEventListener('pointerdown', marker.pointerDownListener);
+        }
+        
         const onPointerDown = this.handlePointerDown(marker);
-        const element = raw.content as HTMLElement;
-        element.addEventListener('pointerdown', onPointerDown);
+        markerContent.addEventListener('pointerdown', onPointerDown);
         marker.pointerDownListener = onPointerDown;
     }
 
     private attachPointerUp(marker: Marker): void {
-        const raw = marker.getRaw();
-        if (!raw) {
+        const markerContent = marker.getRaw()?.content;
+        if (!markerContent || !(markerContent instanceof HTMLElement)) {
             return;
         }
-        
+
+        if (marker.pointerUpListener) {
+            markerContent.removeEventListener('pointerup', marker.pointerUpListener);
+            markerContent.removeEventListener('pointercancel', marker.pointerUpListener);
+        }
+
         const onPointerUp = this.handlePointerUp(marker);
-        const element = raw.content as HTMLElement;
-        element.addEventListener('pointerup', onPointerUp);
-        element.addEventListener('pointercancel', onPointerUp);
+        markerContent.addEventListener('pointerup', onPointerUp);
+        markerContent.addEventListener('pointercancel', onPointerUp);
         marker.pointerUpListener = onPointerUp;
     }
 
@@ -54,9 +61,15 @@ export class DragController {
         if (!raw) {
             return;
         }
+
+        if (marker.clickListener) {
+            google.maps.event.removeListener(marker.clickListener);
+            marker.clickListener = undefined;
+        }
+
         const onClick = marker.getOnClick();
         if (onClick) {
-            raw.addListener('gmp-click', onClick);
+            marker.clickListener = raw.addListener('gmp-click', onClick);
         }
     }
 
@@ -77,23 +90,31 @@ export class DragController {
     }
 
     private startDrag(marker: Marker) {
-        const raw = marker.getRaw();
-        if (!raw) {
+        const markerContent = marker.getRaw()?.content;
+        if (!markerContent || !(markerContent instanceof HTMLElement)) {
             return;
         }
         marker.pointerMoveListener = this.createMapMoveListener(marker);
         const start = marker.getOnDragStart();
         start?.();
-        (raw.content as HTMLElement).classList.add('marker-dragging');
+        markerContent.classList.add('marker-dragging');
     }
 
     private createMapMoveListener(marker: Marker): google.maps.MapsEventListener {
+        if (!mapState.map) {
+            throw new Error('Map is not initialized');
+        }
+
         return google.maps.event.addListener(
-            mapState.map!,
+            mapState.map,
             'mousemove',
             (event: google.maps.MapMouseEvent) => {
+                if (!event.latLng) {
+                    return;
+                }
+                
                 marker.isDragged = true;
-                marker.setPosition({lat: event.latLng!.lat(), lng: event.latLng!.lng()});
+                marker.setPosition({lat: event.latLng.lat(), lng: event.latLng.lng()});
             },
         );
     }
@@ -107,26 +128,27 @@ export class DragController {
                 const end = marker.getOnDragEnd();
                 end?.();
             }
-            const raw = marker.getRaw();
-            if (raw) {
-                (raw.content as HTMLElement).classList.remove('marker-dragging');
+            const markerContent = marker.getRaw()?.content;
+            if (markerContent && markerContent instanceof HTMLElement) {
+                markerContent.classList.remove('marker-dragging');
             }
         };
     }
 
     private removeDomPointerListeners(marker: Marker) {
-        const raw = marker.getRaw();
-        if (!raw) {
+        const markerContent = marker.getRaw()?.content;
+        if (!markerContent || !(markerContent instanceof HTMLElement)) {
             return;
         }
-        const element = raw.content as HTMLElement;
+
         if (marker.pointerDownListener) {
-            element.removeEventListener('pointerdown', marker.pointerDownListener);
+            markerContent.removeEventListener('pointerdown', marker.pointerDownListener);
             marker.pointerDownListener = undefined;
         }
+
         if (marker.pointerUpListener) {
-            element.removeEventListener('pointerup', marker.pointerUpListener);
-            element.removeEventListener('pointercancel', marker.pointerUpListener);
+            markerContent.removeEventListener('pointerup', marker.pointerUpListener);
+            markerContent.removeEventListener('pointercancel', marker.pointerUpListener);
             marker.pointerUpListener = undefined;
         }
     }

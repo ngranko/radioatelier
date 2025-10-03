@@ -6,11 +6,11 @@ export const markerState = $state<MarkerState>({
     dragTimeout: undefined,
 });
 
-export function setDragTimeout(timeout: number) {
+export function setDragTimeout(timeoutId: number) {
     if (markerState.dragTimeout) {
         clearTimeout(markerState.dragTimeout);
     }
-    markerState.dragTimeout = timeout;
+    markerState.dragTimeout = timeoutId;
 }
 
 export function removeDragTimeout() {

@@ -63,8 +63,16 @@ export class HybridMarkerRenderer implements MarkerRenderer {
     }
 
     public destroy(): void {
+        try {
         this.dom.destroy();
-        this.deck.destroy();
+        } catch (e) {
+            console.error('error destroying DomMarkerRenderer:', e);
+        }
+        try {
+            this.deck.destroy();
+        } catch (e) {
+            console.error('error destroying DeckOverlayRenderer:', e);
+        }
     }
 }
 

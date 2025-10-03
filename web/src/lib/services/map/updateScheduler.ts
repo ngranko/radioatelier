@@ -32,10 +32,12 @@ export class UpdateScheduler {
 
         this.updateInProgress = true;
         try {
+            this.shouldUpdate = false;
             this.triggerFn();
         } catch (e) {
             console.error('error updating viewport');
             console.error(e);
+            this.updateInProgress = false;
         }
     }
 

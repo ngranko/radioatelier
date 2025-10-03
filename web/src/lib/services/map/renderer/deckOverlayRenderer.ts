@@ -48,7 +48,7 @@ export class DeckOverlayRenderer implements MarkerRenderer {
         }
     }
 
-    public applyState(marker: Marker): void {
+    public applyState(_marker: Marker): void {
         // No-op; all markers rendered in one deck.gl layer
     }
 
@@ -64,9 +64,11 @@ export class DeckOverlayRenderer implements MarkerRenderer {
         }
         this.scheduled = true;
         setTimeout(() => {
-            this.scheduled = false;
-            this.render();
-        }, 0);
+            requestAnimationFrame(() => {
+                this.scheduled = false;
+                this.render();
+            });
+        }, 16); // ~60fps
     }
 
     private render() {
