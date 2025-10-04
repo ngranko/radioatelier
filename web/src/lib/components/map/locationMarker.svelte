@@ -17,10 +17,11 @@
 
     onMount(async () => {
         const icon = document.createElement('div');
-        icon.innerHTML = '<i class="fa-solid fa-circle-dot"></i>';
-        icon.className = 'current-location-marker';
+        icon.innerHTML = '<i class="fa-solid fa-circle-dot block"></i>';
+        icon.className = 'nav-marker';
 
-        const {AdvancedMarkerElement, CollisionBehavior} = await mapState.loader.importLibrary('marker');
+        const {AdvancedMarkerElement, CollisionBehavior} =
+            await mapState.loader.importLibrary('marker');
 
         marker = new AdvancedMarkerElement({
             map: mapState.map,
@@ -46,7 +47,7 @@
         }
 
         const degrees = event.webkitCompassHeading ? event.webkitCompassHeading : event.alpha;
-        (marker.content as HTMLElement).style.transform = `translate(0, 50%) rotate(${degrees}deg)`;
+        (marker.content as HTMLElement).style.rotate = `${degrees}deg`;
     }
 
     function updateCurrentPosition(forceStale = false) {
@@ -61,84 +62,25 @@
 
         marker.position = {lat: position.lat, lng: position.lng};
         if (!position.isCurrent || forceStale) {
-            (marker.content as HTMLDivElement).classList.add('current-location-marker-stale');
+            (marker.content as HTMLDivElement).classList.add('nav-marker-stale');
+            (marker.content as HTMLDivElement).classList.add('nav-marker-oriented-stale');
         } else {
-            (marker.content as HTMLDivElement).classList.remove('current-location-marker-stale');
+            (marker.content as HTMLDivElement).classList.remove('nav-marker-stale');
+            (marker.content as HTMLDivElement).classList.remove('nav-marker-oriented-stale');
         }
     }
+
     $effect(() => {
         if (orientationEnabled) {
             if (marker && marker.content) {
-                (marker.content as HTMLDivElement).classList.add(
-                    'current-location-marker-oriented',
-                );
+                (marker.content as HTMLDivElement).classList.add('nav-marker-oriented');
             }
             window.addEventListener('deviceorientation', handleOrientation, true);
         } else {
             if (marker && marker.content) {
-                (marker.content as HTMLDivElement).classList.remove(
-                    'current-location-marker-oriented',
-                );
+                (marker.content as HTMLDivElement).classList.remove('nav-marker-oriented');
             }
             window.removeEventListener('deviceorientation', handleOrientation, true);
         }
     });
 </script>
-
-<style lang="scss">
-    @use '../../../styles/colors';
-    @use '../../../styles/typography';
-
-    :global(.current-location-marker) {
-        @include typography.size-20;
-        position: relative;
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        transform: translate(0, 50%);
-        color: colors.$primary;
-        box-shadow: 0 0 10px colors.$primary;
-        transition:
-            box-shadow 0.2s ease-in-out,
-            color 0.2s ease-in-out;
-
-        & :global(i) {
-            display: block;
-        }
-
-        &::before {
-            content: '';
-            box-sizing: border-box;
-            position: absolute;
-            top: -1.5px;
-            left: 4px;
-            width: 12px;
-            height: 12px;
-            border-radius: 2px;
-            transform: scaleY(1.5) rotate(45deg);
-            border-left: 5px solid colors.$primary;
-            border-top: 5px solid colors.$primary;
-            transform-origin: center;
-            box-shadow: 0 0 10px colors.$primary;
-            transition: opacity 0.1s ease-in-out;
-            opacity: 0;
-        }
-    }
-
-    :global(.current-location-marker-oriented) {
-        &::before {
-            opacity: 1;
-        }
-    }
-
-    :global(.current-location-marker-stale) {
-        color: colors.$darkgray;
-        box-shadow: 0 0 10px colors.$darkgray;
-
-        &::before {
-            border-left-color: colors.$darkgray;
-            border-top-color: colors.$darkgray;
-            box-shadow: 0 0 10px colors.$darkgray;
-        }
-    }
-</style>
