@@ -1,6 +1,7 @@
 <script lang="ts">
-    import TextButton from '$lib/components/button/textButton.svelte';
-    import Dialog from '$lib/components/dialog.svelte';
+    import * as AlertDialog from '$lib/components/ui/alert-dialog';
+    import {ImportStepProgress} from '$lib/interfaces/import.ts';
+    import {importState} from '$lib/state/import.svelte.ts';
 
     interface Props {
         isOpen?: boolean;
@@ -9,34 +10,32 @@
 
     let {isOpen = $bindable(false), onClick}: Props = $props();
 
-    function handleClose() {
-        isOpen = false;
+    function getIsOpen() {
+        return isOpen;
     }
 
-    function handleConfirm() {
-        handleClose();
+    function setIsOpen(value: boolean) {
+        isOpen = value;
+    }
+
+    function handleClick() {
+        setIsOpen(false);
         onClick();
     }
 </script>
 
-<Dialog {isOpen}>
-    <p>Вы действительно хотите закрыть окно?</p>
-    <p>Текущий импорт будет отменен, но уже обработанные точки не будут удалены</p>
-    <div class="actions">
-        <TextButton type="button" onClick={handleClose}>Остаться</TextButton>
-        <span class="close">
-            <TextButton type="button" modifier="danger" onClick={handleConfirm}>Закрыть</TextButton>
-        </span>
-    </div>
-</Dialog>
-
-<style lang="scss">
-    .actions {
-        display: flex;
-        justify-content: flex-end;
-    }
-
-    .close {
-        margin-left: 8px;
-    }
-</style>
+<!-- prettier-ignore -->
+<AlertDialog.Root bind:open={getIsOpen, setIsOpen}>
+    <AlertDialog.Content>
+        <AlertDialog.Header>
+            <AlertDialog.Title>Вы действительно хотите закрыть окно?</AlertDialog.Title>
+            {#if importState.step === ImportStepProgress}
+                <AlertDialog.Description>Текущий импорт будет отменен, но уже обработанные точки не будут удалены</AlertDialog.Description>
+            {/if}
+        </AlertDialog.Header>
+        <AlertDialog.Footer>
+            <AlertDialog.Cancel>Остаться</AlertDialog.Cancel>
+            <AlertDialog.Action onclick={handleClick} class="bg-destructive hover:bg-destructive/70">Закрыть</AlertDialog.Action>
+        </AlertDialog.Footer>
+    </AlertDialog.Content>
+</AlertDialog.Root>

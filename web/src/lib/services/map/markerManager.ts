@@ -54,7 +54,11 @@ export class MarkerManager {
         }
     }
 
-    public addMarker(id: MarkerId, position: google.maps.LatLngLiteral,options: MarkerOptions): Marker | null {
+    public addMarker(
+        id: MarkerId,
+        position: google.maps.LatLngLiteral,
+        options: MarkerOptions,
+    ): Marker | null {
         const isLazy = options.source === 'list';
 
         const upsert = this.repo.upsertWithPolicy(
@@ -92,6 +96,10 @@ export class MarkerManager {
         }
 
         return marker;
+    }
+
+    public getMarker(id: MarkerId): Marker | undefined {
+        return this.repo.get(id);
     }
 
     public scheduleViewportUpdate() {

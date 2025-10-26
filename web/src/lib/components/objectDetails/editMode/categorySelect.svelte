@@ -4,7 +4,7 @@
     import Svelecte from 'svelecte';
     import type {Payload} from '$lib/interfaces/api';
     import type {Category, ListCategoriesResponsePayload} from '$lib/interfaces/category.js';
-    import {clsx} from 'clsx';
+    import {cn} from '$lib/utils.ts';
 
     const client = useQueryClient();
 
@@ -63,6 +63,6 @@
         {name}
         {value}
         createHandler={handleCreate}
-        controlClass={clsx({'transition-colors': true, 'sv-control-error': error})}
+        controlClass={cn({'transition-colors': true, 'sv-control-error': error})}
     />
 {/if}

@@ -1,90 +1,37 @@
 <script lang="ts">
-    import {importInfo} from '$lib/stores/import';
-    import TextButton from '$lib/components/button/textButton.svelte';
-
-    interface Props {
-        onClose(): void;
-    }
-
-    let {onClose}: Props = $props();
-
-    function handleReset(event: Event) {
-        event.stopPropagation();
-        importInfo.reset();
-    }
+    import {Button} from '$lib/components/ui/button';
+    import {DialogClose, DialogFooter} from '$lib/components/ui/dialog';
+    import {Progress} from '$lib/components/ui/progress';
+    import {importState} from '$lib/state/import.svelte.ts';
 </script>
 
-<div class="root">
-    {#if $importInfo.status === 'in progress'}
-        <h2>Подождите, импортирую точки</h2>
-        <div class="percentage">{$importInfo.percentage}%</div>
-        <TextButton onClick={onClose}>Отменить</TextButton>
-    {:else if $importInfo.status === 'success'}
-        <h2>Импорт завершен!</h2>
-        <div>{$importInfo.resultText}</div>
-        {#if $importInfo.lineFeedback.length > 0}
-            <h3>Ошибки:</h3>
-            {#each $importInfo.lineFeedback as item}
-                {#if item.severity === 'warning'}
-                    <div class="warningFeedback">
-                        <i class="fa-solid fa-circle-exclamation"></i>
-                        {item.text}
-                    </div>
-                {:else}
-                    <div class="errorFeedback">
-                        <i class="fa-solid fa-circle-xmark"></i>
-                        {item.text}
-                    </div>
-                {/if}
-            {/each}
-        {/if}
-        <div class="actions">
-            <TextButton onClick={handleReset}>Импортировать другой файл</TextButton>
-            <TextButton onClick={onClose}>Закрыть</TextButton>
+<div class="flex flex-1 items-center justify-center pt-12 pb-6">
+    <div class="w-full max-w-md space-y-6">
+        <div class="flex flex-col items-center gap-4">
+            <div class="bg-primary/10 flex h-16 w-16 items-center justify-center rounded-full">
+                <i class="fa-solid fa-circle-notch text-primary animate-spin text-2xl"></i>
+            </div>
+            <div class="space-y-2 text-center">
+                <p class="text-lg font-medium">Импортирую данные...</p>
+            </div>
         </div>
-    {:else if $importInfo.status === 'error'}
-        <h2>Во время импорта произошла ошибка</h2>
-        <div>{$importInfo.globalError}</div>
-        <div class="actions">
-            <TextButton onClick={handleReset}>Импортировать другой файл</TextButton>
-            <TextButton onClick={onClose}>Закрыть</TextButton>
+
+        <div class="space-y-2">
+            <Progress value={importState.percentage} className="h-2" />
+            <div class="text-muted-foreground flex justify-between text-sm">
+                <span>{importState.percentage}% завершено</span>
+            </div>
         </div>
-    {/if}
+
+        <div class="bg-muted/30 rounded-lg border p-4">
+            <p class="text-muted-foreground text-center text-sm">
+                Пожалуйста, не закрывайте окно, пока импорт не завершен
+            </p>
+        </div>
+    </div>
 </div>
-
-<style lang="scss">
-    @use '../../../../styles/colors';
-    @use '../../../../styles/typography';
-
-    .root {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }
-
-    .percentage {
-        @include typography.size-32;
-        @include typography.weight-bold;
-        margin-bottom: 24px;
-    }
-
-    .warningFeedback {
-        & i {
-            color: colors.$secondary;
-        }
-    }
-
-    .errorFeedback {
-        & i {
-            color: colors.$danger;
-        }
-    }
-
-    .actions {
-        margin-top: 24px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 16px;
-    }
-</style>
+<DialogFooter>
+    <DialogClose>
+        <Button variant="ghost">Отменить</Button>
+    </DialogClose>
+</DialogFooter>

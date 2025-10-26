@@ -1,33 +1,41 @@
 <script lang="ts">
-    import PrimaryButton from '$lib/components/button/primaryButton.svelte';
-    import TextButton from '$lib/components/button/textButton.svelte';
     import {createMutation} from '@tanstack/svelte-query';
     import toast from 'svelte-5-french-toast';
     import {extractPreview, uploadFile} from '$lib/api/import';
-    import {importInfo} from '$lib/stores/import';
+    import {ImportStepPreview} from '$lib/interfaces/import.ts';
+    import {importState} from '$lib/state/import.svelte.ts';
 
-    interface Props {
-        onClose(): void;
-    }
-
-    let {onClose}: Props = $props();
-
-    let uploadRef: HTMLInputElement | undefined = $state();
+    let isDragging = $state(false);
 
     const uploadFileMutation = createMutation({
         mutationFn: uploadFile,
         onSuccess: result => {
-            importInfo.update(value => ({...value, id: result.data.id}));
+            importState.id = result.data.id;
         },
     });
 
     const preview = createMutation({mutationFn: extractPreview});
 
-    function handleClick() {
-        uploadRef?.click();
+    function handleDragOver(e: DragEvent) {
+        e.preventDefault();
+        isDragging = true;
     }
 
-    async function handleFileChange(event: Event) {
+    function handleDragLeave(e: DragEvent) {
+        e.preventDefault();
+        isDragging = false;
+    }
+
+    function handleDrop(e: DragEvent) {
+        e.preventDefault();
+        isDragging = false;
+        const file = e.dataTransfer?.files[0];
+        if (file) {
+            handleFile(file);
+        }
+    }
+
+    function handleFileChange(event: Event) {
         const file = (event.target as HTMLInputElement).files?.[0];
 
         if (!file) {
@@ -35,6 +43,10 @@
             return;
         }
 
+        handleFile(file);
+    }
+
+    async function handleFile(file: File) {
         const formData = new FormData();
         formData.append('file', file);
         try {
@@ -43,49 +55,55 @@
                 error: 'Не удалось загрузить файл',
                 success: 'Файл загружен',
             });
-            importInfo.update(value => ({
-                ...value,
-                currentStep: 2,
-                preview: result.data.preview,
-            }));
+            if (!document.startViewTransition) {
+                updateStore(file, result.data.preview);
+            } else {
+                document.startViewTransition(() => updateStore(file, result.data.preview));
+            }
         } catch (error) {
             console.error(error);
         }
     }
 
+    function updateStore(file: File, preview: string[][]) {
+        importState.name = file.name;
+        importState.size = file.size;
+        importState.step = ImportStepPreview;
+        importState.preview = preview;
+    }
+
     async function uploadAndPreview(formData: FormData) {
         await $uploadFileMutation.mutateAsync({formData});
-        return $preview.mutateAsync({id: $importInfo.id, separator: $importInfo.separator});
+        return $preview.mutateAsync({id: importState.id, separator: importState.separator});
     }
 </script>
 
-<div class="root">
-    <h2>Импорт csv</h2>
-    <input
-        bind:this={uploadRef}
-        class="upload"
-        type="file"
-        accept="text/csv"
-        onchange={handleFileChange}
-    />
-    <PrimaryButton onClick={handleClick}>Выбрать файл</PrimaryButton>
-    <TextButton onClick={onClose}>Отменить</TextButton>
+<!-- prettier-ignore -->
+<div
+    class={`w-full max-w-xl rounded-lg border-2 border-dashed transition-colors ${
+        isDragging
+            ? 'border-primary bg-primary/5'
+            : 'border-muted-foreground/25 hover:border-muted-foreground/50'
+    }`}
+    ondragover={handleDragOver}
+    ondragleave={handleDragLeave}
+    ondrop={handleDrop}
+    role="region"
+    aria-dropeffect="link"
+>
+    <label class="flex cursor-pointer flex-col items-center justify-center gap-4 px-6 py-16">
+        <div class="bg-primary/10 flex h-16 w-16 items-center justify-center rounded-full">
+            <i class="fa-solid fa-file-csv text-primary text-2xl ml-1"></i>
+        </div>
+        <div class="space-y-2 text-center">
+            <p class="text-lg">
+                {isDragging ? 'Перетащите файл сюда' : 'Перетащите ваш CSV файл сюда'}
+            </p>
+            <p class="text-muted-foreground text-sm">
+                или <span class="text-primary">нажмите</span>, чтобы выбрать файл
+            </p>
+        </div>
+        <div class="text-muted-foreground text-xs">Поддерживаются .csv файлы до 10MB</div>
+        <input type="file" accept=".csv,text/csv" onchange={handleFileChange} class="hidden" />
+    </label>
 </div>
-
-<style lang="scss">
-    @use '../../../../styles/colors';
-    @use '../../../../styles/typography';
-
-    .root {
-        width: 240px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        gap: 16px;
-    }
-
-    .upload {
-        display: none;
-    }
-</style>

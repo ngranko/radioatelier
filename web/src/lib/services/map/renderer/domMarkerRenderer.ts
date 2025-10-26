@@ -1,8 +1,8 @@
 import type {Marker} from '$lib/services/map/marker';
+import {DragController} from '$lib/services/map/renderer/dom/dragController';
+import {Factory} from '$lib/services/map/renderer/dom/factory';
+import {Styler} from '$lib/services/map/renderer/dom/styler';
 import type {MarkerRenderer} from '$lib/services/map/renderer/markerRenderer';
-import { Styler } from '$lib/services/map/renderer/dom/styler';
-import { Factory } from '$lib/services/map/renderer/dom/factory';
-import { DragController } from '$lib/services/map/renderer/dom/dragController';
 
 export class DomMarkerRenderer implements MarkerRenderer {
     private factory = new Factory();
@@ -17,7 +17,7 @@ export class DomMarkerRenderer implements MarkerRenderer {
         }
     }
 
-    public syncAll(iterable: Iterable<Marker>): void {
+    public syncAll(_iterable: Iterable<Marker>): void {
         // No-op; DOM markers are created on demand
     }
 
@@ -33,7 +33,7 @@ export class DomMarkerRenderer implements MarkerRenderer {
         setTimeout(() => {
             element.classList.remove('animate-popin');
         }, 200);
-        
+
         marker.show();
     }
 
@@ -47,7 +47,7 @@ export class DomMarkerRenderer implements MarkerRenderer {
             onRemoved?.();
             return;
         }
-        
+
         const element = raw.content as HTMLElement;
         element.classList.add('animate-popout');
         setTimeout(() => {

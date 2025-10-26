@@ -2,9 +2,11 @@
     import ClearButton from '$lib/components/search/clearButton.svelte';
     import {searchPointList} from '$lib/stores/map';
     import {searchState} from '$lib/components/search/search.svelte.ts';
-    import { mapState } from '$lib/state/map.svelte';
+    import {mapState} from '$lib/state/map.svelte';
+    import {Input} from '$lib/components/ui/input';
+    import {fade} from 'svelte/transition';
+    import {cubicInOut} from 'svelte/easing';
 
-    let inputRef: HTMLInputElement | undefined = $state();
     let val: string = $state('');
     let timeout: number | undefined;
 
@@ -30,7 +32,6 @@
         searchState.lng = '';
         searchState.isResultsShown = false;
         val = '';
-        inputRef!.value = '';
         clearTimeout(timeout);
         timeout = undefined;
         searchPointList.clear();
@@ -38,14 +39,20 @@
 </script>
 
 <div class="relative z-1">
-    <input
+    <Input
         type="text"
+        name="search"
         placeholder="Искать..."
         oninput={handleInput}
-        bind:this={inputRef}
-        class="relative h-full w-full rounded-4xl border-none bg-white pt-2 pr-10 pb-2 pl-4 shadow-sm"
+        bind:value={val}
+        class="relative h-full w-full rounded-full border-none pt-2 pr-10 pb-2 pl-4 shadow-sm"
     />
     {#if val}
-        <ClearButton onClick={handleClearClick} />
+        <div
+            class="absolute top-1/2 right-0 -translate-y-1/2"
+            transition:fade={{duration: 100, easing: cubicInOut}}
+        >
+            <ClearButton onClick={handleClearClick} />
+        </div>
     {/if}
 </div>

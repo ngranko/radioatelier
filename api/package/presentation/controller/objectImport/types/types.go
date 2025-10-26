@@ -51,7 +51,17 @@ type ResultPayload struct {
     Feedback []LineFeedback `json:"feedback"`
 }
 
+type Payload struct {
+    Type       string         `json:"type"`
+    Total      int            `json:"total"`
+    Successful int            `json:"successful"`
+    Percentage int            `json:"percentage"`
+    Error      string         `json:"error"`
+    Feedback   []LineFeedback `json:"feedback"`
+}
+
 type LineFeedback struct {
+    Line     int    `json:"line"`
     Text     string `json:"text"`
     Severity string `json:"severity"`
 }

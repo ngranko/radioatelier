@@ -1,6 +1,6 @@
 <script lang="ts">
     import PasswordInput from '$lib/components/input/passwordInput.svelte';
-    import ErrorableLabel from '../errorableLabel.svelte';
+    import ErrorableLabel from '$lib/components/errorableLabel.svelte';
 
     interface Props {
         id?: string | undefined;
@@ -26,7 +26,7 @@
 </script>
 
 <div>
-    <ErrorableLabel for={id} {error}>
+    <ErrorableLabel for={id} class="mb-1" {error}>
         {label}
     </ErrorableLabel>
     <PasswordInput {id} {name} {value} {required} {placeholder} {withStrengthIndicator} />

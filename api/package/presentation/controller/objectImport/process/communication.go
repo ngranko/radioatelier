@@ -11,14 +11,12 @@ import (
 )
 
 type message struct {
+    state      string
+    total      int
+    successful int
     percentage int
     error      error
-    result     *result
-}
-
-type result struct {
-    text     string
-    feedback []types.LineFeedback
+    feedback   []types.LineFeedback
 }
 
 func StartImport(ID string, separator rune, mappings types.ImportMappings, client *ws.Client) {
@@ -41,7 +39,7 @@ func StartImport(ID string, separator rune, mappings types.ImportMappings, clien
                 return
             }
 
-            logger.GetZerolog().Info("received a message from handler goroutine", slog.Int("percentage", msg.percentage), slog.Any("error", msg.error), slog.Any("result", msg.result), slog.String("user", user.GetModel().ID.String()))
+            logger.GetZerolog().Info("received a message from handler goroutine", slog.Any("message", msg), slog.String("user", user.GetModel().ID.String()))
             isComplete := processMessage(msg, client)
             if isComplete {
                 return
@@ -70,37 +68,17 @@ func processReadFailure(client *ws.Client) {
 }
 
 func processMessage(msg message, client *ws.Client) (isComplete bool) {
-    user := client.Context.Value("user").(presenter.User)
-
-    if msg.error != nil {
-        logger.GetZerolog().Info("message is error", slog.String("user", user.GetModel().ID.String()))
-        processErrorMessage(msg.error, client)
-        return true
+    payload := types.Payload{
+        Type:       msg.state,
+        Total:      msg.total,
+        Successful: msg.successful,
+        Percentage: msg.percentage,
+        Error:      msg.error.Error(),
+        Feedback:   msg.feedback,
     }
+    _ = sendMessageToClient(client, msg.state, payload, msg.state != types.MessageTypeProgress)
 
-    if msg.result != nil {
-        logger.GetZerolog().Info("message is success", slog.String("user", user.GetModel().ID.String()))
-        processSuccessMessage(msg, client)
-        return true
-    }
-
-    logger.GetZerolog().Info("message is progress", slog.String("user", user.GetModel().ID.String()))
-    processProgressMessage(msg, client)
-    return false
-}
-
-func processErrorMessage(err error, client *ws.Client) {
-    _ = sendMessageToClient(client, types.MessageTypeError, types.ErrorPayload{Error: err.Error()}, true)
-}
-
-func processSuccessMessage(msg message, client *ws.Client) {
-    payload := types.ResultPayload{Text: msg.result.text, Feedback: msg.result.feedback}
-    _ = sendMessageToClient(client, types.MessageTypeSuccess, payload, true)
-}
-
-func processProgressMessage(msg message, client *ws.Client) {
-    payload := types.ProgressPayload{Percentage: msg.percentage}
-    _ = sendMessageToClient(client, types.MessageTypeProgress, payload, false)
+    return msg.state != types.MessageTypeProgress
 }
 
 func sendMessageToClient(client *ws.Client, resultType string, payload interface{}, isFinal bool) bool {
