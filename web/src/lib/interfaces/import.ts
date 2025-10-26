@@ -24,23 +24,19 @@ export interface WSSendInputMessagePayload {
     mappings: ImportMappings;
 }
 
-export interface WSSuccessMessagePayload {
-    text: string;
-    feedback: LineFeedback[];
-}
-
-export interface WSErrorMessagePayload {
-    error: string;
-}
-
-export interface WSProgressMessagePayload {
+export interface WSMessagePayload {
+    type: string;
+    total: number;
+    successful: number;
     percentage: number;
+    error?: string;
+    feedback?: LineFeedback[];
 }
 
-export type ImportSuccessHandler = (message: WebSocketMessage<WSSuccessMessagePayload>) => void;
-export type ImportErrorHandler = (message: WebSocketMessage<WSErrorMessagePayload>) => void;
+export type ImportSuccessHandler = (message: WebSocketMessage<WSMessagePayload>) => void;
+export type ImportErrorHandler = (message: WebSocketMessage<WSMessagePayload>) => void;
 export type ImportDisconnectHandler = () => void;
-export type ImportProgressHandler = (message: WebSocketMessage<WSProgressMessagePayload>) => void;
+export type ImportProgressHandler = (message: WebSocketMessage<WSMessagePayload>) => void;
 
 export interface ImportMappings {
     coordinates: number | null;
@@ -63,18 +59,32 @@ export interface ImportMappings {
 
 export interface ImportInfo {
     id: string;
-    provider: ImportProvider;
+    name: string;
+    size: number;
+    provider?: ImportProvider;
     separator: string;
-    currentStep: number;
     preview: string[][];
-    status: string;
+    step:
+        | typeof ImportStepUpload
+        | typeof ImportStepPreview
+        | typeof ImportStepProgress
+        | typeof ImportStepSuccess
+        | typeof ImportStepError;
+    totalRows: number;
+    successfulRows: number;
     percentage: number;
-    resultText: string;
     lineFeedback: LineFeedback[];
     globalError: string;
 }
 
+export const ImportStepUpload = 'upload';
+export const ImportStepPreview = 'preview';
+export const ImportStepProgress = 'in progress';
+export const ImportStepSuccess = 'success';
+export const ImportStepError = 'error';
+
 export interface LineFeedback {
+    line: number;
     text: string;
     severity: 'warning' | 'error';
 }

@@ -9,6 +9,8 @@ html {
     --sv-border: 1px solid var(--input);
     --sv-border-radius: var(--radius-md);
     --sv-dropdown-width: 100%;
+    -webkit-font-smoothing: subpixel-antialiased;
+    font-optical-sizing: auto;
 
     .svelecte .sv-control {
         box-shadow: rgba(0, 0, 0, 0) 0 0 0 0, rgba(0, 0, 0, 0) 0 0 0 0, rgba(0, 0, 0, 0) 0 0 0 0, rgba(0, 0, 0, 0) 0 0 0 0, rgba(0, 0, 0, 0.05) 0 1px 2px 0;
@@ -141,11 +143,11 @@ html {
     }
 
     body {
-        @apply bg-background text-foreground;
+        @apply bg-background text-foreground font-branding m-0;
     }
 }
 
-@layer utilities {
+@layer components {
     .marker-dragging {
         opacity: 0.5;
         scale: 1.2;
@@ -171,6 +173,42 @@ html {
         box-shadow: 0 0 0 24px color-mix(in srgb, var(--primary) 10%, transparent);
         animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
     }
+
+    .nav-marker {
+        @apply text-xl relative w-6 h-6 flex justify-center items-center rounded-full text-primary translate-[0_50%] shadow-lg transition-colors bg-white;
+    }
+
+    .nav-marker-stale {
+        @apply text-ring;
+    }
+
+    .nav-marker-oriented::before {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 140px;
+        height: 140px;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+        background: conic-gradient(
+            from -30deg,
+            color-mix(in srgb, currentColor 40%, transparent) 0 60deg,
+            transparent 60deg 360deg
+        );
+        mask-image: radial-gradient(circle at 50% 50%, #000 0%, #000 40%, rgba(0,0,0,0) 70%);
+        mask-repeat: no-repeat;
+        mask-position: center;
+        mask-size: 100% 100%;
+        opacity: 0.5;
+        z-index: -1;
+    }
+
+    .nav-marker-oriented-stale::before {
+        opacity: 0.2;
+    }
+
 }
 
 @keyframes popIn {

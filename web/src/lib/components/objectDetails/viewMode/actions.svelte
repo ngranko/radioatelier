@@ -1,7 +1,7 @@
 <script lang="ts">
     import {activeObjectInfo} from '$lib/stores/map.ts';
     import toast from 'svelte-5-french-toast';
-    import {getStreetView} from '$lib/services/map/map.svelte.js';
+    import {getStreetView} from '$lib/services/map/streetView.svelte';
     import {Button} from '$lib/components/ui/button';
 
     interface Props {

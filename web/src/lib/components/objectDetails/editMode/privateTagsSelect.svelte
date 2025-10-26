@@ -4,8 +4,8 @@
     import {createPrivateTag, listPrivateTags} from '$lib/api/privateTag';
     import type {Payload} from '$lib/interfaces/api';
     import type {ListPrivateTagsResponsePayload} from '$lib/interfaces/privateTag';
-    import {clsx} from 'clsx';
     import type {Tag} from '$lib/interfaces/tag';
+    import {cn} from '$lib/utils.ts';
 
     const client = useQueryClient();
 
@@ -80,6 +80,6 @@
         {name}
         {value}
         createHandler={handleCreate}
-        controlClass={clsx({'transition-colors': true, 'sv-control-error': hasError()})}
+        controlClass={cn({'transition-colors': true, 'sv-control-error': hasError()})}
     />
 {/if}

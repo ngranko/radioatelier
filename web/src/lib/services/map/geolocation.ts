@@ -30,7 +30,7 @@ export function stopPositionPolling(id?: number) {
     if (id) clearInterval(id);
 }
 
-export function updateCurrentPosition() {
+function updateCurrentPosition() {
     navigator.permissions.query({name: 'geolocation'}).then(
         result => {
             if (result.state === 'granted' || result.state === 'prompt') {

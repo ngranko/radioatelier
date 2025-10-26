@@ -1,48 +1,96 @@
 <script lang="ts">
-    import Menu from '$lib/components/userMenu/menu.svelte';
+    import * as Avatar from '$lib/components/ui/avatar';
+    import {Button} from '$lib/components/ui/button';
+    import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+    import {DropdownMenuItem} from '$lib/components/ui/dropdown-menu';
+    import toast from 'svelte-5-french-toast';
+    import type {Component} from 'svelte';
+    import LogoutDialog from '$lib/components/userMenu/logoutDialog.svelte';
+    import {cubicInOut} from 'svelte/easing';
+    import Loader from '$lib/components/loader.svelte';
+    import {fade} from 'svelte/transition';
+    import ImportDialog from '$lib/components/userMenu/importDialog.svelte';
 
-    let isOpen = $state(false);
+    let isImportDialogOpen = $state(false);
+    let isChangePasswordDialogOpen = $state(false);
+    let isLogoutDialogOpen = $state(false);
+    let isDialogLoading = $state(false);
+    let PasswordChangeDialog: Component<{isOpen: boolean}> | undefined = $state();
 
-    function handleMenuClick() {
-        isOpen = !isOpen;
+    function handleImportClick() {
+        isImportDialogOpen = true;
+    }
+
+    async function handleChangePasswordClick() {
+        isChangePasswordDialogOpen = true;
+        if (!PasswordChangeDialog) {
+            isDialogLoading = true;
+            try {
+                const {default: Component} = await import(
+                    '$lib/components/userMenu/passwordChangeDialog.svelte'
+                );
+                PasswordChangeDialog = Component;
+            } catch (error) {
+                toast.error('Что-то пошло не так');
+            }
+            isDialogLoading = false;
+        }
+    }
+
+    function handleLogoutClick() {
+        isLogoutDialogOpen = true;
     }
 </script>
 
-<div>
-    <button class="userButton" onclick={handleMenuClick} aria-label="Показать меню">
-        <i class="fa-solid fa-user-ninja"></i>
-    </button>
-    {#if isOpen}
-        <Menu onClose={handleMenuClick} />
-    {/if}
-</div>
+<DropdownMenu.Root>
+    <DropdownMenu.Trigger>
+        <Button
+            variant="ghost"
+            size="icon"
+            class="relative z-2 m-2 size-10 rounded-full text-3xl"
+            aria-label="Показать меню"
+        >
+            <Avatar.Root class="size-10 rounded-full">
+                <Avatar.Fallback
+                    class="bg-primary items-end rounded-full pt-1 pr-1 pl-1 brightness-200 saturate-25 transition hover:brightness-180 hover:saturate-30"
+                >
+                    <i class="fa-solid fa-user-ninja"></i>
+                </Avatar.Fallback>
+            </Avatar.Root>
+        </Button>
+    </DropdownMenu.Trigger>
+    <DropdownMenu.Content class="mr-4">
+        <DropdownMenu.Group>
+            <DropdownMenu.Item onclick={handleImportClick}>
+                <i class="fa-solid fa-file-import"></i>
+                Импорт точек
+            </DropdownMenu.Item>
+            <DropdownMenuItem onclick={handleChangePasswordClick}>
+                <i class="fa-solid fa-key"></i>
+                Сменить пароль
+            </DropdownMenuItem>
+            <DropdownMenu.Separator />
+            <DropdownMenu.Item onclick={handleLogoutClick}>
+                <i class="fa-solid fa-sign-out-alt"></i>
+                Выйти
+            </DropdownMenu.Item>
+        </DropdownMenu.Group>
+    </DropdownMenu.Content>
+</DropdownMenu.Root>
 
-<style lang="scss">
-    @use 'sass:color';
-    @use '../../../styles/colors';
-    @use '../../../styles/typography';
+{#if isDialogLoading}
+    <div
+        class="fixed inset-0 z-2 flex items-center justify-center bg-black/30"
+        transition:fade={{duration: 100, easing: cubicInOut}}
+    >
+        <Loader />
+    </div>
+{/if}
 
-    .userButton {
-        position: relative;
-        width: 40px;
-        height: 40px;
-        background: color.scale(colors.$primary, $lightness: +70%);
-        border: none;
-        border-radius: 50%;
-        margin: 8px;
-        padding: 0;
-        font-size: 30px;
-        display: flex;
-        justify-content: center;
-        align-items: flex-end;
-        overflow: hidden;
-        cursor: pointer;
-        color: colors.$black;
-        transition: background-color 0.2s;
-        z-index: 2;
+<ImportDialog bind:isOpen={isImportDialogOpen} />
 
-        &:hover {
-            background-color: color.scale(colors.$primary, $lightness: +60%);
-        }
-    }
-</style>
+{#if PasswordChangeDialog}
+    <PasswordChangeDialog bind:isOpen={isChangePasswordDialogOpen} />
+{/if}
+
+<LogoutDialog bind:isOpen={isLogoutDialogOpen} />

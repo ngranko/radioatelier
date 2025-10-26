@@ -1,9 +1,9 @@
 <script lang="ts">
     import {onDestroy} from 'svelte';
     import config from '$lib/config';
-    import {map, mapLoader} from '$lib/stores/map';
     import {cn} from '$lib/utils';
     import Button from '../ui/button/button.svelte';
+    import { mapState } from '$lib/state/map.svelte';
 
     interface Props {
         panorama: google.maps.StreetViewPanorama | null;
@@ -42,12 +42,12 @@
     }
 
     async function ensureMiniMap() {
-        if (!$mapLoader || !isVisible || !miniMapContainer || miniMap) {
+        if (!isVisible || !miniMapContainer || miniMap) {
             return;
         }
 
-        const {Map} = await $mapLoader.importLibrary('maps');
-        const center = position ?? $map?.getCenter() ?? undefined;
+        const {Map} = await mapState.loader.importLibrary('maps');
+        const center = position ?? mapState.map?.getCenter() ?? undefined;
 
         miniMap = new Map(miniMapContainer, {
             mapId: config.googleMapsId,

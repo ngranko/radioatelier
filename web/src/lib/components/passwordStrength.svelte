@@ -1,6 +1,6 @@
 <script lang="ts">
-    import {clsx} from 'clsx';
     import {getPasswordScore} from '$lib/services/passwordStrength';
+    import {cn} from '$lib/utils.ts';
 
     const SCORE_VERY_LOW = 0;
     const SCORE_LOW = 1;
@@ -16,7 +16,7 @@
 
     let passwordScore: Number = $derived(getPasswordScore(value));
     let classNames: string = $derived(
-        clsx({
+        cn({
             'w-full h-0.5 mt-2 flex rounded-sm bg-gray-100 after:block after:duration-200 after:ease-in-out': true,
             'after:bg-destructive after:w-1/20': passwordScore === SCORE_VERY_LOW,
             'after:bg-destructive after:w-1/4': passwordScore === SCORE_LOW,

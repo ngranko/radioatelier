@@ -1,12 +1,10 @@
 <script lang="ts">
     import {onMount, onDestroy} from 'svelte';
-    import {mapLoader, map, markerManager, dragTimeout, deckEnabled} from '$lib/stores/map';
+    import {mapState} from '$lib/state/map.svelte';
     import {createMutation} from '@tanstack/svelte-query';
     import {getLocation} from '$lib/api/location';
     import type {Location} from '$lib/interfaces/location';
     import {MarkerManager} from '$lib/services/map/markerManager';
-    import {pointList} from '$lib/stores/map';
-    import {DeckOverlayController, type DeckItem} from '$lib/services/map/deckOverlay';
     import {
         getInitialCenter,
         startPositionPolling,
@@ -15,6 +13,7 @@
     import {PointerDragZoomController} from '$lib/services/map/pointerDragZoom';
     import config from '$lib/config';
     import StreetView from './streetView.svelte';
+    import { removeDragTimeout } from '$lib/state/marker.svelte';
 
     interface Props {
         onClick(location: Location): void;
@@ -26,36 +25,51 @@
     let clickTimeout: number | undefined;
     let positionInterval: number | undefined;
     let isInZoomMode = false;
-    let selectedDeckId: string | null = null;
-
-    let deckController: DeckOverlayController | null = null;
 
     const location = createMutation({
         mutationFn: getLocation,
     });
 
-    function computeDeckItems(): DeckItem[] {
-        const items = Object.values($pointList).map(p => ({
-            id: p.object.id,
-            position: [Number(p.object.lng), Number(p.object.lat)] as [number, number],
-            isVisited: p.object.isVisited,
-            isRemoved: p.object.isRemoved,
-            isActive: selectedDeckId === p.object.id,
-            isSearch: false,
-        }));
-        return [...items];
-    }
-
     onMount(async () => {
         positionInterval = startPositionPolling(5000);
 
-        const {Map} = await $mapLoader.importLibrary('maps');
-        const {event} = await $mapLoader.importLibrary('core');
+        try {
+            const mapInstance = await initMap();
+            mapState.markerManager = await initMarkerManager(mapInstance);
+            mapState.map = mapInstance;
+            mapState.markerManager!.scheduleViewportUpdate();
+        } catch (e) {
+            console.error('error instantiating map');
+            console.error(e);
+        }
+
+        try {
+            initListeners();
+
+            new PointerDragZoomController({
+                getZoom: () => mapState.map?.getZoom() ?? 15,
+                setZoom: zoom => mapState.map?.setZoom(zoom),
+                onStart: () => {
+                    clearTimeout(clickTimeout);
+                    clickTimeout = undefined;
+                    isInZoomMode = true;
+                },
+                onEnd: () => {
+                    isInZoomMode = false;
+                },
+            }).attachDoubleTapDragZoom(container!);
+        } catch (e) {
+            console.error('error initialising map event listeners');
+            console.error(e);
+        }
+    });
+
+    async function initMap(): Promise<google.maps.Map> {
+        const {Map} = await mapState.loader.importLibrary('maps');
 
         const center = await getInitialCenter($location);
-        const qs = new URLSearchParams(window.location.search);
 
-        const mapOptions: google.maps.MapOptions = {
+        return new Map(container!, {
             zoom: center.zoom ?? 15,
             center,
             mapId: config.googleMapsId,
@@ -65,134 +79,84 @@
             fullscreenControl: false,
             zoomControl: false,
             clickableIcons: false,
-        };
-
-        try {
-            const mapInstance = new Map(container!, mapOptions);
-
-            const disableLazy = qs.has('noLazy');
-
-            const manager = new MarkerManager({
-                enableLazyLoading: !disableLazy,
-            });
-            await manager.initialize(mapInstance, $mapLoader);
-            markerManager.set(manager);
-
-            map.update(() => mapInstance);
-
-            try {
-                deckController = new DeckOverlayController(mapInstance);
-                await deckController.init();
-                if (shouldUseDeck()) {
-                    // Ensure DOM markers are not visible when entering Deck mode on init
-                    manager.hideAllImmediately();
-                    deckController.setEnabled(true);
-                    deckController.rebuild(computeDeckItems());
-                    // Ensure a single update after the first idle when overlay view is attached
-                    event.addListenerOnce(mapInstance, 'idle', () =>
-                        deckController?.rebuild(computeDeckItems()),
-                    );
-                }
-            } catch (e) {
-                console.warn('Deck.gl overlay failed to initialize; continuing without it.', e);
-            }
-
-            // Trigger initial viewport update once when the map first becomes idle
-            event.addListenerOnce(mapInstance, 'idle', () => {
-                if (manager && $map) {
-                    manager.triggerViewportUpdate();
-                }
-            });
-        } catch (e) {
-            console.error('error instantiating map');
-            console.error(e);
-        }
-
-        try {
-            if ($map) {
-                event.addListener($map, 'idle', () => {
-                    if (shouldUseDeck() && !$deckEnabled) {
-                        $markerManager?.hideAllImmediately();
-                        deckController?.setEnabled(true);
-                        deckController?.rebuild(computeDeckItems());
-                    }
-
-                    if (!shouldUseDeck()) {
-                        deckController?.setEnabled(false);
-                        $markerManager?.triggerViewportUpdate();
-                    }
-                });
-
-                event.addListener($map, 'click', function (event: google.maps.MapMouseEvent) {
-                    // if deck is enabled then we are quite zoomed out, so there's no need to allow marker creation
-                    // as it will just lead to more complexity on marker handler (we create a marker as a dom marker,
-                    // but immediately need to transfer it to deck)
-                    if ($deckEnabled) {
-                        return;
-                    }
-                    if (isInZoomMode) {
-                        return;
-                    }
-
-                    clickTimeout = setTimeout(() => {
-                        if (!isInZoomMode) {
-                            onClick({
-                                lat: event.latLng?.lat() ?? 0,
-                                lng: event.latLng?.lng() ?? 0,
-                            });
-                        }
-                        clickTimeout = undefined;
-                    }, 300);
-                });
-
-                new PointerDragZoomController({
-                    getZoom: () => $map?.getZoom() ?? 15,
-                    setZoom: zoom => $map?.setZoom(zoom),
-                    onStart: () => {
-                        clearTimeout(clickTimeout);
-                        clickTimeout = undefined;
-                        isInZoomMode = true;
-                    },
-                    onEnd: () => {
-                        isInZoomMode = false;
-                    },
-                }).attachDoubleTapDragZoom(container!);
-
-                event.addListener($map, 'center_changed', function () {
-                    dragTimeout.remove();
-
-                    const center = $map.getCenter();
-                    localStorage.setItem(
-                        'lastCenter',
-                        JSON.stringify({
-                            lat: (center as google.maps.LatLng).lat(),
-                            lng: (center as google.maps.LatLng).lng(),
-                            zoom: $map.getZoom(),
-                        }),
-                    );
-                });
-            }
-        } catch (e) {
-            console.error('error initialising map event listeners');
-            console.error(e);
-        }
-    });
-
-    function shouldUseDeck(): boolean {
-        return ($map?.getZoom() ?? 15) <= config.deckZoomThreshold;
+        });
     }
+
+    async function initMarkerManager(mapInstance: google.maps.Map): Promise<MarkerManager> {
+        const manager = new MarkerManager(mapInstance, {renderer: shouldUseDeck(mapInstance) ? 'deck' : 'dom'});
+        await manager.initialize(mapState.loader);
+        return manager;
+    }
+
+    function initListeners() {
+        if (!mapState.map) {
+            return;
+        }
+
+        google.maps.event.addListener(mapState.map, 'idle', handleIdle);
+        google.maps.event.addListener(mapState.map, 'click', handleClick);
+        google.maps.event.addListener(mapState.map, 'center_changed', handleCenterChanged);
+    }
+
+    function handleIdle() {
+        mapState.markerManager?.setRendererMode(shouldUseDeck(mapState.map!) ? 'deck' : 'dom');
+        mapState.markerManager?.scheduleViewportUpdate();
+    }
+
+    function handleClick(event: google.maps.MapMouseEvent) {
+        if (mapState.deckEnabled || isInZoomMode) {
+            return;
+        }
+
+        clickTimeout = setTimeout(() => {
+            if (!isInZoomMode) {
+                onClick({
+                    lat: event.latLng?.lat() ?? 0,
+                    lng: event.latLng?.lng() ?? 0,
+                });
+            }
+            clickTimeout = undefined;
+        }, 300);
+    }
+
+    function handleCenterChanged() {
+        if (!mapState.map) {
+            return;
+        }
+
+        removeDragTimeout();
+
+        const center = mapState.map.getCenter();
+        localStorage.setItem(
+            'lastCenter',
+            JSON.stringify({
+                lat: (center as google.maps.LatLng).lat(),
+                lng: (center as google.maps.LatLng).lng(),
+                zoom: mapState.map.getZoom(),
+            }),
+        );
+    }
+
+    function cleanupListeners() {
+        if (!mapState.map) {
+            return;
+        }
+
+        google.maps.event.clearInstanceListeners(mapState.map);
+    }
+
+    function shouldUseDeck(map: google.maps.Map): boolean {
+    return (map.getZoom() ?? 15) <= config.deckZoomThreshold;
+}
 
     onDestroy(() => {
         if (positionInterval) {
             stopPositionPolling(positionInterval);
         }
 
-        // Cleanup marker manager
-        if ($markerManager) {
-            $markerManager.destroy();
-        }
-        deckController?.destroy();
-        map.set(undefined);
+        cleanupListeners();
+        mapState.markerManager?.destroy();
+        mapState.map = undefined;
     });
 </script>
 

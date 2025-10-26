@@ -2,7 +2,6 @@ package process
 
 import (
     "context"
-    "fmt"
     "log/slog"
     "path/filepath"
     "strconv"
@@ -25,14 +24,14 @@ func importObjects(ctx context.Context, ch chan message, ID string, separator ru
 
     f, err := file.Open("/tmp/" + ID)
     if err != nil {
-        ch <- message{error: err}
+        ch <- message{state: types.MessageTypeError, error: err}
         return
     }
     defer f.Delete()
 
     doc, err := document.CSVFromFile(f, separator)
     if err != nil {
-        ch <- message{error: err}
+        ch <- message{state: types.MessageTypeError, error: err}
         return
     }
 
@@ -53,13 +52,13 @@ func importObjects(ctx context.Context, ch chan message, ID string, separator ru
                     successfulLines++
                 }
                 for _, msg := range msgs {
-                    msg.Text = fmt.Sprintf("Строка %d: %s", currentLine+1, msg.Text)
+                    msg.Line = currentLine + 1
                     messages = append(messages, msg)
                 }
                 currentLine++
-                ch <- message{percentage: currentLine * 100 / count}
+                ch <- message{state: types.MessageTypeProgress, total: count, successful: successfulLines, percentage: currentLine * 100 / count}
             } else {
-                ch <- message{result: &result{text: fmt.Sprintf("Импортировано %d точек из %d", successfulLines, count), feedback: messages}}
+                ch <- message{state: types.MessageTypeSuccess, total: count, successful: successfulLines, percentage: 100, feedback: messages}
                 return
             }
         }

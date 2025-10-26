@@ -41,6 +41,7 @@
     }
 
     let {initialValues}: Props = $props();
+    let isSubmitting = $state(false);
 
     const createObjectMutation = createMutation({
         mutationFn: createObject,
@@ -132,11 +133,13 @@
         source: zod.string().url('Должна быть валидной ссылкой').or(zod.literal('')),
     });
 
-    const {form, data, errors, isSubmitting, reset, setData, isDirty, setIsDirty} = createForm<
+    const {form, data, errors, reset, setData, isDirty, setIsDirty} = createForm<
         zod.infer<typeof schema>
     >({
-        onSubmit: (values: LooseObject) => {
-            handleSave(values);
+        onSubmit: async (values: LooseObject) => {
+            isSubmitting = true;
+            await handleSave(values);
+            isSubmitting = false;
         },
         extend: validator({schema}),
         initialValues: initialValues,
@@ -321,7 +324,7 @@
 
 <form use:form>
     <div class="flex items-center justify-between gap-3 border-b bg-gray-50/50 px-4 py-2.5">
-        <Button type="submit" disabled={$isSubmitting.valueOf()} class="px-6 text-base">
+        <Button type="submit" disabled={isSubmitting} class="px-6 text-base">
             Сохранить
         </Button>
         {#if initialValues.id}

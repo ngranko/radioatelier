@@ -1,16 +1,5 @@
-import {WebSocketConnection} from '$lib/api/websocket/WebSocketConnection';
 import {getNonce} from '$lib/api/nonce';
-import type {
-    ImportDisconnectHandler,
-    ImportErrorHandler,
-    ImportSuccessHandler,
-    ImportMappings,
-    WSErrorMessagePayload,
-    WSSendInputMessagePayload,
-    WSSuccessMessagePayload,
-    ImportProgressHandler,
-    WSProgressMessagePayload,
-} from '$lib/interfaces/import';
+import {WebSocketConnection} from '$lib/api/websocket/WebSocketConnection';
 import {
     WebSocketMessage,
     WSCancelMessageType,
@@ -20,8 +9,17 @@ import {
     WSSendInputMessageType,
     WSSuccessMessageType,
 } from '$lib/api/websocket/WebSocketMessage';
-import WebSocketError from '$lib/errors/WebSocketError';
 import config from '$lib/config';
+import WebSocketError from '$lib/errors/WebSocketError';
+import type {
+    ImportDisconnectHandler,
+    ImportErrorHandler,
+    ImportMappings,
+    ImportProgressHandler,
+    ImportSuccessHandler,
+    WSMessagePayload,
+    WSSendInputMessagePayload,
+} from '$lib/interfaces/import';
 
 export class ImportProvider {
     private connection: WebSocketConnection;
@@ -77,7 +75,11 @@ export class ImportProvider {
         this.connection.setErrorHandler(() => {
             if (this.errorHandler) {
                 this.errorHandler(
-                    new WebSocketMessage<WSErrorMessagePayload>(WSErrorMessageType, {
+                    new WebSocketMessage<WSMessagePayload>(WSErrorMessageType, {
+                        type: 'error',
+                        total: 0,
+                        successful: 0,
+                        percentage: 0,
                         error: 'Generic WebSocket error',
                     }),
                 );
@@ -113,19 +115,19 @@ export class ImportProvider {
             case WSSuccessMessageType:
                 this.isFinished = true;
                 if (this.successHandler) {
-                    this.successHandler(message as WebSocketMessage<WSSuccessMessagePayload>);
+                    this.successHandler(message as WebSocketMessage<WSMessagePayload>);
                     this.closeConnection();
                 }
                 break;
             case WSErrorMessageType:
                 this.isFinished = true;
                 if (this.errorHandler) {
-                    this.errorHandler(message as WebSocketMessage<WSErrorMessagePayload>);
+                    this.errorHandler(message as WebSocketMessage<WSMessagePayload>);
                 }
                 break;
             case WSProgressMessageType:
                 if (this.progressHandler) {
-                    this.progressHandler(message as WebSocketMessage<WSProgressMessagePayload>);
+                    this.progressHandler(message as WebSocketMessage<WSMessagePayload>);
                 }
                 break;
             case WSProcessPingMessageType:
