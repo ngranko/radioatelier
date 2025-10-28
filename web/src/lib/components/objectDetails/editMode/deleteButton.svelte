@@ -1,5 +1,5 @@
 <script lang="ts">
-    import {Button, buttonVariants} from '$lib/components/ui/button';
+    import {buttonVariants} from '$lib/components/ui/button';
     import * as AlertDialog from '$lib/components/ui/alert-dialog';
     import {cn} from '$lib/utils.ts';
 
@@ -23,16 +23,10 @@
             <AlertDialog.Description>Это действие нельзя отменить</AlertDialog.Description>
         </AlertDialog.Header>
         <AlertDialog.Footer>
-            <AlertDialog.Close>
-                <Button variant="ghost">Отменить</Button>
-            </AlertDialog.Close>
-            <Button
-                variant="ghost"
-                class="text-destructive hover:text-destructive"
-                onclick={onClick}
-            >
+            <AlertDialog.Cancel>Отменить</AlertDialog.Cancel>
+            <AlertDialog.Action class="bg-destructive hover:bg-destructive/70" onclick={onClick}>
                 Удалить
-            </Button>
+            </AlertDialog.Action>
         </AlertDialog.Footer>
     </AlertDialog.Content>
 </AlertDialog.Root>

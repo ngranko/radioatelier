@@ -14,6 +14,7 @@ var migrationList = []list.Migration{
     list.Migration202405230126,
     list.Migration202410302139,
     list.Migration202410310401,
+    list.Migration202510280240,
 }
 
 func Run(client *db.Client) {
@@ -32,6 +33,7 @@ func updateSchema(client *db.Client) {
         &model.PrivateTag{},
         &model.MapPoint{},
         &model.ObjectUser{},
+        &model.Sequence{},
     )
     if err != nil {
         logger.GetZerolog().Error("error while migrating the database", slog.Any("error", err))

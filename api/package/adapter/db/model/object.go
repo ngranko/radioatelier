@@ -24,6 +24,7 @@ type Object struct {
     Image           string        `gorm:"type:blob"`
     NotionID        *uuid.UUID    `gorm:"type:char(36)"`
     LastSync        *time.Time
+    InternalID      string    `gorm:"->;type:varchar(16)"`
     CreatedBy       uuid.UUID `gorm:"type:char(36);not null"`
     Creator         User      `gorm:"foreignKey:created_by"`
     UpdatedBy       uuid.UUID `gorm:"type:char(36);not null"`
