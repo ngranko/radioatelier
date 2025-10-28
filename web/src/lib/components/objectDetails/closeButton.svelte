@@ -24,20 +24,19 @@
         </AlertDialog.Trigger>
         <AlertDialog.Content>
             <AlertDialog.Header>
-                <Dialog.Title>Вы действительно хотите выйти из редактирования точки?</Dialog.Title>
-                <Dialog.Description>Изменения не будут сохранены</Dialog.Description>
+                <AlertDialog.Title>
+                    Вы действительно хотите выйти из редактирования точки?
+                </AlertDialog.Title>
+                <AlertDialog.Description>Изменения не будут сохранены</AlertDialog.Description>
             </AlertDialog.Header>
             <AlertDialog.Footer>
-                <AlertDialog.Close>
-                    <Button variant="ghost">Отменить</Button>
-                </AlertDialog.Close>
-                <Button
-                    variant="ghost"
-                    class="text-destructive hover:text-destructive"
+                <AlertDialog.Cancel>Отменить</AlertDialog.Cancel>
+                <AlertDialog.Action
+                    class="bg-destructive hover:bg-destructive/70"
                     onclick={onClick}
                 >
                     Закрыть
-                </Button>
+                </AlertDialog.Action>
             </AlertDialog.Footer>
         </AlertDialog.Content>
     </AlertDialog.Root>
