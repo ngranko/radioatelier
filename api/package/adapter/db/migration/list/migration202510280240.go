@@ -29,7 +29,7 @@ var Migration202510280240 = Migration{
             ") f ON f.id = o.id\n" +
             "SET o.internal_id = CONCAT('RA-', f.rn);")
         if result.Error != nil {
-            return err
+            return result.Error
         }
 
         err = client.Exec("ALTER TABLE sequences AUTO_INCREMENT = " + strconv.Itoa(int(result.RowsAffected+1))).Error
