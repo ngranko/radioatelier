@@ -1,9 +1,9 @@
 package ulid
 
 import (
+    "crypto/rand"
     "database/sql/driver"
     "errors"
-    "math/rand"
     "time"
 
     "github.com/oklog/ulid/v2"
@@ -12,7 +12,7 @@ import (
 type ULID [16]byte
 
 func NewULID() ULID {
-    entropy := ulid.Monotonic(rand.New(rand.NewSource(time.Now().UnixNano())), 0)
+    entropy := ulid.Monotonic(rand.Reader, 0)
     id := ulid.MustNew(ulid.Timestamp(time.Now()), entropy)
     var u ULID
     copy(u[:], id.Bytes())
@@ -74,6 +74,6 @@ func (u *ULID) UnmarshalJSON(data []byte) error {
     if err != nil {
         return err
     }
-    *u = ULID(id)
+    copy((*u)[:], id.Bytes())
     return nil
 }

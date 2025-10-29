@@ -115,12 +115,12 @@ func (t *accessToken) Verify() error {
 func (t *accessToken) UserID() ulid.ULID {
     raw, ok := t.rawToken.Get("user_id")
     if !ok {
-        return ulid.NewULID()
+        return ulid.ULID{}
     }
 
     val, err := ulid.Parse(raw.(string))
     if err != nil {
-        return ulid.NewULID()
+        return ulid.ULID{}
     }
 
     return val
