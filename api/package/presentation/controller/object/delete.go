@@ -3,18 +3,17 @@ package object
 import (
     "net/http"
 
-    "github.com/google/uuid"
-
     "radioatelier/package/infrastructure/router"
+    "radioatelier/package/infrastructure/ulid"
     "radioatelier/package/usecase/presenter"
 )
 
 type DeletePayloadData struct {
-    ID uuid.UUID `json:"id"`
+    ID ulid.ULID `json:"id"`
 }
 
 func Delete(w http.ResponseWriter, r *http.Request) {
-    objectID, err := uuid.Parse(router.GetPathParam(r, "id"))
+    objectID, err := ulid.Parse(router.GetPathParam(r, "id"))
     if err != nil {
         router.NewResponse().
             WithStatus(http.StatusBadRequest).

@@ -1,19 +1,15 @@
 <script lang="ts">
     import {onMount, onDestroy} from 'svelte';
-    import {
-        activeObjectInfo,
-        activeMarker,
-        searchPointList,
-    } from '$lib/stores/map';
+    import {activeObjectInfo, activeMarker, searchPointList} from '$lib/stores/map';
     import {createQuery, useQueryClient} from '@tanstack/svelte-query';
     import {getObject} from '$lib/api/object';
     import {useRepositionMutation} from '$lib/api/mutation/reposition';
     import {getAddress} from '$lib/api/location';
     import type {Object} from '$lib/interfaces/object';
     import {pointList} from '$lib/stores/map.js';
-    import { mapState } from '$lib/state/map.svelte';
+    import {mapState} from '$lib/state/map.svelte';
     import {Marker as MarkerObject} from '$lib/services/map/marker';
-    import type { MarkerSource } from '$lib/interfaces/marker';
+    import type {MarkerSource} from '$lib/interfaces/marker';
     import toast from 'svelte-5-french-toast';
 
     interface Props {
@@ -130,10 +126,12 @@
 
     function createMarker() {
         if (!mapState.markerManager) {
-            console.error('marker manager not instantiated when trying to create a marker; this is a noop');
+            console.error(
+                'marker manager not instantiated when trying to create a marker; this is a noop',
+            );
             return;
         }
-        
+
         const position = {lat: Number(lat), lng: Number(lng)};
 
         // For map-clicked markers, pass a unique ID to avoid cache conflicts
@@ -188,7 +186,6 @@
                     lng: String(marker.getPosition().lng),
                 },
             });
-            marker.commitPosition();
             pointList.updateCoordinates(
                 id!,
                 String(marker.getPosition().lat),

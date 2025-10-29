@@ -27,18 +27,6 @@ export class Marker {
         if (this.marker) {
             this.marker.position = position;
         }
-    }
-
-    public commitPosition() {
-        if (!this.marker || !this.marker.position) {
-            return;
-        }
-
-        let position = this.marker.position;
-        if (position instanceof google.maps.LatLng) {
-            position = position.toJSON();
-        }
-
         this.position = position;
     }
 

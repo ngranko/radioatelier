@@ -3,12 +3,11 @@ package object
 import (
     "net/http"
 
-    "github.com/google/uuid"
-
     "radioatelier/package/adapter/auth/accessToken"
     "radioatelier/package/config"
     "radioatelier/package/infrastructure/router"
     "radioatelier/package/infrastructure/transformations"
+    "radioatelier/package/infrastructure/ulid"
     "radioatelier/package/usecase/presenter"
     "radioatelier/package/usecase/validation/validator"
 )
@@ -34,7 +33,7 @@ type CreateInput struct {
 }
 
 type CreatePayloadData struct {
-    ID              uuid.UUID `json:"id"`
+    ID              ulid.ULID `json:"id"`
     Name            string    `json:"name"`
     Description     string    `json:"description"`
     Lat             string    `json:"lat"`
@@ -121,13 +120,13 @@ func Create(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    err = obj.SetTags(transformations.Map(payload.Tags, func(item Tag) uuid.UUID { return item.ID }))
+    err = obj.SetTags(transformations.Map(payload.Tags, func(item Tag) ulid.ULID { return item.ID }))
     if err != nil {
         router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
         return
     }
 
-    err = obj.SetPrivateTags(transformations.Map(payload.PrivateTags, func(item Tag) uuid.UUID { return item.ID }), user)
+    err = obj.SetPrivateTags(transformations.Map(payload.PrivateTags, func(item Tag) ulid.ULID { return item.ID }), user)
     if err != nil {
         router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
         return

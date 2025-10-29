@@ -1,10 +1,9 @@
 package repository
 
 import (
-    "github.com/google/uuid"
-
     "radioatelier/package/adapter/db/model"
     "radioatelier/package/infrastructure/db"
+    "radioatelier/package/infrastructure/ulid"
 )
 
 type objectUserRepo struct {
@@ -13,7 +12,7 @@ type objectUserRepo struct {
 
 type ObjectUser interface {
     Repository[model.ObjectUser]
-    GetByObjectIDUserID(objectID uuid.UUID, userID uuid.UUID) (*model.ObjectUser, error)
+    GetByObjectIDUserID(objectID ulid.ULID, userID ulid.ULID) (*model.ObjectUser, error)
 }
 
 func NewObjectUserRepository(client *db.Client) ObjectUser {
@@ -34,7 +33,7 @@ func (r *objectUserRepo) Delete(objectUser *model.ObjectUser) error {
     return r.client.Delete(objectUser).Error
 }
 
-func (r *objectUserRepo) GetByObjectIDUserID(objectID uuid.UUID, userID uuid.UUID) (*model.ObjectUser, error) {
+func (r *objectUserRepo) GetByObjectIDUserID(objectID ulid.ULID, userID ulid.ULID) (*model.ObjectUser, error) {
     var objectUser model.ObjectUser
 
     err := r.client.Where("object_id = ? AND user_id = ?", objectID, userID).First(&objectUser).Error

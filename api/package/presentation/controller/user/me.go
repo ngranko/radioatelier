@@ -3,15 +3,14 @@ package user
 import (
     "net/http"
 
-    "github.com/google/uuid"
-
     "radioatelier/package/adapter/auth/accessToken"
     "radioatelier/package/infrastructure/router"
+    "radioatelier/package/infrastructure/ulid"
     "radioatelier/package/usecase/presenter"
 )
 
 type MePayloadData struct {
-    ID    uuid.UUID `json:"id"`
+    ID    ulid.ULID `json:"id"`
     Role  string    `json:"role"`
     Email string    `json:"email"`
 }

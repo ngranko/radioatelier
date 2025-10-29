@@ -1,10 +1,9 @@
 package repository
 
 import (
-    "github.com/google/uuid"
-
     "radioatelier/package/adapter/db/model"
     "radioatelier/package/infrastructure/db"
+    "radioatelier/package/infrastructure/ulid"
 )
 
 type userRepo struct {
@@ -14,7 +13,7 @@ type userRepo struct {
 type User interface {
     Repository[model.User]
     IsRegistered(email string) bool
-    GetByID(id uuid.UUID) (*model.User, error)
+    GetByID(id ulid.ULID) (*model.User, error)
     GetByEmail(email string) (*model.User, error)
 }
 
@@ -30,7 +29,7 @@ func (r *userRepo) IsRegistered(email string) bool {
     return count > 0
 }
 
-func (r *userRepo) GetByID(id uuid.UUID) (*model.User, error) {
+func (r *userRepo) GetByID(id ulid.ULID) (*model.User, error) {
     user := model.User{Base: model.Base{ID: id}}
     err := r.client.First(&user).Error
     return &user, err

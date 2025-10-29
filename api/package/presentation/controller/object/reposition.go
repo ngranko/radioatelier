@@ -3,11 +3,10 @@ package object
 import (
     "net/http"
 
-    "github.com/google/uuid"
-
     "radioatelier/package/adapter/auth/accessToken"
     "radioatelier/package/config"
     "radioatelier/package/infrastructure/router"
+    "radioatelier/package/infrastructure/ulid"
     "radioatelier/package/usecase/presenter"
     "radioatelier/package/usecase/validation/validator"
 )
@@ -18,13 +17,13 @@ type RepositionInput struct {
 }
 
 type RepositionPayloadData struct {
-    ID  uuid.UUID `json:"id"`
+    ID  ulid.ULID `json:"id"`
     Lat string    `json:"lat"`
     Lng string    `json:"lng"`
 }
 
 func Reposition(w http.ResponseWriter, r *http.Request) {
-    objectID, err := uuid.Parse(router.GetPathParam(r, "id"))
+    objectID, err := ulid.Parse(router.GetPathParam(r, "id"))
     if err != nil {
         router.NewResponse().
             WithStatus(http.StatusBadRequest).

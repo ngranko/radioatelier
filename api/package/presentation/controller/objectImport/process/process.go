@@ -7,11 +7,10 @@ import (
     "strconv"
     "time"
 
-    "github.com/google/uuid"
-
     "radioatelier/package/adapter/file"
     "radioatelier/package/config"
     "radioatelier/package/infrastructure/logger"
+    "radioatelier/package/infrastructure/ulid"
     "radioatelier/package/presentation/controller/objectImport/types"
     "radioatelier/package/usecase/file/document"
     "radioatelier/package/usecase/file/image"
@@ -196,7 +195,7 @@ func importObjectUser(line document.Line, object presenter.Object, user presente
 func importTags(line document.Line, object presenter.Object, user presenter.User) []types.LineFeedback {
     messages := make([]types.LineFeedback, 0)
 
-    tagIDs := make([]uuid.UUID, 0)
+    tagIDs := make([]ulid.ULID, 0)
     for _, tag := range line.GetTags() {
         if tag == "" {
             continue
@@ -226,7 +225,7 @@ func importTags(line document.Line, object presenter.Object, user presenter.User
 func importPrivateTags(line document.Line, object presenter.Object, user presenter.User) []types.LineFeedback {
     messages := make([]types.LineFeedback, 0)
 
-    privateTagIDs := make([]uuid.UUID, 0)
+    privateTagIDs := make([]ulid.ULID, 0)
     for _, privateTag := range line.GetPrivateTags() {
         if privateTag == "" {
             continue

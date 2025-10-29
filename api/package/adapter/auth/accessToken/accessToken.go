@@ -4,7 +4,6 @@ import (
     "fmt"
     "time"
 
-    "github.com/google/uuid"
     "github.com/lestrrat-go/jwx/v2/jwa"
     "github.com/lestrrat-go/jwx/v2/jwe"
     "github.com/lestrrat-go/jwx/v2/jwk"
@@ -12,6 +11,7 @@ import (
 
     "radioatelier/package/adapter/db/model"
     "radioatelier/package/config"
+    "radioatelier/package/infrastructure/ulid"
 )
 
 type accessToken struct {
@@ -21,7 +21,7 @@ type accessToken struct {
 type AccessToken interface {
     Encode() (string, error)
     Verify() error
-    UserID() uuid.UUID
+    UserID() ulid.ULID
 }
 
 func NewFromRaw(rawToken jwt.Token) AccessToken {
@@ -112,15 +112,15 @@ func (t *accessToken) Verify() error {
     return jwt.Validate(t.rawToken)
 }
 
-func (t *accessToken) UserID() uuid.UUID {
+func (t *accessToken) UserID() ulid.ULID {
     raw, ok := t.rawToken.Get("user_id")
     if !ok {
-        return uuid.Nil
+        return ulid.ULID{}
     }
 
-    val, err := uuid.Parse(raw.(string))
+    val, err := ulid.Parse(raw.(string))
     if err != nil {
-        return uuid.Nil
+        return ulid.ULID{}
     }
 
     return val

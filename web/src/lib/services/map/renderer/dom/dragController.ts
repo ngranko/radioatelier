@@ -1,7 +1,7 @@
-import type { Marker } from '$lib/services/map/marker';
-import { mapState } from '$lib/state/map.svelte';
-import { removeDragTimeout, setDragTimeout } from '$lib/state/marker.svelte';
-import { setDraggable } from '../../map.svelte';
+import type {Marker} from '$lib/services/map/marker';
+import {mapState} from '$lib/state/map.svelte';
+import {removeDragTimeout, setDragTimeout} from '$lib/state/marker.svelte';
+import {setDraggable} from '../../map.svelte';
 
 export class DragController {
     private skipClick = false;
@@ -11,7 +11,7 @@ export class DragController {
         if (!raw) {
             return;
         }
-        
+
         this.attachClick(marker);
         this.attachDragIfNeeded(marker);
     }
@@ -32,15 +32,15 @@ export class DragController {
         if (!raw) {
             return;
         }
-        
+
         if (marker.clickListener) {
             google.maps.event.removeListener(marker.clickListener);
             marker.clickListener = undefined;
         }
-        
+
         marker.clickListener = raw.addListener('gmp-click', this.handleClick(marker));
     }
-    
+
     private handleClick(marker: Marker) {
         return () => {
             if (this.skipClick) {
@@ -51,7 +51,7 @@ export class DragController {
             onClick?.();
         };
     }
-    
+
     private attachDragIfNeeded(marker: Marker): void {
         if (!marker.isDraggable()) {
             return;
@@ -65,11 +65,11 @@ export class DragController {
         if (!markerContent || !(markerContent instanceof HTMLElement)) {
             return;
         }
-        
+
         if (marker.pointerDownListener) {
             markerContent.removeEventListener('pointerdown', marker.pointerDownListener);
         }
-        
+
         const onPointerDown = this.handlePointerDown(marker);
         markerContent.addEventListener('pointerdown', onPointerDown);
         marker.pointerDownListener = onPointerDown;
@@ -77,9 +77,7 @@ export class DragController {
 
     private handlePointerDown(marker: Marker) {
         return () => {
-            setDragTimeout(
-                setTimeout(() => this.startDrag(marker), 300),
-            );
+            setDragTimeout(setTimeout(() => this.startDrag(marker), 300));
         };
     }
 
@@ -108,7 +106,7 @@ export class DragController {
                 if (!event.latLng) {
                     return;
                 }
-                
+
                 marker.isDragged = true;
                 marker.setPosition({lat: event.latLng.lat(), lng: event.latLng.lng()});
             },
@@ -132,7 +130,6 @@ export class DragController {
         marker.pointerUpListener = onPointerUp;
     }
 
-
     private handlePointerUp(marker: Marker) {
         return () => {
             removeDragTimeout();
@@ -150,12 +147,12 @@ export class DragController {
         };
     }
 
-        private removeMapMoveListener(marker: Marker) {
-            if (marker.pointerMoveListener) {
-                google.maps.event.removeListener(marker.pointerMoveListener);
-                marker.pointerMoveListener = undefined;
-            }
+    private removeMapMoveListener(marker: Marker) {
+        if (marker.pointerMoveListener) {
+            google.maps.event.removeListener(marker.pointerMoveListener);
+            marker.pointerMoveListener = undefined;
         }
+    }
 
     private removeDomPointerListeners(marker: Marker) {
         const markerContent = marker.getRaw()?.content;
