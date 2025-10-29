@@ -1,10 +1,9 @@
 package repository
 
 import (
-    "github.com/google/uuid"
-
     "radioatelier/package/adapter/db/model"
     "radioatelier/package/infrastructure/db"
+    "radioatelier/package/infrastructure/ulid"
 )
 
 type refreshTokenRepo struct {
@@ -13,7 +12,7 @@ type refreshTokenRepo struct {
 
 type RefreshToken interface {
     Repository[model.RefreshToken]
-    GetByID(id uuid.UUID) (*model.RefreshToken, error)
+    GetByID(id ulid.ULID) (*model.RefreshToken, error)
     GetByTokenString(tokenString string) (*model.RefreshToken, error)
     DeleteTokenFamily(token *model.RefreshToken) error
 }
@@ -24,7 +23,7 @@ func NewRefreshTokenRepository(client *db.Client) RefreshToken {
     }
 }
 
-func (r *refreshTokenRepo) GetByID(id uuid.UUID) (*model.RefreshToken, error) {
+func (r *refreshTokenRepo) GetByID(id ulid.ULID) (*model.RefreshToken, error) {
     token := model.RefreshToken{Base: model.Base{ID: id}}
     err := r.client.First(&token).Error
     return &token, err

@@ -1,11 +1,10 @@
 package presenter
 
 import (
-    "github.com/google/uuid"
-
     "radioatelier/package/adapter/db/model"
     "radioatelier/package/adapter/db/repository"
     "radioatelier/package/infrastructure/db"
+    "radioatelier/package/infrastructure/ulid"
 )
 
 type objectUserPresenter struct {
@@ -33,7 +32,7 @@ func NewObjectUserFromModel(model *model.ObjectUser) ObjectUser {
     }
 }
 
-func GetObjectUser(objectID uuid.UUID, userID uuid.UUID) (ObjectUser, error) {
+func GetObjectUser(objectID ulid.ULID, userID ulid.ULID) (ObjectUser, error) {
     repo := repository.NewObjectUserRepository(db.Get())
     objectUser, err := repo.GetByObjectIDUserID(objectID, userID)
     if err != nil {

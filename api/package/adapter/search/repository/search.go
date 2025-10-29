@@ -7,7 +7,6 @@ import (
     "log/slog"
     "strconv"
 
-    "github.com/google/uuid"
     openapi "github.com/manticoresoftware/manticoresearch-go"
 
     "radioatelier/package/adapter/google"
@@ -15,6 +14,7 @@ import (
     "radioatelier/package/infrastructure/logger"
     "radioatelier/package/infrastructure/search"
     "radioatelier/package/infrastructure/transformations"
+    "radioatelier/package/infrastructure/ulid"
 )
 
 type searchRepo struct {
@@ -22,7 +22,7 @@ type searchRepo struct {
 }
 
 type Search interface {
-    SearchLocal(query string, latitude string, longitude string, userID uuid.UUID, offset int, limit int) (model.SearchResults, error)
+    SearchLocal(query string, latitude string, longitude string, userID ulid.ULID, offset int, limit int) (model.SearchResults, error)
     SearchGoogle(query string, latitude string, longitude string, limit int, pageToken string) (model.SearchResults, error)
     SearchCoordinates(latitude string, longitude string) (model.SearchResults, error)
 }
@@ -33,7 +33,7 @@ func NewSearchRepository(client *search.Client) Search {
     }
 }
 
-func (r *searchRepo) SearchLocal(query string, latitude string, longitude string, userID uuid.UUID, offset int, limit int) (model.SearchResults, error) {
+func (r *searchRepo) SearchLocal(query string, latitude string, longitude string, userID ulid.ULID, offset int, limit int) (model.SearchResults, error) {
     body := fmt.Sprintf(
         "select object_id, name, address, city, country, latitude, longitude, category_name, weight() as weight, GEODIST(%f, %f, latitude, longitude, {in=degrees, out=km}) as distance from radioatelier where match('%s*') and (created_by = '%s' or is_public = true) order by weight() desc, distance asc limit %d, %d",
         transformations.StringToFloat(latitude, 0),

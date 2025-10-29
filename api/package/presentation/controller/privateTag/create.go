@@ -3,11 +3,10 @@ package privateTag
 import (
     "net/http"
 
-    "github.com/google/uuid"
-
     "radioatelier/package/adapter/auth/accessToken"
     "radioatelier/package/config"
     "radioatelier/package/infrastructure/router"
+    "radioatelier/package/infrastructure/ulid"
     "radioatelier/package/usecase/presenter"
     "radioatelier/package/usecase/validation/validator"
 )
@@ -17,7 +16,7 @@ type CreateInput struct {
 }
 
 type CreatePayloadData struct {
-    ID   uuid.UUID `json:"id"`
+    ID   ulid.ULID `json:"id"`
     Name string    `json:"name"`
 }
 

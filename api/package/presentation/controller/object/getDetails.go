@@ -3,10 +3,9 @@ package object
 import (
     "net/http"
 
-    "github.com/google/uuid"
-
     "radioatelier/package/adapter/auth/accessToken"
     "radioatelier/package/infrastructure/router"
+    "radioatelier/package/infrastructure/ulid"
     "radioatelier/package/usecase/presenter"
 )
 
@@ -15,7 +14,7 @@ type GetDetailsPayloadData struct {
 }
 
 type Object struct {
-    ID              uuid.UUID `json:"id"`
+    ID              ulid.ULID `json:"id"`
     Name            string    `json:"name"`
     Description     string    `json:"description"`
     Latitude        string    `json:"lat"`
@@ -46,7 +45,7 @@ func GetDetails(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    objectID, err := uuid.Parse(router.GetPathParam(r, "id"))
+    objectID, err := ulid.Parse(router.GetPathParam(r, "id"))
     if err != nil {
         router.NewResponse().
             WithStatus(http.StatusBadRequest).

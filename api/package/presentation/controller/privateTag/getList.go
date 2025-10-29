@@ -3,10 +3,9 @@ package privateTag
 import (
     "net/http"
 
-    "github.com/google/uuid"
-
     "radioatelier/package/adapter/auth/accessToken"
     "radioatelier/package/infrastructure/router"
+    "radioatelier/package/infrastructure/ulid"
     "radioatelier/package/usecase/presenter"
 )
 
@@ -15,7 +14,7 @@ type GetListPayloadData struct {
 }
 
 type PrivateTag struct {
-    ID   uuid.UUID `json:"id"`
+    ID   ulid.ULID `json:"id"`
     Name string    `json:"name"`
 }
 

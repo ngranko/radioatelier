@@ -1,11 +1,11 @@
 package repository
 
 import (
-    "github.com/google/uuid"
     "gorm.io/gorm"
 
     "radioatelier/package/adapter/db/model"
     "radioatelier/package/infrastructure/db"
+    "radioatelier/package/infrastructure/ulid"
 )
 
 type objectRepo struct {
@@ -14,14 +14,14 @@ type objectRepo struct {
 
 type Object interface {
     Repository[model.Object]
-    GetList(userID uuid.UUID) ([]model.Object, error)
-    GetByID(id uuid.UUID) (*model.Object, error)
+    GetList(userID ulid.ULID) ([]model.Object, error)
+    GetByID(id ulid.ULID) (*model.Object, error)
     GetMapPoint(object *model.Object) (*model.MapPoint, error)
     GetCategory(object *model.Object) (*model.Category, error)
     GetTags(object *model.Object) ([]*model.Tag, error)
-    SetTags(object *model.Object, tags []uuid.UUID) error
+    SetTags(object *model.Object, tags []ulid.ULID) error
     GetPrivateTags(object *model.Object, user *model.User) ([]*model.PrivateTag, error)
-    SetPrivateTags(object *model.Object, user *model.User, tags []uuid.UUID) error
+    SetPrivateTags(object *model.Object, user *model.User, tags []ulid.ULID) error
 }
 
 func NewObjectRepository(client *db.Client) Object {
@@ -30,7 +30,7 @@ func NewObjectRepository(client *db.Client) Object {
     }
 }
 
-func (r *objectRepo) GetList(userID uuid.UUID) ([]model.Object, error) {
+func (r *objectRepo) GetList(userID ulid.ULID) ([]model.Object, error) {
     var list []model.Object
     err := r.client.
         Model(&model.Object{}).
@@ -46,7 +46,7 @@ func (r *objectRepo) GetList(userID uuid.UUID) ([]model.Object, error) {
     return list, err
 }
 
-func (r *objectRepo) GetByID(id uuid.UUID) (*model.Object, error) {
+func (r *objectRepo) GetByID(id ulid.ULID) (*model.Object, error) {
     object := model.Object{Base: model.Base{ID: id}}
     err := r.client.Where(&object).First(&object).Error
     return &object, err
@@ -82,7 +82,7 @@ func (r *objectRepo) GetTags(object *model.Object) ([]*model.Tag, error) {
     return tags, err
 }
 
-func (r *objectRepo) SetTags(object *model.Object, tags []uuid.UUID) error {
+func (r *objectRepo) SetTags(object *model.Object, tags []ulid.ULID) error {
     var tagList []model.Tag
     for _, tag := range tags {
         tagList = append(tagList, model.Tag{Base: model.Base{ID: tag}})
@@ -103,7 +103,7 @@ func (r *objectRepo) GetPrivateTags(object *model.Object, user *model.User) ([]*
     return tags, err
 }
 
-func (r *objectRepo) SetPrivateTags(object *model.Object, user *model.User, tags []uuid.UUID) error {
+func (r *objectRepo) SetPrivateTags(object *model.Object, user *model.User, tags []ulid.ULID) error {
     err := r.client.Exec("delete from object_private_tags where object_id = ? and private_tag_id in (select id from private_tags where created_by = ?)", object.ID, user.ID).Error
     if err != nil {
         return err

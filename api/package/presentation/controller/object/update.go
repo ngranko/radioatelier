@@ -3,12 +3,11 @@ package object
 import (
     "net/http"
 
-    "github.com/google/uuid"
-
     "radioatelier/package/adapter/auth/accessToken"
     "radioatelier/package/config"
     "radioatelier/package/infrastructure/router"
     "radioatelier/package/infrastructure/transformations"
+    "radioatelier/package/infrastructure/ulid"
     "radioatelier/package/usecase/presenter"
     "radioatelier/package/usecase/validation/validator"
 )
@@ -32,7 +31,7 @@ type UpdateInput struct {
 }
 
 type UpdatePayloadData struct {
-    ID              uuid.UUID `json:"id"`
+    ID              ulid.ULID `json:"id"`
     Name            string    `json:"name"`
     Description     string    `json:"description"`
     Lat             string    `json:"lat"`
@@ -53,7 +52,7 @@ type UpdatePayloadData struct {
 }
 
 func Update(w http.ResponseWriter, r *http.Request) {
-    objectID, err := uuid.Parse(router.GetPathParam(r, "id"))
+    objectID, err := ulid.Parse(router.GetPathParam(r, "id"))
     if err != nil {
         router.NewResponse().
             WithStatus(http.StatusBadRequest).
@@ -123,7 +122,7 @@ func Update(w http.ResponseWriter, r *http.Request) {
         objModel.Description = payload.Description
     }
 
-    if payload.Category.ID != uuid.Nil {
+    if payload.Category.ID != (ulid.ULID{}) {
         objModel.CategoryID = payload.Category.ID
     }
 
@@ -141,13 +140,13 @@ func Update(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    err = object.SetTags(transformations.Map(payload.Tags, func(item Tag) uuid.UUID { return item.ID }))
+    err = object.SetTags(transformations.Map(payload.Tags, func(item Tag) ulid.ULID { return item.ID }))
     if err != nil {
         router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
         return
     }
 
-    err = object.SetPrivateTags(transformations.Map(payload.PrivateTags, func(item Tag) uuid.UUID { return item.ID }), user)
+    err = object.SetPrivateTags(transformations.Map(payload.PrivateTags, func(item Tag) ulid.ULID { return item.ID }), user)
     if err != nil {
         router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
         return
@@ -161,7 +160,7 @@ func Update(w http.ResponseWriter, r *http.Request) {
     objectUserModel.ObjectID = object.GetModel().ID
     objectUserModel.UserID = user.GetModel().ID
     objectUserModel.IsVisited = payload.IsVisited
-    if objectUserModel.ID == uuid.Nil {
+    if objectUserModel.ID == (ulid.ULID{}) {
         err = objectUser.Create()
     } else {
         err = objectUser.Update()

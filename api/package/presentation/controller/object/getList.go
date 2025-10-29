@@ -3,10 +3,9 @@ package object
 import (
     "net/http"
 
-    "github.com/google/uuid"
-
     "radioatelier/package/adapter/auth/accessToken"
     "radioatelier/package/infrastructure/router"
+    "radioatelier/package/infrastructure/ulid"
     "radioatelier/package/usecase/presenter"
 )
 
@@ -15,7 +14,7 @@ type GetListPayloadData struct {
 }
 
 type ListItem struct {
-    ID        uuid.UUID `json:"id"`
+    ID        ulid.ULID `json:"id"`
     Latitude  string    `json:"lat"`
     Longitude string    `json:"lng"`
     IsRemoved bool      `json:"isRemoved"`

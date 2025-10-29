@@ -1,11 +1,10 @@
 package presenter
 
 import (
-    "github.com/google/uuid"
-
     "radioatelier/package/adapter/db/model"
     "radioatelier/package/adapter/db/repository"
     "radioatelier/package/infrastructure/db"
+    "radioatelier/package/infrastructure/ulid"
 )
 
 type objectPresenter struct {
@@ -21,9 +20,9 @@ type Object interface {
     GetMapPoint() (MapPoint, error)
     GetCategory() (Category, error)
     GetTags() ([]Tag, error)
-    SetTags(tags []uuid.UUID) error
+    SetTags(tags []ulid.ULID) error
     GetPrivateTags(user User) ([]PrivateTag, error)
-    SetPrivateTags(tags []uuid.UUID, user User) error
+    SetPrivateTags(tags []ulid.ULID, user User) error
 }
 
 func NewObject() Object {
@@ -33,7 +32,7 @@ func NewObject() Object {
     }
 }
 
-func GetObjectByID(id uuid.UUID) (Object, error) {
+func GetObjectByID(id ulid.ULID) (Object, error) {
     repo := repository.NewObjectRepository(db.Get())
     object, err := repo.GetByID(id)
     if err != nil {
@@ -43,7 +42,7 @@ func GetObjectByID(id uuid.UUID) (Object, error) {
     return &objectPresenter{repository: repo, model: object}, nil
 }
 
-func GetObjectList(userID uuid.UUID) ([]Object, error) {
+func GetObjectList(userID ulid.ULID) ([]Object, error) {
     var result []Object
     repo := repository.NewObjectRepository(db.Get())
     list, err := repo.GetList(userID)
@@ -58,7 +57,7 @@ func GetObjectList(userID uuid.UUID) ([]Object, error) {
     return result, nil
 }
 
-func DeleteObjectByID(id uuid.UUID) error {
+func DeleteObjectByID(id ulid.ULID) error {
     return repository.NewObjectRepository(db.Get()).Delete(&model.Object{Base: model.Base{ID: id}})
 }
 
@@ -111,7 +110,7 @@ func (p *objectPresenter) GetTags() ([]Tag, error) {
     return result, nil
 }
 
-func (p *objectPresenter) SetTags(tags []uuid.UUID) error {
+func (p *objectPresenter) SetTags(tags []ulid.ULID) error {
     return p.repository.SetTags(p.model, tags)
 }
 
@@ -130,6 +129,6 @@ func (p *objectPresenter) GetPrivateTags(user User) ([]PrivateTag, error) {
     return result, nil
 }
 
-func (p *objectPresenter) SetPrivateTags(tags []uuid.UUID, user User) error {
+func (p *objectPresenter) SetPrivateTags(tags []ulid.ULID, user User) error {
     return p.repository.SetPrivateTags(p.model, user.GetModel(), tags)
 }

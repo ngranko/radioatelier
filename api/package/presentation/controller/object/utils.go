@@ -1,18 +1,17 @@
 package object
 
 import (
-    "github.com/google/uuid"
-
+    "radioatelier/package/infrastructure/ulid"
     "radioatelier/package/usecase/presenter"
 )
 
 type Category struct {
-    ID   uuid.UUID `json:"id" validate:"uuid"`
+    ID   ulid.ULID `json:"id" validate:"ulid"`
     Name string    `json:"name"`
 }
 
 type Tag struct {
-    ID   uuid.UUID `json:"id" validate:"uuid"`
+    ID   ulid.ULID `json:"id" validate:"ulid"`
     Name string    `json:"name"`
 }
 

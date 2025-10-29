@@ -4,12 +4,11 @@ import (
     "errors"
     "time"
 
-    "github.com/google/uuid"
-
     "radioatelier/package/adapter/db/model"
     "radioatelier/package/adapter/db/repository"
     "radioatelier/package/adapter/password"
     "radioatelier/package/infrastructure/db"
+    "radioatelier/package/infrastructure/ulid"
 )
 
 type userPresenter struct {
@@ -47,7 +46,7 @@ func FindUserByEmailWithRepo(email string, repo repository.User) (User, error) {
     }, nil
 }
 
-func FindUserByID(id uuid.UUID) (User, error) {
+func FindUserByID(id ulid.ULID) (User, error) {
     repo := repository.NewUserRepository(db.Get())
     user, err := repo.GetByID(id)
     if err != nil {
@@ -59,7 +58,7 @@ func FindUserByID(id uuid.UUID) (User, error) {
     }, nil
 }
 
-func FindUserByIDWithRepo(id uuid.UUID, repo repository.User) (User, error) {
+func FindUserByIDWithRepo(id ulid.ULID, repo repository.User) (User, error) {
     user, err := repo.GetByID(id)
     if err != nil {
         return nil, err

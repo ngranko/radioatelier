@@ -1,11 +1,10 @@
 package presenter
 
 import (
-    "github.com/google/uuid"
-
     "radioatelier/package/adapter/db/model"
     "radioatelier/package/adapter/db/repository"
     "radioatelier/package/infrastructure/db"
+    "radioatelier/package/infrastructure/ulid"
 )
 
 type mapPointPresenter struct {
@@ -34,7 +33,7 @@ func NewMapPointFromModel(model *model.MapPoint) MapPoint {
     }
 }
 
-func DeleteMapPointByID(id uuid.UUID) error {
+func DeleteMapPointByID(id ulid.ULID) error {
     return repository.NewMapPointRepository(db.Get()).Delete(&model.MapPoint{Base: model.Base{ID: id}})
 }
 
