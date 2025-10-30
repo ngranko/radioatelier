@@ -38,7 +38,7 @@ func (r *objectRepo) GetList(userID ulid.ULID) ([]model.Object, error) {
         Preload("ObjectUser", func(db *gorm.DB) *gorm.DB {
             return db.Where("user_id = ?", userID).Select("id", "object_id", "is_visited")
         }).
-        Select("objects.id", "objects.is_removed").
+        Select("objects.id", "objects.is_removed", "objects.created_by").
         Where(&model.Object{IsPublic: true}).
         Or(&model.Object{CreatedBy: userID}).
         Find(&list).

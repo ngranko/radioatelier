@@ -17,7 +17,7 @@ interface TaxonomlessObject {
     image?: string;
     isPublic: boolean;
     isVisited: boolean;
-    createdBy: string;
+    isOwner: boolean;
 }
 
 interface BaseObject extends TaxonomlessObject {
@@ -60,6 +60,7 @@ export interface ObjectListItem {
     lng: string;
     isRemoved: boolean;
     isVisited: boolean;
+    isOwner: boolean;
 }
 
 export interface PointListItem {

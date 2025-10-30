@@ -11,8 +11,6 @@
     import Background from './background.svelte';
     import {mapState} from '$lib/state/map.svelte';
     import {cn} from '$lib/utils.ts';
-    import {createQuery} from '@tanstack/svelte-query';
-    import {me} from '$lib/api/user.ts';
     import {activeObject, resetActiveObject} from '$lib/state/activeObject.svelte.ts';
     import type {Permissions} from '$lib/interfaces/permissions';
 
@@ -32,19 +30,22 @@
         permissions = {canEditAll: true, canEditPersonal: true},
     }: Props = $props();
 
-    let canEditAll = $state(permissions.canEditAll);
-    let canEditPersonal = $state(permissions.canEditPersonal);
-
-    const meQuery = createQuery({queryKey: ['me'], queryFn: me});
-    $effect(() => {
-        if ($meQuery.isSuccess) {
-            canEditAll =
-                permissions.canEditAll &&
-                (!(activeObject.object as Object).createdBy || $meQuery.data.data.id === (activeObject.object as Object).createdBy);
-            canEditPersonal =
-                permissions.canEditAll &&
-                $meQuery.data.data.id !== (activeObject.object as Object).createdBy;
+    const canEditAll = $derived.by(() => {
+        if (initialValues.id === null) {
+            return permissions.canEditAll;
         }
+        
+        const isOwner = initialValues.isOwner ?? (activeObject.object as Object | null)?.isOwner ?? false;
+        return permissions.canEditAll && isOwner;
+    });
+    
+    const canEditPersonal = $derived.by(() => {
+        if (initialValues.id === null) {
+            return permissions.canEditPersonal;
+        }
+        
+        const isOwner = initialValues.isOwner ?? (activeObject.object as Object | null)?.isOwner ?? false;
+        return permissions.canEditAll && !isOwner;
     });
 
     function handleMinimizeClick() {
