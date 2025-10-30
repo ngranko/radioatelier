@@ -33,6 +33,12 @@
 
     const categories = createQuery({queryKey: ['categories'], queryFn: listCategories});
 
+    const sortedCategories = $derived(
+        $categories.data?.data.categories
+            ? [...$categories.data.data.categories].sort((a, b) => a.name.localeCompare(b.name))
+            : [],
+    );
+
     async function handleCreate(props: {
         inputValue: string;
         valueField: string;
@@ -59,7 +65,7 @@
         i18n={{
             createRowLabel: getCreateRowLabel,
         }}
-        options={$categories.data?.data.categories.sort((a, b) => a.name.localeCompare(b.name))}
+        options={sortedCategories}
         {name}
         {value}
         createHandler={handleCreate}
