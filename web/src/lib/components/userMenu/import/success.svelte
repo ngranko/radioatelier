@@ -3,6 +3,13 @@
     import {DialogClose, DialogFooter} from '$lib/components/ui/dialog';
     import {importState, resetImportState} from '$lib/state/import.svelte.ts';
 
+    const warningCount = $derived(
+        importState.lineFeedback.filter(item => item.severity === 'warning').length,
+    );
+    const errorCount = $derived(
+        importState.lineFeedback.filter(item => item.severity === 'error').length,
+    );
+
     function handleReset() {
         resetImportState();
     }
@@ -27,15 +34,11 @@
             <p class="text-muted-foreground mt-1 text-sm">Успешно</p>
         </div>
         <div class="bg-card rounded-lg border p-4 text-center">
-            <p class="text-2xl font-bold text-amber-600">
-                {importState.lineFeedback.filter(item => item.severity === 'warning').length}
-            </p>
+            <p class="text-2xl font-bold text-amber-600">{warningCount}</p>
             <p class="text-muted-foreground mt-1 text-sm">Предупреждений</p>
         </div>
         <div class="bg-card rounded-lg border p-4 text-center">
-            <p class="text-destructive text-2xl font-bold">
-                {importState.lineFeedback.filter(item => item.severity === 'error').length}
-            </p>
+            <p class="text-destructive text-2xl font-bold">{errorCount}</p>
             <p class="text-muted-foreground mt-1 text-sm">Ошибок</p>
         </div>
     </div>
@@ -73,5 +76,5 @@
     <DialogClose>
         <Button variant="ghost">Закрыть</Button>
     </DialogClose>
-    <Button variant="primary" onclick={handleReset}>Импортировать другой файл</Button>
+    <Button variant="default" onclick={handleReset}>Импортировать другой файл</Button>
 </DialogFooter>

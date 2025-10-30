@@ -32,5 +32,5 @@
     <DialogClose>
         <Button variant="ghost">Закрыть</Button>
     </DialogClose>
-    <Button variant="primary" onclick={handleReset}>Импортировать другой файл</Button>
+    <Button variant="default" onclick={handleReset}>Импортировать другой файл</Button>
 </DialogFooter>

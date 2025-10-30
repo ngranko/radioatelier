@@ -12,8 +12,6 @@
     import {fieldList} from '$lib/components/userMenu/import/preview/preview.ts';
     import {importState} from '$lib/state/import.svelte.ts';
 
-    let missingFieldsCount = $state(0);
-
     const schema = z.object({
         coordinates: z.number().nonnegative().default(null),
         name: z.number().nonnegative().default(null),
@@ -46,11 +44,11 @@
 
     const {form: formData, enhance, submitting} = form;
 
-    $effect(() => {
-        missingFieldsCount = fieldList
-            .filter(item => item.required)
-            .filter(item => !$formData[item.name]).length;
-    });
+    const missingFieldsCount = $derived(
+        fieldList.filter(item => item.required).filter(item => !$formData[item.name]).length,
+    );
+
+    const selectedFieldsCount = $derived(Object.values($formData).filter(v => Boolean(v)).length);
 
     function handleImport(values: ImportMappings) {
         importState.provider.start(importState.id, importState.separator, values);
@@ -71,8 +69,7 @@
             <div class="flex items-center justify-between">
                 <h3 class="text-base font-semibold">Соответствие полей</h3>
                 <span class="text-muted-foreground text-sm">
-                    {Object.values($formData).filter(v => Boolean(v)).length} из {fieldList.length}
-                    полей выбрано
+                    {selectedFieldsCount} из {fieldList.length} полей выбрано
                 </span>
             </div>
             <div class="grid gap-3">

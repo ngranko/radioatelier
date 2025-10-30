@@ -32,6 +32,12 @@
 
     const tags = createQuery({queryKey: ['tags'], queryFn: listTags});
 
+    const sortedTags = $derived(
+        $tags.data?.data.tags
+            ? [...$tags.data.data.tags].sort((a, b) => a.name.localeCompare(b.name))
+            : [],
+    );
+
     function hasError(): boolean {
         if (!error) {
             return false;
@@ -74,7 +80,7 @@
         i18n={{
             createRowLabel: getCreateRowLabel,
         }}
-        options={$tags.data?.data.tags.sort((a, b) => a.name.localeCompare(b.name))}
+        options={sortedTags}
         {name}
         {value}
         createHandler={handleCreate}
