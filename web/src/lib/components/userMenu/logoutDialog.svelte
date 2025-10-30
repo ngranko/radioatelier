@@ -3,9 +3,10 @@
     import {createMutation} from '@tanstack/svelte-query';
     import {invalidateToken} from '$lib/api/token.ts';
     import RefreshToken from '$lib/api/auth/refreshToken.ts';
-    import {activeObjectInfo, pointList, searchPointList} from '$lib/stores/map.ts';
+    import {pointList, searchPointList} from '$lib/stores/map.ts';
     import {goto} from '$app/navigation';
     import {logout} from '$lib/api/auth.ts';
+    import {resetActiveObject} from '$lib/state/activeObject.svelte.ts';
 
     interface Props {
         isOpen: boolean;
@@ -17,7 +18,7 @@
         mutationFn: invalidateToken,
         onSuccess() {
             RefreshToken.del();
-            activeObjectInfo.reset();
+            resetActiveObject();
             pointList.clear();
             searchPointList.clear();
             localStorage.removeItem('lastCenter');

@@ -1,5 +1,5 @@
-import { mapState } from '$lib/state/map.svelte';
-import {activeObjectInfo} from '$lib/stores/map';
+import {activeObject} from '$lib/state/activeObject.svelte.ts';
+import {mapState} from '$lib/state/map.svelte';
 
 export function getStreetView(lat: number, lng: number) {
     const streetView = new google.maps.StreetViewService();
@@ -14,7 +14,7 @@ export function getStreetView(lat: number, lng: number) {
                 const pano = mapState.map.getStreetView();
                 pano.setPano(location.pano as string);
                 pano.setVisible(true);
-                activeObjectInfo.update(value => ({...value, isMinimized: true}));
+                activeObject.isMinimized = true;
             }
         });
 }

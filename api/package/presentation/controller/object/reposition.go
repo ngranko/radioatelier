@@ -3,7 +3,6 @@ package object
 import (
     "net/http"
 
-    "radioatelier/package/adapter/auth/accessToken"
     "radioatelier/package/config"
     "radioatelier/package/infrastructure/router"
     "radioatelier/package/infrastructure/ulid"
@@ -52,16 +51,6 @@ func Reposition(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    token := r.Context().Value("Token").(accessToken.AccessToken)
-    user, err := presenter.FindUserByID(token.UserID())
-    if err != nil {
-        router.NewResponse().
-            WithStatus(http.StatusNotFound).
-            WithPayload(router.Payload{Message: "User not found"}).
-            Send(w)
-        return
-    }
-
     object, err := presenter.GetObjectByID(objectID)
     if err != nil {
         router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
@@ -83,20 +72,11 @@ func Reposition(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    objModel := object.GetModel()
-    objModel.UpdatedBy = user.GetModel().ID
-    objModel.Updater = *user.GetModel()
-    err = object.Update()
-    if err != nil {
-        router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
-        return
-    }
-
     router.NewResponse().
         WithStatus(http.StatusOK).
         WithPayload(router.Payload{
             Data: UpdatePayloadData{
-                ID:  objModel.ID,
+                ID:  object.GetModel().ID,
                 Lat: mapPointModel.Latitude,
                 Lng: mapPointModel.Longitude,
             },

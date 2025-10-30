@@ -1,9 +1,9 @@
 <script lang="ts">
-    import {activeObjectInfo} from '$lib/stores/map';
     import StreetViewOverlay from './streetViewOverlay.svelte';
     import {cn} from '$lib/utils';
     import {onDestroy} from 'svelte';
-    import { mapState } from '$lib/state/map.svelte';
+    import {mapState} from '$lib/state/map.svelte';
+    import {activeObject} from '$lib/state/activeObject.svelte.ts';
 
     let streetViewContainer: HTMLDivElement | undefined = $state();
     let panorama: google.maps.StreetViewPanorama | null = $state(null);
@@ -62,7 +62,7 @@
                 isStreetViewVisible = panorama!.getVisible();
                 if (!isStreetViewVisible) {
                     panorama!.setZoom(1);
-                    activeObjectInfo.update(value => ({...value, isMinimized: false}));
+                    activeObject.isMinimized = false;
                 }
             }),
         );

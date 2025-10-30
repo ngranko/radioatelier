@@ -4,9 +4,9 @@
     import SearchPreviewItem from './searchPreviewItem.svelte';
     import {cubicInOut} from 'svelte/easing';
     import {fade} from 'svelte/transition';
-    import {activeObjectInfo} from '$lib/stores/map';
     import LoadMoreButton from './loadMoreButton.svelte';
     import {searchState} from '$lib/components/search/search.svelte.ts';
+    import {activeObject} from '$lib/state/activeObject.svelte.ts';
 
     const previewObjects = createQuery({
         queryKey: [
@@ -22,7 +22,7 @@
 </script>
 
 <!-- only show preview if there's no active object, otherwise it will cover a part of a map on mobile even if the details dialog is minimized -->
-{#if !$activeObjectInfo.detailsId}
+{#if !activeObject.detailsId}
     <div
         class="absolute top-0 container w-full rounded-t-3xl rounded-b-lg bg-white pt-10.5 shadow-sm"
         transition:fade={{duration: 100, easing: cubicInOut}}

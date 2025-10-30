@@ -1,6 +1,6 @@
 <script lang="ts">
     import {onMount, onDestroy} from 'svelte';
-    import {activeObjectInfo, activeMarker, searchPointList} from '$lib/stores/map';
+    import {activeMarker, searchPointList} from '$lib/stores/map';
     import {createQuery, useQueryClient} from '@tanstack/svelte-query';
     import {getObject} from '$lib/api/object';
     import {useRepositionMutation} from '$lib/api/mutation/reposition';
@@ -11,6 +11,7 @@
     import {Marker as MarkerObject} from '$lib/services/map/marker';
     import type {MarkerSource} from '$lib/interfaces/marker';
     import toast from 'svelte-5-french-toast';
+    import {activeObject, resetActiveObject} from '$lib/state/activeObject.svelte.ts';
 
     interface Props {
         id?: string | null;
@@ -69,54 +70,43 @@
         }
 
         // isLoading check is needed here because otherwise creating a duplicate marker for an object that was already open before will immediately trigger the details to open (TSK-286)
-        // TODO: maybe I need to deal with this error by just emptying the activeObjectInfo if I delete a marker with the same ID?
+        // TODO: maybe I need to deal with this error by just emptying the activeObject if I delete a marker with the same ID?
         if (
-            $activeObjectInfo.isLoading &&
+            activeObject.isLoading &&
             $objectDetails.isSuccess &&
-            $activeObjectInfo.detailsId === $objectDetails.data.data.object.id
+            activeObject.detailsId === $objectDetails.data.data.object.id
         ) {
-            activeObjectInfo.set({
-                isLoading: false,
-                isEditing: false,
-                isMinimized: false,
-                isDirty: false,
-                detailsId: $objectDetails.data.data.object.id,
-                object: $objectDetails.data.data.object,
-            });
+            activeObject.isLoading = false;
+            activeObject.isEditing = false;
+            activeObject.isMinimized = false;
+            activeObject.isDirty = false;
+            activeObject.detailsId = $objectDetails.data.data.object.id;
+            activeObject.object = $objectDetails.data.data.object;
         }
 
         if ($objectDetails.isError) {
             console.error($objectDetails.error);
-            // Set loading to false on error to prevent stuck loading state
-            if ($activeObjectInfo.isLoading && $activeObjectInfo.detailsId === id) {
-                activeObjectInfo.update(value => ({
-                    ...value,
-                    isLoading: false,
-                }));
+            // Set loading to false on error to prevent a stuck loading state
+            if (activeObject.isLoading && activeObject.detailsId === id) {
+                activeObject.isLoading = false;
             }
         }
     });
 
     $effect(() => {
         if ($objectAddress.isSuccess) {
-            activeObjectInfo.update(value => ({
-                ...value,
-                isLoading: false,
-                object: {
-                    ...(value.object as Object),
-                    address: $objectAddress.data?.data.address ?? '',
-                    city: $objectAddress.data?.data.city ?? '',
-                    country: $objectAddress.data?.data.country ?? '',
-                },
-            }));
+            activeObject.isLoading = false;
+            activeObject.object = {
+                ...(activeObject.object as Object),
+                address: $objectAddress.data?.data.address ?? '',
+                city: $objectAddress.data?.data.city ?? '',
+                country: $objectAddress.data?.data.country ?? '',
+            };
         }
 
         if ($objectAddress.isError) {
             console.error($objectAddress.error);
-            activeObjectInfo.update(value => ({
-                ...value,
-                isLoading: false,
-            }));
+            activeObject.isLoading = false;
         }
     });
 
@@ -148,10 +138,7 @@
 
         if (source === 'map') {
             void $objectAddress.refetch();
-            activeObjectInfo.update(value => ({
-                ...value,
-                isLoading: true,
-            }));
+            activeObject.isLoading = true;
         }
     }
 
@@ -168,8 +155,8 @@
             mapState.markerManager.removeMarker(markerId!);
         }
 
-        if ($activeObjectInfo.detailsId === id) {
-            activeObjectInfo.reset();
+        if (activeObject.detailsId === id) {
+            resetActiveObject();
         }
     });
 
@@ -203,34 +190,28 @@
 
     function changeActiveMarker() {
         if (source === 'search' && $searchPointList[id!].object.id === null) {
-            activeObjectInfo.set({
-                isLoading: false,
-                isEditing: false,
-                isMinimized: false,
-                isDirty: false,
-                detailsId: id!,
-                object: {...$searchPointList[id!].object, isVisited, isRemoved},
-            });
+            activeObject.isLoading = false;
+            activeObject.isEditing = false;
+            activeObject.isMinimized = false;
+            activeObject.isDirty = false;
+            activeObject.detailsId = id!;
+            activeObject.object = {...$searchPointList[id!].object, isVisited, isRemoved};
         } else {
             if (!$objectDetails.isSuccess) {
-                activeObjectInfo.set({
-                    isLoading: true,
-                    isEditing: false,
-                    isMinimized: false,
-                    isDirty: false,
-                    detailsId: id!,
-                    object: {id, lat, lng, isVisited, isRemoved},
-                });
+                activeObject.isLoading = true;
+                activeObject.isEditing = false;
+                activeObject.isMinimized = false;
+                activeObject.isDirty = false;
+                activeObject.detailsId = id!;
+                activeObject.object = {id, lat, lng, isVisited, isRemoved};
                 $objectDetails.refetch();
             } else {
-                activeObjectInfo.set({
-                    isLoading: false,
-                    isEditing: false,
-                    isMinimized: false,
-                    isDirty: false,
-                    detailsId: $objectDetails.data.data.object.id,
-                    object: $objectDetails.data.data.object,
-                });
+                activeObject.isLoading = false;
+                activeObject.isEditing = false;
+                activeObject.isMinimized = false;
+                activeObject.isDirty = false;
+                activeObject.detailsId = $objectDetails.data.data.object.id;
+                activeObject.object = $objectDetails.data.data.object;
             }
         }
 

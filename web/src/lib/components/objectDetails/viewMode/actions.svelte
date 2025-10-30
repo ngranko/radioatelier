@@ -1,22 +1,21 @@
 <script lang="ts">
-    import {activeObjectInfo} from '$lib/stores/map.ts';
     import toast from 'svelte-5-french-toast';
     import {getStreetView} from '$lib/services/map/streetView.svelte';
     import {Button} from '$lib/components/ui/button';
+    import {activeObject} from '$lib/state/activeObject.svelte.ts';
+    import type {Permissions} from '$lib/interfaces/permissions';
 
     interface Props {
         lat: string;
         lng: string;
+        permissions?: Permissions;
     }
 
-    let {lat, lng}: Props = $props();
+    let {lat, lng, permissions = {canEditAll: true, canEditPersonal: true}}: Props = $props();
 
     function handleEditClick() {
-        activeObjectInfo.update(value => ({
-            ...value,
-            isEditing: true,
-            isDirty: false,
-        }));
+        activeObject.isEditing = true;
+        activeObject.isDirty = false;
     }
 
     function handleRouteClick() {
@@ -32,14 +31,25 @@
 </script>
 
 <div class="flex items-center justify-end gap-2 border-b bg-gray-50/50 px-4 py-2.5">
-    <Button
-        variant="ghost"
-        size="icon"
-        class="bg-sky-600 text-base text-white hover:bg-sky-700 hover:text-white"
-        onclick={handleEditClick}
-    >
-        <i class="fa-solid fa-pen"></i>
-    </Button>
+    {#if permissions.canEditAll}
+        <Button
+            variant="ghost"
+            size="icon"
+            class="bg-sky-600 text-base text-white hover:bg-sky-700 hover:text-white"
+            onclick={handleEditClick}
+        >
+            <i class="fa-solid fa-pen"></i>
+        </Button>
+    {:else if permissions.canEditPersonal}
+        <Button
+            variant="ghost"
+            size="icon"
+            class="bg-sky-600 text-base text-white hover:bg-sky-700 hover:text-white"
+            onclick={handleEditClick}
+        >
+            <i class="fa-solid fa-user-pen"></i>
+        </Button>
+    {/if}
     <Button
         variant="ghost"
         size="icon"

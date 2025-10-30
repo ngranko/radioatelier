@@ -17,6 +17,7 @@ interface TaxonomlessObject {
     image?: string;
     isPublic: boolean;
     isVisited: boolean;
+    createdBy: string;
 }
 
 interface BaseObject extends TaxonomlessObject {
@@ -43,15 +44,6 @@ export interface BareObject {
     country?: string;
     isRemoved: boolean;
     isVisited: boolean;
-}
-
-export interface ObjectDetailsInfo {
-    isMinimized: boolean;
-    isLoading: boolean;
-    isEditing: boolean;
-    isDirty: boolean;
-    detailsId: string;
-    object: Object | BareObject | null;
 }
 
 export type CreateObjectInputs = Omit<Object, 'id'>;

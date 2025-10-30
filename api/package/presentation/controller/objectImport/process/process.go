@@ -168,8 +168,6 @@ func importObject(line document.Line, mapPoint presenter.MapPoint, category pres
     objectModel.CategoryID = category.GetModel().ID
     objectModel.CreatedBy = user.GetModel().ID
     objectModel.Creator = *user.GetModel()
-    objectModel.UpdatedBy = user.GetModel().ID
-    objectModel.Updater = *user.GetModel()
     err = object.Create()
     if err != nil {
         return nil, &types.LineFeedback{Text: "не удалось создать точку", Severity: "error"}

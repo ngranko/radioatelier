@@ -110,8 +110,6 @@ func Create(w http.ResponseWriter, r *http.Request) {
     objModel.CategoryID = payload.Category.ID
     objModel.CreatedBy = user.GetModel().ID
     objModel.Creator = *user.GetModel()
-    objModel.UpdatedBy = user.GetModel().ID
-    objModel.Updater = *user.GetModel()
     objModel.MapPointID = mapPointModel.ID
     objModel.MapPoint = *mapPointModel
     err = obj.Create()

@@ -7,7 +7,7 @@
     } from '$lib/interfaces/object';
     import DeleteButton from '$lib/components/objectDetails/editMode/deleteButton.svelte';
     import BackButton from '$lib/components/objectDetails/editMode/backButton.svelte';
-    import {activeMarker, activeObjectInfo, pointList, searchPointList} from '$lib/stores/map';
+    import {activeMarker, pointList, searchPointList} from '$lib/stores/map';
     import {createForm} from 'felte';
     import * as zod from 'zod';
     import {validator} from '@felte/validator-zod';
@@ -29,6 +29,7 @@
     import {Checkbox} from '$lib/components/ui/checkbox';
     import type {FuzzyPrivateTag} from '$lib/interfaces/privateTag.ts';
     import {Textarea} from '$lib/components/ui/textarea';
+    import {activeObject, resetActiveObject} from '$lib/state/activeObject.svelte.ts';
 
     const client = useQueryClient();
 
@@ -150,7 +151,7 @@
 
     $effect(() => {
         if ($isDirty.valueOf()) {
-            activeObjectInfo.update(value => ({...value, isDirty: true}));
+            activeObject.isDirty = true;
         }
     });
 
@@ -178,7 +179,7 @@
             privateTags,
         };
 
-        if (!$activeObjectInfo.object) {
+        if (!activeObject.object) {
             return;
         }
 
@@ -205,13 +206,11 @@
                 data: {object: result.data},
             });
             pointList.add({object: result.data});
-            activeObjectInfo.update(value => ({
-                ...value,
-                object: result.data,
-                detailsId: result.data.id,
-                isEditing: false,
-                isDirty: false,
-            }));
+
+            activeObject.object = result.data;
+            activeObject.detailsId = result.data.id;
+            activeObject.isEditing = false;
+            activeObject.isDirty = false;
         } catch (error) {
             if (error instanceof RequestError && (error.payload as ErrorPayload).errors) {
                 errors.set((error.payload as ErrorPayload).errors);
@@ -244,12 +243,10 @@
                     type: 'local',
                 },
             });
-            activeObjectInfo.update(value => ({
-                ...value,
-                object: result.data,
-                isEditing: false,
-                isDirty: false,
-            }));
+
+            activeObject.object = result.data;
+            activeObject.isEditing = false;
+            activeObject.isDirty = false;
         } catch (error: unknown) {
             if (error instanceof RequestError && (error.payload as ErrorPayload).errors) {
                 errors.set((error.payload as ErrorPayload).errors);
@@ -259,7 +256,7 @@
     }
 
     async function handleDelete() {
-        if (!$activeObjectInfo.object || !initialValues.id) {
+        if (!activeObject.object || !initialValues.id) {
             return;
         }
 
@@ -277,17 +274,14 @@
         await client.invalidateQueries({
             queryKey: ['searchLocal'],
         });
-        activeObjectInfo.reset();
+        resetActiveObject();
         activeMarker.set(null);
     }
 
     function handleBack() {
         reset();
-        activeObjectInfo.update(value => ({
-            ...value,
-            isEditing: false,
-            isDirty: false,
-        }));
+        activeObject.isEditing = false;
+        activeObject.isDirty = false;
     }
 
     function handleImageChange(file: File) {
@@ -324,9 +318,7 @@
 
 <form use:form>
     <div class="flex items-center justify-between gap-3 border-b bg-gray-50/50 px-4 py-2.5">
-        <Button type="submit" disabled={isSubmitting} class="px-6 text-base">
-            Сохранить
-        </Button>
+        <Button type="submit" disabled={isSubmitting} class="px-6 text-base">Сохранить</Button>
         {#if initialValues.id}
             <BackButton isConfirmationRequired={$isDirty.valueOf()} onClick={handleBack} />
             <span class="flex-1"></span>
