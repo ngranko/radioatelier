@@ -1,7 +1,7 @@
 <script lang="ts">
     import {createMutation, createQuery, useQueryClient} from '@tanstack/svelte-query';
     import {createTag, listTags} from '$lib/api/tag';
-    import Svelecte from 'svelecte';
+    import {Combobox} from '$lib/components/ui/combobox';
     import type {Payload} from '$lib/interfaces/api';
     import type {ListTagsResponsePayload, Tag} from '$lib/interfaces/tag';
     import {cn} from '$lib/utils.ts';
@@ -52,38 +52,34 @@
         return false;
     }
 
-    async function handleCreate(props: {
-        inputValue: string;
-        valueField: string;
-        labelField: string;
-        prefix: string;
-    }) {
-        const result = await $createTagMutation.mutateAsync({name: props.inputValue});
+    async function handleCreate(inputValue: string): Promise<Tag> {
+        const result = await $createTagMutation.mutateAsync({name: inputValue});
         return {id: result.data.id, name: result.data.name};
     }
 
     function getCreateRowLabel(value: string) {
         return `Создать '${value}'`;
     }
+
+    function handleChange(tags: Tag[] | null) {
+        onChange?.(tags || []);
+    }
 </script>
 
 <!-- TODO: add loading state -->
 {#if !$tags.isLoading}
-    <Svelecte
-        {onChange}
-        inputId={id}
+    <Combobox
+        onChange={handleChange}
+        {id}
         placeholder="Не выбраны"
-        highlightFirstItem={false}
         creatable={true}
         multiple={true}
-        clearable={true}
-        i18n={{
-            createRowLabel: getCreateRowLabel,
-        }}
+        createLabel={getCreateRowLabel}
         options={sortedTags}
         {name}
         {value}
-        createHandler={handleCreate}
-        controlClass={cn({'transition-colors': true, 'sv-control-error': hasError()})}
+        onCreate={handleCreate}
+        error={hasError()}
+        class={cn({'transition-colors': true})}
     />
 {/if}
