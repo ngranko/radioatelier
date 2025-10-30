@@ -1,50 +1,77 @@
 <script lang="ts">
     import {fly} from 'svelte/transition';
     import {cubicInOut} from 'svelte/easing';
-    import type {LooseObject} from '$lib/interfaces/object';
+    import type {LooseObject, Object} from '$lib/interfaces/object';
     import Form from '$lib/components/objectDetails/editMode/form.svelte';
+    import LightForm from '$lib/components/objectDetails/editMode/lightForm.svelte';
     import ViewMode from '$lib/components/objectDetails/viewMode/viewMode.svelte';
-    import {activeMarker, activeObjectInfo} from '$lib/stores/map';
+    import {activeMarker} from '$lib/stores/map';
     import {Button} from '$lib/components/ui/button';
     import CloseButton from './closeButton.svelte';
     import Background from './background.svelte';
     import {mapState} from '$lib/state/map.svelte';
     import {cn} from '$lib/utils.ts';
+    import {createQuery} from '@tanstack/svelte-query';
+    import {me} from '$lib/api/user.ts';
+    import {activeObject, resetActiveObject} from '$lib/state/activeObject.svelte.ts';
+    import type {Permissions} from '$lib/interfaces/permissions';
 
     interface Props {
         key: string;
         initialValues: Partial<LooseObject>;
         isLoading?: boolean;
         isEditing?: boolean;
+        permissions?: Permissions;
     }
 
-    let {key, initialValues = $bindable(), isLoading = false, isEditing = false}: Props = $props();
+    let {
+        key,
+        initialValues = $bindable(),
+        isLoading = false,
+        isEditing = false,
+        permissions = {canEditAll: true, canEditPersonal: true},
+    }: Props = $props();
+
+    let canEditAll = $state(permissions.canEditAll);
+    let canEditPersonal = $state(permissions.canEditPersonal);
+
+    const meQuery = createQuery({queryKey: ['me'], queryFn: me});
+    $effect(() => {
+        if ($meQuery.isSuccess) {
+            canEditAll =
+                permissions.canEditAll &&
+                (!(activeObject.object as Object).createdBy || $meQuery.data.data.id === (activeObject.object as Object).createdBy);
+            canEditPersonal =
+                permissions.canEditAll &&
+                $meQuery.data.data.id !== (activeObject.object as Object).createdBy;
+        }
+    });
 
     function handleMinimizeClick() {
-        activeObjectInfo.update(value => ({...value, isMinimized: !value.isMinimized}));
+        activeObject.isMinimized = !activeObject.isMinimized;
     }
 
     function handleClose() {
-        if (!$activeObjectInfo.object) {
+        if (!activeObject.object) {
             return;
         }
 
         activeMarker.deactivate();
         activeMarker.set(null);
-        activeObjectInfo.reset();
+        resetActiveObject();
         if (mapState.map) {
             mapState.map.getStreetView().setVisible(false);
         }
     }
 </script>
 
-<Background onClick={handleClose} isConfirmationRequired={$activeObjectInfo.isDirty} />
+<Background onClick={handleClose} isConfirmationRequired={activeObject.isDirty} />
 <aside
     class={cn([
         'absolute bottom-0 z-3 m-2 flex w-[calc(100dvw-8px*2)] max-w-100 flex-col rounded-lg bg-white transition-[height]',
         {
-            'h-14 overflow-hidden': $activeObjectInfo.isMinimized,
-            'h-[calc(100dvh-8px*2)]': !$activeObjectInfo.isMinimized,
+            'h-14 overflow-hidden': activeObject.isMinimized,
+            'h-[calc(100dvh-8px*2)]': !activeObject.isMinimized,
         },
     ])}
     transition:fly={{x: -100, duration: 200, easing: cubicInOut}}
@@ -52,8 +79,8 @@
     <section class="flex items-center gap-1 border-b p-3">
         <span
             class={cn('mr-2 flex-1 overflow-hidden text-nowrap text-ellipsis transition-colors', {
-                'text-black': $activeObjectInfo.isMinimized,
-                'text-transparent': !$activeObjectInfo.isMinimized,
+                'text-black': activeObject.isMinimized,
+                'text-transparent': !activeObject.isMinimized,
             })}
         >
             {initialValues.name ?? ''}
@@ -65,19 +92,21 @@
             onclick={handleMinimizeClick}
         >
             <i
-                class={`fa-solid ${$activeObjectInfo.isMinimized ? 'fa-chevron-up' : 'fa-chevron-down'}`}
+                class={`fa-solid ${activeObject.isMinimized ? 'fa-chevron-up' : 'fa-chevron-down'}`}
             ></i>
         </Button>
-        <CloseButton onClick={handleClose} isConfirmationRequired={$activeObjectInfo.isDirty} />
+        <CloseButton onClick={handleClose} isConfirmationRequired={activeObject.isDirty} />
     </section>
     {#key key}
         {#if isLoading}
             <!-- TODO: do a proper loader later -->
             <div class="flex flex-1 items-center justify-center">Loading...</div>
-        {:else if isEditing}
+        {:else if canEditAll && isEditing}
             <Form {initialValues} />
+        {:else if canEditPersonal && isEditing}
+            <LightForm {initialValues} />
         {:else}
-            <ViewMode {initialValues} />
+            <ViewMode {initialValues} permissions={{canEditAll, canEditPersonal}} />
         {/if}
     {/key}
 </aside>

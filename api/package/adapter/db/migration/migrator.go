@@ -15,6 +15,7 @@ var migrationList = []list.Migration{
     list.Migration202410302139,
     list.Migration202410310401,
     list.Migration202510280240,
+    list.Migration202510300241,
 }
 
 func Run(client *db.Client) {

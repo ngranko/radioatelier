@@ -32,6 +32,7 @@ type Object struct {
     Category        Category  `json:"category"`
     Tags            []Tag     `json:"tags"`
     PrivateTags     []Tag     `json:"privateTags"`
+    CreatedBy       ulid.ULID `json:"createdBy"`
 }
 
 func GetDetails(w http.ResponseWriter, r *http.Request) {
@@ -112,6 +113,7 @@ func GetDetails(w http.ResponseWriter, r *http.Request) {
                     Category:        category,
                     Tags:            tags,
                     PrivateTags:     privateTags,
+                    CreatedBy:       object.GetModel().CreatedBy,
                 },
             },
         }).

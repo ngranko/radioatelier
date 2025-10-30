@@ -5,12 +5,14 @@
     import Address from './address.svelte';
     import Actions from './actions.svelte';
     import ImageUpload from '$lib/components/input/imageUpload.svelte';
+    import type {Permissions} from '$lib/interfaces/permissions';
 
     interface Props {
         initialValues: Partial<LooseObject>;
+        permissions?: Permissions;
     }
 
-    let {initialValues}: Props = $props();
+    let {initialValues, permissions = {canEditAll: true, canEditPersonal: true}}: Props = $props();
 
     function startsWithNumber(str: string): boolean {
         const char = str.charAt(0);
@@ -18,7 +20,7 @@
     }
 </script>
 
-<Actions lat={initialValues.lat ?? ''} lng={initialValues.lng ?? ''} />
+<Actions lat={initialValues.lat ?? ''} lng={initialValues.lng ?? ''} {permissions} />
 <div class="relative h-[calc(100vh-8px*2-57px*2)] overflow-x-hidden overflow-y-auto p-4">
     <div class="mb-6">
         <ImageUpload

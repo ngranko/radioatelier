@@ -132,8 +132,6 @@ func Update(w http.ResponseWriter, r *http.Request) {
     objModel.Image = payload.Image
     objModel.IsPublic = payload.IsPublic
     objModel.IsRemoved = payload.IsRemoved
-    objModel.UpdatedBy = user.GetModel().ID
-    objModel.Updater = *user.GetModel()
     err = object.Update()
     if err != nil {
         router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)

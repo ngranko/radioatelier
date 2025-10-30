@@ -1,9 +1,9 @@
 <script lang="ts">
-    import {activeObjectInfo} from '$lib/stores/map';
     import SearchItemCard from './searchItemCard.svelte';
     import {setCenter} from '$lib/services/map/map.svelte';
     import type {SearchItem} from '$lib/interfaces/object';
     import {mapState} from '$lib/state/map.svelte.ts';
+    import {activeObject} from '$lib/state/activeObject.svelte.ts';
 
     interface Props {
         object: SearchItem;
@@ -21,24 +21,22 @@
         if (marker) {
             google.maps.event.trigger(marker, 'gmp-click');
         } else {
-            activeObjectInfo.set({
-                isLoading: false,
-                isMinimized: false,
-                isEditing: !Boolean(object.id),
-                isDirty: false,
-                detailsId: object.id ?? new Date().getTime().toString(),
-                object: {
-                    id: object.id,
-                    name: object.name,
-                    address: object.address,
-                    city: object.city,
-                    country: object.country,
-                    lat: String(object.lat),
-                    lng: String(object.lng),
-                    isVisited: false,
-                    isRemoved: false,
-                },
-            });
+            activeObject.isLoading = false;
+            activeObject.isMinimized = false;
+            activeObject.isEditing = !Boolean(object.id);
+            activeObject.isDirty = false;
+            activeObject.detailsId = object.id ?? new Date().getTime().toString();
+            activeObject.object = {
+                id: object.id,
+                name: object.name,
+                address: object.address,
+                city: object.city,
+                country: object.country,
+                lat: String(object.lat),
+                lng: String(object.lng),
+                isVisited: false,
+                isRemoved: false,
+            };
         }
     }
 </script>

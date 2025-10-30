@@ -1,7 +1,7 @@
 <script lang="ts">
     import {createQuery} from '@tanstack/svelte-query';
     import {listObjects} from '$lib/api/object';
-    import {activeObjectInfo, pointList, searchPointList} from '$lib/stores/map.js';
+    import {pointList, searchPointList} from '$lib/stores/map.js';
     import Map from '$lib/components/map/map.svelte';
     import Marker from '$lib/components/map/marker.svelte';
     import UserMenu from '$lib/components/userMenu/userMenu.svelte';
@@ -17,6 +17,7 @@
     import {mapState} from '$lib/state/map.svelte';
     import PositionButton from '$lib/components/map/positionButton.svelte';
     import OrientationButton from '$lib/components/map/orientationButton.svelte';
+    import {activeObject} from '$lib/state/activeObject.svelte.ts';
 
     // this is needed to avoid deck.gl error
     webgl2Adapter;
@@ -54,20 +55,18 @@
     });
 
     function handleMapClick(location: Location) {
-        activeObjectInfo.set({
-            isLoading: false,
-            isMinimized: false,
-            isEditing: true,
-            isDirty: false,
-            detailsId: new Date().getTime().toString(),
-            object: {
-                id: null,
-                lat: String(location.lat),
-                lng: String(location.lng),
-                isVisited: false,
-                isRemoved: false,
-            },
-        });
+        activeObject.isLoading = false;
+        activeObject.isMinimized = false;
+        activeObject.isEditing = true;
+        activeObject.isDirty = false;
+        activeObject.detailsId = new Date().getTime().toString();
+        activeObject.object = {
+            id: null,
+            lat: String(location.lat),
+            lng: String(location.lng),
+            isVisited: false,
+            isRemoved: false,
+        };
     }
 </script>
 
@@ -85,12 +84,12 @@
     <UserMenu />
 </div>
 
-{#if $activeObjectInfo.object}
+{#if activeObject.object}
     <ObjectDetails
-        initialValues={$activeObjectInfo.object}
-        key={$activeObjectInfo.detailsId}
-        isLoading={$activeObjectInfo.isLoading}
-        isEditing={$activeObjectInfo.isEditing}
+        initialValues={activeObject.object}
+        key={activeObject.detailsId}
+        isLoading={activeObject.isLoading}
+        isEditing={activeObject.isEditing}
     />
 {/if}
 
@@ -124,11 +123,11 @@
         />
     {/each}
 
-    {#if $activeObjectInfo.object && !$activeObjectInfo.object.id}
-        {#key `${$activeObjectInfo.object.lat},${$activeObjectInfo.object.lng}`}
+    {#if activeObject.object && !activeObject.object.id}
+        {#key `${activeObject.object.lat},${activeObject.object.lng}`}
             <Marker
-                lat={$activeObjectInfo.object.lat}
-                lng={$activeObjectInfo.object.lng}
+                lat={activeObject.object.lat}
+                lng={activeObject.object.lng}
                 initialActive={true}
                 icon="fa-solid fa-seedling"
                 color="#000000"

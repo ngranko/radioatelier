@@ -1,31 +1,7 @@
 import type KeyVal from '$lib/interfaces/keyVal';
-import type {ObjectDetailsInfo, PointListItem, SearchPointListItem} from '$lib/interfaces/object';
-import type { Marker } from '$lib/services/map/marker';
+import type {PointListItem, SearchPointListItem} from '$lib/interfaces/object';
+import type {Marker} from '$lib/services/map/marker';
 import {writable} from 'svelte/store';
-
-const {subscribe, set, update} = writable<ObjectDetailsInfo>({
-    isMinimized: false,
-    isLoading: false,
-    isEditing: false,
-    isDirty: false,
-    detailsId: '',
-    object: null,
-});
-
-export const activeObjectInfo = {
-    subscribe,
-    reset: () =>
-        set({
-            isMinimized: false,
-            isLoading: false,
-            isEditing: false,
-            isDirty: false,
-            detailsId: '',
-            object: null,
-        }),
-    set,
-    update,
-};
 
 const privateActiveMarker = writable<Marker | null>(null);
 
