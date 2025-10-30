@@ -19,6 +19,7 @@ type ListItem struct {
     Longitude string    `json:"lng"`
     IsRemoved bool      `json:"isRemoved"`
     IsVisited bool      `json:"isVisited"`
+    IsOwner   bool      `json:"isOwner"`
 }
 
 func GetList(w http.ResponseWriter, r *http.Request) {
@@ -31,6 +32,7 @@ func GetList(w http.ResponseWriter, r *http.Request) {
         return
     }
 
+    userID := token.UserID()
     for _, object := range list {
         isVisited := false
         if len(object.GetModel().ObjectUser) > 0 {
@@ -43,6 +45,7 @@ func GetList(w http.ResponseWriter, r *http.Request) {
             Longitude: object.GetModel().MapPoint.Longitude,
             IsRemoved: object.GetModel().IsRemoved,
             IsVisited: isVisited,
+            IsOwner:   object.GetModel().CreatedBy == userID,
         })
     }
 

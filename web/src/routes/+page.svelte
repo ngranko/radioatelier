@@ -103,7 +103,7 @@
             lng={point.object.lng}
             isVisited={point.object.isVisited}
             isRemoved={point.object.isRemoved}
-            isDraggable
+            isDraggable={point.object.isOwner}
             icon="fa-solid fa-bolt"
             color="#000000"
             source="list"
