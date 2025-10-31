@@ -11,7 +11,6 @@
     import type {Payload} from '$lib/interfaces/api';
     import RequestError from '$lib/errors/RequestError';
     import type {FuzzyPrivateTag} from '$lib/interfaces/privateTag.ts';
-    import type {Tag} from '$lib/interfaces/tag';
     import {Button} from '$lib/components/ui/button';
     import {Checkbox} from '$lib/components/ui/checkbox';
     import ErrorableLabel from '$lib/components/errorableLabel.svelte';
@@ -19,6 +18,7 @@
     import ImageUpload from '$lib/components/input/imageUpload.svelte';
     import Flags from '$lib/components/objectDetails/viewMode/flags.svelte';
     import {Separator} from '$lib/components/ui/separator';
+    import {Input} from '$lib/components/ui/input';
 
     const client = useQueryClient();
 
@@ -39,6 +39,12 @@
     let {initialValues}: Props = $props();
     let isSubmitting = $state(false);
 
+    const inValues = $derived({
+        id: initialValues.id,
+        isVisited: initialValues.isVisited ?? false,
+        privateTags: initialValues.privateTags?.map(item => item.id),
+    });
+
     const updateObjectMutation = createMutation({
         mutationFn: updateObject,
         onSuccess: ({data}) => {
@@ -55,17 +61,7 @@
     const schema = zod.object({
         id: zod.string().nonempty(),
         isVisited: zod.boolean(),
-        privateTags: zod.array(
-            zod.preprocess(
-                val => {
-                    if (typeof val === 'string') {
-                        return {id: val};
-                    }
-                    return val;
-                },
-                zod.object({id: zod.string().nonempty()}),
-            ),
-        ),
+        privateTags: zod.array(zod.string()),
     });
 
     const {form, data, errors, reset, setData, isDirty, setIsDirty} = createForm<
@@ -77,10 +73,8 @@
             isSubmitting = false;
         },
         extend: validator({schema}),
-        initialValues: initialValues as LightObject,
+        initialValues: inValues,
     });
-
-    let privateTags: FuzzyPrivateTag[] = $state(initialValues.privateTags ?? []);
 
     $effect(() => {
         if ($isDirty.valueOf()) {
@@ -88,16 +82,14 @@
         }
     });
 
-    function handlePrivateTagsChange(items: Tag[]) {
-        privateTags = items;
-        setData('privateTags', privateTags);
+    function handlePrivateTagsChange(items: string[]) {
+        setData('privateTags', items);
         setIsDirty(true);
     }
 
     async function handleSave(values: LightObject) {
         const object: LightObject = {
             ...values,
-            privateTags,
         };
 
         if (!activeObject.object) {
@@ -186,7 +178,8 @@
             {initialValues.name}
         </h1>
 
-        <!-- Personal fields section -->
+        <Input type="hidden" name="id" value={inValues.id} />
+
         <div class="mb-2 flex items-center gap-2">
             <i class="fa-solid fa-user-pen text-sky-600"></i>
             <div class="text-sm font-semibold text-gray-800">Личные поля</div>
@@ -211,17 +204,13 @@
             <Separator class="my-4" />
 
             <div>
-                <ErrorableLabel
-                    for="privateTags"
-                    class="mb-1"
-                    error={$errors.privateTags as unknown as string[]}
-                >
+                <ErrorableLabel for="privateTags" class="mb-1" error={$errors.privateTags}>
                     приватные теги
                 </ErrorableLabel>
                 <PrivateTagsSelect
                     id="privateTags"
                     name="privateTags"
-                    value={privateTags.map(item => item.id)}
+                    value={inValues.privateTags}
                     error={$errors.privateTags}
                     onChange={handlePrivateTagsChange}
                 />
@@ -230,4 +219,3 @@
         </div>
     </div>
 </form>
-

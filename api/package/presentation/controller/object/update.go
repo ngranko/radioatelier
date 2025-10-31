@@ -6,28 +6,27 @@ import (
     "radioatelier/package/adapter/auth/accessToken"
     "radioatelier/package/config"
     "radioatelier/package/infrastructure/router"
-    "radioatelier/package/infrastructure/transformations"
     "radioatelier/package/infrastructure/ulid"
     "radioatelier/package/usecase/presenter"
     "radioatelier/package/usecase/validation/validator"
 )
 
 type UpdateInput struct {
-    Name            string   `json:"name" validate:"max=255"`
-    Description     string   `json:"description"`
-    Address         string   `json:"address" validate:"max=128"`
-    City            string   `json:"city" validate:"max=64"`
-    Country         string   `json:"country" validate:"max=64"`
-    InstalledPeriod string   `json:"installedPeriod" validate:"max=20"`
-    IsRemoved       bool     `json:"isRemoved"`
-    RemovalPeriod   string   `json:"removalPeriod" validate:"max=20"`
-    Source          string   `json:"source" validate:"max=0|url"`
-    Image           string   `json:"image"`
-    IsPublic        bool     `json:"isPublic"`
-    IsVisited       bool     `json:"isVisited"`
-    Category        Category `json:"category"`
-    Tags            []Tag    `json:"tags"`
-    PrivateTags     []Tag    `json:"privateTags"`
+    Name            string      `json:"name" validate:"max=255"`
+    Description     string      `json:"description"`
+    Address         string      `json:"address" validate:"max=128"`
+    City            string      `json:"city" validate:"max=64"`
+    Country         string      `json:"country" validate:"max=64"`
+    InstalledPeriod string      `json:"installedPeriod" validate:"max=20"`
+    IsRemoved       bool        `json:"isRemoved"`
+    RemovalPeriod   string      `json:"removalPeriod" validate:"max=20"`
+    Source          string      `json:"source" validate:"max=0|url"`
+    Image           string      `json:"image"`
+    IsPublic        bool        `json:"isPublic"`
+    IsVisited       bool        `json:"isVisited"`
+    Category        ulid.ULID   `json:"category"`
+    Tags            []ulid.ULID `json:"tags"`
+    PrivateTags     []ulid.ULID `json:"privateTags"`
 }
 
 type UpdatePayloadData struct {
@@ -49,6 +48,7 @@ type UpdatePayloadData struct {
     Category        Category  `json:"category"`
     Tags            []Tag     `json:"tags"`
     PrivateTags     []Tag     `json:"privateTags"`
+    IsOwner         bool      `json:"isOwner"`
 }
 
 func Update(w http.ResponseWriter, r *http.Request) {
@@ -122,8 +122,8 @@ func Update(w http.ResponseWriter, r *http.Request) {
         objModel.Description = payload.Description
     }
 
-    if payload.Category.ID != (ulid.ULID{}) {
-        objModel.CategoryID = payload.Category.ID
+    if payload.Category != (ulid.ULID{}) {
+        objModel.CategoryID = payload.Category
     }
 
     objModel.InstalledPeriod = payload.InstalledPeriod
@@ -138,13 +138,13 @@ func Update(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    err = object.SetTags(transformations.Map(payload.Tags, func(item Tag) ulid.ULID { return item.ID }))
+    err = object.SetTags(payload.Tags)
     if err != nil {
         router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
         return
     }
 
-    err = object.SetPrivateTags(transformations.Map(payload.PrivateTags, func(item Tag) ulid.ULID { return item.ID }), user)
+    err = object.SetPrivateTags(payload.PrivateTags, user)
     if err != nil {
         router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
         return
@@ -194,6 +194,7 @@ func Update(w http.ResponseWriter, r *http.Request) {
                 Category:        category,
                 Tags:            tags,
                 PrivateTags:     privateTags,
+                IsOwner:         objModel.CreatedBy == user.GetModel().ID,
             },
         }).
         Send(w)

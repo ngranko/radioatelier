@@ -19,15 +19,12 @@
     import {createObject, deleteObject, updateObject, uploadImage} from '$lib/api/object';
     import type {Payload} from '$lib/interfaces/api';
     import RequestError from '$lib/errors/RequestError';
-    import type {Category, FuzzyCategory} from '$lib/interfaces/category';
-    import type {FuzzyTag, Tag} from '$lib/interfaces/tag';
     import ImageUpload from '$lib/components/input/imageUpload.svelte';
     import {Button} from '$lib/components/ui/button';
     import {Input} from '$lib/components/ui/input';
     import ErrorableLabel from '$lib/components/errorableLabel.svelte';
     import {Separator} from '$lib/components/ui/separator';
     import {Checkbox} from '$lib/components/ui/checkbox';
-    import type {FuzzyPrivateTag} from '$lib/interfaces/privateTag.ts';
     import {Textarea} from '$lib/components/ui/textarea';
     import {activeObject, resetActiveObject} from '$lib/state/activeObject.svelte.ts';
 
@@ -43,6 +40,13 @@
 
     let {initialValues}: Props = $props();
     let isSubmitting = $state(false);
+
+    const inValues = $derived({
+        ...initialValues,
+        category: initialValues.category?.id ?? '',
+        tags: initialValues.tags?.map(tag => tag.id) ?? [],
+        privateTags: initialValues.privateTags?.map(tag => tag.id) ?? [],
+    });
 
     const createObjectMutation = createMutation({
         mutationFn: createObject,
@@ -99,32 +103,9 @@
             .nonempty('Пожалуйста, введите название')
             .max(255, 'Слишком длинное название'),
         description: zod.string().optional(),
-        category: zod.custom<FuzzyCategory>(
-            (arg: FuzzyCategory) => arg && Object.hasOwn(arg, 'id') && arg.id.length > 0,
-            'Пожалуйста, выберите категорию',
-        ),
-        tags: zod.array(
-            zod.preprocess(
-                val => {
-                    if (typeof val === 'string') {
-                        return {id: val};
-                    }
-                    return val;
-                },
-                zod.object({id: zod.string().nonempty()}),
-            ),
-        ),
-        privateTags: zod.array(
-            zod.preprocess(
-                val => {
-                    if (typeof val === 'string') {
-                        return {id: val};
-                    }
-                    return val;
-                },
-                zod.object({id: zod.string().nonempty()}),
-            ),
-        ),
+        category: zod.string().nonempty('Нужно выбрать категорию'),
+        tags: zod.array(zod.string()),
+        privateTags: zod.array(zod.string()),
         address: zod.string().max(128, 'Слишком длинный адрес').optional(),
         city: zod.string().max(64, 'Слишком длинное название города').optional(),
         country: zod.string().max(64, 'Слишком длинное название страны').optional(),
@@ -143,40 +124,33 @@
             isSubmitting = false;
         },
         extend: validator({schema}),
-        initialValues: initialValues,
+        initialValues: inValues,
     });
 
-    let tags: FuzzyTag[] = $state(initialValues.tags ?? []);
-    let privateTags: FuzzyPrivateTag[] = $state(initialValues.privateTags ?? []);
-
     $effect(() => {
-        if ($isDirty.valueOf()) {
+        if ($isDirty.valueOf() && !activeObject.isDirty) {
             activeObject.isDirty = true;
         }
     });
 
-    function handleCategoryChange(category: Category) {
+    function handleCategoryChange(category: string) {
         setData('category', category);
         setIsDirty(true);
     }
 
-    function handleTagsChange(items: Tag[]) {
-        tags = items;
-        setData('tags', tags);
+    function handleTagsChange(items: string[]) {
+        setData('tags', items);
         setIsDirty(true);
     }
 
-    function handlePrivateTagsChange(items: Tag[]) {
-        privateTags = items;
-        setData('privateTags', privateTags);
+    function handlePrivateTagsChange(items: string[]) {
+        setData('privateTags', items);
         setIsDirty(true);
     }
 
     async function handleSave(values: LooseObject) {
         const object: LooseObject = {
             ...values,
-            tags,
-            privateTags,
         };
 
         if (!activeObject.object) {
@@ -256,11 +230,11 @@
     }
 
     async function handleDelete() {
-        if (!activeObject.object || !initialValues.id) {
+        if (!activeObject.object || !inValues.id) {
             return;
         }
 
-        await toast.promise(deleteExistingObject(initialValues.id), {
+        await toast.promise(deleteExistingObject(inValues.id), {
             loading: 'Удаляю...',
             success: 'Точка удалена!',
             error: 'Не удалось удалить точку',
@@ -291,7 +265,7 @@
         console.log('uploading new image');
 
         toast.promise(
-            $image.mutateAsync({id: initialValues.id as string, formData}).then(result => {
+            $image.mutateAsync({id: inValues.id as string, formData}).then(result => {
                 console.log(result);
                 $data.image = result.data.url;
             }),
@@ -319,7 +293,7 @@
 <form use:form>
     <div class="flex items-center justify-between gap-3 border-b bg-gray-50/50 px-4 py-2.5">
         <Button type="submit" disabled={isSubmitting} class="px-6 text-base">Сохранить</Button>
-        {#if initialValues.id}
+        {#if inValues.id}
             <BackButton isConfirmationRequired={$isDirty.valueOf()} onClick={handleBack} />
             <span class="flex-1"></span>
             <DeleteButton onClick={handleDelete} />
@@ -329,9 +303,9 @@
         <div class="mb-6">
             <ImageUpload name="image" bind:value={$data.image} onChange={handleImageChange} />
         </div>
-        <Input type="hidden" name="id" value={initialValues.id} />
-        <Input type="hidden" name="lat" value={initialValues.lat} />
-        <Input type="hidden" name="lng" value={initialValues.lng} />
+        <Input type="hidden" name="id" value={inValues.id} />
+        <Input type="hidden" name="lat" value={inValues.lat} />
+        <Input type="hidden" name="lng" value={inValues.lng} />
         <div class="grid flex-1 grid-cols-2 content-start gap-x-4 gap-y-3">
             <div class="col-span-full">
                 <ErrorableLabel for="name" class="mb-1" error={$errors.name}>
@@ -347,7 +321,7 @@
                     id="isVisited"
                     name="isVisited"
                     value="1"
-                    checked={initialValues.isVisited}
+                    checked={inValues.isVisited}
                     onCheckedChange={handleIsVisitedChange}
                 />
                 <ErrorableLabel for="isVisited" error={$errors.isVisited}>посещена</ErrorableLabel>
@@ -357,7 +331,7 @@
                     id="isRemoved"
                     name="isRemoved"
                     value="1"
-                    checked={initialValues.isRemoved}
+                    checked={inValues.isRemoved}
                     onCheckedChange={handleIsRemovedChange}
                 />
                 <ErrorableLabel for="isRemoved" error={$errors.isRemoved}>утрачена</ErrorableLabel>
@@ -367,7 +341,7 @@
                     id="isPublic"
                     name="isPublic"
                     value="1"
-                    checked={initialValues.isPublic}
+                    checked={inValues.isPublic}
                     onCheckedChange={handleIsPublicChange}
                 />
                 <ErrorableLabel for="isPublic" error={$errors.isPublic}>публичная</ErrorableLabel>
@@ -376,45 +350,32 @@
             <Separator class="col-span-full mt-2" />
 
             <div class="col-span-full">
-                <ErrorableLabel
-                    for="category"
-                    class="mb-1"
-                    error={$errors.category as unknown as string[]}
-                >
+                <ErrorableLabel for="category" class="mb-1" error={$errors.category}>
                     категория
                 </ErrorableLabel>
                 <CategorySelect
-                    id="category"
                     name="category"
-                    value={initialValues.category?.id ?? ''}
+                    value={inValues.category ?? ''}
                     onChange={handleCategoryChange}
-                    error={$errors.category as unknown as string[]}
+                    error={$errors.category}
                 />
             </div>
             <div class="col-span-full">
-                <ErrorableLabel for="tags" class="mb-1" error={$errors.tags as unknown as string[]}>
-                    теги
-                </ErrorableLabel>
+                <ErrorableLabel for="tags" class="mb-1" error={$errors.tags}>теги</ErrorableLabel>
                 <TagsSelect
-                    id="tags"
                     name="tags"
-                    value={tags.map(item => item.id)}
+                    value={inValues.tags ?? ''}
                     error={$errors.tags}
                     onChange={handleTagsChange}
                 />
             </div>
             <div class="col-span-full">
-                <ErrorableLabel
-                    for="tags"
-                    class="mb-1"
-                    error={$errors.privateTags as unknown as string[]}
-                >
+                <ErrorableLabel for="tags" class="mb-1" error={$errors.privateTags}>
                     приватные теги
                 </ErrorableLabel>
                 <PrivateTagsSelect
-                    id="privateTags"
                     name="privateTags"
-                    value={privateTags.map(item => item.id)}
+                    value={inValues.privateTags ?? ''}
                     error={$errors.privateTags}
                     onChange={handlePrivateTagsChange}
                 />
