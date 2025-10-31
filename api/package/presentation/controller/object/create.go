@@ -6,30 +6,29 @@ import (
     "radioatelier/package/adapter/auth/accessToken"
     "radioatelier/package/config"
     "radioatelier/package/infrastructure/router"
-    "radioatelier/package/infrastructure/transformations"
     "radioatelier/package/infrastructure/ulid"
     "radioatelier/package/usecase/presenter"
     "radioatelier/package/usecase/validation/validator"
 )
 
 type CreateInput struct {
-    Name            string   `json:"name" validate:"required,max=255"`
-    Description     string   `json:"description"`
-    Lat             string   `json:"lat" validate:"required,latitude"`
-    Lng             string   `json:"lng" validate:"required,longitude"`
-    Address         string   `json:"address" validate:"max=128"`
-    City            string   `json:"city" validate:"max=64"`
-    Country         string   `json:"country" validate:"max=64"`
-    InstalledPeriod string   `json:"installedPeriod" validate:"max=20"`
-    IsRemoved       bool     `json:"isRemoved"`
-    RemovalPeriod   string   `json:"removalPeriod" validate:"max=20"`
-    Source          string   `json:"source" validate:"max=0|url"`
-    Image           string   `json:"image"`
-    IsPublic        bool     `json:"isPublic"`
-    IsVisited       bool     `json:"isVisited"`
-    Category        Category `json:"category" validate:"required"`
-    Tags            []Tag    `json:"tags"`
-    PrivateTags     []Tag    `json:"privateTags"`
+    Name            string      `json:"name" validate:"required,max=255"`
+    Description     string      `json:"description"`
+    Lat             string      `json:"lat" validate:"required,latitude"`
+    Lng             string      `json:"lng" validate:"required,longitude"`
+    Address         string      `json:"address" validate:"max=128"`
+    City            string      `json:"city" validate:"max=64"`
+    Country         string      `json:"country" validate:"max=64"`
+    InstalledPeriod string      `json:"installedPeriod" validate:"max=20"`
+    IsRemoved       bool        `json:"isRemoved"`
+    RemovalPeriod   string      `json:"removalPeriod" validate:"max=20"`
+    Source          string      `json:"source" validate:"max=0|url"`
+    Image           string      `json:"image"`
+    IsPublic        bool        `json:"isPublic"`
+    IsVisited       bool        `json:"isVisited"`
+    Category        ulid.ULID   `json:"category" validate:"required"`
+    Tags            []ulid.ULID `json:"tags"`
+    PrivateTags     []ulid.ULID `json:"privateTags"`
 }
 
 type CreatePayloadData struct {
@@ -51,6 +50,7 @@ type CreatePayloadData struct {
     Category        Category  `json:"category"`
     Tags            []Tag     `json:"tags"`
     PrivateTags     []Tag     `json:"privateTags"`
+    IsOwner         bool      `json:"isOwner"`
 }
 
 func Create(w http.ResponseWriter, r *http.Request) {
@@ -107,7 +107,7 @@ func Create(w http.ResponseWriter, r *http.Request) {
     objModel.Source = payload.Source
     objModel.Image = payload.Image
     objModel.IsPublic = payload.IsPublic
-    objModel.CategoryID = payload.Category.ID
+    objModel.CategoryID = payload.Category
     objModel.CreatedBy = user.GetModel().ID
     objModel.Creator = *user.GetModel()
     objModel.MapPointID = mapPointModel.ID
@@ -118,13 +118,13 @@ func Create(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    err = obj.SetTags(transformations.Map(payload.Tags, func(item Tag) ulid.ULID { return item.ID }))
+    err = obj.SetTags(payload.Tags)
     if err != nil {
         router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
         return
     }
 
-    err = obj.SetPrivateTags(transformations.Map(payload.PrivateTags, func(item Tag) ulid.ULID { return item.ID }), user)
+    err = obj.SetPrivateTags(payload.PrivateTags, user)
     if err != nil {
         router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
         return
@@ -167,6 +167,7 @@ func Create(w http.ResponseWriter, r *http.Request) {
                 Category:        category,
                 Tags:            tags,
                 PrivateTags:     privateTags,
+                IsOwner:         objModel.CreatedBy == user.GetModel().ID,
             },
         }).
         Send(w)
