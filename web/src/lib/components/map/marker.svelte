@@ -38,8 +38,10 @@
         source,
     }: Props = $props();
 
-    let markerId: string | undefined = $state();
+    let markerId: string = $state(id ?? `map-${Date.now()}-${Math.random()}`);
     let marker: MarkerObject | null = $state(null);
+    let detailsRequestedForId: string | null = $state(null);
+    let addressAppliedForKey: string | null = $state(null);
 
     const client = useQueryClient();
 
@@ -58,43 +60,41 @@
     const reposition = useRepositionMutation(client);
 
     $effect(() => {
-        if (!markerId || !mapState.markerManager) {
+        if (!marker || !markerId || !mapState.markerManager) {
             return;
         }
         mapState.markerManager.updateMarkerState(markerId, {isVisited, isRemoved});
     });
 
     $effect(() => {
-        if (!marker) {
-            return;
-        }
-
-        // isLoading check is needed here because otherwise creating a duplicate marker for an object that was already open before will immediately trigger the details to open (TSK-286)
-        // TODO: maybe I need to deal with this error by just emptying the activeObject if I delete a marker with the same ID?
-        if (
-            activeObject.isLoading &&
-            $objectDetails.isSuccess &&
-            activeObject.detailsId === $objectDetails.data.data.object.id
-        ) {
-            activeObject.isLoading = false;
-            activeObject.isEditing = false;
-            activeObject.isMinimized = false;
-            activeObject.isDirty = false;
-            activeObject.detailsId = $objectDetails.data.data.object.id;
-            activeObject.object = $objectDetails.data.data.object;
-        }
-
-        if ($objectDetails.isError) {
-            console.error($objectDetails.error);
-            // Set loading to false on error to prevent a stuck loading state
-            if (activeObject.isLoading && activeObject.detailsId === id) {
+        if ($objectDetails.isSuccess && detailsRequestedForId) {
+            const objectId = $objectDetails.data.data.object.id;
+            if (objectId === detailsRequestedForId) {
                 activeObject.isLoading = false;
+                activeObject.isEditing = false;
+                activeObject.isMinimized = false;
+                activeObject.isDirty = false;
+                activeObject.detailsId = objectId;
+                activeObject.object = $objectDetails.data.data.object;
+                detailsRequestedForId = null;
             }
+        }
+
+        if ($objectDetails.isError && detailsRequestedForId === id) {
+            console.error($objectDetails.error);
+            activeObject.isLoading = false;
+            detailsRequestedForId = null;
         }
     });
 
     $effect(() => {
         if ($objectAddress.isSuccess) {
+            const key = `${lat}|${lng}`;
+            if (addressAppliedForKey === key) {
+                return;
+            }
+            addressAppliedForKey = key;
+
             activeObject.isLoading = false;
             activeObject.object = {
                 ...(activeObject.object as Object),
@@ -125,13 +125,15 @@
         const position = {lat: Number(lat), lng: Number(lng)};
 
         // For map-clicked markers, pass a unique ID to avoid cache conflicts
-        markerId = id ?? `map-${Date.now()}-${Math.random()}`;
+        // markerId = id ?? `map-${Date.now()}-${Math.random()}`;
 
         marker = mapState.markerManager.addMarker(markerId, position, {
             icon,
             color,
             isDraggable,
             source,
+            isVisited,
+            isRemoved,
             onClick: handleMarkerClick,
             onDragEnd: handleDragEnd,
         });
@@ -139,6 +141,7 @@
         if (source === 'map') {
             void $objectAddress.refetch();
             activeObject.isLoading = true;
+            addressAppliedForKey = null;
         }
     }
 
@@ -205,6 +208,7 @@
                 activeObject.detailsId = id!;
                 activeObject.object = {id, lat, lng, isVisited, isRemoved};
                 $objectDetails.refetch();
+                detailsRequestedForId = id!;
             } else {
                 activeObject.isLoading = false;
                 activeObject.isEditing = false;
