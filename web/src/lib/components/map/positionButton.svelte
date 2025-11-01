@@ -18,7 +18,7 @@
 </script>
 
 <button
-    class="text-primary absolute right-2.5 bottom-18 z-1 flex w-10 items-center justify-center rounded-xs border-0 bg-white p-2.5 text-xl shadow-xs"
+    class="text-primary absolute right-2.5 bottom-18 z-1 flex w-10 items-center justify-center rounded-xs border-0 bg-white p-2.5 text-xl shadow-md"
     onclick={goToLastPosition}
     aria-label="Go to last position"
 >

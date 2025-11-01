@@ -45,7 +45,7 @@
 
 <button
     class={cn([
-        'align-center absolute right-2.5 bottom-30 z-1 flex w-10 justify-center rounded-xs border-0 bg-white p-2.5 text-xl shadow-xs transition-colors',
+        'align-center absolute right-2.5 bottom-30 z-1 flex w-10 justify-center rounded-xs border-0 bg-white p-2.5 text-xl shadow-md transition-colors',
         {'text-gray-500': !orientationEnabled, 'text-primary': orientationEnabled},
     ])}
     onclick={toggleOrientation}
