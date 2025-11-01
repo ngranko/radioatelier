@@ -9,7 +9,7 @@
     import RequestError from '$lib/errors/RequestError';
     import type {Payload} from '$lib/interfaces/api';
     import type {ChangePasswordFormErrors} from '$lib/interfaces/user';
-    import toast from 'svelte-5-french-toast';
+    import { toast } from 'svelte-sonner';
     import * as zod from 'zod';
     import {validator} from '@felte/validator-zod';
     import {Button} from '$lib/components/ui/button';

@@ -10,7 +10,7 @@
     import {mapState} from '$lib/state/map.svelte';
     import {Marker as MarkerObject} from '$lib/services/map/marker';
     import type {MarkerSource} from '$lib/interfaces/marker';
-    import toast from 'svelte-5-french-toast';
+    import {toast} from 'svelte-sonner';
     import {activeObject, resetActiveObject} from '$lib/state/activeObject.svelte.ts';
 
     interface Props {
@@ -146,11 +146,13 @@
     }
 
     async function handleDragEnd() {
-        await toast.promise(updateObjectCoordinates(), {
+        const promise = updateObjectCoordinates();
+        toast.promise(promise, {
             loading: 'Обновляю...',
             success: 'Позиция обновлена!',
             error: 'Не удалось обновить позицию',
         });
+        await promise;
     }
 
     onDestroy(() => {

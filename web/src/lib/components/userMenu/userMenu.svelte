@@ -3,7 +3,7 @@
     import {Button} from '$lib/components/ui/button';
     import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
     import {DropdownMenuItem} from '$lib/components/ui/dropdown-menu';
-    import toast from 'svelte-5-french-toast';
+    import { toast } from 'svelte-sonner';
     import type {Component} from 'svelte';
     import LogoutDialog from '$lib/components/userMenu/logoutDialog.svelte';
     import {cubicInOut} from 'svelte/easing';

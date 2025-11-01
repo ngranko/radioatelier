@@ -1,6 +1,6 @@
 <script lang="ts">
     import {createMutation} from '@tanstack/svelte-query';
-    import toast from 'svelte-5-french-toast';
+    import {toast} from 'svelte-sonner';
     import {extractPreview} from '$lib/api/import';
     import {Label} from '$lib/components/ui/label';
     import {Button} from '$lib/components/ui/button';
@@ -15,14 +15,13 @@
 
     async function handleSeparatorChange(separator: string) {
         try {
-            const result = await toast.promise(
-                $preview.mutateAsync({id: importState.id, separator}),
-                {
-                    loading: 'Обновляю превью...',
-                    error: 'Не удалось обновить превью',
-                    success: 'Превью обновлено',
-                },
-            );
+            const promise = $preview.mutateAsync({id: importState.id, separator});
+            toast.promise(promise, {
+                loading: 'Обновляю превью...',
+                error: 'Не удалось обновить превью',
+                success: 'Превью обновлено',
+            });
+            const result = await promise;
             importState.separator = separator;
             importState.preview = result.data.preview;
         } catch (error) {

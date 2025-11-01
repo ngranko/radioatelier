@@ -5,7 +5,7 @@
     import * as zod from 'zod';
     import {validator} from '@felte/validator-zod';
     import PrivateTagsSelect from '$lib/components/objectDetails/editMode/privateTagsSelect.svelte';
-    import toast from 'svelte-5-french-toast';
+    import {toast} from 'svelte-sonner';
     import {createMutation, useQueryClient} from '@tanstack/svelte-query';
     import {updateObject} from '$lib/api/object';
     import type {Payload} from '$lib/interfaces/api';
@@ -96,11 +96,13 @@
             return;
         }
 
-        await toast.promise(updateExistingObject(object as Object), {
+        const promise = updateExistingObject(object as Object);
+        toast.promise(promise, {
             loading: 'Обновляю...',
             success: 'Точка обновлена!',
             error: 'Не удалось обновить точку',
         });
+        await promise;
     }
 
     async function updateExistingObject(object: LightObject) {
@@ -208,7 +210,6 @@
                     приватные теги
                 </ErrorableLabel>
                 <PrivateTagsSelect
-                    id="privateTags"
                     name="privateTags"
                     value={inValues.privateTags}
                     error={$errors.privateTags}
