@@ -6,7 +6,7 @@
     import ServerError from '$lib/errors/ServerError';
     import {STATUS_TOO_MANY_REQUESTS} from '$lib/api/constants';
     import config from '$lib/config';
-    import {Toaster} from 'svelte-5-french-toast';
+    import {Toaster} from '$lib/components/ui/sonner';
     import {onMount} from 'svelte';
     import type {Snippet} from 'svelte';
     interface Props {
@@ -38,6 +38,33 @@
 
 <QueryClientProvider client={queryClient}>
     {@render children?.()}
-    <Toaster />
+    <Toaster
+        position="top-center"
+        richColors
+        theme="light"
+        toastOptions={{
+            classes: {
+                toast: 'bg-white',
+                title: 'font-branding text-base',
+                description: 'font-branding',
+            },
+        }}
+    >
+        {#snippet loadingIcon()}
+            <i class="fa-solid fa-circle-notch animate-spin text-base"></i>
+        {/snippet}
+        {#snippet successIcon()}
+            <i class="fa-solid fa-circle-check text-base"></i>
+        {/snippet}
+        {#snippet errorIcon()}
+            <i class="fa-solid fa-circle-xmark text-base"></i>
+        {/snippet}
+        {#snippet infoIcon()}
+            <i class="fa-solid fa-circle-info text-base"></i>
+        {/snippet}
+        {#snippet warningIcon()}
+            <i class="fa-solid fa-triangle-exclamation text-base"></i>
+        {/snippet}
+    </Toaster>
     <div id="portal"></div>
 </QueryClientProvider>

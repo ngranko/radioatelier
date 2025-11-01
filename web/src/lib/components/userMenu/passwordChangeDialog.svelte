@@ -7,7 +7,7 @@
     import {isPasswordAcceptable} from '$lib/services/passwordStrength';
     import RequestError from '$lib/errors/RequestError';
     import type {Payload} from '$lib/interfaces/api';
-    import toast from 'svelte-5-french-toast';
+    import { toast } from 'svelte-sonner';
     import {validator} from '@felte/validator-zod';
     import * as zod from 'zod';
     import * as Dialog from '$lib/components/ui/dialog';

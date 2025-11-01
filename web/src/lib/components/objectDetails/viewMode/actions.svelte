@@ -1,5 +1,5 @@
 <script lang="ts">
-    import toast from 'svelte-5-french-toast';
+    import { toast } from 'svelte-sonner';
     import {getStreetView} from '$lib/services/map/streetView.svelte';
     import {Button} from '$lib/components/ui/button';
     import {activeObject} from '$lib/state/activeObject.svelte.ts';

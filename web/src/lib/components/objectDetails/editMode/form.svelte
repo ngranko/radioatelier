@@ -14,7 +14,7 @@
     import CategorySelect from '$lib/components/objectDetails/editMode/categorySelect.svelte';
     import PrivateTagsSelect from '$lib/components/objectDetails/editMode/privateTagsSelect.svelte';
     import TagsSelect from '$lib/components/objectDetails/editMode/tagsSelect.svelte';
-    import toast from 'svelte-5-french-toast';
+    import {toast} from 'svelte-sonner';
     import {createMutation, useQueryClient} from '@tanstack/svelte-query';
     import {createObject, deleteObject, updateObject, uploadImage} from '$lib/api/object';
     import type {Payload} from '$lib/interfaces/api';
@@ -158,17 +158,21 @@
         }
 
         if (!values.id) {
-            await toast.promise(createNewObject(object), {
+            const promise = createNewObject(object);
+            toast.promise(promise, {
                 loading: 'Создаю...',
                 success: 'Точка создана!',
                 error: 'Не удалось создать точку',
             });
+            await promise;
         } else {
-            await toast.promise(updateExistingObject(object as Object), {
+            const promise = updateExistingObject(object as Object);
+            toast.promise(promise, {
                 loading: 'Обновляю...',
                 success: 'Точка обновлена!',
                 error: 'Не удалось обновить точку',
             });
+            await promise;
         }
     }
 
@@ -234,11 +238,13 @@
             return;
         }
 
-        await toast.promise(deleteExistingObject(inValues.id), {
+        const promise = deleteExistingObject(inValues.id);
+        toast.promise(promise, {
             loading: 'Удаляю...',
             success: 'Точка удалена!',
             error: 'Не удалось удалить точку',
         });
+        await promise;
     }
 
     async function deleteExistingObject(id: string) {
@@ -262,11 +268,8 @@
         const formData = new FormData();
         formData.append('file', file);
 
-        console.log('uploading new image');
-
         toast.promise(
             $image.mutateAsync({id: inValues.id as string, formData}).then(result => {
-                console.log(result);
                 $data.image = result.data.url;
             }),
             {

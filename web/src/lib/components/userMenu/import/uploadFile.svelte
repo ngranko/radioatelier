@@ -1,6 +1,6 @@
 <script lang="ts">
     import {createMutation} from '@tanstack/svelte-query';
-    import toast from 'svelte-5-french-toast';
+    import {toast} from 'svelte-sonner';
     import {extractPreview, uploadFile} from '$lib/api/import';
     import {ImportStepPreview} from '$lib/interfaces/import.ts';
     import {importState} from '$lib/state/import.svelte.ts';
@@ -50,11 +50,14 @@
         const formData = new FormData();
         formData.append('file', file);
         try {
-            const result = await toast.promise(uploadAndPreview(formData), {
+            const promise = uploadAndPreview(formData);
+            toast.promise(promise, {
                 loading: 'Загружаю файл...',
                 error: 'Не удалось загрузить файл',
                 success: 'Файл загружен',
             });
+
+            const result = await promise;
             if (!document.startViewTransition) {
                 updateStore(file, result.data.preview);
             } else {
