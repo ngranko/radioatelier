@@ -1,7 +1,7 @@
 <script lang="ts">
     import Badge from '$lib/components/ui/badge/badge.svelte';
-    import * as Select from '$lib/components/ui/select';
-    import * as Form from '$lib/components/ui/form';
+    import {Root as SelectRoot, Trigger, Content, Item} from '$lib/components/ui/select';
+    import {Field as FormField, Control as FormControl} from '$lib/components/ui/form';
     import {type SuperForm} from 'sveltekit-superforms';
     import {cn} from '$lib/utils.ts';
     import {importState} from '$lib/state/import.svelte.ts';
@@ -40,34 +40,34 @@
             {/if}
         </div>
 
-        <Form.Field
+        <FormField
             {form}
             name="name"
             class="col-start-2 col-end-2 row-start-1 row-end-1 space-y-0"
         >
-            <Form.Control>
+            <FormControl>
                 {#snippet children({props})}
-                    <Select.Root type="single" {...props} bind:value={$formData[field.name]}>
-                        <Select.Trigger>
+                    <SelectRoot type="single" {...props} bind:value={$formData[field.name]}>
+                        <Trigger>
                             {importState.preview[0][$formData[field.name]] ?? 'Не выбрано'}
-                        </Select.Trigger>
-                        <Select.Content>
-                            <Select.Item value={null}>
+                        </Trigger>
+                        <Content>
+                            <Item value={null}>
                                 <span class="text-muted-foreground flex items-center gap-2">
                                     <i class="fa-solid fa-xmark"></i>
                                     Не выбрано
                                 </span>
-                            </Select.Item>
+                            </Item>
                             {#each importState.preview[0] as item, key}
-                                <Select.Item value={key}>
+                                <Item value={key}>
                                     {item}
-                                </Select.Item>
+                                </Item>
                             {/each}
-                        </Select.Content>
-                    </Select.Root>
+                        </Content>
+                    </SelectRoot>
                 {/snippet}
-            </Form.Control>
-        </Form.Field>
+            </FormControl>
+        </FormField>
 
         {#if field.validation}
             <div class="bg-muted/50 col-span-full row-start-2 row-end-2 rounded-md border p-2">

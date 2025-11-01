@@ -1,5 +1,5 @@
 <script lang="ts">
-    import * as AlertDialog from '$lib/components/ui/alert-dialog';
+    import {Root as AlertDialogRoot, Trigger, Content, Header, Title, Description, Footer, Cancel, Action} from '$lib/components/ui/alert-dialog';
     import {Button, buttonVariants} from '$lib/components/ui/button';
     import {cn} from '$lib/utils.ts';
 
@@ -12,8 +12,8 @@
 </script>
 
 {#if isConfirmationRequired}
-    <AlertDialog.Root>
-        <AlertDialog.Trigger
+    <AlertDialogRoot>
+        <Trigger
             type="button"
             class={cn([
                 buttonVariants({variant: 'ghost', size: 'icon'}),
@@ -21,25 +21,25 @@
             ])}
         >
             <i class="fa-solid fa-xmark"></i>
-        </AlertDialog.Trigger>
-        <AlertDialog.Content>
-            <AlertDialog.Header>
-                <AlertDialog.Title>
+        </Trigger>
+        <Content>
+            <Header>
+                <Title>
                     Вы действительно хотите выйти из редактирования точки?
-                </AlertDialog.Title>
-                <AlertDialog.Description>Изменения не будут сохранены</AlertDialog.Description>
-            </AlertDialog.Header>
-            <AlertDialog.Footer>
-                <AlertDialog.Cancel>Отменить</AlertDialog.Cancel>
-                <AlertDialog.Action
+                </Title>
+                <Description>Изменения не будут сохранены</Description>
+            </Header>
+            <Footer>
+                <Cancel>Отменить</Cancel>
+                <Action
                     class="bg-destructive hover:bg-destructive/70"
                     onclick={onClick}
                 >
                     Закрыть
-                </AlertDialog.Action>
-            </AlertDialog.Footer>
-        </AlertDialog.Content>
-    </AlertDialog.Root>
+                </Action>
+            </Footer>
+        </Content>
+    </AlertDialogRoot>
 {:else}
     <Button variant="ghost" size="icon" class="h-8 w-8 text-lg hover:bg-gray-100" onclick={onClick}>
         <i class="fa-solid fa-xmark"></i>

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import * as AlertDialog from '$lib/components/ui/alert-dialog';
+    import {Root as AlertDialogRoot, Content, Header, Title, Footer, Cancel, Action} from '$lib/components/ui/alert-dialog';
     import {createMutation} from '@tanstack/svelte-query';
     import {invalidateToken} from '$lib/api/token.ts';
     import RefreshToken from '$lib/api/auth/refreshToken.ts';
@@ -47,14 +47,14 @@
 </script>
 
 <!-- prettier-ignore -->
-<AlertDialog.Root bind:open={getIsOpen, setIsOpen}>
-    <AlertDialog.Content>
-        <AlertDialog.Header>
-            <AlertDialog.Title>Вы действительно хотите выйти?</AlertDialog.Title>
-        </AlertDialog.Header>
-        <AlertDialog.Footer>
-            <AlertDialog.Cancel>Отмена</AlertDialog.Cancel>
-            <AlertDialog.Action onclick={handleClick}>Выйти</AlertDialog.Action>
-        </AlertDialog.Footer>
-    </AlertDialog.Content>
-</AlertDialog.Root>
+<AlertDialogRoot bind:open={getIsOpen, setIsOpen}>
+    <Content>
+        <Header>
+            <Title>Вы действительно хотите выйти?</Title>
+        </Header>
+        <Footer>
+            <Cancel>Отмена</Cancel>
+            <Action onclick={handleClick}>Выйти</Action>
+        </Footer>
+    </Content>
+</AlertDialogRoot>

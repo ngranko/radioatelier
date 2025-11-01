@@ -1,8 +1,7 @@
 <script lang="ts">
-    import * as Avatar from '$lib/components/ui/avatar';
+    import {Root as AvatarRoot, Fallback} from '$lib/components/ui/avatar';
     import {Button} from '$lib/components/ui/button';
-    import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-    import {DropdownMenuItem} from '$lib/components/ui/dropdown-menu';
+    import {Root as DropdownMenuRoot, Trigger as DropdownMenuTrigger, Content as DropdownMenuContent, Group, Separator as DropdownMenuSeparator, Item as DropdownMenuItem} from '$lib/components/ui/dropdown-menu';
     import { toast } from 'svelte-sonner';
     import type {Component} from 'svelte';
     import LogoutDialog from '$lib/components/userMenu/logoutDialog.svelte';
@@ -42,41 +41,41 @@
     }
 </script>
 
-<DropdownMenu.Root>
-    <DropdownMenu.Trigger>
+<DropdownMenuRoot>
+    <DropdownMenuTrigger>
         <Button
             variant="ghost"
             size="icon"
             class="relative z-2 m-2 size-10 rounded-full text-3xl"
             aria-label="Показать меню"
         >
-            <Avatar.Root class="size-10 rounded-full">
-                <Avatar.Fallback
+            <AvatarRoot class="size-10 rounded-full">
+                <Fallback
                     class="bg-primary items-end rounded-full pt-1 pr-1 pl-1 brightness-200 saturate-25 transition hover:brightness-180 hover:saturate-30"
                 >
                     <i class="fa-solid fa-user-ninja"></i>
-                </Avatar.Fallback>
-            </Avatar.Root>
+                </Fallback>
+            </AvatarRoot>
         </Button>
-    </DropdownMenu.Trigger>
-    <DropdownMenu.Content class="mr-4">
-        <DropdownMenu.Group>
-            <DropdownMenu.Item onclick={handleImportClick}>
+    </DropdownMenuTrigger>
+    <DropdownMenuContent class="mr-4">
+        <Group>
+            <DropdownMenuItem onclick={handleImportClick}>
                 <i class="fa-solid fa-file-import"></i>
                 Импорт точек
-            </DropdownMenu.Item>
+            </DropdownMenuItem>
             <DropdownMenuItem onclick={handleChangePasswordClick}>
                 <i class="fa-solid fa-key"></i>
                 Сменить пароль
             </DropdownMenuItem>
-            <DropdownMenu.Separator />
-            <DropdownMenu.Item onclick={handleLogoutClick}>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onclick={handleLogoutClick}>
                 <i class="fa-solid fa-sign-out-alt"></i>
                 Выйти
-            </DropdownMenu.Item>
-        </DropdownMenu.Group>
-    </DropdownMenu.Content>
-</DropdownMenu.Root>
+            </DropdownMenuItem>
+        </Group>
+    </DropdownMenuContent>
+</DropdownMenuRoot>
 
 {#if isDialogLoading}
     <div
