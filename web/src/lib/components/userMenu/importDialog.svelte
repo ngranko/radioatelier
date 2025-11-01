@@ -1,5 +1,5 @@
 <script lang="ts">
-    import * as Dialog from '$lib/components/ui/dialog';
+    import {Root as DialogRoot, Content} from '$lib/components/ui/dialog';
     import UploadFile from '$lib/components/userMenu/import/uploadFile.svelte';
     import PreviewImport from '$lib/components/userMenu/import/preview.svelte';
     import Progress from '$lib/components/userMenu/import/progress.svelte';
@@ -56,8 +56,8 @@
 </script>
 
 <!-- prettier-ignore -->
-<Dialog.Root bind:open={getIsOpen, setIsOpen}>
-    <Dialog.Content class="max-h-[95vh] flex flex-col">
+<DialogRoot bind:open={getIsOpen, setIsOpen}>
+    <Content class="max-h-[95vh] flex flex-col">
         <DialogHeader>
             <DialogTitle>Импорт csv</DialogTitle>
         </DialogHeader>
@@ -72,7 +72,7 @@
         {:else if importState.step === ImportStepError}
             <Error />
         {/if}
-    </Dialog.Content>
-</Dialog.Root>
+    </Content>
+</DialogRoot>
 
 <CloseConfirmation bind:isOpen={isConfirmationOpen} onClick={doClose} />

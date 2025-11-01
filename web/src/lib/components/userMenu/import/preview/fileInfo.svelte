@@ -4,7 +4,7 @@
     import {extractPreview} from '$lib/api/import';
     import {Label} from '$lib/components/ui/label';
     import {Button} from '$lib/components/ui/button';
-    import * as Select from '$lib/components/ui/select';
+    import {Root as SelectRoot, Trigger, Content, Item} from '$lib/components/ui/select';
     import {importState, resetImportState} from '$lib/state/import.svelte.ts';
 
     const preview = createMutation({mutationFn: extractPreview});
@@ -68,16 +68,16 @@
         <Label class="text-sm whitespace-nowrap">
             Разделитель
             <!-- prettier-ignore -->
-            <Select.Root type="single" bind:value={getSeparator, handleSeparatorChange}>
-                    <Select.Trigger id="separator" class="w-20">
+            <SelectRoot type="single" bind:value={getSeparator, handleSeparatorChange}>
+                    <Trigger id="separator" class="w-20">
                         {getSeparatorLabel()}
-                    </Select.Trigger>
-                    <Select.Content>
-                        <Select.Item value=";">;</Select.Item>
-                        <Select.Item value={"\t"}>Tab</Select.Item>
-                        <Select.Item value="|">|</Select.Item>
-                    </Select.Content>
-                </Select.Root>
+                    </Trigger>
+                    <Content>
+                        <Item value=";">;</Item>
+                        <Item value={"\t"}>Tab</Item>
+                        <Item value="|">|</Item>
+                    </Content>
+                </SelectRoot>
         </Label>
     </div>
 </div>

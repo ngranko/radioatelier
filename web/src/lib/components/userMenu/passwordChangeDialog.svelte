@@ -10,7 +10,7 @@
     import { toast } from 'svelte-sonner';
     import {validator} from '@felte/validator-zod';
     import * as zod from 'zod';
-    import * as Dialog from '$lib/components/ui/dialog';
+    import {Root as DialogRoot, Content, Header, Title, Footer} from '$lib/components/ui/dialog';
     import {Button} from '$lib/components/ui/button';
 
     interface Props {
@@ -62,11 +62,11 @@
 </script>
 
 <!-- prettier-ignore -->
-<Dialog.Root bind:open={getIsOpen, setIsOpen}>
-    <Dialog.Content>
-        <Dialog.Header>
-            <Dialog.Title>Сменить пароль</Dialog.Title>
-        </Dialog.Header>
+<DialogRoot bind:open={getIsOpen, setIsOpen}>
+    <Content>
+        <Header>
+            <Title>Сменить пароль</Title>
+        </Header>
         <form class="flex w-full flex-col gap-4" use:form>
             <FormPasswordInput
                 id="password"
@@ -84,7 +84,7 @@
                 label="Повторите пароль"
                 error={$errors.passwordConfirm}
             />
-            <Dialog.Footer>
+            <Footer>
                 <Button
                     variant="ghost"
                     onclick={handleDialogClose}
@@ -95,7 +95,7 @@
                 <Button variant="default" type="submit" disabled={$isSubmitting.valueOf()}>
                     Сменить
                 </Button>
-            </Dialog.Footer>
+            </Footer>
         </form>
-    </Dialog.Content>
-</Dialog.Root>
+    </Content>
+</DialogRoot>
