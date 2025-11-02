@@ -17,7 +17,7 @@
         </div>
 
         <div class="space-y-2">
-            <Progress value={importState.percentage} className="h-2" />
+            <Progress value={importState.percentage} class="h-2" />
             <div class="text-muted-foreground flex justify-between text-sm">
                 <span>{importState.percentage}% завершено</span>
             </div>

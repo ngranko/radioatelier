@@ -1,17 +1,18 @@
 <script lang="ts">
     import {createMutation} from '@tanstack/svelte-query';
-    import FormPasswordInput from '$lib/components/form/formPasswordInput.svelte';
     import {changePassword} from '$lib/api/user';
-    import type {ChangePasswordFormErrors, ChangePasswordFormInputs} from '$lib/interfaces/user';
-    import {createForm} from 'felte';
+    import {defaults, superForm} from 'sveltekit-superforms';
     import {isPasswordAcceptable} from '$lib/services/passwordStrength';
     import RequestError from '$lib/errors/RequestError';
     import type {Payload} from '$lib/interfaces/api';
-    import { toast } from 'svelte-sonner';
-    import {validator} from '@felte/validator-zod';
-    import * as zod from 'zod';
+    import {toast} from 'svelte-sonner';
+    import {z} from 'zod';
     import {Root as DialogRoot, Content, Header, Title, Footer} from '$lib/components/ui/dialog';
     import {Button} from '$lib/components/ui/button';
+    import {FormLabel, FormField, FormControl, FormFieldErrors} from '$lib/components/ui/form';
+    import PasswordInput from '$lib/components/input/passwordInput.svelte';
+    import {zod4} from 'sveltekit-superforms/adapters';
+    import { normalizeFormErrors } from '$lib/utils/formErrors';
 
     interface Props {
         isOpen: boolean;
@@ -19,36 +20,63 @@
 
     let {isOpen = $bindable()}: Props = $props();
 
-    const schema = zod
+    const schema = z
         .object({
-            password: zod.string().nonempty('Пожалуйста, введите пароль'),
-            passwordConfirm: zod.string().nonempty('Пожалуйста, повторите пароль'),
+            password: z.string().min(1, 'Пожалуйста, введите пароль'),
+            passwordConfirm: z.string().min(1, 'Пожалуйста, повторите пароль'),
         })
-        .refine(obj => obj.password === obj.passwordConfirm, {message: 'Пароли не совпадают'})
-        .refine(obj => isPasswordAcceptable(obj.password), {message: 'Слишком слабый пароль'});
-
-    const {form, data, errors, isSubmitting, reset} = createForm<zod.infer<typeof schema>>({
-        onSubmit: async (values: ChangePasswordFormInputs) =>
-            $changePasswordMutation.mutateAsync(values),
-        onSuccess: () => {
-            toast.success('Пароль успешно изменен');
-            isOpen = false;
-        },
-        onError: error => {
-            if (error instanceof RequestError && error.status === 422) {
-                return (error.payload as Payload<null, ChangePasswordFormErrors>).errors;
+        .superRefine((data, ctx) => {
+            if (data.password !== data.passwordConfirm) {
+                ctx.addIssue({
+                    code: 'custom',
+                    message: 'Пароли не совпадают',
+                    path: ['passwordConfirm'],
+                });
             }
-            toast.error('Не удалось сменить пароль');
-        },
-        extend: validator({schema}),
-    });
+            if (!isPasswordAcceptable(data.password)) {
+                ctx.addIssue({
+                    code: 'custom',
+                    message: 'Слишком слабый пароль',
+                    path: ['password'],
+                });
+            }
+        });
+
+    type ChangePasswordFormInputs = z.infer<typeof schema>;
 
     const changePasswordMutation = createMutation({
         mutationFn: changePassword,
     });
 
+    const form = superForm<ChangePasswordFormInputs>(defaults(zod4(schema)), {
+        SPA: true,
+        onUpdate: async ({form}) => {
+            if (!form.valid) {
+                return;
+            }
+
+            try {
+                await $changePasswordMutation.mutateAsync($formData as ChangePasswordFormInputs);
+                toast.success('Пароль успешно изменен');
+                isOpen = false;
+            } catch (error) {
+                if (error instanceof RequestError && error.status === 422) {
+                    form.valid = false;
+                    const formErrors = (error.payload as Payload).errors;
+                    if (formErrors) {
+                        form.errors = normalizeFormErrors(formErrors, form.data);
+                    }
+                } else {
+                    toast.error('Не удалось сменить пароль');
+                }
+            }
+        },
+    });
+
+    const {form: formData, enhance, submitting} = form;
+
     function handleDialogClose() {
-        reset();
+        form.reset();
         setIsOpen(false);
     }
 
@@ -67,32 +95,41 @@
         <Header>
             <Title>Сменить пароль</Title>
         </Header>
-        <form class="flex w-full flex-col gap-4" use:form>
-            <FormPasswordInput
-                id="password"
-                name="password"
-                required
-                label="Пароль"
-                value={$data.password}
-                error={$errors.password}
-                withStrengthIndicator={true}
-            />
-            <FormPasswordInput
-                id="passwordConfirm"
-                name="passwordConfirm"
-                required
-                label="Повторите пароль"
-                error={$errors.passwordConfirm}
-            />
+        <form class="flex w-full flex-col gap-4" use:enhance>
+            <FormField {form} name="password">
+                <FormControl>
+                    {#snippet children({props})}
+                        <FormLabel>Пароль</FormLabel>
+                        <PasswordInput
+                            bind:value={$formData.password}
+                            withStrengthIndicator={true}
+                            {...props}
+                        />
+                    {/snippet}
+                </FormControl>
+                <FormFieldErrors />
+            </FormField>
+            <FormField {form} name="passwordConfirm">
+                <FormControl>
+                    {#snippet children({props})}
+                        <FormLabel>Повторите пароль</FormLabel>
+                        <PasswordInput
+                            bind:value={$formData.passwordConfirm}
+                            {...props}
+                        />
+                    {/snippet}
+                </FormControl>
+                <FormFieldErrors />
+            </FormField>
             <Footer>
                 <Button
                     variant="ghost"
                     onclick={handleDialogClose}
-                    disabled={$isSubmitting.valueOf()}
+                    disabled={$submitting}
                 >
                     Отменить
                 </Button>
-                <Button variant="default" type="submit" disabled={$isSubmitting.valueOf()}>
+                <Button variant="default" type="submit" disabled={$submitting}>
                     Сменить
                 </Button>
             </Footer>

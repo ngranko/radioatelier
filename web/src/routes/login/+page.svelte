@@ -1,22 +1,24 @@
 <script lang="ts">
     import {createMutation, useQueryClient} from '@tanstack/svelte-query';
-    import type {LoginFormInputs, LoginResponsePayload} from '$lib/interfaces/auth';
+    import type {
+        LoginResponsePayload,
+    } from '$lib/interfaces/auth';
     import {login} from '$lib/api/auth';
     import RefreshToken from '$lib/api/auth/refreshToken';
     import {page} from '$app/state';
     import {goto} from '$app/navigation';
-    import {createForm} from 'felte';
+    import {defaults, superForm} from 'sveltekit-superforms';
+    import {zod4, zod4Client} from 'sveltekit-superforms/adapters';
     import RequestError from '$lib/errors/RequestError';
     import type {Payload} from '$lib/interfaces/api';
-    import type {ChangePasswordFormErrors} from '$lib/interfaces/user';
-    import { toast } from 'svelte-sonner';
-    import * as zod from 'zod';
-    import {validator} from '@felte/validator-zod';
+    import {toast} from 'svelte-sonner';
+    import {z} from 'zod';
     import {Button} from '$lib/components/ui/button';
     import Logo from './logo.svelte';
-    import ErrorableLabel from '$lib/components/errorableLabel.svelte';
+    import {FormField, FormControl, FormLabel, FormFieldErrors} from '$lib/components/ui/form';
     import {Input} from '$lib/components/ui/input';
     import PasswordInput from '$lib/components/input/passwordInput.svelte';
+    import {normalizeFormErrors} from '$lib/utils/formErrors.ts';
 
     const queryClient = useQueryClient();
 
@@ -24,47 +26,67 @@
         mutationFn: login,
     });
 
-    const schema = zod.object({
-        email: zod.string().nonempty('Пожалуйста, введите email').email('Это непохоже на email'),
-        password: zod.string().nonempty('Пожалуйста, введите пароль'),
+    const schema = z.object({
+        email: z.email('Это непохоже на email'),
+        password: z.string().min(1, 'Пожалуйста, введите пароль'),
     });
 
-    const {form, errors, isSubmitting} = createForm<zod.infer<typeof schema>>({
-        onSubmit: async (values: LoginFormInputs) => await $mutation.mutateAsync(values),
-        onSuccess: async (result: unknown) => {
-            RefreshToken.set((result as LoginResponsePayload).data.refreshToken);
-            queryClient.clear();
-            const ref = page.url.searchParams.get('ref');
-            await goto(ref ?? '/');
-        },
-        onError: error => {
-            console.error(error);
-            if (error instanceof RequestError && (error.payload as Payload).errors) {
-                return (error.payload as Payload<null, ChangePasswordFormErrors>).errors;
+    type LoginFormInputs = z.infer<typeof schema>;
+
+    const form = superForm<LoginFormInputs>(defaults(zod4(schema)), {
+        SPA: true,
+        validators: zod4Client(schema),
+        onUpdate: async ({form}) => {
+            if (!form.valid) {
+                return;
             }
-            toast.error('Вход не удался');
+            try {
+                const result = await $mutation.mutateAsync(form.data);
+                RefreshToken.set((result as LoginResponsePayload).data.refreshToken);
+                queryClient.clear();
+                const ref = page.url.searchParams.get('ref');
+                await goto(ref ?? '/');
+            } catch (error) {
+                if (error instanceof RequestError && (error.payload as Payload).errors) {
+                    form.valid = false;
+                    const formErrors = (error.payload as Payload).errors;
+                    if (formErrors) {
+                        form.errors = normalizeFormErrors(formErrors, form.data);
+                    }
+                } else {
+                    console.log(error);
+                    toast.error('Вход не удался');
+                }
+            }
         },
-        extend: validator({schema}),
     });
+
+    const {form: formData, enhance, submitting} = form;
 </script>
 
 <section class="flex h-screen flex-col items-center justify-center p-6">
     <Logo class="mb-10 flex w-full max-w-sm" />
-    <form class="flex w-full max-w-sm flex-col gap-4" use:form>
-        <div>
-            <ErrorableLabel for="email" class="mb-1" error={$errors.email}>email</ErrorableLabel>
-            <Input type="email" id="email" name="email" required />
-        </div>
-        <div>
-            <ErrorableLabel for="password" class="mb-1" error={$errors.password}>
-                пароль
-            </ErrorableLabel>
-            <PasswordInput id="password" name="password" required />
-        </div>
+    <form class="flex w-full max-w-sm flex-col gap-4" use:enhance>
+        <FormField {form} name="email">
+            <FormControl>
+                {#snippet children({props})}
+                    <FormLabel>email</FormLabel>
+                    <Input type="email" {...props} bind:value={$formData.email} />
+                {/snippet}
+            </FormControl>
+            <FormFieldErrors />
+        </FormField>
+        <FormField {form} name="password">
+            <FormControl>
+                {#snippet children({props})}
+                    <FormLabel>пароль</FormLabel>
+                    <PasswordInput {...props} bind:value={$formData.password} />
+                {/snippet}
+            </FormControl>
+            <FormFieldErrors />
+        </FormField>
         <div class="mt-2">
-            <Button type="submit" class="text-base" disabled={$isSubmitting.valueOf()}>
-                Войти
-            </Button>
+            <Button type="submit" class="text-base" disabled={$submitting}>Войти</Button>
         </div>
     </form>
 </section>
