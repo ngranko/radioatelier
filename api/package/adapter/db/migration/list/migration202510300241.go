@@ -16,6 +16,8 @@ var Migration202510300241 = Migration{
         client.Exec("ALTER TABLE objects drop column longitude")
         client.Exec("ALTER TABLE objects drop column longitude")
         client.Exec("ALTER TABLE objects drop column tags")
+        client.Exec("ALTER TABLE objects drop index fk_objects_updater")
+        client.Exec("ALTER TABLE objects drop foreign key fk_objects_updater")
         client.Exec("ALTER TABLE objects drop column updated_by")
         client.Exec("drop table if exists cities")
         return nil

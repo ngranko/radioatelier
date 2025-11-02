@@ -8,7 +8,7 @@
         withStrengthIndicator?: boolean;
     }
 
-    let {withStrengthIndicator = false, value, ...rest}: Props = $props();
+    let {withStrengthIndicator = false, value = $bindable(), ...rest}: Props = $props();
 
     let isPlainPassword: boolean = $state(false);
     let PasswordStrength: Component | undefined = $state();
@@ -27,7 +27,7 @@
 </script>
 
 <div class="relative">
-    <Input type={isPlainPassword ? 'text' : 'password'} class="pr-11" {value} {...rest} />
+    <Input type={isPlainPassword ? 'text' : 'password'} class="pr-11" bind:value {...rest} />
     <Button
         variant="ghost"
         class="absolute top-1/2 right-0 w-10 transform-[translateY(-50%)] text-xl"

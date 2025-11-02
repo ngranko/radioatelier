@@ -1,7 +1,7 @@
 <script lang="ts">
     import Badge from '$lib/components/ui/badge/badge.svelte';
     import {Root as SelectRoot, Trigger, Content, Item} from '$lib/components/ui/select';
-    import {Field as FormField, Control as FormControl} from '$lib/components/ui/form';
+    import {FormField, FormControl} from '$lib/components/ui/form';
     import {type SuperForm} from 'sveltekit-superforms';
     import {cn} from '$lib/utils.ts';
     import {importState} from '$lib/state/import.svelte.ts';
@@ -42,7 +42,7 @@
 
         <FormField
             {form}
-            name="name"
+            name={field.name}
             class="col-start-2 col-end-2 row-start-1 row-end-1 space-y-0"
         >
             <FormControl>

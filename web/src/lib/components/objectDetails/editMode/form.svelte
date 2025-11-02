@@ -8,9 +8,9 @@
     import DeleteButton from '$lib/components/objectDetails/editMode/deleteButton.svelte';
     import BackButton from '$lib/components/objectDetails/editMode/backButton.svelte';
     import {activeMarker, pointList, searchPointList} from '$lib/stores/map';
-    import {createForm} from 'felte';
-    import * as zod from 'zod';
-    import {validator} from '@felte/validator-zod';
+    import {defaults, superForm} from 'sveltekit-superforms';
+    import {zod4, zod4Client} from 'sveltekit-superforms/adapters';
+    import {z} from 'zod';
     import CategorySelect from '$lib/components/objectDetails/editMode/categorySelect.svelte';
     import PrivateTagsSelect from '$lib/components/objectDetails/editMode/privateTagsSelect.svelte';
     import TagsSelect from '$lib/components/objectDetails/editMode/tagsSelect.svelte';
@@ -22,11 +22,17 @@
     import ImageUpload from '$lib/components/input/imageUpload.svelte';
     import {Button} from '$lib/components/ui/button';
     import {Input} from '$lib/components/ui/input';
-    import ErrorableLabel from '$lib/components/errorableLabel.svelte';
     import {Separator} from '$lib/components/ui/separator';
     import {Checkbox} from '$lib/components/ui/checkbox';
     import {Textarea} from '$lib/components/ui/textarea';
     import {activeObject, resetActiveObject} from '$lib/state/activeObject.svelte.ts';
+    import {getErrorArray, normalizeFormErrors} from '$lib/utils/formErrors.ts';
+    import {
+        FormField,
+        FormControl,
+        FormLabel,
+        FormFieldErrors,
+    } from '$lib/components/ui/form/index.js';
 
     const client = useQueryClient();
 
@@ -39,10 +45,10 @@
     }
 
     let {initialValues}: Props = $props();
-    let isSubmitting = $state(false);
 
-    const inValues = $derived({
-        ...initialValues,
+    const inValues: ObjectFormInputs = $derived({
+        ...(initialValues as Object),
+        source: initialValues.source ?? '',
         category: initialValues.category?.id ?? '',
         tags: initialValues.tags?.map(tag => tag.id) ?? [],
         privateTags: initialValues.privateTags?.map(tag => tag.id) ?? [],
@@ -91,74 +97,83 @@
         mutationFn: uploadImage,
     });
 
-    const schema = zod.object({
-        id: zod.string().nullable(),
-        lat: zod.string().nonempty(),
-        lng: zod.string().nonempty(),
-        image: zod.string().optional(),
-        isPublic: zod.boolean(),
-        isVisited: zod.boolean(),
-        name: zod
+    const schema = z.object({
+        id: z.string().optional(),
+        lat: z.string().min(1),
+        lng: z.string().min(1),
+        image: z.string().optional(),
+        isPublic: z.boolean(),
+        isVisited: z.boolean(),
+        name: z
             .string()
-            .nonempty('Пожалуйста, введите название')
+            .min(1, 'Пожалуйста, введите название')
             .max(255, 'Слишком длинное название'),
-        description: zod.string().optional(),
-        category: zod.string().nonempty('Нужно выбрать категорию'),
-        tags: zod.array(zod.string()),
-        privateTags: zod.array(zod.string()),
-        address: zod.string().max(128, 'Слишком длинный адрес').optional(),
-        city: zod.string().max(64, 'Слишком длинное название города').optional(),
-        country: zod.string().max(64, 'Слишком длинное название страны').optional(),
-        installedPeriod: zod.string().max(20, 'Слишком длинный период создания').optional(),
-        isRemoved: zod.boolean(),
-        removalPeriod: zod.string().max(20, 'Слишком длинный период утраты').optional(),
-        source: zod.string().url('Должна быть валидной ссылкой').or(zod.literal('')),
+        description: z.string().optional(),
+        category: z.string().min(1, 'Нужно выбрать категорию'),
+        tags: z.array(z.string()),
+        privateTags: z.array(z.string()),
+        address: z.string().max(128, 'Слишком длинный адрес').optional(),
+        city: z.string().max(64, 'Слишком длинное название города').optional(),
+        country: z.string().max(64, 'Слишком длинное название страны').optional(),
+        installedPeriod: z.string().max(20, 'Слишком длинный период создания').optional(),
+        isRemoved: z.boolean(),
+        removalPeriod: z.string().max(20, 'Слишком длинный период утраты').optional(),
+        source: z.url('Должна быть валидной ссылкой').or(z.literal('')),
     });
 
-    const {form, data, errors, reset, setData, isDirty, setIsDirty} = createForm<
-        zod.infer<typeof schema>
-    >({
-        onSubmit: async (values: LooseObject) => {
-            isSubmitting = true;
-            await handleSave(values);
-            isSubmitting = false;
+    type ObjectFormInputs = z.infer<typeof schema>;
+
+    const form = superForm<ObjectFormInputs>(defaults(inValues, zod4(schema)), {
+        SPA: true,
+        validators: zod4Client(schema),
+        onUpdate: async ({form}) => {
+            if (!form.valid) {
+                return;
+            }
+
+            try {
+                await handleSave(form.data);
+            } catch (error) {
+                if (error instanceof RequestError && (error.payload as ErrorPayload).errors) {
+                    form.valid = false;
+                    const formErrors = (error.payload as Payload).errors;
+                    if (formErrors) {
+                        form.errors = normalizeFormErrors(formErrors, form.data);
+                    }
+                } else {
+                    console.log(error);
+                }
+            }
         },
-        extend: validator({schema}),
-        initialValues: inValues,
     });
+
+    const {form: formData, errors, enhance, isTainted, submitting} = form;
 
     $effect(() => {
-        if ($isDirty.valueOf() && !activeObject.isDirty) {
+        if (isTainted() && !activeObject.isDirty) {
             activeObject.isDirty = true;
         }
     });
 
     function handleCategoryChange(category: string) {
-        setData('category', category);
-        setIsDirty(true);
+        $formData.category = category;
     }
 
     function handleTagsChange(items: string[]) {
-        setData('tags', items);
-        setIsDirty(true);
+        $formData.tags = items;
     }
 
     function handlePrivateTagsChange(items: string[]) {
-        setData('privateTags', items);
-        setIsDirty(true);
+        $formData.privateTags = items;
     }
 
-    async function handleSave(values: LooseObject) {
-        const object: LooseObject = {
-            ...values,
-        };
-
+    async function handleSave(values: ObjectFormInputs) {
         if (!activeObject.object) {
             return;
         }
 
         if (!values.id) {
-            const promise = createNewObject(object);
+            const promise = createNewObject(values);
             toast.promise(promise, {
                 loading: 'Создаю...',
                 success: 'Точка создана!',
@@ -166,7 +181,7 @@
             });
             await promise;
         } else {
-            const promise = updateExistingObject(object as Object);
+            const promise = updateExistingObject(values);
             toast.promise(promise, {
                 loading: 'Обновляю...',
                 success: 'Точка обновлена!',
@@ -176,61 +191,47 @@
         }
     }
 
-    async function createNewObject(object: LooseObject) {
-        try {
-            const result = await $createObjectMutation.mutateAsync(object);
-            client.setQueryData(['object', {id: result.data.id}], {
-                message: '',
-                data: {object: result.data},
-            });
-            pointList.add({object: result.data});
+    async function createNewObject(object: ObjectFormInputs) {
+        const result = await $createObjectMutation.mutateAsync(object);
+        client.setQueryData(['object', {id: result.data.id}], {
+            message: '',
+            data: {object: result.data},
+        });
+        pointList.add({object: result.data});
 
-            activeObject.object = result.data;
-            activeObject.detailsId = result.data.id;
-            activeObject.isEditing = false;
-            activeObject.isDirty = false;
-        } catch (error) {
-            if (error instanceof RequestError && (error.payload as ErrorPayload).errors) {
-                errors.set((error.payload as ErrorPayload).errors);
-            }
-            throw error;
-        }
+        activeObject.object = result.data;
+        activeObject.detailsId = result.data.id;
+        activeObject.isEditing = false;
+        activeObject.isDirty = false;
     }
 
-    async function updateExistingObject(object: Object) {
-        try {
-            const result = await $updateObjectMutation.mutateAsync({
-                id: object.id,
-                updatedFields: object,
-            });
-            client.setQueryData(['object', {id: result.data.id}], {
-                message: '',
-                data: {object: result.data},
-            });
-            pointList.update(result.data.id, {object: result.data});
-            searchPointList.update(result.data.id, {
-                object: {
-                    id: result.data.id,
-                    name: result.data.name,
-                    lat: result.data.lat,
-                    lng: result.data.lng,
-                    categoryName: result.data.category.name ?? '',
-                    address: result.data.address,
-                    city: result.data.city,
-                    country: result.data.country,
-                    type: 'local',
-                },
-            });
+    async function updateExistingObject(object: ObjectFormInputs) {
+        const result = await $updateObjectMutation.mutateAsync({
+            id: object.id as string,
+            updatedFields: object,
+        });
+        client.setQueryData(['object', {id: result.data.id}], {
+            message: '',
+            data: {object: result.data},
+        });
+        pointList.update(result.data.id, {object: result.data});
+        searchPointList.update(result.data.id, {
+            object: {
+                id: result.data.id,
+                name: result.data.name,
+                lat: result.data.lat,
+                lng: result.data.lng,
+                categoryName: result.data.category.name ?? '',
+                address: result.data.address,
+                city: result.data.city,
+                country: result.data.country,
+                type: 'local',
+            },
+        });
 
-            activeObject.object = result.data;
-            activeObject.isEditing = false;
-            activeObject.isDirty = false;
-        } catch (error: unknown) {
-            if (error instanceof RequestError && (error.payload as ErrorPayload).errors) {
-                errors.set((error.payload as ErrorPayload).errors);
-            }
-            throw error;
-        }
+        activeObject.object = result.data;
+        activeObject.isEditing = false;
+        activeObject.isDirty = false;
     }
 
     async function handleDelete() {
@@ -259,18 +260,19 @@
     }
 
     function handleBack() {
-        reset();
+        form.reset();
         activeObject.isEditing = false;
         activeObject.isDirty = false;
     }
 
     function handleImageChange(file: File) {
-        const formData = new FormData();
-        formData.append('file', file);
+        const uploadFormData = new FormData();
+        uploadFormData.append('file', file);
 
+        const imageId = inValues.id;
         toast.promise(
-            $image.mutateAsync({id: inValues.id as string, formData}).then(result => {
-                $data.image = result.data.url;
+            $image.mutateAsync({id: imageId as string, formData: uploadFormData}).then(result => {
+                $formData.image = result.data.url;
             }),
             {
                 loading: 'Загружаю...',
@@ -279,161 +281,235 @@
             },
         );
     }
-
-    function handleIsVisitedChange() {
-        $data.isVisited = !$data.isVisited;
-    }
-
-    function handleIsRemovedChange() {
-        $data.isRemoved = !$data.isRemoved;
-    }
-
-    function handleIsPublicChange() {
-        $data.isPublic = !$data.isPublic;
-    }
 </script>
 
-<form use:form>
+<form use:enhance>
     <div class="flex items-center justify-between gap-3 border-b bg-gray-50/50 px-4 py-2.5">
-        <Button type="submit" disabled={isSubmitting} class="px-6 text-base">Сохранить</Button>
+        <Button type="submit" disabled={$submitting} class="px-6 text-base">Сохранить</Button>
         {#if inValues.id}
-            <BackButton isConfirmationRequired={$isDirty.valueOf()} onClick={handleBack} />
+            <BackButton isConfirmationRequired={isTainted()} onClick={handleBack} />
             <span class="flex-1"></span>
             <DeleteButton onClick={handleDelete} />
         {/if}
     </div>
     <div class="h-[calc(100vh-8px*2-57px*2)] overflow-x-hidden overflow-y-auto p-4">
-        <div class="mb-6">
-            <ImageUpload name="image" bind:value={$data.image} onChange={handleImageChange} />
-        </div>
-        <Input type="hidden" name="id" value={inValues.id} />
-        <Input type="hidden" name="lat" value={inValues.lat} />
-        <Input type="hidden" name="lng" value={inValues.lng} />
+        <FormField {form} name="image" class="mb-6">
+            <FormControl>
+                {#snippet children({props})}
+                    <ImageUpload
+                        {...props}
+                        bind:value={$formData.image}
+                        onChange={handleImageChange}
+                    />
+                {/snippet}
+            </FormControl>
+            <FormFieldErrors />
+        </FormField>
+
+        <Input type="hidden" name="id" bind:value={$formData.id} />
+        <Input type="hidden" name="lat" bind:value={$formData.lat} />
+        <Input type="hidden" name="lng" bind:value={$formData.lng} />
+
         <div class="grid flex-1 grid-cols-2 content-start gap-x-4 gap-y-3">
-            <div class="col-span-full">
-                <ErrorableLabel for="name" class="mb-1" error={$errors.name}>
-                    название
-                </ErrorableLabel>
-                <Input type="text" id="name" name="name" data-1p-ignore />
-            </div>
+            <FormField {form} name="name" class="col-span-full">
+                <FormControl>
+                    {#snippet children({props})}
+                        <div class="space-y-1">
+                            <FormLabel>название</FormLabel>
+                            <Input
+                                type="text"
+                                {...props}
+                                bind:value={$formData.name}
+                                data-1p-ignore
+                            />
+                        </div>
+                    {/snippet}
+                </FormControl>
+                <FormFieldErrors />
+            </FormField>
 
             <Separator class="col-span-full mt-2" />
 
-            <div class="flex items-center space-x-2">
-                <Checkbox
-                    id="isVisited"
-                    name="isVisited"
-                    value="1"
-                    checked={inValues.isVisited}
-                    onCheckedChange={handleIsVisitedChange}
-                />
-                <ErrorableLabel for="isVisited" error={$errors.isVisited}>посещена</ErrorableLabel>
-            </div>
-            <div class="flex items-center space-x-2">
-                <Checkbox
-                    id="isRemoved"
-                    name="isRemoved"
-                    value="1"
-                    checked={inValues.isRemoved}
-                    onCheckedChange={handleIsRemovedChange}
-                />
-                <ErrorableLabel for="isRemoved" error={$errors.isRemoved}>утрачена</ErrorableLabel>
-            </div>
-            <div class="flex items-center space-x-2">
-                <Checkbox
-                    id="isPublic"
-                    name="isPublic"
-                    value="1"
-                    checked={inValues.isPublic}
-                    onCheckedChange={handleIsPublicChange}
-                />
-                <ErrorableLabel for="isPublic" error={$errors.isPublic}>публичная</ErrorableLabel>
-            </div>
+            <FormField {form} name="isVisited" class="space-y-0">
+                <FormControl>
+                    {#snippet children({props})}
+                        <div class="flex items-center space-x-2">
+                            <Checkbox {...props} bind:checked={$formData.isVisited} />
+                            <FormLabel class="mb-0">посещена</FormLabel>
+                        </div>
+                    {/snippet}
+                </FormControl>
+                <FormFieldErrors />
+            </FormField>
+            <FormField {form} name="isRemoved" class="space-y-0">
+                <FormControl>
+                    {#snippet children({props})}
+                        <div class="flex items-center space-x-2">
+                            <Checkbox {...props} bind:checked={$formData.isRemoved} />
+                            <FormLabel class="mb-0">утрачена</FormLabel>
+                        </div>
+                    {/snippet}
+                </FormControl>
+                <FormFieldErrors />
+            </FormField>
+            <FormField {form} name="isPublic" class="space-y-0">
+                <FormControl>
+                    {#snippet children({props})}
+                        <div class="flex items-center space-x-2">
+                            <Checkbox {...props} bind:checked={$formData.isPublic} />
+                            <FormLabel class="mb-0">публичная</FormLabel>
+                        </div>
+                    {/snippet}
+                </FormControl>
+                <FormFieldErrors />
+            </FormField>
 
             <Separator class="col-span-full mt-2" />
 
-            <div class="col-span-full">
-                <ErrorableLabel for="category" class="mb-1" error={$errors.category}>
-                    категория
-                </ErrorableLabel>
-                <CategorySelect
-                    name="category"
-                    value={inValues.category ?? ''}
-                    onChange={handleCategoryChange}
-                    error={$errors.category}
-                />
-            </div>
-            <div class="col-span-full">
-                <ErrorableLabel for="tags" class="mb-1" error={$errors.tags}>теги</ErrorableLabel>
-                <TagsSelect
-                    name="tags"
-                    value={inValues.tags ?? ''}
-                    error={$errors.tags}
-                    onChange={handleTagsChange}
-                />
-            </div>
-            <div class="col-span-full">
-                <ErrorableLabel for="tags" class="mb-1" error={$errors.privateTags}>
-                    приватные теги
-                </ErrorableLabel>
-                <PrivateTagsSelect
-                    name="privateTags"
-                    value={inValues.privateTags ?? ''}
-                    error={$errors.privateTags}
-                    onChange={handlePrivateTagsChange}
-                />
-            </div>
+            <FormField {form} name="category" class="col-span-full">
+                <FormControl>
+                    {#snippet children({props})}
+                        <div class="space-y-1">
+                            <FormLabel>категория</FormLabel>
+                            <CategorySelect
+                                {...props}
+                                value={$formData.category ?? ''}
+                                onChange={handleCategoryChange}
+                                error={getErrorArray($errors.category)}
+                            />
+                        </div>
+                    {/snippet}
+                </FormControl>
+                <FormFieldErrors />
+            </FormField>
+            <FormField {form} name="tags" class="col-span-full">
+                <FormControl>
+                    {#snippet children({props})}
+                        <div class="space-y-1">
+                            <FormLabel>теги</FormLabel>
+                            <TagsSelect
+                                {...props}
+                                value={$formData.tags ?? []}
+                                error={getErrorArray($errors.tags)}
+                                onChange={handleTagsChange}
+                            />
+                        </div>
+                    {/snippet}
+                </FormControl>
+                <FormFieldErrors />
+            </FormField>
+            <FormField {form} name="privateTags" class="col-span-full">
+                <FormControl>
+                    {#snippet children({props})}
+                        <div class="space-y-1">
+                            <FormLabel>приватные теги</FormLabel>
+                            <PrivateTagsSelect
+                                {...props}
+                                value={$formData.privateTags ?? []}
+                                error={getErrorArray($errors.privateTags)}
+                                onChange={handlePrivateTagsChange}
+                            />
+                        </div>
+                    {/snippet}
+                </FormControl>
+                <FormFieldErrors />
+            </FormField>
 
             <Separator class="col-span-full mt-2" />
 
-            <div class="col-span-full">
-                <ErrorableLabel for="address" class="mb-1" error={$errors.address}>
-                    адрес
-                </ErrorableLabel>
-                <Input type="text" id="address" name="address" />
-            </div>
-            <div class="col-span-1">
-                <ErrorableLabel for="city" class="mb-1" error={$errors.city}>город</ErrorableLabel>
-                <Input type="text" id="city" name="city" />
-            </div>
-            <div class="col-span-1">
-                <ErrorableLabel for="country" class="mb-1" error={$errors.country}>
-                    страна
-                </ErrorableLabel>
-                <Input type="text" id="country" name="country" />
-            </div>
+            <FormField {form} name="address" class="col-span-full">
+                <FormControl>
+                    {#snippet children({props})}
+                        <div class="space-y-1">
+                            <FormLabel>адрес</FormLabel>
+                            <Input type="text" {...props} bind:value={$formData.address} />
+                        </div>
+                    {/snippet}
+                </FormControl>
+                <FormFieldErrors />
+            </FormField>
+            <FormField {form} name="city" class="col-span-1">
+                <FormControl>
+                    {#snippet children({props})}
+                        <div class="space-y-1">
+                            <FormLabel>город</FormLabel>
+                            <Input type="text" {...props} bind:value={$formData.city} />
+                        </div>
+                    {/snippet}
+                </FormControl>
+                <FormFieldErrors />
+            </FormField>
+            <FormField {form} name="country" class="col-span-1">
+                <FormControl>
+                    {#snippet children({props})}
+                        <div class="space-y-1">
+                            <FormLabel>страна</FormLabel>
+                            <Input type="text" {...props} bind:value={$formData.country} />
+                        </div>
+                    {/snippet}
+                </FormControl>
+                <FormFieldErrors />
+            </FormField>
 
             <Separator class="col-span-full mt-2" />
 
-            <div class="col-span-1">
-                <ErrorableLabel for="installedPeriod" class="mb-1" error={$errors.installedPeriod}>
-                    период создания
-                </ErrorableLabel>
-                <Input type="text" id="installedPeriod" name="installedPeriod" />
-            </div>
-            {#if $data.isRemoved}
-                <div class="col-span-1">
-                    <ErrorableLabel for="removalPeriod" class="mb-1" error={$errors.removalPeriod}>
-                        период пропажи
-                    </ErrorableLabel>
-                    <Input type="text" id="removalPeriod" name="removalPeriod" />
-                </div>
+            <FormField {form} name="installedPeriod" class="col-span-1">
+                <FormControl>
+                    {#snippet children({props})}
+                        <div class="space-y-1">
+                            <FormLabel>период создания</FormLabel>
+                            <Input type="text" {...props} bind:value={$formData.installedPeriod} />
+                        </div>
+                    {/snippet}
+                </FormControl>
+                <FormFieldErrors />
+            </FormField>
+            {#if $formData.isRemoved}
+                <FormField {form} name="removalPeriod" class="col-span-1">
+                    <FormControl>
+                        {#snippet children({props})}
+                            <div class="space-y-1">
+                                <FormLabel>период пропажи</FormLabel>
+                                <Input
+                                    type="text"
+                                    {...props}
+                                    bind:value={$formData.removalPeriod}
+                                />
+                            </div>
+                        {/snippet}
+                    </FormControl>
+                    <FormFieldErrors />
+                </FormField>
             {/if}
 
             <Separator class="col-span-full mt-2" />
 
-            <div class="col-span-full">
-                <ErrorableLabel for="description" class="mb-1" error={$errors.description}>
-                    информация
-                </ErrorableLabel>
-                <Textarea id="description" name="description" class="resize-y" />
-            </div>
-            <div class="col-span-full">
-                <ErrorableLabel for="source" class="mb-1" error={$errors.source}>
-                    ссылка на источник
-                </ErrorableLabel>
-                <Input type="text" id="source" name="source" />
-            </div>
+            <FormField {form} name="description" class="col-span-full">
+                <FormControl>
+                    {#snippet children({props})}
+                        <div class="space-y-1">
+                            <FormLabel>информация</FormLabel>
+                            <Textarea
+                                {...props}
+                                bind:value={$formData.description}
+                                class="resize-y"
+                            />
+                        </div>
+                    {/snippet}
+                </FormControl>
+                <FormFieldErrors />
+            </FormField>
+            <FormField {form} name="source" class="col-span-full">
+                <FormControl>
+                    {#snippet children({props})}
+                        <div class="space-y-1">
+                            <FormLabel>ссылка на источник</FormLabel>
+                            <Input type="text" {...props} bind:value={$formData.source} />
+                        </div>
+                    {/snippet}
+                </FormControl>
+                <FormFieldErrors />
+            </FormField>
         </div>
     </div>
 </form>

@@ -46,7 +46,14 @@ export interface BareObject {
     isVisited: boolean;
 }
 
-export type CreateObjectInputs = Omit<Object, 'id'>;
+export interface ObjectFormInputs extends Omit<TaxonomlessObject, 'isOwner'> {
+    id?: string;
+    category: string;
+    tags: string[];
+    privateTags: string[];
+}
+
+export type CreateObjectInputs = Omit<ObjectFormInputs, 'id'>;
 
 export type CreateObjectResponsePayload = Object;
 
@@ -80,7 +87,7 @@ export interface GetObjectResponsePayload {
 
 export interface UpdateObjectInputs {
     id: string;
-    updatedFields: Omit<Object, 'id' | 'lat' | 'lng'>;
+    updatedFields: Partial<Omit<ObjectFormInputs, 'id' | 'lat' | 'lng'>>;
 }
 
 export type UpdateObjectResponsePayload = Object;
