@@ -106,6 +106,7 @@
 
     async function handleSave(values: LightFormInputs) {
         if (!activeObject.object) {
+            toast.warning('Точка не найдена');
             return;
         }
 
