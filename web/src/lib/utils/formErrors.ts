@@ -2,15 +2,16 @@ import type {ValidationErrors} from 'sveltekit-superforms';
 
 export type FormErrorMap = Record<string, string | string[] | undefined>;
 
-export function getErrorArray(fieldErrors: any): string[] | null {
+export function getErrorArray(fieldErrors: unknown): string[] | null {
     if (!fieldErrors) {
         return null;
     }
-    if (Array.isArray(fieldErrors)) {
+    if (Array.isArray(fieldErrors) && fieldErrors.every(item => typeof item === 'string')) {
         return fieldErrors;
     }
-    if (fieldErrors._errors) {
-        return fieldErrors._errors;
+    if (typeof fieldErrors === 'object' && fieldErrors !== null && '_errors' in fieldErrors) {
+        const errors = (fieldErrors as Record<string, unknown>)._errors;
+        return Array.isArray(errors) && errors.every(item => typeof item === 'string') ? errors : null;
     }
     return null;
 }

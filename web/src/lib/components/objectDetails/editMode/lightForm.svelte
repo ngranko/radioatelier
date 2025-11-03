@@ -67,7 +67,7 @@
     const inValues: LightFormInputs = $derived({
         id: initialValues.id as string,
         isVisited: initialValues.isVisited ?? false,
-        privateTags: initialValues.privateTags?.map(item => item.id) as string[],
+        privateTags: initialValues.privateTags?.map(item => item.id) ?? [],
     });
 
     const form = superForm<LightFormInputs>(defaults(inValues, zod4(schema)), {
@@ -105,16 +105,16 @@
     }
 
     async function handleSave(values: LightFormInputs) {
+        if (!activeObject.object) {
+            return;
+        }
+
         const object: ObjectFormInputs = {
             ...(activeObject.object as Object),
             category: (activeObject.object as Object).category.id,
             tags: (activeObject.object as Object).tags.map(item => item.id),
             ...values,
         };
-
-        if (!activeObject.object) {
-            return;
-        }
 
         const promise = updateExistingObject(object);
         toast.promise(promise, {
@@ -141,7 +141,7 @@
                 name: result.data.name,
                 lat: result.data.lat,
                 lng: result.data.lng,
-                categoryName: result.data.category.name ?? '',
+                categoryName: result.data.category?.name ?? '',
                 address: result.data.address,
                 city: result.data.city,
                 country: result.data.country,

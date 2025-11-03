@@ -45,7 +45,7 @@
         }
         
         const isOwner = initialValues.isOwner ?? (activeObject.object as Object | null)?.isOwner ?? false;
-        return permissions.canEditAll && !isOwner;
+        return permissions.canEditPersonal && !isOwner;
     });
 
     function handleMinimizeClick() {

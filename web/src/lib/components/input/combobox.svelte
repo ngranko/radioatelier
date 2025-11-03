@@ -101,10 +101,12 @@
                 onChange?.(value.length > 0 ? value : []);
             } else {
                 value = newOption[valueField];
-                onChange?.(newOption as any);
+                onChange?.(value);
                 open = false;
             }
             searchValue = '';
+        }).catch(error => {
+            console.error('Failed to create option:', error);
         });
     }
 
@@ -112,7 +114,7 @@
         e.stopPropagation();
         if (multiple) {
             value = [];
-            onChange?.(null);
+            onChange?.([]);
         } else {
             value = undefined;
             onChange?.(null);

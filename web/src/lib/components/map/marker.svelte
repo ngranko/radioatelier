@@ -96,6 +96,12 @@
             addressAppliedForKey = key;
 
             activeObject.isLoading = false;
+
+            if (!activeObject.object) {
+                console.warn('Address fetch completed but activeObject.object is not set');
+                return;
+            }
+
             activeObject.object = {
                 ...(activeObject.object as Object),
                 address: $objectAddress.data?.data.address ?? '',

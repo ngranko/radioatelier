@@ -28,10 +28,11 @@
     {#if multiple && selectedOptions.length > 0}
         {#each selectedOptions as option}
             <Badge variant="secondary">
-                {option.name}
+                {option[labelField]}
                 <button
                     type="button"
                     onclick={() => onChange(option)}
+                    aria-label="Remove {option[labelField]}"
                     class="hover:bg-accent rounded-sm p-0.5"
                 >
                     <XIcon class="size-3" />
