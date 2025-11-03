@@ -21,8 +21,8 @@
 </script>
 
 <Actions lat={initialValues.lat ?? ''} lng={initialValues.lng ?? ''} {permissions} />
-<div class="relative h-[calc(100vh-8px*2-57px*2)] overflow-x-hidden overflow-y-auto p-4">
-    <div class="mb-6">
+<div class="relative h-[calc(100vh-8px*2-57px*2)] overflow-x-hidden overflow-y-auto p-4 space-y-3">
+    <div class="mb-3">
         <ImageUpload
             bind:value={initialValues.image}
             onChange={() => {
@@ -31,17 +31,21 @@
             disabled
         />
     </div>
-    <div class="flex items-center justify-between">
-        <div class="text-sm text-gray-500">{initialValues.category?.name ?? ''}</div>
-        <Flags
-            isPublic={initialValues.isPublic ?? false}
-            isVisited={initialValues.isVisited ?? false}
-            isRemoved={initialValues.isRemoved ?? false}
-        />
+    <div class={!initialValues.tags?.length && !initialValues.privateTags?.length ? 'mb-4' : ''}>
+        <div class="flex items-center justify-between">
+            <div class="text-sm text-gray-500">{initialValues.category?.name ?? ''}</div>
+            <Flags
+                isPublic={initialValues.isPublic ?? false}
+                isVisited={initialValues.isVisited ?? false}
+                isRemoved={initialValues.isRemoved ?? false}
+            />
+        </div>
+        <h1 class="text-2xl leading-tight font-semibold text-gray-900">{initialValues.name}</h1>
     </div>
-    <h1 class="mb-3 text-2xl leading-tight font-semibold text-gray-900">{initialValues.name}</h1>
     {#if initialValues.tags?.length || initialValues.privateTags?.length}
-        <Tags tags={initialValues.tags ?? []} privateTags={initialValues.privateTags ?? []} />
+        <div class="mb-4">
+            <Tags tags={initialValues.tags ?? []} privateTags={initialValues.privateTags ?? []} />
+        </div>
     {/if}
     {#if initialValues.address || initialValues.city || initialValues.country}
         <Address
@@ -51,14 +55,12 @@
         />
     {/if}
     {#if initialValues.description}
-        <div class="mb-4">
-            <p class="text-sm leading-relaxed whitespace-pre-line text-gray-700">
-                {initialValues.description}
-            </p>
-        </div>
+        <p class="text-sm leading-relaxed whitespace-pre-line text-gray-700">
+            {initialValues.description}
+        </p>
     {/if}
     {#if initialValues.installedPeriod || initialValues.removalPeriod}
-        <div class="mb-4 space-y-1">
+        <div class="space-y-1">
             {#if initialValues.installedPeriod}
                 <div class="text-sm text-gray-500">
                     Появилась <span class="lowercase">
