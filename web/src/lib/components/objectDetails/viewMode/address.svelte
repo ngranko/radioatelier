@@ -22,6 +22,6 @@
     }
 </script>
 
-<div class="mb-4 text-base text-gray-900">
+<p class="text-base text-gray-900">
     {composeAddress()}
-</div>
+</p>

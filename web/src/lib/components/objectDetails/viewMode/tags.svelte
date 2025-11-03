@@ -1,4 +1,5 @@
 <script lang="ts">
+    import Badge from '$lib/components/ui/badge/badge.svelte';
     import type {FuzzyTag} from '$lib/interfaces/tag.js';
     import type {FuzzyPrivateTag} from '$lib/interfaces/privateTag.ts';
 
@@ -13,19 +14,17 @@
     const sortedPrivateTags = $derived([...privateTags].sort((a, b) => (a.name && b.name ? a.name.localeCompare(b.name) : 0)));
 </script>
 
-<div class="mb-4 flex flex-wrap gap-1">
+<div class="flex flex-wrap gap-2">
     {#each sortedTags as tag}
-        <span
-            class="rounded-sm border border-blue-200 bg-blue-50 px-2.5 pt-0.5 pb-1 text-xs font-medium lowercase"
-        >
-            {tag.name}
-        </span>
+        <Badge variant="secondary" class="bg-sky-100 text-sky-800">
+            <i class="fa-solid fa-tag"></i>
+            <span class="lowercase">{tag.name}</span>
+        </Badge>
     {/each}
     {#each sortedPrivateTags as tag}
-        <span
-            class="rounded-sm border border-amber-200 bg-amber-50 px-2.5 pt-0.5 pb-1 text-xs font-medium lowercase"
-        >
-            {tag.name}
-        </span>
+        <Badge variant="secondary" class="bg-amber-100 text-amber-900">
+            <i class="fa-solid fa-lock"></i>
+            <span class="lowercase">{tag.name}</span>
+        </Badge>
     {/each}
 </div>

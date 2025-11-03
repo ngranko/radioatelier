@@ -10,7 +10,7 @@
     let {isPublic, isVisited, isRemoved}: Props = $props();
 </script>
 
-<span class="flex gap-1">
+<span class="flex gap-1 text-slate-500">
     {#if isPublic}
         <Tooltip>
             {#snippet button()}
