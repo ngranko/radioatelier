@@ -66,7 +66,7 @@
             .filter(item => !($formData as Record<string, any>)[item.name]).length,
     );
 
-    const selectedFieldsCount = $derived(Object.values($formData).filter(v => Boolean(v)).length);
+    const selectedFieldsCount = $derived(Object.values($formData).filter(v => v !== null).length);
 
     function handleImport(values: ImportMappings) {
         importState.provider.start(importState.id, importState.separator, values);
