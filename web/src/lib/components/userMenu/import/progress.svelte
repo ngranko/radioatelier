@@ -1,5 +1,4 @@
 <script lang="ts">
-    import {Button} from '$lib/components/ui/button';
     import {DialogClose, DialogFooter} from '$lib/components/ui/dialog';
     import {Progress} from '$lib/components/ui/progress';
     import {importState} from '$lib/state/import.svelte.ts';
@@ -31,7 +30,5 @@
     </div>
 </div>
 <DialogFooter>
-    <DialogClose>
-        <Button variant="ghost">Отменить</Button>
-    </DialogClose>
+    <DialogClose>Отменить</DialogClose>
 </DialogFooter>

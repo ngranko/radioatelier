@@ -98,9 +98,7 @@
         </div>
     </div>
     <DialogFooter class="border-t bg-white pt-2">
-        <DialogClose>
-            <Button variant="ghost">Отменить</Button>
-        </DialogClose>
+        <DialogClose>Отменить</DialogClose>
         <Button type="submit" disabled={$submitting}>Импортировать</Button>
     </DialogFooter>
 </form>

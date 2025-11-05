@@ -1,5 +1,10 @@
 <script lang="ts">
-    import {Root as DialogRoot, Content} from '$lib/components/ui/dialog';
+    import {
+        Root as DialogRoot,
+        Content,
+        DialogHeader,
+        DialogTitle,
+    } from '$lib/components/ui/dialog';
     import UploadFile from '$lib/components/userMenu/import/uploadFile.svelte';
     import PreviewImport from '$lib/components/userMenu/import/preview.svelte';
     import Progress from '$lib/components/userMenu/import/progress.svelte';
@@ -13,7 +18,6 @@
         ImportStepProgress,
         ImportStepUpload,
     } from '$lib/interfaces/import.ts';
-    import {DialogHeader, DialogTitle} from '$lib/components/ui/dialog';
     import Success from '$lib/components/userMenu/import/success.svelte';
     import Error from '$lib/components/userMenu/import/error.svelte';
     import {importState, resetImportState} from '$lib/state/import.svelte.ts';

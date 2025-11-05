@@ -29,8 +29,6 @@
     </div>
 </div>
 <DialogFooter>
-    <DialogClose>
-        <Button variant="ghost">Закрыть</Button>
-    </DialogClose>
-    <Button variant="default" onclick={handleReset}>Импортировать другой файл</Button>
+    <DialogClose>Закрыть</DialogClose>
+    <Button onclick={handleReset}>Импортировать другой файл</Button>
 </DialogFooter>
