@@ -3,7 +3,7 @@
     import config from '$lib/config';
     import {cn} from '$lib/utils';
     import Button from '../ui/button/button.svelte';
-    import { mapState } from '$lib/state/map.svelte';
+    import {mapState} from '$lib/state/map.svelte';
 
     interface Props {
         panorama: google.maps.StreetViewPanorama | null;
@@ -157,7 +157,7 @@
     </Button>
 
     <div
-        class="pointer-events-auto absolute top-3 right-3 h-40 w-55 overflow-hidden rounded-xl bg-white shadow-[0_2px_10px_rgba(0,0,0,0.25)] sm:top-auto sm:bottom-3"
+        class="pointer-events-auto absolute top-3 left-3 h-40 w-55 overflow-hidden rounded-xl bg-white shadow-[0_2px_10px_rgba(0,0,0,0.25)] sm:top-auto sm:right-3 sm:bottom-3 sm:left-auto"
         bind:this={miniMapContainer}
     ></div>
 </div>
