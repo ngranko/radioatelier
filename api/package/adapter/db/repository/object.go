@@ -22,6 +22,7 @@ type Object interface {
     SetTags(object *model.Object, tags []ulid.ULID) error
     GetPrivateTags(object *model.Object, user *model.User) ([]*model.PrivateTag, error)
     SetPrivateTags(object *model.Object, user *model.User, tags []ulid.ULID) error
+    GetCover(object *model.Object) (*model.Image, error)
 }
 
 func NewObjectRepository(client *db.Client) Object {
@@ -114,4 +115,14 @@ func (r *objectRepo) SetPrivateTags(object *model.Object, user *model.User, tags
         tagList = append(tagList, model.PrivateTag{Base: model.Base{ID: tag}})
     }
     return r.client.Model(object).Association("PrivateTags").Append(&tagList)
+}
+
+func (r *objectRepo) GetCover(object *model.Object) (*model.Image, error) {
+    if object.CoverID == nil {
+        return nil, nil
+    }
+
+    var image *model.Image
+    err := r.client.Model(object).Association("Cover").Find(&image)
+    return image, err
 }

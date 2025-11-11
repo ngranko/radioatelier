@@ -1,25 +1,32 @@
 <script lang="ts">
-    import {fade} from 'svelte/transition';
-    import {cubicInOut} from 'svelte/easing';
     import {Button} from '$lib/components/ui/button';
+    import CropDialog from '$lib/components/input/imageUpload/cropDialog.svelte';
+    import ImageViewer from '$lib/components/input/imageUpload/imageViewer.svelte';
+    import {toast} from 'svelte-sonner';
+    import {activeObject} from '$lib/state/activeObject.svelte.ts';
+    import type {Object} from '$lib/interfaces/object.ts';
 
     interface Props {
-        id?: string | undefined;
-        name?: string | undefined;
-        value?: string | undefined;
+        id?: string;
+        name?: string;
+        value?: string;
         disabled?: boolean;
+        url?: string;
+        previewUrl?: string;
         onChange(file: File): void;
     }
 
     let {
-        id = undefined,
-        name = undefined,
+        id,
+        name,
         value = $bindable(),
         disabled = false,
+        url = $bindable(),
+        previewUrl = $bindable(),
         onChange,
     }: Props = $props();
 
-    let isPreviewOpen = $state(false);
+    let isViewerOpen = $state(false);
 
     let imageUploadRef: HTMLInputElement | undefined = $state();
 
@@ -27,11 +34,16 @@
         const file = (event.target as HTMLInputElement).files?.[0];
 
         if (!file) {
-            console.error('no file selected');
+            toast.warning('Не удалось загрузить изображение');
             return;
         }
 
         onChange(file);
+    }
+
+    function handlePreviewChange(newPreviewUrl: string) {
+        previewUrl = newPreviewUrl;
+        (activeObject.object as Object).cover.previewUrl = newPreviewUrl;
     }
 
     function handleUploadClick() {
@@ -42,25 +54,23 @@
         value = undefined;
     }
 
-    function handleOpen() {
-        if (!value) {
-            return;
+    function handleViewerOpen() {
+        if (url) {
+            isViewerOpen = true;
         }
-
-        isPreviewOpen = true;
     }
 
-    function handleClose() {
-        isPreviewOpen = false;
+    function getImageUrl(): string {
+        return previewUrl || url || '/image_empty.jpg';
     }
 </script>
 
-<div class="relative w-full overflow-hidden rounded-lg border-2 border-gray-300 bg-gray-50">
+<div class="relative w-full overflow-hidden rounded-lg border-2 border-gray-200 bg-gray-50">
     <button
         type="button"
         class="block aspect-2/1 w-full border-none bg-cover bg-center bg-no-repeat"
-        style="background-image:url('{value && value.length ? value : '/image_empty.jpg'}')"
-        onclick={handleOpen}
+        style="background-image:url('{getImageUrl()}')"
+        onclick={handleViewerOpen}
         aria-label="Изображение"
     ></button>
     {#if !disabled}
@@ -75,6 +85,9 @@
                 <i class="fa-solid fa-arrow-up-from-bracket"></i>
             </Button>
             {#if value}
+                {#if url}
+                    <CropDialog imageId={value} imageUrl={url} onChange={handlePreviewChange} />
+                {/if}
                 <Button
                     variant="secondary"
                     size="icon"
@@ -98,14 +111,7 @@
         {disabled}
     />
 
-    {#if isPreviewOpen}
-        <button
-            class="fixed inset-0 z-10 flex items-center justify-center border-none bg-black/50"
-            onclick={handleClose}
-            transition:fade={{duration: 100, easing: cubicInOut}}
-            type="button"
-        >
-            <img class="max-h-full max-w-full" src={value} alt="Изображение" />
-        </button>
+    {#if url}
+        <ImageViewer bind:isOpen={isViewerOpen} {url} />
     {/if}
 </div>

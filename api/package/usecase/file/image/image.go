@@ -37,7 +37,7 @@ func NewImageFromURL(url string) (*Image, error) {
     if err != nil {
         return nil, err
     }
-    defer resp.Body.Close()
+    defer func() { _ = resp.Body.Close() }()
 
     img, err := makeRawImage(resp.Body, resp.Header.Get("Content-Type"))
     if err != nil {
@@ -70,6 +70,32 @@ func (i *Image) ResizeToFit(sizeLimit int) {
     i.raw.Resize(width, height)
 }
 
+func (i *Image) Crop(x, y, width, height int) {
+    i.raw.Crop(x, y, width, height)
+}
+
+func (i *Image) CropCenter() {
+    originalWidth := i.raw.GetWidth()
+    originalHeight := i.raw.GetHeight()
+    croppedWidth := 0
+    croppedHeight := 0
+
+    originalAspect := originalWidth / originalHeight
+
+    if originalAspect < 2 {
+        croppedWidth = originalWidth
+        croppedHeight = croppedWidth / 2
+    } else {
+        croppedHeight = originalHeight
+        croppedWidth = croppedHeight * 2
+    }
+
+    x := (originalWidth - croppedWidth) / 2
+    y := (originalHeight - croppedHeight) / 2
+
+    i.Crop(x, y, croppedWidth, croppedHeight)
+}
+
 func (i *Image) getSizeInsideLimit(sizeLimit int) (width, height int) {
     if int(math.Max(float64(i.raw.GetWidth()), float64(i.raw.GetHeight()))) < sizeLimit {
         return i.raw.GetWidth(), i.raw.GetHeight()
@@ -86,8 +112,8 @@ func (i *Image) GetFormat() string {
     return i.raw.GetFormat()
 }
 
-func (i *Image) Save(path string) (file.File, error) {
-    dest, err := file.Create(path)
+func (i *Image) Save(path string, overwrite bool) (file.File, error) {
+    dest, err := file.Create(path, overwrite)
     if err != nil {
         return nil, err
     }
@@ -98,6 +124,10 @@ func (i *Image) Save(path string) (file.File, error) {
     }
 
     return dest, nil
+}
+
+func (i *Image) Persist() {
+    i.raw.Persist()
 }
 
 func makeRawImage(file io.Reader, mimeType string) (image.Image, error) {

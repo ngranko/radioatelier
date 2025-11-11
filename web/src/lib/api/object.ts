@@ -1,6 +1,7 @@
-import type {Payload} from '$lib/interfaces/api';
-import JsonRequest from '$lib/api/request/JsonRequest';
 import {METHOD_DELETE, METHOD_GET, METHOD_POST, METHOD_PUT} from '$lib/api/constants';
+import AuthRequest from '$lib/api/request/AuthRequest';
+import JsonRequest from '$lib/api/request/JsonRequest';
+import type {Payload} from '$lib/interfaces/api';
 import type {
     CreateObjectInputs,
     CreateObjectResponsePayload,
@@ -16,10 +17,7 @@ import type {
     SearchLocalResponsePayload,
     UpdateObjectInputs,
     UpdateObjectResponsePayload,
-    UploadImageInputs,
-    UploadImagePayloadData,
 } from '$lib/interfaces/object';
-import AuthRequest from '$lib/api/request/AuthRequest';
 import type {QueryFunctionContext} from '@tanstack/svelte-query';
 
 export async function createObject(
@@ -53,15 +51,6 @@ export async function repositionObject(
         new JsonRequest(`/api/object/${values.id}/position`, METHOD_PUT).setParams(
             values.updatedFields,
         ),
-    ).send();
-}
-
-export async function uploadImage({
-    id,
-    formData,
-}: UploadImageInputs): Promise<Payload<UploadImagePayloadData>> {
-    return new AuthRequest(
-        new JsonRequest(`/api/object/${id}/image`, METHOD_POST).setFormData(formData),
     ).send();
 }
 

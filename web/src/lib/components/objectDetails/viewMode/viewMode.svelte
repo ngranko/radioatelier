@@ -21,13 +21,15 @@
 </script>
 
 <Actions lat={initialValues.lat ?? ''} lng={initialValues.lng ?? ''} {permissions} />
-<div class="relative h-[calc(100vh-8px*2-57px*2)] overflow-x-hidden overflow-y-auto p-4 space-y-3">
+<div class="relative h-[calc(100vh-8px*2-57px*2)] space-y-3 overflow-x-hidden overflow-y-auto p-4">
     <div class="mb-3">
         <ImageUpload
-            bind:value={initialValues.image}
+            value={initialValues.cover?.id}
             onChange={() => {
                 /* do nothing */
             }}
+            url={initialValues.cover?.url}
+            previewUrl={initialValues.cover?.previewUrl}
             disabled
         />
     </div>

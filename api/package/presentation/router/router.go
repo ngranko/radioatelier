@@ -3,6 +3,7 @@ package router
 import (
     "radioatelier/package/infrastructure/router"
     "radioatelier/package/presentation/controller/category"
+    "radioatelier/package/presentation/controller/image"
     "radioatelier/package/presentation/controller/nonce"
     "radioatelier/package/presentation/controller/object"
     "radioatelier/package/presentation/controller/objectImport"
@@ -21,6 +22,13 @@ func ConfigureRouter() *router.Router {
 
         r.Post("/", category.Create)
         r.Get("/list", category.GetList)
+    })
+
+    r.Route("/image", func(r *router.Router) {
+        r.Use(middleware.VerifyAccessToken)
+
+        r.Post("/", image.UploadImage)
+        r.Post("/{id}/preview", image.CreatePreview)
     })
 
     r.Route("/import", func(r *router.Router) {
@@ -51,7 +59,6 @@ func ConfigureRouter() *router.Router {
         r.Get("/address", object.GetAddress)
         r.Put("/{id}", object.Update)
         r.Put("/{id}/position", object.Reposition)
-        r.Post("/{id}/image", object.UploadImage)
         r.Delete("/{id}", object.Delete)
         r.Get("/search/local", object.SearchLocal)
         r.Get("/search/google", object.SearchGoogle)

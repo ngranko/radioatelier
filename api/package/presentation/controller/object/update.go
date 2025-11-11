@@ -21,7 +21,7 @@ type UpdateInput struct {
     IsRemoved       bool        `json:"isRemoved"`
     RemovalPeriod   string      `json:"removalPeriod" validate:"max=20"`
     Source          string      `json:"source" validate:"max=0|url"`
-    Image           string      `json:"image"`
+    Cover           *ulid.ULID  `json:"cover"`
     IsPublic        bool        `json:"isPublic"`
     IsVisited       bool        `json:"isVisited"`
     Category        ulid.ULID   `json:"category"`
@@ -42,7 +42,7 @@ type UpdatePayloadData struct {
     IsRemoved       bool      `json:"isRemoved"`
     RemovalPeriod   string    `json:"removalPeriod"`
     Source          string    `json:"source"`
-    Image           string    `json:"image"`
+    Cover           *Cover    `json:"cover"`
     IsPublic        bool      `json:"isPublic"`
     IsVisited       bool      `json:"isVisited"`
     Category        Category  `json:"category"`
@@ -129,7 +129,7 @@ func Update(w http.ResponseWriter, r *http.Request) {
     objModel.InstalledPeriod = payload.InstalledPeriod
     objModel.RemovalPeriod = payload.RemovalPeriod
     objModel.Source = payload.Source
-    objModel.Image = payload.Image
+    objModel.CoverID = payload.Cover
     objModel.IsPublic = payload.IsPublic
     objModel.IsRemoved = payload.IsRemoved
     err = object.Update()
@@ -171,6 +171,7 @@ func Update(w http.ResponseWriter, r *http.Request) {
     category, _ := getCategory(object)
     tags, _ := getTags(object)
     privateTags, _ := getPrivateTags(object, user)
+    cover, _ := getCover(object)
 
     router.NewResponse().
         WithStatus(http.StatusOK).
@@ -188,7 +189,7 @@ func Update(w http.ResponseWriter, r *http.Request) {
                 IsRemoved:       objModel.IsRemoved,
                 RemovalPeriod:   objModel.RemovalPeriod,
                 Source:          objModel.Source,
-                Image:           objModel.Image,
+                Cover:           cover,
                 IsPublic:        objModel.IsPublic,
                 IsVisited:       objectUserModel.IsVisited,
                 Category:        category,

@@ -114,6 +114,7 @@
             ...(activeObject.object as Object),
             category: (activeObject.object as Object).category.id,
             tags: (activeObject.object as Object).tags.map(item => item.id),
+            cover: (activeObject.object as Object).cover?.id,
             ...values,
         };
 
@@ -171,10 +172,12 @@
         <!-- Header (mirror of view mode) -->
         <div class="mb-6">
             <ImageUpload
-                bind:value={initialValues.image}
+                value={initialValues.cover?.id}
                 onChange={() => {
                     /* do nothing */
                 }}
+                url={initialValues.cover?.url}
+                previewUrl={initialValues.cover?.previewUrl}
                 disabled
             />
         </div>
