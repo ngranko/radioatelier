@@ -16,7 +16,7 @@
     import TagsSelect from '$lib/components/objectDetails/editMode/tagsSelect.svelte';
     import {toast} from 'svelte-sonner';
     import {createMutation, useQueryClient} from '@tanstack/svelte-query';
-    import {createObject, deleteObject, updateObject, uploadImage} from '$lib/api/object';
+    import {createObject, deleteObject, updateObject} from '$lib/api/object';
     import type {Payload} from '$lib/interfaces/api';
     import RequestError from '$lib/errors/RequestError';
     import ImageUpload from '$lib/components/input/imageUpload.svelte';
@@ -33,6 +33,7 @@
         FormLabel,
         FormFieldErrors,
     } from '$lib/components/ui/form/index.js';
+    import {uploadImage} from '$lib/api/image.ts';
 
     const client = useQueryClient();
 
@@ -45,6 +46,8 @@
     }
 
     let {initialValues}: Props = $props();
+    let imageUrl: string | undefined = $derived(initialValues.cover?.url);
+    let imagePreviewUrl: string | undefined = $state(initialValues.cover?.previewUrl);
 
     const inValues: ObjectFormInputs = $derived({
         ...(initialValues as Object),
@@ -52,6 +55,7 @@
         category: initialValues.category?.id ?? '',
         tags: initialValues.tags?.map(tag => tag.id) ?? [],
         privateTags: initialValues.privateTags?.map(tag => tag.id) ?? [],
+        cover: initialValues.cover?.id ?? '',
     });
 
     const createObjectMutation = createMutation({
@@ -101,7 +105,7 @@
         id: z.string().optional(),
         lat: z.string().min(1),
         lng: z.string().min(1),
-        image: z.string().optional(),
+        cover: z.string().optional(),
         isPublic: z.boolean(),
         isVisited: z.boolean(),
         name: z
@@ -269,10 +273,11 @@
         const uploadFormData = new FormData();
         uploadFormData.append('file', file);
 
-        const imageId = inValues.id;
         toast.promise(
-            $image.mutateAsync({id: imageId as string, formData: uploadFormData}).then(result => {
-                $formData.image = result.data.url;
+            $image.mutateAsync({formData: uploadFormData}).then(result => {
+                $formData.cover = result.data.id;
+                imageUrl = result.data.url;
+                imagePreviewUrl = result.data.previewUrl;
             }),
             {
                 loading: 'Загружаю...',
@@ -293,12 +298,15 @@
         {/if}
     </div>
     <div class="h-[calc(100vh-8px*2-57px*2)] overflow-x-hidden overflow-y-auto p-4">
-        <FormField {form} name="image" class="mb-6">
+        <FormField {form} name="cover" class="mb-6">
             <FormControl>
                 {#snippet children({props})}
                     <ImageUpload
                         {...props}
-                        bind:value={$formData.image}
+                        bind:value={$formData.cover}
+                        bind:url={imageUrl}
+                        bind:previewUrl={imagePreviewUrl}
+                        disabled={$submitting}
                         onChange={handleImageChange}
                     />
                 {/snippet}

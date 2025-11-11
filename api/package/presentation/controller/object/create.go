@@ -23,7 +23,7 @@ type CreateInput struct {
     IsRemoved       bool        `json:"isRemoved"`
     RemovalPeriod   string      `json:"removalPeriod" validate:"max=20"`
     Source          string      `json:"source" validate:"max=0|url"`
-    Image           string      `json:"image"`
+    Cover           *ulid.ULID  `json:"cover"`
     IsPublic        bool        `json:"isPublic"`
     IsVisited       bool        `json:"isVisited"`
     Category        ulid.ULID   `json:"category" validate:"required"`
@@ -44,7 +44,7 @@ type CreatePayloadData struct {
     IsRemoved       bool      `json:"isRemoved"`
     RemovalPeriod   string    `json:"removalPeriod"`
     Source          string    `json:"source"`
-    Image           string    `json:"image"`
+    Cover           *Cover    `json:"cover"`
     IsPublic        bool      `json:"isPublic"`
     IsVisited       bool      `json:"isVisited"`
     Category        Category  `json:"category"`
@@ -105,7 +105,7 @@ func Create(w http.ResponseWriter, r *http.Request) {
     objModel.IsRemoved = payload.IsRemoved
     objModel.RemovalPeriod = payload.RemovalPeriod
     objModel.Source = payload.Source
-    objModel.Image = payload.Image
+    objModel.CoverID = payload.Cover
     objModel.IsPublic = payload.IsPublic
     objModel.CategoryID = payload.Category
     objModel.CreatedBy = user.GetModel().ID
@@ -144,6 +144,7 @@ func Create(w http.ResponseWriter, r *http.Request) {
     category, _ := getCategory(obj)
     tags, _ := getTags(obj)
     privateTags, _ := getPrivateTags(obj, user)
+    cover, _ := getCover(obj)
 
     router.NewResponse().
         WithStatus(http.StatusOK).
@@ -161,7 +162,7 @@ func Create(w http.ResponseWriter, r *http.Request) {
                 IsRemoved:       objModel.IsRemoved,
                 RemovalPeriod:   objModel.RemovalPeriod,
                 Source:          objModel.Source,
-                Image:           objModel.Image,
+                Cover:           cover,
                 IsPublic:        objModel.IsPublic,
                 IsVisited:       objectUserModel.IsVisited,
                 Category:        category,

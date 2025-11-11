@@ -23,6 +23,7 @@ type Object interface {
     SetTags(tags []ulid.ULID) error
     GetPrivateTags(user User) ([]PrivateTag, error)
     SetPrivateTags(tags []ulid.ULID, user User) error
+    GetCover() (Image, error)
 }
 
 func NewObject() Object {
@@ -131,4 +132,16 @@ func (p *objectPresenter) GetPrivateTags(user User) ([]PrivateTag, error) {
 
 func (p *objectPresenter) SetPrivateTags(tags []ulid.ULID, user User) error {
     return p.repository.SetPrivateTags(p.model, user.GetModel(), tags)
+}
+
+func (p *objectPresenter) GetCover() (Image, error) {
+    cover, err := p.repository.GetCover(p.model)
+    if err != nil {
+        return nil, err
+    }
+    if cover == nil {
+        return nil, nil
+    }
+
+    return NewImageFromModel(cover), nil
 }

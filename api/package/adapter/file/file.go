@@ -25,9 +25,13 @@ type File interface {
     Close() error
 }
 
-func Create(path string) (File, error) {
+func Create(path string, overwrite bool) (File, error) {
+    realPath := path
+    if !overwrite {
+        realPath = getUniqueFilename(path)
+    }
     f := &file{
-        path: getUniqueFilename(path),
+        path: realPath,
     }
 
     output, err := os.Create(f.path)

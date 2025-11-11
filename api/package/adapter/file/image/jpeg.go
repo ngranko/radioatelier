@@ -35,6 +35,12 @@ func (f *jpegFile) Resize(width, height int) {
     draw.BiLinear.Scale(f.current, f.current.Rect, f.original, f.original.Bounds(), draw.Over, nil)
 }
 
+func (f *jpegFile) Crop(x, y, width, height int) {
+    cropSize := image.Rect(0, 0, width, height)
+    f.current = image.NewRGBA(cropSize)
+    draw.Draw(f.current, cropSize, f.original, image.Point{x, y}, draw.Over)
+}
+
 func (f *jpegFile) GetWidth() int {
     return f.original.Bounds().Max.X
 }
@@ -49,4 +55,8 @@ func (f *jpegFile) GetFormat() string {
 
 func (f *jpegFile) Save(file file.File) error {
     return jpeg.Encode(file, f.current, &jpeg.Options{Quality: 95})
+}
+
+func (f *jpegFile) Persist() {
+    f.original = f.current
 }

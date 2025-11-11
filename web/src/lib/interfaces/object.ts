@@ -14,7 +14,6 @@ interface TaxonomlessObject {
     isRemoved: boolean;
     removalPeriod?: string;
     source?: string;
-    image?: string;
     isPublic: boolean;
     isVisited: boolean;
     isOwner: boolean;
@@ -24,6 +23,11 @@ interface BaseObject extends TaxonomlessObject {
     category: FuzzyCategory;
     tags: FuzzyTag[];
     privateTags: FuzzyPrivateTag[];
+    cover: {
+        id: string;
+        url: string;
+        previewUrl: string;
+    };
 }
 
 export interface Object extends BaseObject {
@@ -51,6 +55,7 @@ export interface ObjectFormInputs extends Omit<TaxonomlessObject, 'isOwner'> {
     category: string;
     tags: string[];
     privateTags: string[];
+    cover?: string;
 }
 
 export type CreateObjectInputs = Omit<ObjectFormInputs, 'id'>;
@@ -105,15 +110,6 @@ export interface DeleteObjectInputs {
 
 export interface DeleteObjectPayloadData {
     id: string;
-}
-
-export interface UploadImageInputs {
-    id: string;
-    formData: FormData;
-}
-
-export interface UploadImagePayloadData {
-    url: string;
 }
 
 export interface SearchPointListItem {

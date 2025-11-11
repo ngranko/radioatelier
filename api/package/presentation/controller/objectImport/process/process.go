@@ -4,16 +4,12 @@ import (
     "context"
     "log/slog"
     "path/filepath"
-    "strconv"
-    "time"
 
     "radioatelier/package/adapter/file"
-    "radioatelier/package/config"
     "radioatelier/package/infrastructure/logger"
     "radioatelier/package/infrastructure/ulid"
     "radioatelier/package/presentation/controller/objectImport/types"
     "radioatelier/package/usecase/file/document"
-    "radioatelier/package/usecase/file/image"
     "radioatelier/package/usecase/presenter"
     "radioatelier/package/usecase/validation/validator"
 )
@@ -26,7 +22,7 @@ func importObjects(ctx context.Context, ch chan message, ID string, separator ru
         ch <- message{state: types.MessageTypeError, error: err}
         return
     }
-    defer f.Delete()
+    defer func() { _ = f.Delete() }()
 
     doc, err := document.CSVFromFile(f, separator)
     if err != nil {
@@ -99,7 +95,7 @@ func importNextLine(ctx context.Context, csv *document.CSV, mappings types.Impor
         messages = append(messages, *feedback)
     }
 
-    messages = append(messages, importTags(line, object, user)...)
+    messages = append(messages, importTags(line, object)...)
     messages = append(messages, importPrivateTags(line, object, user)...)
 
     return true, messages
@@ -163,7 +159,7 @@ func importObject(line document.Line, mapPoint presenter.MapPoint, category pres
     objectModel.IsRemoved = line.GetIsRemoved()
     objectModel.RemovalPeriod = line.GetRemovalPeriod()
     objectModel.Source = source
-    objectModel.Image = img
+    objectModel.CoverID = img
     objectModel.IsPublic = line.GetIsPublic()
     objectModel.CategoryID = category.GetModel().ID
     objectModel.CreatedBy = user.GetModel().ID
@@ -190,7 +186,7 @@ func importObjectUser(line document.Line, object presenter.Object, user presente
     return objectUser, nil
 }
 
-func importTags(line document.Line, object presenter.Object, user presenter.User) []types.LineFeedback {
+func importTags(line document.Line, object presenter.Object) []types.LineFeedback {
     messages := make([]types.LineFeedback, 0)
 
     tagIDs := make([]ulid.ULID, 0)
@@ -251,45 +247,18 @@ func importPrivateTags(line document.Line, object presenter.Object, user present
     return messages
 }
 
-func processImage(source string) (string, error) {
-    filename := ""
-    var imageMutator *image.Image
-
+func processImage(source string) (*ulid.ULID, error) {
     res := validator.Get().ValidateVar(source, "url")
     if res.IsValid() {
-        img, err := image.NewImageFromURL(source)
-        if err != nil {
-            return "", err
-        }
-
-        filename = filepath.Base(source)
-        imageMutator = img
+        id, _, _, err := svc.UploadFromURL(filepath.Base(source), source)
+        return &id, err
     }
 
     res = validator.Get().ValidateVar(source, "base64")
     if res.IsValid() {
-        img, err := image.NewImageFromBase64(source)
-        if err != nil {
-            return "", err
-        }
-
-        imageMutator = img
-        filename = "image_" + strconv.FormatInt(time.Now().Unix(), 10) + "." + img.GetFormat()
+        id, _, _, err := svc.UploadFromBase64("image", source)
+        return &id, err
     }
 
-    if filename != "" {
-        imageMutator.ResizeToFit(config.Get().ImageResolutionLimit)
-        f, err := imageMutator.Save(config.Get().UploadDir + "/" + filename)
-        if err != nil {
-            return "", err
-        }
-        err = f.Close()
-        if err != nil {
-            return "", err
-        }
-
-        return "/uploads" + "/" + filename, nil
-    }
-
-    return "", nil
+    return nil, nil
 }

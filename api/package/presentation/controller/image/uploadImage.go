@@ -1,18 +1,18 @@
-package object
+package image
 
 import (
     "log/slog"
     "net/http"
-    "path/filepath"
 
-    "radioatelier/package/config"
     "radioatelier/package/infrastructure/logger"
     "radioatelier/package/infrastructure/router"
-    "radioatelier/package/usecase/file/image"
+    "radioatelier/package/infrastructure/ulid"
 )
 
 type UploadImagePayloadData struct {
-    URL string `json:"url"`
+    ID         ulid.ULID `json:"id"`
+    URL        string    `json:"url"`
+    PreviewURL string    `json:"previewUrl"`
 }
 
 func UploadImage(w http.ResponseWriter, r *http.Request) {
@@ -29,32 +29,22 @@ func UploadImage(w http.ResponseWriter, r *http.Request) {
         router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
         return
     }
-    defer func() {
-        _ = upload.Close()
-    }()
+    defer func() { _ = upload.Close() }()
 
-    img, err := image.NewImage(upload)
+    id, url, previewURL, err := svc.Upload(header.Filename, upload)
     if err != nil {
-        logger.GetZerolog().Error("failed creating an image", slog.Any("error", err))
+        logger.GetZerolog().Error("failed uploading an image", slog.Any("error", err))
         router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
         return
     }
-
-    img.ResizeToFit(config.Get().ImageResolutionLimit)
-
-    dest, err := img.Save(config.Get().UploadDir + "/" + header.Filename)
-    if err != nil {
-        logger.GetZerolog().Error("failed writing an image", slog.Any("error", err))
-        router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
-        return
-    }
-    defer dest.Close()
 
     router.NewResponse().
         WithStatus(http.StatusOK).
         WithPayload(router.Payload{
             Data: UploadImagePayloadData{
-                URL: "/uploads/" + filepath.Base(dest.GetPath()),
+                ID:         id,
+                URL:        url,
+                PreviewURL: previewURL,
             },
         }).
         Send(w)

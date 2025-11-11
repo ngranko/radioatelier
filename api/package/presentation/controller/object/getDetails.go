@@ -26,7 +26,7 @@ type Object struct {
     IsRemoved       bool      `json:"isRemoved"`
     RemovalPeriod   string    `json:"removalPeriod"`
     Source          string    `json:"source"`
-    Image           string    `json:"image"`
+    Cover           *Cover    `json:"cover"`
     IsPublic        bool      `json:"isPublic"`
     IsVisited       bool      `json:"isVisited"`
     Category        Category  `json:"category"`
@@ -90,6 +90,8 @@ func GetDetails(w http.ResponseWriter, r *http.Request) {
         objectUser = presenter.NewObjectUser()
     }
 
+    cover, _ := getCover(object)
+
     router.NewResponse().
         WithStatus(http.StatusOK).
         WithPayload(router.Payload{
@@ -107,7 +109,7 @@ func GetDetails(w http.ResponseWriter, r *http.Request) {
                     IsRemoved:       object.GetModel().IsRemoved,
                     RemovalPeriod:   object.GetModel().RemovalPeriod,
                     Source:          object.GetModel().Source,
-                    Image:           object.GetModel().Image,
+                    Cover:           cover,
                     IsPublic:        object.GetModel().IsPublic,
                     IsVisited:       objectUser.GetModel().IsVisited,
                     Category:        category,

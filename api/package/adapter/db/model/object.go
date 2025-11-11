@@ -23,8 +23,9 @@ type Object struct {
     Category        Category
     Tags            []*Tag        `gorm:"many2many:object_tags;constraint:OnDelete:CASCADE"`
     PrivateTags     []*PrivateTag `gorm:"many2many:object_private_tags;constraint:OnDelete:CASCADE"`
-    Image           string        `gorm:"type:blob"`
-    NotionID        *uuid.UUID    `gorm:"type:char(36)"`
+    CoverID         *ulid.ULID
+    Cover           *Image     `gorm:"constraint:OnDelete:SET NULL"`
+    NotionID        *uuid.UUID `gorm:"type:char(36)"`
     LastSync        *time.Time
     InternalID      string       `gorm:"->;type:varchar(16)"`
     CreatedBy       ulid.ULID    `gorm:"type:binary(16);not null"`

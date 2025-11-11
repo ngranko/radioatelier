@@ -15,6 +15,12 @@ type Tag struct {
     Name string    `json:"name"`
 }
 
+type Cover struct {
+    ID         ulid.ULID `json:"id" validate:"ulid"`
+    URL        string    `json:"url"`
+    PreviewURL string    `json:"previewUrl"`
+}
+
 func getCategory(object presenter.Object) (Category, error) {
     category, err := object.GetCategory()
     if err != nil {
@@ -50,4 +56,15 @@ func getPrivateTags(object presenter.Object, user presenter.User) ([]Tag, error)
     }
 
     return privateTagsResult, nil
+}
+
+func getCover(object presenter.Object) (*Cover, error) {
+    cover, err := object.GetCover()
+    if err != nil {
+        return nil, err
+    }
+    if cover == nil {
+        return nil, nil
+    }
+    return &Cover{ID: cover.GetModel().ID, URL: cover.GetModel().Link, PreviewURL: cover.GetModel().PreviewLink}, nil
 }
