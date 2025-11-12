@@ -51,18 +51,25 @@ func ConfigureRouter() *router.Router {
     })
 
     r.Route("/object", func(r *router.Router) {
-        r.Use(middleware.VerifyAccessToken)
+        r.Group(func(r *router.Router) {
+            r.Use(middleware.VerifyAccessToken)
 
-        r.Post("/", object.Create)
-        r.Get("/list", object.GetList)
-        r.Get("/{id}", object.GetDetails)
-        r.Get("/address", object.GetAddress)
-        r.Put("/{id}", object.Update)
-        r.Put("/{id}/position", object.Reposition)
-        r.Delete("/{id}", object.Delete)
-        r.Get("/search/local", object.SearchLocal)
-        r.Get("/search/google", object.SearchGoogle)
-        r.Get("/search/preview", object.SearchPreview)
+            r.Post("/", object.Create)
+            r.Get("/list", object.GetList)
+            r.Get("/address", object.GetAddress)
+            r.Put("/{id}", object.Update)
+            r.Put("/{id}/position", object.Reposition)
+            r.Delete("/{id}", object.Delete)
+            r.Get("/search/local", object.SearchLocal)
+            r.Get("/search/google", object.SearchGoogle)
+            r.Get("/search/preview", object.SearchPreview)
+        })
+
+        r.Group(func(r *router.Router) {
+            r.Use(middleware.VerifyAccessTokenOptional)
+
+            r.Get("/{id}", object.GetDetails)
+        })
     })
 
     r.Route("/tag", func(r *router.Router) {
