@@ -36,16 +36,6 @@ type Object struct {
 }
 
 func GetDetails(w http.ResponseWriter, r *http.Request) {
-    token := r.Context().Value("Token").(accessToken.AccessToken)
-    user, err := presenter.FindUserByID(token.UserID())
-    if err != nil {
-        router.NewResponse().
-            WithStatus(http.StatusNotFound).
-            WithPayload(router.Payload{Message: "User not found"}).
-            Send(w)
-        return
-    }
-
     objectID, err := ulid.Parse(router.GetPathParam(r, "id"))
     if err != nil {
         router.NewResponse().
@@ -61,28 +51,78 @@ func GetDetails(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    mapPoint, err := object.GetMapPoint()
+    objectResponse, err := getUserAgnosticObject(object)
     if err != nil {
         router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
         return
+    }
+
+    token, ok := r.Context().Value("Token").(accessToken.AccessToken)
+    if ok {
+        objectResponse, err = fillUserDependentProps(token, object, objectResponse)
+        if err != nil {
+            router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
+            return
+        }
+    }
+
+    router.NewResponse().
+        WithStatus(http.StatusOK).
+        WithPayload(router.Payload{
+            Data: GetDetailsPayloadData{
+                Object: objectResponse,
+            },
+        }).
+        Send(w)
+}
+
+func getUserAgnosticObject(object presenter.Object) (Object, error) {
+    mapPoint, err := object.GetMapPoint()
+    if err != nil {
+        return Object{}, err
     }
 
     category, err := getCategory(object)
     if err != nil {
-        router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
-        return
+        return Object{}, err
     }
 
     tags, err := getTags(object)
     if err != nil {
-        router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
-        return
+        return Object{}, err
+    }
+
+    cover, _ := getCover(object)
+
+    return Object{
+        ID:              object.GetModel().ID,
+        Name:            object.GetModel().Name,
+        Description:     object.GetModel().Description,
+        Latitude:        mapPoint.GetModel().Latitude,
+        Longitude:       mapPoint.GetModel().Longitude,
+        Address:         mapPoint.GetModel().Address,
+        City:            mapPoint.GetModel().City,
+        Country:         mapPoint.GetModel().Country,
+        InstalledPeriod: object.GetModel().InstalledPeriod,
+        IsRemoved:       object.GetModel().IsRemoved,
+        RemovalPeriod:   object.GetModel().RemovalPeriod,
+        Source:          object.GetModel().Source,
+        Cover:           cover,
+        IsPublic:        object.GetModel().IsPublic,
+        Category:        category,
+        Tags:            tags,
+    }, nil
+}
+
+func fillUserDependentProps(token accessToken.AccessToken, object presenter.Object, objectResponse Object) (Object, error) {
+    user, err := presenter.FindUserByID(token.UserID())
+    if err != nil {
+        return objectResponse, err
     }
 
     privateTags, err := getPrivateTags(object, user)
     if err != nil {
-        router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
-        return
+        return objectResponse, err
     }
 
     objectUser, err := presenter.GetObjectUser(object.GetModel().ID, user.GetModel().ID)
@@ -90,34 +130,9 @@ func GetDetails(w http.ResponseWriter, r *http.Request) {
         objectUser = presenter.NewObjectUser()
     }
 
-    cover, _ := getCover(object)
+    objectResponse.PrivateTags = privateTags
+    objectResponse.IsVisited = objectUser.GetModel().IsVisited
+    objectResponse.IsOwner = object.GetModel().CreatedBy == user.GetModel().ID
 
-    router.NewResponse().
-        WithStatus(http.StatusOK).
-        WithPayload(router.Payload{
-            Data: GetDetailsPayloadData{
-                Object: Object{
-                    ID:              object.GetModel().ID,
-                    Name:            object.GetModel().Name,
-                    Description:     object.GetModel().Description,
-                    Latitude:        mapPoint.GetModel().Latitude,
-                    Longitude:       mapPoint.GetModel().Longitude,
-                    Address:         mapPoint.GetModel().Address,
-                    City:            mapPoint.GetModel().City,
-                    Country:         mapPoint.GetModel().Country,
-                    InstalledPeriod: object.GetModel().InstalledPeriod,
-                    IsRemoved:       object.GetModel().IsRemoved,
-                    RemovalPeriod:   object.GetModel().RemovalPeriod,
-                    Source:          object.GetModel().Source,
-                    Cover:           cover,
-                    IsPublic:        object.GetModel().IsPublic,
-                    IsVisited:       objectUser.GetModel().IsVisited,
-                    Category:        category,
-                    Tags:            tags,
-                    PrivateTags:     privateTags,
-                    IsOwner:         object.GetModel().CreatedBy == user.GetModel().ID,
-                },
-            },
-        }).
-        Send(w)
+    return objectResponse, nil
 }
