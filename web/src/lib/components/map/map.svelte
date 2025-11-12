@@ -13,10 +13,10 @@
     import {PointerDragZoomController} from '$lib/services/map/pointerDragZoom';
     import config from '$lib/config';
     import StreetView from './streetView.svelte';
-    import { removeDragTimeout } from '$lib/state/marker.svelte';
+    import {removeDragTimeout} from '$lib/state/marker.svelte';
 
     interface Props {
-        onClick(location: Location): void;
+        onClick?(location: Location): void;
     }
 
     let {onClick}: Props = $props();
@@ -83,7 +83,9 @@
     }
 
     async function initMarkerManager(mapInstance: google.maps.Map): Promise<MarkerManager> {
-        const manager = new MarkerManager(mapInstance, {renderer: shouldUseDeck(mapInstance) ? 'deck' : 'dom'});
+        const manager = new MarkerManager(mapInstance, {
+            renderer: shouldUseDeck(mapInstance) ? 'deck' : 'dom',
+        });
         await manager.initialize(mapState.loader);
         return manager;
     }
@@ -109,7 +111,7 @@
         }
 
         clickTimeout = setTimeout(() => {
-            if (!isInZoomMode) {
+            if (!isInZoomMode && onClick) {
                 onClick({
                     lat: event.latLng?.lat() ?? 0,
                     lng: event.latLng?.lng() ?? 0,
@@ -146,8 +148,8 @@
     }
 
     function shouldUseDeck(map: google.maps.Map): boolean {
-    return (map.getZoom() ?? 15) <= config.deckZoomThreshold;
-}
+        return (map.getZoom() ?? 15) <= config.deckZoomThreshold;
+    }
 
     onDestroy(() => {
         if (positionInterval) {
