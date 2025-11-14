@@ -116,6 +116,13 @@
         }
     });
 
+    $effect(() => {
+        if (activeObject.detailsId === id && marker) {
+            activeMarker.set(marker);
+            activeMarker.activate();
+        }
+    });
+
     onMount(() => {
         createMarker();
     });
@@ -129,9 +136,6 @@
         }
 
         const position = {lat: Number(lat), lng: Number(lng)};
-
-        // For map-clicked markers, pass a unique ID to avoid cache conflicts
-        // markerId = id ?? `map-${Date.now()}-${Math.random()}`;
 
         marker = mapState.markerManager.addMarker(markerId, position, {
             icon,
@@ -226,8 +230,5 @@
                 activeObject.object = $objectDetails.data.data.object;
             }
         }
-
-        activeMarker.set(marker);
-        activeMarker.activate();
     }
 </script>

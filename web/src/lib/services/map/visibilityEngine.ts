@@ -1,4 +1,6 @@
-import type { MarkerId } from '$lib/interfaces/marker';
+import type {MarkerId} from '$lib/interfaces/marker';
+import {activeObject} from '$lib/state/activeObject.svelte.ts';
+import {activeMarker} from '$lib/stores/map.ts';
 import type {MarkerRepository} from './markerRepository';
 import type {MarkerRenderer} from './renderer/markerRenderer';
 
@@ -73,6 +75,14 @@ export class VisibilityEngine {
         this.renderer.ensureCreated(marker);
         this.renderer.show(marker);
         this.repo.markVisible(id);
+
+        // this is needed so that share pages will load with the correct marker active
+        // as at the point of page load no markers are displayed, we need this block to
+        // activate required marker on first viewport update
+        if (activeObject.detailsId === id) {
+            activeMarker.set(marker);
+            activeMarker.activate();
+        }
     }
 
     public hide(id: MarkerId) {
