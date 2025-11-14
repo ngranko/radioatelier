@@ -1,6 +1,6 @@
 import {METHOD_DELETE, METHOD_GET, METHOD_POST, METHOD_PUT} from '$lib/api/constants';
 import AuthRequest from '$lib/api/request/AuthRequest';
-import JsonRequest from '$lib/api/request/JsonRequest';
+import JsonRequest, {type JsonRequestOptions} from '$lib/api/request/JsonRequest';
 import type {Payload} from '$lib/interfaces/api';
 import type {
     CreateObjectInputs,
@@ -28,6 +28,12 @@ export async function createObject(
 
 export async function listObjects(): Promise<Payload<ListObjectsResponsePayload>> {
     return new AuthRequest(new JsonRequest('/api/object/list', METHOD_GET)).send();
+}
+
+export async function listObjectsDirect(
+    options: JsonRequestOptions,
+): Promise<Payload<ListObjectsResponsePayload>> {
+    return new AuthRequest(new JsonRequest('/api/object/list', METHOD_GET, options)).send();
 }
 
 export async function getObject({
