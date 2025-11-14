@@ -4,20 +4,27 @@ import {
     STATUS_REQUEST_ERROR,
     STATUS_SERVER_ERROR,
 } from '$lib/api/constants';
-import type {HttpMethod} from '$lib/interfaces/http';
-import type KeyVal from '$lib/interfaces/keyVal';
+import type Request from '$lib/api/request/Request';
 import RequestError from '$lib/errors/RequestError';
 import ServerError from '$lib/errors/ServerError';
 import type {RawResponse} from '$lib/interfaces/api';
-import type Request from '$lib/api/request/Request';
+import type {HttpMethod} from '$lib/interfaces/http';
+import type KeyVal from '$lib/interfaces/keyVal';
+
+type FetchLike = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 
 interface RequestParams {
     resource: RequestInfo;
     init: RequestInit;
 }
 
-interface JsonRequestOptions {
+export interface JsonRequestOptions {
     noContentType?: boolean;
+    fetch?: FetchLike;
+}
+
+interface JsonRequestOptionsConcrete extends JsonRequestOptions {
+    fetch: FetchLike;
 }
 
 export default class JsonRequest implements Request<never> {
@@ -26,7 +33,7 @@ export default class JsonRequest implements Request<never> {
     private readonly headers: KeyVal<string>;
     private params: KeyVal;
     private formData?: FormData;
-    private options: JsonRequestOptions;
+    private options: JsonRequestOptionsConcrete;
 
     public constructor(
         uri: string,
@@ -37,7 +44,7 @@ export default class JsonRequest implements Request<never> {
         this.method = method;
         this.params = {};
         this.headers = {};
-        this.options = options;
+        this.options = {...options, fetch: options.fetch ?? fetch};
     }
 
     public setParams(params: {}): this {
@@ -81,7 +88,7 @@ export default class JsonRequest implements Request<never> {
     }
 
     private async doSend(resource: RequestInfo, init: RequestInit): Promise<RawResponse<object>> {
-        return fetch(resource, init).then(async response => {
+        return this.options.fetch(resource, init).then(async response => {
             if (response.status >= STATUS_SERVER_ERROR) {
                 throw new ServerError(
                     `Request to ${this.uri} ended with status ${response.status}`,

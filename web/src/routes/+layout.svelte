@@ -2,12 +2,11 @@
     import {browser} from '$app/environment';
     import {QueryClient, QueryClientProvider} from '@tanstack/svelte-query';
     import '../styles/app.css';
-    import type RequestError from '$lib/errors/RequestError';
-    import ServerError from '$lib/errors/ServerError';
-    import {STATUS_TOO_MANY_REQUESTS} from '$lib/api/constants';
+    import type RequestError from '$lib/errors/RequestError.ts';
+    import ServerError from '$lib/errors/ServerError.ts';
+    import {STATUS_TOO_MANY_REQUESTS} from '$lib/api/constants.ts';
     import config from '$lib/config';
     import {Toaster} from '$lib/components/ui/sonner';
-    import {onMount} from 'svelte';
     import type {Snippet} from 'svelte';
     interface Props {
         children?: Snippet;
@@ -26,13 +25,6 @@
                 staleTime: 1000 * 20,
             },
         },
-    });
-
-    onMount(() => {
-        if (location.pathname !== '/login') {
-            // TODO: check user session
-            console.log('not login');
-        }
     });
 </script>
 

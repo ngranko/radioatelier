@@ -4,9 +4,7 @@ export class UpdateScheduler {
     private pendingViewportUpdate = false;
     private suppressUpdates = false;
 
-    public constructor(
-        private triggerFn: () => void,
-    ) {
+    public constructor(private triggerFn: () => void) {
         //
     }
 
@@ -61,9 +59,5 @@ export class UpdateScheduler {
 
     public get isSuppressed() {
         return this.suppressUpdates;
-    }
-
-    public get isUpdating() {
-        return this.updateInProgress;
     }
 }
