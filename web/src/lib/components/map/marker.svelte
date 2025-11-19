@@ -12,6 +12,9 @@
     import type {MarkerSource} from '$lib/interfaces/marker';
     import {toast} from 'svelte-sonner';
     import {activeObject, resetActiveObject} from '$lib/state/activeObject.svelte.ts';
+    import {setCenter} from '$lib/services/map/map.svelte.ts';
+    import {goto} from '$app/navigation';
+    import {page} from '$app/state';
 
     interface Props {
         id?: string | null;
@@ -120,6 +123,7 @@
         if (activeObject.detailsId === id && marker) {
             activeMarker.set(marker);
             activeMarker.activate();
+            setCenter(Number(activeObject.object?.lat), Number(activeObject.object?.lng));
         }
     });
 
@@ -212,22 +216,15 @@
             activeObject.detailsId = id!;
             activeObject.object = {...$searchPointList[id!].object, isVisited, isRemoved};
         } else {
-            if (!$objectDetails.isSuccess) {
-                activeObject.isLoading = true;
-                activeObject.isEditing = false;
-                activeObject.isMinimized = false;
-                activeObject.isDirty = false;
-                activeObject.detailsId = id!;
-                activeObject.object = {id, lat, lng, isVisited, isRemoved};
-                $objectDetails.refetch();
-                detailsRequestedForId = id!;
+            if (!page.params.id) {
+                goto(`/object/${id}`);
             } else {
                 activeObject.isLoading = false;
                 activeObject.isEditing = false;
                 activeObject.isMinimized = false;
                 activeObject.isDirty = false;
-                activeObject.detailsId = $objectDetails.data.data.object.id;
-                activeObject.object = $objectDetails.data.data.object;
+                activeObject.detailsId = page.data.activeObject.id;
+                activeObject.object = page.data.activeObject;
             }
         }
     }

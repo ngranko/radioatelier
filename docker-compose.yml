@@ -1,0 +1,4 @@
+name: radioatelier
+include:
+    - api/docker-compose.yml
+    - web/docker-compose.yml

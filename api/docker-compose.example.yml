@@ -13,6 +13,8 @@ services:
       - -../uploads:/radioatelier/assets/uploads
     depends_on:
       - db
+    extra_hosts:
+      - "radioatelier.test:host-gateway"
 
   db:
     image: mysql:8.0

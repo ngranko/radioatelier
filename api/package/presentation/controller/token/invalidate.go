@@ -22,5 +22,10 @@ func Invalidate(w http.ResponseWriter, r *http.Request) {
         return
     }
 
+    http.SetCookie(w, &http.Cookie{
+        Name:   "refreshToken",
+        MaxAge: -1,
+    })
+
     router.NewResponse().WithStatus(http.StatusOK).WithPayload(router.Payload{}).Send(w)
 }

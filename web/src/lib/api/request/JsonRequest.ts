@@ -47,6 +47,10 @@ export default class JsonRequest implements Request<never> {
         this.options = {...options, fetch: options.fetch ?? fetch};
     }
 
+    public getOptions(): JsonRequestOptionsConcrete {
+        return this.options;
+    }
+
     public setParams(params: {}): this {
         this.params = {...this.params, ...params};
         return this;
@@ -64,11 +68,6 @@ export default class JsonRequest implements Request<never> {
 
     public setHeader(name: string, value: string): this {
         this.headers[name] = value;
-        return this;
-    }
-
-    public setAuthHeader(token: string): this {
-        this.headers.Authorization = `Bearer ${token}`;
         return this;
     }
 

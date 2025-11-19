@@ -12,3 +12,8 @@ export interface MeResponseData {
     role: string;
     email: string;
 }
+
+export interface CurrentUser {
+    auth: boolean;
+    profile?: MeResponseData;
+}

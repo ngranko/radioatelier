@@ -2,7 +2,27 @@ import {STATUS_UNAUTHORIZED} from '$lib/api/constants';
 import type Request from '$lib/api/request/Request';
 import {refreshToken} from '$lib/api/token';
 import RequestError from '$lib/errors/RequestError';
-import RefreshToken from '$lib/api/auth/refreshToken';
+
+let refreshPromise: Promise<void> | null = null;
+
+const withRefreshLock = async (fn: () => Promise<void>): Promise<void> => {
+    if (typeof navigator !== 'undefined' && typeof navigator.locks !== 'undefined') {
+        await navigator.locks.request('refresh_token', fn);
+        return;
+    }
+
+    if (!refreshPromise) {
+        refreshPromise = (async () => {
+            try {
+                await fn();
+            } finally {
+                refreshPromise = null;
+            }
+        })();
+    }
+
+    await refreshPromise;
+};
 
 export default class AuthRequest<T = never> {
     private readonly request: Request<T>;
@@ -24,9 +44,8 @@ export default class AuthRequest<T = never> {
     }
 
     private async refreshTokenAndRestart(): Promise<T> {
-        await navigator.locks.request('refresh_token', async () => {
-            const response = await refreshToken(RefreshToken.get() ?? '');
-            RefreshToken.set(response.data.refreshToken);
+        await withRefreshLock(async () => {
+            await refreshToken(this.request.getOptions());
         });
         return this.request.send();
     }

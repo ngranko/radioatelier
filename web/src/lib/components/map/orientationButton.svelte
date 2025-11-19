@@ -10,7 +10,11 @@
         requestPermission(): Promise<'granted' | 'denied'>;
     }
 
-    let orientationEnabled = $state(false);
+    interface Props {
+        isEnabled: boolean;
+    }
+
+    let {isEnabled = $bindable(false)}: Props = $props();
 
     onMount(() => {
         // let's try it in case android allows doing it
@@ -18,8 +22,8 @@
     });
 
     function toggleOrientation() {
-        if (orientationEnabled) {
-            orientationEnabled = false;
+        if (isEnabled) {
+            isEnabled = false;
             return;
         }
 
@@ -31,7 +35,7 @@
             (window.DeviceOrientationEvent as unknown as DeviceOrientationEventExtended)
                 .requestPermission()
                 .then(() => {
-                    orientationEnabled = true;
+                    isEnabled = true;
                 })
                 .catch((error: unknown) => {
                     console.error('error while requesting DeviceOrientationEvent permission');
@@ -46,7 +50,7 @@
 <button
     class={cn([
         'align-center absolute right-2.5 bottom-30 z-1 flex w-10 justify-center rounded-xs border-0 bg-white p-2.5 text-xl shadow-md transition-colors',
-        {'text-gray-500': !orientationEnabled, 'text-primary': orientationEnabled},
+        {'text-gray-500': !isEnabled, 'text-primary': isEnabled},
     ])}
     onclick={toggleOrientation}
     aria-label="Toggle orientation"

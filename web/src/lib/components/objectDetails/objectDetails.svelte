@@ -13,6 +13,8 @@
     import {cn} from '$lib/utils.ts';
     import {activeObject, resetActiveObject} from '$lib/state/activeObject.svelte.ts';
     import type {Permissions} from '$lib/interfaces/permissions';
+    import {goto} from '$app/navigation';
+    import {page} from '$app/state';
 
     interface Props {
         key: string;
@@ -34,17 +36,19 @@
         if (initialValues.id === null) {
             return permissions.canEditAll;
         }
-        
-        const isOwner = initialValues.isOwner ?? (activeObject.object as Object | null)?.isOwner ?? false;
+
+        const isOwner =
+            initialValues.isOwner ?? (activeObject.object as Object | null)?.isOwner ?? false;
         return permissions.canEditAll && isOwner;
     });
-    
+
     const canEditPersonal = $derived.by(() => {
         if (initialValues.id === null) {
             return permissions.canEditPersonal;
         }
-        
-        const isOwner = initialValues.isOwner ?? (activeObject.object as Object | null)?.isOwner ?? false;
+
+        const isOwner =
+            initialValues.isOwner ?? (activeObject.object as Object | null)?.isOwner ?? false;
         return permissions.canEditPersonal && !isOwner;
     });
 
@@ -62,6 +66,17 @@
         resetActiveObject();
         if (mapState.map) {
             mapState.map.getStreetView().setVisible(false);
+        }
+
+        if (page.data.user.auth) {
+            goto('/');
+        } else {
+            activeObject.object = null;
+            activeObject.detailsId = '';
+            activeObject.isDirty = false;
+            activeObject.isEditing = false;
+            activeObject.isLoading = false;
+            activeObject.isMinimized = false;
         }
     }
 </script>

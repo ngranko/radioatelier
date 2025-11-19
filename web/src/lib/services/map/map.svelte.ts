@@ -1,10 +1,10 @@
 import type {MapPlaceable} from '$lib/interfaces/object';
-import { mapState } from '$lib/state/map.svelte';
+import {mapState} from '$lib/state/map.svelte';
 
 export function setCenter(lat: number, lng: number) {
     if (mapState.map) {
-        mapState.map.setCenter(new google.maps.LatLng(lat, lng));
-        mapState.map.setZoom(16);
+        mapState.map.setZoom(15);
+        mapState.map.panTo(new google.maps.LatLng(lat, lng));
     }
 }
 
