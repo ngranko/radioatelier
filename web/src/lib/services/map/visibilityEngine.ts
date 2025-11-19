@@ -1,4 +1,5 @@
 import type {MarkerId} from '$lib/interfaces/marker';
+import {setCenter} from '$lib/services/map/map.svelte.ts';
 import {activeObject} from '$lib/state/activeObject.svelte.ts';
 import {activeMarker} from '$lib/stores/map.ts';
 import type {MarkerRepository} from './markerRepository';
@@ -76,12 +77,13 @@ export class VisibilityEngine {
         this.renderer.show(marker);
         this.repo.markVisible(id);
 
-        // this is needed so that share pages will load with the correct marker active
+        // this is needed so that share pages will load with active correct marker
         // as at the point of page load no markers are displayed, we need this block to
         // activate required marker on first viewport update
         if (activeObject.detailsId === id) {
             activeMarker.set(marker);
             activeMarker.activate();
+            setCenter(Number(activeObject.object!.lat), Number(activeObject.object!.lng));
         }
     }
 

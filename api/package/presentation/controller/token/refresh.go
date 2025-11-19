@@ -4,6 +4,7 @@ import (
     "log/slog"
     "net/http"
 
+    "radioatelier/package/config"
     "radioatelier/package/infrastructure/logger"
     "radioatelier/package/infrastructure/router"
     "radioatelier/package/usecase/presenter"
@@ -37,6 +38,17 @@ func Refresh(w http.ResponseWriter, r *http.Request) {
         router.NewResponse().WithStatus(http.StatusInternalServerError).Send(w)
         return
     }
+
+    http.SetCookie(w, &http.Cookie{
+        Name:     "refreshToken",
+        Value:    newToken.GetModel().Token,
+        Expires:  newToken.GetModel().ValidUntil,
+        Secure:   config.Get().IsLive,
+        HttpOnly: true,
+        Domain:   config.Get().Host,
+        Path:     "/",
+        SameSite: http.SameSiteLaxMode,
+    })
 
     router.NewResponse().
         WithStatus(http.StatusOK).

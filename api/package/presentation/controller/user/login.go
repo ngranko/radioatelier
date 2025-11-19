@@ -79,6 +79,17 @@ func LogIn(w http.ResponseWriter, r *http.Request) {
         return
     }
 
+    http.SetCookie(w, &http.Cookie{
+        Name:     "refreshToken",
+        Value:    refreshToken.GetModel().Token,
+        Expires:  refreshToken.GetModel().ValidUntil,
+        Secure:   config.Get().IsLive,
+        HttpOnly: true,
+        Domain:   config.Get().Host,
+        Path:     "/",
+        SameSite: http.SameSiteLaxMode,
+    })
+
     router.NewResponse().
         WithStatus(http.StatusOK).
         WithPayload(router.Payload{

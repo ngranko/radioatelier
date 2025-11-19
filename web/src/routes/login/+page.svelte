@@ -1,10 +1,6 @@
 <script lang="ts">
     import {createMutation, useQueryClient} from '@tanstack/svelte-query';
-    import type {
-        LoginResponsePayload,
-    } from '$lib/interfaces/auth';
     import {login} from '$lib/api/auth';
-    import RefreshToken from '$lib/api/auth/refreshToken';
     import {page} from '$app/state';
     import {goto} from '$app/navigation';
     import {defaults, superForm} from 'sveltekit-superforms';
@@ -41,8 +37,7 @@
                 return;
             }
             try {
-                const result = await $mutation.mutateAsync(form.data);
-                RefreshToken.set((result as LoginResponsePayload).data.refreshToken);
+                await $mutation.mutateAsync(form.data);
                 queryClient.clear();
                 const ref = page.url.searchParams.get('ref');
                 await goto(ref ?? '/');

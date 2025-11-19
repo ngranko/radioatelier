@@ -10,7 +10,4 @@ export interface LoginResponsePayload extends Payload {
         email?: string;
         password?: string;
     };
-    data: {
-        refreshToken: string;
-    };
 }
