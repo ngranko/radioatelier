@@ -77,7 +77,6 @@ export interface ObjectListItem {
 
 export interface PointListItem {
     object: ObjectListItem;
-    marker?: google.maps.marker.AdvancedMarkerElement;
 }
 
 export type GetObjectContext = [string, GetObjectInputs];
@@ -114,7 +113,6 @@ export interface DeleteObjectPayloadData {
 
 export interface SearchPointListItem {
     object: SearchItem;
-    marker?: google.maps.marker.AdvancedMarkerElement;
 }
 
 export interface SearchItem {

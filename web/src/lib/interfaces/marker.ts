@@ -10,7 +10,7 @@ export interface MarkerOptions {
     onDragEnd?(): void;
 }
 
-export type MarkerSource = 'map' | 'list' | 'search';
+export type MarkerSource = 'map' | 'list' | 'search' | 'share';
 
 export type MarkerId = string;
 

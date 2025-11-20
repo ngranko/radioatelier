@@ -13,6 +13,7 @@
     import Marker from '$lib/components/map/marker.svelte';
     import UserMenu from '$lib/components/userMenu/userMenu.svelte';
     import Search from '$lib/components/search/search.svelte';
+    import {sharedMarker} from '$lib/state/sharedMarker.svelte.ts';
 
     // this is needed to avoid deck.gl error
     webgl2Adapter;
@@ -116,6 +117,20 @@
             source="search"
         />
     {/each}
+
+    {#if sharedMarker.object}
+        {#key `${sharedMarker.object.lat},${sharedMarker.object.lng}`}
+            <Marker
+                id={sharedMarker.object.id}
+                lat={sharedMarker.object.lat}
+                lng={sharedMarker.object.lng}
+                initialActive={true}
+                icon="fa-solid fa-star"
+                color="#0085c8"
+                source="share"
+            />
+        {/key}
+    {/if}
 
     {#if activeObject.object && !activeObject.object.id}
         {#key `${activeObject.object.lat},${activeObject.object.lng}`}

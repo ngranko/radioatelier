@@ -1,5 +1,5 @@
 interface MarkerState {
-    dragTimeout: number | undefined;
+    dragTimeout?: number;
 }
 
 export const markerState = $state<MarkerState>({
