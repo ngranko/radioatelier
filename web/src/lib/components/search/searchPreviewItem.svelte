@@ -18,8 +18,8 @@
 
         setCenter(Number(object.lat), Number(object.lng));
         const marker = mapState.markerManager.getMarker(object.id);
-        if (marker) {
-            google.maps.event.trigger(marker, 'gmp-click');
+        if (marker?.getRaw()) {
+            google.maps.event.trigger(marker.getRaw()!, 'gmp-click');
         } else {
             activeObject.isLoading = false;
             activeObject.isMinimized = false;

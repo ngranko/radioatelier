@@ -56,16 +56,8 @@ export const pointList = {
     update: (id: string, updatedFields: Partial<PointListItem>) => {
         privatePointList.update(value => {
             const point = value[id];
-            if (point) {
-                if (updatedFields.object) {
-                    point.object = updatedFields.object;
-                }
-                if (updatedFields.marker) {
-                    if (point.marker) {
-                        point.marker.map = null;
-                    }
-                    point.marker = updatedFields.marker;
-                }
+            if (point && updatedFields.object) {
+                point.object = updatedFields.object;
             }
             return value;
         });
@@ -108,22 +100,8 @@ export const searchPointList = {
     update: (id: string, updatedFields: Partial<SearchPointListItem>) => {
         privateSearchPointList.update(value => {
             const point = value[id];
-            if (point) {
-                if (updatedFields.object) {
-                    point.object = updatedFields.object;
-                }
-                if (updatedFields.marker) {
-                    privatePointList.update(value => {
-                        if (value[id] && value[id].marker) {
-                            value[id].marker.map = null;
-                        }
-                        return value;
-                    });
-                    if (point.marker) {
-                        point.marker.map = null;
-                    }
-                    point.marker = updatedFields.marker;
-                }
+            if (point && updatedFields.object) {
+                point.object = updatedFields.object;
             }
             return value;
         });

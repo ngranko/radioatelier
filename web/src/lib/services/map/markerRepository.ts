@@ -1,4 +1,4 @@
-import type { MarkerId } from '$lib/interfaces/marker';
+import type {MarkerId} from '$lib/interfaces/marker';
 import {Marker} from './marker';
 
 export class MarkerRepository {
@@ -8,10 +8,6 @@ export class MarkerRepository {
 
     public get(id: MarkerId): Marker | undefined {
         return this.markerCache.get(id);
-    }
-
-    public set(id: MarkerId, marker: Marker): void {
-        this.markerCache.set(id, marker);
     }
 
     public remove(id: MarkerId): void {
@@ -43,10 +39,6 @@ export class MarkerRepository {
         return Array.from(this.markerCache.keys());
     }
 
-    public setReplaced(id: MarkerId, marker: Marker): void {
-        this.replacedMarkers.set(id, marker);
-    }
-
     public maybeRestoreReplaced(id: MarkerId): Marker | null {
         const replaced = this.replacedMarkers.get(id) ?? null;
         if (replaced) {
@@ -65,7 +57,7 @@ export class MarkerRepository {
     public upsertWithPolicy(
         id: MarkerId,
         createMarker: () => Marker,
-        source: 'map' | 'list' | 'search',
+        source: 'map' | 'list' | 'search' | 'share',
     ): {action: 'inserted' | 'ignored' | 'replaced'; marker: Marker} {
         const existing = this.markerCache.get(id);
         if (!existing) {
@@ -88,24 +80,5 @@ export class MarkerRepository {
         }
 
         return {action: 'ignored', marker: existing};
-    }
-
-    public bulkUpsertWithPolicy(
-        items: Array<{id: MarkerId; createMarker: () => Marker; source: 'map' | 'list' | 'search'}>,
-    ): {inserted: number; replaced: number; ignored: number; markers: Record<string, Marker>} {
-        let inserted = 0;
-        let replaced = 0;
-        let ignored = 0;
-        const markers: Record<string, Marker> = {};
-
-        for (const {id, createMarker, source} of items) {
-            const result = this.upsertWithPolicy(id, createMarker, source);
-            markers[id] = result.marker;
-            if (result.action === 'inserted') inserted++;
-            else if (result.action === 'replaced') replaced++;
-            else ignored++;
-        }
-
-        return {inserted, replaced, ignored, markers};
     }
 }
