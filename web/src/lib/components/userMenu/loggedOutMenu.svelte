@@ -9,9 +9,10 @@
         Item as DropdownMenuItem,
     } from '$lib/components/ui/dropdown-menu';
     import {goto} from '$app/navigation';
+    import {page} from '$app/state';
 
     function handleLoginClick() {
-        goto('/login');
+        goto(`/login?ref=${encodeURIComponent(page.url.pathname)}`);
     }
 </script>
 
