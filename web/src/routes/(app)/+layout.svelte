@@ -66,8 +66,14 @@
         isLoading={activeObject.isLoading}
         isEditing={activeObject.isEditing}
         permissions={{
-            canEditAll: data.user.auth && activeObject.object.isOwner,
-            canEditPersonal: data.user.auth && !activeObject.object.isOwner,
+            canEditAll:
+                data.user.auth &&
+                activeObject.object.id !== sharedMarker.object?.id &&
+                activeObject.object.isOwner,
+            canEditPersonal:
+                data.user.auth &&
+                activeObject.object.id !== sharedMarker.object?.id &&
+                !activeObject.object.isOwner,
         }}
     />
 {/if}
