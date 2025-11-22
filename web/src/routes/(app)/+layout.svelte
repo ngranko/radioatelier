@@ -14,6 +14,7 @@
     import UserMenu from '$lib/components/userMenu/userMenu.svelte';
     import Search from '$lib/components/search/search.svelte';
     import {sharedMarker} from '$lib/state/sharedMarker.svelte.ts';
+    import {goto} from '$app/navigation';
 
     // this is needed to avoid deck.gl error
     webgl2Adapter;
@@ -28,19 +29,7 @@
             return;
         }
 
-        activeObject.isLoading = false;
-        activeObject.isMinimized = false;
-        activeObject.isEditing = true;
-        activeObject.isDirty = false;
-        activeObject.detailsId = new Date().getTime().toString();
-        activeObject.object = {
-            id: null,
-            lat: String(location.lat),
-            lng: String(location.lng),
-            isVisited: false,
-            isRemoved: false,
-            isOwner: true,
-        };
+        goto(`/object/create?lat=${location.lat}&lng=${location.lng}`);
     }
 
     // uncomment if mobile dev tools are required
