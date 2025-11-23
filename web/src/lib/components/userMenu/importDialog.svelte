@@ -8,8 +8,6 @@
     import UploadFile from '$lib/components/userMenu/import/uploadFile.svelte';
     import PreviewImport from '$lib/components/userMenu/import/preview.svelte';
     import Progress from '$lib/components/userMenu/import/progress.svelte';
-    import {createQuery, useQueryClient} from '@tanstack/svelte-query';
-    import {listObjects} from '$lib/api/object.ts';
     import CloseConfirmation from '$lib/components/userMenu/import/closeConfirmation.svelte';
     import {
         ImportStepSuccess,
@@ -21,8 +19,7 @@
     import Success from '$lib/components/userMenu/import/success.svelte';
     import Error from '$lib/components/userMenu/import/error.svelte';
     import {importState, resetImportState} from '$lib/state/import.svelte.ts';
-
-    const queryClient = useQueryClient();
+    import {goto} from '$app/navigation';
 
     interface Props {
         isOpen: boolean;
@@ -31,15 +28,13 @@
     let {isOpen = $bindable()}: Props = $props();
     let isConfirmationOpen = $state(false);
 
-    const objects = createQuery({queryKey: ['objects'], queryFn: listObjects});
-
     function doClose() {
         isOpen = false;
         if (importState.provider.isRunning()) {
             importState.provider.cancel();
         }
-        queryClient.invalidateQueries({queryKey: ['objects']}).then(() => $objects.refetch());
         resetImportState();
+        goto('/', {invalidate: ['/api/object/list']});
     }
 
     function getIsOpen() {
@@ -50,7 +45,7 @@
         if (!newOpen && isDestructive()) {
             isConfirmationOpen = true;
         } else {
-            isOpen = newOpen;
+            goto('/');
         }
     }
 

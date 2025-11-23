@@ -5,7 +5,7 @@
         ObjectFormInputs,
         UpdateObjectResponsePayload,
     } from '$lib/interfaces/object';
-    import {pointList, searchPointList} from '$lib/stores/map';
+    import {searchPointList} from '$lib/stores/map';
     import {defaults, superForm} from 'sveltekit-superforms';
     import {zod4, zod4Client} from 'sveltekit-superforms/adapters';
     import {z} from 'zod';
@@ -30,6 +30,7 @@
     import {Separator} from '$lib/components/ui/separator';
     import {Input} from '$lib/components/ui/input';
     import {getErrorArray, normalizeFormErrors} from '$lib/utils/formErrors';
+    import {goto} from '$app/navigation';
 
     const client = useQueryClient();
 
@@ -132,11 +133,6 @@
             id: object.id as string,
             updatedFields: object,
         });
-        client.setQueryData(['object', {id: result.data.id}], {
-            message: '',
-            data: {object: result.data},
-        });
-        pointList.update(result.data.id, {object: result.data});
         searchPointList.update(result.data.id, {
             object: {
                 id: result.data.id,
@@ -154,6 +150,8 @@
         activeObject.object = result.data;
         activeObject.isEditing = false;
         activeObject.isDirty = false;
+
+        goto(`/object/${object.id}`);
     }
 
     function handleBack() {

@@ -7,7 +7,7 @@
     import type {Location} from '$lib/interfaces/location.ts';
     import {activeObject} from '$lib/state/activeObject.svelte.ts';
     import ObjectDetails from '$lib/components/objectDetails/objectDetails.svelte';
-    import {pointList, searchPointList} from '$lib/stores/map.ts';
+    import {searchPointList} from '$lib/stores/map.ts';
     import {mapState} from '$lib/state/map.svelte.ts';
     import LocationMarker from '$lib/components/map/locationMarker.svelte';
     import Marker from '$lib/components/map/marker.svelte';
@@ -85,20 +85,6 @@
 
 {#if mapState.map}
     <LocationMarker {orientationEnabled} />
-
-    {#each Object.values($pointList) as point (point.object.id)}
-        <Marker
-            id={point.object.id}
-            lat={point.object.lat}
-            lng={point.object.lng}
-            isVisited={point.object.isVisited}
-            isRemoved={point.object.isRemoved}
-            isDraggable={point.object.isOwner}
-            icon="fa-solid fa-bolt"
-            color="#000000"
-            source="list"
-        />
-    {/each}
 
     {#each Object.keys($searchPointList) as id (id)}
         <Marker
