@@ -114,7 +114,7 @@
     {/each}
 
     {#if sharedMarker.object}
-        {#key `${sharedMarker.object.lat},${sharedMarker.object.lng}`}
+        {#key sharedMarker.object.id}
             <Marker
                 id={sharedMarker.object.id}
                 lat={sharedMarker.object.lat}

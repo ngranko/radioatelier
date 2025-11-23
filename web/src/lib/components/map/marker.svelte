@@ -1,12 +1,11 @@
 <script lang="ts">
     import {onMount, onDestroy} from 'svelte';
-    import {activeMarker, searchPointList} from '$lib/stores/map';
+    import {activeMarker, searchPointList, pointList} from '$lib/stores/map.ts';
     import {createQuery, useQueryClient} from '@tanstack/svelte-query';
     import {getObject} from '$lib/api/object';
     import {useRepositionMutation} from '$lib/api/mutation/reposition';
     import {getAddress} from '$lib/api/location';
     import type {Object} from '$lib/interfaces/object';
-    import {pointList} from '$lib/stores/map.js';
     import {mapState} from '$lib/state/map.svelte';
     import {Marker as MarkerObject} from '$lib/services/map/marker';
     import type {MarkerSource} from '$lib/interfaces/marker';

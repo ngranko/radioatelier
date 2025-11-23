@@ -70,13 +70,6 @@
 
         if (page.data.user.auth) {
             goto('/');
-        } else {
-            activeObject.object = null;
-            activeObject.detailsId = '';
-            activeObject.isDirty = false;
-            activeObject.isEditing = false;
-            activeObject.isLoading = false;
-            activeObject.isMinimized = false;
         }
     }
 </script>
