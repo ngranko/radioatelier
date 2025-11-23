@@ -14,6 +14,7 @@
     import {logout} from '$lib/api/auth.ts';
     import {resetActiveObject} from '$lib/state/activeObject.svelte.ts';
     import {page} from '$app/state';
+    import {goto} from '$app/navigation';
 
     interface Props {
         isOpen: boolean;
@@ -30,7 +31,7 @@
             localStorage.removeItem('lastCenter');
             localStorage.removeItem('lastPosition');
             page.data.user = {auth: false};
-            isOpen = false;
+            goto('/login');
         },
     });
     const logoutMutation = createMutation({
