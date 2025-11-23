@@ -59,29 +59,47 @@
     const {form: formData, enhance, submitting} = form;
 </script>
 
-<section class="flex h-screen flex-col items-center justify-center p-6">
-    <Logo class="mb-10 flex w-full max-w-sm" />
-    <form class="flex w-full max-w-sm flex-col gap-4" use:enhance>
-        <FormField {form} name="email">
-            <FormControl>
-                {#snippet children({props})}
-                    <FormLabel>email</FormLabel>
-                    <Input type="email" {...props} bind:value={$formData.email} />
-                {/snippet}
-            </FormControl>
-            <FormFieldErrors />
-        </FormField>
-        <FormField {form} name="password">
-            <FormControl>
-                {#snippet children({props})}
-                    <FormLabel>пароль</FormLabel>
-                    <PasswordInput {...props} bind:value={$formData.password} />
-                {/snippet}
-            </FormControl>
-            <FormFieldErrors />
-        </FormField>
-        <div class="mt-2">
-            <Button type="submit" class="text-base" disabled={$submitting}>Войти</Button>
+<section class="flex min-h-screen flex-col items-center justify-center bg-muted p-6">
+    <div class="w-full max-w-sm space-y-6">
+        <div class="flex flex-col items-center space-y-2 text-center">
+            <Logo class="mb-2 flex items-center justify-center" />
+            <p class="text-sm text-muted-foreground">
+                Введите свои данные для входа в систему
+            </p>
         </div>
-    </form>
+
+        <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+            <div class="p-6 pt-6">
+                <form class="flex flex-col gap-4" use:enhance>
+                    <FormField {form} name="email">
+                        <FormControl>
+                            {#snippet children({props})}
+                                <FormLabel>Email</FormLabel>
+                                <Input type="email" placeholder="name@example.com" {...props} bind:value={$formData.email} />
+                            {/snippet}
+                        </FormControl>
+                        <FormFieldErrors />
+                    </FormField>
+                    <FormField {form} name="password">
+                        <FormControl>
+                            {#snippet children({props})}
+                                <FormLabel>Пароль</FormLabel>
+                                <PasswordInput placeholder="••••••••" {...props} bind:value={$formData.password} />
+                            {/snippet}
+                        </FormControl>
+                        <FormFieldErrors />
+                    </FormField>
+                    <div class="mt-2">
+                        <Button type="submit" class="w-full text-base" disabled={$submitting}>
+                            {#if $submitting}
+                                Вход...
+                            {:else}
+                                Войти
+                            {/if}
+                        </Button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </section>
