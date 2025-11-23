@@ -75,10 +75,6 @@ export interface ObjectListItem {
     isOwner: boolean;
 }
 
-export interface PointListItem {
-    object: ObjectListItem;
-}
-
 export type GetObjectContext = [string, GetObjectInputs];
 
 export interface GetObjectInputs {

@@ -7,7 +7,7 @@
     } from '$lib/interfaces/object';
     import DeleteButton from '$lib/components/objectDetails/editMode/deleteButton.svelte';
     import BackButton from '$lib/components/objectDetails/editMode/backButton.svelte';
-    import {pointList, searchPointList} from '$lib/stores/map';
+    import {searchPointList} from '$lib/stores/map';
     import {defaults, superForm} from 'sveltekit-superforms';
     import {zod4, zod4Client} from 'sveltekit-superforms/adapters';
     import {z} from 'zod';
@@ -34,7 +34,6 @@
         FormFieldErrors,
     } from '$lib/components/ui/form/index.js';
     import {uploadImage} from '$lib/api/image.ts';
-    import {page} from '$app/state';
     import {goto} from '$app/navigation';
 
     const client = useQueryClient();
@@ -174,10 +173,7 @@
     }
 
     async function handleSave(values: ObjectFormInputs) {
-        console.log('saving');
-
         if (!activeObject.object) {
-            console.log('quitting without saving');
             return;
         }
 
@@ -202,18 +198,13 @@
 
     async function createNewObject(object: ObjectFormInputs) {
         const result = await $createObjectMutation.mutateAsync(object);
-        client.setQueryData(['object', {id: result.data.id}], {
-            message: '',
-            data: {object: result.data},
-        });
-        pointList.add({object: result.data});
 
         activeObject.object = result.data;
         activeObject.detailsId = result.data.id;
         activeObject.isEditing = false;
         activeObject.isDirty = false;
 
-        await goto(`/object/${result.data.id}`);
+        await goto(`/object/${result.data.id}`, {invalidate: ['/api/object/list']});
     }
 
     async function updateExistingObject(object: ObjectFormInputs) {
@@ -221,11 +212,6 @@
             id: object.id as string,
             updatedFields: object,
         });
-        client.setQueryData(['object', {id: result.data.id}], {
-            message: '',
-            data: {object: result.data},
-        });
-        pointList.update(result.data.id, {object: result.data});
         searchPointList.update(result.data.id, {
             object: {
                 id: result.data.id,
@@ -244,7 +230,7 @@
         activeObject.isEditing = false;
         activeObject.isDirty = false;
 
-        await goto(`/object/${result.data.id}`);
+        await goto(`/object/${result.data.id}`, {invalidate: ['/api/object/list']});
     }
 
     async function handleDelete() {
@@ -263,12 +249,11 @@
 
     async function deleteExistingObject(id: string) {
         const result = await $deleteObjectMutation.mutateAsync({id});
-        pointList.remove(result.data.id);
         searchPointList.remove(result.data.id);
         await client.invalidateQueries({
             queryKey: ['searchLocal'],
         });
-        goto('/');
+        goto('/', {invalidate: ['/api/object/list']});
     }
 
     function handleBack() {

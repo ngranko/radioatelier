@@ -1,6 +1,6 @@
 <script lang="ts">
     import {onMount, onDestroy} from 'svelte';
-    import {activeMarker, searchPointList, pointList} from '$lib/stores/map.ts';
+    import {activeMarker, searchPointList} from '$lib/stores/map.ts';
     import {createQuery, useQueryClient} from '@tanstack/svelte-query';
     import {getObject} from '$lib/api/object';
     import {useRepositionMutation} from '$lib/api/mutation/reposition';
@@ -12,7 +12,7 @@
     import {toast} from 'svelte-sonner';
     import {activeObject, resetActiveObject} from '$lib/state/activeObject.svelte.ts';
     import {setCenter} from '$lib/services/map/map.svelte.ts';
-    import {goto} from '$app/navigation';
+    import {goto, invalidate} from '$app/navigation';
     import {page} from '$app/state';
 
     interface Props {
@@ -191,11 +191,7 @@
                     lng: String(marker.getPosition().lng),
                 },
             });
-            pointList.updateCoordinates(
-                id!,
-                String(marker.getPosition().lat),
-                String(marker.getPosition().lng),
-            );
+            invalidate('/api/object/list');
         } catch (error) {
             marker.revertPosition();
             throw error;
