@@ -15,16 +15,15 @@
     import {cubicInOut} from 'svelte/easing';
     import Loader from '$lib/components/loader.svelte';
     import {fade} from 'svelte/transition';
-    import ImportDialog from '$lib/components/userMenu/importDialog.svelte';
+    import {goto} from '$app/navigation';
 
-    let isImportDialogOpen = $state(false);
     let isChangePasswordDialogOpen = $state(false);
     let isLogoutDialogOpen = $state(false);
     let isDialogLoading = $state(false);
     let PasswordChangeDialog: Component<{isOpen: boolean}> | undefined = $state();
 
     function handleImportClick() {
-        isImportDialogOpen = true;
+        goto('/import');
     }
 
     async function handleChangePasswordClick() {
@@ -92,8 +91,6 @@
         <Loader />
     </div>
 {/if}
-
-<ImportDialog bind:isOpen={isImportDialogOpen} />
 
 {#if PasswordChangeDialog}
     <PasswordChangeDialog bind:isOpen={isChangePasswordDialogOpen} />
