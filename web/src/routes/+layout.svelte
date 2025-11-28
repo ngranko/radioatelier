@@ -32,13 +32,15 @@
     {@render children?.()}
     <Toaster
         position="top-center"
-        richColors
         theme="light"
         toastOptions={{
             classes: {
-                toast: 'bg-white',
                 title: 'font-branding text-base',
                 description: 'font-branding',
+                success: '[&_[data-icon]]:text-success',
+                error: '[&_[data-icon]]:text-destructive',
+                warning: '[&_[data-icon]]:text-warning',
+                info: '[&_[data-icon]]:text-primary',
             },
         }}
     >
