@@ -35,7 +35,7 @@
         <Button
             variant="ghost"
             size="icon"
-            class="bg-sky-600 text-base text-white hover:bg-sky-700 hover:text-white"
+            class="bg-primary text-base text-white hover:bg-primary/90 hover:text-white"
             onclick={handleEditClick}
         >
             <i class="fa-solid fa-pen"></i>
@@ -44,7 +44,7 @@
         <Button
             variant="ghost"
             size="icon"
-            class="bg-sky-600 text-base text-white hover:bg-sky-700 hover:text-white"
+            class="bg-primary text-base text-white hover:bg-primary/90 hover:text-white"
             onclick={handleEditClick}
         >
             <i class="fa-solid fa-user-pen"></i>

@@ -20,9 +20,9 @@
             'w-full h-0.5 mt-2 flex rounded-sm bg-gray-100 after:block after:duration-200 after:ease-in-out': true,
             'after:bg-destructive after:w-1/20': passwordScore === SCORE_VERY_LOW,
             'after:bg-destructive after:w-1/4': passwordScore === SCORE_LOW,
-            'after:bg-sky-600 after:w-1/2': passwordScore === SCORE_MEDIUM,
-            'after:bg-sky-600 after:w-3/4': passwordScore === SCORE_HIGH,
-            'after:bg-sky-600 after:w-full': passwordScore === SCORE_VERY_HIGH,
+            'after:bg-primary after:w-1/2': passwordScore === SCORE_MEDIUM,
+            'after:bg-primary after:w-3/4': passwordScore === SCORE_HIGH,
+            'after:bg-primary after:w-full': passwordScore === SCORE_VERY_HIGH,
         }),
     );
 </script>

@@ -21,7 +21,7 @@
     class="fixed top-29 left-1/2 z-1 transform-[translateX(-50%)] sm:top-2"
     transition:fade={{duration: 100, easing: cubicInOut}}
 >
-    <Button variant="default" class="bg-sky-600 hover:bg-sky-700" onclick={handleClick}>
+    <Button onclick={handleClick}>
         Искать в этой области
     </Button>
 </div>
