@@ -26,6 +26,8 @@ html {
     --accent: oklch(0.968 0.007 247.896);
     --accent-foreground: oklch(0.208 0.042 265.755);
     --destructive: oklch(0.58 0.24 30);
+    --success: oklch(0.75 0.3 145);
+    --warning: oklch(0.85 0.22 95);
     --border: oklch(0.929 0.013 255.508);
     --input: oklch(0.929 0.013 255.508);
     --ring: oklch(0.65 0.1 195);
@@ -60,6 +62,8 @@ html {
     --accent: oklch(0.279 0.041 260.031);
     --accent-foreground: oklch(0.984 0.003 247.858);
     --destructive: oklch(0.68 0.24 30);
+    --success: oklch(0.8 0.32 145);
+    --warning: oklch(0.88 0.24 95);
     --border: oklch(1 0 0 / 10%);
     --input: oklch(1 0 0 / 15%);
     --ring: oklch(0.6 0.1 195);
@@ -98,6 +102,8 @@ html {
     --color-accent: var(--accent);
     --color-accent-foreground: var(--accent-foreground);
     --color-destructive: var(--destructive);
+    --color-success: var(--success);
+    --color-warning: var(--warning);
     --color-border: var(--border);
     --color-input: var(--input);
     --color-ring: var(--ring);
@@ -202,4 +208,40 @@ html {
     100% {
         scale: 1;
     }
+}
+
+[data-sonner-toast] {
+    --toast-accent: var(--primary);
+    overflow: hidden;
+}
+
+[data-sonner-toast]::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(to right, var(--toast-accent), color-mix(in srgb, var(--toast-accent) 50%, transparent));
+    pointer-events: none;
+}
+
+[data-sonner-toast][data-removed="true"]::before {
+    display: none;
+}
+
+[data-sonner-toast][data-type="success"] {
+    --toast-accent: var(--success);
+}
+
+[data-sonner-toast][data-type="error"] {
+    --toast-accent: var(--destructive);
+}
+
+[data-sonner-toast][data-type="warning"] {
+    --toast-accent: var(--warning);
+}
+
+[data-sonner-toast][data-type="info"] {
+    --toast-accent: var(--primary);
 }
