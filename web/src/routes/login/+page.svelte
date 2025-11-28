@@ -15,6 +15,7 @@
     import {Input} from '$lib/components/ui/input';
     import PasswordInput from '$lib/components/input/passwordInput.svelte';
     import {normalizeFormErrors} from '$lib/utils/formErrors.ts';
+    import Background from './background.svelte';
 
     const queryClient = useQueryClient();
 
@@ -59,22 +60,26 @@
     const {form: formData, enhance, submitting} = form;
 </script>
 
-<section class="flex min-h-screen flex-col items-center justify-center bg-muted p-6">
-    <div class="w-full max-w-sm space-y-6">
-        <div class="flex flex-col items-center space-y-2 text-center">
-            <Logo class="mb-2 flex items-center justify-center" />
-            <p class="text-sm text-muted-foreground">
-                Введите свои данные для входа в систему
-            </p>
-        </div>
+<section class="min-h-screen flex items-center justify-center p-6 relative overflow-hidden bg-gradient-to-br from-muted via-background to-muted dark:from-[oklch(0.129_0.042_264.695)] dark:via-[oklch(0.15_0.03_260)] dark:to-[oklch(0.129_0.042_264.695)]">
+    
+    <Background />
 
-        <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
-            <div class="p-6 pt-6">
-                <form class="flex flex-col gap-4" use:enhance>
+    <div class="w-full max-w-sm relative z-10">
+        <div class="bg-card dark:bg-white/10 dark:backdrop-blur-md rounded-lg shadow-xl ring-1 ring-border dark:ring-white/20 overflow-hidden relative">
+            <div class="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-primary to-primary/50"></div>
+            <div class="px-8 py-10 sm:px-10 sm:py-12">
+                <div class="text-center mb-8">
+                    <Logo class="flex items-center justify-center gap-3 text-3xl mb-3" />
+                    <p class="text-sm text-muted-foreground dark:text-white/60">
+                        Введите свои данные для входа в систему
+                    </p>
+                </div>
+
+                <form class="flex flex-col gap-5" use:enhance>
                     <FormField {form} name="email">
                         <FormControl>
                             {#snippet children({props})}
-                                <FormLabel>Email</FormLabel>
+                                <FormLabel>email</FormLabel>
                                 <Input type="email" placeholder="name@example.com" {...props} bind:value={$formData.email} />
                             {/snippet}
                         </FormControl>
@@ -83,7 +88,7 @@
                     <FormField {form} name="password">
                         <FormControl>
                             {#snippet children({props})}
-                                <FormLabel>Пароль</FormLabel>
+                                <FormLabel>пароль</FormLabel>
                                 <PasswordInput placeholder="••••••••" {...props} bind:value={$formData.password} />
                             {/snippet}
                         </FormControl>
@@ -92,7 +97,11 @@
                     <div class="mt-2">
                         <Button type="submit" class="w-full text-base" disabled={$submitting}>
                             {#if $submitting}
-                                Вход...
+                                <span class="flex gap-1 justify-center">
+                                    <span class="w-1.5 h-1.5 bg-current rounded-full animate-bounce"></span>
+                                    <span class="w-1.5 h-1.5 bg-current rounded-full animate-bounce [animation-delay:0.1s]"></span>
+                                    <span class="w-1.5 h-1.5 bg-current rounded-full animate-bounce [animation-delay:0.2s]"></span>
+                                </span>
                             {:else}
                                 Войти
                             {/if}
