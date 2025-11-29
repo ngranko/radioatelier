@@ -10,10 +10,6 @@ export async function changePassword(values: ChangePasswordFormInputs): Promise<
     ).send();
 }
 
-export async function me(): Promise<Payload<MeResponseData>> {
-    return new AuthRequest(new JsonRequest('/api/user/me', METHOD_GET)).send();
-}
-
-export async function meDirect(options: JsonRequestOptions): Promise<Payload<MeResponseData>> {
+export async function me(options: JsonRequestOptions): Promise<Payload<MeResponseData>> {
     return new AuthRequest(new JsonRequest('/api/user/me', METHOD_GET, options)).send();
 }

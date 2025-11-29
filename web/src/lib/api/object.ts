@@ -7,7 +7,6 @@ import type {
     CreateObjectResponsePayload,
     DeleteObjectInputs,
     DeleteObjectPayloadData,
-    GetObjectContext,
     GetObjectResponsePayload,
     ListObjectsResponsePayload,
     RepositionObjectInputs,
@@ -26,23 +25,13 @@ export async function createObject(
     return new AuthRequest(new JsonRequest('/api/object', METHOD_POST).setParams(values)).send();
 }
 
-export async function listObjects(): Promise<Payload<ListObjectsResponsePayload>> {
-    return new AuthRequest(new JsonRequest('/api/object/list', METHOD_GET)).send();
-}
-
-export async function listObjectsDirect(
+export async function listObjects(
     options: JsonRequestOptions,
 ): Promise<Payload<ListObjectsResponsePayload>> {
     return new AuthRequest(new JsonRequest('/api/object/list', METHOD_GET, options)).send();
 }
 
-export async function getObject({
-    queryKey: [_key, {id}],
-}: QueryFunctionContext<GetObjectContext>): Promise<Payload<GetObjectResponsePayload>> {
-    return new AuthRequest(new JsonRequest(`/api/object/${id}`, METHOD_GET)).send();
-}
-
-export async function getObjectDirect(
+export async function getObject(
     id: string,
     options: JsonRequestOptions,
 ): Promise<Payload<GetObjectResponsePayload>> {

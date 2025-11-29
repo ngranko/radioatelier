@@ -1,4 +1,4 @@
-import {listObjectsDirect} from '$lib/api/object.ts';
+import {listObjects} from '$lib/api/object.ts';
 import type {ObjectListItem} from '$lib/interfaces/object.ts';
 import type {CurrentUser} from '$lib/interfaces/user.ts';
 import type {LayoutLoad} from './$types';
@@ -16,7 +16,7 @@ export const load: LayoutLoad<LayoutData> = async ({fetch, parent}) => {
     }
 
     try {
-        const objects = await listObjectsDirect({fetch});
+        const objects = await listObjects({fetch});
         result.objects = objects.data.objects;
     } catch (error) {
         return result;
