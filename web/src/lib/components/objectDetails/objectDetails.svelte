@@ -19,7 +19,6 @@
     interface Props {
         key: string;
         initialValues: Partial<LooseObject>;
-        isLoading?: boolean;
         isEditing?: boolean;
         permissions?: Permissions;
     }
@@ -27,7 +26,6 @@
     let {
         key,
         initialValues = $bindable(),
-        isLoading = false,
         isEditing = false,
         permissions = {canEditAll: true, canEditPersonal: true},
     }: Props = $props();
@@ -107,10 +105,7 @@
         <CloseButton onClick={handleClose} isConfirmationRequired={activeObject.isDirty} />
     </section>
     {#key key}
-        {#if isLoading}
-            <!-- TODO: do a proper loader later -->
-            <div class="flex flex-1 items-center justify-center">Loading...</div>
-        {:else if canEditAll && isEditing}
+        {#if canEditAll && isEditing}
             <Form {initialValues} />
         {:else if canEditPersonal && isEditing}
             <LightForm {initialValues} />

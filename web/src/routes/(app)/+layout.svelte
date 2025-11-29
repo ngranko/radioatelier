@@ -52,7 +52,6 @@
     <ObjectDetails
         initialValues={activeObject.object}
         key={activeObject.detailsId}
-        isLoading={activeObject.isLoading}
         isEditing={activeObject.isEditing}
         permissions={{
             canEditAll:

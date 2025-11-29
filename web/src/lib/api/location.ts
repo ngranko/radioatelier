@@ -1,14 +1,13 @@
-import JsonRequest from '$lib/api/request/JsonRequest';
 import {METHOD_GET, METHOD_POST} from '$lib/api/constants';
+import AuthRequest from '$lib/api/request/AuthRequest';
+import JsonRequest, {type JsonRequestOptions} from '$lib/api/request/JsonRequest';
 import config from '$lib/config';
+import type {Payload} from '$lib/interfaces/api';
 import type {
-    GetAddressContext,
+    GetAddressInputs,
     GetAddressResponseData,
     GetLocationResponseData,
 } from '$lib/interfaces/location';
-import type {QueryFunctionContext} from '@tanstack/svelte-query';
-import type {Payload} from '$lib/interfaces/api';
-import AuthRequest from '$lib/api/request/AuthRequest';
 
 export function getLocation(): Promise<GetLocationResponseData> {
     return new JsonRequest(
@@ -17,11 +16,13 @@ export function getLocation(): Promise<GetLocationResponseData> {
     ).send();
 }
 
-export function getAddress({
-    queryKey: [_key, {lat, lng}],
-}: QueryFunctionContext<GetAddressContext>): Promise<Payload<GetAddressResponseData>> {
+export function getAddress(
+    {lat, lng}: GetAddressInputs,
+    options: JsonRequestOptions,
+): Promise<Payload<GetAddressResponseData>> {
     return new AuthRequest(
         new JsonRequest(`/api/object/address?lat=${lat}&lng=${lng}`, METHOD_GET, {
+            ...options,
             noContentType: true,
         }),
     ).send();

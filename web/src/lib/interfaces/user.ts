@@ -3,10 +3,6 @@ export interface ChangePasswordFormInputs extends Record<string, string> {
     passwordConfirm: string;
 }
 
-export type ChangePasswordFormErrors = Partial<
-    Record<keyof ChangePasswordFormInputs, string | string[]>
->;
-
 export interface MeResponseData {
     id: string;
     role: string;

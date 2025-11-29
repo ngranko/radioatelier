@@ -21,7 +21,6 @@
         if (marker?.getRaw()) {
             google.maps.event.trigger(marker.getRaw()!, 'gmp-click');
         } else {
-            activeObject.isLoading = false;
             activeObject.isMinimized = false;
             activeObject.isEditing = !Boolean(object.id);
             activeObject.isDirty = false;

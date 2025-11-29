@@ -75,12 +75,6 @@ export interface ObjectListItem {
     isOwner: boolean;
 }
 
-export type GetObjectContext = [string, GetObjectInputs];
-
-export interface GetObjectInputs {
-    id: string;
-}
-
 export interface GetObjectResponsePayload {
     object: Object;
 }
