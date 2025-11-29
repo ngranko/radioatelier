@@ -9,9 +9,8 @@ interface LayoutData {
 }
 
 export const load: LayoutLoad<LayoutData> = async ({fetch, parent}) => {
-    const result: LayoutData = {user: {auth: false}, objects: []};
     const {user} = await parent();
-    result.user = {auth: user.auth, profile: user.profile};
+    const result: LayoutData = {user, objects: []};
     if (!user.auth) {
         return result;
     }
