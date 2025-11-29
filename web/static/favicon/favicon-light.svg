@@ -1,0 +1,17 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Light theme favicon - teal on transparent for light backgrounds -->
+  <defs>
+    <clipPath id="outer-clip">
+      <path d="M56 56 L456 56 C478 56 496 74 496 96 L496 296 C496 318 478 336 456 336 L136 336 L136 456 L56 456 L56 56 Z"/>
+    </clipPath>
+  </defs>
+  
+  <!-- Main outer shape -->
+  <path d="M56 80 C56 63 70 48 88 48 L424 48 C458 48 486 76 486 110 L486 282 C486 316 458 344 424 344 L136 344 L136 448 C136 459 127 468 116 468 L68 468 C57 468 48 459 48 448 L48 80 C48 63 63 48 80 48 Z" fill="#0094a8"/>
+  
+  <!-- Inner cutout - white background -->
+  <path d="M88 88 L424 88 C435 88 446 99 446 110 L446 282 C446 293 435 304 424 304 L88 304 Z" fill="white"/>
+  
+  <!-- Inner colored rectangle -->
+  <rect x="152" y="136" width="232" height="120" rx="8" fill="#0094a8"/>
+</svg>

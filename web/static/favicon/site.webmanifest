@@ -1,7 +1,19 @@
 {
-    "name": "Radioatelier",
-    "short_name": "Radioatelier",
+    "name": "Радиоателье",
+    "short_name": "Радиоателье",
     "icons": [
+        {
+            "src": "/favicon/favicon-light.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any"
+        },
+        {
+            "src": "/favicon/favicon-dark.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any"
+        },
         {
             "src": "/favicon/android-chrome-192x192.png",
             "sizes": "192x192",
