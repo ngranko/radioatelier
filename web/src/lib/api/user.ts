@@ -2,11 +2,18 @@ import {METHOD_GET, METHOD_POST} from '$lib/api/constants';
 import AuthRequest from '$lib/api/request/AuthRequest';
 import JsonRequest, {type JsonRequestOptions} from '$lib/api/request/JsonRequest';
 import type {Payload} from '$lib/interfaces/api';
-import type {ChangePasswordFormInputs, MeResponseData} from '$lib/interfaces/user';
+import type {
+    ChangePasswordFormInputs,
+    ChangePasswordResponsePayload,
+    MeResponseData,
+} from '$lib/interfaces/user';
 
-export async function changePassword(values: ChangePasswordFormInputs): Promise<Payload> {
+export async function changePassword(
+    values: ChangePasswordFormInputs,
+    options: JsonRequestOptions,
+): Promise<Payload<ChangePasswordResponsePayload>> {
     return new AuthRequest(
-        new JsonRequest('/api/user/password', METHOD_POST).setParams(values),
+        new JsonRequest('/api/user/password', METHOD_POST, options).setParams(values),
     ).send();
 }
 
