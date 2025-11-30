@@ -1,7 +1,7 @@
 <script lang="ts">
     import ImportDialog from '$lib/components/userMenu/importDialog.svelte';
 
-    let isImportDialogOpen = $state(true);
+    let isOpen = $state(true);
 </script>
 
-<ImportDialog bind:isOpen={isImportDialogOpen} />
+<ImportDialog bind:isOpen />
