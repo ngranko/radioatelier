@@ -30,10 +30,9 @@ func NewFromRaw(rawToken jwt.Token) AccessToken {
 
 func NewFromUser(user *model.User) (AccessToken, error) {
     token, err := jwt.NewBuilder().
-        Issuer("acts").
+        Issuer("radioatelier").
         IssuedAt(time.Now()).
-        // TODO: move expiration to config
-        Expiration(time.Now().Add(time.Minute*15)).
+        Expiration(time.Now().Add(config.Get().AccessTokenLifespan)).
         Claim("user_id", user.ID.String()).
         Build()
     if err != nil {

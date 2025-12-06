@@ -23,6 +23,7 @@ type Config struct {
     Manticore            ManticoreConfig
     Notion               NotionConfig
     WebSocket            WebSocketConfig
+    AccessTokenLifespan  time.Duration
 }
 
 type MySQLConfig struct {
@@ -84,6 +85,7 @@ func init() {
             // should be less than PongWait, otherwise PongWait will time out between two pings
             PingInterval: 9 * time.Second,
         },
+        AccessTokenLifespan: 15 * time.Minute,
     }
 }
 
