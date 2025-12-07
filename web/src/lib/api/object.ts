@@ -21,8 +21,11 @@ import type {QueryFunctionContext} from '@tanstack/svelte-query';
 
 export async function createObject(
     values: CreateObjectInputs,
+    options: JsonRequestOptions,
 ): Promise<Payload<CreateObjectResponsePayload>> {
-    return new AuthRequest(new JsonRequest('/api/object', METHOD_POST).setParams(values)).send();
+    return new AuthRequest(
+        new JsonRequest('/api/object', METHOD_POST, options).setParams(values),
+    ).send();
 }
 
 export async function listObjects(
@@ -46,6 +49,17 @@ export async function updateObject(
     ).send();
 }
 
+export async function updateObjectDirect(
+    values: UpdateObjectInputs,
+    options: JsonRequestOptions,
+): Promise<Payload<UpdateObjectResponsePayload>> {
+    return new AuthRequest(
+        new JsonRequest(`/api/object/${values.id}`, METHOD_PUT, options).setParams(
+            values.updatedFields,
+        ),
+    ).send();
+}
+
 export async function repositionObject(
     values: RepositionObjectInputs,
 ): Promise<Payload<RepositionObjectResponsePayload>> {
@@ -58,8 +72,11 @@ export async function repositionObject(
 
 export async function deleteObject(
     values: DeleteObjectInputs,
+    options: JsonRequestOptions,
 ): Promise<Payload<DeleteObjectPayloadData>> {
-    return new AuthRequest(new JsonRequest(`/api/object/${values.id}`, METHOD_DELETE)).send();
+    return new AuthRequest(
+        new JsonRequest(`/api/object/${values.id}`, METHOD_DELETE, options),
+    ).send();
 }
 
 export async function searchPreview({

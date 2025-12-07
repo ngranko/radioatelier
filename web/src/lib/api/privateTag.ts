@@ -1,7 +1,7 @@
-import type {Payload} from '$lib/interfaces/api';
-import AuthRequest from '$lib/api/request/AuthRequest';
-import JsonRequest from '$lib/api/request/JsonRequest';
 import {METHOD_GET, METHOD_POST} from '$lib/api/constants';
+import AuthRequest from '$lib/api/request/AuthRequest';
+import JsonRequest, {type JsonRequestOptions} from '$lib/api/request/JsonRequest';
+import type {Payload} from '$lib/interfaces/api';
 import type {
     CreatePrivateTagInputs,
     CreatePrivateTagResponsePayload,
@@ -16,6 +16,8 @@ export async function createPrivateTag(
     ).send();
 }
 
-export async function listPrivateTags(): Promise<Payload<ListPrivateTagsResponsePayload>> {
-    return new AuthRequest(new JsonRequest('/api/tag/private/list', METHOD_GET)).send();
+export async function listPrivateTags(
+    options: JsonRequestOptions,
+): Promise<Payload<ListPrivateTagsResponsePayload>> {
+    return new AuthRequest(new JsonRequest('/api/tag/private/list', METHOD_GET, options)).send();
 }
