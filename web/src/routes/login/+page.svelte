@@ -30,13 +30,7 @@
         },
     });
 
-    const {form: formData, enhance, submitting, message} = form;
-
-    $effect(() => {
-        if ($message) {
-            toast.error($message);
-        }
-    });
+    const {form: formData, enhance, submitting} = form;
 </script>
 
 <section

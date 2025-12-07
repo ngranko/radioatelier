@@ -1,9 +1,10 @@
 <script lang="ts">
-    import { toast } from 'svelte-sonner';
+    import {toast} from 'svelte-sonner';
     import {getStreetView} from '$lib/services/map/streetView.svelte';
     import {Button} from '$lib/components/ui/button';
     import {activeObject} from '$lib/state/activeObject.svelte.ts';
     import type {Permissions} from '$lib/interfaces/permissions';
+    import {goto} from '$app/navigation';
 
     interface Props {
         lat: string;
@@ -14,8 +15,11 @@
     let {lat, lng, permissions = {canEditAll: true, canEditPersonal: true}}: Props = $props();
 
     function handleEditClick() {
-        activeObject.isEditing = true;
-        activeObject.isDirty = false;
+        if (!activeObject.detailsId) {
+            return;
+        }
+
+        goto(`/object/${activeObject.detailsId}/edit`);
     }
 
     function handleRouteClick() {
@@ -35,7 +39,7 @@
         <Button
             variant="ghost"
             size="icon"
-            class="bg-primary text-base text-white hover:bg-primary/90 hover:text-white"
+            class="bg-primary hover:bg-primary/90 text-base text-white hover:text-white"
             onclick={handleEditClick}
         >
             <i class="fa-solid fa-pen"></i>
@@ -44,7 +48,7 @@
         <Button
             variant="ghost"
             size="icon"
-            class="bg-primary text-base text-white hover:bg-primary/90 hover:text-white"
+            class="bg-primary hover:bg-primary/90 text-base text-white hover:text-white"
             onclick={handleEditClick}
         >
             <i class="fa-solid fa-user-pen"></i>

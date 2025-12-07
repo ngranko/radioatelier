@@ -1,8 +1,8 @@
 import {login} from '$lib/api/auth.ts';
 import RequestError from '$lib/errors/RequestError';
 import type {LoginResponsePayload} from '$lib/interfaces/auth';
-import {fail, isRedirect, redirect} from '@sveltejs/kit';
-import {type ErrorStatus, message, setError, superValidate} from 'sveltekit-superforms';
+import {error, fail, isRedirect, redirect} from '@sveltejs/kit';
+import {setError, superValidate} from 'sveltekit-superforms';
 import {zod4} from 'sveltekit-superforms/adapters';
 import type {Actions, PageServerLoad} from './$types';
 import {loginSchema} from './schema';
@@ -22,29 +22,33 @@ export const actions: Actions = {
 
         try {
             await login(form.data, {fetch});
-            const ref = url.searchParams.get('ref');
-            redirect(302, ref ?? '/');
-        } catch (error) {
-            if (isRedirect(error)) {
-                throw error;
+            redirect(303, normalizeRef(url.searchParams.get('ref'), url.href));
+        } catch (err) {
+            if (isRedirect(err)) {
+                throw err;
             }
 
-            if (error instanceof RequestError) {
-                const payload = error.payload as LoginResponsePayload;
+            if (err instanceof RequestError) {
+                const payload = err.payload as LoginResponsePayload;
                 if (payload.errors) {
                     for (const [key, value] of Object.entries(payload.errors)) {
                         if (value) {
                             setError(form, key as keyof typeof form.data, value);
                         }
                     }
-                    return fail(error.status, {form});
+                    return fail(err.status, {form});
                 }
-                return message(form, payload.message || 'Вход не удался', {
-                    status: error.status as ErrorStatus,
-                });
+                return error(err.status, payload.message || 'Вход не удался');
             }
 
-            return message(form, 'Вход не удался', {status: 500});
+            return error(500, 'Вход не удался');
         }
     },
 };
+
+function normalizeRef(value: string | null, base: string): string {
+    if (!value) {
+        return '/';
+    }
+    return new URL(value, base).pathname;
+}

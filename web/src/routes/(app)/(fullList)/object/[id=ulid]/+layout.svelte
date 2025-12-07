@@ -2,23 +2,22 @@
     import {activeObject} from '$lib/state/activeObject.svelte.ts';
     import {page} from '$app/state';
     import {onMount} from 'svelte';
-    import type {PageProps} from './$types';
-    import {sharedMarker} from '$lib/state/sharedMarker.svelte.ts';
+    import type {LayoutProps} from './$types';
+    import {goto} from '$app/navigation';
 
-    let {data}: PageProps = $props();
+    let {data, children}: LayoutProps = $props();
 
     const id = page.params.id;
 
     onMount(() => {
         if (!data.activeObject) {
+            goto('/');
             return;
         }
 
         activeObject.detailsId = id;
         activeObject.object = data.activeObject;
-
-        if (!data.objects.find(o => o.id === data.activeObject!.id)) {
-            sharedMarker.object = data.activeObject;
-        }
     });
 </script>
+
+{@render children?.()}

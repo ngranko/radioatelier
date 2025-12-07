@@ -19,6 +19,7 @@ export const activeObject = $state<ActiveObject>({
 export function resetActiveObject() {
     activeObject.isMinimized = false;
     activeObject.isDirty = false;
+    activeObject.isEditing = false;
     activeObject.detailsId = '';
     activeObject.object = null;
 }

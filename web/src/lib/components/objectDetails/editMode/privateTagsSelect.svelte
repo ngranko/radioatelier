@@ -1,41 +1,29 @@
 <script lang="ts">
-    import {createMutation, createQuery, useQueryClient} from '@tanstack/svelte-query';
+    import {createMutation} from '@tanstack/svelte-query';
     import Combobox from '$lib/components/input/combobox.svelte';
-    import {createPrivateTag, listPrivateTags} from '$lib/api/privateTag';
-    import type {Payload} from '$lib/interfaces/api';
-    import type {ListPrivateTagsResponsePayload} from '$lib/interfaces/privateTag';
+    import {createPrivateTag} from '$lib/api/privateTag';
+    import {invalidateReferenceData} from '$lib/cache/referenceData';
     import type {Tag} from '$lib/interfaces/tag';
-    import {cn} from '$lib/utils.ts';
-
-    const client = useQueryClient();
+    import {page} from '$app/state';
 
     interface Props {
         name?: string;
         value?: string[];
         error: any[] | null;
-        onChange?(value: string[]): void;
     }
 
-    let {name = undefined, value = [], error = null, onChange}: Props = $props();
+    let {name = undefined, value = $bindable([]), error = null}: Props = $props();
 
     const createTagMutation = createMutation({
         mutationFn: createPrivateTag,
-        onSuccess: ({data}) => {
-            const cachedValue: Payload<ListPrivateTagsResponsePayload> | undefined =
-                client.getQueryData(['privateTags']);
-            if (cachedValue) {
-                client.setQueryData(['privateTags'], {
-                    data: {tags: [...cachedValue.data.tags, data]},
-                });
-            }
+        onSuccess: () => {
+            invalidateReferenceData();
         },
     });
 
-    const tags = createQuery({queryKey: ['privateTags'], queryFn: listPrivateTags});
-
     const sortedTags = $derived(
-        $tags.data?.data.tags
-            ? [...$tags.data.data.tags].sort((a, b) => a.name.localeCompare(b.name))
+        page.data.privateTags
+            ? [...page.data.privateTags].sort((a, b) => a.name.localeCompare(b.name))
             : [],
     );
 
@@ -43,25 +31,17 @@
         const result = await $createTagMutation.mutateAsync({name: inputValue});
         return {id: result.data.id, name: result.data.name};
     }
-
-    function handleChange(tags: string[]) {
-        onChange?.(tags || []);
-    }
 </script>
 
-<!-- TODO: add loading state -->
-{#if !$tags.isLoading}
-    <Combobox
-        onChange={handleChange}
-        placeholder="Не выбраны"
-        creatable={true}
-        multiple={true}
-        options={sortedTags}
-        {name}
-        value={value ?? []}
-        onCreate={handleCreate}
-        error={!!error}
-        class={cn({'transition-colors': true})}
-        wrapperClass="w-full"
-    />
-{/if}
+<Combobox
+    placeholder="Не выбраны"
+    creatable={true}
+    multiple={true}
+    options={sortedTags}
+    {name}
+    bind:value
+    onCreate={handleCreate}
+    error={Boolean(error)}
+    class="px-3 py-1 transition-colors"
+    wrapperClass="w-full"
+/>

@@ -95,19 +95,21 @@
 
     function handleCreate() {
         if (!onCreate || !searchValue) return;
-        onCreate(searchValue).then(newOption => {
-            if (multiple) {
-                value = [...selectedValues, newOption[valueField]];
-                onChange?.(value.length > 0 ? value : []);
-            } else {
-                value = newOption[valueField];
-                onChange?.(value);
-                open = false;
-            }
-            searchValue = '';
-        }).catch(error => {
-            console.error('Failed to create option:', error);
-        });
+        onCreate(searchValue)
+            .then(newOption => {
+                if (multiple) {
+                    value = [...selectedValues, newOption[valueField]];
+                    onChange?.(value.length > 0 ? value : []);
+                } else {
+                    value = newOption[valueField];
+                    onChange?.(value);
+                    open = false;
+                }
+                searchValue = '';
+            })
+            .catch(error => {
+                console.error('Failed to create option:', error);
+            });
     }
 
     function handleClear(e: MouseEvent) {
@@ -128,6 +130,16 @@
     });
 </script>
 
+{#if name}
+    {#if multiple && Array.isArray(value)}
+        {#each value as v}
+            <input type="hidden" {name} value={v} />
+        {/each}
+    {:else if !multiple && value}
+        <input type="hidden" {name} value={value} />
+    {/if}
+{/if}
+
 <Popover bind:open>
     <ComboboxTrigger
         {labelField}
@@ -142,7 +154,7 @@
         onChange={handleSelect}
         onClear={handleClear}
     />
-    <PopoverContent class="p-0">
+    <PopoverContent class="w-(--bits-popover-anchor-width) p-0" align="start">
         <Command>
             <CommandInput
                 bind:value={searchValue}

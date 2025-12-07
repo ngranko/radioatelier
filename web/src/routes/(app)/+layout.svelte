@@ -6,7 +6,6 @@
     import Map from '$lib/components/map/map.svelte';
     import type {Location} from '$lib/interfaces/location.ts';
     import {activeObject} from '$lib/state/activeObject.svelte.ts';
-    import ObjectDetails from '$lib/components/objectDetails/objectDetails.svelte';
     import {searchPointList} from '$lib/stores/map.ts';
     import {mapState} from '$lib/state/map.svelte.ts';
     import LocationMarker from '$lib/components/map/locationMarker.svelte';
@@ -47,24 +46,6 @@
 </script>
 
 <div bind:this={consoleElement}></div>
-
-{#if activeObject.object}
-    <ObjectDetails
-        initialValues={activeObject.object}
-        key={activeObject.detailsId}
-        isEditing={activeObject.isEditing}
-        permissions={{
-            canEditAll:
-                data.user.auth &&
-                activeObject.object.id !== sharedMarker.object?.id &&
-                activeObject.object.isOwner,
-            canEditPersonal:
-                data.user.auth &&
-                activeObject.object.id !== sharedMarker.object?.id &&
-                !activeObject.object.isOwner,
-        }}
-    />
-{/if}
 
 <div class="menu absolute top-2 right-2 left-2 flex items-center justify-between gap-4">
     {#if mapState.map && data.user.auth}

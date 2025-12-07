@@ -1,8 +1,8 @@
 import {changePassword} from '$lib/api/user.ts';
 import RequestError from '$lib/errors/RequestError.ts';
 import type {ChangePasswordResponsePayload} from '$lib/interfaces/user.ts';
-import {type Actions, fail, isRedirect, redirect} from '@sveltejs/kit';
-import {type ErrorStatus, message, setError, superValidate} from 'sveltekit-superforms';
+import {type Actions, error, fail, isRedirect, redirect} from '@sveltejs/kit';
+import {setError, superValidate} from 'sveltekit-superforms';
 import {zod4} from 'sveltekit-superforms/adapters';
 import {schema} from './schema.ts';
 
@@ -21,28 +21,26 @@ export const actions: Actions = {
 
         try {
             await changePassword(form.data, {fetch});
-            redirect(302, '/');
-        } catch (error) {
-            if (isRedirect(error)) {
-                throw error;
+            redirect(303, '/');
+        } catch (err) {
+            if (isRedirect(err)) {
+                throw err;
             }
 
-            if (error instanceof RequestError) {
-                const payload = error.payload as ChangePasswordResponsePayload;
+            if (err instanceof RequestError) {
+                const payload = err.payload as ChangePasswordResponsePayload;
                 if (payload.errors) {
                     for (const [key, value] of Object.entries(payload.errors)) {
                         if (value) {
                             setError(form, key as keyof typeof form.data, value);
                         }
                     }
-                    return fail(error.status, {form});
+                    return fail(err.status, {form});
                 }
-                return message(form, payload.message || 'Не удалось сменить пароль', {
-                    status: error.status as ErrorStatus,
-                });
+                return error(err.status, payload.message || 'Не удалось сменить пароль');
             }
 
-            return message(form, 'Не удалось сменить пароль', {status: 500});
+            return error(500, 'Не удалось сменить пароль');
         }
     },
 };
