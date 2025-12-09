@@ -12,10 +12,6 @@ export const load: PageLoad = async ({fetch, params, parent}) => {
         redirect(303, `/object/${params.id}`);
     }
 
-    if (!objects.find(o => o.id === activeObject.id)) {
-        redirect(303, `/object/${params.id}`);
-    }
-
     const initialValues = {
         ...activeObject,
         source: activeObject.source ?? '',

@@ -13,7 +13,6 @@ interface CachedData {
     privateTags: Tag[];
 }
 
-// TODO: comb through this
 let cachedPromise: Promise<CachedData> | null = null;
 export async function getReferenceData(fetch: FetchFn): Promise<CachedData> {
     if (browser && cachedPromise) {
@@ -62,3 +61,5 @@ async function fetchReferenceData(fetch: FetchFn): Promise<CachedData> {
 export function invalidateReferenceData(): void {
     cachedPromise = null;
 }
+
+// TODO: add functions for partial invalidation (categories only, tags only)
