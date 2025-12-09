@@ -1,4 +1,4 @@
-import {deleteObject, updateObjectDirect} from '$lib/api/object.ts';
+import {deleteObject, getObject, updateObjectDirect} from '$lib/api/object.ts';
 import {me} from '$lib/api/user.ts';
 import {schema} from '$lib/schema/objectSchema.ts';
 import {type Actions, error, fail, redirect} from '@sveltejs/kit';
@@ -13,9 +13,17 @@ export const actions: Actions = {
             redirect(303, `/login?ref=${encodeURIComponent(url.pathname)}`);
         }
 
-        // TODO: add the edit availability check here
-
         const form = await superValidate(request, zod4(schema));
+
+        try {
+            const object = await getObject(form.data.id!, {fetch});
+            if (!object.data.object.isPublic && !object.data.object.isOwner) {
+                return error(403, 'Невозможно сохранить точку');
+            }
+        } catch (err) {
+            console.error(err);
+            return error(500, 'Не удалось сохранить точку');
+        }
 
         if (!form.valid) {
             return fail(400, {form});
@@ -59,9 +67,17 @@ export const actions: Actions = {
             redirect(303, `/login?ref=${encodeURIComponent(url.pathname)}`);
         }
 
-        // TODO: add the edit availability check here
-
         const form = await superValidate(request, zod4(schema));
+
+        try {
+            const object = await getObject(form.data.id!, {fetch});
+            if (!object.data.object.isPublic && !object.data.object.isOwner) {
+                return error(403, 'Невозможно удалить точку');
+            }
+        } catch (err) {
+            console.error(err);
+            return error(500, 'Не удалось удалить точку');
+        }
 
         try {
             const result = await deleteObject({id: form.data.id!}, {fetch});

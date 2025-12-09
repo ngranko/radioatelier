@@ -1,18 +1,18 @@
 <script lang="ts">
     import {activeObject} from '$lib/state/activeObject.svelte.ts';
     import {onMount} from 'svelte';
-    import type {PageProps} from './$types';
     import {goto} from '$app/navigation';
-
-    let {data}: PageProps = $props();
+    import type {Object} from '$lib/interfaces/object.ts';
 
     onMount(() => {
-        if (!data.activeObject) {
+        if (!activeObject.object) {
             goto('/');
             return;
         }
 
-        // TODO: if not available for editing – redirect to view mode
+        if (!(activeObject.object as Object).isOwner && !(activeObject.object as Object).isPublic) {
+            goto(`/object/${activeObject.object.id}`);
+        }
 
         activeObject.isEditing = true;
         activeObject.isDirty = false;
