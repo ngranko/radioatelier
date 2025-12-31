@@ -35,6 +35,7 @@
             return permissions.canEditAll;
         }
 
+        // TODO: redo this
         const isOwner =
             initialValues.isOwner ?? (activeObject.object as Object | null)?.isOwner ?? false;
         return permissions.canEditAll && isOwner;
@@ -45,6 +46,7 @@
             return permissions.canEditPersonal;
         }
 
+        // TODO: redo this
         const isOwner =
             initialValues.isOwner ?? (activeObject.object as Object | null)?.isOwner ?? false;
         return permissions.canEditPersonal && !isOwner;

@@ -1,20 +1,10 @@
 <script lang="ts">
-    import type {
-        LooseObject,
-        Object,
-        ObjectFormInputs,
-        UpdateObjectResponsePayload,
-    } from '$lib/interfaces/object';
+    import type {LooseObject, Object} from '$lib/interfaces/object';
     import {searchPointList} from '$lib/stores/map';
-    import {defaults, superForm} from 'sveltekit-superforms';
-    import {zod4, zod4Client} from 'sveltekit-superforms/adapters';
-    import {z} from 'zod';
+    import {superForm} from 'sveltekit-superforms';
+    import {zod4Client} from 'sveltekit-superforms/adapters';
     import PrivateTagsSelect from '$lib/components/objectDetails/editMode/privateTagsSelect.svelte';
     import {toast} from 'svelte-sonner';
-    import {createMutation, useQueryClient} from '@tanstack/svelte-query';
-    import {updateObject} from '$lib/api/object';
-    import type {Payload} from '$lib/interfaces/api';
-    import RequestError from '$lib/errors/RequestError';
     import {Button} from '$lib/components/ui/button';
     import {Checkbox} from '$lib/components/ui/checkbox';
     import {
@@ -29,67 +19,57 @@
     import Flags from '$lib/components/objectDetails/viewMode/flags.svelte';
     import {Separator} from '$lib/components/ui/separator';
     import {Input} from '$lib/components/ui/input';
-    import {getErrorArray, normalizeFormErrors} from '$lib/utils/formErrors';
+    import {getErrorArray} from '$lib/utils/formErrors';
     import {goto} from '$app/navigation';
+    import {page} from '$app/state';
+    import {schema} from '$lib/schema/objectSchema.ts';
+    import {getObjectsContext} from '$lib/context/objects.ts';
+    import BackButton from '$lib/components/objectDetails/editMode/backButton.svelte';
 
-    const client = useQueryClient();
+    const objectsCtx = getObjectsContext();
 
     interface Props {
         initialValues: Partial<LooseObject>;
     }
 
-    interface ErrorPayload {
-        errors: Record<string, string>;
-    }
-
     let {initialValues}: Props = $props();
 
-    const updateObjectMutation = createMutation({
-        mutationFn: updateObject,
-        onSuccess: ({data}) => {
-            const cachedValue: Payload<UpdateObjectResponsePayload> | undefined =
-                client.getQueryData(['object', {id: data.id}]);
-            if (cachedValue) {
-                client.setQueryData(['object', {id: data.id}], {
-                    data: {...cachedValue.data, ...data},
-                });
-            }
-        },
-    });
+    let submitPromise: {resolve(value: unknown): void; reject(value?: unknown): void} | null = null;
 
-    const schema = z.object({
-        id: z.string().min(1),
-        isVisited: z.boolean(),
-        privateTags: z.array(z.string()),
-    });
-
-    type LightFormInputs = z.infer<typeof schema>;
-
-    const inValues: LightFormInputs = $derived({
-        id: initialValues.id as string,
-        isVisited: initialValues.isVisited ?? false,
-        privateTags: initialValues.privateTags?.map(item => item.id) ?? [],
-    });
-
-    const form = superForm<LightFormInputs>(defaults(inValues, zod4(schema)), {
-        SPA: true,
+    const form = superForm(page.data.form, {
         validators: zod4Client(schema),
-        onUpdate: async ({form}) => {
-            if (form.valid) {
-                try {
-                    await handleSave(form.data);
-                } catch (error) {
-                    if (error instanceof RequestError && (error.payload as ErrorPayload).errors) {
-                        form.valid = false;
-                        const formErrors = (error.payload as Payload).errors;
-                        if (formErrors) {
-                            form.errors = normalizeFormErrors(formErrors, form.data);
-                        }
-                    } else {
-                        console.log(error);
+        invalidateAll: false,
+        onSubmit: () => {
+            const promise = new Promise((resolve, reject) => {
+                submitPromise = {resolve, reject};
+            });
+
+            toast.promise(promise, {
+                loading: 'Сохраняю...',
+                success: 'Точка сохранена!',
+                error: err => {
+                    if (!err) {
+                        return 'Произошла чудовищная ошибка';
                     }
-                }
+                    return (err as Error).message;
+                },
+            });
+        },
+        onResult: ({result}) => {
+            if (result.type === 'redirect') {
+                submitPromise?.reject(new Error('Пользователь не авторизован'));
             }
+
+            if (result.type === 'success' && result.data?.object) {
+                submitPromise?.resolve(null);
+                handleSaveSuccess(result.data.object);
+            }
+
+            submitPromise = null;
+        },
+        onError: ({result}) => {
+            submitPromise?.reject(result.error ?? new Error('Не удалось сохранить точку'));
+            submitPromise = null;
         },
     });
 
@@ -101,74 +81,48 @@
         }
     });
 
-    function handlePrivateTagsChange(items: string[]) {
-        $formData.privateTags = items;
-    }
-
-    async function handleSave(values: LightFormInputs) {
-        if (!activeObject.object) {
-            toast.warning('Точка не найдена');
-            return;
-        }
-
-        const object: ObjectFormInputs = {
-            ...(activeObject.object as Object),
-            category: (activeObject.object as Object).category.id,
-            tags: (activeObject.object as Object).tags.map(item => item.id),
-            cover: (activeObject.object as Object).cover?.id,
-            ...values,
-        };
-
-        const promise = updateExistingObject(object);
-        toast.promise(promise, {
-            loading: 'Обновляю...',
-            success: 'Точка обновлена!',
-            error: 'Не удалось обновить точку',
+    function handleSaveSuccess(updated: Object) {
+        objectsCtx.update(updated.id, {
+            id: updated.id,
+            lat: updated.lat,
+            lng: updated.lng,
+            isRemoved: updated.isRemoved,
+            isVisited: updated.isVisited,
+            isOwner: updated.isOwner,
         });
-        await promise;
-    }
 
-    async function updateExistingObject(object: ObjectFormInputs) {
-        const result = await $updateObjectMutation.mutateAsync({
-            id: object.id as string,
-            updatedFields: object,
-        });
-        searchPointList.update(result.data.id, {
+        activeObject.object = updated;
+
+        searchPointList.update(updated.id, {
             object: {
-                id: result.data.id,
-                name: result.data.name,
-                lat: result.data.lat,
-                lng: result.data.lng,
-                categoryName: result.data.category?.name ?? '',
-                address: result.data.address,
-                city: result.data.city,
-                country: result.data.country,
+                id: updated.id,
+                name: updated.name,
+                lat: updated.lat,
+                lng: updated.lng,
+                categoryName: updated.category?.name ?? '',
+                address: updated.address,
+                city: updated.city,
+                country: updated.country,
                 type: 'local',
             },
         });
 
-        activeObject.object = result.data;
-        activeObject.isEditing = false;
-        activeObject.isDirty = false;
-
-        goto(`/object/${object.id}`);
+        goto(`/object/${updated.id}`);
     }
 
     function handleBack() {
-        form.reset();
-        activeObject.isEditing = false;
-        activeObject.isDirty = false;
+        goto(`/object/${$formData.id}`);
     }
 </script>
 
-<form use:enhance>
+<form method="POST" action="?/save" use:enhance>
     <div class="flex items-center justify-between gap-3 border-b bg-gray-50/50 px-4 py-2.5">
         <Button type="submit" disabled={$submitting} class="px-6 text-base">Сохранить</Button>
-        <Button variant="ghost" class="px-4 text-base" onclick={handleBack}>Назад</Button>
+        <BackButton isConfirmationRequired={isTainted()} onClick={handleBack} />
     </div>
     <div class="h-[calc(100vh-8px*2-57px*2)] overflow-x-hidden overflow-y-auto p-4">
         <!-- Header (mirror of view mode) -->
-        <div class="mb-6">
+        <div class="mb-3">
             <ImageUpload
                 value={initialValues.cover?.id}
                 onChange={() => {
@@ -192,11 +146,24 @@
         </h1>
 
         <Input type="hidden" name="id" bind:value={$formData.id} />
+        <Input type="hidden" name="lat" bind:value={$formData.lat} />
+        <Input type="hidden" name="lng" bind:value={$formData.lng} />
+        <Input type="hidden" name="name" bind:value={$formData.name} />
+        <Input type="hidden" name="category" bind:value={$formData.category} />
+        <Input type="hidden" name="isPublic" value={$formData.isPublic ? 'on' : ''} />
+        <Input type="hidden" name="isRemoved" value={$formData.isRemoved ? 'on' : ''} />
+        <Input type="hidden" name="cover" bind:value={$formData.cover} />
+        <Input type="hidden" name="description" bind:value={$formData.description} />
+        <Input type="hidden" name="address" bind:value={$formData.address} />
+        <Input type="hidden" name="city" bind:value={$formData.city} />
+        <Input type="hidden" name="country" bind:value={$formData.country} />
+        <Input type="hidden" name="installedPeriod" bind:value={$formData.installedPeriod} />
+        <Input type="hidden" name="removalPeriod" bind:value={$formData.removalPeriod} />
+        <Input type="hidden" name="source" bind:value={$formData.source} />
+        {#each $formData.tags as tag}
+            <Input type="hidden" name="tags" value={tag} />
+        {/each}
 
-        <div class="mb-2 flex items-center gap-2">
-            <i class="fa-solid fa-user-pen text-sky-600"></i>
-            <div class="text-sm font-semibold text-gray-800">Личные поля</div>
-        </div>
         <div class="space-y-4 rounded-lg border bg-gray-50 p-4">
             <FormField {form} name="isVisited">
                 <FormControl>
@@ -228,15 +195,14 @@
                             <FormLabel>приватные теги</FormLabel>
                             <PrivateTagsSelect
                                 {...props}
-                                value={$formData.privateTags ?? []}
+                                bind:value={$formData.privateTags}
                                 error={getErrorArray($errors.privateTags)}
-                                onChange={handlePrivateTagsChange}
                             />
                         </div>
                     {/snippet}
                 </FormControl>
                 <FormDescription class="text-xs text-gray-500">
-                    Теги видны только вам
+                    Приватные теги видны только вам
                 </FormDescription>
                 <FormFieldErrors />
             </FormField>

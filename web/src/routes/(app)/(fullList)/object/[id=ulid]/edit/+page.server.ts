@@ -33,45 +33,6 @@ export const actions: Actions = {
             return fail(400, {form});
         }
 
-        let updatedFields: UpdateObjectInputs['updatedFields'];
-        if (!object.data.object.isOwner) {
-            updatedFields = {
-                name: object.data.object.name,
-                description: object.data.object.description,
-                cover: object.data.object.cover.id,
-                isPublic: object.data.object.isPublic,
-                isVisited: form.data.isVisited,
-                isRemoved: object.data.object.isRemoved,
-                category: object.data.object.category.id,
-                tags: object.data.object.tags.map(item => item.id),
-                privateTags: form.data.privateTags,
-                address: object.data.object.address,
-                city: object.data.object.city,
-                country: object.data.object.country,
-                installedPeriod: object.data.object.installedPeriod,
-                removalPeriod: object.data.object.removalPeriod,
-                source: object.data.object.source,
-            };
-        } else {
-            updatedFields = {
-                name: form.data.name,
-                description: form.data.description,
-                cover: form.data.cover,
-                isPublic: form.data.isPublic,
-                isVisited: form.data.isVisited,
-                isRemoved: form.data.isRemoved,
-                category: form.data.category,
-                tags: form.data.tags,
-                privateTags: form.data.privateTags,
-                address: form.data.address,
-                city: form.data.city,
-                country: form.data.country,
-                installedPeriod: form.data.installedPeriod,
-                removalPeriod: form.data.removalPeriod,
-                source: form.data.source,
-            };
-        }
-
         try {
             const result = await updateObjectDirect(
                 {
@@ -124,7 +85,7 @@ function prepareUpdatedFields(
         return {
             name: currentObject.name,
             description: currentObject.description,
-            cover: currentObject.cover.id,
+            cover: currentObject.cover?.id,
             isPublic: currentObject.isPublic,
             isVisited: formData.isVisited,
             isRemoved: currentObject.isRemoved,
