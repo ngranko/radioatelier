@@ -7,8 +7,7 @@ import type {PageLoad} from './$types';
 
 export const load: PageLoad = async ({fetch, params, parent}) => {
     const {user, objects, activeObject} = await parent();
-    // TODO: show different forms for owner and non-owner users
-    if (!user.auth || !objects.find(o => o.id === activeObject!.id)) {
+    if (!user.auth || !(activeObject.isOwner || activeObject.isPublic)) {
         redirect(303, `/object/${params.id}`);
     }
 
