@@ -19,6 +19,7 @@
         activeObject.isEditing = true;
         activeObject.isDirty = false;
         activeObject.detailsId = new Date().getTime().toString();
+        activeObject.addressLoading = true;
         activeObject.object = {
             id: null,
             lat,
@@ -26,7 +27,19 @@
             isVisited: false,
             isRemoved: false,
             isOwner: true,
-            ...data.address,
         };
+
+        data.streamed.address
+            .then(address => {
+                if (activeObject.object) {
+                    activeObject.object = {
+                        ...activeObject.object,
+                        ...address,
+                    };
+                }
+            })
+            .finally(() => {
+                activeObject.addressLoading = false;
+            });
     });
 </script>

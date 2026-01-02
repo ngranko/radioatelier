@@ -29,6 +29,7 @@
     import {page} from '$app/state';
     import {schema} from '$lib/schema/objectSchema.ts';
     import {getObjectsContext} from '$lib/context/objects.ts';
+    import AddressLoadingIndicator from '$lib/components/objectDetails/editMode/addressLoadingIndicator.svelte';
 
     const objectsCtx = getObjectsContext();
 
@@ -112,6 +113,21 @@
     $effect(() => {
         if (isTainted() && !activeObject.isDirty) {
             activeObject.isDirty = true;
+        }
+    });
+
+    $effect(() => {
+        if (!activeObject.addressLoading && activeObject.object) {
+            const obj = activeObject.object;
+            if (!$formData.address && obj.address) {
+                $formData.address = obj.address;
+            }
+            if (!$formData.city && obj.city) {
+                $formData.city = obj.city;
+            }
+            if (!$formData.country && obj.country) {
+                $formData.country = obj.country;
+            }
         }
     });
 
@@ -329,7 +345,12 @@
                     {#snippet children({props})}
                         <div class="space-y-1">
                             <FormLabel>адрес</FormLabel>
-                            <Input type="text" {...props} bind:value={$formData.address} />
+                            <div class="relative">
+                                <Input type="text" {...props} bind:value={$formData.address} />
+                                {#if activeObject.addressLoading}
+                                    <AddressLoadingIndicator />
+                                {/if}
+                            </div>
                         </div>
                     {/snippet}
                 </FormControl>
@@ -340,7 +361,12 @@
                     {#snippet children({props})}
                         <div class="space-y-1">
                             <FormLabel>город</FormLabel>
-                            <Input type="text" {...props} bind:value={$formData.city} />
+                            <div class="relative">
+                                <Input type="text" {...props} bind:value={$formData.city} />
+                                {#if activeObject.addressLoading}
+                                    <AddressLoadingIndicator />
+                                {/if}
+                            </div>
                         </div>
                     {/snippet}
                 </FormControl>
@@ -351,7 +377,12 @@
                     {#snippet children({props})}
                         <div class="space-y-1">
                             <FormLabel>страна</FormLabel>
-                            <Input type="text" {...props} bind:value={$formData.country} />
+                            <div class="relative">
+                                <Input type="text" {...props} bind:value={$formData.country} />
+                                {#if activeObject.addressLoading}
+                                    <AddressLoadingIndicator />
+                                {/if}
+                            </div>
                         </div>
                     {/snippet}
                 </FormControl>
