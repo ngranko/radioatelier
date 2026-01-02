@@ -138,14 +138,19 @@
     }
     
     function handleSaveSuccess(updated: Object) {
-        objectsCtx.update(updated.id, {
-            id: updated.id,
-            lat: updated.lat,
-            lng: updated.lng,
-            isRemoved: updated.isRemoved,
-            isVisited: updated.isVisited,
-            isOwner: updated.isOwner,
-        });
+        const updatedListItem = {
+                id: updated.id,
+                lat: updated.lat,
+                lng: updated.lng,
+                isRemoved: updated.isRemoved,
+                isVisited: updated.isVisited,
+                isOwner: updated.isOwner,
+            };
+        if (objectsCtx.items.find(o => o.id === updated.id)) {
+            objectsCtx.update(updated.id, updatedListItem);
+        } else {
+            objectsCtx.add(updatedListItem);
+        }
 
         activeObject.object = updated;
 
