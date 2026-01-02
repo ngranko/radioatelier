@@ -70,6 +70,10 @@
                 submitPromise?.reject(new Error('Пользователь не авторизован'));
             }
 
+            if (result.type === 'failure') {
+                submitPromise?.reject(new Error('Что-то не так во введенных данных'));
+            }
+
             if (result.type === 'success') {
                 submitPromise?.resolve(null);
 

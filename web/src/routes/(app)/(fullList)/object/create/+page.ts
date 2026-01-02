@@ -23,15 +23,17 @@ export const load: PageLoad = async ({fetch, parent, url}) => {
         }),
     ]);
 
+    const address = addressResult.data;
     const form = await superValidate(
         {lat, lng, ...addressResult.data},
         zod4(schema),
+        {errors: false},
     );
 
     return {
         ...data,
         ...referenceData,
-        address: addressResult.data,
+        address,
         form,
         isEdit: true,
     };
