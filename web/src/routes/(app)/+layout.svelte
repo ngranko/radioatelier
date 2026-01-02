@@ -87,7 +87,7 @@
                 lng={sharedMarker.object.lng}
                 initialActive={true}
                 icon="fa-solid fa-star"
-                color="#008E92"
+                color="#008e92"
                 source="share"
             />
         {/key}
