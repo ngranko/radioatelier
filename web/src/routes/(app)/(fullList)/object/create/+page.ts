@@ -15,25 +15,30 @@ export const load: PageLoad = async ({fetch, parent, url}) => {
     const lat = normalizeLattitude(url.searchParams.get('lat') ?? '');
     const lng = normalizeLongitude(url.searchParams.get('lng') ?? '');
 
-    const [referenceData, addressResult] = await Promise.all([
-        getReferenceData(fetch),
-        getAddress({lat, lng}, {fetch}).catch(error => {
+    const addressPromise = getAddress({lat, lng}, {fetch})
+        .then(result => {
+            return result.data;
+        })
+        .catch(error => {
             console.error('Address retrieval failed:', error);
-            return {data: {address: '', city: '', country: ''}};
-        }),
-    ]);
+            return {address: '', city: '', country: ''};
+        });
 
-    const address = addressResult.data;
-    const form = await superValidate(
-        {lat, lng, ...addressResult.data},
-        zod4(schema),
-        {errors: false},
-    );
+    const [referenceData, form] = await Promise.all([
+        getReferenceData(fetch),
+        superValidate(
+            {lat, lng},
+            zod4(schema),
+            {errors: false},
+        ),
+    ]);
 
     return {
         ...data,
         ...referenceData,
-        address,
+        streamed: {
+            address: addressPromise,
+        },
         form,
         isEdit: true,
     };
