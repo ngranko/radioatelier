@@ -69,7 +69,7 @@
         }
 
         if (page.data.user.auth) {
-            goto('/');
+            setTimeout(() => goto('/'), 200);
         }
     }
 </script>
