@@ -1,22 +1,19 @@
 <script lang="ts">
-    import {activeObject} from '$lib/state/activeObject.svelte.ts';
     import {page} from '$app/state';
-    import {onMount} from 'svelte';
+    import {activeObject, resetActiveObject} from '$lib/state/activeObject.svelte.ts';
     import type {LayoutProps} from './$types';
-    import {goto} from '$app/navigation';
 
     let {data, children}: LayoutProps = $props();
 
-    const id = page.params.id;
-
-    onMount(() => {
-        if (!data.activeObject) {
-            goto('/');
+    $effect(() => {
+        if (data.activeObject) {
+            activeObject.detailsId = page.params.id;
+            activeObject.object = data.activeObject;
+            activeObject.isEditing = data.isEditPage ?? false;
             return;
         }
 
-        activeObject.detailsId = id;
-        activeObject.object = data.activeObject;
+        resetActiveObject();
     });
 </script>
 
