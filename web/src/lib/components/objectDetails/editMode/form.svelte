@@ -3,7 +3,7 @@
     import DeleteButton from '$lib/components/objectDetails/editMode/deleteButton.svelte';
     import BackButton from '$lib/components/objectDetails/editMode/backButton.svelte';
     import {searchPointList} from '$lib/stores/map';
-    import {superForm} from 'sveltekit-superforms';
+    import {superForm, defaults} from 'sveltekit-superforms';
     import {zod4Client} from 'sveltekit-superforms/adapters';
     import CategorySelect from '$lib/components/objectDetails/editMode/categorySelect.svelte';
     import PrivateTagsSelect from '$lib/components/objectDetails/editMode/privateTagsSelect.svelte';
@@ -45,7 +45,38 @@
     let deleteButton: HTMLButtonElement;
     let submitPromise: {resolve(value: unknown): void; reject(value?: unknown): void} | null = null;
 
-    const form = superForm(page.data.form, {
+    // During client-side navigation, page.data.form may be undefined
+    // In that case, create form data from initialValues
+    function getFormData() {
+        if (page.data.form) {
+            return page.data.form;
+        }
+
+        const formValues = {
+            id: initialValues.id ?? null,
+            lat: initialValues.lat ?? '',
+            lng: initialValues.lng ?? '',
+            name: initialValues.name ?? '',
+            description: initialValues.description ?? '',
+            isPublic: initialValues.isPublic ?? false,
+            isVisited: initialValues.isVisited ?? false,
+            isRemoved: initialValues.isRemoved ?? false,
+            address: initialValues.address ?? '',
+            city: initialValues.city ?? '',
+            country: initialValues.country ?? '',
+            installedPeriod: initialValues.installedPeriod ?? '',
+            removalPeriod: initialValues.removalPeriod ?? '',
+            source: initialValues.source ?? '',
+            category: initialValues.category?.id ?? '',
+            tags: initialValues.tags?.map(tag => tag.id) ?? [],
+            privateTags: initialValues.privateTags?.map(tag => tag.id) ?? [],
+            cover: initialValues.cover?.id,
+        };
+
+        return defaults(formValues, zod4Client(schema));
+    }
+
+    const form = superForm(getFormData(), {
         validators: zod4Client(schema),
         invalidateAll: false,
         onSubmit: ({action}) => {
@@ -86,7 +117,7 @@
                     handleSaveSuccess(result.data.object);
                 }
             }
-            
+
             submitPromise = null;
         },
         onError: ({result}) => {
@@ -156,16 +187,16 @@
             },
         );
     }
-    
+
     function handleSaveSuccess(updated: Object) {
         const updatedListItem = {
-                id: updated.id,
-                lat: updated.lat,
-                lng: updated.lng,
-                isRemoved: updated.isRemoved,
-                isVisited: updated.isVisited,
-                isOwner: updated.isOwner,
-            };
+            id: updated.id,
+            lat: updated.lat,
+            lng: updated.lng,
+            isRemoved: updated.isRemoved,
+            isVisited: updated.isVisited,
+            isOwner: updated.isOwner,
+        };
         if (objectsCtx.items.find(o => o.id === updated.id)) {
             objectsCtx.update(updated.id, updatedListItem);
         } else {

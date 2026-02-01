@@ -1,14 +1,14 @@
 import {sveltekit} from '@sveltejs/kit/vite';
-import {defineConfig} from 'vitest/config';
-import {cjsInterop} from 'vite-plugin-cjs-interop';
 import tailwindcss from '@tailwindcss/vite';
+import {cjsInterop} from 'vite-plugin-cjs-interop';
+import {defineConfig} from 'vitest/config';
 
 export default defineConfig({
     plugins: [
         tailwindcss(),
         sveltekit(),
         cjsInterop({
-            // Add broken npm package here
+            // Add broken npm packages here
             dependencies: ['@googlemaps/js-api-loader', '@mapbox/tiny-sdf'],
         }),
     ],

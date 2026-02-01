@@ -1,7 +1,7 @@
 <script lang="ts">
     import type {LooseObject, Object} from '$lib/interfaces/object';
     import {searchPointList} from '$lib/stores/map';
-    import {superForm} from 'sveltekit-superforms';
+    import {superForm, defaults} from 'sveltekit-superforms';
     import {zod4Client} from 'sveltekit-superforms/adapters';
     import PrivateTagsSelect from '$lib/components/objectDetails/editMode/privateTagsSelect.svelte';
     import {toast} from 'svelte-sonner';
@@ -36,7 +36,38 @@
 
     let submitPromise: {resolve(value: unknown): void; reject(value?: unknown): void} | null = null;
 
-    const form = superForm(page.data.form, {
+    // During client-side navigation, page.data.form may be undefined
+    // In that case, create form data from initialValues
+    function getFormData() {
+        if (page.data.form) {
+            return page.data.form;
+        }
+
+        const formValues = {
+            id: initialValues.id ?? null,
+            lat: initialValues.lat ?? '',
+            lng: initialValues.lng ?? '',
+            name: initialValues.name ?? '',
+            description: initialValues.description ?? '',
+            isPublic: initialValues.isPublic ?? false,
+            isVisited: initialValues.isVisited ?? false,
+            isRemoved: initialValues.isRemoved ?? false,
+            address: initialValues.address ?? '',
+            city: initialValues.city ?? '',
+            country: initialValues.country ?? '',
+            installedPeriod: initialValues.installedPeriod ?? '',
+            removalPeriod: initialValues.removalPeriod ?? '',
+            source: initialValues.source ?? '',
+            category: initialValues.category?.id ?? '',
+            tags: initialValues.tags?.map(tag => tag.id) ?? [],
+            privateTags: initialValues.privateTags?.map(tag => tag.id) ?? [],
+            cover: initialValues.cover?.id,
+        };
+
+        return defaults(formValues, zod4Client(schema));
+    }
+
+    const form = superForm(getFormData(), {
         validators: zod4Client(schema),
         invalidateAll: false,
         onSubmit: () => {
