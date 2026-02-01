@@ -1,10 +1,20 @@
+<script lang="ts" module>
+    // Module-level flag to track if initial hydration is complete
+    // This persists across component instances but resets on full page reload
+    let isInitialHydrationComplete = false;
+</script>
+
 <script lang="ts">
-    import {fly} from 'svelte/transition';
+    import {fly, fade} from 'svelte/transition';
     import {cubicInOut} from 'svelte/easing';
+    import {onMount, untrack} from 'svelte';
+    import {browser} from '$app/environment';
     import type {LooseObject, Object} from '$lib/interfaces/object';
     import Form from '$lib/components/objectDetails/editMode/form.svelte';
     import LightForm from '$lib/components/objectDetails/editMode/lightForm.svelte';
     import ViewMode from '$lib/components/objectDetails/viewMode/viewMode.svelte';
+    import ViewModeSkeleton from '$lib/components/objectDetails/viewMode/viewModeSkeleton.svelte';
+    import FormSkeleton from '$lib/components/objectDetails/editMode/formSkeleton.svelte';
     import {activeMarker} from '$lib/stores/map';
     import {Button} from '$lib/components/ui/button';
     import CloseButton from './closeButton.svelte';
@@ -18,8 +28,9 @@
 
     interface Props {
         key: string;
-        initialValues: Partial<LooseObject>;
+        initialValues?: Partial<LooseObject>;
         isEditing?: boolean;
+        isLoading?: boolean;
         permissions?: Permissions;
     }
 
@@ -27,11 +38,63 @@
         key,
         initialValues = $bindable(),
         isEditing = false,
+        isLoading = false,
         permissions = {canEditAll: true, canEditPersonal: true},
     }: Props = $props();
 
+    // Capture at component creation: are we in SSR hydration?
+    // During SSR: browser=false
+    // During hydration: browser=true, isInitialHydrationComplete=false
+    // After hydration: browser=true, isInitialHydrationComplete=true
+    const skipIntroAnimation = browser && !isInitialHydrationComplete;
+
+    onMount(() => {
+        isInitialHydrationComplete = true;
+    });
+
+    let showSkeleton = $state(false);
+    let skeletonTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    $effect(() => {
+        if (isLoading) {
+            skeletonTimeout = setTimeout(() => {
+                showSkeleton = true;
+            }, 150);
+        } else {
+            if (skeletonTimeout) {
+                clearTimeout(skeletonTimeout);
+                skeletonTimeout = null;
+            }
+            untrack(() => {
+                showSkeleton = false;
+            });
+        }
+
+        return () => {
+            if (skeletonTimeout) {
+                clearTimeout(skeletonTimeout);
+            }
+        };
+    });
+
+    // Custom transition that skips animation on SSR hydration
+    function flyTransition(node: HTMLElement) {
+        if (skipIntroAnimation) {
+            return {duration: 0, css: () => ''};
+        }
+        return fly(node, {x: -100, duration: 200, easing: cubicInOut});
+    }
+
+    // Custom fade transition that skips animation on SSR hydration
+    function fadeTransition(node: HTMLElement) {
+        if (skipIntroAnimation) {
+            return {duration: 0, css: () => ''};
+        }
+        return fade(node, {duration: 150});
+    }
+
     const canEditAll = $derived.by(() => {
-        if (initialValues.id === null) {
+        if (!initialValues || initialValues.id === null) {
             return permissions.canEditAll;
         }
 
@@ -42,7 +105,7 @@
     });
 
     const canEditPersonal = $derived.by(() => {
-        if (initialValues.id === null) {
+        if (!initialValues || initialValues.id === null) {
             return permissions.canEditPersonal;
         }
 
@@ -57,7 +120,7 @@
     }
 
     function handleClose() {
-        if (!activeObject.object) {
+        if (!activeObject.object && !isLoading) {
             return;
         }
 
@@ -83,7 +146,7 @@
             'h-[calc(100dvh-8px*2)]': !activeObject.isMinimized,
         },
     ])}
-    transition:fly={{x: -100, duration: 200, easing: cubicInOut}}
+    transition:flyTransition
 >
     <section class="flex items-center gap-1 border-b p-3">
         <span
@@ -92,7 +155,7 @@
                 'text-transparent': !activeObject.isMinimized,
             })}
         >
-            {initialValues.name ?? ''}
+            {initialValues?.name ?? ''}
         </span>
         <Button
             variant="ghost"
@@ -107,12 +170,29 @@
         <CloseButton onClick={handleClose} isConfirmationRequired={activeObject.isDirty} />
     </section>
     {#key key}
-        {#if canEditAll && isEditing}
-            <Form {initialValues} />
-        {:else if canEditPersonal && isEditing}
-            <LightForm {initialValues} />
-        {:else}
-            <ViewMode {initialValues} permissions={{canEditAll, canEditPersonal}} />
-        {/if}
+        <div class="relative flex-1 overflow-hidden">
+            {#if isLoading && showSkeleton}
+                <div class="absolute inset-0" transition:fadeTransition>
+                    {#if isEditing}
+                        <FormSkeleton />
+                    {:else}
+                        <ViewModeSkeleton />
+                    {/if}
+                </div>
+            {:else if !isLoading}
+                <div class="absolute inset-0" transition:fadeTransition>
+                    {#if canEditAll && isEditing}
+                        <Form initialValues={initialValues!} />
+                    {:else if canEditPersonal && isEditing}
+                        <LightForm initialValues={initialValues!} />
+                    {:else}
+                        <ViewMode
+                            initialValues={initialValues!}
+                            permissions={{canEditAll, canEditPersonal}}
+                        />
+                    {/if}
+                </div>
+            {/if}
+        </div>
     {/key}
 </aside>

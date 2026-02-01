@@ -18,5 +18,6 @@ services:
             - ../uploads:/app/static/uploads
 #            - "/Users/nikita/Library/Application Support/mkcert/rootCA.pem:/usr/local/share/ca-certificates/cacert.pem:ro"
         restart: unless-stopped
+        command: npm run dev -- --host
         extra_hosts:
             - "radioatelier.test:host-gateway"

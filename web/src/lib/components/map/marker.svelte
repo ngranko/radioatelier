@@ -55,7 +55,7 @@
         if (activeObject.detailsId === id && marker) {
             activeMarker.set(marker);
             activeMarker.activate();
-            setCenter(Number(activeObject.object?.lat), Number(activeObject.object?.lng));
+            setCenter(Number(lat), Number(lng));
         }
     });
 

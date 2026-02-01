@@ -89,11 +89,12 @@
 
 {@render children?.()}
 
-{#if renderedObject}
+{#if renderedObject || activeObject.isLoading}
     <ObjectDetails
-        initialValues={renderedObject}
+        initialValues={renderedObject ?? undefined}
         key={detailsKey}
         {isEditing}
+        isLoading={activeObject.isLoading}
         permissions={{
             canEditAll: data.user.auth && isOwner,
             canEditPersonal: data.user.auth && !isOwner && isPublic,
