@@ -40,7 +40,7 @@
 
     <div class="relative z-10 w-full max-w-sm">
         <div
-            class="bg-card ring-border relative overflow-hidden rounded-lg shadow-xl ring-1 dark:bg-white/10 dark:ring-white/20 dark:backdrop-blur-md"
+            class="bg-card ring-border relative overflow-hidden rounded-lg shadow-xl ring-1 shadow-black/5 dark:bg-white/10 dark:ring-white/20 dark:backdrop-blur-md dark:shadow-black/20 animate-in fade-in-0 slide-in-from-bottom-4 duration-500"
         >
             <div
                 class="from-primary to-primary/50 absolute top-0 right-0 left-0 h-0.5 bg-gradient-to-r"
@@ -48,19 +48,17 @@
             <div class="px-8 py-10 sm:px-10 sm:py-12">
                 <div class="mb-8 text-center">
                     <Logo class="mb-3 flex items-center justify-center gap-3 text-3xl" />
-                    <p class="text-muted-foreground text-sm dark:text-white/60">
-                        Введите свои данные для входа в систему
-                    </p>
                 </div>
 
                 <form method="POST" class="flex flex-col gap-5" use:enhance>
                     <FormField {form} name="email">
                         <FormControl>
                             {#snippet children({props})}
-                                <FormLabel>email</FormLabel>
+                                <FormLabel>Email</FormLabel>
                                 <Input
                                     type="email"
                                     placeholder="name@example.com"
+                                    class="focus-visible:border-primary focus-visible:ring-primary/30"
                                     {...props}
                                     bind:value={$formData.email}
                                 />
@@ -71,9 +69,10 @@
                     <FormField {form} name="password">
                         <FormControl>
                             {#snippet children({props})}
-                                <FormLabel>пароль</FormLabel>
+                                <FormLabel>Пароль</FormLabel>
                                 <PasswordInput
                                     placeholder="••••••••"
+                                    class="focus-visible:border-primary focus-visible:ring-primary/30"
                                     {...props}
                                     bind:value={$formData.password}
                                 />
