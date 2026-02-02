@@ -151,6 +151,10 @@
                     activeObject.detailsId = id!;
                     page.data.activeObjectPromise
                         .then((object: Object) => {
+                            if (activeObject.detailsId !== object.id) {
+                                return;
+                            }
+
                             activeObject.object = object;
                             activeObject.isLoading = false;
                         })
