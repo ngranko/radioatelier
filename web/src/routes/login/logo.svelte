@@ -10,6 +10,6 @@
 
 <div class={cn(['gap-3 text-3xl', className])}>
     <img src="/logo.svg" class="h-8" alt="logo" />
-    <span class="separator">.</span>
-    <span class="name">архив</span>
+    <span class="text-muted-foreground font-light dark:text-white/40">.</span>
+    <span class="font-semibold tracking-tight">архив</span>
 </div>

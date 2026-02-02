@@ -1,6 +1,6 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
-@import "tw-animate-css";
+@import 'tw-animate-css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -141,7 +141,9 @@ html {
     .marker-dragging {
         opacity: 0.5;
         scale: 1.2;
-        box-shadow: 0 0 0 16px color-mix(in srgb, var(--primary) 20%, transparent), 0 0 0 24px color-mix(in srgb, var(--primary) 10%, transparent);
+        box-shadow:
+            0 0 0 16px color-mix(in srgb, var(--primary) 20%, transparent),
+            0 0 0 24px color-mix(in srgb, var(--primary) 10%, transparent);
         cursor: grabbing;
         position: relative;
     }
@@ -187,7 +189,7 @@ html {
             color-mix(in srgb, currentColor 40%, transparent) 0 60deg,
             transparent 60deg 360deg
         );
-        mask-image: radial-gradient(circle at 50% 50%, #000 0%, #000 40%, rgba(0,0,0,0) 70%);
+        mask-image: radial-gradient(circle at 50% 50%, #000 0%, #000 40%, rgba(0, 0, 0, 0) 70%);
         mask-repeat: no-repeat;
         mask-position: center;
         mask-size: 100% 100%;
@@ -198,7 +200,6 @@ html {
     .nav-marker-oriented-stale::before {
         opacity: 0.2;
     }
-
 }
 
 @keyframes popIn {
@@ -222,26 +223,30 @@ html {
     left: 0;
     right: 0;
     height: 2px;
-    background: linear-gradient(to right, var(--toast-accent), color-mix(in srgb, var(--toast-accent) 50%, transparent));
+    background: linear-gradient(
+        to right,
+        var(--toast-accent),
+        color-mix(in srgb, var(--toast-accent) 50%, transparent)
+    );
     pointer-events: none;
 }
 
-[data-sonner-toast][data-removed="true"]::before {
+[data-sonner-toast][data-removed='true']::before {
     display: none;
 }
 
-[data-sonner-toast][data-type="success"] {
+[data-sonner-toast][data-type='success'] {
     --toast-accent: var(--success);
 }
 
-[data-sonner-toast][data-type="error"] {
+[data-sonner-toast][data-type='error'] {
     --toast-accent: var(--destructive);
 }
 
-[data-sonner-toast][data-type="warning"] {
+[data-sonner-toast][data-type='warning'] {
     --toast-accent: var(--warning);
 }
 
-[data-sonner-toast][data-type="info"] {
+[data-sonner-toast][data-type='info'] {
     --toast-accent: var(--primary);
 }

@@ -16,7 +16,7 @@ export async function getInitialCenter(locationMutation: any): Promise<Location>
         console.error('error getting location');
         console.error(e);
     }
-    
+
     return {lat: 0, lng: 0};
 }
 
@@ -46,7 +46,9 @@ function updateCurrentPosition() {
                     error => {
                         console.error(error);
                         if (localStorage.getItem('lastPosition')) {
-                            const location = JSON.parse(localStorage.getItem('lastPosition') as string);
+                            const location = JSON.parse(
+                                localStorage.getItem('lastPosition') as string,
+                            );
                             location.isCurrent = false;
                             localStorage.setItem('lastPosition', JSON.stringify(location));
                         }
@@ -63,5 +65,3 @@ function updateCurrentPosition() {
         },
     );
 }
-
-

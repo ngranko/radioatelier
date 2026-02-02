@@ -26,11 +26,7 @@ export const load: PageLoad = async ({fetch, parent, url}) => {
 
     const [referenceData, form] = await Promise.all([
         getReferenceData(fetch),
-        superValidate(
-            {lat, lng},
-            zod4(schema),
-            {errors: false},
-        ),
+        superValidate({lat, lng}, zod4(schema), {errors: false}),
     ]);
 
     return {

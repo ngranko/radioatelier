@@ -1,5 +1,14 @@
 <script lang="ts">
-    import {Root as DialogRoot, Trigger, Content, Header, Title, Description, Footer, Close} from '$lib/components/ui/dialog';
+    import {
+        Root as DialogRoot,
+        Trigger,
+        Content,
+        Header,
+        Title,
+        Description,
+        Footer,
+        Close,
+    } from '$lib/components/ui/dialog';
     import {Button} from '$lib/components/ui/button';
 
     interface Props {

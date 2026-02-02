@@ -13,7 +13,11 @@
     "proseWrap": "preserve",
     "htmlWhitespaceSensitivity": "ignore",
     "endOfLine": "lf",
-    "plugins": ["prettier-plugin-svelte", "prettier-plugin-organize-imports", "prettier-plugin-tailwindcss"],
+    "plugins": [
+        "prettier-plugin-svelte",
+        "prettier-plugin-organize-imports",
+        "prettier-plugin-tailwindcss"
+    ],
     "overrides": [
         {
             "files": "*.svelte",

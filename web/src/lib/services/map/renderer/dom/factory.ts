@@ -1,4 +1,4 @@
-import type { Marker } from '$lib/services/map/marker';
+import type {Marker} from '$lib/services/map/marker';
 
 export class Factory {
     public create(marker: Marker): void {
@@ -9,7 +9,8 @@ export class Factory {
 
     private createMarkerContent(marker: Marker): HTMLElement {
         const iconElement = document.createElement('div');
-        iconElement.className = 'w-6 h-6 translate-y-1/2 flex justify-center items-center rounded-full transition-transform transition-opacity duration-100 ease-in-out text-sm text-white';
+        iconElement.className =
+            'w-6 h-6 translate-y-1/2 flex justify-center items-center rounded-full transition-transform transition-opacity duration-100 ease-in-out text-sm text-white';
         iconElement.style.backgroundColor = marker.getColor();
         iconElement.appendChild(this.createIcon(marker));
         return iconElement;
@@ -23,7 +24,10 @@ export class Factory {
         return icon;
     }
 
-    private createAdvancedMarkerElement(marker: Marker, content: HTMLElement): google.maps.marker.AdvancedMarkerElement {
+    private createAdvancedMarkerElement(
+        marker: Marker,
+        content: HTMLElement,
+    ): google.maps.marker.AdvancedMarkerElement {
         return new google.maps.marker.AdvancedMarkerElement({
             position: marker.getPosition(),
             content,

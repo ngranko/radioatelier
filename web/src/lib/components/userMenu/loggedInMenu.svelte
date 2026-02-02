@@ -29,7 +29,7 @@
 
 <DropdownMenuRoot>
     <DropdownMenuTrigger>
-        {#snippet child({ props })}
+        {#snippet child({props})}
             <Button
                 {...props}
                 variant="ghost"

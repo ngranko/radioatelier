@@ -1,5 +1,14 @@
 <script lang="ts">
-    import {Root as AlertDialogRoot, Content, Header, Title, Description, Footer, Cancel, Action} from '$lib/components/ui/alert-dialog';
+    import {
+        Root as AlertDialogRoot,
+        Content,
+        Header,
+        Title,
+        Description,
+        Footer,
+        Cancel,
+        Action,
+    } from '$lib/components/ui/alert-dialog';
     import {ImportStepProgress} from '$lib/interfaces/import.ts';
     import {importState} from '$lib/state/import.svelte.ts';
 

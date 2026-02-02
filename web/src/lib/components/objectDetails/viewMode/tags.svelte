@@ -10,8 +10,12 @@
 
     let {tags, privateTags}: Props = $props();
 
-    const sortedTags = $derived([...tags].sort((a, b) => (a.name && b.name ? a.name.localeCompare(b.name) : 0)));
-    const sortedPrivateTags = $derived([...privateTags].sort((a, b) => (a.name && b.name ? a.name.localeCompare(b.name) : 0)));
+    const sortedTags = $derived(
+        [...tags].sort((a, b) => (a.name && b.name ? a.name.localeCompare(b.name) : 0)),
+    );
+    const sortedPrivateTags = $derived(
+        [...privateTags].sort((a, b) => (a.name && b.name ? a.name.localeCompare(b.name) : 0)),
+    );
 </script>
 
 <div class="flex flex-wrap gap-2">

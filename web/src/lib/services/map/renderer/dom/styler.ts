@@ -1,5 +1,5 @@
-import { getContrastingColor } from '$lib/services/colorConverter';
-import type { Marker } from '$lib/services/map/marker';
+import {getContrastingColor} from '$lib/services/colorConverter';
+import type {Marker} from '$lib/services/map/marker';
 
 export class Styler {
     public apply(marker: Marker) {
