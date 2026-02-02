@@ -11,6 +11,7 @@
     import {setCenter} from '$lib/services/map/map.svelte.ts';
     import {goto, invalidate} from '$app/navigation';
     import {page} from '$app/state';
+    import type {Object} from '$lib/interfaces/object.ts';
 
     interface Props {
         id?: string | null;
@@ -141,8 +142,23 @@
             } else {
                 activeObject.isMinimized = false;
                 activeObject.isDirty = false;
-                activeObject.detailsId = page.data.activeObject.id;
-                activeObject.object = page.data.activeObject;
+
+                if (page.data.activeObject) {
+                    activeObject.detailsId = page.data.activeObject.id;
+                    activeObject.object = page.data.activeObject;
+                } else {
+                    activeObject.isLoading = true;
+                    activeObject.detailsId = id!;
+                    page.data.activeObjectPromise
+                        .then((object: Object) => {
+                            activeObject.object = object;
+                            activeObject.isLoading = false;
+                        })
+                        .catch(() => {
+                            // TODO: probably better to just show an error, not redirect
+                            goto('/');
+                        });
+                }
             }
         }
     }
