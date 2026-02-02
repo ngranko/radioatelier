@@ -2,6 +2,10 @@ version: 2
 enable-beta-ecosystems: true
 updates:
     - package-ecosystem: "npm"
-      directory: "/"
+      directory: "/web"
+      schedule:
+          interval: "daily"
+    - package-ecosystem: "go"
+      directory: "/api"
       schedule:
           interval: "daily"
