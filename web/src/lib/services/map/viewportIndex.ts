@@ -1,4 +1,4 @@
-import type { MarkerId } from '$lib/interfaces/marker';
+import type {MarkerId} from '$lib/interfaces/marker';
 import type {MarkerRepository} from './markerRepository';
 
 export interface ViewportCandidate {
@@ -7,10 +7,7 @@ export interface ViewportCandidate {
 }
 
 export class ViewportIndex {
-    public collect(
-        bounds: google.maps.LatLngBounds,
-        repo: MarkerRepository,
-    ): ViewportCandidate[] {
+    public collect(bounds: google.maps.LatLngBounds, repo: MarkerRepository): ViewportCandidate[] {
         const allMarkersInViewport: ViewportCandidate[] = [];
 
         for (const id of repo.ids()) {

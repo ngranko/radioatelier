@@ -11,7 +11,9 @@ export function getErrorArray(fieldErrors: unknown): string[] | null {
     }
     if (typeof fieldErrors === 'object' && fieldErrors !== null && '_errors' in fieldErrors) {
         const errors = (fieldErrors as Record<string, unknown>)._errors;
-        return Array.isArray(errors) && errors.every(item => typeof item === 'string') ? errors : null;
+        return Array.isArray(errors) && errors.every(item => typeof item === 'string')
+            ? errors
+            : null;
     }
     return null;
 }

@@ -2,7 +2,12 @@
     import {cubicInOut} from 'svelte/easing';
     import {fly} from 'svelte/transition';
     import {portal} from 'svelte-portal';
-    import {Root as TabsRoot, List, Trigger, Content as TabsContent} from '$lib/components/ui/tabs/index.js';
+    import {
+        Root as TabsRoot,
+        List,
+        Trigger,
+        Content as TabsContent,
+    } from '$lib/components/ui/tabs/index.js';
     import SearchResultsLocal from './searchResultsLocal.svelte';
     import SearchResultsGoogle from './searchResultsGoogle.svelte';
     import {searchState} from '$lib/components/search/search.svelte.ts';

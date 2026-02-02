@@ -5,7 +5,7 @@
     import {searchState} from '$lib/components/search/search.svelte.ts';
     import {onDestroy, onMount} from 'svelte';
     import SearchAreaButton from './searchAreaButton.svelte';
-    import { mapState } from '$lib/state/map.svelte';
+    import {mapState} from '$lib/state/map.svelte';
 
     let centerLat = $state('');
     let centerLng = $state('');

@@ -7,17 +7,17 @@ services:
         ports:
             - 3001:5173
             - 3002:5174
-#        if you use celf-signed certificates, uncomment this block and a volume and change the origin path to the root CA
-#        environment:
-#            - NODE_EXTRA_CA_CERTS=/usr/local/share/ca-certificates/cacert.pem
+        #        if you use self-signed certificates, uncomment this block and a volume and change the origin path to the root CA
+        #        environment:
+        #            - NODE_EXTRA_CA_CERTS=/usr/local/share/ca-certificates/cacert.pem
         volumes:
             - ./src:/app/src
             - ./static:/app/static
             - ./package.json:/app/package.json
             - ./package-lock.json:/app/package-lock.json
             - ../uploads:/app/static/uploads
-#            - "/Users/nikita/Library/Application Support/mkcert/rootCA.pem:/usr/local/share/ca-certificates/cacert.pem:ro"
+        #            - "/Users/nikita/Library/Application Support/mkcert/rootCA.pem:/usr/local/share/ca-certificates/cacert.pem:ro"
         restart: unless-stopped
         command: npm run dev -- --host
         extra_hosts:
-            - "radioatelier.test:host-gateway"
+            - 'radioatelier.test:host-gateway'

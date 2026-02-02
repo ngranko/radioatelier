@@ -136,7 +136,7 @@
             <input type="hidden" {name} value={v} />
         {/each}
     {:else if !multiple && value}
-        <input type="hidden" {name} value={value} />
+        <input type="hidden" {name} {value} />
     {/if}
 {/if}
 

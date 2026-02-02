@@ -1,6 +1,6 @@
 import config from '$lib/config';
 import type {MarkerManager} from '$lib/services/map/markerManager';
-import { Loader } from '@googlemaps/js-api-loader';
+import {Loader} from '@googlemaps/js-api-loader';
 
 interface MapState {
     loader: Loader;
@@ -19,5 +19,3 @@ export const mapState = $state<MapState>({
     markerManager: undefined,
     deckEnabled: false,
 });
-
-

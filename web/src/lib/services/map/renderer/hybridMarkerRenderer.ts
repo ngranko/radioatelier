@@ -64,7 +64,7 @@ export class HybridMarkerRenderer implements MarkerRenderer {
 
     public destroy(): void {
         try {
-        this.dom.destroy();
+            this.dom.destroy();
         } catch (e) {
             console.error('error destroying DomMarkerRenderer:', e);
         }
@@ -75,5 +75,3 @@ export class HybridMarkerRenderer implements MarkerRenderer {
         }
     }
 }
-
-

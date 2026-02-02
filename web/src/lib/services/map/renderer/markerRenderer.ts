@@ -6,9 +6,9 @@ export interface MarkerRenderer {
     syncAll(iterable: Iterable<Marker>): void;
 
     show(marker: Marker): void;
-    
+
     hide(marker: Marker): void;
-    
+
     remove(marker: Marker, onRemoved?: () => void): void;
 
     applyState(marker: Marker): void;

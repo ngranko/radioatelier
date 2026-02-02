@@ -1,5 +1,15 @@
 <script lang="ts">
-    import {Root as AlertDialogRoot, Trigger, Content, Header, Title, Description, Footer, Cancel, Action} from '$lib/components/ui/alert-dialog';
+    import {
+        Root as AlertDialogRoot,
+        Trigger,
+        Content,
+        Header,
+        Title,
+        Description,
+        Footer,
+        Cancel,
+        Action,
+    } from '$lib/components/ui/alert-dialog';
     import {Button, buttonVariants} from '$lib/components/ui/button';
     import {cn} from '$lib/utils.ts';
 
@@ -24,17 +34,12 @@
         </Trigger>
         <Content>
             <Header>
-                <Title>
-                    Вы действительно хотите выйти из редактирования точки?
-                </Title>
+                <Title>Вы действительно хотите выйти из редактирования точки?</Title>
                 <Description>Изменения не будут сохранены</Description>
             </Header>
             <Footer>
                 <Cancel>Отменить</Cancel>
-                <Action
-                    class="bg-destructive hover:bg-destructive/70"
-                    onclick={onClick}
-                >
+                <Action class="bg-destructive hover:bg-destructive/70" onclick={onClick}>
                     Закрыть
                 </Action>
             </Footer>

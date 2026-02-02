@@ -32,10 +32,22 @@
             <g opacity="0.18">
                 <path d="M-5 28 H26 Q32 28 36 24 L46 14 Q50 10 56 10 H105" stroke-width="0.36" />
                 <path d="M-5 66 H22 Q28 66 32 70 L42 80 Q46 84 52 84 H105" stroke-width="0.34" />
-                <path d="M16 -5 V26 Q16 32 20 36 L30 46 Q34 50 34 56 V105" stroke-width="0.32" opacity="0.9" />
-                <path d="M84 -5 V20 Q84 26 80 30 L70 40 Q66 44 66 50 V105" stroke-width="0.32" opacity="0.9" />
+                <path
+                    d="M16 -5 V26 Q16 32 20 36 L30 46 Q34 50 34 56 V105"
+                    stroke-width="0.32"
+                    opacity="0.9"
+                />
+                <path
+                    d="M84 -5 V20 Q84 26 80 30 L70 40 Q66 44 66 50 V105"
+                    stroke-width="0.32"
+                    opacity="0.9"
+                />
                 <!-- Diagonal “avenue” -->
-                <path d="M-5 12 L18 28 Q26 34 34 34 H48 Q54 34 60 40 L74 54 Q82 62 92 62 H105" stroke-width="0.34" opacity="0.85" />
+                <path
+                    d="M-5 12 L18 28 Q26 34 34 34 H48 Q54 34 60 40 L74 54 Q82 62 92 62 H105"
+                    stroke-width="0.34"
+                    opacity="0.85"
+                />
             </g>
 
             <!-- Roundabouts / plazas (map-like landmarks) -->
@@ -46,7 +58,9 @@
             <!-- Secondary streets -->
             <g opacity="0.14" stroke-width="0.2">
                 <path d="M-5 42 H20 Q26 42 30 46 L36 52 Q40 56 46 56 H105" />
-                <path d="M52 -5 V18 Q52 24 48 28 L44 32 Q40 36 40 42 V62 Q40 68 44 72 L50 78 Q54 82 54 88 V105" />
+                <path
+                    d="M52 -5 V18 Q52 24 48 28 L44 32 Q40 36 40 42 V62 Q40 68 44 72 L50 78 Q54 82 54 88 V105"
+                />
                 <path d="M-5 84 H28 Q36 84 42 78 L48 72 Q54 66 62 66 H105" />
             </g>
 

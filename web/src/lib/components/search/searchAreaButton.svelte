@@ -21,7 +21,5 @@
     class="fixed top-29 left-1/2 z-1 transform-[translateX(-50%)] sm:top-2"
     transition:fade={{duration: 100, easing: cubicInOut}}
 >
-    <Button onclick={handleClick}>
-        Искать в этой области
-    </Button>
+    <Button onclick={handleClick}>Искать в этой области</Button>
 </div>

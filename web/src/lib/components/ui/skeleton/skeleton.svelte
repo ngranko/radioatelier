@@ -10,4 +10,3 @@
 </script>
 
 <div class={cn('animate-pulse rounded-md bg-gray-200', className)} {...restProps}></div>
-
