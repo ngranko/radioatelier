@@ -27,6 +27,10 @@
 
             dataWithPromise.activeObjectPromise
                 .then((obj: Object) => {
+                    if (activeObject.detailsId !== obj.id) {
+                        // probably this happened because a user navigated away, so let's just do an early return to not mess up the state
+                        return;
+                    }
                     activeObject.object = obj;
                     activeObject.isLoading = false;
                 })

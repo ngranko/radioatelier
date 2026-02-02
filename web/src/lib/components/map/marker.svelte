@@ -152,6 +152,7 @@
                     page.data.activeObjectPromise
                         .then((object: Object) => {
                             if (activeObject.detailsId !== object.id) {
+                                // probably this happened because a user navigated away, so let's just do an early return to not mess up the state
                                 return;
                             }
 
