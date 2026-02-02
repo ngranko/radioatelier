@@ -3,7 +3,8 @@
     "allow": [
       "Bash(ls:*)",
       "Bash(npm run check:*)",
-      "Bash(npm run format:*)"
+      "Bash(npm run format:*)",
+      "Bash(find:*)"
     ]
   }
 }
