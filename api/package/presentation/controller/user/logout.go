@@ -18,10 +18,5 @@ func LogOut(w http.ResponseWriter, r *http.Request) {
         Path:     "/",
     })
 
-    http.SetCookie(w, &http.Cookie{
-        Name:   "refreshToken",
-        MaxAge: -1,
-    })
-
     router.NewResponse().WithStatus(http.StatusOK).WithPayload(router.Payload{}).Send(w)
 }

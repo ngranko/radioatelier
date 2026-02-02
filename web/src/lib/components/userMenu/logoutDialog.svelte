@@ -34,6 +34,7 @@
     const logoutMutation = createMutation({
         mutationFn: logout,
         onSuccess: () => {
+            // TODO: maybe the other way around is better? Invalidate then logout?
             $invalidateTokenMutation.mutate();
         },
     });
