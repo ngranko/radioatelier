@@ -8,12 +8,10 @@
         Cancel,
         Action,
     } from '$lib/components/ui/alert-dialog';
-    import {createMutation} from '@tanstack/svelte-query';
-    import {invalidateToken} from '$lib/api/token.ts';
     import {searchPointList} from '$lib/stores/map.ts';
-    import {logout} from '$lib/api/auth.ts';
     import {resetActiveObject} from '$lib/state/activeObject.svelte.ts';
-    import {goto} from '$app/navigation';
+    import {useClerkContext} from 'svelte-clerk';
+    import {toast} from 'svelte-sonner';
 
     interface Props {
         isOpen: boolean;
@@ -21,26 +19,30 @@
 
     let {isOpen = $bindable()}: Props = $props();
 
-    const invalidateTokenMutation = createMutation({
-        mutationFn: invalidateToken,
-        onSuccess() {
+    const ctx = useClerkContext();
+    let isLoggingOut = $state(false);
+
+    async function handleClick() {
+        if (!ctx.clerk || !ctx.isLoaded) {
+            toast.error('Система авторизации загружается...');
+            return;
+        }
+
+        isLoggingOut = true;
+
+        try {
+            // might cause issues if the logout call fails (because we already cleaned everything up)
+            // TODO: fix sometime in the future when I have nothing else to do
             resetActiveObject();
             searchPointList.clear();
             localStorage.removeItem('lastCenter');
             localStorage.removeItem('lastPosition');
-            goto('/login', {invalidateAll: true});
-        },
-    });
-    const logoutMutation = createMutation({
-        mutationFn: logout,
-        onSuccess: () => {
-            // TODO: maybe the other way around is better? Invalidate then logout?
-            $invalidateTokenMutation.mutate();
-        },
-    });
 
-    function handleClick() {
-        $logoutMutation.mutate();
+            await ctx.clerk.signOut({redirectUrl: '/login'});
+        } catch (err) {
+            toast.error('Не удалось выйти из аккаунта');
+            isLoggingOut = false;
+        }
     }
 
     function getIsOpen() {
@@ -59,8 +61,14 @@
             <Title>Вы действительно хотите выйти?</Title>
         </Header>
         <Footer>
-            <Cancel>Отмена</Cancel>
-            <Action onclick={handleClick}>Выйти</Action>
+            <Cancel disabled={isLoggingOut}>Отмена</Cancel>
+            <Action onclick={handleClick} disabled={isLoggingOut}>
+                {#if isLoggingOut}
+                    <i class="fa-solid fa-circle-notch animate-spin"></i>
+                {:else}
+                    Выйти
+                {/if}
+            </Action>
         </Footer>
     </Content>
 </AlertDialogRoot>

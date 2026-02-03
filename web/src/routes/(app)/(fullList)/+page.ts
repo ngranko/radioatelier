@@ -1,9 +1,9 @@
 import {redirect} from '@sveltejs/kit';
-import type {PageLoad} from './$types';
 
-export const load: PageLoad = async ({parent, url}) => {
+export const load = async ({parent, url}) => {
     const data = await parent();
-    if (!data.user.auth) {
+
+    if (!data.initialState.userId) {
         redirect(303, `/login?ref=${encodeURIComponent(url.pathname)}`);
     }
 

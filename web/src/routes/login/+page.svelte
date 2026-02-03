@@ -1,36 +1,190 @@
 <script lang="ts">
+    import {goto} from '$app/navigation';
+    import {page} from '$app/state';
     import {useQueryClient} from '@tanstack/svelte-query';
-    import {superForm} from 'sveltekit-superforms';
-    import {zod4Client} from 'sveltekit-superforms/adapters';
     import {toast} from 'svelte-sonner';
-    import {Button} from '$lib/components/ui/button';
+    import {useClerkContext} from 'svelte-clerk';
+    import type {EmailCodeFactor, OAuthStrategy} from '@clerk/types';
     import Logo from './logo.svelte';
-    import {FormField, FormControl, FormLabel, FormFieldErrors} from '$lib/components/ui/form';
-    import {Input} from '$lib/components/ui/input';
-    import PasswordInput from '$lib/components/input/passwordInput.svelte';
     import Background from './background.svelte';
-    import type {PageData} from './$types';
-    import {loginSchema} from './schema';
-
-    let {data}: {data: PageData} = $props();
+    import LoginForm from './loginForm.svelte';
+    import SecondFactorForm from './secondFactorForm.svelte';
+    import SsoButtons from './ssoButtons.svelte';
 
     const queryClient = useQueryClient();
+    const ctx = useClerkContext();
 
-    const form = superForm(data.form, {
-        validators: zod4Client(loginSchema),
-        onResult: ({result}) => {
-            // Clear Tanstack Query cache on successful login (redirect means success)
-            // TODO: remove after full ssr move
-            if (result.type === 'redirect') {
-                queryClient.clear();
-            }
-        },
-        onError: ({result}) => {
-            toast.error(result.error?.message ?? 'Вход не удался');
-        },
+    let email = $state('');
+    let password = $state('');
+    let verificationCode = $state('');
+    let submitting = $state(false);
+    let oauthLoading = $state<OAuthStrategy | null>(null);
+    let needsSecondFactor = $state(false);
+    let errors = $state<{email?: string; password?: string; code?: string}>({});
+
+    type ClerkWithEnvironment = typeof ctx.clerk & {
+        __unstable__environment?: {
+            userSettings?: {
+                socialProviderStrategies?: OAuthStrategy[];
+            };
+        };
+    };
+
+    function getEnabledStrategies(): OAuthStrategy[] {
+        if (!ctx.isLoaded || !ctx.clerk) return [];
+        const clerk = ctx.clerk as ClerkWithEnvironment;
+        return clerk.__unstable__environment?.userSettings?.socialProviderStrategies ?? [];
+    }
+
+    const enabledStrategies = $derived.by(() => {
+        if (!ctx.isLoaded) return [];
+        return getEnabledStrategies();
     });
 
-    const {form: formData, enhance, submitting} = form;
+    const hasGoogle = $derived(enabledStrategies.includes('oauth_google'));
+    const hasApple = $derived(enabledStrategies.includes('oauth_apple'));
+    const hasGithub = $derived(enabledStrategies.includes('oauth_github'));
+
+    function normalizeRef(value: string | null): string {
+        if (!value) return '/';
+        try {
+            return new URL(value, page.url.href).pathname;
+        } catch {
+            return '/';
+        }
+    }
+
+    async function signInWithOAuth(strategy: OAuthStrategy) {
+        if (!ctx.clerk || !ctx.isLoaded) {
+            toast.error('Система авторизации загружается...');
+            return;
+        }
+
+        if (!ctx.clerk.client) {
+            toast.error('Ошибка инициализации авторизации');
+            return;
+        }
+
+        oauthLoading = strategy;
+
+        try {
+            await ctx.clerk.client.signIn.authenticateWithRedirect({
+                strategy,
+                redirectUrl: '/login/sso-callback',
+                redirectUrlComplete: normalizeRef(page.url.searchParams.get('ref')),
+            });
+        } catch (err: unknown) {
+            const clerkError = err as {errors?: Array<{code: string; message: string}>};
+            const errorMessage = clerkError.errors?.[0]?.message || 'Не удалось войти';
+            toast.error(errorMessage);
+            oauthLoading = null;
+        }
+    }
+
+    async function handleSubmit(event: SubmitEvent) {
+        event.preventDefault();
+        errors = {};
+
+        if (!email.trim()) {
+            errors.email = 'Это непохоже на email';
+            return;
+        }
+        if (!password) {
+            errors.password = 'Пожалуйста, введите пароль';
+            return;
+        }
+
+        if (!ctx.clerk || !ctx.isLoaded) {
+            toast.error('Система авторизации загружается...');
+            return;
+        }
+
+        if (!ctx.clerk.client) {
+            toast.error('Ошибка инициализации авторизации');
+            return;
+        }
+
+        submitting = true;
+
+        try {
+            const signInAttempt = await ctx.clerk.client.signIn.create({
+                identifier: email,
+                password,
+            });
+
+            if (signInAttempt.status === 'complete') {
+                await ctx.clerk.setActive({session: signInAttempt.createdSessionId});
+                queryClient.clear();
+                goto(normalizeRef(page.url.searchParams.get('ref')));
+            } else if (signInAttempt.status === 'needs_second_factor') {
+                const emailCodeFactor = signInAttempt.supportedSecondFactors?.find(
+                    (factor): factor is EmailCodeFactor => factor.strategy === 'email_code',
+                );
+
+                if (emailCodeFactor) {
+                    await ctx.clerk.client.signIn.prepareSecondFactor({
+                        strategy: 'email_code',
+                        emailAddressId: emailCodeFactor.emailAddressId,
+                    });
+                    needsSecondFactor = true;
+                } else {
+                    toast.error('Требуется дополнительная верификация');
+                }
+            } else {
+                toast.error('Не удалось завершить вход');
+            }
+        } catch (err: unknown) {
+            const clerkError = err as {errors?: Array<{code: string; message: string}>};
+            const errorMessage = clerkError.errors?.[0]?.message || 'Неверный email или пароль';
+            toast.error(errorMessage);
+        } finally {
+            submitting = false;
+        }
+    }
+
+    async function handleVerifyCode(event: SubmitEvent) {
+        event.preventDefault();
+        errors = {};
+
+        if (!verificationCode.trim()) {
+            errors.code = 'Введите код подтверждения';
+            return;
+        }
+
+        if (!ctx.clerk || !ctx.isLoaded) {
+            toast.error('Система авторизации загружается...');
+            return;
+        }
+
+        if (!ctx.clerk.client) {
+            toast.error('Ошибка инициализации авторизации');
+            return;
+        }
+
+        submitting = true;
+
+        try {
+            const signInAttempt = await ctx.clerk.client.signIn.attemptSecondFactor({
+                strategy: 'email_code',
+                code: verificationCode,
+            });
+
+            if (signInAttempt.status === 'complete') {
+                await ctx.clerk.setActive({session: signInAttempt.createdSessionId});
+                queryClient.clear();
+                goto(normalizeRef(page.url.searchParams.get('ref')));
+            } else {
+                toast.error('Не удалось подтвердить код');
+            }
+        } catch (err: unknown) {
+            const clerkError = err as {errors?: Array<{code: string; message: string}>};
+            const errorMessage = clerkError.errors?.[0]?.message || 'Неверный код';
+            console.error(errorMessage);
+            toast.error('Ошибка авторизации');
+        } finally {
+            submitting = false;
+        }
+    }
 </script>
 
 <section
@@ -50,56 +204,31 @@
                     <Logo class="mb-3 flex items-center justify-center gap-3 text-3xl" />
                 </div>
 
-                <form method="POST" class="flex flex-col gap-5" use:enhance>
-                    <FormField {form} name="email">
-                        <FormControl>
-                            {#snippet children({props})}
-                                <FormLabel>Email</FormLabel>
-                                <Input
-                                    type="email"
-                                    placeholder="name@example.com"
-                                    class="focus-visible:border-primary focus-visible:ring-primary/30"
-                                    {...props}
-                                    bind:value={$formData.email}
-                                />
-                            {/snippet}
-                        </FormControl>
-                        <FormFieldErrors />
-                    </FormField>
-                    <FormField {form} name="password">
-                        <FormControl>
-                            {#snippet children({props})}
-                                <FormLabel>Пароль</FormLabel>
-                                <PasswordInput
-                                    placeholder="••••••••"
-                                    class="focus-visible:border-primary focus-visible:ring-primary/30"
-                                    {...props}
-                                    bind:value={$formData.password}
-                                />
-                            {/snippet}
-                        </FormControl>
-                        <FormFieldErrors />
-                    </FormField>
-                    <div class="mt-2">
-                        <Button type="submit" class="w-full text-base" disabled={$submitting}>
-                            {#if $submitting}
-                                <span class="flex justify-center gap-1">
-                                    <span
-                                        class="h-1.5 w-1.5 animate-bounce rounded-full bg-current"
-                                    ></span>
-                                    <span
-                                        class="h-1.5 w-1.5 animate-bounce rounded-full bg-current [animation-delay:0.1s]"
-                                    ></span>
-                                    <span
-                                        class="h-1.5 w-1.5 animate-bounce rounded-full bg-current [animation-delay:0.2s]"
-                                    ></span>
-                                </span>
-                            {:else}
-                                Войти
-                            {/if}
-                        </Button>
-                    </div>
-                </form>
+                {#if needsSecondFactor}
+                    <SecondFactorForm
+                        bind:verificationCode
+                        {submitting}
+                        error={errors.code}
+                        onsubmit={handleVerifyCode}
+                        onback={() => (needsSecondFactor = false)}
+                    />
+                {:else}
+                    <LoginForm
+                        bind:email
+                        bind:password
+                        {submitting}
+                        errors={{email: errors.email, password: errors.password}}
+                        onsubmit={handleSubmit}
+                    />
+
+                    <SsoButtons
+                        {hasGoogle}
+                        {hasApple}
+                        {hasGithub}
+                        {oauthLoading}
+                        onsignin={signInWithOAuth}
+                    />
+                {/if}
             </div>
         </div>
     </div>

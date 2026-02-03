@@ -65,8 +65,12 @@ jobs:
 
     - name: Tag the current commit
       run: |
-        git tag v${{ steps.calculate-version.outputs.version }}
-        git push origin v${{ steps.calculate-version.outputs.version }}
+        if git rev-parse "v${{ steps.calculate-version.outputs.version }}" >/dev/null 2>&1; then
+          echo "Tag v${{ steps.calculate-version.outputs.version }} already exists, skipping"
+        else
+          git tag v${{ steps.calculate-version.outputs.version }}
+          git push origin v${{ steps.calculate-version.outputs.version }}
+        fi
 
   deploy:
     runs-on: ubuntu-latest
@@ -81,6 +85,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
+              set -e
               cd ${{ secrets.SSH_WORKDIR }}
               docker compose pull
               docker compose up -d
