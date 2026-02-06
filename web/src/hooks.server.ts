@@ -1,5 +1,13 @@
 export const handle = async ({event, resolve}) => {
-    event.url.host = event.request.headers.get('x-forwarded-host') ?? event.url.host;
-    event.url.protocol = event.request.headers.get('x-forwarded-proto') ?? event.url.protocol;
+    const forwardedHost = event.request.headers.get('x-forwarded-host');
+    const forwardedProto = event.request.headers.get('x-forwarded-proto');
+
+    if (forwardedHost) {
+        event.url.host = forwardedHost;
+    }
+    if (forwardedProto) {
+        event.url.protocol = `${forwardedProto}:`;
+    }
+
     return resolve(event);
 };
