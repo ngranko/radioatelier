@@ -16,7 +16,14 @@
 import {mkdir, writeFile, readFile} from 'node:fs/promises';
 import {join, dirname} from 'node:path';
 import {parseSqlDump} from './parse-sql';
-import {transformTable, toJsonl, getTransformConfig, type IdMapping} from './transform';
+import {
+    transformTable,
+    transformVisitedChunksFromObjectUsers,
+    transformMarkersFromObjects,
+    toJsonl,
+    getTransformConfig,
+    type IdMapping,
+} from './transform';
 
 const OUTPUT_DIR = join(dirname(new URL(import.meta.url).pathname), 'output');
 
@@ -40,7 +47,7 @@ const IMPORT_PHASES = [
     // Phase 3: Junction tables
     {
         phase: 3,
-        tables: ['object_tags', 'object_private_tags', 'object_users'],
+        tables: ['object_private_tags', 'object_users'],
         description: 'Junction tables',
     },
 ];
@@ -156,8 +163,26 @@ async function migrate(sqlDumpPath: string): Promise<void> {
                 continue;
             }
 
+            if (mysqlTable === 'object_users') {
+                const visitedChunks = transformVisitedChunksFromObjectUsers(parsed, idMappings);
+                if (visitedChunks.records.length > 0) {
+                    const visitedJsonlPath = join(OUTPUT_DIR, `${visitedChunks.convexTable}.jsonl`);
+                    const visitedJsonlContent = toJsonl(visitedChunks.records);
+                    await writeFile(visitedJsonlPath, visitedJsonlContent);
+
+                    console.log(
+                        `  Generated ${visitedChunks.convexTable}.jsonl (${visitedChunks.records.length} records)`,
+                    );
+
+                    await importTable(visitedChunks.convexTable, visitedJsonlPath);
+                } else {
+                    console.log(`  Skipping userVisitedChunks: no records to import`);
+                }
+                continue;
+            }
+
             // Transform the data
-            const transformed = transformTable(parsed, idMappings);
+            const transformed = transformTable(parsed, idMappings, parsedTables);
             if (!transformed) {
                 console.log(`  Skipping ${mysqlTable}: no transform config`);
                 continue;
@@ -179,6 +204,23 @@ async function migrate(sqlDumpPath: string): Promise<void> {
 
             // Import into Convex
             await importTable(transformed.convexTable, jsonlPath);
+
+            if (mysqlTable === 'objects') {
+                const markers = transformMarkersFromObjects(parsedTables, idMappings);
+                if (markers.records.length > 0) {
+                    const markersJsonlPath = join(OUTPUT_DIR, `${markers.convexTable}.jsonl`);
+                    const markersJsonlContent = toJsonl(markers.records);
+                    await writeFile(markersJsonlPath, markersJsonlContent);
+
+                    console.log(
+                        `  Generated ${markers.convexTable}.jsonl (${markers.records.length} records)`,
+                    );
+
+                    await importTable(markers.convexTable, markersJsonlPath);
+                } else {
+                    console.log(`  Skipping markers: no records to import`);
+                }
+            }
         }
     }
 

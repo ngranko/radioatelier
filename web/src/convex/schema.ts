@@ -26,6 +26,14 @@ export default defineSchema({
         .index('byLatitudeAndLongitude', ['latitude', 'longitude'])
         .index('byAddressCityCountry', ['address', 'city', 'country'])
         .index('byMysqlId', ['mysqlId']),
+    markers: defineTable({
+        latitude: v.number(),
+        longitude: v.number(),
+        createdById: v.id('users'),
+        categoryId: v.id('categories'),
+        tagIds: v.array(v.id('tags')),
+        isRemoved: v.boolean(),
+    }),
     objects: defineTable({
         name: v.string(),
         description: v.nullable(v.string()),
@@ -38,24 +46,17 @@ export default defineSchema({
         mapPointId: v.id('mapPoints'),
         isPublic: v.boolean(),
         createdById: v.id('users'),
+        tagIds: v.array(v.id('tags')),
         internalId: v.string(),
         mysqlId: v.optional(v.string()),
     })
         .index('byIsPublic', ['isPublic'])
-        .index('byMysqlId', ['mysqlId']),
+        .index('byMysqlId', ['mysqlId'])
+        .index('byCreatorId', ['createdById']),
     objectPrivateTags: defineTable({
         objectId: v.id('objects'),
         privateTagId: v.id('privateTags'),
     }).index('byObjectIdAndPrivateTagId', ['objectId', 'privateTagId']),
-    objectTags: defineTable({
-        objectId: v.id('objects'),
-        tagId: v.id('tags'),
-    }).index('byObjectIdAndTagId', ['objectId', 'tagId']),
-    objectUsers: defineTable({
-        objectId: v.id('objects'),
-        userId: v.id('users'),
-        isVisited: v.boolean(),
-    }).index('byObjectIdAndUserId', ['objectId', 'userId']),
     privateTags: defineTable({
         name: v.string(),
         createdById: v.id('users'),
@@ -79,4 +80,9 @@ export default defineSchema({
     })
         .index('byExternalId', ['externalId'])
         .index('byMysqlId', ['mysqlId']),
+    userVisitedChunks: defineTable({
+        userId: v.id('users'),
+        chunkId: v.string(),
+        visitedObjectIds: v.array(v.id('objects')),
+    }).index('byUserIdAndChunkId', ['userId', 'chunkId']),
 });

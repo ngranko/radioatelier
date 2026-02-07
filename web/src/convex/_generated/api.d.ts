@@ -10,7 +10,9 @@
 
 import type * as http from "../http.js";
 import type * as migrations from "../migrations.js";
+import type * as objects from "../objects.js";
 import type * as users from "../users.js";
+import type * as utils_visitedChunks from "../utils/visitedChunks.js";
 
 import type {
   ApiFromModules,
@@ -21,7 +23,9 @@ import type {
 declare const fullApi: ApiFromModules<{
   http: typeof http;
   migrations: typeof migrations;
+  objects: typeof objects;
   users: typeof users;
+  "utils/visitedChunks": typeof utils_visitedChunks;
 }>;
 
 /**
