@@ -5,10 +5,9 @@ export const handle = async ({event, resolve}) => {
 };
 
 export const handleFetch: HandleFetch = async ({event, request, fetch}) => {
-    const forwardedHost = event.request.headers.get('x-forwarded-host');
     const forwardedProto = event.request.headers.get('x-forwarded-proto');
 
-    if (!forwardedHost && !forwardedProto) {
+    if (!forwardedProto) {
         return fetch(request);
     }
 
@@ -17,12 +16,7 @@ export const handleFetch: HandleFetch = async ({event, request, fetch}) => {
         return fetch(request);
     }
 
-    if (forwardedHost) {
-        url.host = forwardedHost;
-    }
-    if (forwardedProto) {
-        url.protocol = forwardedProto.endsWith(':') ? forwardedProto : `${forwardedProto}:`;
-    }
+    url.protocol = forwardedProto.endsWith(':') ? forwardedProto : `${forwardedProto}:`;
 
     return fetch(new Request(url, request));
 };
