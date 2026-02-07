@@ -13,7 +13,6 @@ export const getIdMappings = query({
         for (const table of tables) {
             mappings[table] = {};
 
-            // Query each table and build the mapping
             // We need to handle each table separately due to type constraints
             let records: Array<{_id: string; mysqlId?: string}> = [];
 

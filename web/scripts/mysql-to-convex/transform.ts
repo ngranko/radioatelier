@@ -32,7 +32,10 @@ interface ForeignKeyMapping {
 const toBoolean = (value: unknown): boolean => value === 1 || value === '1' || value === true;
 const toNumber = (value: unknown): number => {
     if (typeof value === 'number') return value;
-    if (typeof value === 'string') return parseFloat(value);
+    if (typeof value === 'string') {
+        const parsed = parseFloat(value);
+        return Number.isNaN(parsed) ? 0 : parsed;
+    }
     return 0;
 };
 const toNullableString = (value: unknown): string | null => {
