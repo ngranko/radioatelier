@@ -18,6 +18,10 @@ const config = {
             // In production with adapter-node, set ORIGIN env var instead.
             checkOrigin: process.env.NODE_ENV === 'production',
         },
+        alias: {
+            $convex: 'src/convex',
+            '$convex/*': 'src/convex/*',
+        },
     },
 };
 
