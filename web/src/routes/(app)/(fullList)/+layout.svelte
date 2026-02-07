@@ -4,15 +4,19 @@
     import {sharedMarker} from '$lib/state/sharedMarker.svelte.ts';
     import {mapState} from '$lib/state/map.svelte.ts';
     import Marker from '$lib/components/map/marker.svelte';
-    import {setObjectsContext} from '$lib/context/objects.ts';
     import ObjectDetails from '$lib/components/objectDetails/objectDetails.svelte';
     import {activeObject} from '$lib/state/activeObject.svelte.ts';
     import type {ObjectListItem, Object as ObjectType} from '$lib/interfaces/object.ts';
+    import {useQuery} from 'convex-svelte';
+    import {api} from '$convex/_generated/api.js';
+    import { useClerkContext } from 'svelte-clerk';
 
     let {data, children} = $props();
     let shouldUsePageObject = $state(!!page.data.activeObject);
     let lastPageObjectId = $state(page.data.activeObject?.id ?? null);
-    let objects = $state<ObjectListItem[]>(data.objects);
+
+    const ctx = useClerkContext();
+    const objects = useQuery(api.markers.getListForCurrentUser, {}, {initialData: data.objects});
 
     const renderedObject = $derived(
         activeObject.object ?? (shouldUsePageObject ? (page.data.activeObject ?? null) : null),
@@ -50,36 +54,8 @@
         }
     });
 
-    $effect(() => {
-        objects = data.objects;
-    });
-
-    function updateObject(id: string, updates: Partial<ObjectListItem>) {
-        const idx = objects.findIndex(o => o.id === id);
-        if (idx !== -1) {
-            objects[idx] = {...objects[idx], ...updates};
-        }
-    }
-
-    function addObject(obj: ObjectListItem) {
-        objects = [...objects, obj];
-    }
-
-    function removeObject(id: string) {
-        objects = objects.filter(o => o.id !== id);
-    }
-
-    setObjectsContext({
-        get items() {
-            return objects;
-        },
-        update: updateObject,
-        add: addObject,
-        remove: removeObject,
-    });
-
     onMount(() => {
-        objects.forEach(object => {
+        objects.data?.forEach((object: ObjectListItem) => {
             if (sharedMarker.object && sharedMarker.object.id === object.id) {
                 sharedMarker.object = undefined;
             }
@@ -96,14 +72,14 @@
         {isEditing}
         isLoading={activeObject.isLoading}
         permissions={{
-            canEditAll: data.user.auth && isOwner,
-            canEditPersonal: data.user.auth && !isOwner && isPublic,
+            canEditAll: Boolean(ctx.auth.userId) && isOwner,
+            canEditPersonal: Boolean(ctx.auth.userId) && !isOwner && isPublic,
         }}
     />
 {/if}
 
 {#if mapState.map}
-    {#each objects as point (point.id)}
+    {#each objects.data as point (point.id)}
         <Marker
             id={point.id}
             lat={point.lat}

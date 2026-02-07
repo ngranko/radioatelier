@@ -85,7 +85,8 @@
         event.preventDefault();
         errors = {};
 
-        if (!email.trim()) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!email.trim() || !emailRegex.test(email)) {
             errors.email = 'Это непохоже на email';
             return;
         }
