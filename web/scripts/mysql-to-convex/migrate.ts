@@ -206,7 +206,11 @@ async function migrate(sqlDumpPath: string): Promise<void> {
             await importTable(transformed.convexTable, jsonlPath);
 
             if (mysqlTable === 'objects') {
-                const markers = transformMarkersFromObjects(parsedTables, idMappings);
+                const markerMappings = await fetchIdMappings([
+                    ...IMPORT_PHASES.slice(0, phase.phase).flatMap(p => p.tables),
+                    'objects',
+                ]);
+                const markers = transformMarkersFromObjects(parsedTables, markerMappings);
                 if (markers.records.length > 0) {
                     const markersJsonlPath = join(OUTPUT_DIR, `${markers.convexTable}.jsonl`);
                     const markersJsonlContent = toJsonl(markers.records);

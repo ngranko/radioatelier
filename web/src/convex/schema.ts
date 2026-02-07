@@ -27,13 +27,18 @@ export default defineSchema({
         .index('byAddressCityCountry', ['address', 'city', 'country'])
         .index('byMysqlId', ['mysqlId']),
     markers: defineTable({
+        objectId: v.id('objects'),
         latitude: v.number(),
         longitude: v.number(),
         createdById: v.id('users'),
         categoryId: v.id('categories'),
         tagIds: v.array(v.id('tags')),
         isRemoved: v.boolean(),
-    }),
+        isPublic: v.boolean(),
+    })
+        .index('byCreatedByIdAndIsPublic', ['createdById', 'isPublic'])
+        .index('byIsPublic', ['isPublic'])
+        .index('byObjectId', ['objectId']),
     objects: defineTable({
         name: v.string(),
         description: v.nullable(v.string()),

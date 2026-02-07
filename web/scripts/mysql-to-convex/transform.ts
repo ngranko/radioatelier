@@ -295,6 +295,7 @@ export function transformMarkersFromObjects(
     }
 
     const tagMappings = idMappings.tags;
+    const objectMapping = idMappings.objects;
     const categoryMapping = idMappings.categories;
     const userMapping = idMappings.users;
     const objectTagMap = buildObjectTagMap(parsedTables);
@@ -302,11 +303,12 @@ export function transformMarkersFromObjects(
     const records: Record<string, unknown>[] = [];
 
     for (const row of objectsTable.rows) {
-        if (!row.map_point_id || !row.created_by || !row.category_id) {
-            console.warn('Skipping marker: missing map point, creator, or category');
+        if (!row.id || !row.map_point_id || !row.created_by || !row.category_id) {
+            console.warn('Skipping marker: missing object, map point, creator, or category');
             continue;
         }
 
+        const mysqlObjectId = hexToUlid(row.id as string).toLowerCase();
         const mysqlMapPointId = hexToUlid(row.map_point_id as string).toLowerCase();
         const mapPoint = mapPointLookup.get(mysqlMapPointId);
         if (!mapPoint) {
@@ -316,18 +318,18 @@ export function transformMarkersFromObjects(
 
         const mysqlUserId = hexToUlid(row.created_by as string).toLowerCase();
         const mysqlCategoryId = hexToUlid(row.category_id as string).toLowerCase();
+        const objectId = resolveConvexId(objectMapping, mysqlObjectId);
         const createdById = resolveConvexId(userMapping, mysqlUserId);
         const categoryId = resolveConvexId(categoryMapping, mysqlCategoryId);
 
-        if (!createdById || !categoryId) {
+        if (!objectId || !createdById || !categoryId) {
             console.warn(
-                `Skipping marker: missing user/category mapping user=${mysqlUserId} category=${mysqlCategoryId}`,
+                `Skipping marker: missing object/user/category mapping object=${mysqlObjectId} user=${mysqlUserId} category=${mysqlCategoryId}`,
             );
             continue;
         }
 
-        const mysqlObjectId = row.id ? hexToUlid(row.id as string).toLowerCase() : null;
-        const mysqlTagIds = mysqlObjectId ? (objectTagMap?.get(mysqlObjectId) ?? []) : [];
+        const mysqlTagIds = objectTagMap?.get(mysqlObjectId) ?? [];
         const resolvedTagIds: string[] = [];
 
         for (const mysqlTagId of mysqlTagIds) {
@@ -340,12 +342,14 @@ export function transformMarkersFromObjects(
         }
 
         records.push({
+            objectId,
             latitude: mapPoint.latitude,
             longitude: mapPoint.longitude,
             createdById,
             categoryId,
             tagIds: resolvedTagIds,
             isRemoved: toBoolean(row.is_removed),
+            isPublic: toBoolean(row.is_public),
         });
     }
 
