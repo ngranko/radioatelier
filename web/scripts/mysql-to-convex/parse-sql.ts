@@ -445,14 +445,15 @@ export function hexToUlid(hex: string): string {
  */
 export function mysqlTimestampToMs(timestamp: string | null): number {
     if (!timestamp) {
+        console.warn('Null timestamp encountered, using current time');
         return Date.now();
     }
-    // Handle '0000-00-00 00:00:00.000' as invalid
     if (timestamp.startsWith('0000-00-00')) {
         return Date.now();
     }
     const date = new Date(timestamp);
     if (isNaN(date.getTime())) {
+        console.warn(`Invalid timestamp: ${timestamp}, using current time`);
         return Date.now();
     }
     return date.getTime();

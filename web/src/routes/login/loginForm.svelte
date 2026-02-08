@@ -71,11 +71,15 @@
                     );
 
                     if (emailCodeFactor) {
-                        await ctx.clerk.client.signIn.prepareSecondFactor({
-                            strategy: 'email_code',
-                            emailAddressId: emailCodeFactor.emailAddressId,
-                        });
-                        onNeedsSecondFactor();
+                        try {
+                            await ctx.clerk.client.signIn.prepareSecondFactor({
+                                strategy: 'email_code',
+                                emailAddressId: emailCodeFactor.emailAddressId,
+                            });
+                            onNeedsSecondFactor();
+                        } catch (error: unknown) {
+                            toast.error('Не удалось отправить код верификации, попробуйте позже');
+                        }
                     } else {
                         toast.error('Требуется дополнительная верификация');
                     }

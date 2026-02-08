@@ -79,7 +79,7 @@
 {/if}
 
 {#if mapState.map}
-    {#each objects.data as point (point.id)}
+    {#each objects.data ?? [] as point (point.id)}
         <Marker
             id={point.id}
             lat={point.lat}
