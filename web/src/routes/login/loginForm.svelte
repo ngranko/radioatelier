@@ -3,54 +3,116 @@
     import {Label} from '$lib/components/ui/label';
     import {Input} from '$lib/components/ui/input';
     import PasswordInput from '$lib/components/input/passwordInput.svelte';
+    import {getErrorArray} from '$lib/utils/formErrors';
+    import {defaults, superForm} from 'sveltekit-superforms';
     import LoadingDots from './loadingDots.svelte';
+    import {loginSchema} from './schema';
+    import { toast } from 'svelte-sonner';
+    import { normalizeRef } from '$lib/utils';
+    import { page } from '$app/state';
+    import { goto } from '$app/navigation';
+    import { zod4, zod4Client } from 'sveltekit-superforms/adapters';
+    import { useQueryClient } from '@tanstack/svelte-query';
+    import { useClerkContext } from 'svelte-clerk';
+    import type {EmailCodeFactor} from '@clerk/types';
 
     interface Props {
-        email: string;
-        password: string;
-        submitting: boolean;
-        errors: {email?: string; password?: string};
-        onsubmit: (event: SubmitEvent) => void;
+        onNeedsSecondFactor: () => void;
     }
 
-    let {
-        email = $bindable(),
-        password = $bindable(),
-        submitting,
-        errors,
-        onsubmit,
-    }: Props = $props();
+    const queryClient = useQueryClient();
+    const ctx = useClerkContext();
+
+    let {onNeedsSecondFactor}: Props = $props();
+
+    const loginForm = superForm(defaults(zod4(loginSchema)), {
+        SPA: true,
+        validators: zod4Client(loginSchema),
+        onSubmit: async () => {
+            const validation = await loginForm.validateForm({update: true});
+            if (!validation.valid) {
+                return;
+            }
+
+            if (!ctx.clerk || !ctx.isLoaded || !ctx.clerk.client) {
+                console.error('failed loading clerk for auth', ctx.clerk, ctx.isLoaded, ctx.clerk?.client);
+                toast.error('Что-то пошло не так, попробуйте позже');
+                return;
+            }
+
+            try {
+                const signInAttempt = await ctx.clerk.client.signIn.create({
+                    identifier: validation.data.email,
+                    password: validation.data.password,
+                });
+
+                if (signInAttempt.status === 'complete') {
+                    await ctx.clerk.setActive({session: signInAttempt.createdSessionId});
+                    queryClient.clear();
+                    goto(normalizeRef(page.url.searchParams.get('ref')));
+                } else if (signInAttempt.status === 'needs_second_factor') {
+                    const emailCodeFactor = signInAttempt.supportedSecondFactors?.find(
+                        (factor): factor is EmailCodeFactor => factor.strategy === 'email_code',
+                    );
+
+                    if (emailCodeFactor) {
+                        await ctx.clerk.client.signIn.prepareSecondFactor({
+                            strategy: 'email_code',
+                            emailAddressId: emailCodeFactor.emailAddressId,
+                        });
+                        onNeedsSecondFactor();
+                    } else {
+                        toast.error('Требуется дополнительная верификация');
+                    }
+                } else {
+                    toast.error('Не удалось завершить вход');
+                }
+            } catch (err: unknown) {
+                const clerkError = err as {errors?: Array<{code: string; message: string}>};
+                const errorMessage = clerkError.errors?.[0]?.message || 'Неверный email или пароль';
+                toast.error(errorMessage);
+            }
+        },
+    });
+
+    let {form: formData, errors, enhance, submitting} = loginForm;
 </script>
 
-<form {onsubmit} class="flex flex-col gap-5">
+<form class="flex flex-col gap-5" use:enhance>
     <div class="space-y-2">
         <Label for="email">Email</Label>
         <Input
             id="email"
+            name="email"
             type="email"
             placeholder="name@example.com"
             class="focus-visible:border-primary focus-visible:ring-primary/30"
-            bind:value={email}
+            bind:value={$formData.email}
         />
-        {#if errors.email}
-            <p class="text-destructive text-sm">{errors.email}</p>
+        {#if $errors.email}
+            <p class="text-destructive text-sm">
+                {getErrorArray($errors.email)?.[0] ?? 'Это непохоже на email'}
+            </p>
         {/if}
     </div>
     <div class="space-y-2">
         <Label for="password">Пароль</Label>
         <PasswordInput
             id="password"
+            name="password"
             placeholder="••••••••"
             class="focus-visible:border-primary focus-visible:ring-primary/30"
-            bind:value={password}
+            bind:value={$formData.password}
         />
-        {#if errors.password}
-            <p class="text-destructive text-sm">{errors.password}</p>
+        {#if $errors.password}
+            <p class="text-destructive text-sm">
+                {getErrorArray($errors.password)?.[0] ?? 'Пожалуйста, введите пароль'}
+            </p>
         {/if}
     </div>
     <div class="mt-2">
-        <Button type="submit" class="w-full text-base" disabled={submitting}>
-            {#if submitting}
+        <Button type="submit" class="w-full text-base" disabled={$submitting}>
+            {#if $submitting}
                 <LoadingDots />
             {:else}
                 Войти

@@ -1,124 +1,11 @@
 <script lang="ts">
-    import {goto} from '$app/navigation';
-    import {page} from '$app/state';
-    import {useQueryClient} from '@tanstack/svelte-query';
-    import {toast} from 'svelte-sonner';
-    import {useClerkContext} from 'svelte-clerk';
-    import type {EmailCodeFactor} from '@clerk/types';
     import Logo from './logo.svelte';
     import Background from './background.svelte';
     import LoginForm from './loginForm.svelte';
     import SecondFactorForm from './secondFactorForm.svelte';
     import SsoButtons from './ssoButtons.svelte';
-    import { normalizeRef } from '$lib/utils';
 
-    const queryClient = useQueryClient();
-    const ctx = useClerkContext();
-
-    let email = $state('');
-    let password = $state('');
-    let verificationCode = $state('');
-    let submitting = $state(false);
     let needsSecondFactor = $state(false);
-    let errors = $state<{email?: string; password?: string; code?: string}>({});
-
-    async function handleSubmit(event: SubmitEvent) {
-        event.preventDefault();
-        errors = {};
-
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!email.trim() || !emailRegex.test(email)) {
-            errors.email = 'Это непохоже на email';
-            return;
-        }
-        if (!password) {
-            errors.password = 'Пожалуйста, введите пароль';
-            return;
-        }
-
-        if (!ctx.clerk || !ctx.isLoaded || !ctx.clerk.client) {
-            console.error('failed loading clerk for auth', ctx.clerk, ctx.isLoaded, ctx.clerk?.client);
-            toast.error('Что-то пошло не так, попробуйте позже');
-            return;
-        }
-
-        submitting = true;
-
-        try {
-            const signInAttempt = await ctx.clerk.client.signIn.create({
-                identifier: email,
-                password,
-            });
-
-            if (signInAttempt.status === 'complete') {
-                await ctx.clerk.setActive({session: signInAttempt.createdSessionId});
-                queryClient.clear();
-                goto(normalizeRef(page.url.searchParams.get('ref')));
-            } else if (signInAttempt.status === 'needs_second_factor') {
-                const emailCodeFactor = signInAttempt.supportedSecondFactors?.find(
-                    (factor): factor is EmailCodeFactor => factor.strategy === 'email_code',
-                );
-
-                if (emailCodeFactor) {
-                    await ctx.clerk.client.signIn.prepareSecondFactor({
-                        strategy: 'email_code',
-                        emailAddressId: emailCodeFactor.emailAddressId,
-                    });
-                    needsSecondFactor = true;
-                } else {
-                    toast.error('Требуется дополнительная верификация');
-                }
-            } else {
-                toast.error('Не удалось завершить вход');
-            }
-        } catch (err: unknown) {
-            const clerkError = err as {errors?: Array<{code: string; message: string}>};
-            const errorMessage = clerkError.errors?.[0]?.message || 'Неверный email или пароль';
-            toast.error(errorMessage);
-        } finally {
-            submitting = false;
-        }
-    }
-
-    async function handleVerifyCode(event: SubmitEvent) {
-        event.preventDefault();
-        errors = {};
-
-        if (!verificationCode.trim()) {
-            errors.code = 'Введите код подтверждения';
-            return;
-        }
-
-        if (!ctx.clerk || !ctx.isLoaded || !ctx.clerk.client) {
-            console.error('failed loading clerk for auth', ctx.clerk, ctx.isLoaded, ctx.clerk?.client);
-            toast.error('Что-то пошло не так, попробуйте позже');
-            return;
-        }
-
-        submitting = true;
-
-        try {
-            const signInAttempt = await ctx.clerk.client.signIn.attemptSecondFactor({
-                strategy: 'email_code',
-                code: verificationCode,
-            });
-
-            if (signInAttempt.status === 'complete') {
-                await ctx.clerk.setActive({session: signInAttempt.createdSessionId});
-                queryClient.clear();
-                goto(normalizeRef(page.url.searchParams.get('ref')));
-            } else {
-                toast.error('Не удалось подтвердить код');
-            }
-        } catch (err: unknown) {
-            const clerkError = err as {errors?: Array<{code: string; message: string}>};
-            const errorMessage = clerkError.errors?.[0]?.message || 'Неверный код';
-            console.error(errorMessage);
-            toast.error('Ошибка авторизации');
-        } finally {
-            submitting = false;
-        }
-    }
 </script>
 
 <section
@@ -139,21 +26,9 @@
                 </div>
 
                 {#if needsSecondFactor}
-                    <SecondFactorForm
-                        bind:verificationCode
-                        {submitting}
-                        error={errors.code}
-                        onsubmit={handleVerifyCode}
-                        onback={() => (needsSecondFactor = false)}
-                    />
+                    <SecondFactorForm onBack={() => (needsSecondFactor = false)} />
                 {:else}
-                    <LoginForm
-                        bind:email
-                        bind:password
-                        {submitting}
-                        errors={{email: errors.email, password: errors.password}}
-                        onsubmit={handleSubmit}
-                    />
+                    <LoginForm onNeedsSecondFactor={() => (needsSecondFactor = true)} />
 
                     <SsoButtons />
                 {/if}
