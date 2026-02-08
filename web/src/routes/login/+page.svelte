@@ -4,12 +4,13 @@
     import {useQueryClient} from '@tanstack/svelte-query';
     import {toast} from 'svelte-sonner';
     import {useClerkContext} from 'svelte-clerk';
-    import type {EmailCodeFactor, OAuthStrategy} from '@clerk/types';
+    import type {EmailCodeFactor} from '@clerk/types';
     import Logo from './logo.svelte';
     import Background from './background.svelte';
     import LoginForm from './loginForm.svelte';
     import SecondFactorForm from './secondFactorForm.svelte';
     import SsoButtons from './ssoButtons.svelte';
+    import { normalizeRef } from '$lib/utils';
 
     const queryClient = useQueryClient();
     const ctx = useClerkContext();
@@ -18,68 +19,8 @@
     let password = $state('');
     let verificationCode = $state('');
     let submitting = $state(false);
-    let oauthLoading = $state<OAuthStrategy | null>(null);
     let needsSecondFactor = $state(false);
     let errors = $state<{email?: string; password?: string; code?: string}>({});
-
-    type ClerkWithEnvironment = typeof ctx.clerk & {
-        __unstable__environment?: {
-            userSettings?: {
-                socialProviderStrategies?: OAuthStrategy[];
-            };
-        };
-    };
-
-    function getEnabledStrategies(): OAuthStrategy[] {
-        if (!ctx.isLoaded || !ctx.clerk) return [];
-        const clerk = ctx.clerk as ClerkWithEnvironment;
-        return clerk.__unstable__environment?.userSettings?.socialProviderStrategies ?? [];
-    }
-
-    const enabledStrategies = $derived.by(() => {
-        if (!ctx.isLoaded) return [];
-        return getEnabledStrategies();
-    });
-
-    const hasGoogle = $derived(enabledStrategies.includes('oauth_google'));
-    const hasApple = $derived(enabledStrategies.includes('oauth_apple'));
-    const hasGithub = $derived(enabledStrategies.includes('oauth_github'));
-
-    function normalizeRef(value: string | null): string {
-        if (!value) return '/';
-        try {
-            return new URL(value, page.url.href).pathname;
-        } catch {
-            return '/';
-        }
-    }
-
-    async function signInWithOAuth(strategy: OAuthStrategy) {
-        if (!ctx.clerk || !ctx.isLoaded) {
-            toast.error('Система авторизации загружается...');
-            return;
-        }
-
-        if (!ctx.clerk.client) {
-            toast.error('Ошибка инициализации авторизации');
-            return;
-        }
-
-        oauthLoading = strategy;
-
-        try {
-            await ctx.clerk.client.signIn.authenticateWithRedirect({
-                strategy,
-                redirectUrl: '/login/sso-callback',
-                redirectUrlComplete: normalizeRef(page.url.searchParams.get('ref')),
-            });
-        } catch (err: unknown) {
-            const clerkError = err as {errors?: Array<{code: string; message: string}>};
-            const errorMessage = clerkError.errors?.[0]?.message || 'Не удалось войти';
-            toast.error(errorMessage);
-            oauthLoading = null;
-        }
-    }
 
     async function handleSubmit(event: SubmitEvent) {
         event.preventDefault();
@@ -95,13 +36,9 @@
             return;
         }
 
-        if (!ctx.clerk || !ctx.isLoaded) {
-            toast.error('Система авторизации загружается...');
-            return;
-        }
-
-        if (!ctx.clerk.client) {
-            toast.error('Ошибка инициализации авторизации');
+        if (!ctx.clerk || !ctx.isLoaded || !ctx.clerk.client) {
+            console.error('failed loading clerk for auth', ctx.clerk, ctx.isLoaded, ctx.clerk?.client);
+            toast.error('Что-то пошло не так, попробуйте позже');
             return;
         }
 
@@ -152,13 +89,9 @@
             return;
         }
 
-        if (!ctx.clerk || !ctx.isLoaded) {
-            toast.error('Система авторизации загружается...');
-            return;
-        }
-
-        if (!ctx.clerk.client) {
-            toast.error('Ошибка инициализации авторизации');
+        if (!ctx.clerk || !ctx.isLoaded || !ctx.clerk.client) {
+            console.error('failed loading clerk for auth', ctx.clerk, ctx.isLoaded, ctx.clerk?.client);
+            toast.error('Что-то пошло не так, попробуйте позже');
             return;
         }
 
@@ -222,13 +155,7 @@
                         onsubmit={handleSubmit}
                     />
 
-                    <SsoButtons
-                        {hasGoogle}
-                        {hasApple}
-                        {hasGithub}
-                        {oauthLoading}
-                        onsignin={signInWithOAuth}
-                    />
+                    <SsoButtons />
                 {/if}
             </div>
         </div>

@@ -1,3 +1,4 @@
+import { page } from '$app/state';
 import {clsx, type ClassValue} from 'clsx';
 import {twMerge} from 'tailwind-merge';
 
@@ -28,4 +29,15 @@ export function throttle<T extends (...args: any[]) => any>(
             }, delay);
         }
     };
+}
+
+export function normalizeRef(value: string | null): string {
+    if (!value) {
+        return '/';
+    }
+    try {
+        return new URL(value, page.url.href).pathname;
+    } catch {
+        return '/';
+    }
 }
