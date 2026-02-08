@@ -7,13 +7,13 @@
     import {defaults, superForm} from 'sveltekit-superforms';
     import LoadingDots from './loadingDots.svelte';
     import {loginSchema} from './schema';
-    import { toast } from 'svelte-sonner';
-    import { normalizeRef } from '$lib/utils';
-    import { page } from '$app/state';
-    import { goto } from '$app/navigation';
-    import { zod4, zod4Client } from 'sveltekit-superforms/adapters';
-    import { useQueryClient } from '@tanstack/svelte-query';
-    import { useClerkContext } from 'svelte-clerk';
+    import {toast} from 'svelte-sonner';
+    import {normalizeRef} from '$lib/utils';
+    import {page} from '$app/state';
+    import {goto} from '$app/navigation';
+    import {zod4, zod4Client} from 'sveltekit-superforms/adapters';
+    import {useQueryClient} from '@tanstack/svelte-query';
+    import {useClerkContext} from 'svelte-clerk';
     import type {EmailCodeFactor} from '@clerk/types';
 
     interface Props {
@@ -26,6 +26,15 @@
 
     let {onNeedsSecondFactor, onForgotPassword}: Props = $props();
 
+    async function handlePostSignInRedirect() {
+        const ref = normalizeRef(page.url.searchParams.get('ref'));
+        if (ctx.clerk?.session?.currentTask?.key === 'reset-password') {
+            await goto(`/login/reset-password?ref=${encodeURIComponent(ref)}`);
+            return;
+        }
+        await goto(ref);
+    }
+
     const loginForm = superForm(defaults(zod4(loginSchema)), {
         SPA: true,
         validators: zod4Client(loginSchema),
@@ -36,7 +45,12 @@
             }
 
             if (!ctx.clerk || !ctx.isLoaded || !ctx.clerk.client) {
-                console.error('failed loading clerk for auth', ctx.clerk, ctx.isLoaded, ctx.clerk?.client);
+                console.error(
+                    'failed loading clerk for auth',
+                    ctx.clerk,
+                    ctx.isLoaded,
+                    ctx.clerk?.client,
+                );
                 toast.error('Что-то пошло не так, попробуйте позже');
                 return;
             }
@@ -50,7 +64,7 @@
                 if (signInAttempt.status === 'complete') {
                     await ctx.clerk.setActive({session: signInAttempt.createdSessionId});
                     queryClient.clear();
-                    goto(normalizeRef(page.url.searchParams.get('ref')));
+                    await handlePostSignInRedirect();
                 } else if (signInAttempt.status === 'needs_second_factor') {
                     const emailCodeFactor = signInAttempt.supportedSecondFactors?.find(
                         (factor): factor is EmailCodeFactor => factor.strategy === 'email_code',
@@ -70,7 +84,13 @@
                 }
             } catch (err: unknown) {
                 const clerkError = err as {errors?: Array<{code: string; message: string}>};
-                const errorMessage = clerkError.errors?.[0]?.message || 'Неверный email или пароль';
+                const firstError = clerkError.errors?.[0];
+                if (firstError?.code === 'form_password_compromised') {
+                    toast.error(firstError.message);
+                    onForgotPassword();
+                    return;
+                }
+                const errorMessage = firstError?.message || 'Неверный email или пароль';
                 toast.error(errorMessage);
             }
         },

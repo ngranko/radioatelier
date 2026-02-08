@@ -27,6 +27,15 @@
     let step = $state<'request' | 'reset'>('request');
     let requestedEmail = $state('');
 
+    async function handlePostSignInRedirect() {
+        const ref = normalizeRef(page.url.searchParams.get('ref'));
+        if (ctx.clerk?.session?.currentTask?.key === 'reset-password') {
+            await goto(`/login/reset-password?ref=${encodeURIComponent(ref)}`);
+            return;
+        }
+        await goto(ref);
+    }
+
     const requestForm = superForm(defaults(zod4(resetPasswordRequestSchema)), {
         SPA: true,
         validators: zod4Client(resetPasswordRequestSchema),
@@ -37,7 +46,12 @@
             }
 
             if (!ctx.clerk || !ctx.isLoaded || !ctx.clerk.client) {
-                console.error('failed loading clerk for auth', ctx.clerk, ctx.isLoaded, ctx.clerk?.client);
+                console.error(
+                    'failed loading clerk for auth',
+                    ctx.clerk,
+                    ctx.isLoaded,
+                    ctx.clerk?.client,
+                );
                 toast.error('Что-то пошло не так, попробуйте позже');
                 return;
             }
@@ -84,7 +98,12 @@
             }
 
             if (!ctx.clerk || !ctx.isLoaded || !ctx.clerk.client) {
-                console.error('failed loading clerk for auth', ctx.clerk, ctx.isLoaded, ctx.clerk?.client);
+                console.error(
+                    'failed loading clerk for auth',
+                    ctx.clerk,
+                    ctx.isLoaded,
+                    ctx.clerk?.client,
+                );
                 toast.error('Что-то пошло не так, попробуйте позже');
                 return;
             }
@@ -99,7 +118,7 @@
                 if (signInAttempt.status === 'complete') {
                     await ctx.clerk.setActive({session: signInAttempt.createdSessionId});
                     queryClient.clear();
-                    goto(normalizeRef(page.url.searchParams.get('ref')));
+                    await handlePostSignInRedirect();
                 } else {
                     toast.error('Не удалось завершить восстановление');
                 }
@@ -112,10 +131,18 @@
         },
     });
 
-    let {form: requestData, errors: requestErrors, enhance: requestEnhance, submitting: requesting} =
-        requestForm;
-    let {form: confirmData, errors: confirmErrors, enhance: confirmEnhance, submitting: confirming} =
-        confirmForm;
+    let {
+        form: requestData,
+        errors: requestErrors,
+        enhance: requestEnhance,
+        submitting: requesting,
+    } = requestForm;
+    let {
+        form: confirmData,
+        errors: confirmErrors,
+        enhance: confirmEnhance,
+        submitting: confirming,
+    } = confirmForm;
 </script>
 
 {#if step === 'request'}
@@ -168,7 +195,8 @@
             />
             {#if $confirmErrors.verificationCode}
                 <p class="text-destructive text-sm">
-                    {getErrorArray($confirmErrors.verificationCode)?.[0] ?? 'Введите код подтверждения'}
+                    {getErrorArray($confirmErrors.verificationCode)?.[0] ??
+                        'Введите код подтверждения'}
                 </p>
             {/if}
         </div>

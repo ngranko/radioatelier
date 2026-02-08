@@ -1,16 +1,20 @@
-import { query } from "./_generated/server";
-import { getCurrentUserOrThrow } from "./users";
+import {query} from './_generated/server';
+import {getCurrentUserOrThrow} from './users';
 
 export const getListForCurrentUser = query({
     args: {},
-    handler: async (ctx) => {
+    handler: async ctx => {
         const user = await getCurrentUserOrThrow(ctx);
 
-        const userMarkers = await ctx.db.query('markers')
-        .withIndex('byCreatedByIdAndIsPublic', q => q.eq('createdById', user._id).eq('isPublic', false))
-        .collect();
+        const userMarkers = await ctx.db
+            .query('markers')
+            .withIndex('byCreatedByIdAndIsPublic', q =>
+                q.eq('createdById', user._id).eq('isPublic', false),
+            )
+            .collect();
 
-        const publicMarkers = await ctx.db.query('markers')
+        const publicMarkers = await ctx.db
+            .query('markers')
             .withIndex('byIsPublic', q => q.eq('isPublic', true))
             .collect();
 

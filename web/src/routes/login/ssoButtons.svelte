@@ -1,10 +1,10 @@
 <script lang="ts">
     import type {OAuthStrategy} from '@clerk/types';
-    import { useClerkContext } from 'svelte-clerk';
+    import {useClerkContext} from 'svelte-clerk';
     import SsoButton from './ssoButton.svelte';
-    import { toast } from 'svelte-sonner';
-    import { page } from '$app/state';
-    import { normalizeRef } from '$lib/utils';
+    import {toast} from 'svelte-sonner';
+    import {page} from '$app/state';
+    import {normalizeRef} from '$lib/utils';
 
     type ClerkWithEnvironment = typeof ctx.clerk & {
         __unstable__environment?: {
@@ -17,33 +17,38 @@
     const ctx = useClerkContext();
 
     let oauthLoading = $state<OAuthStrategy | null>(null);
-    
+
     const enabledStrategies = $derived.by(() => {
         if (!ctx.isLoaded) {
             return [];
         }
-        
+
         return getEnabledStrategies();
     });
-    
+
     const hasGoogle = $derived(enabledStrategies.includes('oauth_google'));
     const hasApple = $derived(enabledStrategies.includes('oauth_apple'));
     const hasGithub = $derived(enabledStrategies.includes('oauth_github'));
-    
+
     const hasAnySocialProvider = $derived(hasGoogle || hasApple || hasGithub);
-    
+
     function getEnabledStrategies(): OAuthStrategy[] {
         if (!ctx.isLoaded || !ctx.clerk) {
             return [];
         }
-        
+
         const clerk = ctx.clerk as ClerkWithEnvironment;
         return clerk.__unstable__environment?.userSettings?.socialProviderStrategies ?? [];
     }
 
     async function signInWithOAuth(strategy: OAuthStrategy) {
         if (!ctx.clerk || !ctx.isLoaded || !ctx.clerk.client) {
-            console.error('failed loading clerk for auth', ctx.clerk, ctx.isLoaded, ctx.clerk?.client);
+            console.error(
+                'failed loading clerk for auth',
+                ctx.clerk,
+                ctx.isLoaded,
+                ctx.clerk?.client,
+            );
             toast.error('Что-то пошло не так, попробуйте позже');
             return;
         }

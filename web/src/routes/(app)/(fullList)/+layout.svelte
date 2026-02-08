@@ -9,7 +9,7 @@
     import type {ObjectListItem, Object as ObjectType} from '$lib/interfaces/object.ts';
     import {useQuery} from 'convex-svelte';
     import {api} from '$convex/_generated/api.js';
-    import { useClerkContext } from 'svelte-clerk';
+    import {useClerkContext} from 'svelte-clerk';
 
     let {data, children} = $props();
     let shouldUsePageObject = $state(!!page.data.activeObject);

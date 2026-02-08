@@ -14,6 +14,8 @@
     import Search from '$lib/components/search/search.svelte';
     import {sharedMarker} from '$lib/state/sharedMarker.svelte.ts';
     import {goto} from '$app/navigation';
+    import {page} from '$app/state';
+    import {useClerkContext} from 'svelte-clerk';
 
     // this is needed to avoid deck.gl error
     webgl2Adapter;
@@ -22,6 +24,7 @@
 
     let consoleElement: HTMLElement | undefined = $state();
     let orientationEnabled = $state(false);
+    const clerkCtx = useClerkContext();
 
     function handleMapClick(location: Location) {
         if (!data.user.auth) {
@@ -30,6 +33,17 @@
 
         goto(`/object/create?lat=${location.lat}&lng=${location.lng}`);
     }
+
+    $effect(() => {
+        if (!clerkCtx.isLoaded) {
+            return;
+        }
+        if (clerkCtx.session?.currentTask?.key !== 'reset-password') {
+            return;
+        }
+        const ref = `${page.url.pathname}${page.url.search}`;
+        goto(`/login/reset-password?ref=${encodeURIComponent(ref)}`);
+    });
 
     // uncomment if mobile dev tools are required
     // $effect(() => {

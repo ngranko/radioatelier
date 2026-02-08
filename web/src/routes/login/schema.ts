@@ -19,7 +19,7 @@ export const resetPasswordConfirmSchema = z
         password: z.string().min(1, 'Введите новый пароль'),
         confirmPassword: z.string().min(1, 'Подтвердите новый пароль'),
     })
-    .refine((data) => data.password === data.confirmPassword, {
+    .refine(data => data.password === data.confirmPassword, {
         message: 'Пароли не совпадают',
         path: ['confirmPassword'],
     });
