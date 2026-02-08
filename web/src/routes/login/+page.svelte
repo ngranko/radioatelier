@@ -3,9 +3,11 @@
     import Background from './background.svelte';
     import LoginForm from './loginForm.svelte';
     import SecondFactorForm from './secondFactorForm.svelte';
+    import ForgotPasswordForm from './forgotPasswordForm.svelte';
     import SsoButtons from './ssoButtons.svelte';
 
     let needsSecondFactor = $state(false);
+    let showForgotPassword = $state(false);
 </script>
 
 <section
@@ -27,8 +29,16 @@
 
                 {#if needsSecondFactor}
                     <SecondFactorForm onBack={() => (needsSecondFactor = false)} />
+                {:else if showForgotPassword}
+                    <ForgotPasswordForm onBack={() => (showForgotPassword = false)} />
                 {:else}
-                    <LoginForm onNeedsSecondFactor={() => (needsSecondFactor = true)} />
+                    <LoginForm
+                        onNeedsSecondFactor={() => {
+                            needsSecondFactor = true;
+                            showForgotPassword = false;
+                        }}
+                        onForgotPassword={() => (showForgotPassword = true)}
+                    />
 
                     <SsoButtons />
                 {/if}

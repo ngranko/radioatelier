@@ -18,12 +18,13 @@
 
     interface Props {
         onNeedsSecondFactor: () => void;
+        onForgotPassword: () => void;
     }
 
     const queryClient = useQueryClient();
     const ctx = useClerkContext();
 
-    let {onNeedsSecondFactor}: Props = $props();
+    let {onNeedsSecondFactor, onForgotPassword}: Props = $props();
 
     const loginForm = superForm(defaults(zod4(loginSchema)), {
         SPA: true,
@@ -109,6 +110,14 @@
                 {getErrorArray($errors.password)?.[0] ?? 'Пожалуйста, введите пароль'}
             </p>
         {/if}
+        <Button
+            type="button"
+            variant="ghost"
+            class="text-primary h-auto p-0 text-sm hover:bg-transparent"
+            onclick={onForgotPassword}
+        >
+            Забыли пароль?
+        </Button>
     </div>
     <div class="mt-2">
         <Button type="submit" class="w-full text-base" disabled={$submitting}>
