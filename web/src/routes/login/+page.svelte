@@ -1,48 +1,23 @@
 <script lang="ts">
     import Logo from './logo.svelte';
-    import Background from './background.svelte';
     import LoginForm from './loginForm.svelte';
     import SecondFactorForm from './secondFactorForm.svelte';
-    import ForgotPasswordForm from './forgotPasswordForm.svelte';
     import SsoButtons from './ssoButtons.svelte';
 
     let needsSecondFactor = $state(false);
-    let showForgotPassword = $state(false);
 </script>
 
-<section
-    class="from-muted via-background to-muted relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br p-6 dark:from-[oklch(0.129_0.042_264.695)] dark:via-[oklch(0.15_0.03_260)] dark:to-[oklch(0.129_0.042_264.695)]"
->
-    <Background />
+<div class="mb-10 text-center">
+    <Logo class="mb-4 flex items-center justify-center gap-3 text-3xl" />
+    <p class="text-muted-foreground/70 text-sm tracking-wide">
+        {needsSecondFactor ? 'Подтверждение входа' : 'Вход в систему'}
+    </p>
+</div>
 
-    <div class="relative z-10 w-full max-w-sm">
-        <div
-            class="bg-card ring-border relative overflow-hidden rounded-lg shadow-xl ring-1 shadow-black/5 dark:bg-white/10 dark:ring-white/20 dark:backdrop-blur-md dark:shadow-black/20 animate-in fade-in-0 slide-in-from-bottom-4 duration-500"
-        >
-            <div
-                class="from-primary to-primary/50 absolute top-0 right-0 left-0 h-0.5 bg-gradient-to-r"
-            ></div>
-            <div class="px-8 py-10 sm:px-10 sm:py-12">
-                <div class="mb-8 text-center">
-                    <Logo class="mb-3 flex items-center justify-center gap-3 text-3xl" />
-                </div>
+{#if needsSecondFactor}
+    <SecondFactorForm onBack={() => (needsSecondFactor = false)} />
+{:else}
+    <LoginForm onNeedsSecondFactor={() => (needsSecondFactor = true)} />
 
-                {#if needsSecondFactor}
-                    <SecondFactorForm onBack={() => (needsSecondFactor = false)} />
-                {:else if showForgotPassword}
-                    <ForgotPasswordForm onBack={() => (showForgotPassword = false)} />
-                {:else}
-                    <LoginForm
-                        onNeedsSecondFactor={() => {
-                            needsSecondFactor = true;
-                            showForgotPassword = false;
-                        }}
-                        onForgotPassword={() => (showForgotPassword = true)}
-                    />
-
-                    <SsoButtons />
-                {/if}
-            </div>
-        </div>
-    </div>
-</section>
+    <SsoButtons />
+{/if}

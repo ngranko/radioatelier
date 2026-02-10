@@ -1,24 +1,13 @@
 <script lang="ts">
-    import {type Component, onMount} from 'svelte';
     import {Input} from '$lib/components/ui/input';
     import {Button} from '$lib/components/ui/button';
     import type {HTMLInputAttributes} from 'svelte/elements';
 
-    interface Props extends Omit<HTMLInputAttributes, 'type' | 'files'> {
-        withStrengthIndicator?: boolean;
-    }
+    interface Props extends Omit<HTMLInputAttributes, 'type' | 'files'> {}
 
-    let {withStrengthIndicator = false, value = $bindable(), ...rest}: Props = $props();
+    let {value = $bindable(), ...rest}: Props = $props();
 
     let isPlainPassword: boolean = $state(false);
-    let PasswordStrength: Component | undefined = $state();
-
-    onMount(async () => {
-        if (withStrengthIndicator) {
-            const {default: Component} = await import('$lib/components/passwordStrength.svelte');
-            PasswordStrength = Component;
-        }
-    });
 
     function handleShowPasswordClick(event: MouseEvent) {
         event.stopPropagation();
@@ -40,6 +29,3 @@
         {/if}
     </Button>
 </div>
-{#if withStrengthIndicator && PasswordStrength}
-    <PasswordStrength {value} />
-{/if}

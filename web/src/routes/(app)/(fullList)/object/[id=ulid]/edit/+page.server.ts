@@ -1,5 +1,4 @@
 import {deleteObject, getObject, updateObjectDirect} from '$lib/api/object.ts';
-import {me} from '$lib/api/user.ts';
 import type {Payload} from '$lib/interfaces/api.ts';
 import type {GetObjectResponsePayload, Object, UpdateObjectInputs} from '$lib/interfaces/object.ts';
 import {schema} from '$lib/schema/objectSchema.ts';
@@ -8,12 +7,11 @@ import {superValidate} from 'sveltekit-superforms';
 import {zod4} from 'sveltekit-superforms/adapters';
 
 export const actions: Actions = {
-    save: async ({request, fetch, params, url}) => {
+    save: async ({request, fetch, params, url, locals}) => {
         let object: Payload<GetObjectResponsePayload>;
 
-        try {
-            await me({fetch});
-        } catch {
+        const auth = locals.auth();
+        if (!auth.userId) {
             redirect(303, `/login?ref=${encodeURIComponent(url.pathname)}`);
         }
 
@@ -48,10 +46,9 @@ export const actions: Actions = {
             return error(500, 'Не удалось сохранить точку');
         }
     },
-    delete: async ({request, fetch, params, url}) => {
-        try {
-            await me({fetch});
-        } catch {
+    delete: async ({request, fetch, params, url, locals}) => {
+        const auth = locals.auth();
+        if (!auth.userId) {
             redirect(303, `/login?ref=${encodeURIComponent(url.pathname)}`);
         }
 

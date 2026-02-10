@@ -1,8 +1,10 @@
 import type {Payload} from '$lib/interfaces/api.ts';
 
-export interface ChangePasswordFormInputs extends Record<string, string> {
+export interface ChangePasswordFormInputs {
+    currentPassword: string;
     password: string;
     passwordConfirm: string;
+    signOutOtherSessions: boolean;
 }
 
 export interface ChangePasswordResponsePayload extends Payload {

@@ -9,7 +9,7 @@
 </script>
 
 <div class={cn(['gap-3 text-3xl', className])}>
-    <img src="/logo.svg" class="h-8" alt="logo" />
-    <span class="text-muted-foreground font-light dark:text-white/40">.</span>
-    <span class="font-semibold tracking-tight">архив</span>
+    <img src="/logo.svg" class="h-9 drop-shadow-sm" alt="Radioatelier logo" />
+    <span class="text-muted-foreground/40 font-light">.</span>
+    <span class="text-foreground font-semibold tracking-tight">архив</span>
 </div>

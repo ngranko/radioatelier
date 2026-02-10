@@ -4,9 +4,8 @@
     import {goto} from '$app/navigation';
     import {useClerkContext} from 'svelte-clerk';
     import {normalizeRef} from '$lib/utils';
-    import {Button} from '$lib/components/ui/button';
     import Logo from '../logo.svelte';
-    import Background from '../background.svelte';
+    import AuthButton from '../authButton.svelte';
 
     const ctx = useClerkContext();
     let taskContainer: HTMLDivElement | null = $state(null);
@@ -34,43 +33,30 @@
     });
 </script>
 
-<section
-    class="from-muted via-background to-muted relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br p-6 dark:from-[oklch(0.129_0.042_264.695)] dark:via-[oklch(0.15_0.03_260)] dark:to-[oklch(0.129_0.042_264.695)]"
->
-    <Background />
+<div class="mb-10 text-center">
+    <Logo class="mb-4 flex items-center justify-center gap-3 text-3xl" />
+    <p class="text-muted-foreground/70 text-sm tracking-wide">Обновление пароля</p>
+</div>
 
-    <div class="relative z-10 w-full max-w-sm">
-        <div
-            class="bg-card ring-border relative overflow-hidden rounded-lg shadow-xl ring-1 shadow-black/5 dark:bg-white/10 dark:ring-white/20 dark:backdrop-blur-md dark:shadow-black/20 animate-in fade-in-0 slide-in-from-bottom-4 duration-500"
-        >
-            <div
-                class="from-primary to-primary/50 absolute top-0 right-0 left-0 h-0.5 bg-gradient-to-r"
-            ></div>
-            <div class="px-8 py-10 sm:px-10 sm:py-12">
-                <div class="mb-8 text-center">
-                    <Logo class="mb-3 flex items-center justify-center gap-3 text-3xl" />
-                </div>
-
-                <div class="space-y-4">
-                    <p class="text-muted-foreground text-center text-sm">
-                        Для защиты аккаунта нужно обновить пароль перед входом.
-                    </p>
-                    <div bind:this={taskContainer}></div>
-
-                    {#if ctx.isLoaded && !hasResetTask}
-                        <p class="text-muted-foreground text-center text-sm">
-                            Нет активной задачи смены пароля.
-                        </p>
-                        <Button
-                            type="button"
-                            class="w-full text-base"
-                            onclick={() => goto(redirectUrl)}
-                        >
-                            Вернуться
-                        </Button>
-                    {/if}
-                </div>
-            </div>
-        </div>
+<div class="space-y-6">
+    <div
+        class="bg-warning/10 dark:bg-warning/15 border-warning/30 mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border"
+    >
+        <i class="fa-solid fa-lock text-warning text-2xl"></i>
     </div>
-</section>
+
+    <p class="text-muted-foreground text-center text-sm leading-relaxed">
+        Для защиты аккаунта необходимо обновить пароль перед входом.
+    </p>
+
+    <div bind:this={taskContainer}></div>
+
+    {#if ctx.isLoaded && !hasResetTask}
+        <div class="space-y-4">
+            <p class="text-muted-foreground text-center text-sm">
+                Нет активной задачи смены пароля.
+            </p>
+            <AuthButton type="button" onclick={() => goto(redirectUrl)}>Вернуться</AuthButton>
+        </div>
+    {/if}
+</div>

@@ -1,11 +1,8 @@
 <script lang="ts">
-    import {Button} from '$lib/components/ui/button';
     import {Label} from '$lib/components/ui/label';
-    import {Input} from '$lib/components/ui/input';
-    import PasswordInput from '$lib/components/input/passwordInput.svelte';
     import {getErrorArray} from '$lib/utils/formErrors';
     import {defaults, superForm} from 'sveltekit-superforms';
-    import LoadingDots from './loadingDots.svelte';
+    import LoadingDots from '$lib/components/loadingDots.svelte';
     import {loginSchema} from './schema';
     import {toast} from 'svelte-sonner';
     import {normalizeRef} from '$lib/utils';
@@ -15,16 +12,25 @@
     import {useQueryClient} from '@tanstack/svelte-query';
     import {useClerkContext} from 'svelte-clerk';
     import type {EmailCodeFactor} from '@clerk/types';
+    import AuthInput from './authInput.svelte';
+    import AuthPasswordInput from './authPasswordInput.svelte';
+    import AuthButton from './authButton.svelte';
 
     interface Props {
         onNeedsSecondFactor: () => void;
-        onForgotPassword: () => void;
     }
 
     const queryClient = useQueryClient();
     const ctx = useClerkContext();
 
-    let {onNeedsSecondFactor, onForgotPassword}: Props = $props();
+    let {onNeedsSecondFactor}: Props = $props();
+
+    function buildForgotPasswordUrl() {
+        const ref = page.url.searchParams.get('ref');
+        return ref
+            ? `/login/forgot-password?ref=${encodeURIComponent(ref)}`
+            : '/login/forgot-password';
+    }
 
     async function handlePostSignInRedirect() {
         const ref = normalizeRef(page.url.searchParams.get('ref'));
@@ -91,7 +97,7 @@
                 const firstError = clerkError.errors?.[0];
                 if (firstError?.code === 'form_password_compromised') {
                     toast.error(firstError.message);
-                    onForgotPassword();
+                    await goto(buildForgotPasswordUrl());
                     return;
                 }
                 const errorMessage = firstError?.message || 'Неверный email или пароль';
@@ -103,53 +109,57 @@
     let {form: formData, errors, enhance, submitting} = loginForm;
 </script>
 
-<form class="flex flex-col gap-5" use:enhance>
+<form class="flex flex-col gap-6" use:enhance>
     <div class="space-y-2">
-        <Label for="email">Email</Label>
-        <Input
+        <Label for="email" class="text-foreground/80 text-sm font-medium">Email</Label>
+        <AuthInput
             id="email"
             name="email"
             type="email"
             placeholder="name@example.com"
-            class="focus-visible:border-primary focus-visible:ring-primary/30"
+            autocomplete="email"
             bind:value={$formData.email}
+            hasError={Boolean($errors.email)}
         />
         {#if $errors.email}
-            <p class="text-destructive text-sm">
+            <p class="text-destructive flex items-center gap-1.5 text-sm">
+                <i class="fa-solid fa-circle-exclamation text-xs"></i>
                 {getErrorArray($errors.email)?.[0] ?? 'Это непохоже на email'}
             </p>
         {/if}
     </div>
+
     <div class="space-y-2">
-        <Label for="password">Пароль</Label>
-        <PasswordInput
+        <Label for="password" class="text-foreground/80 text-sm font-medium">Пароль</Label>
+        <AuthPasswordInput
             id="password"
             name="password"
-            placeholder="••••••••"
-            class="focus-visible:border-primary focus-visible:ring-primary/30"
+            placeholder="Введите пароль"
+            autocomplete="current-password"
             bind:value={$formData.password}
+            hasError={Boolean($errors.password)}
         />
         {#if $errors.password}
-            <p class="text-destructive text-sm">
+            <p class="text-destructive flex items-center gap-1.5 text-sm">
+                <i class="fa-solid fa-circle-exclamation text-xs"></i>
                 {getErrorArray($errors.password)?.[0] ?? 'Пожалуйста, введите пароль'}
             </p>
         {/if}
-        <Button
-            type="button"
-            variant="ghost"
-            class="text-primary h-auto p-0 text-sm hover:bg-transparent"
-            onclick={onForgotPassword}
+        <a
+            href={buildForgotPasswordUrl()}
+            class="text-primary hover:text-primary/80 inline-flex items-center gap-1 text-sm font-medium transition-colors"
         >
             Забыли пароль?
-        </Button>
+        </a>
     </div>
-    <div class="mt-2">
-        <Button type="submit" class="w-full text-base" disabled={$submitting}>
+
+    <div class="pt-2">
+        <AuthButton type="submit" loading={$submitting}>
             {#if $submitting}
                 <LoadingDots />
             {:else}
                 Войти
             {/if}
-        </Button>
+        </AuthButton>
     </div>
 </form>
