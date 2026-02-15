@@ -11,8 +11,8 @@
     import {useQueryClient} from '@tanstack/svelte-query';
     import {useClerkContext} from 'svelte-clerk';
     import {goto} from '$app/navigation';
-    import AuthInput from './authInput.svelte';
-    import AuthButton from './authButton.svelte';
+    import {Input} from '$lib/components/ui/input';
+    import {Button} from '$lib/components/ui/button';
 
     interface Props {
         onBack: () => void;
@@ -90,7 +90,7 @@
 
     <div class="space-y-2">
         <Label for="code" class="text-foreground/80 text-sm font-medium">Код подтверждения</Label>
-        <AuthInput
+        <Input
             id="code"
             name="verificationCode"
             type="text"
@@ -98,7 +98,7 @@
             placeholder="000000"
             autocomplete="one-time-code"
             bind:value={$formData.verificationCode}
-            hasError={Boolean($errors.verificationCode)}
+            aria-invalid={Boolean($errors.verificationCode) || undefined}
         />
         {#if $errors.verificationCode}
             <p class="text-destructive flex items-center gap-1.5 text-sm">
@@ -109,17 +109,17 @@
     </div>
 
     <div class="flex flex-col gap-3 pt-2">
-        <AuthButton type="submit" loading={$submitting}>
+        <Button type="submit" class="w-full" disabled={$submitting}>
             {#if $submitting}
                 <LoadingDots />
             {:else}
                 <span>Подтвердить</span>
             {/if}
-        </AuthButton>
+        </Button>
 
-        <AuthButton type="button" variant="ghost" onclick={onBack}>
+        <Button type="button" variant="ghost" class="w-full" onclick={onBack}>
             <i class="fa-solid fa-arrow-left mr-2 text-sm"></i>
             <span>Назад</span>
-        </AuthButton>
+        </Button>
     </div>
 </form>

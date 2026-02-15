@@ -8,8 +8,8 @@
     import {Label} from '$lib/components/ui/label';
     import {resetPasswordRequestSchema} from '../schema';
     import type {ResetPasswordEmailCodeFactor} from '@clerk/types';
-    import AuthInput from '../authInput.svelte';
-    import AuthButton from '../authButton.svelte';
+    import {Input} from '$lib/components/ui/input';
+    import {Button} from '$lib/components/ui/button';
     import LoadingDots from '$lib/components/loadingDots.svelte';
 
     interface Props {
@@ -94,14 +94,14 @@
 
     <div class="space-y-2">
         <Label for="reset-email" class="text-foreground/80 text-sm font-medium">Email</Label>
-        <AuthInput
+        <Input
             id="reset-email"
             name="email"
             type="email"
             placeholder="name@example.com"
             autocomplete="email"
             bind:value={$formData.email}
-            hasError={Boolean($errors.email)}
+            aria-invalid={Boolean($errors.email) || undefined}
         />
         {#if $errors.email}
             <p class="text-destructive flex items-center gap-1.5 text-sm">
@@ -112,17 +112,17 @@
     </div>
 
     <div class="flex flex-col gap-3 pt-2">
-        <AuthButton type="submit" loading={$submitting}>
+        <Button type="submit" class="w-full" disabled={$submitting}>
             {#if $submitting}
                 <LoadingDots />
             {:else}
                 Отправить код
             {/if}
-        </AuthButton>
+        </Button>
 
-        <AuthButton type="button" variant="ghost" href={buildBackUrl()} loading={$submitting}>
+        <Button variant="ghost" class="w-full" href={buildBackUrl()} disabled={$submitting}>
             <i class="fa-solid fa-arrow-left mr-2 text-sm"></i>
             <span>Назад</span>
-        </AuthButton>
+        </Button>
     </div>
 </form>

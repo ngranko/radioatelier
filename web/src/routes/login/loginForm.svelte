@@ -12,9 +12,9 @@
     import {useQueryClient} from '@tanstack/svelte-query';
     import {useClerkContext} from 'svelte-clerk';
     import type {EmailCodeFactor} from '@clerk/types';
-    import AuthInput from './authInput.svelte';
-    import AuthPasswordInput from './authPasswordInput.svelte';
-    import AuthButton from './authButton.svelte';
+    import {Input} from '$lib/components/ui/input';
+    import PasswordInput from '$lib/components/input/passwordInput.svelte';
+    import {Button} from '$lib/components/ui/button';
 
     interface Props {
         onNeedsSecondFactor: () => void;
@@ -112,14 +112,14 @@
 <form class="flex flex-col gap-6" use:enhance>
     <div class="space-y-2">
         <Label for="email" class="text-foreground/80 text-sm font-medium">Email</Label>
-        <AuthInput
+        <Input
             id="email"
             name="email"
             type="email"
             placeholder="name@example.com"
             autocomplete="email"
             bind:value={$formData.email}
-            hasError={Boolean($errors.email)}
+            aria-invalid={Boolean($errors.email) || undefined}
         />
         {#if $errors.email}
             <p class="text-destructive flex items-center gap-1.5 text-sm">
@@ -131,13 +131,13 @@
 
     <div class="space-y-2">
         <Label for="password" class="text-foreground/80 text-sm font-medium">Пароль</Label>
-        <AuthPasswordInput
+        <PasswordInput
             id="password"
             name="password"
             placeholder="Введите пароль"
             autocomplete="current-password"
             bind:value={$formData.password}
-            hasError={Boolean($errors.password)}
+            aria-invalid={Boolean($errors.password) || undefined}
         />
         {#if $errors.password}
             <p class="text-destructive flex items-center gap-1.5 text-sm">
@@ -154,12 +154,12 @@
     </div>
 
     <div class="pt-2">
-        <AuthButton type="submit" loading={$submitting}>
+        <Button type="submit" class="w-full" disabled={$submitting}>
             {#if $submitting}
                 <LoadingDots />
             {:else}
                 Войти
             {/if}
-        </AuthButton>
+        </Button>
     </div>
 </form>

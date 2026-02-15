@@ -5,7 +5,7 @@
     import {useClerkContext} from 'svelte-clerk';
     import {normalizeRef} from '$lib/utils';
     import Logo from '../logo.svelte';
-    import AuthButton from '../authButton.svelte';
+    import {Button} from '$lib/components/ui/button';
 
     const ctx = useClerkContext();
     let taskContainer: HTMLDivElement | null = $state(null);
@@ -56,7 +56,9 @@
             <p class="text-muted-foreground text-center text-sm">
                 Нет активной задачи смены пароля.
             </p>
-            <AuthButton type="button" onclick={() => goto(redirectUrl)}>Вернуться</AuthButton>
+            <Button type="button" class="w-full" onclick={() => goto(redirectUrl)}>
+                Вернуться
+            </Button>
         </div>
     {/if}
 </div>

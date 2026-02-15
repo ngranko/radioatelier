@@ -10,9 +10,9 @@
     import {getErrorArray} from '$lib/utils/formErrors';
     import {Label} from '$lib/components/ui/label';
     import {resetPasswordConfirmSchema} from '../schema';
-    import AuthInput from '../authInput.svelte';
-    import AuthPasswordInput from '../authPasswordInput.svelte';
-    import AuthButton from '../authButton.svelte';
+    import {Input} from '$lib/components/ui/input';
+    import PasswordInput from '$lib/components/input/passwordInput.svelte';
+    import {Button} from '$lib/components/ui/button';
     import LoadingDots from '$lib/components/loadingDots.svelte';
 
     interface Props {
@@ -97,7 +97,7 @@
         <Label for="reset-code" class="text-foreground/80 text-sm font-medium">
             Код подтверждения
         </Label>
-        <AuthInput
+        <Input
             id="reset-code"
             name="verificationCode"
             type="text"
@@ -105,13 +105,12 @@
             placeholder="000000"
             autocomplete="one-time-code"
             bind:value={$formData.verificationCode}
-            hasError={Boolean($errors.verificationCode)}
+            aria-invalid={Boolean($errors.verificationCode) || undefined}
         />
         {#if $errors.verificationCode}
             <p class="text-destructive flex items-center gap-1.5 text-sm">
                 <i class="fa-solid fa-circle-exclamation text-xs"></i>
-                {getErrorArray($errors.verificationCode)?.[0] ??
-                    'Введите код подтверждения'}
+                {getErrorArray($errors.verificationCode)?.[0] ?? 'Введите код подтверждения'}
             </p>
         {/if}
     </div>
@@ -120,13 +119,13 @@
         <Label for="reset-password" class="text-foreground/80 text-sm font-medium">
             Новый пароль
         </Label>
-        <AuthPasswordInput
+        <PasswordInput
             id="reset-password"
             name="password"
             placeholder="Минимум 8 символов"
             autocomplete="new-password"
             bind:value={$formData.password}
-            hasError={Boolean($errors.password)}
+            aria-invalid={Boolean($errors.password) || undefined}
         />
         {#if $errors.password}
             <p class="text-destructive flex items-center gap-1.5 text-sm">
@@ -140,13 +139,13 @@
         <Label for="reset-password-confirm" class="text-foreground/80 text-sm font-medium">
             Повторите пароль
         </Label>
-        <AuthPasswordInput
+        <PasswordInput
             id="reset-password-confirm"
             name="confirmPassword"
             placeholder="Повторите новый пароль"
             autocomplete="new-password"
             bind:value={$formData.confirmPassword}
-            hasError={Boolean($errors.confirmPassword)}
+            aria-invalid={Boolean($errors.confirmPassword) || undefined}
         />
         {#if $errors.confirmPassword}
             <p class="text-destructive flex items-center gap-1.5 text-sm">
@@ -157,17 +156,23 @@
     </div>
 
     <div class="flex flex-col gap-3 pt-1">
-        <AuthButton type="submit" loading={$submitting}>
+        <Button type="submit" class="w-full" disabled={$submitting}>
             {#if $submitting}
                 <LoadingDots />
             {:else}
                 Сбросить пароль
             {/if}
-        </AuthButton>
+        </Button>
 
-        <AuthButton type="button" variant="ghost" onclick={onBack} loading={$submitting}>
+        <Button
+            type="button"
+            variant="ghost"
+            class="w-full"
+            onclick={onBack}
+            disabled={$submitting}
+        >
             <i class="fa-solid fa-arrow-left mr-2 text-sm"></i>
             <span>Назад</span>
-        </AuthButton>
+        </Button>
     </div>
 </form>

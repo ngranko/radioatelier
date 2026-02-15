@@ -10,7 +10,6 @@
         required?: boolean;
         label?: string | undefined;
         error?: string[] | null | undefined;
-        withStrengthIndicator?: boolean;
     }
 
     let {
@@ -21,7 +20,6 @@
         required = false,
         label = undefined,
         error = undefined,
-        withStrengthIndicator = false,
     }: Props = $props();
 </script>
 
@@ -29,5 +27,5 @@
     <ErrorableLabel for={id} class="mb-1" {error}>
         {label}
     </ErrorableLabel>
-    <PasswordInput {id} {name} {value} {required} {placeholder} {withStrengthIndicator} />
+    <PasswordInput {id} {name} {value} {required} {placeholder} />
 </div>
