@@ -27,7 +27,10 @@ export const getDetails = query({
             throw new Error('Category not found');
         }
 
-        const tags = await Promise.all(object.tagIds.map(async item => ctx.db.get('tags', item)));
+        const fetchedTags = await Promise.all(
+            object.tagIds.map(async item => ctx.db.get('tags', item)),
+        );
+        const tags = fetchedTags.filter(tag => tag !== null);
 
         let privateTags: Doc<'privateTags'>[] = [];
         let isVisited = false;
@@ -63,12 +66,10 @@ export const getDetails = query({
 
         return {
             id: object._id,
-            lat: mapPoint.latitude,
-            lng: mapPoint.longitude,
-            name: object.name,
-            description: object.description,
             latitude: mapPoint.latitude,
             longitude: mapPoint.longitude,
+            name: object.name,
+            description: object.description,
             address: mapPoint.address,
             city: mapPoint.city,
             country: mapPoint.country,
@@ -89,8 +90,8 @@ export const getDetails = query({
                 name: category.name,
             },
             tags: tags.map(tag => ({
-                id: tag!._id,
-                name: tag!.name,
+                id: tag._id,
+                name: tag.name,
             })),
             privateTags: privateTags.map(tag => ({
                 id: tag._id,

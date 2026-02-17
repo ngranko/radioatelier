@@ -171,7 +171,7 @@
                 <!-- TODO: don't like this, redo later -->
             {:else if !isLoading && initialValues}
                 <div class="absolute inset-0" in:fadeTransition out:fade={{duration: 150}}>
-                    {#if initialValues.id !== null}
+                    {#if initialValues.id}
                         <ObjectDetailsLive
                             initialValues={initialValues as Object}
                             {isEditing}

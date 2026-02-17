@@ -5,5 +5,10 @@
     onMount(() => {
         activeObject.isEditing = true;
         activeObject.isDirty = false;
+
+        return () => {
+            activeObject.isEditing = false;
+            activeObject.isDirty = false;
+        };
     });
 </script>

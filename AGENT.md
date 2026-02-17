@@ -34,9 +34,10 @@ Do not run the build command directly — it is run automatically by the Docker 
 
 If there were any frontend changes as a result of your run – always run the format command at the end to keep the code style consistent.
 
-Use bun as a package manager for the project
+Use bun as the package manager for the project.
 
 Key patterns:
+
 - Forms use `sveltekit-superforms` with Zod validation
 - UI components follow shadcn-svelte conventions (bits-ui primitives)
 - State management uses Svelte 5 runes (`$state`, `$derived`)

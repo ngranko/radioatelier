@@ -18,11 +18,11 @@ export const actions: Actions = {
         try {
             object = await getObject(params.id!, {fetch});
             if (!object.data.object.isPublic && !object.data.object.isOwner) {
-                return error(403, 'Невозможно сохранить точку');
+                throw error(403, 'Невозможно сохранить точку');
             }
         } catch (err) {
             console.error(err);
-            return error(500, 'Не удалось сохранить точку');
+            throw error(500, 'Не удалось сохранить точку');
         }
 
         const form = await superValidate(request, zod4(schema));
@@ -43,33 +43,33 @@ export const actions: Actions = {
             return {form, object: result.data};
         } catch (err) {
             console.error('Failed to update object:', err);
-            return error(500, 'Не удалось сохранить точку');
+            throw error(500, 'Не удалось сохранить точку');
         }
     },
     delete: async ({request, fetch, params, url, locals}) => {
         const auth = locals.auth();
         if (!auth.userId) {
-            redirect(303, `/login?ref=${encodeURIComponent(url.pathname)}`);
+            throw redirect(303, `/login?ref=${encodeURIComponent(url.pathname)}`);
         }
 
+        let object;
         try {
-            const object = await getObject(params.id!, {fetch});
-            if (!object.data.object.isPublic && !object.data.object.isOwner) {
-                return error(403, 'Невозможно удалить точку');
-            }
+            object = await getObject(params.id!, {fetch});
         } catch (err) {
             console.error(err);
-            return error(500, 'Не удалось удалить точку');
+            throw error(500, 'Не удалось удалить точку');
         }
 
-        const form = await superValidate(request, zod4(schema));
+        if (!object.data.object.isOwner) {
+            throw error(403, 'Невозможно удалить точку');
+        }
 
         try {
             const result = await deleteObject({id: params.id!}, {fetch});
-            return {form, id: result.data.id};
+            return {id: result.data.id};
         } catch (err) {
             console.error('Failed to delete object:', err);
-            return error(500, 'Не удалось удалить точку');
+            throw error(500, 'Не удалось удалить точку');
         }
     },
 };

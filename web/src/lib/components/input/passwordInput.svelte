@@ -19,6 +19,7 @@
             isPlainPassword = !isPlainPassword;
         }}
         tabindex={-1}
+        aria-label={isPlainPassword ? 'Скрыть пароль' : 'Показать пароль'}
     >
         {#if isPlainPassword}
             <i class="fa-regular fa-eye-slash text-lg"></i>

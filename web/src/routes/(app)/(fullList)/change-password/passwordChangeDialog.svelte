@@ -101,6 +101,7 @@
                 const paramName = firstError?.meta?.paramName;
 
                 if (firstError) {
+                    let fieldErrorSet = false;
                     if (
                         paramName === 'current_password' ||
                         firstError.code === 'form_password_incorrect'
@@ -109,6 +110,7 @@
                             ...current,
                             currentPassword: [firstError.message],
                         }));
+                        fieldErrorSet = true;
                     } else if (
                         paramName === 'new_password' ||
                         paramName === 'password' ||
@@ -118,10 +120,15 @@
                             ...current,
                             password: [firstError.message],
                         }));
+                        fieldErrorSet = true;
                     }
-                }
 
-                toast.error(firstError?.message || 'Не удалось сменить пароль');
+                    if (!fieldErrorSet) {
+                        toast.error(firstError.message);
+                    }
+                } else {
+                    toast.error('Не удалось сменить пароль');
+                }
             }
         },
     });
@@ -239,6 +246,7 @@
                                 <Checkbox
                                     {...props}
                                     bind:checked={$formData.signOutOtherSessions}
+                                    disabled={!isPasswordEnabled}
                                 />
                             </label>
                         {/snippet}

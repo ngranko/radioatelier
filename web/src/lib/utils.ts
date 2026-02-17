@@ -1,4 +1,3 @@
-import {page} from '$app/state';
 import {clsx, type ClassValue} from 'clsx';
 import {twMerge} from 'tailwind-merge';
 
@@ -31,12 +30,12 @@ export function throttle<T extends (...args: any[]) => any>(
     };
 }
 
-export function normalizeRef(value: string | null): string {
+export function normalizeRef(value: string | null, baseUrl: string): string {
     if (!value) {
         return '/';
     }
     try {
-        return new URL(value, page.url.href).pathname;
+        return new URL(value, baseUrl).pathname;
     } catch {
         return '/';
     }

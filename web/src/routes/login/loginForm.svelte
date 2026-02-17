@@ -33,7 +33,7 @@
     }
 
     async function handlePostSignInRedirect() {
-        const ref = normalizeRef(page.url.searchParams.get('ref'));
+        const ref = normalizeRef(page.url.searchParams.get('ref'), page.url.href);
         if (ctx.clerk?.session?.currentTask?.key === 'reset-password') {
             await goto(`/login/reset-password?ref=${encodeURIComponent(ref)}`);
             return;
@@ -83,7 +83,7 @@
                                 emailAddressId: emailCodeFactor.emailAddressId,
                             });
                             onNeedsSecondFactor();
-                        } catch (error: unknown) {
+                        } catch {
                             toast.error('Не удалось отправить код верификации, попробуйте позже');
                         }
                     } else {

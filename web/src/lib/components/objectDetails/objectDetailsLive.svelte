@@ -17,13 +17,12 @@
     let {initialValues, isEditing = false, permissions}: Props = $props();
     const queryInitialData = {
         ...initialValues,
-        // id: initialValues.id as Id<'objects'>,
     };
 
     const liveObject = useQuery(
         api.objects.getDetails,
         {id: initialValues.id as Id<'objects'>},
-        {initialData: queryInitialData as never},
+        {initialData: queryInitialData},
     );
 
     const values = $derived((liveObject.data ?? queryInitialData) as Object);

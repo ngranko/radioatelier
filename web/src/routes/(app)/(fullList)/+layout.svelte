@@ -24,7 +24,7 @@
         return object as ObjectType;
     });
     const detailsKey = $derived(activeObject.detailsId || renderedObject?.id || 'object-details');
-    const isOwner = $derived(renderedObject?.isOwner ?? true);
+    const isOwner = $derived(renderedObject?.isOwner ?? false);
     const isPublic = $derived(renderedObject?.isPublic ?? false);
 
     $effect(() => {
@@ -66,10 +66,11 @@
                     activeObject.object = obj;
                     activeObject.isLoading = false;
                 })
-                .catch(() => {
+                .catch((error: unknown) => {
                     if (activeObject.detailsId !== expectedId) {
                         return;
                     }
+                    console.error('Failed to load object:', error);
                     activeObject.isLoading = false;
                 });
         }

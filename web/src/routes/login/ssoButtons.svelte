@@ -45,7 +45,7 @@
             await ctx.clerk.client.signIn.authenticateWithRedirect({
                 strategy,
                 redirectUrl: '/login/sso-callback',
-                redirectUrlComplete: normalizeRef(page.url.searchParams.get('ref')),
+                redirectUrlComplete: normalizeRef(page.url.searchParams.get('ref'), page.url.href),
             });
         } catch (err: unknown) {
             const clerkError = err as {errors?: Array<{code: string; message: string}>};

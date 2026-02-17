@@ -1,3 +1,4 @@
+import type {Id} from '$convex/_generated/dataModel';
 import type {FuzzyCategory} from '$lib/interfaces/category';
 import type {FuzzyPrivateTag} from '$lib/interfaces/privateTag';
 import type {FuzzyTag} from '$lib/interfaces/tag';
@@ -5,11 +6,11 @@ import type {FuzzyTag} from '$lib/interfaces/tag';
 interface TaxonomlessObject {
     name: string;
     description: string | null;
-    lat: number;
-    lng: number;
-    address?: string;
-    city?: string;
-    country?: string;
+    latitude: number;
+    longitude: number;
+    address: string;
+    city: string;
+    country: string;
     installedPeriod: string | null;
     isRemoved: boolean;
     removalPeriod: string | null;
@@ -24,34 +25,34 @@ interface BaseObject extends TaxonomlessObject {
     tags: FuzzyTag[];
     privateTags: FuzzyPrivateTag[];
     cover: {
-        id: string;
+        id: Id<'images'>;
         url: string;
         previewUrl: string;
     } | null;
 }
 
 export interface Object extends BaseObject {
-    id: string;
+    id: Id<'objects'>;
 }
 
 export interface LooseObject extends BaseObject {
-    id: string | null;
+    id: Id<'objects'> | null;
 }
 
 export interface BareObject {
-    id: string | null;
+    id: Id<'objects'> | null;
     name?: string;
-    lat: string;
-    lng: string;
-    address?: string;
-    city?: string;
-    country?: string;
+    latitude: number;
+    longitude: number;
+    address: string;
+    city: string;
+    country: string;
     isRemoved: boolean;
     isVisited: boolean;
 }
 
 export interface ObjectFormInputs extends Omit<TaxonomlessObject, 'isOwner'> {
-    id?: string;
+    id?: Id<'objects'>;
     category: string;
     tags: string[];
     privateTags: string[];
@@ -68,8 +69,8 @@ export interface ListObjectsResponsePayload {
 
 export interface ObjectListItem {
     id: string;
-    lat: string;
-    lng: string;
+    latitude: number;
+    longitude: number;
     isRemoved: boolean;
     isVisited: boolean;
     isOwner: boolean;
@@ -81,14 +82,14 @@ export interface GetObjectResponsePayload {
 
 export interface UpdateObjectInputs {
     id: string;
-    updatedFields: Partial<Omit<ObjectFormInputs, 'id' | 'lat' | 'lng'>>;
+    updatedFields: Partial<Omit<ObjectFormInputs, 'id' | 'latitude' | 'longitude'>>;
 }
 
 export type UpdateObjectResponsePayload = Object;
 
 export interface RepositionObjectInputs {
     id: string;
-    updatedFields: Pick<Object, 'lat' | 'lng'>;
+    updatedFields: Pick<Object, 'latitude' | 'longitude'>;
 }
 
 export type RepositionObjectResponsePayload = BareObject;
@@ -109,11 +110,11 @@ export interface SearchItem {
     id: string;
     name: string;
     categoryName: string;
-    lat: string;
-    lng: string;
-    address?: string;
-    city?: string;
-    country?: string;
+    latitude: number;
+    longitude: number;
+    address: string;
+    city: string;
+    country: string;
     type: 'local' | 'google';
 }
 
@@ -138,6 +139,6 @@ export interface SearchInputs {
 }
 
 export interface MapPlaceable {
-    lat: string;
-    lng: string;
+    latitude: number;
+    longitude: number;
 }

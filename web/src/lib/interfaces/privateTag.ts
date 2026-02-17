@@ -1,3 +1,5 @@
+import type {Id} from '$convex/_generated/dataModel';
+
 export interface CreatePrivateTagInputs {
     name: string;
 }
@@ -9,11 +11,11 @@ export interface ListPrivateTagsResponsePayload {
 }
 
 export interface PrivateTag {
-    id: string;
+    id: Id<'privateTags'>;
     name: string;
 }
 
 export interface FuzzyPrivateTag {
-    id: string;
-    name?: string;
+    id: Id<'privateTags'>;
+    name: string;
 }

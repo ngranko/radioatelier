@@ -26,7 +26,7 @@
     let {requestedEmail = $bindable(''), onBack}: Props = $props();
 
     async function handlePostSignInRedirect() {
-        const ref = normalizeRef(page.url.searchParams.get('ref'));
+        const ref = normalizeRef(page.url.searchParams.get('ref'), page.url.href);
         if (ctx.clerk?.session?.currentTask?.key === 'reset-password') {
             await goto(`/login/reset-password?ref=${encodeURIComponent(ref)}`);
             return;

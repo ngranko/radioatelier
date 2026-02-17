@@ -1,3 +1,5 @@
+import type {Id} from '$convex/_generated/dataModel';
+
 export interface CreateCategoryInputs {
     name: string;
 }
@@ -9,11 +11,11 @@ export interface ListCategoriesResponsePayload {
 }
 
 export interface Category {
-    id: string;
+    id: Id<'categories'>;
     name: string;
 }
 
 export interface FuzzyCategory {
-    id: string;
-    name?: string;
+    id: Id<'categories'>;
+    name: string;
 }

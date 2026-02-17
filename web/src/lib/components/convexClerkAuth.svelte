@@ -1,5 +1,4 @@
 <script lang="ts">
-    import {browser} from '$app/environment';
     import {useConvexClient} from 'convex-svelte';
     import {useClerkContext} from 'svelte-clerk';
     import type {Snippet} from 'svelte';
@@ -12,7 +11,6 @@
 
     const convexClient = useConvexClient();
     const clerkCtx = useClerkContext();
-    let authInitialized = $state(!browser);
     let appliedAuthUserId = $state<string | null | undefined>(undefined);
 
     $effect(() => {
@@ -22,7 +20,6 @@
 
         const nextAuthUserId = clerkCtx.auth.userId ?? null;
         if (nextAuthUserId === appliedAuthUserId) {
-            authInitialized = true;
             return;
         }
 
@@ -35,6 +32,7 @@
                     });
                     return token ?? null;
                 } catch {
+                    console.error('Failed to fetch Clerk token for Convex');
                     return null;
                 }
             });
@@ -43,7 +41,6 @@
         }
 
         appliedAuthUserId = nextAuthUserId;
-        authInitialized = true;
     });
 </script>
 

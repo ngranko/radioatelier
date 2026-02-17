@@ -1,3 +1,5 @@
+import type {Id} from '$convex/_generated/dataModel';
+
 export interface CreateTagInputs {
     name: string;
 }
@@ -9,11 +11,11 @@ export interface ListTagsResponsePayload {
 }
 
 export interface Tag {
-    id: string;
+    id: Id<'tags'>;
     name: string;
 }
 
 export interface FuzzyTag {
-    id: string;
-    name?: string;
+    id: Id<'tags'>;
+    name: string;
 }
