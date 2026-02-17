@@ -11,12 +11,11 @@
     import {setCenter} from '$lib/services/map/map.svelte.ts';
     import {goto, invalidate} from '$app/navigation';
     import {page} from '$app/state';
-    import type {Object} from '$lib/interfaces/object.ts';
 
     interface Props {
         id?: string | null;
-        lat: string;
-        lng: string;
+        lat: number;
+        lng: number;
         isRemoved?: boolean;
         isVisited?: boolean;
         initialActive?: boolean;
@@ -115,8 +114,8 @@
             await $reposition.mutateAsync({
                 id: id!,
                 updatedFields: {
-                    lat: String(marker.getPosition().lat),
-                    lng: String(marker.getPosition().lng),
+                    lat: marker.getPosition().lat,
+                    lng: marker.getPosition().lng,
                 },
             });
             invalidate('/api/object/list');
@@ -137,34 +136,20 @@
             activeObject.detailsId = id!;
             activeObject.object = {...$searchPointList[id!].object, isVisited, isRemoved};
         } else {
-            if (!page.params.id) {
-                goto(`/object/${id}`);
-            } else {
+            if (page.params.id === id && activeObject.object?.id === id) {
                 activeObject.isMinimized = false;
                 activeObject.isDirty = false;
-
-                if (page.data.activeObject) {
-                    activeObject.detailsId = page.data.activeObject.id;
-                    activeObject.object = page.data.activeObject;
-                } else {
-                    activeObject.isLoading = true;
-                    activeObject.detailsId = id!;
-                    page.data.activeObjectPromise
-                        .then((object: Object) => {
-                            if (activeObject.detailsId !== object.id) {
-                                // probably this happened because a user navigated away, so let's just do an early return to not mess up the state
-                                return;
-                            }
-
-                            activeObject.object = object;
-                            activeObject.isLoading = false;
-                        })
-                        .catch(() => {
-                            // TODO: probably better to just show an error, not redirect
-                            goto('/');
-                        });
-                }
+                activeObject.isLoading = false;
+                return;
             }
+
+            activeObject.isMinimized = false;
+            activeObject.isDirty = false;
+            activeObject.isEditing = false;
+            activeObject.isLoading = true;
+            activeObject.detailsId = id!;
+            activeObject.object = null;
+            goto(`/object/${id}`);
         }
     }
 </script>

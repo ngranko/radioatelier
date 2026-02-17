@@ -6,7 +6,3 @@ import type {Payload} from '$lib/interfaces/api';
 export async function refreshToken(options: JsonRequestOptions): Promise<Payload> {
     return new JsonRequest('/api/token/refresh', METHOD_GET, options).send();
 }
-
-export async function invalidateToken(): Promise<Payload> {
-    return new JsonRequest('/api/token/invalidate', METHOD_POST).send();
-}

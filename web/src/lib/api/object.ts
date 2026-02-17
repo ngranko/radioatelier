@@ -34,14 +34,6 @@ export async function getObject(
     return new AuthRequest(new JsonRequest(`/api/object/${id}`, METHOD_GET, options)).send();
 }
 
-export async function updateObject(
-    values: UpdateObjectInputs,
-): Promise<Payload<UpdateObjectResponsePayload>> {
-    return new AuthRequest(
-        new JsonRequest(`/api/object/${values.id}`, METHOD_PUT).setParams(values.updatedFields),
-    ).send();
-}
-
 export async function updateObjectDirect(
     values: UpdateObjectInputs,
     options: JsonRequestOptions,

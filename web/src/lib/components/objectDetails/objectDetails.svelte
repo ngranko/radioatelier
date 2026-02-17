@@ -1,15 +1,9 @@
-<script lang="ts" module>
-    // Module-level flag to track if initial hydration is complete
-    // This persists across component instances but resets on full page reload
-    let isInitialHydrationComplete = false;
-</script>
-
 <script lang="ts">
     import {fly, fade} from 'svelte/transition';
     import {cubicInOut} from 'svelte/easing';
-    import {onMount, untrack} from 'svelte';
-    import {browser} from '$app/environment';
+    import {untrack} from 'svelte';
     import type {LooseObject, Object} from '$lib/interfaces/object';
+    import ObjectDetailsLive from '$lib/components/objectDetails/objectDetailsLive.svelte';
     import Form from '$lib/components/objectDetails/editMode/form.svelte';
     import LightForm from '$lib/components/objectDetails/editMode/lightForm.svelte';
     import ViewMode from '$lib/components/objectDetails/viewMode/viewMode.svelte';
@@ -24,33 +18,27 @@
     import {activeObject, resetActiveObject} from '$lib/state/activeObject.svelte.ts';
     import type {Permissions} from '$lib/interfaces/permissions';
     import {goto} from '$app/navigation';
-    import {page} from '$app/state';
+    import {useClerkContext} from 'svelte-clerk';
 
     interface Props {
         key: string;
         initialValues?: Partial<LooseObject>;
         isEditing?: boolean;
         isLoading?: boolean;
+        disableIntroAnimation?: boolean;
         permissions?: Permissions;
     }
+
+    const ctx = useClerkContext();
 
     let {
         key,
         initialValues = $bindable(),
         isEditing = false,
         isLoading = false,
+        disableIntroAnimation = false,
         permissions = {canEditAll: true, canEditPersonal: true},
     }: Props = $props();
-
-    // Capture at component creation: are we in SSR hydration?
-    // During SSR: browser=false
-    // During hydration: browser=true, isInitialHydrationComplete=false
-    // After hydration: browser=true, isInitialHydrationComplete=true
-    const skipIntroAnimation = browser && !isInitialHydrationComplete;
-
-    onMount(() => {
-        isInitialHydrationComplete = true;
-    });
 
     let showSkeleton = $state(false);
     let skeletonTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -79,7 +67,7 @@
 
     // Custom transition that skips animation on SSR hydration
     function flyTransition(node: HTMLElement) {
-        if (skipIntroAnimation) {
+        if (disableIntroAnimation) {
             return {duration: 0, css: () => ''};
         }
         return fly(node, {x: -100, duration: 200, easing: cubicInOut});
@@ -87,7 +75,7 @@
 
     // Custom fade transition that skips animation on SSR hydration
     function fadeTransition(node: HTMLElement) {
-        if (skipIntroAnimation) {
+        if (disableIntroAnimation) {
             return {duration: 0, css: () => ''};
         }
         return fade(node, {duration: 150});
@@ -131,7 +119,7 @@
             mapState.map.getStreetView().setVisible(false);
         }
 
-        if (page.data.user.auth) {
+        if (ctx.auth.userId) {
             setTimeout(() => goto('/'), 200);
         }
     }
@@ -146,7 +134,8 @@
             'h-[calc(100dvh-8px*2)]': !activeObject.isMinimized,
         },
     ])}
-    transition:flyTransition
+    in:flyTransition
+    out:fly={{x: -100, duration: 200, easing: cubicInOut}}
 >
     <section class="flex items-center gap-1 border-b p-3">
         <span
@@ -172,24 +161,28 @@
     {#key key}
         <div class="relative flex-1 overflow-hidden">
             {#if isLoading && showSkeleton}
-                <div class="absolute inset-0" transition:fadeTransition>
+                <div class="absolute inset-0" in:fadeTransition out:fade={{duration: 150}}>
                     {#if isEditing}
                         <FormSkeleton />
                     {:else}
                         <ViewModeSkeleton />
                     {/if}
                 </div>
-            {:else if !isLoading}
-                <div class="absolute inset-0" transition:fadeTransition>
-                    {#if canEditAll && isEditing}
-                        <Form initialValues={initialValues!} />
-                    {:else if canEditPersonal && isEditing}
-                        <LightForm initialValues={initialValues!} />
-                    {:else}
-                        <ViewMode
-                            initialValues={initialValues!}
-                            permissions={{canEditAll, canEditPersonal}}
+                <!-- TODO: don't like this, redo later -->
+            {:else if !isLoading && initialValues}
+                <div class="absolute inset-0" in:fadeTransition out:fade={{duration: 150}}>
+                    {#if initialValues.id !== null}
+                        <ObjectDetailsLive
+                            initialValues={initialValues as Object}
+                            {isEditing}
+                            {permissions}
                         />
+                    {:else if canEditAll && isEditing}
+                        <Form {initialValues} />
+                    {:else if canEditPersonal && isEditing}
+                        <LightForm {initialValues} />
+                    {:else}
+                        <ViewMode {initialValues} permissions={{canEditAll, canEditPersonal}} />
                     {/if}
                 </div>
             {/if}

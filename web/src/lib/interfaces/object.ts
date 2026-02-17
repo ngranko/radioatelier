@@ -4,16 +4,16 @@ import type {FuzzyTag} from '$lib/interfaces/tag';
 
 interface TaxonomlessObject {
     name: string;
-    description?: string;
-    lat: string;
-    lng: string;
+    description: string | null;
+    lat: number;
+    lng: number;
     address?: string;
     city?: string;
     country?: string;
-    installedPeriod?: string;
+    installedPeriod: string | null;
     isRemoved: boolean;
-    removalPeriod?: string;
-    source?: string;
+    removalPeriod: string | null;
+    source: string | null;
     isPublic: boolean;
     isVisited: boolean;
     isOwner: boolean;
@@ -27,7 +27,7 @@ interface BaseObject extends TaxonomlessObject {
         id: string;
         url: string;
         previewUrl: string;
-    };
+    } | null;
 }
 
 export interface Object extends BaseObject {

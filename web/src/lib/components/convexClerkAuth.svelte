@@ -47,16 +47,4 @@
     });
 </script>
 
-{#if authInitialized}
-    {@render children?.()}
-{:else}
-    <div class="flex min-h-24 items-center justify-center py-6">
-        <div class="flex items-center gap-3 text-sm text-muted-foreground">
-            <span
-                class="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
-                aria-hidden="true"
-            ></span>
-            <span>Загрузка...</span>
-        </div>
-    </div>
-{/if}
+{@render children?.()}
