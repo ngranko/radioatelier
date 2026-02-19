@@ -31,8 +31,8 @@ export const list = query({
 
         return [...userMarkers, ...publicMarkers].map(item => ({
             id: item.objectId,
-            lat: item.latitude,
-            lng: item.longitude,
+            latitude: item.latitude,
+            longitude: item.longitude,
             isRemoved: item.isRemoved,
             isVisited: visitedMarkers.includes(item.objectId),
             isPublic: item.isPublic,
