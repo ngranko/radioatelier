@@ -112,7 +112,7 @@
     </div>
 
     <div class="flex flex-col gap-3 pt-2">
-        <Button type="submit" class="w-full" disabled={$submitting}>
+        <Button type="submit" size="lg" class="w-full" disabled={$submitting}>
             {#if $submitting}
                 <LoadingDots />
             {:else}
@@ -120,7 +120,13 @@
             {/if}
         </Button>
 
-        <Button variant="ghost" class="w-full" href={buildBackUrl()} disabled={$submitting}>
+        <Button
+            variant="ghost"
+            size="lg"
+            class="w-full"
+            href={buildBackUrl()}
+            disabled={$submitting}
+        >
             <i class="fa-solid fa-arrow-left mr-2 text-sm"></i>
             <span>Назад</span>
         </Button>

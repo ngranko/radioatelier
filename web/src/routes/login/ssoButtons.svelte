@@ -67,7 +67,8 @@
             {#if enabledStrategies.includes('oauth_google')}
                 <Button
                     variant="outline"
-                    class="hover:bg-muted/50 active:bg-muted flex h-12 w-full items-center justify-center gap-3 rounded-xl border bg-white/50 text-base font-medium transition-all duration-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white/5 dark:hover:bg-white/10"
+                    size="lg"
+                    class="hover:bg-muted/50 active:bg-muted w-full gap-3 bg-white/50 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white/5 dark:hover:bg-white/10"
                     disabled={Boolean(oauthLoading)}
                     onclick={() => signInWithOAuth('oauth_google')}
                     aria-label="Войти с Google"
@@ -84,7 +85,8 @@
             {#if enabledStrategies.includes('oauth_apple')}
                 <Button
                     variant="outline"
-                    class="hover:bg-muted/50 active:bg-muted flex h-12 w-full items-center justify-center gap-3 rounded-xl border bg-white/50 text-base font-medium transition-all duration-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white/5 dark:hover:bg-white/10"
+                    size="lg"
+                    class="hover:bg-muted/50 active:bg-muted w-full gap-3 bg-white/50 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white/5 dark:hover:bg-white/10"
                     disabled={Boolean(oauthLoading)}
                     onclick={() => signInWithOAuth('oauth_apple')}
                     aria-label="Войти с Apple"
@@ -101,7 +103,8 @@
             {#if enabledStrategies.includes('oauth_github')}
                 <Button
                     variant="outline"
-                    class="hover:bg-muted/50 active:bg-muted flex h-12 w-full items-center justify-center gap-3 rounded-xl border bg-white/50 text-base font-medium transition-all duration-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white/5 dark:hover:bg-white/10"
+                    size="lg"
+                    class="hover:bg-muted/50 active:bg-muted w-full gap-3 bg-white/50 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white/5 dark:hover:bg-white/10"
                     disabled={Boolean(oauthLoading)}
                     onclick={() => signInWithOAuth('oauth_github')}
                     aria-label="Войти с GitHub"

@@ -56,7 +56,7 @@
             <p class="text-muted-foreground text-center text-sm">
                 Нет активной задачи смены пароля.
             </p>
-            <Button type="button" class="w-full" onclick={() => goto(redirectUrl)}>
+            <Button type="button" size="lg" class="w-full" onclick={() => goto(redirectUrl)}>
                 Вернуться
             </Button>
         </div>
