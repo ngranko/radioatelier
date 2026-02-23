@@ -31,12 +31,11 @@
             }
 
             if (!ctx.clerk || !ctx.isLoaded || !ctx.clerk.client) {
-                console.error(
-                    'failed loading clerk for auth',
-                    ctx.clerk,
-                    ctx.isLoaded,
-                    ctx.clerk?.client,
-                );
+                console.error('Clerk not ready', {
+                    isLoaded: ctx.isLoaded,
+                    hasClerk: Boolean(ctx.clerk),
+                    hasClient: Boolean(ctx.clerk?.client),
+                });
                 toast.error('Что-то пошло не так, попробуйте позже');
                 return;
             }
@@ -124,8 +123,8 @@
             variant="ghost"
             size="lg"
             class="w-full"
-            href={buildBackUrl()}
-            disabled={$submitting}
+            href={$submitting ? undefined : buildBackUrl()}
+            aria-disabled={$submitting || undefined}
         >
             <i class="fa-solid fa-arrow-left mr-2 text-sm"></i>
             <span>Назад</span>

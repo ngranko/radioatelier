@@ -44,12 +44,11 @@
             }
 
             if (!ctx.clerk || !ctx.isLoaded || !ctx.clerk.client) {
-                console.error(
-                    'failed loading clerk for auth',
-                    ctx.clerk,
-                    ctx.isLoaded,
-                    ctx.clerk?.client,
-                );
+                console.error('Clerk not ready', {
+                    isLoaded: ctx.isLoaded,
+                    hasClerk: Boolean(ctx.clerk),
+                    hasClient: Boolean(ctx.clerk?.client),
+                });
                 toast.error('Что-то пошло не так, попробуйте позже');
                 return;
             }
@@ -106,9 +105,10 @@
             autocomplete="one-time-code"
             bind:value={$formData.verificationCode}
             aria-invalid={Boolean($errors.verificationCode) || undefined}
+            aria-describedby={$errors.verificationCode ? 'error-verificationCode' : undefined}
         />
         {#if $errors.verificationCode}
-            <p class="text-destructive flex items-center gap-1.5 text-sm">
+            <p id="error-verificationCode" class="text-destructive flex items-center gap-1.5 text-sm">
                 <i class="fa-solid fa-circle-exclamation text-xs"></i>
                 {getErrorArray($errors.verificationCode)?.[0] ?? 'Введите код подтверждения'}
             </p>
@@ -126,9 +126,10 @@
             autocomplete="new-password"
             bind:value={$formData.password}
             aria-invalid={Boolean($errors.password) || undefined}
+            aria-describedby={$errors.password ? 'error-password' : undefined}
         />
         {#if $errors.password}
-            <p class="text-destructive flex items-center gap-1.5 text-sm">
+            <p id="error-password" class="text-destructive flex items-center gap-1.5 text-sm">
                 <i class="fa-solid fa-circle-exclamation text-xs"></i>
                 {getErrorArray($errors.password)?.[0] ?? 'Введите новый пароль'}
             </p>
@@ -146,9 +147,10 @@
             autocomplete="new-password"
             bind:value={$formData.confirmPassword}
             aria-invalid={Boolean($errors.confirmPassword) || undefined}
+            aria-describedby={$errors.confirmPassword ? 'error-confirmPassword' : undefined}
         />
         {#if $errors.confirmPassword}
-            <p class="text-destructive flex items-center gap-1.5 text-sm">
+            <p id="error-confirmPassword" class="text-destructive flex items-center gap-1.5 text-sm">
                 <i class="fa-solid fa-circle-exclamation text-xs"></i>
                 {getErrorArray($errors.confirmPassword)?.[0] ?? 'Пароли не совпадают'}
             </p>

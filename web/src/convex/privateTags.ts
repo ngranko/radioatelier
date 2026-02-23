@@ -1,4 +1,4 @@
-import {v} from 'convex/values';
+import {ConvexError, v} from 'convex/values';
 import {mutation, query} from './_generated/server';
 import {getCurrentUserOrThrow} from './users';
 
@@ -23,9 +23,9 @@ export const create = mutation({
     handler: async (ctx, args) => {
         const user = await getCurrentUserOrThrow(ctx);
 
-        const normalizedName = args.name.trim();
+        const normalizedName = args.name.trim().toLowerCase();
         if (!normalizedName) {
-            throw new Error('Tag name is required');
+            throw new ConvexError('Tag name is required');
         }
 
         const existing = await ctx.db

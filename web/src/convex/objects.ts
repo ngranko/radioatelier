@@ -30,7 +30,7 @@ export const getDetails = query({
         const fetchedTags = await Promise.all(
             object.tagIds.map(async item => ctx.db.get('tags', item)),
         );
-        const tags = fetchedTags.filter(tag => tag !== null);
+        const tags = fetchedTags.filter((tag): tag is Doc<'tags'> => tag !== null);
 
         let privateTags: Doc<'privateTags'>[] = [];
         let isVisited = false;

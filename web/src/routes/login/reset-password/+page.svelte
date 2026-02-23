@@ -1,5 +1,4 @@
 <script lang="ts">
-    import {onDestroy} from 'svelte';
     import {page} from '$app/state';
     import {goto} from '$app/navigation';
     import {useClerkContext} from 'svelte-clerk';
@@ -15,21 +14,21 @@
     const hasResetTask = $derived(ctx.clerk?.session?.currentTask?.key === 'reset-password');
 
     $effect(() => {
-        if (taskMounted || !ctx.isLoaded || !ctx.clerk || !taskContainer || !hasResetTask) {
+        if (!ctx.isLoaded || !ctx.clerk || !taskContainer || !hasResetTask) {
             return;
         }
+        
+        const clerk = ctx.clerk;
+        const container = taskContainer;
 
-        ctx.clerk.mountTaskResetPassword(taskContainer, {
+        clerk.mountTaskResetPassword(container, {
             redirectUrlComplete: redirectUrl,
         });
         taskMounted = true;
-    });
 
-    onDestroy(() => {
-        if (!taskMounted || !taskContainer || !ctx.clerk) {
-            return;
-        }
-        ctx.clerk.unmountTaskResetPassword(taskContainer);
+        return () => {
+            clerk.unmountTaskResetPassword(container);
+        };
     });
 </script>
 

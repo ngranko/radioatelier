@@ -26,13 +26,17 @@
         if (nextAuthUserId) {
             convexClient.setAuth(async ({forceRefreshToken}) => {
                 try {
-                    const token = await clerkCtx.session?.getToken({
+                    if (!clerkCtx.session) {
+                        console.warn('Convex token fetch skipped: Clerk session is unavailable');
+                        return null;
+                    }
+                    const token = await clerkCtx.session.getToken({
                         template: 'convex',
                         skipCache: forceRefreshToken,
                     });
                     return token ?? null;
-                } catch {
-                    console.error('Failed to fetch Clerk token for Convex');
+                } catch (err) {
+                    console.error('Failed to fetch Clerk token for Convex', err);
                     return null;
                 }
             });

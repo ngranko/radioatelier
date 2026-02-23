@@ -10,7 +10,7 @@
     import {useClerkContext} from 'svelte-clerk';
 
     let {data, children} = $props();
-    let lastRouteObjectId = $state<string | null>(null);
+    let lastRouteObjectId: string | null = null;
 
     const ctx = useClerkContext();
     const objects = useQuery(api.markers.list, {}, {initialData: data.objects});

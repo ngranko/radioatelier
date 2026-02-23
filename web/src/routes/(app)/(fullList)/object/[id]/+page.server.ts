@@ -17,12 +17,13 @@ export const actions: Actions = {
 
         try {
             object = await getObject(params.id!, {fetch});
-            if (!object.data.object.isPublic && !object.data.object.isOwner) {
-                throw error(403, 'Невозможно сохранить точку');
-            }
         } catch (err) {
             console.error(err);
             throw error(500, 'Не удалось сохранить точку');
+        }
+
+        if (!object.data.object.isPublic && !object.data.object.isOwner) {
+            throw error(403, 'Невозможно сохранить точку');
         }
 
         const form = await superValidate(request, zod4(schema));
@@ -46,7 +47,7 @@ export const actions: Actions = {
             throw error(500, 'Не удалось сохранить точку');
         }
     },
-    delete: async ({request, fetch, params, url, locals}) => {
+    delete: async ({fetch, params, url, locals}) => {
         const auth = locals.auth();
         if (!auth.userId) {
             redirect(303, `/login?ref=${encodeURIComponent(url.pathname)}`);

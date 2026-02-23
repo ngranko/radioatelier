@@ -44,7 +44,7 @@
         aria-expanded={isOpen}
         class={cn(
             'bg-background/50 dark:bg-background/30 h-auto min-h-12 w-full justify-between whitespace-normal px-4 py-2 font-medium',
-            'focus:border-primary focus:ring-primary/20 focus:ring-4 dark:focus:ring-2',
+            'focus:border-primary focus:ring-primary/30 focus:ring-4 dark:focus:ring-2',
             !selectedOptions.length ? 'text-muted-foreground/40' : '',
             error ? 'border-destructive' : '',
             className,

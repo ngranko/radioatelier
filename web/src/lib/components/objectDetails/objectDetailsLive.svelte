@@ -30,6 +30,7 @@
     const canEditPersonal = $derived(permissions.canEditPersonal && !values.isOwner);
 </script>
 
+<!-- TODO: add an error state -->
 {#if canEditAll && isEditing}
     <Form initialValues={values} />
 {:else if canEditPersonal && isEditing}

@@ -116,8 +116,8 @@
                 open = false;
             }
             searchValue = '';
-        } catch (error) {
-            console.error('Failed to create option:', error);
+        } catch (err) {
+            console.error('Failed to create option:', err);
         } finally {
             isCreating = false;
         }

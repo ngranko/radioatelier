@@ -16,8 +16,8 @@ export const resetPasswordRequestSchema = z.object({
 export const resetPasswordConfirmSchema = z
     .object({
         verificationCode: z.string().min(1, 'Введите код подтверждения'),
-        password: z.string().min(1, 'Введите новый пароль'),
-        confirmPassword: z.string().min(1, 'Подтвердите новый пароль'),
+        password: z.string().min(8, 'Пароль должен содержать не менее 8 символов'),
+        confirmPassword: z.string().min(8, 'Подтвердите новый пароль'),
     })
     .refine(data => data.password === data.confirmPassword, {
         message: 'Пароли не совпадают',

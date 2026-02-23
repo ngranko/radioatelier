@@ -4,6 +4,7 @@
     import {SignedIn, SignedOut} from 'svelte-clerk';
 </script>
 
+<!-- TODO: add a case for clerk loading -->
 <SignedIn>
     <LoggedInMenu />
 </SignedIn>

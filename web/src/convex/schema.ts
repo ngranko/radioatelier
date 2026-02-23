@@ -59,7 +59,7 @@ export default defineSchema({
     })
         .index('byIsPublic', ['isPublic'])
         .index('byMysqlId', ['mysqlId'])
-        .index('byCreatorId', ['createdById']),
+        .index('byCreatedById', ['createdById']),
     objectPrivateTags: defineTable({
         objectId: v.id('objects'),
         privateTagId: v.id('privateTags'),

@@ -96,7 +96,6 @@
                 const clerkError = err as {errors?: Array<{code: string; message: string}>};
                 const firstError = clerkError.errors?.[0];
                 if (firstError?.code === 'form_password_compromised') {
-                    toast.error(firstError.message);
                     await goto(buildForgotPasswordUrl());
                     return;
                 }

@@ -20,13 +20,15 @@
         privateTags.data ? [...privateTags.data].sort((a, b) => a.name.localeCompare(b.name)) : [],
     );
 
+    // TODO: add an error state
     async function handleCreate(inputValue: string) {
         const result = await client.mutation(api.privateTags.create, {name: inputValue});
         return result;
     }
 </script>
 
-{#if privateTags.data === undefined}
+<!-- TODO: add an error state -->
+{#if privateTags.isLoading}
     <Skeleton class="h-9 w-full rounded-md" />
 {:else}
     <Combobox

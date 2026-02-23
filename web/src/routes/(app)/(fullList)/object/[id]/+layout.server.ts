@@ -1,16 +1,20 @@
 import {api} from '$convex/_generated/api';
 import type {Id} from '$convex/_generated/dataModel';
 import {getConvexClient} from '$lib/server/convexClient';
+import {error} from '@sveltejs/kit';
 
 export const load = async ({params, locals, isDataRequest}) => {
     const {client} = await getConvexClient(locals);
 
     const object = client.query(api.objects.getDetails, {id: params.id as Id<'objects'>});
 
-    // During SSR, await the data to ensure proper SEO and initial render
-    // During client-side navigation, stream the data for faster perceived performance
     return {
-        activeObject: isDataRequest ? undefined : await object,
+        activeObject: isDataRequest ? undefined : await object.then((result) => {
+            if (!result) {
+                error(404, 'Object not found');
+            }
+            return result;
+        }),
         activeObjectPromise: isDataRequest ? object : undefined,
     };
 };

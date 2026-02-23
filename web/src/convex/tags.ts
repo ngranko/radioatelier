@@ -1,4 +1,4 @@
-import {v} from 'convex/values';
+import {ConvexError, v} from 'convex/values';
 import {mutation, query} from './_generated/server';
 
 export const list = query({
@@ -6,7 +6,7 @@ export const list = query({
     handler: async ctx => {
         const identity = await ctx.auth.getUserIdentity();
         if (identity === null) {
-            throw new Error('Unauthorized');
+            throw new ConvexError('Unauthorized');
         }
 
         const tags = await ctx.db.query('tags').collect();
@@ -22,12 +22,12 @@ export const create = mutation({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         if (identity === null) {
-            throw new Error('Unauthorized');
+            throw new ConvexError('Unauthorized');
         }
 
-        const normalizedName = args.name.trim();
+        const normalizedName = args.name.trim().toLowerCase();
         if (!normalizedName) {
-            throw new Error('Tag name is required');
+            throw new ConvexError('Tag name is required');
         }
 
         const existing = await ctx.db

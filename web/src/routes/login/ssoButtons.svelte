@@ -29,12 +29,11 @@
 
     async function signInWithOAuth(strategy: OAuthStrategy) {
         if (!ctx.clerk || !ctx.isLoaded || !ctx.clerk.client) {
-            console.error(
-                'failed loading clerk for auth',
-                ctx.clerk,
-                ctx.isLoaded,
-                ctx.clerk?.client,
-            );
+            console.error('failed loading clerk for auth', {
+                isLoaded: ctx.isLoaded,
+                clerkAvailable: Boolean(ctx.clerk),
+                clientAvailable: Boolean(ctx.clerk?.client),
+            });
             toast.error('Что-то пошло не так, попробуйте позже');
             return;
         }
