@@ -4,7 +4,6 @@
     import {Button} from '$lib/components/ui/button';
     import {activeObject} from '$lib/state/activeObject.svelte.ts';
     import type {Permissions} from '$lib/interfaces/permissions';
-    import {goto} from '$app/navigation';
 
     interface Props {
         lat: string;
@@ -18,8 +17,7 @@
         if (!activeObject.detailsId) {
             return;
         }
-
-        goto(`/object/${activeObject.detailsId}/edit`);
+        activeObject.isEditing = true;
     }
 
     function handleRouteClick() {

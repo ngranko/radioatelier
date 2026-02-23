@@ -32,7 +32,6 @@
         const routeData = page.data as {
             activeObject?: ObjectType;
             activeObjectPromise?: Promise<ObjectType>;
-            isEditPage?: boolean;
         };
 
         if (!routeObjectId) {
@@ -45,7 +44,6 @@
 
         lastRouteObjectId = routeObjectId;
         activeObject.detailsId = routeObjectId;
-        activeObject.isEditing = Boolean(routeData.isEditPage);
 
         if (routeData.activeObject) {
             activeObject.object = routeData.activeObject;
@@ -106,8 +104,8 @@
     {#each objects.data ?? data.objects as point (point.id)}
         <Marker
             id={point.id}
-            lat={point.lat}
-            lng={point.lng}
+            lat={point.latitude}
+            lng={point.longitude}
             isVisited={point.isVisited}
             isRemoved={point.isRemoved}
             isDraggable={point.isOwner}

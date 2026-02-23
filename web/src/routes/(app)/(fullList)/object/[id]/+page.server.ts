@@ -49,7 +49,7 @@ export const actions: Actions = {
     delete: async ({request, fetch, params, url, locals}) => {
         const auth = locals.auth();
         if (!auth.userId) {
-            throw redirect(303, `/login?ref=${encodeURIComponent(url.pathname)}`);
+            redirect(303, `/login?ref=${encodeURIComponent(url.pathname)}`);
         }
 
         let object;

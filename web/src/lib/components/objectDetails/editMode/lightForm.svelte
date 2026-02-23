@@ -20,7 +20,6 @@
     import {Separator} from '$lib/components/ui/separator';
     import {Input} from '$lib/components/ui/input';
     import {getErrorArray} from '$lib/utils/formErrors';
-    import {goto} from '$app/navigation';
     import {page} from '$app/state';
     import {schema} from '$lib/schema/objectSchema.ts';
     import {getObjectsContext} from '$lib/context/objects.ts';
@@ -45,8 +44,8 @@
 
         const formValues = {
             id: initialValues.id ?? null,
-            lat: initialValues.lat ?? '',
-            lng: initialValues.lng ?? '',
+            latitude: initialValues.latitude ?? '',
+            longitude: initialValues.longitude ?? '',
             name: initialValues.name ?? '',
             description: initialValues.description ?? '',
             isPublic: initialValues.isPublic ?? false,
@@ -119,8 +118,8 @@
     function handleSaveSuccess(updated: Object) {
         objectsCtx.update(updated.id, {
             id: updated.id,
-            lat: updated.lat,
-            lng: updated.lng,
+            latitude: updated.latitude,
+            longitude: updated.longitude,
             isRemoved: updated.isRemoved,
             isVisited: updated.isVisited,
             isOwner: updated.isOwner,
@@ -132,8 +131,8 @@
             object: {
                 id: updated.id,
                 name: updated.name,
-                lat: updated.lat,
-                lng: updated.lng,
+                latitude: updated.latitude,
+                longitude: updated.longitude,
                 categoryName: updated.category?.name ?? '',
                 address: updated.address,
                 city: updated.city,
@@ -142,11 +141,11 @@
             },
         });
 
-        goto(`/object/${updated.id}`);
+        activeObject.isEditing = false;
     }
 
     function handleBack() {
-        goto(`/object/${$formData.id}`);
+        activeObject.isEditing = false;
     }
 </script>
 
@@ -156,7 +155,6 @@
         <BackButton isConfirmationRequired={isTainted()} onClick={handleBack} />
     </div>
     <div class="h-[calc(100vh-8px*2-57px*2)] overflow-x-hidden overflow-y-auto p-4">
-        <!-- Header (mirror of view mode) -->
         <div class="mb-3">
             <ImageUpload
                 value={initialValues.cover?.id}

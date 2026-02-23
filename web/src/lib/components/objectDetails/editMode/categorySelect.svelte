@@ -1,10 +1,8 @@
 <script lang="ts">
-    import {createMutation} from '@tanstack/svelte-query';
-    import {createCategory} from '$lib/api/category';
-    import {invalidateReferenceData} from '$lib/cache/referenceData';
     import Combobox from '$lib/components/input/combobox.svelte';
-    import type {Category} from '$lib/interfaces/category.js';
-    import {page} from '$app/state';
+    import {Skeleton} from '$lib/components/ui/skeleton';
+    import {useConvexClient, useQuery} from 'convex-svelte';
+    import {api} from '$convex/_generated/api';
 
     interface Props {
         name?: string | undefined;
@@ -12,35 +10,33 @@
         error?: string[] | null | undefined;
     }
 
+    const client = useConvexClient();
+
     let {name = undefined, value = $bindable(), error = undefined}: Props = $props();
 
-    const createCategoryMutation = createMutation({
-        mutationFn: createCategory,
-        onSuccess: () => {
-            invalidateReferenceData();
-        },
-    });
-
+    const categories = useQuery(api.categories.list);
     const sortedCategories = $derived(
-        page.data.categories
-            ? [...page.data.categories].sort((a, b) => a.name.localeCompare(b.name))
-            : [],
+        categories.data ? [...categories.data].sort((a, b) => a.name.localeCompare(b.name)) : [],
     );
 
-    async function handleCreate(inputValue: string): Promise<Category> {
-        const result = await $createCategoryMutation.mutateAsync({name: inputValue});
-        return {id: result.data.id, name: result.data.name};
+    async function handleCreate(inputValue: string) {
+        const result = await client.mutation(api.categories.create, {name: inputValue});
+        return result;
     }
 </script>
 
-<Combobox
-    placeholder="Не выбрана"
-    creatable={true}
-    options={sortedCategories}
-    {name}
-    bind:value
-    onCreate={handleCreate}
-    error={Boolean(error)}
-    class="px-3 py-1 transition-colors"
-    wrapperClass="w-full"
-/>
+{#if categories.data === undefined}
+    <Skeleton class="h-9 w-full rounded-md" />
+{:else}
+    <Combobox
+        placeholder="Не выбрана"
+        creatable={true}
+        options={sortedCategories}
+        {name}
+        bind:value
+        onCreate={handleCreate}
+        error={Boolean(error)}
+        class="px-3 py-1 transition-colors"
+        wrapperClass="w-full"
+    />
+{/if}

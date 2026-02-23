@@ -28,10 +28,10 @@
     import {goto} from '$app/navigation';
     import {page} from '$app/state';
     import {schema} from '$lib/schema/objectSchema.ts';
-    import {getObjectsContext} from '$lib/context/objects.ts';
+    // import {getObjectsContext} from '$lib/context/objects.ts';
     import AddressLoadingIndicator from '$lib/components/objectDetails/editMode/addressLoadingIndicator.svelte';
 
-    const objectsCtx = getObjectsContext();
+    // const objectsCtx = getObjectsContext();
 
     interface Props {
         initialValues: Partial<LooseObject>;
@@ -54,18 +54,18 @@
 
         const formValues = {
             id: initialValues.id ?? null,
-            lat: initialValues.lat ?? '',
-            lng: initialValues.lng ?? '',
+            latitude: initialValues.latitude ?? '',
+            longitude: initialValues.longitude ?? '',
             name: initialValues.name ?? '',
-            description: initialValues.description ?? '',
+            description: initialValues.description,
             isPublic: initialValues.isPublic ?? false,
             isVisited: initialValues.isVisited ?? false,
             isRemoved: initialValues.isRemoved ?? false,
-            address: initialValues.address ?? '',
-            city: initialValues.city ?? '',
-            country: initialValues.country ?? '',
-            installedPeriod: initialValues.installedPeriod ?? '',
-            removalPeriod: initialValues.removalPeriod ?? '',
+            address: initialValues.address,
+            city: initialValues.city,
+            country: initialValues.country,
+            installedPeriod: initialValues.installedPeriod,
+            removalPeriod: initialValues.removalPeriod,
             source: initialValues.source ?? '',
             category: initialValues.category?.id ?? '',
             tags: initialValues.tags?.map(tag => tag.id) ?? [],
@@ -167,7 +167,7 @@
     }
 
     function handleBack() {
-        goto(`/object/${$formData.id}`);
+        activeObject.isEditing = false;
     }
 
     function handleImageChange(file: File) {
@@ -189,19 +189,6 @@
     }
 
     function handleSaveSuccess(updated: Object) {
-        const updatedListItem = {
-            id: updated.id,
-            lat: updated.lat,
-            lng: updated.lng,
-            isRemoved: updated.isRemoved,
-            isVisited: updated.isVisited,
-            isOwner: updated.isOwner,
-        };
-        if (objectsCtx.items.find(o => o.id === updated.id)) {
-            objectsCtx.update(updated.id, updatedListItem);
-        } else {
-            objectsCtx.add(updatedListItem);
-        }
 
         activeObject.object = updated;
 
@@ -209,8 +196,8 @@
             object: {
                 id: updated.id,
                 name: updated.name,
-                lat: updated.lat,
-                lng: updated.lng,
+                latitude: updated.latitude,
+                longitude: updated.longitude,
                 categoryName: updated.category?.name ?? '',
                 address: updated.address,
                 city: updated.city,
@@ -219,11 +206,11 @@
             },
         });
 
-        goto(`/object/${updated.id}`);
+        activeObject.isEditing = false;
     }
 
     function handleDeleteSuccess(id: string) {
-        objectsCtx.remove(id);
+        // objectsCtx.remove(id);
         searchPointList.remove(id);
 
         goto('/');

@@ -2,8 +2,7 @@ import {api} from '$convex/_generated/api';
 import type {Id} from '$convex/_generated/dataModel';
 import {getConvexClient} from '$lib/server/convexClient';
 
-export const load = async ({params, url, locals, isDataRequest}) => {
-    const isEditPage = url.pathname.endsWith('/edit');
+export const load = async ({params, locals, isDataRequest}) => {
     const {client} = await getConvexClient(locals);
 
     const object = client.query(api.objects.getDetails, {id: params.id as Id<'objects'>});
@@ -13,6 +12,5 @@ export const load = async ({params, url, locals, isDataRequest}) => {
     return {
         activeObject: isDataRequest ? undefined : await object,
         activeObjectPromise: isDataRequest ? object : undefined,
-        isEditPage,
     };
 };

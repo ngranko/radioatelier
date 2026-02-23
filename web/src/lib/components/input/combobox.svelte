@@ -21,7 +21,7 @@
         emptyText?: string;
         createLabel?: (value: string) => string;
         onChange?: (value: any) => void;
-        onCreate?: (inputValue: string) => Promise<Option>;
+        onCreate?: (inputValue: string) => Promise<string>;
         error?: boolean;
         name?: string;
         valueField?: string;
@@ -51,6 +51,7 @@
 
     let open = $state(false);
     let searchValue = $state('');
+    let isCreating = $state(false);
 
     const selectedValues = $derived.by(() => {
         if (!value) {
@@ -93,23 +94,33 @@
         }
     }
 
-    function handleCreate() {
-        if (!onCreate || !searchValue) return;
-        onCreate(searchValue)
-            .then(newOption => {
-                if (multiple) {
-                    value = [...selectedValues, newOption[valueField]];
-                    onChange?.(value.length > 0 ? value : []);
-                } else {
-                    value = newOption[valueField];
-                    onChange?.(value);
-                    open = false;
-                }
-                searchValue = '';
-            })
-            .catch(error => {
-                console.error('Failed to create option:', error);
-            });
+    async function handleCreate() {
+        if (!onCreate || !searchValue || isCreating) {
+            return;
+        }
+
+        const query = searchValue.trim();
+        if (!query) {
+            return;
+        }
+
+        isCreating = true;
+        try {
+            const newOption = await onCreate(query);
+            if (multiple) {
+                value = [...selectedValues, newOption];
+                onChange?.(value.length > 0 ? value : []);
+            } else {
+                value = newOption;
+                onChange?.(value);
+                open = false;
+            }
+            searchValue = '';
+        } catch (error) {
+            console.error('Failed to create option:', error);
+        } finally {
+            isCreating = false;
+        }
     }
 
     function handleClear(e: MouseEvent) {
@@ -160,8 +171,9 @@
                 bind:value={searchValue}
                 placeholder="Поиск..."
                 onkeydown={(e: KeyboardEvent) => {
-                    if (e.key === 'Enter' && showCreateOption) {
+                    if (e.key === 'Enter' && showCreateOption && !isCreating) {
                         e.preventDefault();
+                        e.stopPropagation();
                         handleCreate();
                     }
                 }}
@@ -169,7 +181,15 @@
 
             <CommandList>
                 {#if showCreateOption}
-                    <CommandItem value={searchValue} onclick={handleCreate} class="text-primary">
+                    <CommandItem
+                        value={searchValue}
+                        onclick={() => {
+                            if (!isCreating) {
+                                handleCreate();
+                            }
+                        }}
+                        class="text-primary"
+                    >
                         <PlusIcon class="mr-2 size-4" />
                         {createLabel(searchValue)}
                     </CommandItem>

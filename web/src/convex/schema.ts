@@ -5,7 +5,9 @@ export default defineSchema({
     categories: defineTable({
         name: v.string(),
         mysqlId: v.optional(v.string()),
-    }).index('byMysqlId', ['mysqlId']),
+    })
+        .index('byMysqlId', ['mysqlId'])
+        .index('byName', ['name']),
     counters: defineTable({
         name: v.string(),
         value: v.number(),
@@ -73,7 +75,9 @@ export default defineSchema({
     tags: defineTable({
         name: v.string(),
         mysqlId: v.optional(v.string()),
-    }).index('byMysqlId', ['mysqlId']),
+    })
+        .index('byMysqlId', ['mysqlId'])
+        .index('byName', ['name']),
     users: defineTable({
         email: v.string(),
         // this is the Clerk ID, stored in the subject JWT field
