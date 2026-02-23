@@ -1,9 +1,15 @@
+import type {Id} from '$convex/_generated/dataModel';
 import {z} from 'zod';
 
+const objectIdSchema = z.preprocess(
+    value => (value === '' ? null : value), // useful for form submits
+    z.union([z.string().transform(v => v as Id<'objects'>), z.null()]),
+);
+
 export const schema = z.object({
-    id: z.string().optional().nullable(),
-    lat: z.string().min(1),
-    lng: z.string().min(1),
+    id: objectIdSchema,
+    latitude: z.string().min(1),
+    longitude: z.string().min(1),
     cover: z.string().optional(),
     isPublic: z.boolean(),
     isVisited: z.boolean(),
