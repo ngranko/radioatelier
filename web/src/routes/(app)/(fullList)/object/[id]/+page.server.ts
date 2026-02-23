@@ -12,7 +12,7 @@ export const actions: Actions = {
 
         const auth = locals.auth();
         if (!auth.userId) {
-            redirect(303, `/login?ref=${encodeURIComponent(url.pathname)}`);
+            redirect(307, `/login?ref=${encodeURIComponent(url.pathname)}`);
         }
 
         try {
@@ -50,7 +50,7 @@ export const actions: Actions = {
     delete: async ({fetch, params, url, locals}) => {
         const auth = locals.auth();
         if (!auth.userId) {
-            redirect(303, `/login?ref=${encodeURIComponent(url.pathname)}`);
+            redirect(307, `/login?ref=${encodeURIComponent(url.pathname)}`);
         }
 
         let object;

@@ -108,7 +108,10 @@
             aria-describedby={$errors.verificationCode ? 'error-verificationCode' : undefined}
         />
         {#if $errors.verificationCode}
-            <p id="error-verificationCode" class="text-destructive flex items-center gap-1.5 text-sm">
+            <p
+                id="error-verificationCode"
+                class="text-destructive flex items-center gap-1.5 text-sm"
+            >
                 <i class="fa-solid fa-circle-exclamation text-xs"></i>
                 {getErrorArray($errors.verificationCode)?.[0] ?? 'Введите код подтверждения'}
             </p>
@@ -150,7 +153,10 @@
             aria-describedby={$errors.confirmPassword ? 'error-confirmPassword' : undefined}
         />
         {#if $errors.confirmPassword}
-            <p id="error-confirmPassword" class="text-destructive flex items-center gap-1.5 text-sm">
+            <p
+                id="error-confirmPassword"
+                class="text-destructive flex items-center gap-1.5 text-sm"
+            >
                 <i class="fa-solid fa-circle-exclamation text-xs"></i>
                 {getErrorArray($errors.confirmPassword)?.[0] ?? 'Пароли не совпадают'}
             </p>

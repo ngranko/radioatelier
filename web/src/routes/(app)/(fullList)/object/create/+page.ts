@@ -9,7 +9,7 @@ import type {PageLoad} from './$types';
 export const load: PageLoad = async ({fetch, parent, url}) => {
     const data = await parent();
     if (!data.user.auth) {
-        redirect(303, `/login?ref=${encodeURIComponent(url.pathname)}`);
+        redirect(307, `/login?ref=${encodeURIComponent(url.pathname)}`);
     }
 
     const lat = normalizeLattitude(url.searchParams.get('lat') ?? '');
@@ -45,7 +45,7 @@ function normalizeLattitude(value: string): string {
     if (isFinite(normalizedValue) && Math.abs(normalizedValue) <= 90) {
         return String(normalizedValue);
     }
-    redirect(303, '/');
+    redirect(307, '/');
 }
 
 function normalizeLongitude(value: string): string {
@@ -53,5 +53,5 @@ function normalizeLongitude(value: string): string {
     if (isFinite(normalizedValue) && Math.abs(normalizedValue) <= 180) {
         return String(normalizedValue);
     }
-    redirect(303, '/');
+    redirect(307, '/');
 }

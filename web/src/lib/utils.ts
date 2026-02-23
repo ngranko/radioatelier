@@ -35,7 +35,7 @@ export function normalizeRef(value: string | null, baseUrl: string): string {
         return '/';
     }
     try {
-        const { pathname } = new URL(value, baseUrl);
+        const {pathname} = new URL(value, baseUrl);
         return pathname.startsWith('/') ? pathname : '/';
     } catch {
         return '/';

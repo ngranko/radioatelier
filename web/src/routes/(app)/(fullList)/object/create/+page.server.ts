@@ -8,7 +8,7 @@ export const actions: Actions = {
     save: async ({request, fetch, url, locals}) => {
         const auth = locals.auth();
         if (!auth.userId) {
-            redirect(303, `/login?ref=${encodeURIComponent(url.pathname)}`);
+            redirect(307, `/login?ref=${encodeURIComponent(url.pathname)}`);
         }
 
         const form = await superValidate(request, zod4(schema));

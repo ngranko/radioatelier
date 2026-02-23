@@ -9,12 +9,14 @@ export const load = async ({params, locals, isDataRequest}) => {
     const object = client.query(api.objects.getDetails, {id: params.id as Id<'objects'>});
 
     return {
-        activeObject: isDataRequest ? undefined : await object.then((result) => {
-            if (!result) {
-                error(404, 'Object not found');
-            }
-            return result;
-        }),
+        activeObject: isDataRequest
+            ? undefined
+            : await object.then(result => {
+                  if (!result) {
+                      error(404, 'Object not found');
+                  }
+                  return result;
+              }),
         activeObjectPromise: isDataRequest ? object : undefined,
     };
 };
