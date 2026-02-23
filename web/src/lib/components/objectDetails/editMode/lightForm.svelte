@@ -21,7 +21,7 @@
     import {Input} from '$lib/components/ui/input';
     import {getErrorArray} from '$lib/utils/formErrors';
     import {page} from '$app/state';
-    import {schema} from '$lib/schema/objectSchema.ts';
+    import {schema, toFormDefaults} from '$lib/schema/objectSchema.ts';
     import {getObjectsContext} from '$lib/context/objects.ts';
     import BackButton from '$lib/components/objectDetails/editMode/backButton.svelte';
 
@@ -41,29 +41,7 @@
         if (page.data.form) {
             return page.data.form;
         }
-
-        const formValues = {
-            id: initialValues.id ?? null,
-            latitude: initialValues.latitude ?? '',
-            longitude: initialValues.longitude ?? '',
-            name: initialValues.name ?? '',
-            description: initialValues.description ?? '',
-            isPublic: initialValues.isPublic ?? false,
-            isVisited: initialValues.isVisited ?? false,
-            isRemoved: initialValues.isRemoved ?? false,
-            address: initialValues.address ?? '',
-            city: initialValues.city ?? '',
-            country: initialValues.country ?? '',
-            installedPeriod: initialValues.installedPeriod ?? '',
-            removalPeriod: initialValues.removalPeriod ?? '',
-            source: initialValues.source ?? '',
-            category: initialValues.category?.id ?? '',
-            tags: initialValues.tags?.map(tag => tag.id) ?? [],
-            privateTags: initialValues.privateTags?.map(tag => tag.id) ?? [],
-            cover: initialValues.cover?.id,
-        };
-
-        return defaults(formValues, zod4Client(schema));
+        return defaults(toFormDefaults(initialValues), zod4Client(schema));
     }
 
     const form = superForm(getFormData(), {
@@ -179,8 +157,8 @@
         </h1>
 
         <Input type="hidden" name="id" bind:value={$formData.id} />
-        <Input type="hidden" name="lat" bind:value={$formData.lat} />
-        <Input type="hidden" name="lng" bind:value={$formData.lng} />
+        <Input type="hidden" name="latitude" bind:value={$formData.latitude} />
+        <Input type="hidden" name="longitude" bind:value={$formData.longitude} />
         <Input type="hidden" name="name" bind:value={$formData.name} />
         <Input type="hidden" name="category" bind:value={$formData.category} />
         <Input type="hidden" name="isPublic" value={$formData.isPublic ? 'on' : ''} />
