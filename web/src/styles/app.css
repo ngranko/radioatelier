@@ -4,11 +4,6 @@
 
 @custom-variant dark (&:is(.dark *));
 
-html {
-    -webkit-font-smoothing: subpixel-antialiased;
-    font-optical-sizing: auto;
-}
-
 :root {
     --radius: 0.625rem;
     --background: oklch(1 0 0);
@@ -128,6 +123,16 @@ html {
 }
 
 @layer base {
+    html {
+        -webkit-font-smoothing: subpixel-antialiased;
+        font-optical-sizing: auto;
+    }
+
+    ::selection {
+        background-color: var(--primary);
+        color: var(--primary-foreground);
+    }
+
     * {
         @apply border-border outline-ring/50;
     }
