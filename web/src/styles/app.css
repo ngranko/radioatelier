@@ -172,7 +172,7 @@
     }
 
     .nav-marker {
-        @apply text-xl relative w-6 h-6 flex justify-center items-center rounded-full text-primary translate-[0_50%] shadow-lg transition-colors bg-white;
+        @apply text-primary relative flex h-6 w-6 translate-[0_50%] items-center justify-center rounded-full bg-white text-xl shadow-lg transition-colors;
     }
 
     .nav-marker-stale {

@@ -13,11 +13,10 @@ export default [
     ...eslintPluginSvelte.configs['flat/recommended'],
     eslintPluginPrettierRecommended,
     {
-        ignores: ['.svelte-kit', '**/*.js', '**/*.jsx'],
+        ignores: ['.svelte-kit', 'build', 'convex/_generated', '**/*.js', '**/*.jsx'],
     },
     {
         files: ['**!/!*.ts', '**!/!*.tsx', '**/*.svelte'],
-
         languageOptions: {
             globals: {
                 ...globals.browser,
