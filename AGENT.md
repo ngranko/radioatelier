@@ -1,21 +1,11 @@
 ## Project Overview
 
-Radioatelier is a full-stack application for managing and displaying geolocated objects. It consists of:
-
-- **api/**: Go backend with MySQL database and Manticore search
+- **api/**: deprecated, do not try to make changes within that dir, only use if for the backend reference when required
 - **web/**: SvelteKit frontend with TypeScript, Tailwind CSS, and Google Maps integration
 
 ## Development Environment
 
-The project runs in Docker. Start all services from the project root:
-
-```bash
-docker compose up -d    # Start all services
-```
-
 Access the application at **https://radioatelier.test** (requires local DNS/hosts configuration).
-
-Do not use the `docker-compose.yml` files in `/api` or `/web` subfolders directly - the root compose file includes them.
 
 ## Common Commands
 
@@ -32,7 +22,7 @@ bun run build        # Production build (do not run this command for checks)
 
 Do not run the build command directly — it is run automatically by the Docker container.
 
-If there were any frontend changes as a result of your run – always run the format command at the end to keep the code style consistent.
+If there were any frontend changes as a result of your run – always run the lint command to make sure there aren't any code style problems.
 
 Use bun as the package manager for the project.
 
@@ -45,3 +35,5 @@ Key patterns:
 ## Code Style
 
 Don't put comments in the code that just describe what the next code block does. Comments should explain why, not what. Only put comments in code when the reasoning behind the current implementation should be clarified to not create confusion.
+
+Follow SOLID, DRY and KISS principles in your work. Don't create huge god-files. Soft cap for line count is 200, if a file grows bigger – consider possible refactors
