@@ -4,11 +4,11 @@ import {
     STATUS_REQUEST_ERROR,
     STATUS_SERVER_ERROR,
 } from '$lib/api/constants';
-import type {HttpMethod} from '$lib/interfaces/http';
-import type KeyVal from '$lib/interfaces/keyVal';
+import type Request from '$lib/api/request/Request';
 import RequestError from '$lib/errors/RequestError';
 import ServerError from '$lib/errors/ServerError';
-import type Request from '$lib/api/request/Request';
+import type {HttpMethod} from '$lib/interfaces/http';
+import type KeyVal from '$lib/interfaces/keyVal';
 
 interface RequestParams {
     resource: RequestInfo;

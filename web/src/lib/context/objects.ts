@@ -1,5 +1,5 @@
-import {getContext, setContext} from 'svelte';
 import type {ObjectListItem} from '$lib/interfaces/object';
+import {getContext, setContext} from 'svelte';
 
 const KEY = 'objects';
 

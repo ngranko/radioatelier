@@ -22,7 +22,7 @@
             google.maps.event.trigger(marker.getRaw()!, 'gmp-click');
         } else {
             activeObject.isMinimized = false;
-            activeObject.isEditing = !Boolean(object.id);
+            activeObject.isEditing = !object.id;
             activeObject.isDirty = false;
             activeObject.detailsId = object.id ?? new Date().getTime().toString();
             activeObject.object = {

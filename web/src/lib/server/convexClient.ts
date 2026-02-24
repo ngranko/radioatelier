@@ -1,6 +1,6 @@
 import {PUBLIC_CONVEX_URL} from '$env/static/public';
-import {ConvexHttpClient} from 'convex/browser';
 import type {RequestEvent} from '@sveltejs/kit';
+import {ConvexHttpClient} from 'convex/browser';
 
 type Locals = RequestEvent['locals'];
 

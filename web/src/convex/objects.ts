@@ -1,6 +1,6 @@
-import {query} from './_generated/server';
-import {Doc} from './_generated/dataModel';
 import {v} from 'convex/values';
+import {Doc} from './_generated/dataModel';
+import {mutation, query} from './_generated/server';
 import {getCurrentUser} from './users';
 import {getVisitedChunkId} from './utils/visitedChunks';
 
@@ -100,5 +100,28 @@ export const getDetails = query({
             isVisited,
             isOwner: object.createdById === user?._id,
         };
+    },
+});
+
+export const create = mutation({
+    args: {
+        data: v.object({
+            name: v.string(),
+        }),
+    },
+    handler: async (ctx, {data}) => {
+        return await ctx.db.insert('objects', data);
+    },
+});
+
+export const update = mutation({
+    args: {
+        id: v.id('objects'),
+        data: v.object({
+            name: v.string(),
+        }),
+    },
+    handler: async (ctx, {id, data}) => {
+        return await ctx.db.patch('objects', id, data);
     },
 });

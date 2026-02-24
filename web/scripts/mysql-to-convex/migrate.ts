@@ -13,15 +13,15 @@
  *   --prod    Import into production deployment instead of dev
  */
 
-import {mkdir, writeFile, readFile} from 'node:fs/promises';
-import {join, dirname} from 'node:path';
+import {mkdir, readFile, writeFile} from 'node:fs/promises';
+import {dirname, join} from 'node:path';
 import {parseSqlDump} from './parse-sql';
 import {
+    getTransformConfig,
+    toJsonl,
+    transformMarkersFromObjects,
     transformTable,
     transformVisitedChunksFromObjectUsers,
-    transformMarkersFromObjects,
-    toJsonl,
-    getTransformConfig,
     type IdMapping,
 } from './transform';
 

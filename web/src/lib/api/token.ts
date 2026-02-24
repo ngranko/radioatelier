@@ -1,4 +1,4 @@
-import {METHOD_GET, METHOD_POST} from '$lib/api/constants';
+import {METHOD_GET} from '$lib/api/constants';
 import JsonRequest, {type JsonRequestOptions} from '$lib/api/request/JsonRequest';
 import type {Payload} from '$lib/interfaces/api';
 

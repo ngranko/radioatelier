@@ -1,9 +1,9 @@
-import BaseError from '$lib/errors/BaseError';
 import {
     STATUS_FORBIDDEN,
     STATUS_UNAUTHORIZED,
     STATUS_UNPROCESSABLE_ENTITY,
 } from '$lib/api/constants';
+import BaseError from '$lib/errors/BaseError';
 
 export default class RequestError extends BaseError {
     public status: number;

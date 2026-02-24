@@ -1,6 +1,6 @@
-import type KeyVal from '$lib/interfaces/keyVal';
 import {WebSocketMessage} from '$lib/api/websocket/WebSocketMessage';
 import WebSocketError from '$lib/errors/WebSocketError';
+import type KeyVal from '$lib/interfaces/keyVal';
 
 interface RawMessage<T = undefined> {
     type: string;

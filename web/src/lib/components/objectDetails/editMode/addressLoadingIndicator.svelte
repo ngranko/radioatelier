@@ -10,7 +10,7 @@
 
 <div
     class={cn(
-        'pointer-events-none absolute inset-0 flex items-center justify-end pr-3 text-muted-foreground',
+        'text-muted-foreground pointer-events-none absolute inset-0 flex items-center justify-end pr-3',
         className,
     )}
 >

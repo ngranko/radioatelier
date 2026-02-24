@@ -1,6 +1,6 @@
-import JsonRequest from '$lib/api/request/JsonRequest';
 import {METHOD_POST} from '$lib/api/constants';
 import AuthRequest from '$lib/api/request/AuthRequest';
+import JsonRequest from '$lib/api/request/JsonRequest';
 import type {Payload} from '$lib/interfaces/api';
 import type {
     ExtractPreviewInputs,

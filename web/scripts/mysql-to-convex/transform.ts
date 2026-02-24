@@ -3,8 +3,8 @@
  * Maps MySQL columns to Convex schema fields
  */
 
-import {hexToUlid, mysqlTimestampToMs, type ParsedTable} from './parse-sql';
 import {getVisitedChunkId} from '../../src/convex/utils/visitedChunks';
+import {hexToUlid, mysqlTimestampToMs, type ParsedTable} from './parse-sql';
 
 export type IdMapping = Record<string, Record<string, string>>;
 

@@ -89,7 +89,7 @@
                 href={initialValues.source}
                 target="_blank"
                 rel="noopener noreferrer nofollow"
-                class="inline-flex items-center gap-1 text-sm text-primary hover:text-primary/90 hover:underline"
+                class="text-primary hover:text-primary/90 inline-flex items-center gap-1 text-sm hover:underline"
             >
                 Источник
                 <i class="fa-solid fa-arrow-up-right-from-square ml-1 text-xs"></i>

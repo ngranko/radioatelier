@@ -20,9 +20,9 @@
 
     <div class="relative z-10 w-full max-w-[400px]">
         <div
-            class="group relative overflow-hidden rounded-2xl bg-white/80 shadow-2xl shadow-black/[0.08] ring-1 ring-black/[0.04] backdrop-blur-xl dark:bg-white/[0.06] dark:shadow-black/30 dark:ring-white/[0.08] transition-[transform,opacity] duration-700 ease-out motion-reduce:transition-none {mounted
+            class="group relative overflow-hidden rounded-2xl bg-white/80 shadow-2xl ring-1 shadow-black/[0.08] ring-black/[0.04] backdrop-blur-xl transition-[transform,opacity] duration-700 ease-out motion-reduce:transition-none dark:bg-white/[0.06] dark:shadow-black/30 dark:ring-white/[0.08] {mounted
                 ? 'translate-y-0 opacity-100'
-                : 'motion-reduce:translate-y-0 motion-reduce:opacity-100 translate-y-6 opacity-0'}"
+                : 'translate-y-6 opacity-0 motion-reduce:translate-y-0 motion-reduce:opacity-100'}"
         >
             <div
                 class="absolute inset-0 bg-gradient-to-br from-white/50 via-transparent to-transparent dark:from-white/[0.02]"

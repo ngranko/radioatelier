@@ -8,7 +8,6 @@
 
     const ctx = useClerkContext();
     let taskContainer: HTMLDivElement | null = $state(null);
-    let taskMounted = $state(false);
 
     const redirectUrl = $derived(normalizeRef(page.url.searchParams.get('ref'), page.url.href));
     const hasResetTask = $derived(ctx.clerk?.session?.currentTask?.key === 'reset-password');
@@ -17,14 +16,13 @@
         if (!ctx.isLoaded || !ctx.clerk || !taskContainer || !hasResetTask) {
             return;
         }
-        
+
         const clerk = ctx.clerk;
         const container = taskContainer;
 
         clerk.mountTaskResetPassword(container, {
             redirectUrlComplete: redirectUrl,
         });
-        taskMounted = true;
 
         return () => {
             clerk.unmountTaskResetPassword(container);
