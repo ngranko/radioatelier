@@ -183,6 +183,15 @@ export function transformTable(
         return null;
     }
 
+    if (parsedTable.tableName === 'object_private_tags') {
+        return transformObjectPrivateTags(
+            parsedTable,
+            idMappings,
+            parsedTables,
+            config.convexTable,
+        );
+    }
+
     const records: Record<string, unknown>[] = [];
     const shouldMapTags = parsedTable.tableName === 'objects';
     const tagMappings = shouldMapTags ? idMappings.tags : undefined;
@@ -271,6 +280,61 @@ export function transformTable(
     }
 
     return {convexTable: config.convexTable, records};
+}
+
+function transformObjectPrivateTags(
+    parsedTable: ParsedTable,
+    idMappings: IdMapping,
+    parsedTables: Map<string, ParsedTable> | undefined,
+    convexTable: string,
+): {convexTable: string; records: Record<string, unknown>[]} {
+    const objectMapping = idMappings.objects;
+    const privateTagMapping = idMappings.privateTags;
+    const userMapping = idMappings.users;
+    const privateTagUserMap = buildPrivateTagUserMap(parsedTables, userMapping);
+
+    const grouped = new Map<
+        string,
+        {objectId: string; userId: string; privateTagIds: Set<string>}
+    >();
+
+    for (const row of parsedTable.rows) {
+        if (!row.object_id || !row.private_tag_id) continue;
+
+        const mysqlObjectId = hexToUlid(row.object_id as string).toLowerCase();
+        const mysqlPrivateTagId = hexToUlid(row.private_tag_id as string).toLowerCase();
+
+        const objectId = resolveConvexId(objectMapping, mysqlObjectId);
+        const privateTagId = resolveConvexId(privateTagMapping, mysqlPrivateTagId);
+        const userId = privateTagUserMap.get(mysqlPrivateTagId);
+
+        if (!objectId || !privateTagId || !userId) {
+            console.warn(
+                `object_private_tags mapping missing: object=${mysqlObjectId} privateTag=${mysqlPrivateTagId}`,
+            );
+            continue;
+        }
+
+        const key = `${objectId}:${userId}`;
+        const existing = grouped.get(key);
+        if (existing) {
+            existing.privateTagIds.add(privateTagId);
+        } else {
+            grouped.set(key, {
+                objectId,
+                userId,
+                privateTagIds: new Set([privateTagId]),
+            });
+        }
+    }
+
+    const records = [...grouped.values()].map(item => ({
+        objectId: item.objectId,
+        userId: item.userId,
+        privateTagIds: [...item.privateTagIds],
+    }));
+
+    return {convexTable, records};
 }
 
 export function transformMarkersFromObjects(
@@ -372,6 +436,30 @@ function buildObjectTagMap(parsedTables?: Map<string, ParsedTable>): Map<string,
         } else {
             map.set(mysqlObjectId, [mysqlTagId]);
         }
+    }
+
+    return map;
+}
+
+function buildPrivateTagUserMap(
+    parsedTables: Map<string, ParsedTable> | undefined,
+    userMapping: Record<string, string> | undefined,
+): Map<string, string> {
+    const map = new Map<string, string>();
+    if (!parsedTables) return map;
+    const privateTags = parsedTables.get('private_tags');
+    if (!privateTags) return map;
+
+    for (const row of privateTags.rows) {
+        if (!row.id || !row.created_by) continue;
+        const mysqlPrivateTagId = hexToUlid(row.id as string).toLowerCase();
+        const mysqlUserId = hexToUlid(row.created_by as string).toLowerCase();
+        const userId = resolveConvexId(userMapping, mysqlUserId);
+        if (!userId) {
+            console.warn(`private_tags user mapping missing: privateTag=${mysqlPrivateTagId}`);
+            continue;
+        }
+        map.set(mysqlPrivateTagId, userId);
     }
 
     return map;

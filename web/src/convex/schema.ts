@@ -1,5 +1,6 @@
 import {defineSchema, defineTable} from 'convex/server';
 import {v} from 'convex/values';
+import {mapPointTableFields, objectTableFields} from './sharedValidators';
 
 export default defineSchema({
     categories: defineTable({
@@ -17,14 +18,7 @@ export default defineSchema({
         previewUrl: v.nullable(v.string()),
         mysqlId: v.optional(v.string()),
     }).index('byMysqlId', ['mysqlId']),
-    mapPoints: defineTable({
-        latitude: v.number(),
-        longitude: v.number(),
-        address: v.string(),
-        city: v.string(),
-        country: v.string(),
-        mysqlId: v.optional(v.string()),
-    })
+    mapPoints: defineTable(mapPointTableFields)
         .index('byLatitudeAndLongitude', ['latitude', 'longitude'])
         .index('byAddressCityCountry', ['address', 'city', 'country'])
         .index('byMysqlId', ['mysqlId']),
@@ -41,29 +35,15 @@ export default defineSchema({
         .index('byCreatedByIdAndIsPublic', ['createdById', 'isPublic'])
         .index('byIsPublic', ['isPublic'])
         .index('byObjectId', ['objectId']),
-    objects: defineTable({
-        name: v.string(),
-        description: v.nullable(v.string()),
-        installedPeriod: v.nullable(v.string()),
-        isRemoved: v.boolean(),
-        removalPeriod: v.nullable(v.string()),
-        source: v.nullable(v.string()),
-        coverId: v.nullable(v.id('images')),
-        categoryId: v.id('categories'),
-        mapPointId: v.id('mapPoints'),
-        isPublic: v.boolean(),
-        createdById: v.id('users'),
-        tagIds: v.array(v.id('tags')),
-        internalId: v.string(),
-        mysqlId: v.optional(v.string()),
-    })
+    objects: defineTable(objectTableFields)
         .index('byIsPublic', ['isPublic'])
         .index('byMysqlId', ['mysqlId'])
         .index('byCreatedById', ['createdById']),
     objectPrivateTags: defineTable({
         objectId: v.id('objects'),
-        privateTagId: v.id('privateTags'),
-    }).index('byObjectIdAndPrivateTagId', ['objectId', 'privateTagId']),
+        privateTagIds: v.array(v.id('privateTags')),
+        userId: v.id('users'),
+    }).index('byObjectIdUserId', ['objectId', 'userId']),
     privateTags: defineTable({
         name: v.string(),
         createdById: v.id('users'),

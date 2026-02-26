@@ -1,7 +1,8 @@
 import {v} from 'convex/values';
 import {Doc} from './_generated/dataModel';
 import {mutation, query} from './_generated/server';
-import {getCurrentUser} from './users';
+import {createObjectLocationFields, createObjectRecordFields} from './sharedValidators';
+import {getCurrentUser, getCurrentUserOrThrow} from './users';
 import {getVisitedChunkId} from './utils/visitedChunks';
 
 export const getDetails = query({
@@ -37,15 +38,16 @@ export const getDetails = query({
         if (user) {
             const objectPrivateTags = await ctx.db
                 .query('objectPrivateTags')
-                .withIndex('byObjectIdAndPrivateTagId', q => q.eq('objectId', id))
-                .collect();
-            const fetchedPrivateTags = await Promise.all(
-                objectPrivateTags.map(async item => ctx.db.get('privateTags', item.privateTagId)),
-            );
-            privateTags = fetchedPrivateTags.filter(
-                (item): item is Doc<'privateTags'> =>
-                    item !== null && item.createdById === user._id,
-            );
+                .withIndex('byObjectIdUserId', q => q.eq('objectId', id).eq('userId', user._id))
+                .first();
+            privateTags =
+                (
+                    await Promise.all(
+                        objectPrivateTags?.privateTagIds.map(async item =>
+                            ctx.db.get('privateTags', item),
+                        ) ?? [],
+                    )
+                ).filter((tag): tag is Doc<'privateTags'> => tag !== null) ?? [];
 
             const chunkId = getVisitedChunkId(object._id);
             const visitedData = await ctx.db
@@ -106,11 +108,69 @@ export const getDetails = query({
 export const create = mutation({
     args: {
         data: v.object({
-            name: v.string(),
+            ...createObjectLocationFields,
+            ...createObjectRecordFields,
+            privateTags: v.array(v.id('privateTags')),
+            isVisited: v.boolean(),
         }),
     },
     handler: async (ctx, {data}) => {
-        return await ctx.db.insert('objects', data);
+        const user = await getCurrentUserOrThrow(ctx);
+
+        const mapPointId = await ctx.db.insert('mapPoints', {
+            latitude: data.latitude,
+            longitude: data.longitude,
+            address: data.address,
+            city: data.city,
+            country: data.country,
+        });
+
+        const objectId = await ctx.db.insert('objects', {
+            ...data,
+            mapPointId,
+            createdById: user._id,
+        });
+
+        await ctx.db.insert('objectPrivateTags', {
+            objectId,
+            privateTagIds: data.privateTags,
+            userId: user._id,
+        });
+
+        if (data.isVisited) {
+            const chunkId = getVisitedChunkId(objectId);
+            const visitedData = await ctx.db
+                .query('userVisitedChunks')
+                .withIndex('byUserIdAndChunkId', q =>
+                    q.eq('userId', user._id).eq('chunkId', chunkId),
+                )
+                .unique();
+            if (visitedData) {
+                visitedData.visitedObjectIds.push(objectId);
+                await ctx.db.patch('userVisitedChunks', visitedData._id, {
+                    visitedObjectIds: [...visitedData.visitedObjectIds, objectId],
+                });
+            } else {
+                await ctx.db.insert('userVisitedChunks', {
+                    userId: user._id,
+                    chunkId,
+                    visitedObjectIds: [objectId],
+                });
+            }
+        }
+
+        await ctx.db.insert('markers', {
+            objectId,
+            latitude: data.latitude,
+            longitude: data.longitude,
+            createdById: user._id,
+            categoryId: data.categoryId,
+            tagIds: data.tagIds,
+            isRemoved: data.isRemoved,
+            isPublic: data.isPublic,
+        });
+
+        return objectId;
     },
 });
 
