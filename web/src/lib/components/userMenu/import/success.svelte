@@ -48,7 +48,7 @@
             <h3 class="text-base font-semibold">Найденные проблемы</h3>
             <div class="bg-card max-h-64 overflow-y-auto rounded-lg border">
                 <div class="divide-y">
-                    {#each importState.lineFeedback as item}
+                    {#each importState.lineFeedback as item (item.line)}
                         <div class="flex items-start gap-3 p-4">
                             {#if item.severity === 'error'}
                                 <i

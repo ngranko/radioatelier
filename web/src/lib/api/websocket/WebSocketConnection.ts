@@ -21,7 +21,7 @@ export class WebSocketConnection {
         this.params = {};
     }
 
-    public setParams(params: {}): this {
+    public setParams(params: object): this {
         this.params = {...this.params, ...params};
         return this;
     }

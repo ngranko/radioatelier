@@ -49,7 +49,7 @@
             }
 
             await Promise.all(otherSessions.map(session => session.revoke()));
-        } catch (error: unknown) {
+        } catch {
             toast.error('Не удалось завершить другие сессии');
         }
     }

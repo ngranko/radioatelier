@@ -101,7 +101,7 @@ export class ImportProvider {
 
     public cancel() {
         this.disconnectHandler = undefined;
-        this.connection.sendMessage<{}>(WSCancelMessageType, {});
+        this.connection.sendMessage<object>(WSCancelMessageType, {});
         this.stopIdleTimeout();
     }
 

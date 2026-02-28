@@ -74,7 +74,7 @@
                     </Trigger>
                     <Content>
                         <Item value=";">;</Item>
-                        <Item value={"\t"}>Tab</Item>
+                        <Item value="\t">Tab</Item>
                         <Item value="|">|</Item>
                     </Content>
                 </SelectRoot>

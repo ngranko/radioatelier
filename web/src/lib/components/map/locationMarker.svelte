@@ -13,7 +13,7 @@
     let {orientationEnabled}: Props = $props();
 
     let marker: google.maps.marker.AdvancedMarkerElement | undefined = $state();
-    let updateLocationInterval: number | undefined;
+    let updateLocationInterval: ReturnType<typeof setInterval> | undefined;
 
     onMount(async () => {
         const icon = document.createElement('div');

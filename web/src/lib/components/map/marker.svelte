@@ -18,7 +18,6 @@
         lng: number;
         isRemoved?: boolean;
         isVisited?: boolean;
-        initialActive?: boolean;
         icon: string;
         color: string;
         isDraggable?: boolean;

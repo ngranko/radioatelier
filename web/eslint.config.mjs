@@ -23,11 +23,12 @@ export default [
         ],
     },
     {
-        files: ['**/*.ts', '**/*.svelte'],
+        files: ['**/*.svelte'],
         languageOptions: {
             globals: {
                 ...globals.browser,
                 ...globals.node,
+                google: 'readonly',
             },
             parser: svelteParser,
             ecmaVersion: 2022,
@@ -41,6 +42,24 @@ export default [
         },
         rules: {
             curly: ['error', 'all'],
+            'svelte/no-navigation-without-resolve': 'off',
+        },
+    },
+    {
+        files: ['**/*.ts'],
+        languageOptions: {
+            globals: {
+                ...globals.browser,
+                ...globals.node,
+                google: 'readonly',
+            },
+            parser: tsParser,
+            ecmaVersion: 2022,
+            sourceType: 'module',
+        },
+        rules: {
+            curly: ['error', 'all'],
+            'svelte/no-navigation-without-resolve': 'off',
         },
     },
     eslintConfigPrettier,

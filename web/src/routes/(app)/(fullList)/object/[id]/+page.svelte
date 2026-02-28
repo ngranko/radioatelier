@@ -1,15 +1,15 @@
 <script lang="ts">
     import {onMount} from 'svelte';
-    import type {PageProps} from './$types';
-    import {sharedMarker} from '$lib/state/sharedMarker.svelte.ts';
-    import {getObjectsContext} from '$lib/context/objects';
+    // import type {PageProps} from './$types';
+    // import {sharedMarker} from '$lib/state/sharedMarker.svelte.ts';
+    // import {getObjectsContext} from '$lib/context/objects';
     import {activeObject} from '$lib/state/activeObject.svelte.ts';
-    import type {Object} from '$lib/interfaces/object.ts';
+    // import type {Object} from '$lib/interfaces/object.ts';
 
-    let {data}: PageProps = $props();
+    // let {data}: PageProps = $props();
 
     // let objectsCtx = getObjectsContext();
-    let sharedMarkerChecked = false;
+    // let sharedMarkerChecked = false;
 
     // function checkSharedMarker(obj: Object) {
     //     if (sharedMarkerChecked) {

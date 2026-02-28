@@ -1,4 +1,5 @@
 import type {MarkerId, MarkerOptions, MarkerStateUpdate} from '$lib/interfaces/marker';
+import type {Loader} from '@googlemaps/js-api-loader';
 import {Marker} from './marker';
 import {MarkerRepository} from './markerRepository';
 import {DomMarkerRenderer} from './renderer/domMarkerRenderer';
@@ -46,10 +47,10 @@ export class MarkerManager {
         );
     }
 
-    public async initialize(mapLoader: any) {
+    public async initialize(mapLoader: Loader) {
         try {
             await mapLoader.importLibrary('marker');
-        } catch (error) {
+        } catch (error: unknown) {
             console.error('Failed to pre-load marker library:', error);
         }
     }

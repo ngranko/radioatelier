@@ -29,7 +29,7 @@ export default class BlobRequest implements Request<Blob> {
         this.headers = {};
     }
 
-    public setParams(params: {}): this {
+    public setParams(params: object): this {
         this.params = {...this.params, ...params};
         return this;
     }

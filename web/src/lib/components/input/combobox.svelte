@@ -11,6 +11,7 @@
     import PlusIcon from '@lucide/svelte/icons/plus';
     import ComboboxTrigger from './combobox/comboboxTrigger.svelte';
     import type {Option} from '$lib/interfaces/option';
+    type ComboboxValue = string | string[] | null | undefined;
 
     interface Props {
         options: Option[];
@@ -18,9 +19,8 @@
         multiple?: boolean;
         creatable?: boolean;
         placeholder?: string;
-        emptyText?: string;
         createLabel?: (value: string) => string;
-        onChange?: (value: any) => void;
+        onChange?: (value: ComboboxValue) => void;
         onCreate?: (inputValue: string) => Promise<string>;
         error?: boolean;
         name?: string;
@@ -145,7 +145,7 @@
 
 {#if name}
     {#if multiple && Array.isArray(value)}
-        {#each value as v}
+        {#each value as v (v)}
             <input type="hidden" {name} value={v} />
         {/each}
     {:else if !multiple && value}
@@ -197,7 +197,7 @@
                     </CommandItem>
                 {/if}
 
-                {#each options as option}
+                {#each options as option (option.id)}
                     <CommandItem value={option[labelField]} onclick={() => handleSelect(option)}>
                         <div class="flex items-center gap-2">
                             {#if selectedValues.includes(option[valueField])}

@@ -17,7 +17,7 @@ export class DomMarkerRenderer implements MarkerRenderer {
         }
     }
 
-    public syncAll(_iterable: Iterable<Marker>): void {
+    public syncAll(): void {
         // No-op; DOM markers are created on demand
     }
 

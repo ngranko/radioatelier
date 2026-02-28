@@ -7,7 +7,7 @@
     interface Props {
         name?: string;
         value?: string[];
-        error: any[] | null;
+        error: string[] | null;
     }
 
     const client = useConvexClient();

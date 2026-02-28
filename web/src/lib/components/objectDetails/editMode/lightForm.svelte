@@ -142,7 +142,7 @@
         <Input type="hidden" name="installedPeriod" bind:value={$formData.installedPeriod} />
         <Input type="hidden" name="removalPeriod" bind:value={$formData.removalPeriod} />
         <Input type="hidden" name="source" bind:value={$formData.source} />
-        {#each $formData.tags as tag}
+        {#each $formData.tags as tag (tag)}
             <Input type="hidden" name="tags" value={tag} />
         {/each}
 

@@ -26,7 +26,7 @@
 
 <div class="flex flex-1 flex-wrap gap-1 overflow-hidden">
     {#if multiple && selectedOptions.length > 0}
-        {#each selectedOptions as option}
+        {#each selectedOptions as option (option.id)}
             <Badge variant="secondary">
                 {option[labelField]}
                 <button

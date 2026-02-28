@@ -58,27 +58,7 @@
             center,
         } as google.maps.MapOptions);
 
-        miniMapContainer.append(makePegman());
         updateMiniMap();
-    }
-
-    function makePegman(): HTMLDivElement {
-        if (!pegmanOverlay) {
-            pegmanOverlay = document.createElement('div');
-            pegmanOverlay.className =
-                'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 pointer-events-none z-10 origin-[50%_60%]';
-
-            const img = document.createElement('img');
-            img.className = 'w-8 h-8 object-contain drop-shadow-sm';
-            img.src =
-                'data:image/svg+xml;charset=UTF-8,' +
-                encodeURIComponent(
-                    '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="7" r="4" fill="#fbbc04"/><rect x="7" y="12" width="10" height="6" rx="3" fill="#1a73e8"/></svg>',
-                );
-
-            pegmanOverlay.append(img);
-        }
-        return pegmanOverlay;
     }
 
     function updateMiniMap() {
@@ -91,7 +71,7 @@
         }
 
         if (pegmanOverlay) {
-            pegmanOverlay.style.transform = `rotate(${heading}deg)`;
+            pegmanOverlay.style.rotate = `${heading}deg`;
         }
     }
 
@@ -159,5 +139,16 @@
     <div
         class="pointer-events-auto absolute top-3 left-3 h-40 w-55 overflow-hidden rounded-xl bg-white shadow-[0_2px_10px_rgba(0,0,0,0.25)] sm:top-auto sm:right-3 sm:bottom-3 sm:left-auto"
         bind:this={miniMapContainer}
-    ></div>
+    >
+        <div
+            bind:this={pegmanOverlay}
+            class="pointer-events-none absolute top-1/2 left-1/2 z-10 h-8 w-8 origin-[50%_60%] -translate-x-1/2 -translate-y-1/2"
+        >
+            <img
+                class="h-8 w-8 object-contain drop-shadow-sm"
+                alt="Street View heading"
+                src="data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%227%22%20r%3D%224%22%20fill%3D%22%23fbbc04%22/%3E%3Crect%20x%3D%227%22%20y%3D%2212%22%20width%3D%2210%22%20height%3D%226%22%20rx%3D%223%22%20fill%3D%22%231a73e8%22/%3E%3C/svg%3E"
+            />
+        </div>
+    </div>
 </div>

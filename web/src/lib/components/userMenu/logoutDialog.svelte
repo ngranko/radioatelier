@@ -40,6 +40,7 @@
 
             await ctx.clerk.signOut({redirectUrl: '/login'});
         } catch (err) {
+            console.error('Failed to logout', err);
             toast.error('Не удалось выйти из аккаунта');
             isLoggingOut = false;
         }

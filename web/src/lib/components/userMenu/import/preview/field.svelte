@@ -7,6 +7,7 @@
     import {importState} from '$lib/state/import.svelte.ts';
 
     interface Props {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         form: SuperForm<any>;
         field: Field;
     }
@@ -52,14 +53,14 @@
                             {importState.preview[0][$formData[field.name]] ?? 'Не выбрано'}
                         </Trigger>
                         <Content>
-                            <Item value={null}>
+                            <Item value="">
                                 <span class="text-muted-foreground flex items-center gap-2">
                                     <i class="fa-solid fa-xmark"></i>
                                     Не выбрано
                                 </span>
                             </Item>
-                            {#each importState.preview[0] as item, key}
-                                <Item value={key}>
+                            {#each importState.preview[0] as item, key (key)}
+                                <Item value={String(key)}>
                                     {item}
                                 </Item>
                             {/each}

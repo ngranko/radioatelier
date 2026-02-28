@@ -2,7 +2,7 @@
     import {Input} from '$lib/components/ui/input';
     import type {HTMLInputAttributes} from 'svelte/elements';
 
-    interface Props extends Omit<HTMLInputAttributes, 'type' | 'files'> {}
+    type Props = Omit<HTMLInputAttributes, 'type' | 'files'>;
 
     let {value = $bindable(), ...rest}: Props = $props();
 

@@ -42,7 +42,9 @@ export class PointerDragZoomController {
                 event.preventDefault();
                 try {
                     (event.currentTarget as Element).setPointerCapture(event.pointerId);
-                } catch {}
+                } catch {
+                    // do nothing
+                }
                 this.activePointerId = event.pointerId;
                 this.start(event.clientY);
 
@@ -71,7 +73,9 @@ export class PointerDragZoomController {
             this.end();
             try {
                 (event.currentTarget as Element).releasePointerCapture(event.pointerId);
-            } catch {}
+            } catch {
+                // do nothing
+            }
         };
 
         element.addEventListener('pointerdown', onPointerDown, {passive: false});

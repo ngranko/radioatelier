@@ -34,7 +34,7 @@
             importState.provider.cancel();
         }
         resetImportState();
-        goto('/', {invalidate: ['/api/object/list']});
+        goto('/');
     }
 
     function getIsOpen() {

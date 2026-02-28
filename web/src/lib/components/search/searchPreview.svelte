@@ -36,7 +36,7 @@
                 <div class="pt-2 pr-4 pb-2 pl-4 opacity-75">Ничего не найдено</div>
             {/if}
 
-            {#each $previewObjects.data.data.items as object}
+            {#each $previewObjects.data.data.items as object (object.id)}
                 <SearchPreviewItem {object} />
             {/each}
 

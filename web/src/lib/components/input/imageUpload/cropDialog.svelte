@@ -48,6 +48,7 @@
             });
             isOpen = false;
         } catch (error) {
+            console.error('Failed to create preview:', error);
             toast.error('Не получилось обновить превью');
         }
         isSubmitting = false;

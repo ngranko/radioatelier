@@ -7,12 +7,12 @@
     interface Props {
         name?: string | undefined;
         value: string | undefined;
-        error?: string[] | null | undefined;
+        error: string[] | null;
     }
 
     const client = useConvexClient();
 
-    let {name = undefined, value = $bindable(), error = undefined}: Props = $props();
+    let {name = undefined, value = $bindable(), error = null}: Props = $props();
 
     const categories = useQuery(api.categories.list);
     const sortedCategories = $derived(

@@ -1,5 +1,6 @@
 import type {Location} from '$lib/interfaces/location';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function getInitialCenter(locationMutation: any): Promise<Location> {
     if (localStorage.getItem('lastCenter')) {
         return JSON.parse(localStorage.getItem('lastCenter') as string);
@@ -22,12 +23,14 @@ export async function getInitialCenter(locationMutation: any): Promise<Location>
 
 export function startPositionPolling(intervalMs = 5000): number {
     updateCurrentPosition();
-    const id = setInterval(updateCurrentPosition, intervalMs);
+    const id = window.setInterval(updateCurrentPosition, intervalMs);
     return id;
 }
 
 export function stopPositionPolling(id?: number) {
-    if (id) clearInterval(id);
+    if (id) {
+        window.clearInterval(id);
+    }
 }
 
 function updateCurrentPosition() {

@@ -19,13 +19,13 @@
 </script>
 
 <div class="flex flex-wrap gap-2">
-    {#each sortedTags as tag}
+    {#each sortedTags as tag (tag.id)}
         <Badge variant="secondary" class="bg-sky-100 text-sky-800">
             <i class="fa-solid fa-tag"></i>
             <span class="lowercase">{tag.name}</span>
         </Badge>
     {/each}
-    {#each sortedPrivateTags as tag}
+    {#each sortedPrivateTags as tag (tag.id)}
         <Badge variant="secondary" class="bg-amber-100 text-amber-900">
             <i class="fa-solid fa-lock"></i>
             <span class="lowercase">{tag.name}</span>

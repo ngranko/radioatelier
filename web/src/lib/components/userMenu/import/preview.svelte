@@ -63,6 +63,7 @@
     const missingFieldsCount = $derived(
         fieldList
             .filter(item => item.required)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             .filter(item => !($formData as Record<string, any>)[item.name]).length,
     );
 
@@ -91,7 +92,7 @@
                 </span>
             </div>
             <div class="grid gap-3">
-                {#each fieldList as field}
+                {#each fieldList as field (field.name)}
                     <Field {form} {field} />
                 {/each}
             </div>

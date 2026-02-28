@@ -51,7 +51,7 @@ export default class JsonRequest implements Request<never> {
         return this.options;
     }
 
-    public setParams(params: {}): this {
+    public setParams(params: object): this {
         this.params = {...this.params, ...params};
         return this;
     }

@@ -22,7 +22,7 @@
     let {onClick}: Props = $props();
 
     let container: HTMLDivElement | undefined = $state();
-    let clickTimeout: number | undefined;
+    let clickTimeout: ReturnType<typeof setTimeout> | undefined;
     let positionInterval: number | undefined;
     let isInZoomMode = false;
 

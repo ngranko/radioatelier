@@ -15,15 +15,13 @@
     import {cn} from '$lib/utils.ts';
 
     let currentTab = $state('local');
-    let classes: string = $state('');
-
-    $effect(() => {
-        classes = cn({
+    let classes: string = $derived(
+        cn({
             'absolute top-0 w-[calc(100vw-16px)] max-w-sm m-2 pt-14 rounded-lg bg-white overflow-hidden transition-[height] z-1': true,
             'h-[calc(100dvh-16px)]': !searchState.isResultsMinimized,
             'h-25': searchState.isResultsMinimized,
-        });
-    });
+        }),
+    );
 </script>
 
 <aside

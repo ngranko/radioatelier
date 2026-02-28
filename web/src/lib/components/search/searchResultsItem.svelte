@@ -12,7 +12,7 @@
     let {id, object}: Props = $props();
 
     function handleClick() {
-        setCenter(Number(object.lat), Number(object.lng));
+        setCenter(object.latitude, object.longitude);
         if (id && mapState.markerManager) {
             const marker = mapState.markerManager.getMarker(id);
             if (marker?.getRaw()) {

@@ -54,7 +54,7 @@ export async function deleteObject(
 }
 
 export async function searchPreview({
-    queryKey: [_key, {query, latitude, longitude}],
+    queryKey: [, {query, latitude, longitude}],
 }: QueryFunctionContext<SearchContext>): Promise<Payload<SearchLocalResponsePayload>> {
     return new AuthRequest(
         new JsonRequest(
@@ -65,7 +65,7 @@ export async function searchPreview({
 }
 
 export async function searchLocal({
-    queryKey: [_key, {query, latitude, longitude}],
+    queryKey: [, {query, latitude, longitude}],
     pageParam = 0,
 }: QueryFunctionContext<SearchContext, number>): Promise<Payload<SearchLocalResponsePayload>> {
     return new AuthRequest(
@@ -77,7 +77,7 @@ export async function searchLocal({
 }
 
 export async function searchGoogle({
-    queryKey: [_key, {query, latitude, longitude}],
+    queryKey: [, {query, latitude, longitude}],
     pageParam = '',
 }: QueryFunctionContext<SearchContext, string>): Promise<Payload<SearchGoogleResponsePayload>> {
     return new AuthRequest(

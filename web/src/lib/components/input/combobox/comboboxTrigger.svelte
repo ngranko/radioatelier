@@ -3,7 +3,6 @@
     import {Button} from '$lib/components/ui/button';
     import {cn} from '$lib/utils.js';
     import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
-    import XIcon from '@lucide/svelte/icons/x';
     import ComboboxValue from '$lib/components/input/combobox/comboboxValue.svelte';
     import ClearButton from '$lib/components/input/combobox/clearButton.svelte';
     import type {Option} from '$lib/interfaces/option';

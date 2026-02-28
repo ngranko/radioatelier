@@ -24,9 +24,10 @@
     import {type LooseObject} from '$lib/interfaces/object';
 
     // this is needed to avoid deck.gl error
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     webgl2Adapter;
 
-    let {data, children}: LayoutProps = $props();
+    let {children}: LayoutProps = $props();
 
     let consoleElement: HTMLElement | undefined = $state();
     let orientationEnabled = $state(false);
@@ -125,7 +126,6 @@
                 id={sharedMarker.object.id}
                 lat={sharedMarker.object.latitude}
                 lng={sharedMarker.object.longitude}
-                initialActive={true}
                 icon="fa-solid fa-star"
                 color="#008e92"
                 source="share"
@@ -138,7 +138,6 @@
             <Marker
                 lat={createDraftState.position.lat}
                 lng={createDraftState.position.lng}
-                initialActive={true}
                 icon="fa-solid fa-seedling"
                 color="#000000"
                 source="map"

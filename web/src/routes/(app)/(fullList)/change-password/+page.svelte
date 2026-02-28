@@ -9,13 +9,14 @@
     let isLoading = $state(true);
     let PasswordChangeDialog: Component<{isOpen: boolean}> | undefined = $state();
 
+    // TODO: don't need the dynamic import after removing zxcvbn
     onMount(async () => {
         if (!PasswordChangeDialog) {
             isLoading = true;
             try {
                 const {default: Component} = await import('./passwordChangeDialog.svelte');
                 PasswordChangeDialog = Component;
-            } catch (error) {
+            } catch {
                 toast.error('Что-то пошло не так');
             }
             isLoading = false;

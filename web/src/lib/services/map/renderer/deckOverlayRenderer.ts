@@ -32,11 +32,11 @@ export class DeckOverlayRenderer implements MarkerRenderer {
         this.scheduleRender();
     }
 
-    public show(_marker: Marker): void {
+    public show(): void {
         // No-op; all markers rendered in one deck.gl layer
     }
 
-    public hide(_marker: Marker): void {
+    public hide(): void {
         // No-op; all markers rendered in one deck.gl layer
     }
 
@@ -48,7 +48,7 @@ export class DeckOverlayRenderer implements MarkerRenderer {
         }
     }
 
-    public applyState(_marker: Marker): void {
+    public applyState(): void {
         // No-op; all markers rendered in one deck.gl layer
     }
 
