@@ -1,6 +1,5 @@
 <script lang="ts">
-    import type {LooseObject, Object} from '$lib/interfaces/object';
-    import {searchPointList} from '$lib/stores/map';
+    import type {LooseObject} from '$lib/interfaces/object';
     import {superForm, defaults} from 'sveltekit-superforms';
     import {zod4Client} from 'sveltekit-superforms/adapters';
     import PrivateTagsSelect from '$lib/components/objectDetails/editMode/privateTagsSelect.svelte';
@@ -22,10 +21,7 @@
     import {getErrorArray} from '$lib/utils/formErrors';
     import {page} from '$app/state';
     import {schema, toFormDefaults} from '$lib/schema/objectSchema.ts';
-    import {getObjectsContext} from '$lib/context/objects.ts';
     import BackButton from '$lib/components/objectDetails/editMode/backButton.svelte';
-
-    const objectsCtx = getObjectsContext();
 
     interface Props {
         initialValues: Partial<LooseObject>;
@@ -72,9 +68,9 @@
                 submitPromise?.reject(new Error('Что-то не так во введенных данных'));
             }
 
-            if (result.type === 'success' && result.data?.object) {
+            if (result.type === 'success' && result.data?.id) {
                 submitPromise?.resolve(null);
-                handleSaveSuccess(result.data.object);
+                handleSaveSuccess();
             }
 
             submitPromise = null;
@@ -93,32 +89,7 @@
         }
     });
 
-    function handleSaveSuccess(updated: Object) {
-        objectsCtx.update(updated.id, {
-            id: updated.id,
-            latitude: updated.latitude,
-            longitude: updated.longitude,
-            isRemoved: updated.isRemoved,
-            isVisited: updated.isVisited,
-            isOwner: updated.isOwner,
-        });
-
-        activeObject.object = updated;
-
-        searchPointList.update(updated.id, {
-            object: {
-                id: updated.id,
-                name: updated.name,
-                latitude: updated.latitude,
-                longitude: updated.longitude,
-                categoryName: updated.category?.name ?? '',
-                address: updated.address,
-                city: updated.city,
-                country: updated.country,
-                type: 'local',
-            },
-        });
-
+    function handleSaveSuccess() {
         activeObject.isEditing = false;
     }
 

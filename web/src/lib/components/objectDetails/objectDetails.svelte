@@ -27,6 +27,8 @@
         isLoading?: boolean;
         disableIntroAnimation?: boolean;
         permissions?: Permissions;
+        /** When set, close triggers this instead of navigating; caller handles transition then navigation */
+        onCloseRequest?: () => void;
     }
 
     const ctx = useClerkContext();
@@ -38,6 +40,7 @@
         isLoading = false,
         disableIntroAnimation = false,
         permissions = {canEditAll: true, canEditPersonal: true},
+        onCloseRequest,
     }: Props = $props();
 
     let showSkeleton = $state(false);
@@ -45,6 +48,10 @@
 
     $effect(() => {
         if (isLoading) {
+            if (!initialValues) {
+                showSkeleton = true;
+                return;
+            }
             skeletonTimeout = setTimeout(() => {
                 showSkeleton = true;
             }, 150);
@@ -85,22 +92,14 @@
         if (!initialValues || initialValues.id === null) {
             return permissions.canEditAll;
         }
-
-        // TODO: redo this
-        const isOwner =
-            initialValues.isOwner ?? (activeObject.object as Object | null)?.isOwner ?? false;
-        return permissions.canEditAll && isOwner;
+        return permissions.canEditAll && (initialValues.isOwner ?? false);
     });
 
     const canEditPersonal = $derived.by(() => {
         if (!initialValues || initialValues.id === null) {
             return permissions.canEditPersonal;
         }
-
-        // TODO: redo this
-        const isOwner =
-            initialValues.isOwner ?? (activeObject.object as Object | null)?.isOwner ?? false;
-        return permissions.canEditPersonal && !isOwner;
+        return permissions.canEditPersonal && !(initialValues.isOwner ?? false);
     });
 
     function handleMinimizeClick() {
@@ -108,7 +107,7 @@
     }
 
     function handleClose() {
-        if (!activeObject.object && !isLoading) {
+        if (!activeObject.detailsId && !isLoading) {
             return;
         }
 
@@ -119,7 +118,9 @@
             mapState.map.getStreetView().setVisible(false);
         }
 
-        if (ctx.auth.userId) {
+        if (onCloseRequest) {
+            onCloseRequest();
+        } else if (ctx.auth.userId) {
             setTimeout(() => goto('/'), 200);
         }
     }

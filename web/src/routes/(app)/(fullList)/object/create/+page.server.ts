@@ -45,9 +45,30 @@ export const actions: Actions = {
             return fail(400, {form});
         }
 
+        const d = form.data;
         try {
-            const result = await client.mutation(api.objects.create, {data: form.data});
-            return {form, object: result.data};
+            const id = await client.mutation(api.objects.create, {
+                data: {
+                    latitude: d.latitude,
+                    longitude: d.longitude,
+                    address: d.address ?? '',
+                    city: d.city ?? '',
+                    country: d.country ?? '',
+                    name: d.name,
+                    description: d.description ?? null,
+                    installedPeriod: d.installedPeriod ?? null,
+                    removalPeriod: d.removalPeriod ?? null,
+                    source: d.source ?? null,
+                    coverId: d.cover ?? null,
+                    categoryId: d.category,
+                    tagIds: d.tags,
+                    isPublic: d.isPublic,
+                    isRemoved: d.isRemoved,
+                    privateTags: d.privateTags,
+                    isVisited: d.isVisited,
+                },
+            });
+            return {form, id};
         } catch (err) {
             console.error('Failed to create object:', err);
             return error(500, 'Не удалось сохранить точку');

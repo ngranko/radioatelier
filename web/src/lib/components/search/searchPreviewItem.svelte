@@ -4,6 +4,7 @@
     import type {SearchItem} from '$lib/interfaces/object';
     import {mapState} from '$lib/state/map.svelte.ts';
     import {activeObject} from '$lib/state/activeObject.svelte.ts';
+    import {goto} from '$app/navigation';
 
     interface Props {
         object: SearchItem;
@@ -16,26 +17,23 @@
             return;
         }
 
-        setCenter(Number(object.lat), Number(object.lng));
+        setCenter(object.latitude, object.longitude);
         const marker = mapState.markerManager.getMarker(object.id);
         if (marker?.getRaw()) {
             google.maps.event.trigger(marker.getRaw()!, 'gmp-click');
+        } else if (object.id) {
+            activeObject.isMinimized = false;
+            activeObject.isDirty = false;
+            activeObject.detailsId = object.id;
+            activeObject.isEditing = false;
+            activeObject.isLoading = true;
+            goto(`/object/${object.id}`);
         } else {
             activeObject.isMinimized = false;
-            activeObject.isEditing = !object.id;
+            activeObject.isEditing = true;
             activeObject.isDirty = false;
-            activeObject.detailsId = object.id ?? new Date().getTime().toString();
-            activeObject.object = {
-                id: object.id,
-                name: object.name,
-                address: object.address,
-                city: object.city,
-                country: object.country,
-                lat: String(object.lat),
-                lng: String(object.lng),
-                isVisited: false,
-                isRemoved: false,
-            };
+            activeObject.detailsId = new Date().getTime().toString();
+            goto(`/object/create?lat=${object.latitude}&lng=${object.longitude}`);
         }
     }
 </script>

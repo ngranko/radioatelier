@@ -114,8 +114,8 @@
             await $reposition.mutateAsync({
                 id: id!,
                 updatedFields: {
-                    lat: marker.getPosition().lat,
-                    lng: marker.getPosition().lng,
+                    latitude: marker.getPosition().lat,
+                    longitude: marker.getPosition().lng,
                 },
             });
             invalidate('/api/object/list');
@@ -134,9 +134,8 @@
             activeObject.isMinimized = false;
             activeObject.isDirty = false;
             activeObject.detailsId = id!;
-            activeObject.object = {...$searchPointList[id!].object, isVisited, isRemoved};
         } else {
-            if (page.params.id === id && activeObject.object?.id === id) {
+            if (page.params.id === id && activeObject.detailsId === id) {
                 activeObject.isMinimized = false;
                 activeObject.isDirty = false;
                 activeObject.isLoading = false;
@@ -148,7 +147,6 @@
             activeObject.isEditing = false;
             activeObject.isLoading = true;
             activeObject.detailsId = id!;
-            activeObject.object = null;
             goto(`/object/${id}`);
         }
     }

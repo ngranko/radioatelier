@@ -25,16 +25,34 @@
         {initialData: queryInitialData},
     );
 
-    const values = $derived((liveObject.data ?? queryInitialData) as Object);
-    const canEditAll = $derived(permissions.canEditAll && values.isOwner);
-    const canEditPersonal = $derived(permissions.canEditPersonal && !values.isOwner);
+    const liveValues = $derived((liveObject.data ?? queryInitialData) as Object);
+    const canEditAll = $derived(permissions.canEditAll && liveValues.isOwner);
+    const canEditPersonal = $derived(permissions.canEditPersonal && !liveValues.isOwner);
+
+    let editSnapshot = $state<Object | null>(null);
+    let snapshotObjectId = $state<Id<'objects'> | null>(null);
+
+    $effect(() => {
+        const currentId = liveValues.id;
+        if (isEditing) {
+            if (!editSnapshot || snapshotObjectId !== currentId) {
+                editSnapshot = structuredClone(liveValues);
+                snapshotObjectId = currentId;
+            }
+        } else {
+            editSnapshot = null;
+            snapshotObjectId = null;
+        }
+    });
+
+    const formValues = $derived((isEditing && editSnapshot ? editSnapshot : liveValues) as Object);
 </script>
 
 <!-- TODO: add an error state -->
 {#if canEditAll && isEditing}
-    <Form initialValues={values} />
+    <Form initialValues={formValues} />
 {:else if canEditPersonal && isEditing}
-    <LightForm initialValues={values} />
+    <LightForm initialValues={formValues} />
 {:else}
-    <ViewMode initialValues={values} permissions={{canEditAll, canEditPersonal}} />
+    <ViewMode initialValues={liveValues} permissions={{canEditAll, canEditPersonal}} />
 {/if}

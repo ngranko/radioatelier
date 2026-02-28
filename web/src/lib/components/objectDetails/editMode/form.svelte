@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type {LooseObject, Object} from '$lib/interfaces/object';
+    import type {LooseObject} from '$lib/interfaces/object';
     import DeleteButton from '$lib/components/objectDetails/editMode/deleteButton.svelte';
     import BackButton from '$lib/components/objectDetails/editMode/backButton.svelte';
     import {searchPointList} from '$lib/stores/map';
@@ -29,6 +29,7 @@
     import {page} from '$app/state';
     import {schema, toFormDefaults} from '$lib/schema/objectSchema.ts';
     import AddressLoadingIndicator from '$lib/components/objectDetails/editMode/addressLoadingIndicator.svelte';
+    import type {Id} from '$convex/_generated/dataModel';
 
     interface Props {
         initialValues: Partial<LooseObject>;
@@ -87,8 +88,8 @@
                     handleDeleteSuccess(result.data.id);
                 }
 
-                if (lastAction === 'save' && result.data?.object) {
-                    handleSaveSuccess(result.data.object);
+                if (lastAction === 'save' && result.data?.id) {
+                    handleSaveSuccess(result.data.id);
                 }
             }
 
@@ -121,21 +122,6 @@
         }
     });
 
-    $effect(() => {
-        if (!activeObject.addressLoading && activeObject.object) {
-            const obj = activeObject.object;
-            if (!$formData.address && obj.address) {
-                $formData.address = obj.address;
-            }
-            if (!$formData.city && obj.city) {
-                $formData.city = obj.city;
-            }
-            if (!$formData.country && obj.country) {
-                $formData.country = obj.country;
-            }
-        }
-    });
-
     function handleDelete() {
         deleteButton.click();
     }
@@ -162,28 +148,13 @@
         );
     }
 
-    function handleSaveSuccess(updated: Object) {
-        activeObject.object = updated;
-
-        searchPointList.update(updated.id, {
-            object: {
-                id: updated.id,
-                name: updated.name,
-                latitude: updated.latitude,
-                longitude: updated.longitude,
-                categoryName: updated.category?.name ?? '',
-                address: updated.address,
-                city: updated.city,
-                country: updated.country,
-                type: 'local',
-            },
-        });
-
+    function handleSaveSuccess(id: Id<'objects'>) {
         activeObject.isEditing = false;
+        // in case we were creating a new object
+        goto(`/object/${id}`);
     }
 
     function handleDeleteSuccess(id: string) {
-        // objectsCtx.remove(id);
         searchPointList.remove(id);
 
         goto('/');

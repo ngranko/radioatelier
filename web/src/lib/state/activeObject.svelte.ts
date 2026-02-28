@@ -1,5 +1,3 @@
-import type {BareObject, Object} from '$lib/interfaces/object.ts';
-
 interface ActiveObject {
     isMinimized: boolean;
     isEditing: boolean;
@@ -7,7 +5,6 @@ interface ActiveObject {
     isLoading: boolean;
     addressLoading: boolean;
     detailsId: string;
-    object: Object | BareObject | null;
 }
 
 export const activeObject = $state<ActiveObject>({
@@ -17,7 +14,6 @@ export const activeObject = $state<ActiveObject>({
     isLoading: false,
     addressLoading: false,
     detailsId: '',
-    object: null,
 });
 
 export function resetActiveObject() {
@@ -27,5 +23,4 @@ export function resetActiveObject() {
     activeObject.isLoading = false;
     activeObject.addressLoading = false;
     activeObject.detailsId = '';
-    activeObject.object = null;
 }

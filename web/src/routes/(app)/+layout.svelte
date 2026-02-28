@@ -5,7 +5,7 @@
     import type {LayoutProps} from './$types';
     import Map from '$lib/components/map/map.svelte';
     import type {Location} from '$lib/interfaces/location.ts';
-    import {activeObject} from '$lib/state/activeObject.svelte.ts';
+    import {createDraftState} from '$lib/state/createDraft.svelte.ts';
     import {searchPointList} from '$lib/stores/map.ts';
     import {mapState} from '$lib/state/map.svelte.ts';
     import LocationMarker from '$lib/components/map/locationMarker.svelte';
@@ -16,6 +16,7 @@
     import {goto} from '$app/navigation';
     import {page} from '$app/state';
     import {useClerkContext} from 'svelte-clerk';
+    import {activeObject} from '$lib/state/activeObject.svelte';
 
     // this is needed to avoid deck.gl error
     webgl2Adapter;
@@ -30,6 +31,10 @@
         if (!clerkCtx.auth.userId) {
             return;
         }
+
+        activeObject.isLoading = true;
+        activeObject.detailsId = new Date().getTime().toString();
+        activeObject.addressLoading = true;
 
         goto(`/object/create?lat=${location.lat}&lng=${location.lng}`);
     }
@@ -83,8 +88,8 @@
     {#each Object.keys($searchPointList) as id (id)}
         <Marker
             {id}
-            lat={$searchPointList[id].object.lat}
-            lng={$searchPointList[id].object.lng}
+            lat={$searchPointList[id].object.latitude}
+            lng={$searchPointList[id].object.longitude}
             icon={$searchPointList[id].object.type === 'local'
                 ? 'fa-solid fa-magnifying-glass'
                 : 'fa-brands fa-google'}
@@ -97,8 +102,8 @@
         {#key sharedMarker.object.id}
             <Marker
                 id={sharedMarker.object.id}
-                lat={sharedMarker.object.lat}
-                lng={sharedMarker.object.lng}
+                lat={sharedMarker.object.latitude}
+                lng={sharedMarker.object.longitude}
                 initialActive={true}
                 icon="fa-solid fa-star"
                 color="#008e92"
@@ -107,11 +112,11 @@
         {/key}
     {/if}
 
-    {#if activeObject.object && !activeObject.object.id}
-        {#key `${activeObject.object.lat},${activeObject.object.lng}`}
+    {#if createDraftState.position}
+        {#key `${createDraftState.position.lat},${createDraftState.position.lng}`}
             <Marker
-                lat={activeObject.object.lat}
-                lng={activeObject.object.lng}
+                lat={createDraftState.position.lat}
+                lng={createDraftState.position.lng}
                 initialActive={true}
                 icon="fa-solid fa-seedling"
                 color="#000000"

@@ -3,8 +3,6 @@
     import CropDialog from '$lib/components/input/imageUpload/cropDialog.svelte';
     import ImageViewer from '$lib/components/input/imageUpload/imageViewer.svelte';
     import {toast} from 'svelte-sonner';
-    import {activeObject} from '$lib/state/activeObject.svelte.ts';
-    import type {Object} from '$lib/interfaces/object.ts';
 
     interface Props {
         id?: string;
@@ -43,7 +41,6 @@
 
     function handlePreviewChange(newPreviewUrl: string) {
         previewUrl = newPreviewUrl;
-        (activeObject.object as Object).cover.previewUrl = newPreviewUrl;
     }
 
     function handleUploadClick() {

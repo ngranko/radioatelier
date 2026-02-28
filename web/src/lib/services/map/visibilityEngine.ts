@@ -83,7 +83,8 @@ export class VisibilityEngine {
         if (activeObject.detailsId === id) {
             activeMarker.set(marker);
             activeMarker.activate();
-            setCenter(activeObject.object!.latitude, activeObject.object!.longitude);
+            const pos = marker.getPosition();
+            setCenter(pos.lat, pos.lng);
         }
     }
 

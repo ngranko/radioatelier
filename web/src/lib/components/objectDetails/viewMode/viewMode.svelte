@@ -20,7 +20,11 @@
     }
 </script>
 
-<Actions lat={initialValues.lat ?? ''} lng={initialValues.lng ?? ''} {permissions} />
+<Actions
+    lat={initialValues.latitude != null ? String(initialValues.latitude) : ''}
+    lng={initialValues.longitude != null ? String(initialValues.longitude) : ''}
+    {permissions}
+/>
 <div class="relative h-[calc(100vh-8px*2-57px*2)] space-y-3 overflow-x-hidden overflow-y-auto p-4">
     <div class="mb-3">
         <ImageUpload
