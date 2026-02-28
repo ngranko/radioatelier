@@ -10,6 +10,7 @@
     import {type LooseObject} from '$lib/interfaces/object';
 
     let {data} = $props();
+    let isCreatePageActive = true;
 
     onMount(() => {
         const lat = page.url.searchParams.get('lat');
@@ -42,15 +43,22 @@
 
         data.streamed.address
             .then((address: {address?: string; city?: string; country?: string}) => {
+                if (!isCreatePageActive) {
+                    return;
+                }
                 draft = {...draft, ...address};
                 setCreateDraftInitialValues(draft);
             })
             .finally(() => {
+                if (!isCreatePageActive) {
+                    return;
+                }
                 activeObject.addressLoading = false;
             });
     });
 
     onDestroy(() => {
+        isCreatePageActive = false;
         setCreateDraftPosition(null);
         setCreateDraftInitialValues(null);
     });

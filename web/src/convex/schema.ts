@@ -12,7 +12,7 @@ export default defineSchema({
     counters: defineTable({
         name: v.string(),
         value: v.number(),
-    }),
+    }).index('byName', ['name']),
     images: defineTable({
         url: v.string(),
         previewUrl: v.nullable(v.string()),

@@ -1,9 +1,14 @@
 import {v} from 'convex/values';
 import {Doc} from './_generated/dataModel';
 import {mutation, query} from './_generated/server';
-import {createObjectLocationFields} from './sharedValidators';
+import {
+    getIsVisited,
+    getNextInternalId,
+    getPrivateTags,
+    updateIsVisited,
+} from './helpers/objectHelpers';
+import {createObjectRecordFields, updateObjectRecordFields} from './sharedValidators';
 import {getCurrentUser, getCurrentUserOrThrow} from './users';
-import {getVisitedChunkId} from './utils/visitedChunks';
 
 export const getDetails = query({
     args: {
@@ -13,7 +18,6 @@ export const getDetails = query({
         const user = await getCurrentUser(ctx);
 
         const object = await ctx.db.get('objects', id);
-
         if (!object) {
             throw new Error('Object not found');
         }
@@ -36,29 +40,8 @@ export const getDetails = query({
         let privateTags: Doc<'privateTags'>[] = [];
         let isVisited = false;
         if (user) {
-            const objectPrivateTags = await ctx.db
-                .query('objectPrivateTags')
-                .withIndex('byObjectIdUserId', q => q.eq('objectId', id).eq('userId', user._id))
-                .first();
-            privateTags =
-                (
-                    await Promise.all(
-                        objectPrivateTags?.privateTagIds.map(async item =>
-                            ctx.db.get('privateTags', item),
-                        ) ?? [],
-                    )
-                ).filter((tag): tag is Doc<'privateTags'> => tag !== null) ?? [];
-
-            const chunkId = getVisitedChunkId(object._id);
-            const visitedData = await ctx.db
-                .query('userVisitedChunks')
-                .withIndex('byUserIdAndChunkId', q =>
-                    q.eq('userId', user._id).eq('chunkId', chunkId),
-                )
-                .unique();
-            if (visitedData) {
-                isVisited = visitedData.visitedObjectIds.includes(object._id);
-            }
+            privateTags = await getPrivateTags(ctx, object._id, user._id);
+            isVisited = await getIsVisited(ctx, object._id, user._id);
         }
 
         let cover = null;
@@ -105,26 +88,9 @@ export const getDetails = query({
     },
 });
 
-const createDataValidator = {
-    ...createObjectLocationFields,
-    name: v.string(),
-    description: v.union(v.string(), v.null()),
-    installedPeriod: v.union(v.string(), v.null()),
-    removalPeriod: v.union(v.string(), v.null()),
-    source: v.union(v.string(), v.null()),
-    coverId: v.union(v.id('images'), v.null()),
-    categoryId: v.id('categories'),
-    tagIds: v.array(v.id('tags')),
-    isPublic: v.boolean(),
-    isRemoved: v.boolean(),
-    internalId: v.optional(v.string()),
-    privateTags: v.array(v.id('privateTags')),
-    isVisited: v.boolean(),
-};
-
 export const create = mutation({
     args: {
-        data: v.object(createDataValidator),
+        data: v.object(createObjectRecordFields),
     },
     handler: async (ctx, {data}) => {
         const user = await getCurrentUserOrThrow(ctx);
@@ -148,7 +114,7 @@ export const create = mutation({
             tagIds: data.tagIds,
             isPublic: data.isPublic,
             isRemoved: data.isRemoved,
-            internalId: data.internalId ?? `temp-${Date.now()}`,
+            internalId: await getNextInternalId(ctx),
             mapPointId,
             createdById: user._id,
         });
@@ -160,25 +126,7 @@ export const create = mutation({
         });
 
         if (data.isVisited) {
-            const chunkId = getVisitedChunkId(objectId);
-            const visitedData = await ctx.db
-                .query('userVisitedChunks')
-                .withIndex('byUserIdAndChunkId', q =>
-                    q.eq('userId', user._id).eq('chunkId', chunkId),
-                )
-                .unique();
-            if (visitedData) {
-                visitedData.visitedObjectIds.push(objectId);
-                await ctx.db.patch('userVisitedChunks', visitedData._id, {
-                    visitedObjectIds: [...visitedData.visitedObjectIds, objectId],
-                });
-            } else {
-                await ctx.db.insert('userVisitedChunks', {
-                    userId: user._id,
-                    chunkId,
-                    visitedObjectIds: [objectId],
-                });
-            }
+            updateIsVisited(ctx, objectId, user._id, true);
         }
 
         await ctx.db.insert('markers', {
@@ -196,33 +144,14 @@ export const create = mutation({
     },
 });
 
-const updateDataValidator = {
-    name: v.string(),
-    description: v.union(v.string(), v.null()),
-    coverId: v.union(v.id('images'), v.null()),
-    categoryId: v.id('categories'),
-    tagIds: v.array(v.id('tags')),
-    privateTags: v.array(v.id('privateTags')),
-    isPublic: v.boolean(),
-    isVisited: v.boolean(),
-    isRemoved: v.boolean(),
-    latitude: v.number(),
-    longitude: v.number(),
-    address: v.union(v.string(), v.null()),
-    city: v.union(v.string(), v.null()),
-    country: v.union(v.string(), v.null()),
-    installedPeriod: v.union(v.string(), v.null()),
-    removalPeriod: v.union(v.string(), v.null()),
-    source: v.union(v.string(), v.null()),
-};
-
-export const updateFull = mutation({
+export const update = mutation({
     args: {
         id: v.id('objects'),
-        data: v.object(updateDataValidator),
+        data: v.object(updateObjectRecordFields),
     },
     handler: async (ctx, {id, data}) => {
         const user = await getCurrentUserOrThrow(ctx);
+
         const object = await ctx.db.get('objects', id);
         if (!object) {
             throw new Error('Object not found');
@@ -253,8 +182,6 @@ export const updateFull = mutation({
             await ctx.db.patch('objects', id, objectPatch);
 
             await ctx.db.patch('mapPoints', object.mapPointId, {
-                latitude: data.latitude,
-                longitude: data.longitude,
                 address: data.address ?? '',
                 city: data.city ?? '',
                 country: data.country ?? '',
@@ -266,8 +193,6 @@ export const updateFull = mutation({
                 .first();
             if (marker) {
                 await ctx.db.patch('markers', marker._id, {
-                    latitude: data.latitude,
-                    longitude: data.longitude,
                     categoryId: data.categoryId,
                     tagIds: data.tagIds,
                     isRemoved: data.isRemoved,
@@ -276,12 +201,12 @@ export const updateFull = mutation({
             }
         }
 
-        const existingOpt = await ctx.db
+        const privateTagsRecord = await ctx.db
             .query('objectPrivateTags')
             .withIndex('byObjectIdUserId', q => q.eq('objectId', id).eq('userId', user._id))
             .first();
-        if (existingOpt) {
-            await ctx.db.patch('objectPrivateTags', existingOpt._id, {
+        if (privateTagsRecord) {
+            await ctx.db.patch('objectPrivateTags', privateTagsRecord._id, {
                 privateTagIds: data.privateTags,
             });
         } else {
@@ -292,48 +217,9 @@ export const updateFull = mutation({
             });
         }
 
-        const chunkId = getVisitedChunkId(id);
-        const visitedData = await ctx.db
-            .query('userVisitedChunks')
-            .withIndex('byUserIdAndChunkId', q => q.eq('userId', user._id).eq('chunkId', chunkId))
-            .unique();
-        const wasVisited = visitedData?.visitedObjectIds.includes(id) ?? false;
-        if (data.isVisited && !wasVisited) {
-            if (visitedData) {
-                await ctx.db.patch('userVisitedChunks', visitedData._id, {
-                    visitedObjectIds: [...visitedData.visitedObjectIds, id],
-                });
-            } else {
-                await ctx.db.insert('userVisitedChunks', {
-                    userId: user._id,
-                    chunkId,
-                    visitedObjectIds: [id],
-                });
-            }
-        } else if (!data.isVisited && wasVisited && visitedData) {
-            const newIds = visitedData.visitedObjectIds.filter(oid => oid !== id);
-            if (newIds.length === 0) {
-                await ctx.db.delete('userVisitedChunks', visitedData._id);
-            } else {
-                await ctx.db.patch('userVisitedChunks', visitedData._id, {
-                    visitedObjectIds: newIds,
-                });
-            }
-        }
+        updateIsVisited(ctx, id, user._id, data.isVisited);
 
         return id;
-    },
-});
-
-export const update = mutation({
-    args: {
-        id: v.id('objects'),
-        data: v.object({
-            name: v.string(),
-        }),
-    },
-    handler: async (ctx, {id, data}) => {
-        return await ctx.db.patch('objects', id, data);
     },
 });
 
@@ -366,24 +252,10 @@ export const remove = mutation({
             await ctx.db.delete('objectPrivateTags', row._id);
         }
 
-        const chunkId = getVisitedChunkId(id);
-        const visitedData = await ctx.db
-            .query('userVisitedChunks')
-            .withIndex('byUserIdAndChunkId', q => q.eq('userId', user._id).eq('chunkId', chunkId))
-            .unique();
-        if (visitedData) {
-            const newIds = visitedData.visitedObjectIds.filter(oid => oid !== id);
-            if (newIds.length === 0) {
-                await ctx.db.delete('userVisitedChunks', visitedData._id);
-            } else {
-                await ctx.db.patch('userVisitedChunks', visitedData._id, {
-                    visitedObjectIds: newIds,
-                });
-            }
-        }
+        updateIsVisited(ctx, id, user._id, false);
 
-        await ctx.db.delete('objects', id);
         await ctx.db.delete('mapPoints', object.mapPointId);
+        await ctx.db.delete('objects', id);
         return id;
     },
 });

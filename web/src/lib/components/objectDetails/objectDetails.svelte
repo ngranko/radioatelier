@@ -16,6 +16,10 @@
     import {mapState} from '$lib/state/map.svelte';
     import {cn} from '$lib/utils.ts';
     import {activeObject, resetActiveObject} from '$lib/state/activeObject.svelte.ts';
+    import {
+        setCreateDraftInitialValues,
+        setCreateDraftPosition,
+    } from '$lib/state/createDraft.svelte.ts';
     import type {Permissions} from '$lib/interfaces/permissions';
     import {goto} from '$app/navigation';
     import {useClerkContext} from 'svelte-clerk';
@@ -111,6 +115,11 @@
             return;
         }
 
+        if (initialValues?.id === null) {
+            setCreateDraftInitialValues(null);
+            setCreateDraftPosition(null);
+        }
+
         activeMarker.deactivate();
         activeMarker.set(null);
         resetActiveObject();
@@ -121,7 +130,7 @@
         if (onCloseRequest) {
             onCloseRequest();
         } else if (ctx.auth.userId) {
-            setTimeout(() => goto('/'), 200);
+            goto('/');
         }
     }
 </script>

@@ -29,7 +29,7 @@
 
 <!-- TODO: add an error state -->
 {#if privateTags.isLoading}
-    <Skeleton class="h-9 w-full rounded-md" />
+    <Skeleton class="h-12 w-full rounded-md" />
 {:else}
     <Combobox
         placeholder="Не выбраны"

@@ -5,7 +5,11 @@
     import type {LayoutProps} from './$types';
     import Map from '$lib/components/map/map.svelte';
     import type {Location} from '$lib/interfaces/location.ts';
-    import {createDraftState} from '$lib/state/createDraft.svelte.ts';
+    import {
+        createDraftState,
+        setCreateDraftInitialValues,
+        setCreateDraftPosition,
+    } from '$lib/state/createDraft.svelte.ts';
     import {searchPointList} from '$lib/stores/map.ts';
     import {mapState} from '$lib/state/map.svelte.ts';
     import LocationMarker from '$lib/components/map/locationMarker.svelte';
@@ -17,6 +21,7 @@
     import {page} from '$app/state';
     import {useClerkContext} from 'svelte-clerk';
     import {activeObject} from '$lib/state/activeObject.svelte';
+    import {type LooseObject} from '$lib/interfaces/object';
 
     // this is needed to avoid deck.gl error
     webgl2Adapter;
@@ -32,6 +37,22 @@
             return;
         }
 
+        const draft: Partial<LooseObject> = {
+            id: null,
+            latitude: location.lat,
+            longitude: location.lng,
+            isPublic: false,
+            isVisited: false,
+            isRemoved: false,
+            isOwner: true,
+        };
+
+        setCreateDraftPosition({lat: location.lat, lng: location.lng});
+        setCreateDraftInitialValues(draft);
+
+        activeObject.isMinimized = false;
+        activeObject.isEditing = true;
+        activeObject.isDirty = false;
         activeObject.isLoading = true;
         activeObject.detailsId = new Date().getTime().toString();
         activeObject.addressLoading = true;
