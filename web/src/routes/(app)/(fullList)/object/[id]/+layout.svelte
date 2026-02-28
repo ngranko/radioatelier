@@ -48,16 +48,15 @@
     <div
         out:fly={FLY_OUT}
         onoutroend={() => goto('/')}
-        class="absolute bottom-0 left-0 right-0 z-3"
+        class="absolute right-0 bottom-0 left-0 z-3"
     >
         <ObjectDetails
             key={renderedObject?.id ?? 'object-details'}
             initialValues={renderedObject}
             isEditing={activeObject.isEditing}
             isLoading={false}
-            disableIntroAnimation={
-                skipIntroAnimation || Boolean((data as {activeObject?: ObjectType}).activeObject)
-            }
+            disableIntroAnimation={skipIntroAnimation ||
+                Boolean((data as {activeObject?: ObjectType}).activeObject)}
             onCloseRequest={handleCloseRequest}
             permissions={{
                 canEditAll: Boolean(ctx.auth.userId) && (isOwner || !renderedObject),

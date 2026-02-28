@@ -69,7 +69,9 @@
             return false;
         }
         const query = (searchValue || '').trim();
-        if (!query) return false;
+        if (!query) {
+            return false;
+        }
         return !options.some(
             opt => String(opt[labelField] || '').toLowerCase() === query.toLowerCase(),
         );

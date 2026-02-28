@@ -21,7 +21,11 @@
     $effect(() => {
         const routeObjectId = page.params.id;
         if (!routeObjectId || routeObjectId === 'create') {
-            if (lastRouteObjectId && lastRouteObjectId !== 'create' && activeObject.detailsId === lastRouteObjectId) {
+            if (
+                lastRouteObjectId &&
+                lastRouteObjectId !== 'create' &&
+                activeObject.detailsId === lastRouteObjectId
+            ) {
                 resetActiveObject();
             }
             lastRouteObjectId = routeObjectId ?? null;
@@ -30,12 +34,20 @@
         lastRouteObjectId = routeObjectId;
     });
 
-    const detailsKey = $derived((activeObject.detailsId || createDraftState.initialValues?.id) ?? 'object-details');
-    const showPendingObjectOverlay = $derived(
-        Boolean(activeObject.isLoading && activeObject.detailsId && !createDraftState.initialValues),
+    const detailsKey = $derived(
+        (activeObject.detailsId || createDraftState.initialValues?.id) ?? 'object-details',
     );
-    const isOwner = $derived((createDraftState.initialValues as ObjectType | undefined)?.isOwner ?? false);
-    const isPublic = $derived((createDraftState.initialValues as ObjectType | undefined)?.isPublic ?? false);
+    const showPendingObjectOverlay = $derived(
+        Boolean(
+            activeObject.isLoading && activeObject.detailsId && !createDraftState.initialValues,
+        ),
+    );
+    const isOwner = $derived(
+        (createDraftState.initialValues as ObjectType | undefined)?.isOwner ?? false,
+    );
+    const isPublic = $derived(
+        (createDraftState.initialValues as ObjectType | undefined)?.isPublic ?? false,
+    );
 </script>
 
 {@render children?.()}
@@ -47,7 +59,9 @@
         out:fade={{duration: 140}}
     >
         <div class="flex h-14 items-center border-b p-3">
-            <span class="mr-2 flex-1 animate-pulse rounded bg-gray-200 text-transparent">Loading</span>
+            <span class="mr-2 flex-1 animate-pulse rounded bg-gray-200 text-transparent">
+                Loading
+            </span>
         </div>
         <div class="flex-1 overflow-hidden">
             <ViewModeSkeleton />

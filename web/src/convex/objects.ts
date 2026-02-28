@@ -224,9 +224,13 @@ export const updateFull = mutation({
     handler: async (ctx, {id, data}) => {
         const user = await getCurrentUserOrThrow(ctx);
         const object = await ctx.db.get('objects', id);
-        if (!object) throw new Error('Object not found');
+        if (!object) {
+            throw new Error('Object not found');
+        }
         const mapPoint = await ctx.db.get('mapPoints', object.mapPointId);
-        if (!mapPoint) throw new Error('Map point not found');
+        if (!mapPoint) {
+            throw new Error('Map point not found');
+        }
 
         const isOwner = object.createdById === user._id;
         if (!isOwner && !object.isPublic) {
@@ -337,8 +341,11 @@ export const remove = mutation({
     args: {id: v.id('objects')},
     handler: async (ctx, {id}) => {
         const user = await getCurrentUserOrThrow(ctx);
+
         const object = await ctx.db.get('objects', id);
-        if (!object) throw new Error('Object not found');
+        if (!object) {
+            throw new Error('Object not found');
+        }
         if (object.createdById !== user._id) {
             throw new Error('Only the owner can delete this object');
         }
@@ -347,7 +354,9 @@ export const remove = mutation({
             .query('markers')
             .withIndex('byObjectId', q => q.eq('objectId', id))
             .first();
-        if (marker) await ctx.db.delete('markers', marker._id);
+        if (marker) {
+            await ctx.db.delete('markers', marker._id);
+        }
 
         const privateTagRows = await ctx.db
             .query('objectPrivateTags')

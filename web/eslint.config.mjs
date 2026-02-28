@@ -1,5 +1,4 @@
 import js from '@eslint/js';
-import stylistic from '@stylistic/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
 import eslintConfigPrettier from 'eslint-config-prettier';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
@@ -14,10 +13,17 @@ export default [
     ...eslintPluginSvelte.configs['flat/recommended'],
     eslintPluginPrettierRecommended,
     {
-        ignores: ['.svelte-kit', 'build', 'convex/_generated', '**/*.js', '**/*.jsx'],
+        ignores: [
+            '.svelte-kit',
+            'build',
+            'node_modules',
+            'convex/_generated',
+            '**/*.js',
+            '**/*.jsx',
+        ],
     },
     {
-        files: ['**!/!*.ts', '**!/!*.tsx', '**/*.svelte'],
+        files: ['**/*.ts', '**/*.svelte'],
         languageOptions: {
             globals: {
                 ...globals.browser,
@@ -26,7 +32,6 @@ export default [
             parser: svelteParser,
             ecmaVersion: 2022,
             sourceType: 'module',
-
             parserOptions: {
                 projectService: true,
                 tsconfigRootDir: import.meta.dirname,
@@ -34,12 +39,8 @@ export default [
                 parser: tsParser,
             },
         },
-        plugins: {
-            '@stylistic': stylistic,
-        },
         rules: {
             curly: ['error', 'all'],
-            '@stylistic/brace-style': ['error', '1tbs', {allowSingleLine: false}],
         },
     },
     eslintConfigPrettier,
