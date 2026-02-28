@@ -77,7 +77,7 @@ export class DragController {
 
     private handlePointerDown(marker: Marker) {
         return () => {
-            setDragTimeout(setTimeout(() => this.startDrag(marker), 300));
+            setDragTimeout(window.setTimeout(() => this.startDrag(marker), 300));
         };
     }
 

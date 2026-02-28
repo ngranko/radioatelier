@@ -1,12 +1,11 @@
 import {api} from '$convex/_generated/api.js';
-import {getReferenceData} from '$lib/cache/referenceData';
 import {schema} from '$lib/schema/objectSchema.ts';
 import {getConvexClient} from '$lib/server/convexClient';
 import {type Actions, error, fail, redirect} from '@sveltejs/kit';
 import {superValidate} from 'sveltekit-superforms';
 import {zod4} from 'sveltekit-superforms/adapters';
 
-export const load = async ({fetch, url, locals}) => {
+export const load = async ({url, locals}) => {
     const {client, token} = await getConvexClient(locals);
     if (!token) {
         redirect(307, `/login?ref=${encodeURIComponent(url.pathname)}`);
@@ -17,13 +16,9 @@ export const load = async ({fetch, url, locals}) => {
 
     const address = client.action(api.locations.getAddress, {latitude, longitude});
 
-    const [referenceData, form] = await Promise.all([
-        getReferenceData(fetch),
-        superValidate({latitude, longitude}, zod4(schema), {errors: false}),
-    ]);
+    const form = await superValidate({latitude, longitude}, zod4(schema), {errors: false});
 
     return {
-        ...referenceData,
         streamed: {
             address,
         },

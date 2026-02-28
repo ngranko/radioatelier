@@ -22,26 +22,24 @@ export const actions: Actions = {
         const d = form.data;
 
         try {
-            await client.mutation(api.objects.updateFull, {
+            await client.mutation(api.objects.update, {
                 id,
                 data: {
                     name: d.name,
                     description: d.description,
-                    coverId: d.cover ?? null,
+                    coverId: d.cover,
                     categoryId: d.category,
                     tagIds: d.tags,
                     privateTags: d.privateTags,
                     isPublic: d.isPublic,
                     isVisited: d.isVisited,
                     isRemoved: d.isRemoved,
-                    latitude: d.latitude,
-                    longitude: d.longitude,
-                    address: d.address ?? null,
-                    city: d.city ?? null,
-                    country: d.country ?? null,
-                    installedPeriod: d.installedPeriod ?? null,
-                    removalPeriod: d.removalPeriod ?? null,
-                    source: d.source ?? null,
+                    address: d.address,
+                    city: d.city,
+                    country: d.country,
+                    installedPeriod: d.installedPeriod,
+                    removalPeriod: d.removalPeriod,
+                    source: d.source,
                 },
             });
             return {form, id};

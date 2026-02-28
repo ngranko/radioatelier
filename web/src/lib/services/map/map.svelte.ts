@@ -23,12 +23,12 @@ export function fitMarkerList(objects: MapPlaceable[], currentCenter?: MapPlacea
         const latlngbounds = new google.maps.LatLngBounds();
         if (currentCenter) {
             latlngbounds.extend(
-                new google.maps.LatLng(Number(currentCenter.lat), Number(currentCenter.lng)),
+                new google.maps.LatLng(currentCenter.latitude, currentCenter.longitude),
             );
         }
 
         for (const object of objects) {
-            latlngbounds.extend(new google.maps.LatLng(Number(object.lat), Number(object.lng)));
+            latlngbounds.extend(new google.maps.LatLng(object.latitude, object.longitude));
         }
         mapState.map.fitBounds(
             latlngbounds,

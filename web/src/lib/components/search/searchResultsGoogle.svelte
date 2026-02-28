@@ -35,7 +35,10 @@
                 .reduce((acc, val) => acc.concat(val), []);
             searchPointList.set(objects.map(item => ({object: item})));
 
-            fitMarkerList(objects, {lat: searchState.lat, lng: searchState.lng});
+            fitMarkerList(objects, {
+                latitude: Number(searchState.lat),
+                longitude: Number(searchState.lng),
+            });
         }
     });
 

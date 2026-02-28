@@ -1,4 +1,4 @@
-import {Id} from './_generated/dataModel';
+import type {Id} from './_generated/dataModel';
 import {query} from './_generated/server';
 import {getCurrentUserOrThrow} from './users';
 

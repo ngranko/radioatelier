@@ -43,6 +43,7 @@ export default [
         rules: {
             curly: ['error', 'all'],
             'svelte/no-navigation-without-resolve': 'off',
+            '@typescript-eslint/no-unused-vars': ['error', {argsIgnorePattern: '^_'}],
         },
     },
     {
@@ -60,6 +61,7 @@ export default [
         rules: {
             curly: ['error', 'all'],
             'svelte/no-navigation-without-resolve': 'off',
+            '@typescript-eslint/no-unused-vars': ['error', {argsIgnorePattern: '^_'}],
         },
     },
     eslintConfigPrettier,

@@ -47,8 +47,8 @@ function updateObjectCache(
         data: {
             object: {
                 ...cachedValue.data.object,
-                lat: data.lat,
-                lng: data.lng,
+                lat: data.latitude,
+                lng: data.longitude,
             },
         },
     });
@@ -77,8 +77,8 @@ function updateListCache(
                 if (object.id === data.id) {
                     return {
                         ...object,
-                        lat: data.lat,
-                        lng: data.lng,
+                        lat: data.latitude,
+                        lng: data.longitude,
                     };
                 }
                 return object;

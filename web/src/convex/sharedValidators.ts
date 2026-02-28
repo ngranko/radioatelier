@@ -1,9 +1,9 @@
 import {v} from 'convex/values';
 
 const mapPointAddressFields = {
-    address: v.string(),
-    city: v.string(),
-    country: v.string(),
+    address: v.nullable(v.string()),
+    city: v.nullable(v.string()),
+    country: v.nullable(v.string()),
 };
 
 const mapPointCoreFields = {

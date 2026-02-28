@@ -8,32 +8,38 @@
  * @module
  */
 
-import type * as categories from '../categories.js';
-import type * as http from '../http.js';
-import type * as locations from '../locations.js';
-import type * as markers from '../markers.js';
-import type * as migrations from '../migrations.js';
-import type * as objects from '../objects.js';
-import type * as privateTags from '../privateTags.js';
-import type * as sharedValidators from '../sharedValidators.js';
-import type * as tags from '../tags.js';
-import type * as users from '../users.js';
-import type * as utils_visitedChunks from '../utils/visitedChunks.js';
+import type * as categories from "../categories.js";
+import type * as helpers_objectHelpers from "../helpers/objectHelpers.js";
+import type * as http from "../http.js";
+import type * as locations from "../locations.js";
+import type * as markers from "../markers.js";
+import type * as migrations from "../migrations.js";
+import type * as objects from "../objects.js";
+import type * as privateTags from "../privateTags.js";
+import type * as sharedValidators from "../sharedValidators.js";
+import type * as tags from "../tags.js";
+import type * as users from "../users.js";
+import type * as utils_visitedChunks from "../utils/visitedChunks.js";
 
-import type {ApiFromModules, FilterApi, FunctionReference} from 'convex/server';
+import type {
+  ApiFromModules,
+  FilterApi,
+  FunctionReference,
+} from "convex/server";
 
 declare const fullApi: ApiFromModules<{
-    categories: typeof categories;
-    http: typeof http;
-    locations: typeof locations;
-    markers: typeof markers;
-    migrations: typeof migrations;
-    objects: typeof objects;
-    privateTags: typeof privateTags;
-    sharedValidators: typeof sharedValidators;
-    tags: typeof tags;
-    users: typeof users;
-    'utils/visitedChunks': typeof utils_visitedChunks;
+  categories: typeof categories;
+  "helpers/objectHelpers": typeof helpers_objectHelpers;
+  http: typeof http;
+  locations: typeof locations;
+  markers: typeof markers;
+  migrations: typeof migrations;
+  objects: typeof objects;
+  privateTags: typeof privateTags;
+  sharedValidators: typeof sharedValidators;
+  tags: typeof tags;
+  users: typeof users;
+  "utils/visitedChunks": typeof utils_visitedChunks;
 }>;
 
 /**
@@ -44,7 +50,10 @@ declare const fullApi: ApiFromModules<{
  * const myFunctionReference = api.myModule.myFunction;
  * ```
  */
-export declare const api: FilterApi<typeof fullApi, FunctionReference<any, 'public'>>;
+export declare const api: FilterApi<
+  typeof fullApi,
+  FunctionReference<any, "public">
+>;
 
 /**
  * A utility for referencing Convex functions in your app's internal API.
@@ -54,6 +63,9 @@ export declare const api: FilterApi<typeof fullApi, FunctionReference<any, 'publ
  * const myFunctionReference = internal.myModule.myFunction;
  * ```
  */
-export declare const internal: FilterApi<typeof fullApi, FunctionReference<any, 'internal'>>;
+export declare const internal: FilterApi<
+  typeof fullApi,
+  FunctionReference<any, "internal">
+>;
 
 export declare const components: {};

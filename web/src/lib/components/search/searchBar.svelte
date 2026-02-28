@@ -13,7 +13,7 @@
     function handleInput(evt: Event) {
         val = (evt.target as HTMLInputElement).value;
         clearTimeout(timeout);
-        timeout = setTimeout(() => {
+        timeout = window.setTimeout(() => {
             const center = mapState.map?.getCenter();
             if (!center) {
                 timeout = undefined;
