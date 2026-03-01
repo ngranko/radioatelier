@@ -46,7 +46,20 @@ export const getDetails = query({
 
         let cover = null;
         if (object.coverId) {
-            cover = await ctx.db.get('images', object.coverId);
+            const image = await ctx.db.get('images', object.coverId);
+            if (image) {
+                cover = {
+                    id: image._id,
+                    url: '',
+                    previewUrl: '',
+                };
+                if (image.originalStorageId) {
+                    cover.url = (await ctx.storage.getUrl(image.originalStorageId)) ?? '';
+                }
+                if (image.previewStorageId) {
+                    cover.previewUrl = (await ctx.storage.getUrl(image.previewStorageId)) ?? '';
+                }
+            }
         }
 
         return {
@@ -62,13 +75,7 @@ export const getDetails = query({
             isRemoved: object.isRemoved,
             removalPeriod: object.removalPeriod,
             source: object.source,
-            cover: cover
-                ? {
-                      id: cover._id,
-                      url: cover.url,
-                      previewUrl: cover.previewUrl ?? '',
-                  }
-                : null,
+            cover,
             isPublic: object.isPublic,
             category: {
                 id: category._id,

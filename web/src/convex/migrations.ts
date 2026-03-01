@@ -1,5 +1,5 @@
 import {v} from 'convex/values';
-import {query} from './_generated/server';
+import {mutation, query} from './_generated/server';
 
 /**
  * Get ID mappings (mysqlId -> convexId) for specified tables
@@ -51,5 +51,15 @@ export const getIdMappings = query({
         }
 
         return mappings;
+    },
+});
+
+/**
+ * Generate a Convex Storage upload URL for one-off migration script usage.
+ */
+export const generateMigrationUploadUrl = mutation({
+    args: {},
+    handler: async ctx => {
+        return await ctx.storage.generateUploadUrl();
     },
 });

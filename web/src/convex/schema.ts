@@ -14,9 +14,9 @@ export default defineSchema({
         value: v.number(),
     }).index('byName', ['name']),
     images: defineTable({
-        url: v.string(),
-        previewUrl: v.nullable(v.string()),
         mysqlId: v.optional(v.string()),
+        originalStorageId: v.id('_storage'),
+        previewStorageId: v.optional(v.id('_storage')),
     }).index('byMysqlId', ['mysqlId']),
     mapPoints: defineTable(mapPointTableFields)
         .index('byLatitudeAndLongitude', ['latitude', 'longitude'])

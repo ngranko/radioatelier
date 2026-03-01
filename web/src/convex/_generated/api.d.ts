@@ -11,6 +11,7 @@
 import type * as categories from "../categories.js";
 import type * as helpers_objectHelpers from "../helpers/objectHelpers.js";
 import type * as http from "../http.js";
+import type * as images from "../images.js";
 import type * as locations from "../locations.js";
 import type * as markers from "../markers.js";
 import type * as migrations from "../migrations.js";
@@ -31,6 +32,7 @@ declare const fullApi: ApiFromModules<{
   categories: typeof categories;
   "helpers/objectHelpers": typeof helpers_objectHelpers;
   http: typeof http;
+  images: typeof images;
   locations: typeof locations;
   markers: typeof markers;
   migrations: typeof migrations;

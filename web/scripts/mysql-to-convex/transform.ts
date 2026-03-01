@@ -7,6 +7,13 @@ import {getVisitedChunkId} from '../../src/convex/utils/visitedChunks';
 import {hexToUlid, mysqlTimestampToMs, type ParsedTable} from './parse-sql';
 
 export type IdMapping = Record<string, Record<string, string>>;
+export type ImageStorageMapping = Record<
+    string,
+    {
+        originalStorageId: string;
+        previewStorageId?: string;
+    }
+>;
 
 interface TransformConfig {
     tableName: string;
@@ -79,11 +86,7 @@ const transformConfigs: TransformConfig[] = [
     {
         tableName: 'images',
         convexTable: 'images',
-        columns: [
-            {mysql: 'id', convex: 'mysqlId', transform: toUlid},
-            {mysql: 'link', convex: 'url'},
-            {mysql: 'preview_link', convex: 'previewUrl', transform: toNullableString},
-        ],
+        columns: [{mysql: 'id', convex: 'mysqlId', transform: toUlid}],
     },
     {
         tableName: 'map_points',
@@ -176,6 +179,7 @@ export function transformTable(
     parsedTable: ParsedTable,
     idMappings: IdMapping,
     parsedTables?: Map<string, ParsedTable>,
+    imageStorageMapping?: ImageStorageMapping,
 ): {convexTable: string; records: Record<string, unknown>[]} | null {
     const config = getTransformConfig(parsedTable.tableName);
     if (!config) {
@@ -204,6 +208,27 @@ export function transformTable(
         for (const col of config.columns) {
             const value = row[col.mysql];
             record[col.convex] = col.transform ? col.transform(value) : value;
+        }
+
+        if (parsedTable.tableName === 'images') {
+            const mysqlId = record.mysqlId;
+            if (typeof mysqlId !== 'string') {
+                console.warn('Skipping image: invalid mysqlId');
+                continue;
+            }
+
+            const storageIds = imageStorageMapping?.[mysqlId.toLowerCase()];
+            if (!storageIds?.originalStorageId) {
+                throw new Error(
+                    `Missing originalStorageId for image mysqlId=${mysqlId}. ` +
+                        'Image migration requires originalStorageId for all records.',
+                );
+            }
+
+            record.originalStorageId = storageIds.originalStorageId;
+            if (storageIds.previewStorageId) {
+                record.previewStorageId = storageIds.previewStorageId;
+            }
         }
 
         // Transform _creationTime from created_at
