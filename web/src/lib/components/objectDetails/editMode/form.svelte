@@ -37,7 +37,7 @@
 
     let {initialValues}: Props = $props();
     let imageUrl: string | undefined = $derived(initialValues.cover?.url);
-    let imagePreviewUrl: string | undefined = $state(initialValues.cover?.previewUrl);
+    let imagePreviewUrl: string | undefined = $derived(initialValues.cover?.previewUrl);
 
     let lastAction = '';
     let deleteButton: HTMLButtonElement;
@@ -115,6 +115,34 @@
     });
 
     const {form: formData, errors, enhance, isTainted, submitting} = form;
+    const addressFields = ['address', 'city', 'country'] as const;
+    const lastAutoFilledAddress = $state<Record<(typeof addressFields)[number], string>>({
+        address: '',
+        city: '',
+        country: '',
+    });
+
+    $effect(() => {
+        for (const field of addressFields) {
+            const incomingValue = initialValues[field];
+            if (typeof incomingValue !== 'string' || !incomingValue) {
+                continue;
+            }
+
+            const currentValue = $formData[field];
+            const shouldApply =
+                typeof currentValue !== 'string' ||
+                !currentValue ||
+                currentValue === lastAutoFilledAddress[field];
+
+            if (!shouldApply || currentValue === incomingValue) {
+                continue;
+            }
+
+            $formData[field] = incomingValue;
+            lastAutoFilledAddress[field] = incomingValue;
+        }
+    });
 
     $effect(() => {
         if (isTainted() && !activeObject.isDirty) {
