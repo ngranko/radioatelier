@@ -59,10 +59,6 @@ export interface ObjectFormInputs extends Omit<TaxonomlessObject, 'isOwner'> {
     cover?: string;
 }
 
-export type CreateObjectInputs = Omit<ObjectFormInputs, 'id'>;
-
-export type CreateObjectResponsePayload = Object;
-
 export interface ListObjectsResponsePayload {
     objects: ObjectListItem[];
 }

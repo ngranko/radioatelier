@@ -6,7 +6,8 @@
       "Bash(npm run format:*)",
       "Bash(find:*)",
       "Bash(bun run check:*)",
-      "Bash(bun run format:*)"
+      "Bash(bun run format:*)",
+      "Bash(tail:*)"
     ]
   }
 }
