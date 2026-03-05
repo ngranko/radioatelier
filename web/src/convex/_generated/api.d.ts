@@ -9,6 +9,7 @@
  */
 
 import type * as categories from "../categories.js";
+import type * as crons from "../crons.js";
 import type * as helpers_objectHelpers from "../helpers/objectHelpers.js";
 import type * as http from "../http.js";
 import type * as images from "../images.js";
@@ -18,6 +19,7 @@ import type * as migrations from "../migrations.js";
 import type * as objects from "../objects.js";
 import type * as privateTags from "../privateTags.js";
 import type * as sharedValidators from "../sharedValidators.js";
+import type * as storage from "../storage.js";
 import type * as tags from "../tags.js";
 import type * as users from "../users.js";
 import type * as utils_visitedChunks from "../utils/visitedChunks.js";
@@ -30,6 +32,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   categories: typeof categories;
+  crons: typeof crons;
   "helpers/objectHelpers": typeof helpers_objectHelpers;
   http: typeof http;
   images: typeof images;
@@ -39,6 +42,7 @@ declare const fullApi: ApiFromModules<{
   objects: typeof objects;
   privateTags: typeof privateTags;
   sharedValidators: typeof sharedValidators;
+  storage: typeof storage;
   tags: typeof tags;
   users: typeof users;
   "utils/visitedChunks": typeof utils_visitedChunks;
