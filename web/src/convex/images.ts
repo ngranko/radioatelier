@@ -1,4 +1,4 @@
-import {v} from 'convex/values';
+import {ConvexError, v} from 'convex/values';
 import {mutation} from './_generated/server';
 import {getCurrentUserOrThrow} from './users';
 
@@ -20,6 +20,10 @@ export const create = mutation({
             originalStorageId: storageId,
         });
         const url = await ctx.storage.getUrl(storageId);
-        return {id: imageId, url};
+        if (!url) {
+            throw new ConvexError('Failed to get URL for image');
+        }
+
+        return {id: imageId, url, previewUrl: ''};
     },
 });

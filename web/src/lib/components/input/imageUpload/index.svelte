@@ -3,6 +3,7 @@
     import CropDialog from '$lib/components/input/imageUpload/cropDialog.svelte';
     import ImageViewer from '$lib/components/input/imageUpload/imageViewer.svelte';
     import {toast} from 'svelte-sonner';
+    import LoadingOverlay from './loadingOverlay.svelte';
 
     interface Props {
         id?: string;
@@ -11,7 +12,7 @@
         disabled?: boolean;
         url?: string;
         previewUrl?: string;
-        onChange(file: File): void;
+        onChange(file: File): void | Promise<void>;
     }
 
     let {
@@ -25,18 +26,30 @@
     }: Props = $props();
 
     let isViewerOpen = $state(false);
-
+    let isUploading = $state(false);
     let imageUploadRef: HTMLInputElement | undefined = $state();
 
-    function handleImageChange(event: Event) {
+    async function handleImageChange(event: Event) {
         const file = (event.target as HTMLInputElement).files?.[0];
 
         if (!file) {
+            console.error('Не удалось получить файл');
             toast.warning('Не удалось загрузить изображение');
             return;
         }
 
-        onChange(file);
+        if (!['image/png', 'image/jpeg'].includes(file.type)) {
+            console.error('Неподдерживаемый тип файла', file.type);
+            toast.warning('Неподдерживаемый тип файла');
+            return;
+        }
+
+        isUploading = true;
+        try {
+            await onChange(file);
+        } finally {
+            isUploading = false;
+        }
     }
 
     function handlePreviewChange(newPreviewUrl: string) {
@@ -68,8 +81,13 @@
         class="block aspect-2/1 w-full border-none bg-cover bg-center bg-no-repeat"
         style="background-image:url('{getImageUrl()}')"
         onclick={handleViewerOpen}
+        disabled={isUploading}
         aria-label="Изображение"
+        aria-busy={isUploading}
     ></button>
+    {#if isUploading}
+        <LoadingOverlay />
+    {/if}
     {#if !disabled}
         <div class="absolute right-3 bottom-3 flex gap-3">
             <Button
@@ -77,11 +95,12 @@
                 size="icon"
                 class="text-base text-black hover:bg-gray-200"
                 onclick={handleUploadClick}
+                disabled={isUploading}
                 aria-label="Загрузить изображение"
             >
                 <i class="fa-solid fa-arrow-up-from-bracket"></i>
             </Button>
-            {#if value}
+            {#if value && !isUploading}
                 {#if url}
                     <CropDialog imageId={value} imageUrl={url} onChange={handlePreviewChange} />
                 {/if}
@@ -90,6 +109,7 @@
                     size="icon"
                     class="text-destructive text-base"
                     onclick={handleRemoveClick}
+                    disabled={isUploading}
                     aria-label="Удалить изображение"
                 >
                     <i class="fa-solid fa-trash"></i>

@@ -4,7 +4,7 @@
     import Tags from './tags.svelte';
     import Address from './address.svelte';
     import Actions from './actions.svelte';
-    import ImageUpload from '$lib/components/input/imageUpload.svelte';
+    import ImageUpload from '$lib/components/input/imageUpload/index.svelte';
     import type {Permissions} from '$lib/interfaces/permissions';
 
     interface Props {

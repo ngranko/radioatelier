@@ -29,6 +29,16 @@
     const canEditAll = $derived(permissions.canEditAll && liveValues.isOwner);
     const canEditPersonal = $derived(permissions.canEditPersonal && !liveValues.isOwner);
 
+    function cloneObjectSnapshot(value: Object): Object {
+        return {
+            ...value,
+            category: {...value.category},
+            tags: value.tags.map(tag => ({...tag})),
+            privateTags: value.privateTags.map(tag => ({...tag})),
+            cover: value.cover ? {...value.cover} : null,
+        };
+    }
+
     let editSnapshot = $state<Object | null>(null);
     let snapshotObjectId = $state<Id<'objects'> | null>(null);
 
@@ -36,7 +46,7 @@
         const currentId = liveValues.id;
         if (isEditing) {
             if (!editSnapshot || snapshotObjectId !== currentId) {
-                editSnapshot = structuredClone(liveValues);
+                editSnapshot = cloneObjectSnapshot(liveValues);
                 snapshotObjectId = currentId;
             }
         } else {

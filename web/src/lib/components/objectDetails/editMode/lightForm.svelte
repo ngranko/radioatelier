@@ -14,7 +14,7 @@
         FormLabel,
     } from '$lib/components/ui/form';
     import {activeObject} from '$lib/state/activeObject.svelte.ts';
-    import ImageUpload from '$lib/components/input/imageUpload.svelte';
+    import ImageUpload from '$lib/components/input/imageUpload/index.svelte';
     import Flags from '$lib/components/objectDetails/viewMode/flags.svelte';
     import {Separator} from '$lib/components/ui/separator';
     import {Input} from '$lib/components/ui/input';

@@ -9,8 +9,7 @@
     import PrivateTagsSelect from '$lib/components/objectDetails/editMode/privateTagsSelect.svelte';
     import TagsSelect from '$lib/components/objectDetails/editMode/tagsSelect.svelte';
     import {toast} from 'svelte-sonner';
-    import {createMutation} from '@tanstack/svelte-query';
-    import ImageUpload from '$lib/components/input/imageUpload.svelte';
+    import ImageUpload from '$lib/components/input/imageUpload/index.svelte';
     import {Button} from '$lib/components/ui/button';
     import {Input} from '$lib/components/ui/input';
     import {Separator} from '$lib/components/ui/separator';
@@ -24,16 +23,20 @@
         FormLabel,
         FormFieldErrors,
     } from '$lib/components/ui/form/index.js';
-    import {uploadImage} from '$lib/api/image.ts';
     import {goto} from '$app/navigation';
     import {page} from '$app/state';
     import {schema, toFormDefaults} from '$lib/schema/objectSchema.ts';
     import AddressLoadingIndicator from '$lib/components/objectDetails/editMode/addressLoadingIndicator.svelte';
     import type {Id} from '$convex/_generated/dataModel';
+    import {useConvexClient} from 'convex-svelte';
+    import {api} from '$convex/_generated/api';
+    import {resizeImage} from '$lib/utils/imageResizer';
 
     interface Props {
         initialValues: Partial<LooseObject>;
     }
+
+    const client = useConvexClient();
 
     let {initialValues}: Props = $props();
     let imageUrl: string | undefined = $derived(initialValues.cover?.url);
@@ -110,10 +113,6 @@
         },
     });
 
-    const image = createMutation({
-        mutationFn: uploadImage,
-    });
-
     const {form: formData, errors, enhance, isTainted, submitting} = form;
     const addressFields = ['address', 'city', 'country'] as const;
     const lastAutoFilledAddress = $state<Record<(typeof addressFields)[number], string>>({
@@ -158,22 +157,34 @@
         activeObject.isEditing = false;
     }
 
-    function handleImageChange(file: File) {
-        const uploadFormData = new FormData();
-        uploadFormData.append('file', file);
+    function handleImageChange(file: File): Promise<void> {
+        const uploadPromise = doImageChange(file);
+        toast.promise(uploadPromise, {
+            loading: 'Загружаю фото...',
+            success: 'Фото загружено!',
+            error: 'Не удалось загрузить фото',
+        });
 
-        toast.promise(
-            $image.mutateAsync({formData: uploadFormData}).then(result => {
-                $formData.cover = result.data.id;
-                imageUrl = result.data.url;
-                imagePreviewUrl = result.data.previewUrl;
-            }),
-            {
-                loading: 'Загружаю...',
-                success: 'Фото загружено!',
-                error: 'Не удалось загрузить фото',
-            },
-        );
+        return uploadPromise;
+    }
+
+    async function doImageChange(file: File) {
+        const resizedFile = await resizeImage(file);
+        const image = await uploadImage(resizedFile);
+
+        $formData.cover = image.id;
+        initialValues.cover = image;
+    }
+
+    async function uploadImage(file: File) {
+        const uploadUrl = await client.mutation(api.images.generateUploadUrl, {});
+        const result = await fetch(uploadUrl, {
+            method: 'POST',
+            headers: {'Content-Type': file.type},
+            body: file,
+        });
+        const {storageId} = await result.json();
+        return client.mutation(api.images.create, {storageId});
     }
 
     function handleSaveSuccess(id: Id<'objects'>) {
