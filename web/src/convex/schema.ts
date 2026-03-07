@@ -18,6 +18,30 @@ export default defineSchema({
         originalStorageId: v.id('_storage'),
         previewStorageId: v.optional(v.id('_storage')),
     }).index('byMysqlId', ['mysqlId']),
+    importJobs: defineTable({
+        createdById: v.id('users'),
+        status: v.union(
+            v.literal('running'),
+            v.literal('success'),
+            v.literal('error'),
+            v.literal('cancelled'),
+        ),
+        totalRows: v.number(),
+        processedRows: v.number(),
+        successfulRows: v.number(),
+        percentage: v.number(),
+        startedAt: v.number(),
+        finishedAt: v.optional(v.number()),
+        globalError: v.optional(v.string()),
+        lastBatchSequence: v.optional(v.number()),
+        feedback: v.array(
+            v.object({
+                line: v.number(),
+                text: v.string(),
+                severity: v.union(v.literal('warning'), v.literal('error')),
+            }),
+        ),
+    }),
     mapPoints: defineTable(mapPointTableFields)
         .index('byLatitudeAndLongitude', ['latitude', 'longitude'])
         .index('byAddressCityCountry', ['address', 'city', 'country'])

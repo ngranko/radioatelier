@@ -141,7 +141,9 @@ function normalizeUploadsHost(host: string): string {
 }
 
 function parseBoolEnv(value: string | undefined): boolean {
-    if (!value) return false;
+    if (!value) {
+        return false;
+    }
     const normalized = value.trim().toLowerCase();
     return normalized === '1' || normalized === 'true' || normalized === 'yes';
 }

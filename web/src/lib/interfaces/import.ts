@@ -1,60 +1,36 @@
-import type {WebSocketMessage} from '$lib/api/websocket/WebSocketMessage';
+import type {Id} from '$convex/_generated/dataModel';
 import type {ImportProvider} from '$lib/services/importProvider';
+import type {
+    ImportJobStatus,
+    ImportLineFeedback,
+    ImportMappings,
+    ImportMappingsForJob,
+    NormalizedImportRow,
+} from './importShared';
 
-export interface UploadFileInputs {
-    formData: FormData;
+export interface ParsedCsvData {
+    rows: string[][];
 }
 
-export interface UploadFileResponseData {
-    id: string;
+export interface ImportJobSnapshot {
+    id: Id<'importJobs'>;
+    status: ImportJobStatus;
+    totalRows: number;
+    processedRows: number;
+    successfulRows: number;
+    percentage: number;
+    startedAt: number;
+    finishedAt?: number;
+    globalError?: string;
+    feedback: ImportLineFeedback[];
 }
 
-export interface ExtractPreviewInputs {
-    id: string;
-    separator: string;
-}
-
-export interface ExtractPreviewResponseData {
-    preview: string[][];
-}
-
-export interface WSSendInputMessagePayload {
-    id: string;
-    separator: string;
-    mappings: ImportMappings;
-}
-
-export interface WSMessagePayload {
-    type: string;
+export interface ImportProviderPayload {
     total: number;
     successful: number;
+    processed: number;
     percentage: number;
     error?: string;
-    feedback?: LineFeedback[];
-}
-
-export type ImportSuccessHandler = (message: WebSocketMessage<WSMessagePayload>) => void;
-export type ImportErrorHandler = (message: WebSocketMessage<WSMessagePayload>) => void;
-export type ImportDisconnectHandler = () => void;
-export type ImportProgressHandler = (message: WebSocketMessage<WSMessagePayload>) => void;
-
-export interface ImportMappings {
-    coordinates: number | null;
-    name: number | null;
-    isPublic: number | null;
-    category: number | null;
-    image: number | null;
-    tags: number | null;
-    privateTags: number | null;
-    description: number | null;
-    address: number | null;
-    city: number | null;
-    country: number | null;
-    installedPeriod: number | null;
-    isRemoved: number | null;
-    removalPeriod: number | null;
-    source: number | null;
-    isVisited: number | null;
 }
 
 export interface ImportInfo {
@@ -73,7 +49,7 @@ export interface ImportInfo {
     totalRows: number;
     successfulRows: number;
     percentage: number;
-    lineFeedback: LineFeedback[];
+    lineFeedback: ImportLineFeedback[];
     globalError: string;
 }
 
@@ -83,8 +59,5 @@ export const ImportStepProgress = 'in progress';
 export const ImportStepSuccess = 'success';
 export const ImportStepError = 'error';
 
-export interface LineFeedback {
-    line: number;
-    text: string;
-    severity: 'warning' | 'error';
-}
+export type LineFeedback = ImportLineFeedback;
+export type {ImportMappings, ImportMappingsForJob, NormalizedImportRow};

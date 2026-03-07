@@ -1,13 +1,11 @@
 <script lang="ts">
-    import {createMutation} from '@tanstack/svelte-query';
     import {toast} from 'svelte-sonner';
-    import {extractPreview} from '$lib/api/import';
     import {Label} from '$lib/components/ui/label';
     import {Button} from '$lib/components/ui/button';
+    import {Checkbox} from '$lib/components/ui/checkbox';
     import {Root as SelectRoot, Trigger, Content, Item} from '$lib/components/ui/select';
     import {importState, resetImportState} from '$lib/state/import.svelte.ts';
-
-    const preview = createMutation({mutationFn: extractPreview});
+    import {parseCsv} from '$lib/services/import/csv';
 
     function getSeparator() {
         return importState.separator;
@@ -15,7 +13,12 @@
 
     async function handleSeparatorChange(separator: string) {
         try {
-            const promise = $preview.mutateAsync({id: importState.id, separator});
+            if (!importState.rawCsvText) {
+                return;
+            }
+            const promise = Promise.resolve().then(() =>
+                parseCsv(importState.rawCsvText, separator),
+            );
             toast.promise(promise, {
                 loading: 'Обновляю превью...',
                 error: 'Не удалось обновить превью',
@@ -23,7 +26,8 @@
             });
             const result = await promise;
             importState.separator = separator;
-            importState.preview = result.data.preview;
+            importState.parsedRows = result;
+            importState.preview = result.slice(0, 2);
         } catch (error) {
             console.error(error);
         }
@@ -35,6 +39,14 @@
         }
 
         return importState.separator;
+    }
+
+    function getHasHeader() {
+        return importState.hasHeader;
+    }
+
+    function setHasHeader(value: boolean) {
+        importState.hasHeader = value;
     }
 
     function handleRemoveFile() {
@@ -64,20 +76,28 @@
             <i class="fa-solid fa-trash text-destructive"></i>
         </Button>
     </div>
-    <div class="pl-[52px]">
+    <div class="flex flex-col gap-2 pl-13">
         <Label class="text-sm whitespace-nowrap">
             Разделитель
             <!-- prettier-ignore -->
             <SelectRoot type="single" bind:value={getSeparator, handleSeparatorChange}>
-                    <Trigger id="separator" class="w-20">
-                        {getSeparatorLabel()}
-                    </Trigger>
-                    <Content>
-                        <Item value=";">;</Item>
-                        <Item value="\t">Tab</Item>
-                        <Item value="|">|</Item>
-                    </Content>
-                </SelectRoot>
+                <Trigger id="separator" class="w-20">
+                    {getSeparatorLabel()}
+                </Trigger>
+                <Content>
+                    <Item value=";">;</Item>
+                    <Item value="\t">Tab</Item>
+                    <Item value="|">|</Item>
+                </Content>
+            </SelectRoot>
+        </Label>
+
+        <Label class="flex cursor-pointer items-center gap-2 text-sm">
+            <Checkbox
+                checked={getHasHeader()}
+                onCheckedChange={value => setHasHeader(value === true)}
+            />
+            Первая строка - заголовки
         </Label>
     </div>
 </div>

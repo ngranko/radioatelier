@@ -1,42 +1,44 @@
-import {getNonce} from '$lib/api/nonce';
-import {WebSocketConnection} from '$lib/api/websocket/WebSocketConnection';
-import {
-    WebSocketMessage,
-    WSCancelMessageType,
-    WSErrorMessageType,
-    WSProcessPingMessageType,
-    WSProgressMessageType,
-    WSSendInputMessageType,
-    WSSuccessMessageType,
-} from '$lib/api/websocket/WebSocketMessage';
-import config from '$lib/config';
-import WebSocketError from '$lib/errors/WebSocketError';
+import {api} from '$convex/_generated/api';
+import type {Id} from '$convex/_generated/dataModel';
 import type {
-    ImportDisconnectHandler,
-    ImportErrorHandler,
-    ImportMappings,
-    ImportProgressHandler,
-    ImportSuccessHandler,
-    WSMessagePayload,
-    WSSendInputMessagePayload,
+    ImportMappingsForJob,
+    ImportProviderPayload,
+    NormalizedImportRow,
 } from '$lib/interfaces/import';
+import {resolveImportImage} from '$lib/services/import/imageResolver';
+import type {ConvexClient} from 'convex/browser';
+
+export type ConvexClientLike = ConvexClient;
+
+export type ImportSuccessHandler = (payload: ImportProviderPayload) => void;
+export type ImportErrorHandler = (payload: ImportProviderPayload) => void;
+export type ImportDisconnectHandler = () => void;
+export type ImportProgressHandler = (payload: ImportProviderPayload) => void;
+
+const BATCH_SIZE = 25;
 
 export class ImportProvider {
-    private connection: WebSocketConnection;
+    private readonly client: ConvexClientLike;
     private successHandler?: ImportSuccessHandler;
     private errorHandler?: ImportErrorHandler;
     private disconnectHandler?: ImportDisconnectHandler;
     private progressHandler?: ImportProgressHandler;
-    private timeout?: number;
     private isStarted = false;
     private isFinished = false;
+    private isCancelled = false;
+    private currentJobId?: Id<'importJobs'>;
+    private imageIdBySource = new Map<string, Id<'images'>>();
 
-    public constructor() {
-        this.connection = new WebSocketConnection('');
+    public constructor(client: ConvexClientLike) {
+        this.client = client;
     }
 
     public isRunning(): boolean {
         return this.isStarted && !this.isFinished;
+    }
+
+    public getJobId() {
+        return this.currentJobId;
     }
 
     public setErrorHandler(handler: ImportErrorHandler) {
@@ -55,115 +57,123 @@ export class ImportProvider {
         this.progressHandler = handler;
     }
 
-    public async start(id: string, separator: string, mappings: ImportMappings) {
-        this.connection = new WebSocketConnection(`wss://${document.location.host}/api/import`);
-
-        const response = await getNonce();
-        this.connection.setParam('token', response.data.nonce);
-
-        this.connection.setOpenHandler(() => {
-            this.isStarted = true;
-            this.connection.sendMessage<WSSendInputMessagePayload>(WSSendInputMessageType, {
-                id,
-                separator,
-                mappings,
-            });
+    public async start(rows: NormalizedImportRow[], mappings: ImportMappingsForJob) {
+        this.isStarted = true;
+        this.isFinished = false;
+        this.isCancelled = false;
+        this.currentJobId = await this.client.mutation(api.imports.startJob, {
+            totalRows: rows.length,
+            mappings,
         });
 
-        this.connection.setMessageHandler(message => this.routeMessage(message));
-
-        this.connection.setErrorHandler(() => {
-            if (this.errorHandler) {
-                this.errorHandler(
-                    new WebSocketMessage<WSMessagePayload>(WSErrorMessageType, {
-                        type: 'error',
-                        total: 0,
-                        successful: 0,
-                        percentage: 0,
-                        error: 'Generic WebSocket error',
-                    }),
-                );
-            }
-        });
-
-        this.connection.setCloseHandler(() => {
-            if (this.isFinished) {
-                this.stopIdleTimeout();
-            } else {
-                this.isFinished = true;
-                this.handleIdleTimeoutReached();
-            }
-        });
-
-        this.connection.connect();
-        this.startIdleTimeout();
+        void this.runImport(this.currentJobId, rows);
+        return this.currentJobId;
     }
 
     public cancel() {
-        this.disconnectHandler = undefined;
-        this.connection.sendMessage<object>(WSCancelMessageType, {});
-        this.stopIdleTimeout();
-    }
-
-    public closeConnection() {
-        this.connection.closeConnection();
-        this.stopIdleTimeout();
-    }
-
-    private routeMessage(message: WebSocketMessage) {
-        switch (message.type) {
-            case WSSuccessMessageType:
-                this.isFinished = true;
-                if (this.successHandler) {
-                    this.successHandler(message as WebSocketMessage<WSMessagePayload>);
-                    this.closeConnection();
-                }
-                break;
-            case WSErrorMessageType:
-                this.isFinished = true;
-                if (this.errorHandler) {
-                    this.errorHandler(message as WebSocketMessage<WSMessagePayload>);
-                }
-                break;
-            case WSProgressMessageType:
-                if (this.progressHandler) {
-                    this.progressHandler(message as WebSocketMessage<WSMessagePayload>);
-                }
-                break;
-            case WSProcessPingMessageType:
-                console.log('processPing');
-                this.resetIdleTimeout();
-                break;
-            default:
-                throw new WebSocketError(`Unknown message type: ${message.type}`);
+        this.isCancelled = true;
+        this.isFinished = true;
+        if (this.currentJobId) {
+            this.client
+                .mutation(api.imports.cancelJob, {jobId: this.currentJobId})
+                .catch(error => {
+                    console.error('Failed to cancel import job', error);
+                })
+                .finally(() => {
+                    if (this.disconnectHandler) {
+                        this.disconnectHandler();
+                    }
+                });
+            return;
         }
-    }
-
-    private startIdleTimeout() {
-        this.resetIdleTimeout();
-    }
-
-    private resetIdleTimeout() {
-        this.stopIdleTimeout();
-        this.timeout = window.setTimeout(
-            () => this.handleIdleTimeoutReached(),
-            config.importIdleTimeout,
-        );
-    }
-
-    private stopIdleTimeout() {
-        if (this.timeout) {
-            window.clearTimeout(this.timeout);
-            this.timeout = undefined;
-        }
-    }
-
-    private handleIdleTimeoutReached() {
-        console.log('idle timeout reached, closing websocket');
-        this.closeConnection();
-
         if (this.disconnectHandler) {
             this.disconnectHandler();
+        }
+    }
+
+    private async runImport(jobId: Id<'importJobs'>, rows: NormalizedImportRow[]) {
+        try {
+            if (this.progressHandler) {
+                this.progressHandler({
+                    total: rows.length,
+                    successful: 0,
+                    percentage: 0,
+                    processed: 0,
+                });
+            }
+
+            let sequence = 1;
+            for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+                if (this.isCancelled) {
+                    break;
+                }
+                const batch = rows.slice(i, i + BATCH_SIZE);
+                const preparedBatch = await Promise.all(
+                    batch.map(async row => {
+                        const imageId = await resolveImportImage(
+                            this.client,
+                            row.imageSource,
+                            this.imageIdBySource,
+                        );
+                        return {
+                            ...row,
+                            ...(imageId ? {imageId} : {}),
+                        };
+                    }),
+                );
+
+                const result = await this.client.mutation(api.imports.importBatch, {
+                    jobId,
+                    sequence,
+                    rows: preparedBatch,
+                });
+                sequence += 1;
+
+                if (this.progressHandler) {
+                    this.progressHandler({
+                        total: rows.length,
+                        successful: result.successfulRows,
+                        percentage: result.percentage,
+                        processed: result.processedRows,
+                    });
+                }
+            }
+
+            if (this.isCancelled) {
+                this.isFinished = true;
+                return;
+            }
+
+            await this.client.mutation(api.imports.finalizeJob, {jobId});
+            this.isFinished = true;
+            if (this.successHandler) {
+                this.successHandler({
+                    total: rows.length,
+                    successful: rows.length,
+                    percentage: 100,
+                    processed: rows.length,
+                });
+            }
+        } catch (error) {
+            this.isFinished = true;
+            await this.client
+                .mutation(api.imports.finalizeJob, {
+                    jobId,
+                    failed: true,
+                    globalError:
+                        error instanceof Error ? error.message : 'Импорт завершился с ошибкой',
+                })
+                .catch(console.error);
+
+            if (this.errorHandler) {
+                this.errorHandler({
+                    total: rows.length,
+                    successful: 0,
+                    percentage: 0,
+                    processed: 0,
+                    error: error instanceof Error ? error.message : 'Импорт завершился с ошибкой',
+                });
+            }
         }
     }
 }

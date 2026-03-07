@@ -1,7 +1,38 @@
 <script lang="ts">
+    import {api} from '$convex/_generated/api';
+    import type {Doc, Id} from '$convex/_generated/dataModel';
     import {DialogClose, DialogFooter} from '$lib/components/ui/dialog';
+    import type {ImportJobSnapshot} from '$lib/interfaces/import';
     import {Progress} from '$lib/components/ui/progress';
-    import {importState} from '$lib/state/import.svelte.ts';
+    import {applyImportJobSnapshot, importState} from '$lib/state/import.svelte.ts';
+    import {useQuery} from 'convex-svelte';
+
+    function toImportJobSnapshot(job: Doc<'importJobs'> | null): ImportJobSnapshot | null {
+        if (!job) {
+            return null;
+        }
+
+        return {
+            id: job._id,
+            status: job.status,
+            totalRows: job.totalRows,
+            processedRows: job.processedRows,
+            successfulRows: job.successfulRows,
+            percentage: job.percentage,
+            startedAt: job.startedAt,
+            finishedAt: job.finishedAt,
+            globalError: job.globalError,
+            feedback: job.feedback,
+        };
+    }
+
+    const importJob = useQuery(api.imports.getJob, {
+        jobId: importState.importJobId as Id<'importJobs'>,
+    });
+
+    $effect(() => {
+        applyImportJobSnapshot(toImportJobSnapshot(importJob.data ?? null));
+    });
 </script>
 
 <div class="flex flex-1 items-center justify-center pt-12 pb-6">

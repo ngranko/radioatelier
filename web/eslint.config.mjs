@@ -12,6 +12,7 @@ export default [
     ...tseslint.configs.recommended,
     ...eslintPluginSvelte.configs['flat/recommended'],
     eslintPluginPrettierRecommended,
+    eslintConfigPrettier,
     {
         ignores: [
             '.svelte-kit',
@@ -64,5 +65,4 @@ export default [
             '@typescript-eslint/no-unused-vars': ['error', {argsIgnorePattern: '^_'}],
         },
     },
-    eslintConfigPrettier,
 ];

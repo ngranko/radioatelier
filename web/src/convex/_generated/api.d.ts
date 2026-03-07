@@ -10,9 +10,12 @@
 
 import type * as categories from "../categories.js";
 import type * as crons from "../crons.js";
+import type * as helpers_importHelpers from "../helpers/importHelpers.js";
 import type * as helpers_objectHelpers from "../helpers/objectHelpers.js";
 import type * as http from "../http.js";
 import type * as images from "../images.js";
+import type * as imports from "../imports.js";
+import type * as importsNode from "../importsNode.js";
 import type * as locations from "../locations.js";
 import type * as markers from "../markers.js";
 import type * as migrations from "../migrations.js";
@@ -33,9 +36,12 @@ import type {
 declare const fullApi: ApiFromModules<{
   categories: typeof categories;
   crons: typeof crons;
+  "helpers/importHelpers": typeof helpers_importHelpers;
   "helpers/objectHelpers": typeof helpers_objectHelpers;
   http: typeof http;
   images: typeof images;
+  imports: typeof imports;
+  importsNode: typeof importsNode;
   locations: typeof locations;
   markers: typeof markers;
   migrations: typeof migrations;

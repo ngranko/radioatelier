@@ -38,7 +38,9 @@ interface ForeignKeyMapping {
 // Standard transformations
 const toBoolean = (value: unknown): boolean => value === 1 || value === '1' || value === true;
 const toNumber = (value: unknown): number => {
-    if (typeof value === 'number') return value;
+    if (typeof value === 'number') {
+        return value;
+    }
     if (typeof value === 'string') {
         const parsed = parseFloat(value);
         return Number.isNaN(parsed) ? 0 : parsed;
@@ -46,7 +48,9 @@ const toNumber = (value: unknown): number => {
     return 0;
 };
 const toNullableString = (value: unknown): string | null => {
-    if (value === null || value === undefined) return null;
+    if (value === null || value === undefined) {
+        return null;
+    }
     return String(value);
 };
 const toUlid = (value: unknown): string => hexToUlid(String(value));
@@ -55,7 +59,9 @@ const resolveConvexId = (
     targetMapping: Record<string, string> | undefined,
     mysqlId: string,
 ): string | null => {
-    if (!targetMapping) return null;
+    if (!targetMapping) {
+        return null;
+    }
     const normalized = mysqlId.toLowerCase();
     return (
         targetMapping[normalized] ||
@@ -281,7 +287,9 @@ export function transformTable(
                 }
             }
 
-            if (skipRecord) continue;
+            if (skipRecord) {
+                continue;
+            }
         }
 
         if (shouldMapTags) {
@@ -324,7 +332,9 @@ function transformObjectPrivateTags(
     >();
 
     for (const row of parsedTable.rows) {
-        if (!row.object_id || !row.private_tag_id) continue;
+        if (!row.object_id || !row.private_tag_id) {
+            continue;
+        }
 
         const mysqlObjectId = hexToUlid(row.object_id as string).toLowerCase();
         const mysqlPrivateTagId = hexToUlid(row.private_tag_id as string).toLowerCase();
@@ -375,7 +385,9 @@ export function transformMarkersFromObjects(
 
     const mapPointLookup = new Map<string, {latitude: number; longitude: number}>();
     for (const row of mapPointsTable.rows) {
-        if (!row.id) continue;
+        if (!row.id) {
+            continue;
+        }
         const mysqlId = hexToUlid(row.id as string).toLowerCase();
         mapPointLookup.set(mysqlId, {
             latitude: toNumber(row.latitude),
@@ -446,13 +458,19 @@ export function transformMarkersFromObjects(
 }
 
 function buildObjectTagMap(parsedTables?: Map<string, ParsedTable>): Map<string, string[]> | null {
-    if (!parsedTables) return null;
+    if (!parsedTables) {
+        return null;
+    }
     const objectTags = parsedTables.get('object_tags');
-    if (!objectTags) return null;
+    if (!objectTags) {
+        return null;
+    }
 
     const map = new Map<string, string[]>();
     for (const row of objectTags.rows) {
-        if (!row.object_id || !row.tag_id) continue;
+        if (!row.object_id || !row.tag_id) {
+            continue;
+        }
         const mysqlObjectId = hexToUlid(row.object_id as string).toLowerCase();
         const mysqlTagId = hexToUlid(row.tag_id as string).toLowerCase();
         const existing = map.get(mysqlObjectId);
@@ -471,12 +489,18 @@ function buildPrivateTagUserMap(
     userMapping: Record<string, string> | undefined,
 ): Map<string, string> {
     const map = new Map<string, string>();
-    if (!parsedTables) return map;
+    if (!parsedTables) {
+        return map;
+    }
     const privateTags = parsedTables.get('private_tags');
-    if (!privateTags) return map;
+    if (!privateTags) {
+        return map;
+    }
 
     for (const row of privateTags.rows) {
-        if (!row.id || !row.created_by) continue;
+        if (!row.id || !row.created_by) {
+            continue;
+        }
         const mysqlPrivateTagId = hexToUlid(row.id as string).toLowerCase();
         const mysqlUserId = hexToUlid(row.created_by as string).toLowerCase();
         const userId = resolveConvexId(userMapping, mysqlUserId);
@@ -499,8 +523,12 @@ export function transformVisitedChunksFromObjectUsers(
     const grouped = new Map<string, {userId: string; chunkId: string; objectIds: Set<string>}>();
 
     for (const row of parsedTable.rows) {
-        if (!row.object_id || !row.user_id) continue;
-        if (!toBoolean(row.is_visited)) continue;
+        if (!row.object_id || !row.user_id) {
+            continue;
+        }
+        if (!toBoolean(row.is_visited)) {
+            continue;
+        }
 
         const mysqlObjectId = hexToUlid(row.object_id as string).toLowerCase();
         const mysqlUserId = hexToUlid(row.user_id as string).toLowerCase();

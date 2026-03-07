@@ -1,5 +1,10 @@
 <script lang="ts">
-    import {type ImportMappings, ImportStepProgress} from '$lib/interfaces/import';
+    import {
+        type ImportMappings,
+        type ImportMappingsForJob,
+        ImportStepError,
+        ImportStepProgress,
+    } from '$lib/interfaces/import';
     import {DialogClose, DialogFooter} from '$lib/components/ui/dialog/index.js';
     import FileInfo from '$lib/components/userMenu/import/preview/fileInfo.svelte';
     import RowPreview from '$lib/components/userMenu/import/preview/rowPreview.svelte';
@@ -10,40 +15,45 @@
     import Field from '$lib/components/userMenu/import/preview/field.svelte';
     import MissingFieldsNotification from '$lib/components/userMenu/import/preview/missingFieldsNotification.svelte';
     import {fieldList} from '$lib/components/userMenu/import/preview/preview.ts';
-    import {importState} from '$lib/state/import.svelte.ts';
+    import {importState, initializeImportProvider} from '$lib/state/import.svelte.ts';
+    import {normalizeRows} from '$lib/services/import/normalize';
+    import {useConvexClient} from 'convex-svelte';
+
+    const client = useConvexClient();
+
+    const optionalMapping = z.preprocess(value => {
+        if (value === null || value === undefined || value === '') {
+            return null;
+        }
+        if (typeof value === 'string') {
+            const parsed = Number(value);
+            return Number.isNaN(parsed) ? value : parsed;
+        }
+        return value;
+    }, z.number().nonnegative().nullable().default(null));
+
+    const requiredMapping = optionalMapping.refine(
+        (value): value is number => value !== null,
+        'Это обязательное поле',
+    );
 
     const schema = z.object({
-        coordinates: z
-            .number()
-            .nonnegative()
-            .nullable()
-            .default(null)
-            .refine((value): value is number => value !== null, 'Это обязательное поле'),
-        name: z
-            .number()
-            .nonnegative()
-            .nullable()
-            .default(null)
-            .refine((value): value is number => value !== null, 'Это обязательное поле'),
-        isVisited: z.number().nonnegative().nullable().default(null),
-        isPublic: z.number().nonnegative().nullable().default(null),
-        isRemoved: z.number().nonnegative().nullable().default(null),
-        category: z
-            .number()
-            .nonnegative()
-            .nullable()
-            .default(null)
-            .refine((value): value is number => value !== null, 'Это обязательное поле'),
-        tags: z.number().nonnegative().nullable().default(null),
-        privateTags: z.number().nonnegative().nullable().default(null),
-        address: z.number().nonnegative().nullable().default(null),
-        city: z.number().nonnegative().nullable().default(null),
-        country: z.number().nonnegative().nullable().default(null),
-        installedPeriod: z.number().nonnegative().nullable().default(null),
-        removalPeriod: z.number().nonnegative().nullable().default(null),
-        description: z.number().nonnegative().nullable().default(null),
-        source: z.number().nonnegative().nullable().default(null),
-        image: z.number().nonnegative().nullable().default(null),
+        coordinates: requiredMapping,
+        name: requiredMapping,
+        isVisited: optionalMapping,
+        isPublic: optionalMapping,
+        isRemoved: optionalMapping,
+        category: requiredMapping,
+        tags: optionalMapping,
+        privateTags: optionalMapping,
+        address: optionalMapping,
+        city: optionalMapping,
+        country: optionalMapping,
+        installedPeriod: optionalMapping,
+        removalPeriod: optionalMapping,
+        description: optionalMapping,
+        source: optionalMapping,
+        image: optionalMapping,
     });
 
     type ImportFormInputs = z.infer<typeof schema>;
@@ -51,27 +61,58 @@
     const form = superForm<ImportFormInputs>(defaults(zod4(schema)), {
         SPA: true,
         validators: zod4Client(schema),
-        onUpdate({form}) {
+        async onUpdate({form}) {
             if (form.valid) {
-                handleImport(form.data);
+                await handleImport(form.data);
             }
         },
     });
 
     const {form: formData, enhance, submitting} = form;
 
+    function isMappedField(value: unknown): boolean {
+        return value !== null && value !== undefined && value !== '';
+    }
+
     const missingFieldsCount = $derived(
         fieldList
             .filter(item => item.required)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            .filter(item => !($formData as Record<string, any>)[item.name]).length,
+            .filter(item => !isMappedField(($formData as Record<string, unknown>)[item.name]))
+            .length,
     );
 
-    const selectedFieldsCount = $derived(Object.values($formData).filter(v => v !== null).length);
+    const selectedFieldsCount = $derived(
+        Object.values($formData as Record<string, unknown>).filter(isMappedField).length,
+    );
 
-    function handleImport(values: ImportMappings) {
-        importState.provider.start(importState.id, importState.separator, values);
-        importState.step = ImportStepProgress;
+    async function handleImport(values: ImportMappings) {
+        const provider = initializeImportProvider(client);
+        const mappings = toJobMappings(values);
+        if (!mappings) {
+            importState.globalError = 'Проверьте обязательные поля';
+            importState.step = ImportStepError;
+            return;
+        }
+        const rows = normalizeRows(importState.parsedRows, mappings, importState.hasHeader);
+        try {
+            const jobId = await provider.start(rows, mappings);
+            importState.importJobId = jobId;
+            importState.totalRows = rows.length;
+            importState.step = ImportStepProgress;
+        } catch (error) {
+            importState.globalError =
+                error instanceof Error ? error.message : 'Не удалось начать импорт';
+            importState.step = ImportStepError;
+        }
+    }
+
+    function toJobMappings(values: ImportMappings): ImportMappingsForJob | null {
+        if (values.coordinates === null || values.name === null || values.category === null) {
+            return null;
+        }
+        return {
+            ...values,
+        } as ImportMappingsForJob;
     }
 </script>
 
@@ -98,7 +139,7 @@
             </div>
         </div>
     </div>
-    <DialogFooter class="border-t bg-white pt-2">
+    <DialogFooter class="gap-4 border-t bg-white pt-2">
         <DialogClose>Отменить</DialogClose>
         <Button type="submit" disabled={$submitting}>Импортировать</Button>
     </DialogFooter>

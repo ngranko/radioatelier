@@ -1,20 +1,10 @@
 <script lang="ts">
-    import {createMutation} from '@tanstack/svelte-query';
     import {toast} from 'svelte-sonner';
-    import {extractPreview, uploadFile} from '$lib/api/import';
     import {ImportStepPreview} from '$lib/interfaces/import.ts';
     import {importState} from '$lib/state/import.svelte.ts';
+    import {parseCsv, readCsvFile} from '$lib/services/import/csv';
 
     let isDragging = $state(false);
-
-    const uploadFileMutation = createMutation({
-        mutationFn: uploadFile,
-        onSuccess: result => {
-            importState.id = result.data.id;
-        },
-    });
-
-    const preview = createMutation({mutationFn: extractPreview});
 
     function handleDragOver(e: DragEvent) {
         e.preventDefault();
@@ -47,21 +37,19 @@
     }
 
     async function handleFile(file: File) {
-        const formData = new FormData();
-        formData.append('file', file);
         try {
-            const promise = uploadAndPreview(formData);
+            const promise = readAndPreview(file);
             toast.promise(promise, {
-                loading: 'Загружаю файл...',
-                error: 'Не удалось загрузить файл',
-                success: 'Файл загружен',
+                loading: 'Обрабатываю файл...',
+                error: 'Не удалось прочитать CSV',
+                success: 'Файл готов к импорту',
             });
 
-            const result = await promise;
+            const preview = await promise;
             if (!document.startViewTransition) {
-                updateStore(file, result.data.preview);
+                updateStore(file, preview);
             } else {
-                document.startViewTransition(() => updateStore(file, result.data.preview));
+                document.startViewTransition(() => updateStore(file, preview));
             }
         } catch (error) {
             console.error(error);
@@ -75,9 +63,15 @@
         importState.preview = preview;
     }
 
-    async function uploadAndPreview(formData: FormData) {
-        await $uploadFileMutation.mutateAsync({formData});
-        return $preview.mutateAsync({id: importState.id, separator: importState.separator});
+    async function readAndPreview(file: File) {
+        const text = await readCsvFile(file);
+        const parsedRows = parseCsv(text, importState.separator);
+        if (parsedRows.length === 0) {
+            throw new Error('CSV файл пуст');
+        }
+        importState.rawCsvText = text;
+        importState.parsedRows = parsedRows;
+        return parsedRows.slice(0, 2);
     }
 </script>
 

@@ -10,9 +10,9 @@
     <div class="bg-card overflow-x-scroll rounded-lg border">
         <table class="w-full">
             <tbody class="font-mono text-xs">
-                {#each importState.preview as row (row.join(''))}
+                {#each importState.preview as row, rowIndex (`row-${rowIndex}`)}
                     <tr class="border-b last:border-0">
-                        {#each row as cell (cell)}
+                        {#each row as cell, cellIndex (`cell-${rowIndex}-${cellIndex}`)}
                             <td
                                 class="text-muted-foreground max-w-40 overflow-hidden px-4 py-3 text-nowrap overflow-ellipsis"
                             >

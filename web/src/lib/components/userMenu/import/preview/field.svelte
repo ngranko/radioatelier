@@ -22,6 +22,17 @@
     let {form, field}: Props = $props();
 
     let {form: formData, errors} = form;
+
+    const optionLabels = $derived.by(() => {
+        const firstRow = importState.preview[0] ?? [];
+        return firstRow.map((item, index) => {
+            if (importState.hasHeader) {
+                const normalized = item.trim();
+                return normalized || `Колонка ${index + 1}`;
+            }
+            return `Колонка ${index + 1}`;
+        });
+    });
 </script>
 
 <div
@@ -50,7 +61,7 @@
                 {#snippet children({props})}
                     <SelectRoot type="single" {...props} bind:value={$formData[field.name]}>
                         <Trigger>
-                            {importState.preview[0][$formData[field.name]] ?? 'Не выбрано'}
+                            {optionLabels[$formData[field.name]] ?? 'Не выбрано'}
                         </Trigger>
                         <Content>
                             <Item value="">
@@ -59,7 +70,7 @@
                                     Не выбрано
                                 </span>
                             </Item>
-                            {#each importState.preview[0] as item, key (key)}
+                            {#each optionLabels as item, key (`option-${key}`)}
                                 <Item value={String(key)}>
                                     {item}
                                 </Item>

@@ -30,7 +30,7 @@
 
     function doClose() {
         isOpen = false;
-        if (importState.provider.isRunning()) {
+        if (importState.provider?.isRunning()) {
             importState.provider.cancel();
         }
         resetImportState();
@@ -42,10 +42,14 @@
     }
 
     function setIsOpen(newOpen: boolean) {
-        if (!newOpen && isDestructive()) {
+        if (newOpen) {
+            return;
+        }
+
+        if (isDestructive()) {
             isConfirmationOpen = true;
         } else {
-            goto('/');
+            doClose();
         }
     }
 

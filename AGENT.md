@@ -36,4 +36,4 @@ Key patterns:
 
 Don't put comments in the code that just describe what the next code block does. Comments should explain why, not what. Only put comments in code when the reasoning behind the current implementation should be clarified to not create confusion.
 
-Follow SOLID, DRY and KISS principles in your work. Don't create huge god-files. Soft cap for line count is 200, if a file grows bigger – consider possible refactors
+Follow SOLID, DRY and KISS principles in your work. Don't create huge god-files. Soft cap for line count if a single file is 200, if a file grows bigger – consider possible refactors. The same rule should apply for huge functions: if a function grows too large – consider splitting it or moving into its own module if that function is complex enough. Soft line cap for a single function is 20 lines.

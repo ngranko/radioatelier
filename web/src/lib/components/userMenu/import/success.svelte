@@ -72,7 +72,7 @@
         </div>
     {/if}
 </div>
-<DialogFooter>
+<DialogFooter class="gap-4">
     <DialogClose>Закрыть</DialogClose>
     <Button onclick={handleReset}>Импортировать другой файл</Button>
 </DialogFooter>
