@@ -1,19 +1,20 @@
 <script lang="ts">
     import {onMount, onDestroy} from 'svelte';
     import {activeMarker, searchPointList} from '$lib/stores/map.ts';
-    import {useQueryClient} from '@tanstack/svelte-query';
-    import {useRepositionMutation} from '$lib/api/mutation/reposition';
     import {mapState} from '$lib/state/map.svelte';
     import {Marker as MarkerObject} from '$lib/services/map/marker';
     import type {MarkerSource} from '$lib/interfaces/marker';
     import {toast} from 'svelte-sonner';
     import {activeObject, resetActiveObject} from '$lib/state/activeObject.svelte.ts';
     import {setCenter} from '$lib/services/map/map.svelte.ts';
-    import {goto, invalidate} from '$app/navigation';
+    import {goto} from '$app/navigation';
     import {page} from '$app/state';
+    import {useConvexClient} from 'convex-svelte';
+    import {api} from '$convex/_generated/api';
+    import type {Id} from '$convex/_generated/dataModel';
 
     interface Props {
-        id?: string | null;
+        id?: Id<'objects'> | null;
         lat: number;
         lng: number;
         isRemoved?: boolean;
@@ -39,9 +40,7 @@
     let markerId: string = $state(id ?? `map-${Date.now()}-${Math.random()}`);
     let marker: MarkerObject | null = $state(null);
 
-    const client = useQueryClient();
-
-    const reposition = useRepositionMutation(client);
+    const client = useConvexClient();
 
     $effect(() => {
         if (!marker || !markerId || !mapState.markerManager) {
@@ -110,14 +109,13 @@
         }
 
         try {
-            await $reposition.mutateAsync({
+            await client.mutation(api.objects.reposition, {
                 id: id!,
-                updatedFields: {
+                data: {
                     latitude: marker.getPosition().lat,
                     longitude: marker.getPosition().lng,
                 },
             });
-            invalidate('/api/object/list');
         } catch (error) {
             marker.revertPosition();
             throw error;

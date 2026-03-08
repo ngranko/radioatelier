@@ -1,8 +1,6 @@
 <script lang="ts">
     import {onMount, onDestroy} from 'svelte';
     import {mapState} from '$lib/state/map.svelte';
-    import {createMutation} from '@tanstack/svelte-query';
-    import {getLocation} from '$lib/api/location';
     import type {Location} from '$lib/interfaces/location';
     import {MarkerManager} from '$lib/services/map/markerManager';
     import {
@@ -25,10 +23,6 @@
     let clickTimeout: ReturnType<typeof setTimeout> | undefined;
     let positionInterval: number | undefined;
     let isInZoomMode = false;
-
-    const location = createMutation({
-        mutationFn: getLocation,
-    });
 
     onMount(async () => {
         positionInterval = startPositionPolling(5000);
@@ -67,7 +61,7 @@
     async function initMap(): Promise<google.maps.Map> {
         const {Map} = await mapState.loader.importLibrary('maps');
 
-        const center = await getInitialCenter($location);
+        const center = await getInitialCenter();
 
         return new Map(container!, {
             zoom: center.zoom ?? 15,

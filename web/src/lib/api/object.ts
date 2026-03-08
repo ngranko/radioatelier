@@ -1,57 +1,13 @@
-import {METHOD_DELETE, METHOD_GET, METHOD_PUT} from '$lib/api/constants';
+import {METHOD_GET} from '$lib/api/constants';
 import AuthRequest from '$lib/api/request/AuthRequest';
-import JsonRequest, {type JsonRequestOptions} from '$lib/api/request/JsonRequest';
+import JsonRequest from '$lib/api/request/JsonRequest';
 import type {Payload} from '$lib/interfaces/api';
 import type {
-    DeleteObjectInputs,
-    DeleteObjectPayloadData,
-    GetObjectResponsePayload,
-    RepositionObjectInputs,
-    RepositionObjectResponsePayload,
     SearchContext,
     SearchGoogleResponsePayload,
     SearchLocalResponsePayload,
-    UpdateObjectInputs,
-    UpdateObjectResponsePayload,
 } from '$lib/interfaces/object';
 import type {QueryFunctionContext} from '@tanstack/svelte-query';
-
-export async function getObject(
-    id: string,
-    options: JsonRequestOptions,
-): Promise<Payload<GetObjectResponsePayload>> {
-    return new AuthRequest(new JsonRequest(`/api/object/${id}`, METHOD_GET, options)).send();
-}
-
-export async function updateObjectDirect(
-    values: UpdateObjectInputs,
-    options: JsonRequestOptions,
-): Promise<Payload<UpdateObjectResponsePayload>> {
-    return new AuthRequest(
-        new JsonRequest(`/api/object/${values.id}`, METHOD_PUT, options).setParams(
-            values.updatedFields,
-        ),
-    ).send();
-}
-
-export async function repositionObject(
-    values: RepositionObjectInputs,
-): Promise<Payload<RepositionObjectResponsePayload>> {
-    return new AuthRequest(
-        new JsonRequest(`/api/object/${values.id}/position`, METHOD_PUT).setParams(
-            values.updatedFields,
-        ),
-    ).send();
-}
-
-export async function deleteObject(
-    values: DeleteObjectInputs,
-    options: JsonRequestOptions,
-): Promise<Payload<DeleteObjectPayloadData>> {
-    return new AuthRequest(
-        new JsonRequest(`/api/object/${values.id}`, METHOD_DELETE, options),
-    ).send();
-}
 
 export async function searchPreview({
     queryKey: [, {query, latitude, longitude}],

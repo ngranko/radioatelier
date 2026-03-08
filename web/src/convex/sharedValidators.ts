@@ -51,3 +51,8 @@ export const updateObjectRecordFields = {
     privateTags: v.array(v.id('privateTags')),
     isVisited: v.boolean(),
 };
+
+export const repositionObjectRecordFields = {
+    latitude: v.number(),
+    longitude: v.number(),
+};

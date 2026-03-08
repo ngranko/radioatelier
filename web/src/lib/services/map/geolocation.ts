@@ -1,7 +1,7 @@
+import {getLocation} from '$lib/api/location';
 import type {Location} from '$lib/interfaces/location';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function getInitialCenter(locationMutation: any): Promise<Location> {
+export async function getInitialCenter(): Promise<Location> {
     if (localStorage.getItem('lastCenter')) {
         return JSON.parse(localStorage.getItem('lastCenter') as string);
     }
@@ -11,7 +11,7 @@ export async function getInitialCenter(locationMutation: any): Promise<Location>
     }
 
     try {
-        const result = await locationMutation.mutateAsync();
+        const result = await getLocation();
         return result.location ?? {lat: 0, lng: 0};
     } catch (e) {
         console.error('error getting location');

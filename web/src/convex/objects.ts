@@ -7,7 +7,11 @@ import {
     getPrivateTags,
     updateIsVisited,
 } from './helpers/objectHelpers';
-import {createObjectRecordFields, updateObjectRecordFields} from './sharedValidators';
+import {
+    createObjectRecordFields,
+    repositionObjectRecordFields,
+    updateObjectRecordFields,
+} from './sharedValidators';
 import {getCurrentUser, getCurrentUserOrThrow} from './users';
 
 export const getDetails = query({
@@ -264,5 +268,46 @@ export const remove = mutation({
         await ctx.db.delete('mapPoints', object.mapPointId);
         await ctx.db.delete('objects', id);
         return id;
+    },
+});
+
+export const reposition = mutation({
+    args: {
+        id: v.id('objects'),
+        data: v.object(repositionObjectRecordFields),
+    },
+    handler: async (ctx, {id, data}) => {
+        const user = await getCurrentUserOrThrow(ctx);
+
+        const object = await ctx.db.get('objects', id);
+        if (!object) {
+            throw new Error('Object not found');
+        }
+        if (object.createdById !== user._id) {
+            throw new Error('Not allowed to update this object');
+        }
+
+        const mapPoint = await ctx.db.get('mapPoints', object.mapPointId);
+        if (!mapPoint) {
+            throw new Error('Map point not found');
+        }
+
+        const marker = await ctx.db
+            .query('markers')
+            .withIndex('byObjectId', q => q.eq('objectId', id))
+            .first();
+        if (!marker) {
+            throw new Error('Marker not found');
+        }
+
+        await ctx.db.patch('mapPoints', object.mapPointId, {
+            latitude: data.latitude,
+            longitude: data.longitude,
+        });
+
+        await ctx.db.patch('markers', marker._id, {
+            latitude: data.latitude,
+            longitude: data.longitude,
+        });
     },
 });
