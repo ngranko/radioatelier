@@ -1,5 +1,5 @@
-import {getLocation} from '$lib/api/location';
-import type {Location} from '$lib/interfaces/location';
+import config from '$lib/config';
+import type {GetLocationResponseData, Location} from '$lib/interfaces/location';
 
 export async function getInitialCenter(): Promise<Location> {
     if (localStorage.getItem('lastCenter')) {
@@ -11,7 +11,7 @@ export async function getInitialCenter(): Promise<Location> {
     }
 
     try {
-        const result = await getLocation();
+        const result = await getLocationFromGoogle();
         return result.location ?? {lat: 0, lng: 0};
     } catch (e) {
         console.error('error getting location');
@@ -31,6 +31,25 @@ export function stopPositionPolling(id?: number) {
     if (id) {
         window.clearInterval(id);
     }
+}
+
+async function getLocationFromGoogle(): Promise<GetLocationResponseData> {
+    const response = await fetch(
+        `https://www.googleapis.com/geolocation/v1/geolocate?key=${config.googleMapsApiKey}`,
+        {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+            },
+        },
+    );
+
+    if (!response.ok) {
+        throw new Error(`Failed to get location: ${response.status}`);
+    }
+
+    return response.json();
 }
 
 function updateCurrentPosition() {
