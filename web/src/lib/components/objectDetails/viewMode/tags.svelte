@@ -1,11 +1,11 @@
 <script lang="ts">
     import Badge from '$lib/components/ui/badge/badge.svelte';
-    import type {FuzzyTag} from '$lib/interfaces/tag.js';
-    import type {FuzzyPrivateTag} from '$lib/interfaces/privateTag.ts';
+    import type {Tag} from '$lib/interfaces/tag.js';
+    import type {PrivateTag} from '$lib/interfaces/privateTag.ts';
 
     interface Props {
-        tags: FuzzyTag[];
-        privateTags: FuzzyPrivateTag[];
+        tags: Tag[];
+        privateTags: PrivateTag[];
     }
 
     let {tags, privateTags}: Props = $props();

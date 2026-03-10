@@ -6,11 +6,12 @@ import {action} from './_generated/server';
 
 export const fetchImageBytesFromUrl = action({
     args: {url: v.string()},
-    returns: v.object({
-        bytesBase64: v.string(),
-        contentType: v.string(),
-    }),
-    handler: async (_ctx, {url}) => {
+    handler: async (ctx, {url}) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (identity === null) {
+            throw new ConvexError('Unauthorized');
+        }
+
         const response = await fetch(url);
         if (!response.ok) {
             throw new ConvexError(`Не удалось загрузить изображение (${response.status})`);

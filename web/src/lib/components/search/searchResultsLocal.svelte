@@ -1,40 +1,34 @@
 <script lang="ts">
-    import {createInfiniteQuery} from '@tanstack/svelte-query';
-    import {searchLocal} from '$lib/api/object';
-    import type {SearchContext} from '$lib/interfaces/object';
-    import LoadMoreButton from './loadMoreButton.svelte';
-    import {searchPointList} from '$lib/stores/map';
-    import {fitMarkerList} from '$lib/services/map/map.svelte';
-    import SearchResultsItem from './searchResultsItem.svelte';
     import {searchState} from '$lib/components/search/search.svelte.ts';
+    import type {SearchItem} from '$lib/interfaces/object';
+    import {fitMarkerList} from '$lib/services/map/map.svelte';
+    import {searchPointList} from '$lib/stores/map';
+    import {useConvexClient} from 'convex-svelte';
+    import LoadMoreButton from './loadMoreButton.svelte';
+    import SearchResultsItem from './searchResultsItem.svelte';
+    import {api} from '$convex/_generated/api';
 
     let {isActive} = $props();
+    const client = useConvexClient();
 
-    const searchResults = createInfiniteQuery({
-        queryKey: [
-            'searchLocal',
-            {query: searchState.query, latitude: searchState.lat, longitude: searchState.lng},
-        ] satisfies SearchContext,
-        queryFn: searchLocal,
-        enabled: isActive,
-        getNextPageParam: lastPage => (lastPage.data.hasMore ? lastPage.data.offset : undefined),
-        initialPageParam: 0,
-    });
+    let items = $state<SearchItem[]>([]);
+    let hasMore = $state(false);
+    let nextOffset = $state(0);
+    let isLoading = $state(false);
+    let isLoadingMore = $state(false);
+    let isError = $state(false);
+    let hasLoaded = $state(false);
 
     $effect(() => {
-        if (isActive && !$searchResults.data) {
-            $searchResults.refetch();
+        if (isActive && !hasLoaded) {
+            void loadPage(0, 'replace');
         }
     });
 
     $effect(() => {
-        if (isActive && $searchResults.data) {
-            const objects = $searchResults.data.pages
-                .map(page => page.data.items)
-                .reduce((acc, val) => acc.concat(val), []);
-            searchPointList.set(objects.map(item => ({object: item})));
-
-            fitMarkerList(objects, {
+        if (isActive) {
+            searchPointList.set(items.map(item => ({object: item})));
+            fitMarkerList(items, {
                 latitude: Number(searchState.lat),
                 longitude: Number(searchState.lng),
             });
@@ -42,22 +36,65 @@
     });
 
     function handleLoadMoreClick() {
-        $searchResults.fetchNextPage();
+        if (!hasMore || isLoadingMore) {
+            return;
+        }
+
+        void loadPage(nextOffset, 'append');
+    }
+
+    async function loadPage(offset: number, mode: 'replace' | 'append') {
+        if (mode === 'replace' && isLoading) {
+            return;
+        }
+        if (mode === 'append' && (isLoading || isLoadingMore)) {
+            return;
+        }
+
+        if (mode === 'replace') {
+            isLoading = true;
+            isError = false;
+        } else {
+            isLoadingMore = true;
+        }
+
+        try {
+            const page = await client.action(api.search.local, {
+                query: searchState.query,
+                latitude: Number(searchState.lat),
+                longitude: Number(searchState.lng),
+                offset,
+            });
+
+            items = mode === 'append' ? [...items, ...page.items] : page.items;
+            hasMore = page.hasMore;
+            nextOffset = page.offset;
+            hasLoaded = true;
+        } catch (error) {
+            console.error('Local search failed', error);
+            isError = true;
+        } finally {
+            isLoading = false;
+            isLoadingMore = false;
+        }
     }
 </script>
 
 <div class="h-full overflow-y-auto overscroll-contain">
-    {#if $searchResults.isLoading}
+    {#if isLoading}
         <div>Loading...</div>
     {/if}
-    {#if $searchResults.isError}
+    {#if isError}
         <div>Error</div>
     {/if}
-    {#if $searchResults.isSuccess}
+    {#if hasLoaded}
         {#each Object.keys($searchPointList) as id (id)}
-            <SearchResultsItem {id} object={$searchPointList[id].object} />
+            {@const searchPoint = $searchPointList[id]}
+            {#if searchPoint?.object}
+                <SearchResultsItem {id} object={searchPoint.object} />
+            {/if}
         {/each}
-        {#if $searchResults.data.pages[$searchResults.data.pages.length - 1].data.hasMore}
+        {#if hasMore}
             <LoadMoreButton onLoadMoreClick={handleLoadMoreClick} />
         {/if}
     {/if}

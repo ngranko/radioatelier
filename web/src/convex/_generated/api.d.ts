@@ -21,10 +21,16 @@ import type * as markers from "../markers.js";
 import type * as migrations from "../migrations.js";
 import type * as objects from "../objects.js";
 import type * as privateTags from "../privateTags.js";
+import type * as search from "../search.js";
+import type * as search_googlePlaces from "../search/googlePlaces.js";
 import type * as sharedValidators from "../sharedValidators.js";
 import type * as storage from "../storage.js";
 import type * as tags from "../tags.js";
+import type * as typesense from "../typesense.js";
+import type * as typesense_client from "../typesense/client.js";
+import type * as typesense_objects from "../typesense/objects.js";
 import type * as users from "../users.js";
+import type * as utils_googleAddress from "../utils/googleAddress.js";
 import type * as utils_visitedChunks from "../utils/visitedChunks.js";
 
 import type {
@@ -47,10 +53,16 @@ declare const fullApi: ApiFromModules<{
   migrations: typeof migrations;
   objects: typeof objects;
   privateTags: typeof privateTags;
+  search: typeof search;
+  "search/googlePlaces": typeof search_googlePlaces;
   sharedValidators: typeof sharedValidators;
   storage: typeof storage;
   tags: typeof tags;
+  typesense: typeof typesense;
+  "typesense/client": typeof typesense_client;
+  "typesense/objects": typeof typesense_objects;
   users: typeof users;
+  "utils/googleAddress": typeof utils_googleAddress;
   "utils/visitedChunks": typeof utils_visitedChunks;
 }>;
 

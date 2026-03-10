@@ -1,6 +1,8 @@
+import {paginationOptsValidator} from 'convex/server';
 import {v} from 'convex/values';
+import {internal} from './_generated/api';
 import type {Doc} from './_generated/dataModel';
-import {mutation, query} from './_generated/server';
+import {internalQuery, mutation, query} from './_generated/server';
 import {
     getIsVisited,
     getNextInternalId,
@@ -151,6 +153,25 @@ export const create = mutation({
             isPublic: data.isPublic,
         });
 
+        const category = await ctx.db.get('categories', data.categoryId);
+        if (!category) {
+            throw new Error('Category not found');
+        }
+
+        ctx.scheduler.runAfter(0, internal.typesense.createInTypesense, {
+            object: {
+                id: objectId,
+                name: data.name,
+                address: data.address ?? null,
+                city: data.city ?? null,
+                country: data.country ?? null,
+                categoryName: category.name,
+                location: [data.latitude, data.longitude] as [number, number],
+                createdBy: user._id,
+                isPublic: data.isPublic,
+            },
+        });
+
         return objectId;
     },
 });
@@ -230,6 +251,25 @@ export const update = mutation({
 
         updateIsVisited(ctx, id, user._id, data.isVisited);
 
+        const category = await ctx.db.get('categories', data.categoryId);
+        if (!category) {
+            throw new Error('Category not found');
+        }
+
+        ctx.scheduler.runAfter(0, internal.typesense.createInTypesense, {
+            object: {
+                id,
+                name: data.name,
+                address: data.address ?? null,
+                city: data.city ?? null,
+                country: data.country ?? null,
+                categoryName: category.name,
+                location: [mapPoint.latitude, mapPoint.longitude] as [number, number],
+                createdBy: user._id,
+                isPublic: data.isPublic,
+            },
+        });
+
         return id;
     },
 });
@@ -267,6 +307,10 @@ export const remove = mutation({
 
         await ctx.db.delete('mapPoints', object.mapPointId);
         await ctx.db.delete('objects', id);
+
+        ctx.scheduler.runAfter(0, internal.typesense.removeFromTypesense, {
+            objectId: id,
+        });
         return id;
     },
 });
@@ -309,5 +353,67 @@ export const reposition = mutation({
             latitude: data.latitude,
             longitude: data.longitude,
         });
+
+        const category = await ctx.db.get('categories', object.categoryId);
+        if (!category) {
+            throw new Error('Category not found');
+        }
+
+        ctx.scheduler.runAfter(0, internal.typesense.updateInTypesense, {
+            object: {
+                id,
+                name: object.name,
+                address: mapPoint.address ?? null,
+                city: mapPoint.city ?? null,
+                country: mapPoint.country ?? null,
+                categoryName: category.name,
+                createdBy: object.createdById,
+                isPublic: object.isPublic,
+                location: [data.latitude, data.longitude] as [number, number],
+            },
+        });
+    },
+});
+
+export const listForTypesenseBackfill = internalQuery({
+    args: {
+        paginationOpts: paginationOptsValidator,
+    },
+    handler: async (ctx, {paginationOpts}) => {
+        const result = await ctx.db.query('objects').order('desc').paginate(paginationOpts);
+        const items = await Promise.all(
+            result.page.map(async object => {
+                const [mapPoint, category] = await Promise.all([
+                    ctx.db.get('mapPoints', object.mapPointId),
+                    ctx.db.get('categories', object.categoryId),
+                ]);
+
+                if (!mapPoint) {
+                    throw new Error(`Map point not found for object ${object._id}`);
+                }
+
+                if (!category) {
+                    throw new Error(`Category not found for object ${object._id}`);
+                }
+
+                return {
+                    id: object._id,
+                    name: object.name,
+                    address: mapPoint.address,
+                    city: mapPoint.city,
+                    country: mapPoint.country,
+                    categoryName: category.name,
+                    location: [mapPoint.latitude, mapPoint.longitude] as [number, number],
+                    createdBy: object.createdById,
+                    isPublic: object.isPublic,
+                };
+            }),
+        );
+
+        return {
+            isDone: result.isDone,
+            continueCursor: result.continueCursor,
+            page: items,
+        };
     },
 });

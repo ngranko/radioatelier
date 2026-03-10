@@ -107,17 +107,21 @@
 {#if mapState.map}
     <LocationMarker {orientationEnabled} />
 
-    {#each Object.keys($searchPointList) as id (id)}
-        <Marker
-            {id}
-            lat={$searchPointList[id].object.latitude}
-            lng={$searchPointList[id].object.longitude}
-            icon={$searchPointList[id].object.type === 'local'
-                ? 'fa-solid fa-magnifying-glass'
-                : 'fa-brands fa-google'}
-            color="#dc2626"
-            source="search"
-        />
+    {#each Object.keys($searchPointList) as searchPointId (searchPointId)}
+        {@const searchPoint = $searchPointList[searchPointId]}
+        {#if searchPoint?.object}
+            <Marker
+                id={searchPoint.object.id}
+                {searchPointId}
+                lat={searchPoint.object.latitude}
+                lng={searchPoint.object.longitude}
+                icon={searchPoint.object.type === 'local'
+                    ? 'fa-solid fa-magnifying-glass'
+                    : 'fa-brands fa-google'}
+                color="#dc2626"
+                source="search"
+            />
+        {/if}
     {/each}
 
     {#if sharedMarker.object}

@@ -1,23 +1,56 @@
 <script lang="ts">
-    import {createQuery} from '@tanstack/svelte-query';
-    import {searchPreview} from '$lib/api/object';
+    import {searchState} from '$lib/components/search/search.svelte.ts';
+    import type {SearchPreviewResponsePayload} from '$lib/interfaces/object';
+    import {activeObject} from '$lib/state/activeObject.svelte.ts';
+    import {useConvexClient} from 'convex-svelte';
     import SearchPreviewItem from './searchPreviewItem.svelte';
+    import LoadMoreButton from './loadMoreButton.svelte';
     import {cubicInOut} from 'svelte/easing';
     import {fade} from 'svelte/transition';
-    import LoadMoreButton from './loadMoreButton.svelte';
-    import {searchState} from '$lib/components/search/search.svelte.ts';
-    import {activeObject} from '$lib/state/activeObject.svelte.ts';
+    import {api} from '$convex/_generated/api';
 
-    const previewObjects = createQuery({
-        queryKey: [
-            'searchPreview',
-            {query: searchState.query, latitude: searchState.lat, longitude: searchState.lng},
-        ],
-        queryFn: searchPreview,
+    const client = useConvexClient();
+
+    let results = $state<SearchPreviewResponsePayload | null>(null);
+    let isLoading = $state(false);
+    let isError = $state(false);
+
+    $effect(() => {
+        if (!searchState.query || !searchState.lat || !searchState.lng) {
+            results = null;
+            isLoading = false;
+            isError = false;
+            return;
+        }
+
+        isLoading = true;
+        isError = false;
+
+        void client
+            .action(api.search.preview, {
+                query: searchState.query,
+                latitude: Number(searchState.lat),
+                longitude: Number(searchState.lng),
+            })
+            .then(nextResults => {
+                results = nextResults;
+            })
+            .catch(error => {
+                console.error('Preview search failed', error);
+                results = null;
+                isError = true;
+            })
+            .finally(() => {
+                isLoading = false;
+            });
     });
 
     function handleLoadMoreClick() {
         searchState.isResultsShown = true;
+    }
+
+    function getPreviewKey(object: SearchPreviewResponsePayload['items'][number]) {
+        return object.id ?? `${object.type}:${object.latitude}:${object.longitude}`;
     }
 </script>
 
@@ -27,20 +60,20 @@
         class="absolute top-0 container w-full rounded-t-3xl rounded-b-lg bg-white pt-10.5 shadow-sm"
         transition:fade={{duration: 100, easing: cubicInOut}}
     >
-        {#if $previewObjects.isLoading}
+        {#if isLoading}
             <div class="loader">Loading...</div>
-        {:else if $previewObjects.isError}
+        {:else if isError}
             <div class="pt-2 pr-4 pb-2 pl-4 opacity-75">Что-то пошло не так</div>
-        {:else if $previewObjects.data}
-            {#if $previewObjects.data.data.items.length === 0}
+        {:else if results}
+            {#if results.items.length === 0}
                 <div class="pt-2 pr-4 pb-2 pl-4 opacity-75">Ничего не найдено</div>
             {/if}
 
-            {#each $previewObjects.data.data.items as object (object.id)}
+            {#each results.items as object (getPreviewKey(object))}
                 <SearchPreviewItem {object} />
             {/each}
 
-            {#if $previewObjects.data.data.hasMore}
+            {#if results.hasMore}
                 <LoadMoreButton onLoadMoreClick={handleLoadMoreClick} />
             {/if}
         {/if}

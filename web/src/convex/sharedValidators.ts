@@ -56,3 +56,15 @@ export const repositionObjectRecordFields = {
     latitude: v.number(),
     longitude: v.number(),
 };
+
+export const typesenseObjectSchema = v.object({
+    id: v.id('objects'),
+    name: v.string(),
+    address: v.nullable(v.string()),
+    city: v.nullable(v.string()),
+    country: v.nullable(v.string()),
+    categoryName: v.string(),
+    location: v.array(v.number()),
+    createdBy: v.id('users'),
+    isPublic: v.boolean(),
+});

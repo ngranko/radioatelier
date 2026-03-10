@@ -15,6 +15,7 @@
 
     interface Props {
         id?: Id<'objects'> | null;
+        searchPointId?: string | null;
         lat: number;
         lng: number;
         isRemoved?: boolean;
@@ -27,6 +28,7 @@
 
     let {
         id = null,
+        searchPointId = null,
         lat,
         lng,
         isRemoved = false,
@@ -37,10 +39,12 @@
         source,
     }: Props = $props();
 
-    let markerId: string = $state(id ?? `map-${Date.now()}-${Math.random()}`);
+    const fallbackMarkerId = `map-${Date.now()}-${Math.random()}`;
+    const markerId = $derived(searchPointId ?? id ?? fallbackMarkerId);
     let marker: MarkerObject | null = $state(null);
 
     const client = useConvexClient();
+    const activeTargetId = $derived(source === 'search' ? (searchPointId ?? id) : id);
 
     $effect(() => {
         if (!marker || !markerId || !mapState.markerManager) {
@@ -50,7 +54,7 @@
     });
 
     $effect(() => {
-        if (activeObject.detailsId === id && marker) {
+        if (activeObject.detailsId === activeTargetId && marker) {
             activeMarker.set(marker);
             activeMarker.activate();
             setCenter(Number(lat), Number(lng));
@@ -98,7 +102,7 @@
             mapState.markerManager.removeMarker(markerId!);
         }
 
-        if (activeObject.detailsId === id) {
+        if (activeObject.detailsId === activeTargetId) {
             resetActiveObject();
         }
     });
@@ -127,12 +131,24 @@
     }
 
     function changeActiveMarker() {
-        if (source === 'search' && $searchPointList[id!].object.id === null) {
+        const searchPoint = searchPointId ? $searchPointList[searchPointId] : null;
+
+        if (source === 'search' && searchPoint?.object.id === null && searchPointId) {
             activeObject.isMinimized = false;
+            activeObject.isEditing = true;
             activeObject.isDirty = false;
-            activeObject.detailsId = id!;
+            activeObject.isLoading = true;
+            activeObject.detailsId = searchPointId;
+            goto(
+                `/object/create?lat=${searchPoint.object.latitude}&lng=${searchPoint.object.longitude}`,
+            );
         } else {
-            if (page.params.id === id && activeObject.detailsId === id) {
+            const targetId = searchPoint?.object.id ?? id;
+            if (!targetId) {
+                return;
+            }
+
+            if (page.params.id === targetId && activeObject.detailsId === targetId) {
                 activeObject.isMinimized = false;
                 activeObject.isDirty = false;
                 activeObject.isLoading = false;
@@ -143,8 +159,8 @@
             activeObject.isDirty = false;
             activeObject.isEditing = false;
             activeObject.isLoading = true;
-            activeObject.detailsId = id!;
-            goto(`/object/${id}`);
+            activeObject.detailsId = targetId;
+            goto(`/object/${targetId}`);
         }
     }
 </script>
