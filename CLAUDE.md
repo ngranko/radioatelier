@@ -1,15 +1,10 @@
 ## Project Overview
 
-- **api/**: deprecated, do not try to make changes within that dir, only use if for the backend reference when required
-- **web/**: SvelteKit frontend with TypeScript, Tailwind CSS, and Google Maps integration
-
 ## Development Environment
 
 Access the application at **https://radioatelier.test** (requires local DNS/hosts configuration).
 
 ## Common Commands
-
-### Web Frontend (run from `web/` directory)
 
 ```bash
 bun run check        # TypeScript type checking

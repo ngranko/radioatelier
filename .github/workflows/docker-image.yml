@@ -48,17 +48,8 @@ jobs:
         # If true, the branch will be used to select the maximum version.
         version_from_branch: false
 
-
-    - name: Build the api docker image
-      run: |
-        cd api
-        docker build --compress --file docker/go/Dockerfile -t registry.radioatelier.one/radioatelier/go:${{ steps.calculate-version.outputs.version }} -t registry.radioatelier.one/radioatelier/go:latest --target prod .
-        docker push registry.radioatelier.one/radioatelier/go:${{ steps.calculate-version.outputs.version }}
-        docker push registry.radioatelier.one/radioatelier/go:latest
-
     - name: Build the web docker image
       run: |
-        cd web
         docker build --compress --file docker/app/Dockerfile -t registry.radioatelier.one/radioatelier/web:${{ steps.calculate-version.outputs.version }} -t registry.radioatelier.one/radioatelier/web:latest --target prod .
         docker push registry.radioatelier.one/radioatelier/web:${{ steps.calculate-version.outputs.version }}
         docker push registry.radioatelier.one/radioatelier/web:latest
