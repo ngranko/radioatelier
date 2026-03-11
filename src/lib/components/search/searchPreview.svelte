@@ -5,6 +5,7 @@
     import {useConvexClient} from 'convex-svelte';
     import SearchPreviewItem from './searchPreviewItem.svelte';
     import LoadMoreButton from './loadMoreButton.svelte';
+    import SearchItemSkeleton from './searchItemSkeleton.svelte';
     import {cubicInOut} from 'svelte/easing';
     import {fade} from 'svelte/transition';
     import {api} from '$convex/_generated/api';
@@ -54,28 +55,43 @@
     }
 </script>
 
-<!-- only show preview if there's no active object, otherwise it will cover a part of a map on mobile even if the details dialog is minimized -->
 {#if !activeObject.detailsId}
     <div
-        class="absolute top-0 container w-full rounded-t-3xl rounded-b-lg bg-white pt-10.5 shadow-sm"
-        transition:fade={{duration: 100, easing: cubicInOut}}
+        class="absolute top-0 flex max-h-[calc(100dvh-24px)] w-full flex-col overflow-hidden rounded-t-2xl rounded-b-xl bg-white/85 pt-11 shadow-lg ring-1 shadow-black/[0.08] ring-black/[0.06] backdrop-blur-xl"
+        transition:fade={{duration: 120, easing: cubicInOut}}
     >
-        {#if isLoading}
-            <div class="loader">Loading...</div>
-        {:else if isError}
-            <div class="pt-2 pr-4 pb-2 pl-4 opacity-75">Что-то пошло не так</div>
-        {:else if results}
-            {#if results.items.length === 0}
-                <div class="pt-2 pr-4 pb-2 pl-4 opacity-75">Ничего не найдено</div>
-            {/if}
+        <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+            {#if isLoading}
+                <div class="divide-y divide-black/[0.04]">
+                    <SearchItemSkeleton />
+                    <SearchItemSkeleton />
+                    <SearchItemSkeleton />
+                </div>
+            {:else if isError}
+                <div class="text-muted-foreground flex items-center gap-2.5 px-4 py-4 text-sm">
+                    <i class="fa-solid fa-circle-exclamation text-destructive/70 shrink-0"></i>
+                    Что-то пошло не так
+                </div>
+            {:else if results}
+                {#if results.items.length === 0}
+                    <div class="text-muted-foreground flex items-center gap-2.5 px-4 py-4 text-sm">
+                        <i class="fa-solid fa-magnifying-glass-minus shrink-0"></i>
+                        Ничего не найдено
+                    </div>
+                {:else}
+                    <div class="divide-y divide-black/[0.04]">
+                        {#each results.items as object (getPreviewKey(object))}
+                            <SearchPreviewItem {object} />
+                        {/each}
+                    </div>
+                {/if}
 
-            {#each results.items as object (getPreviewKey(object))}
-                <SearchPreviewItem {object} />
-            {/each}
-
-            {#if results.hasMore}
-                <LoadMoreButton onLoadMoreClick={handleLoadMoreClick} />
+                {#if results.hasMore}
+                    <div class="border-t border-black/[0.04]">
+                        <LoadMoreButton onLoadMoreClick={handleLoadMoreClick} />
+                    </div>
+                {/if}
             {/if}
-        {/if}
+        </div>
     </div>
 {/if}

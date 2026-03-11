@@ -18,8 +18,14 @@
 </script>
 
 <div
-    class="fixed top-29 left-1/2 z-1 transform-[translateX(-50%)] sm:top-2"
+    class="fixed top-29 left-1/2 z-1 -translate-x-1/2 sm:top-2"
     transition:fade={{duration: 100, easing: cubicInOut}}
 >
-    <Button onclick={handleClick}>Искать в этой области</Button>
+    <Button
+        class="text-foreground rounded-full bg-white/90 shadow-lg ring-1 shadow-black/[0.1] ring-black/[0.06] backdrop-blur-xl transition-all duration-200 hover:bg-white hover:shadow-xl active:scale-[0.97]"
+        onclick={handleClick}
+    >
+        <i class="fa-solid fa-rotate text-xs"></i>
+        Искать в этой области
+    </Button>
 </div>

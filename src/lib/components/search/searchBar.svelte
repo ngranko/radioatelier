@@ -9,6 +9,7 @@
 
     let val: string = $state('');
     let timeout: number | undefined;
+    let isFocused = $state(false);
 
     function handleInput(evt: Event) {
         val = (evt.target as HTMLInputElement).value;
@@ -38,18 +39,29 @@
     }
 </script>
 
-<div class="relative z-1">
+<div class="group relative z-1">
+    <div
+        class="pointer-events-none absolute top-1/2 left-3.5 z-10 -translate-y-1/2 text-sm transition-colors
+            {isFocused ? 'text-primary' : 'text-muted-foreground'}"
+    >
+        <i class="fa-solid fa-magnifying-glass"></i>
+    </div>
     <Input
         type="text"
         name="search"
         placeholder="Искать..."
         oninput={handleInput}
+        onfocus={() => (isFocused = true)}
+        onblur={() => (isFocused = false)}
         bind:value={val}
-        class="relative h-full w-full rounded-full border-none pt-2 pr-10 pb-2 pl-4 shadow-sm"
+        class="placeholder:text-muted-foreground/60 focus:ring-primary/25 h-10 w-full rounded-full border-none bg-white/80 pt-2 pr-10
+            pb-2 pl-9.5 text-sm shadow-sm ring-1
+            ring-black/[0.06] backdrop-blur-xl transition-all
+            ease-out focus:bg-white/95 focus:shadow-md"
     />
     {#if val}
         <div
-            class="absolute top-1/2 right-0 -translate-y-1/2"
+            class="absolute top-1/2 right-0.5 -translate-y-1/2"
             transition:fade={{duration: 100, easing: cubicInOut}}
         >
             <ClearButton onClick={handleClearClick} />

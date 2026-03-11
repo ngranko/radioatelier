@@ -4,8 +4,9 @@
     import {fitMarkerList} from '$lib/services/map/map.svelte';
     import {searchPointList} from '$lib/stores/map';
     import {useConvexClient} from 'convex-svelte';
-    import LoadMoreButton from './loadMoreButton.svelte';
+    import {Button} from '$lib/components/ui/button';
     import SearchResultsItem from './searchResultsItem.svelte';
+    import SearchItemSkeleton from './searchItemSkeleton.svelte';
     import {api} from '$convex/_generated/api';
 
     let {isActive} = $props();
@@ -82,20 +83,51 @@
 
 <div class="h-full overflow-y-auto overscroll-contain">
     {#if isLoading}
-        <div>Loading...</div>
-    {/if}
-    {#if isError}
-        <div>Error</div>
-    {/if}
-    {#if hasLoaded}
-        {#each Object.keys($searchPointList) as id (id)}
-            {@const searchPoint = $searchPointList[id]}
-            {#if searchPoint?.object}
-                <SearchResultsItem {id} object={searchPoint.object} />
-            {/if}
-        {/each}
+        <div class="divide-y divide-black/[0.04]">
+            <SearchItemSkeleton />
+            <SearchItemSkeleton />
+            <SearchItemSkeleton />
+            <SearchItemSkeleton />
+            <SearchItemSkeleton />
+        </div>
+    {:else if isError}
+        <div class="text-muted-foreground flex items-center gap-2.5 px-4 py-6 text-sm">
+            <i class="fa-solid fa-circle-exclamation text-destructive/70 shrink-0"></i>
+            Не удалось загрузить результаты
+        </div>
+    {:else if hasLoaded}
+        {#if Object.keys($searchPointList).length === 0}
+            <div class="flex flex-col items-center gap-2 px-4 py-8 text-center">
+                <i class="fa-solid fa-magnifying-glass-minus text-muted-foreground/50 text-xl"></i>
+                <span class="text-muted-foreground text-sm">Ничего не найдено</span>
+            </div>
+        {:else}
+            <div class="divide-y divide-black/[0.04]">
+                {#each Object.keys($searchPointList) as id (id)}
+                    {@const searchPoint = $searchPointList[id]}
+                    {#if searchPoint?.object}
+                        <SearchResultsItem {id} object={searchPoint.object} />
+                    {/if}
+                {/each}
+            </div>
+        {/if}
+
         {#if hasMore}
-            <LoadMoreButton onLoadMoreClick={handleLoadMoreClick} />
+            <div class="border-t border-black/[0.04]">
+                <Button
+                    variant="ghost"
+                    class="text-primary hover:text-primary/80 w-full text-xs font-medium"
+                    onclick={handleLoadMoreClick}
+                    disabled={isLoadingMore}
+                >
+                    {#if isLoadingMore}
+                        <i class="fa-solid fa-spinner fa-spin"></i>
+                        Загрузка...
+                    {:else}
+                        Загрузить ещё
+                    {/if}
+                </Button>
+            </div>
         {/if}
     {/if}
 </div>

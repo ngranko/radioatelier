@@ -6,8 +6,11 @@
 
 <Button
     variant="ghost"
-    class="text-primary hover:text-primary/90 block w-full rounded-b-lg pt-1 pr-3 pb-2 pl-3 text-left"
+    class="text-primary hover:text-primary/80 group w-full text-xs font-medium"
     onclick={onLoadMoreClick}
 >
-    больше результатов
+    Все результаты
+    <i
+        class="fa-solid fa-chevron-down text-[10px] transition-transform group-hover:translate-y-0.5"
+    ></i>
 </Button>

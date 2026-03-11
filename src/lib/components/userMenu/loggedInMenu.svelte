@@ -34,12 +34,12 @@
                 {...props}
                 variant="ghost"
                 size="icon"
-                class="relative z-2 m-2 size-10 rounded-full text-3xl shadow-lg"
+                class="group text-foreground hover:text-foreground relative z-2 size-11 rounded-full bg-white/90 text-lg shadow-lg ring-1 shadow-black/[0.1] ring-black/[0.06] backdrop-blur-xl transition-all hover:bg-white hover:shadow-xl active:scale-[0.97]"
                 aria-label="Показать меню"
             >
-                <AvatarRoot class="size-10 rounded-full">
+                <AvatarRoot class="size-10 rounded-full bg-transparent">
                     <Fallback
-                        class="bg-primary items-end rounded-full pt-1 pr-1 pl-1 brightness-200 saturate-25 transition hover:brightness-180 hover:saturate-30"
+                        class="text-foreground rounded-full bg-transparent text-lg transition-transform group-hover:scale-110"
                     >
                         <i class="fa-solid fa-user-ninja"></i>
                     </Fallback>

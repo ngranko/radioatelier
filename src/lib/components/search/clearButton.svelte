@@ -7,9 +7,9 @@
 <Button
     variant="ghost"
     size="icon"
-    class="h-10 w-10 rounded-full text-xl"
+    class="text-muted-foreground hover:text-foreground h-8 w-8 rounded-full transition-colors"
     aria-label="Очистить"
     onclick={onClick}
 >
-    <i class="fa-solid fa-xmark block w-5"></i>
+    <i class="fa-solid fa-xmark block w-4 text-sm"></i>
 </Button>

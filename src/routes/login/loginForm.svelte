@@ -9,7 +9,6 @@
     import {page} from '$app/state';
     import {goto} from '$app/navigation';
     import {zod4, zod4Client} from 'sveltekit-superforms/adapters';
-    import {useQueryClient} from '@tanstack/svelte-query';
     import {useClerkContext} from 'svelte-clerk';
     import type {EmailCodeFactor} from '@clerk/types';
     import {Input} from '$lib/components/ui/input';
@@ -20,7 +19,6 @@
         onNeedsSecondFactor: () => void;
     }
 
-    const queryClient = useQueryClient();
     const ctx = useClerkContext();
 
     let {onNeedsSecondFactor}: Props = $props();
@@ -69,7 +67,6 @@
 
                 if (signInAttempt.status === 'complete') {
                     await ctx.clerk.setActive({session: signInAttempt.createdSessionId});
-                    queryClient.clear();
                     await handlePostSignInRedirect();
                 } else if (signInAttempt.status === 'needs_second_factor') {
                     const emailCodeFactor = signInAttempt.supportedSecondFactors?.find(
