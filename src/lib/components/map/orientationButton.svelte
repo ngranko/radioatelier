@@ -49,8 +49,11 @@
 
 <button
     class={cn([
-        'align-center absolute right-2.5 bottom-30 z-1 flex w-10 justify-center rounded-xs border-0 bg-white p-2.5 text-xl shadow-md transition-colors',
-        {'text-gray-500': !isEnabled, 'text-primary': isEnabled},
+        'bg-map-control align-center absolute right-2.5 bottom-30 z-1 flex w-10 justify-center rounded-xs border-0 p-2.5 text-xl shadow-md transition-colors',
+        {
+            'text-map-control-muted-foreground': !isEnabled,
+            'text-map-control-active-foreground': isEnabled,
+        },
     ])}
     onclick={toggleOrientation}
     aria-label="Toggle orientation"

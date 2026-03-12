@@ -1,4 +1,5 @@
 <script lang="ts">
+    import EmptyPlaceholder from '$lib/components/input/imageUpload/emptyPlaceholder.svelte';
     import {Button} from '$lib/components/ui/button';
     import CropDialog from '$lib/components/input/imageUpload/cropDialog.svelte';
     import ImageViewer from '$lib/components/input/imageUpload/imageViewer.svelte';
@@ -69,22 +70,23 @@
             isViewerOpen = true;
         }
     }
-
-    function getImageUrl(): string {
-        return previewUrl || url || '/image_empty.jpg';
-    }
 </script>
 
-<div class="relative w-full overflow-hidden rounded-lg border-2 border-gray-200 bg-gray-50">
-    <button
-        type="button"
-        class="block aspect-2/1 w-full border-none bg-cover bg-center bg-no-repeat"
-        style="background-image:url('{getImageUrl()}')"
-        onclick={handleViewerOpen}
-        disabled={isUploading}
-        aria-label="Изображение"
-        aria-busy={isUploading}
-    ></button>
+<div class="bg-muted/30 border-border relative w-full overflow-hidden rounded-lg border">
+    {#if previewUrl || url}
+        <button
+            type="button"
+            class="block aspect-2/1 w-full border-none bg-cover bg-center bg-no-repeat"
+            style={`background-image:url('${previewUrl || url}')`}
+            onclick={handleViewerOpen}
+            disabled={isUploading}
+            aria-label="Изображение"
+            aria-busy={isUploading}
+        ></button>
+    {:else}
+        <EmptyPlaceholder />
+    {/if}
+
     {#if isUploading}
         <LoadingOverlay />
     {/if}
@@ -93,7 +95,7 @@
             <Button
                 variant="secondary"
                 size="icon"
-                class="text-base text-black hover:bg-gray-200"
+                class="text-foreground/80 hover:bg-secondary/90 text-base shadow-sm"
                 onclick={handleUploadClick}
                 disabled={isUploading}
                 aria-label="Загрузить изображение"

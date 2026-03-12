@@ -20,13 +20,13 @@
 
 <div class="flex flex-wrap gap-2">
     {#each sortedTags as tag (tag.id)}
-        <Badge variant="secondary" class="bg-sky-100 text-sky-800">
+        <Badge variant="secondary" class="text-primary border-primary/15 bg-primary/10">
             <i class="fa-solid fa-tag"></i>
             <span class="lowercase">{tag.name}</span>
         </Badge>
     {/each}
     {#each sortedPrivateTags as tag (tag.id)}
-        <Badge variant="secondary" class="bg-amber-100 text-amber-900">
+        <Badge variant="secondary" class="border-border bg-muted text-muted-foreground">
             <i class="fa-solid fa-lock"></i>
             <span class="lowercase">{tag.name}</span>
         </Badge>

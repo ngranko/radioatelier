@@ -22,6 +22,6 @@
     }
 </script>
 
-<p class="text-base text-gray-900">
+<p class="text-foreground text-base">
     {composeAddress()}
 </p>

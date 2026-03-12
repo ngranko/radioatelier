@@ -8,7 +8,6 @@
     import {page} from '$app/state';
     import {toast} from 'svelte-sonner';
     import {zod4, zod4Client} from 'sveltekit-superforms/adapters';
-    import {useQueryClient} from '@tanstack/svelte-query';
     import {useClerkContext} from 'svelte-clerk';
     import {goto} from '$app/navigation';
     import {Input} from '$lib/components/ui/input';
@@ -18,7 +17,6 @@
         onBack: () => void;
     }
 
-    const queryClient = useQueryClient();
     const ctx = useClerkContext();
 
     let {onBack}: Props = $props();
@@ -60,7 +58,6 @@
 
                 if (signInAttempt.status === 'complete') {
                     await ctx.clerk.setActive({session: signInAttempt.createdSessionId});
-                    queryClient.clear();
                     await handlePostSignInRedirect();
                 } else {
                     toast.error('Не удалось подтвердить код');

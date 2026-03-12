@@ -32,30 +32,20 @@
     }
 </script>
 
-<div class="flex items-center justify-end gap-2 border-b bg-gray-50/50 px-4 py-2.5">
+<div class="bg-muted/40 flex items-center justify-end gap-2 border-b px-4 py-2.5">
     {#if permissions.canEditAll}
-        <Button
-            variant="ghost"
-            size="icon"
-            class="bg-primary hover:bg-primary/90 text-base text-white hover:text-white"
-            onclick={handleEditClick}
-        >
+        <Button variant="default" size="icon" class="text-base" onclick={handleEditClick}>
             <i class="fa-solid fa-pen"></i>
         </Button>
     {:else if permissions.canEditPersonal}
-        <Button
-            variant="ghost"
-            size="icon"
-            class="bg-primary hover:bg-primary/90 text-base text-white hover:text-white"
-            onclick={handleEditClick}
-        >
+        <Button variant="default" size="icon" class="text-base" onclick={handleEditClick}>
             <i class="fa-solid fa-user-pen"></i>
         </Button>
     {/if}
     <Button
         variant="ghost"
         size="icon"
-        class="text-base text-gray-600 hover:bg-gray-100 hover:text-gray-700"
+        class="text-muted-foreground hover:text-foreground text-base"
         onclick={handleRouteClick}
     >
         <i class="fa-solid fa-route"></i>
@@ -63,7 +53,7 @@
     <Button
         variant="ghost"
         size="icon"
-        class="text-base text-gray-600 hover:bg-gray-100 hover:text-gray-700"
+        class="text-muted-foreground hover:text-foreground text-base"
         onclick={handleStreetViewClick}
     >
         <i class="fa-solid fa-street-view"></i>

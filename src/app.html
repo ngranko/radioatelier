@@ -33,6 +33,14 @@
 		<script src="https://kit.fontawesome.com/5f2ce4df4c.js" crossorigin="anonymous"></script>
 
 		<script>
+			(function() {
+				var t = localStorage.getItem('theme');
+				var dark = t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme:dark)').matches);
+				if (dark) document.documentElement.classList.add('dark');
+			})();
+		</script>
+
+		<script>
 			// Disable page-level pinch-zoom and double-tap zoom (iOS/Android)
 			(function() {
 				var lastTouchEnd = 0;

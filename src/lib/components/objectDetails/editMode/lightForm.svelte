@@ -99,7 +99,7 @@
 </script>
 
 <form method="POST" action="?/save" use:enhance>
-    <div class="flex items-center justify-between gap-3 border-b bg-gray-50/50 px-4 py-2.5">
+    <div class="bg-muted/40 flex items-center justify-between gap-3 border-b px-4 py-2.5">
         <Button type="submit" disabled={$submitting} class="px-6 text-base">Сохранить</Button>
         <BackButton isConfirmationRequired={isTainted()} onClick={handleBack} />
     </div>
@@ -116,14 +116,14 @@
             />
         </div>
         <div class="flex items-center justify-between">
-            <div class="text-sm text-gray-500">{initialValues.category?.name ?? ''}</div>
+            <div class="text-muted-foreground text-sm">{initialValues.category?.name ?? ''}</div>
             <Flags
                 isPublic={initialValues.isPublic ?? false}
                 isVisited={initialValues.isVisited ?? false}
                 isRemoved={initialValues.isRemoved ?? false}
             />
         </div>
-        <h1 class="mb-3 text-2xl leading-tight font-semibold text-gray-900">
+        <h1 class="text-foreground mb-3 text-2xl leading-tight font-semibold">
             {initialValues.name}
         </h1>
 
@@ -146,7 +146,7 @@
             <Input type="hidden" name="tags" value={tag} />
         {/each}
 
-        <div class="space-y-4 rounded-lg border bg-gray-50 p-4">
+        <div class="bg-muted/40 space-y-4 rounded-lg border p-4">
             <FormField {form} name="isVisited">
                 <FormControl>
                     {#snippet children({props})}
@@ -158,7 +158,7 @@
                             />
                             <div class="flex flex-col">
                                 <FormLabel class="mb-0">посещена</FormLabel>
-                                <FormDescription class="text-xs text-gray-500">
+                                <FormDescription class="text-muted-foreground text-xs">
                                     Отметка видна только вам
                                 </FormDescription>
                             </div>
@@ -183,7 +183,7 @@
                         </div>
                     {/snippet}
                 </FormControl>
-                <FormDescription class="text-xs text-gray-500">
+                <FormDescription class="text-muted-foreground text-xs">
                     Приватные теги видны только вам
                 </FormDescription>
                 <FormFieldErrors />

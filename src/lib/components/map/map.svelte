@@ -10,6 +10,7 @@
     } from '$lib/services/map/geolocation';
     import {PointerDragZoomController} from '$lib/services/map/pointerDragZoom';
     import config from '$lib/config';
+    import {themeState} from '$lib/state/theme.svelte';
     import StreetView from './streetView.svelte';
     import {removeDragTimeout} from '$lib/state/marker.svelte';
 
@@ -59,7 +60,10 @@
     });
 
     async function initMap(): Promise<google.maps.Map> {
-        const {Map} = await mapState.loader.importLibrary('maps');
+        const [{Map}, {ColorScheme}] = await Promise.all([
+            mapState.loader.importLibrary('maps'),
+            mapState.loader.importLibrary('core'),
+        ]);
 
         const center = await getInitialCenter();
 
@@ -73,7 +77,18 @@
             fullscreenControl: false,
             zoomControl: false,
             clickableIcons: false,
+            colorScheme: getMapColorScheme(ColorScheme),
         });
+    }
+
+    function getMapColorScheme(
+        ColorScheme: typeof google.maps.ColorScheme,
+    ): google.maps.ColorScheme {
+        if (themeState.preference === 'system') {
+            return ColorScheme.FOLLOW_SYSTEM;
+        }
+
+        return themeState.resolved === 'dark' ? ColorScheme.DARK : ColorScheme.LIGHT;
     }
 
     async function initMarkerManager(mapInstance: google.maps.Map): Promise<MarkerManager> {

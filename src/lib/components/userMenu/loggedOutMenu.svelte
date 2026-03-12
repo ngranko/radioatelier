@@ -6,8 +6,10 @@
         Trigger as DropdownMenuTrigger,
         Content as DropdownMenuContent,
         Group,
+        Separator as DropdownMenuSeparator,
         Item as DropdownMenuItem,
     } from '$lib/components/ui/dropdown-menu';
+    import ThemeSwitcher from '$lib/components/themeSwitcher.svelte';
     import {goto} from '$app/navigation';
     import {page} from '$app/state';
 
@@ -23,7 +25,7 @@
                 {...props}
                 variant="ghost"
                 size="icon"
-                class="group text-foreground/50 hover:text-foreground/70 relative z-2 size-11 rounded-full bg-white/75 text-lg shadow-md ring-1 shadow-black/[0.08] ring-black/[0.05] backdrop-blur-xl transition-all hover:bg-white/90 hover:shadow-lg active:scale-[0.97]"
+                class="glass group text-foreground/50 hover:text-foreground/70 relative z-2 size-11 rounded-full bg-white/75 text-lg shadow-md transition-all hover:bg-white/90 hover:shadow-lg active:scale-[0.97] dark:bg-white/10 dark:shadow-black/30 dark:hover:bg-white/15"
                 aria-label="Показать меню"
             >
                 <AvatarRoot class="size-11 rounded-full bg-transparent">
@@ -42,6 +44,10 @@
                 <i class="fa-solid fa-right-to-bracket"></i>
                 Войти
             </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <div class="flex justify-center px-2 py-1.5">
+                <ThemeSwitcher />
+            </div>
         </Group>
     </DropdownMenuContent>
 </DropdownMenuRoot>

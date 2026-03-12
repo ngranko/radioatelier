@@ -6,8 +6,14 @@
     import {setupConvex} from 'convex-svelte';
     import {ClerkProvider} from 'svelte-clerk';
     import ConvexClerkAuth from '$lib/components/convexClerkAuth.svelte';
+    import {initTheme, themeState} from '$lib/state/theme.svelte';
+    import {onMount} from 'svelte';
 
     setupConvex(PUBLIC_CONVEX_URL);
+
+    onMount(() => {
+        initTheme();
+    });
 
     interface Props {
         children?: Snippet;
@@ -21,7 +27,7 @@
         {@render children?.()}
         <Toaster
             position="top-center"
-            theme="light"
+            theme={themeState.resolved}
             toastOptions={{
                 classes: {
                     title: 'font-branding text-base',

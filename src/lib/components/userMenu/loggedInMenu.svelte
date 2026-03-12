@@ -10,6 +10,7 @@
         Item as DropdownMenuItem,
     } from '$lib/components/ui/dropdown-menu';
     import LogoutDialog from '$lib/components/userMenu/logoutDialog.svelte';
+    import ThemeSwitcher from '$lib/components/themeSwitcher.svelte';
     import {goto} from '$app/navigation';
 
     let isLogoutDialogOpen = $state(false);
@@ -34,7 +35,7 @@
                 {...props}
                 variant="ghost"
                 size="icon"
-                class="group text-foreground hover:text-foreground relative z-2 size-11 rounded-full bg-white/90 text-lg shadow-lg ring-1 shadow-black/[0.1] ring-black/[0.06] backdrop-blur-xl transition-all hover:bg-white hover:shadow-xl active:scale-[0.97]"
+                class="glass group text-foreground hover:text-foreground relative z-2 size-11 rounded-full bg-white/90 text-lg transition-all hover:bg-white hover:shadow-xl active:scale-[0.97] dark:bg-white/10 dark:shadow-black/30 dark:hover:bg-white/15"
                 aria-label="Показать меню"
             >
                 <AvatarRoot class="size-10 rounded-full bg-transparent">
@@ -57,6 +58,10 @@
                 <i class="fa-solid fa-key"></i>
                 Сменить пароль
             </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <div class="flex justify-center px-2 py-1.5">
+                <ThemeSwitcher />
+            </div>
             <DropdownMenuSeparator />
             <DropdownMenuItem onclick={handleLogoutClick}>
                 <i class="fa-solid fa-right-from-bracket"></i>

@@ -57,12 +57,12 @@
 
 {#if !activeObject.detailsId}
     <div
-        class="absolute top-0 flex max-h-[calc(100dvh-24px)] w-full flex-col overflow-hidden rounded-t-2xl rounded-b-xl bg-white/85 pt-11 shadow-lg ring-1 shadow-black/[0.08] ring-black/[0.06] backdrop-blur-xl"
+        class="glass absolute top-0 flex max-h-[calc(100dvh-24px)] w-full flex-col overflow-hidden rounded-t-2xl rounded-b-xl pt-11"
         transition:fade={{duration: 120, easing: cubicInOut}}
     >
         <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain">
             {#if isLoading}
-                <div class="divide-y divide-black/[0.04]">
+                <div class="divide-y divide-black/[0.04] dark:divide-white/[0.06]">
                     <SearchItemSkeleton />
                     <SearchItemSkeleton />
                     <SearchItemSkeleton />
@@ -79,7 +79,7 @@
                         Ничего не найдено
                     </div>
                 {:else}
-                    <div class="divide-y divide-black/[0.04]">
+                    <div class="divide-y divide-black/[0.04] dark:divide-white/[0.06]">
                         {#each results.items as object (getPreviewKey(object))}
                             <SearchPreviewItem {object} />
                         {/each}
@@ -87,7 +87,7 @@
                 {/if}
 
                 {#if results.hasMore}
-                    <div class="border-t border-black/[0.04]">
+                    <div class="border-t border-black/[0.04] dark:border-white/[0.06]">
                         <LoadMoreButton onLoadMoreClick={handleLoadMoreClick} />
                     </div>
                 {/if}

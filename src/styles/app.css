@@ -5,6 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+    color-scheme: light;
     --radius: 0.625rem;
     --background: oklch(1 0 0);
     --foreground: oklch(0.129 0.042 264.695);
@@ -18,8 +19,8 @@
     --secondary-foreground: oklch(0.2 0.05 195);
     --muted: oklch(0.968 0.007 247.896);
     --muted-foreground: oklch(0.554 0.046 257.417);
-    --accent: oklch(0.968 0.007 247.896);
-    --accent-foreground: oklch(0.208 0.042 265.755);
+    --accent: oklch(0.95 0.026 205);
+    --accent-foreground: oklch(0.27 0.07 225);
     --destructive: oklch(0.58 0.24 30);
     --success: oklch(0.75 0.3 145);
     --warning: oklch(0.85 0.22 95);
@@ -35,13 +36,18 @@
     --sidebar-foreground: oklch(0.129 0.042 264.695);
     --sidebar-primary: oklch(0.55 0.18 195);
     --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-    --sidebar-accent: oklch(0.968 0.007 247.896);
-    --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
+    --sidebar-accent: oklch(0.95 0.026 205);
+    --sidebar-accent-foreground: oklch(0.27 0.07 225);
     --sidebar-border: oklch(0.929 0.013 255.508);
     --sidebar-ring: oklch(0.65 0.1 195);
+    --map-control: #ffffff;
+    --map-control-foreground: var(--primary);
+    --map-control-muted-foreground: #6b7280;
+    --map-control-active-foreground: var(--primary);
 }
 
 .dark {
+    color-scheme: dark;
     --background: oklch(0.129 0.042 264.695);
     --foreground: oklch(0.984 0.003 247.858);
     --card: oklch(0.208 0.042 265.755);
@@ -54,8 +60,8 @@
     --secondary-foreground: oklch(0.95 0.02 195);
     --muted: oklch(0.279 0.041 260.031);
     --muted-foreground: oklch(0.704 0.04 256.788);
-    --accent: oklch(0.279 0.041 260.031);
-    --accent-foreground: oklch(0.984 0.003 247.858);
+    --accent: oklch(0.34 0.05 225);
+    --accent-foreground: oklch(0.97 0.012 205);
     --destructive: oklch(0.68 0.24 30);
     --success: oklch(0.8 0.32 145);
     --warning: oklch(0.88 0.24 95);
@@ -71,10 +77,14 @@
     --sidebar-foreground: oklch(0.984 0.003 247.858);
     --sidebar-primary: oklch(0.72 0.18 195);
     --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-    --sidebar-accent: oklch(0.279 0.041 260.031);
-    --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
+    --sidebar-accent: oklch(0.34 0.05 225);
+    --sidebar-accent-foreground: oklch(0.97 0.012 205);
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.6 0.1 195);
+    --map-control: #444444;
+    --map-control-foreground: #ffffffdb;
+    --map-control-muted-foreground: #ffffffdb;
+    --map-control-active-foreground: #fbbc04;
 }
 
 @theme inline {
@@ -115,6 +125,10 @@
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-ring: var(--sidebar-ring);
+    --color-map-control: var(--map-control);
+    --color-map-control-foreground: var(--map-control-foreground);
+    --color-map-control-muted-foreground: var(--map-control-muted-foreground);
+    --color-map-control-active-foreground: var(--map-control-active-foreground);
 
     --font-branding: sofia-pro, sans-serif;
 
@@ -143,6 +157,14 @@
 }
 
 @layer components {
+    .glass {
+        @apply bg-white/85 backdrop-blur-xl shadow-lg shadow-black/[0.08] ring-1 ring-black/[0.06];
+    }
+
+    .dark .glass {
+        @apply bg-white/[0.08] shadow-black/40 ring-white/[0.1];
+    }
+
     .marker-dragging {
         opacity: 0.5;
         scale: 1.2;
@@ -204,6 +226,11 @@
 
     .nav-marker-oriented-stale::before {
         opacity: 0.2;
+    }
+
+    /* a workaround for onepassword extension with oklch colors */
+    .dark input[data-com-onepassword-filled="light"] {
+        color: #000000;
     }
 }
 

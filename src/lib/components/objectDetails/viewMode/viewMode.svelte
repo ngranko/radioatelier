@@ -39,14 +39,14 @@
     </div>
     <div class={!initialValues.tags?.length && !initialValues.privateTags?.length ? 'mb-4' : ''}>
         <div class="flex items-center justify-between">
-            <div class="text-sm text-gray-500">{initialValues.category?.name ?? ''}</div>
+            <div class="text-muted-foreground text-sm">{initialValues.category?.name ?? ''}</div>
             <Flags
                 isPublic={initialValues.isPublic ?? false}
                 isVisited={initialValues.isVisited ?? false}
                 isRemoved={initialValues.isRemoved ?? false}
             />
         </div>
-        <h1 class="text-2xl leading-tight font-semibold text-gray-900">{initialValues.name}</h1>
+        <h1 class="text-foreground text-2xl leading-tight font-semibold">{initialValues.name}</h1>
     </div>
     {#if initialValues.tags?.length || initialValues.privateTags?.length}
         <div class="mb-4">
@@ -61,14 +61,14 @@
         />
     {/if}
     {#if initialValues.description}
-        <p class="text-sm leading-relaxed whitespace-pre-line text-gray-700">
+        <p class="text-foreground/80 text-sm leading-relaxed whitespace-pre-line">
             {initialValues.description}
         </p>
     {/if}
     {#if initialValues.installedPeriod || initialValues.removalPeriod}
         <div class="space-y-1">
             {#if initialValues.installedPeriod}
-                <div class="text-sm text-gray-500">
+                <div class="text-muted-foreground text-sm">
                     Появилась <span class="lowercase">
                         {startsWithNumber(initialValues.installedPeriod)
                             ? 'в ' + initialValues.installedPeriod
@@ -77,7 +77,7 @@
                 </div>
             {/if}
             {#if initialValues.removalPeriod}
-                <div class="text-sm text-gray-500">
+                <div class="text-muted-foreground text-sm">
                     Пропала <span class="lowercase">
                         {startsWithNumber(initialValues.removalPeriod)
                             ? 'в ' + initialValues.removalPeriod

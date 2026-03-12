@@ -2,7 +2,6 @@
     import {page} from '$app/state';
     import {goto} from '$app/navigation';
     import {useClerkContext} from 'svelte-clerk';
-    import {useQueryClient} from '@tanstack/svelte-query';
     import {defaults, superForm} from 'sveltekit-superforms';
     import {zod4, zod4Client} from 'sveltekit-superforms/adapters';
     import {toast} from 'svelte-sonner';
@@ -20,7 +19,6 @@
         onBack: () => void;
     }
 
-    const queryClient = useQueryClient();
     const ctx = useClerkContext();
 
     let {requestedEmail = $bindable(''), onBack}: Props = $props();
@@ -62,7 +60,6 @@
 
                 if (signInAttempt.status === 'complete') {
                     await ctx.clerk.setActive({session: signInAttempt.createdSessionId});
-                    queryClient.clear();
                     await handlePostSignInRedirect();
                 } else {
                     toast.error('Не удалось завершить восстановление');

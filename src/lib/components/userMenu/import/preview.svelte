@@ -139,7 +139,7 @@
             </div>
         </div>
     </div>
-    <DialogFooter class="gap-4 border-t bg-white pt-2">
+    <DialogFooter class="bg-background gap-4 border-t pt-2">
         <DialogClose>Отменить</DialogClose>
         <Button type="submit" disabled={$submitting}>Импортировать</Button>
     </DialogFooter>

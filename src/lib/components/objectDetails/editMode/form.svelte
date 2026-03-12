@@ -208,7 +208,7 @@
         bind:this={deleteButton}
         aria-label="Удалить"
     ></button>
-    <div class="flex items-center justify-between gap-3 border-b bg-gray-50/50 px-4 py-2.5">
+    <div class="bg-muted/40 flex items-center justify-between gap-3 border-b px-4 py-2.5">
         <Button type="submit" disabled={$submitting} class="px-6 text-base">Сохранить</Button>
         {#if $formData.id}
             <BackButton isConfirmationRequired={isTainted()} onClick={handleBack} />

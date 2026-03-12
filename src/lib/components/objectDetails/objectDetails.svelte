@@ -1,14 +1,11 @@
 <script lang="ts">
     import {fly, fade} from 'svelte/transition';
     import {cubicInOut} from 'svelte/easing';
-    import {untrack} from 'svelte';
     import type {LooseObject, Object} from '$lib/interfaces/object';
     import ObjectDetailsLive from '$lib/components/objectDetails/objectDetailsLive.svelte';
     import Form from '$lib/components/objectDetails/editMode/form.svelte';
     import LightForm from '$lib/components/objectDetails/editMode/lightForm.svelte';
     import ViewMode from '$lib/components/objectDetails/viewMode/viewMode.svelte';
-    import ViewModeSkeleton from '$lib/components/objectDetails/viewMode/viewModeSkeleton.svelte';
-    import FormSkeleton from '$lib/components/objectDetails/editMode/formSkeleton.svelte';
     import {activeMarker} from '$lib/stores/map';
     import {Button} from '$lib/components/ui/button';
     import CloseButton from './closeButton.svelte';
@@ -46,35 +43,6 @@
         permissions = {canEditAll: true, canEditPersonal: true},
         onCloseRequest,
     }: Props = $props();
-
-    let showSkeleton = $state(false);
-    let skeletonTimeout: ReturnType<typeof setTimeout> | null = null;
-
-    $effect(() => {
-        if (isLoading) {
-            if (!initialValues) {
-                showSkeleton = true;
-                return;
-            }
-            skeletonTimeout = setTimeout(() => {
-                showSkeleton = true;
-            }, 150);
-        } else {
-            if (skeletonTimeout) {
-                clearTimeout(skeletonTimeout);
-                skeletonTimeout = null;
-            }
-            untrack(() => {
-                showSkeleton = false;
-            });
-        }
-
-        return () => {
-            if (skeletonTimeout) {
-                clearTimeout(skeletonTimeout);
-            }
-        };
-    });
 
     // Custom transition that skips animation on SSR hydration
     function flyTransition(node: HTMLElement) {
@@ -138,7 +106,7 @@
 <Background onClick={handleClose} isConfirmationRequired={activeObject.isDirty} />
 <aside
     class={cn([
-        'absolute bottom-0 z-3 m-2 flex w-[calc(100dvw-8px*2)] max-w-100 flex-col rounded-lg bg-white transition-[height]',
+        'bg-background absolute bottom-0 z-3 m-2 flex w-[calc(100dvw-8px*2)] max-w-100 flex-col rounded-lg transition-[height]',
         {
             'h-14 overflow-hidden': activeObject.isMinimized,
             'h-[calc(100dvh-8px*2)]': !activeObject.isMinimized,
@@ -150,18 +118,13 @@
     <section class="flex items-center gap-1 border-b p-3">
         <span
             class={cn('mr-2 flex-1 overflow-hidden text-nowrap text-ellipsis transition-colors', {
-                'text-black': activeObject.isMinimized,
+                'text-foreground': activeObject.isMinimized,
                 'text-transparent': !activeObject.isMinimized,
             })}
         >
             {initialValues?.name ?? ''}
         </span>
-        <Button
-            variant="ghost"
-            size="icon"
-            class="h-8 w-8 text-lg hover:bg-gray-100"
-            onclick={handleMinimizeClick}
-        >
+        <Button variant="ghost" size="icon" class="h-8 w-8 text-lg" onclick={handleMinimizeClick}>
             <i
                 class={`fa-solid ${activeObject.isMinimized ? 'fa-chevron-up' : 'fa-chevron-down'}`}
             ></i>
@@ -170,16 +133,7 @@
     </section>
     {#key key}
         <div class="relative flex-1 overflow-hidden">
-            {#if isLoading && showSkeleton}
-                <div class="absolute inset-0" in:fadeTransition out:fade={{duration: 150}}>
-                    {#if isEditing}
-                        <FormSkeleton />
-                    {:else}
-                        <ViewModeSkeleton />
-                    {/if}
-                </div>
-                <!-- TODO: don't like this, redo later -->
-            {:else if !isLoading && initialValues}
+            {#if initialValues}
                 <div class="absolute inset-0" in:fadeTransition out:fade={{duration: 150}}>
                     {#if initialValues.id}
                         <ObjectDetailsLive

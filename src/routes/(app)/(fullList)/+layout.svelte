@@ -1,6 +1,6 @@
 <script lang="ts">
     import {page} from '$app/state';
-    import {fade} from 'svelte/transition';
+    import {fade, fly} from 'svelte/transition';
     import {mapState} from '$lib/state/map.svelte.ts';
     import Marker from '$lib/components/map/marker.svelte';
     import ObjectDetails from '$lib/components/objectDetails/objectDetails.svelte';
@@ -11,6 +11,7 @@
     import {useQuery} from 'convex-svelte';
     import {api} from '$convex/_generated/api.js';
     import {useClerkContext} from 'svelte-clerk';
+    import {cubicInOut} from 'svelte/easing';
 
     let {data, children} = $props();
     let lastRouteObjectId: string | null = null;
@@ -54,14 +55,12 @@
 
 {#if showPendingObjectOverlay}
     <div
-        class="pointer-events-none absolute bottom-0 z-4 m-2 flex w-[calc(100dvw-8px*2)] max-w-100 flex-col rounded-lg bg-white"
-        in:fade={{duration: 120}}
+        class="bg-background pointer-events-none absolute bottom-0 z-4 m-2 flex w-[calc(100dvw-8px*2)] max-w-100 flex-col rounded-lg"
+        in:fly={{x: -100, duration: 200, easing: cubicInOut}}
         out:fade={{duration: 140}}
     >
         <div class="flex h-14 items-center border-b p-3">
-            <span class="mr-2 flex-1 animate-pulse rounded bg-gray-200 text-transparent">
-                Loading
-            </span>
+            <span class="mr-2 flex-1 animate-pulse rounded text-transparent">Загрузка...</span>
         </div>
         <div class="flex-1 overflow-hidden">
             <ViewModeSkeleton />

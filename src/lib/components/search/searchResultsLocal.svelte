@@ -83,7 +83,7 @@
 
 <div class="h-full overflow-y-auto overscroll-contain">
     {#if isLoading}
-        <div class="divide-y divide-black/[0.04]">
+        <div class="divide-y divide-black/[0.04] dark:divide-white/[0.06]">
             <SearchItemSkeleton />
             <SearchItemSkeleton />
             <SearchItemSkeleton />
@@ -102,7 +102,7 @@
                 <span class="text-muted-foreground text-sm">Ничего не найдено</span>
             </div>
         {:else}
-            <div class="divide-y divide-black/[0.04]">
+            <div class="divide-y divide-black/[0.04] dark:divide-white/[0.06]">
                 {#each Object.keys($searchPointList) as id (id)}
                     {@const searchPoint = $searchPointList[id]}
                     {#if searchPoint?.object}
@@ -113,7 +113,7 @@
         {/if}
 
         {#if hasMore}
-            <div class="border-t border-black/[0.04]">
+            <div class="border-t border-black/[0.04] dark:border-white/[0.06]">
                 <Button
                     variant="ghost"
                     class="text-primary hover:text-primary/80 w-full text-xs font-medium"

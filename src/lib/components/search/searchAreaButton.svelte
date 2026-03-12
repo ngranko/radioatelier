@@ -22,7 +22,7 @@
     transition:fade={{duration: 100, easing: cubicInOut}}
 >
     <Button
-        class="text-foreground rounded-full bg-white/90 shadow-lg ring-1 shadow-black/[0.1] ring-black/[0.06] backdrop-blur-xl transition-all duration-200 hover:bg-white hover:shadow-xl active:scale-[0.97]"
+        class="glass text-foreground rounded-full bg-white/90 transition-all duration-200 hover:bg-white hover:shadow-xl active:scale-[0.97] dark:bg-white/[0.1] dark:hover:bg-white/[0.15]"
         onclick={handleClick}
     >
         <i class="fa-solid fa-rotate text-xs"></i>

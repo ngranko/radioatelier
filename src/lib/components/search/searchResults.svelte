@@ -17,8 +17,7 @@
     let currentTab = $state('local');
     let classes: string = $derived(
         cn({
-            'absolute top-0 w-[calc(100vw-16px)] max-w-sm m-2 rounded-2xl overflow-hidden transition-[height] ease-out z-1': true,
-            'bg-white/85 shadow-lg shadow-black/[0.08] ring-1 ring-black/[0.06] backdrop-blur-xl': true,
+            'bg-background absolute top-0 w-[calc(100vw-16px)] max-w-sm m-2 rounded-2xl overflow-hidden transition-[height] ease-out z-1': true,
             'h-[calc(100dvh-16px)]': !searchState.isResultsMinimized,
             'h-25': searchState.isResultsMinimized,
         }),
@@ -38,14 +37,26 @@
             </List>
             <MinimizeButton />
         </div>
-        <TabsContent value="local" class="min-h-0 flex-1 border-t border-black/[0.06]">
+        <TabsContent
+            value="local"
+            class={cn(
+                'min-h-0 flex-1 border-t border-black/[0.06] dark:border-white/[0.08]',
+                searchState.isResultsMinimized && 'hidden',
+            )}
+        >
             <div class="h-full min-h-0">
                 {#key `${searchState.lat}:${searchState.lng}`}
                     <SearchResultsLocal isActive={currentTab === 'local'} />
                 {/key}
             </div>
         </TabsContent>
-        <TabsContent value="google" class="min-h-0 flex-1 border-t border-black/[0.06]">
+        <TabsContent
+            value="google"
+            class={cn(
+                'min-h-0 flex-1 border-t border-black/[0.06] dark:border-white/[0.08]',
+                searchState.isResultsMinimized && 'hidden',
+            )}
+        >
             <div class="h-full min-h-0">
                 {#key `${searchState.lat}:${searchState.lng}`}
                     <SearchResultsGoogle isActive={currentTab === 'google'} />

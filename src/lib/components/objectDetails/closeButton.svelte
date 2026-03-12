@@ -25,10 +25,7 @@
     <AlertDialogRoot>
         <Trigger
             type="button"
-            class={cn([
-                buttonVariants({variant: 'ghost', size: 'icon'}),
-                'h-8 w-8 text-lg hover:bg-gray-100',
-            ])}
+            class={cn([buttonVariants({variant: 'ghost', size: 'icon'}), 'h-8 w-8 text-lg'])}
         >
             <i class="fa-solid fa-xmark"></i>
         </Trigger>
@@ -46,7 +43,7 @@
         </Content>
     </AlertDialogRoot>
 {:else}
-    <Button variant="ghost" size="icon" class="h-8 w-8 text-lg hover:bg-gray-100" onclick={onClick}>
+    <Button variant="ghost" size="icon" class="h-8 w-8 text-lg" onclick={onClick}>
         <i class="fa-solid fa-xmark"></i>
     </Button>
 {/if}

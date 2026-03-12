@@ -3,7 +3,7 @@
 </script>
 
 <!-- Actions skeleton -->
-<div class="flex items-center justify-between gap-3 border-b bg-gray-50/50 px-4 py-2.5">
+<div class="bg-muted/40 flex items-center justify-between gap-3 border-b px-4 py-2.5">
     <Skeleton class="h-9 w-24" />
     <Skeleton class="h-8 w-8 rounded" />
     <Skeleton class="h-8 w-8 rounded" />
