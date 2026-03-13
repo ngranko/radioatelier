@@ -10,6 +10,7 @@
     } from '$lib/components/ui/alert-dialog';
     import {searchPointList} from '$lib/stores/map.ts';
     import {resetActiveObject} from '$lib/state/activeObject.svelte.ts';
+    import {clearSharedMarker} from '$lib/state/sharedMarker.svelte.ts';
     import {useClerkContext} from 'svelte-clerk';
     import {toast} from 'svelte-sonner';
 
@@ -35,6 +36,7 @@
             // TODO: fix sometime in the future when I have nothing else to do
             resetActiveObject();
             searchPointList.clear();
+            clearSharedMarker();
             localStorage.removeItem('lastCenter');
             localStorage.removeItem('lastPosition');
 

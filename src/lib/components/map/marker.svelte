@@ -148,10 +148,11 @@
                 return;
             }
 
-            if (page.params.id === targetId && activeObject.detailsId === targetId) {
+            if (page.params.id === targetId) {
                 activeObject.isMinimized = false;
                 activeObject.isDirty = false;
                 activeObject.isLoading = false;
+                activeObject.detailsId = targetId;
                 return;
             }
 

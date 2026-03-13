@@ -14,9 +14,11 @@
     let {data, children} = $props();
 
     const objectId = $derived(page.params.id as Id<'objects'>);
-    const objectQuery = useQuery(api.objects.getDetails, () => ({id: objectId}), {
-        initialData: (data as {activeObject?: ObjectType}).activeObject,
-    });
+    const objectQuery = useQuery(
+        api.objects.getDetails,
+        () => ({id: objectId}),
+        () => ({initialData: (data as {activeObject?: ObjectType}).activeObject}),
+    );
 
     let overlayVisible = $state(true);
 
@@ -25,18 +27,40 @@
     const isLoading = $derived(objectQuery.isLoading);
     const isOwner = $derived(renderedObject?.isOwner ?? false);
     const isPublic = $derived(renderedObject?.isPublic ?? false);
+    let syncedObjectId = $state<string | null>(null);
     let skipIntroAnimation = $state(false);
 
     $effect(() => {
+        if (syncedObjectId === objectId) {
+            return;
+        }
+
+        syncedObjectId = objectId;
         activeObject.detailsId = objectId;
+        overlayVisible = true;
+    });
+
+    $effect(() => {
         activeObject.isLoading = isLoading;
         if (isLoading) {
             skipIntroAnimation = true;
         }
     });
 
+    $effect(() => {
+        if (activeObject.detailsId === objectId) {
+            overlayVisible = true;
+        }
+    });
+
     function handleCloseRequest() {
         overlayVisible = false;
+    }
+
+    function handleOverlayOutroEnd() {
+        if (ctx.auth.userId) {
+            goto('/');
+        }
     }
 
     const FLY_OUT = {x: -100, duration: 200, easing: cubicInOut};
@@ -47,7 +71,7 @@
 {#if !isLoading && renderedObject && overlayVisible}
     <div
         out:fly={FLY_OUT}
-        onoutroend={() => goto('/')}
+        onoutroend={handleOverlayOutroEnd}
         class="absolute right-0 bottom-0 left-0 z-3"
     >
         <ObjectDetails

@@ -21,6 +21,7 @@ export const getDetails = query({
         id: v.id('objects'),
     },
     handler: async (ctx, {id}) => {
+        // `/object/:id` doubles as the shared-object entry point, so this read stays anonymous.
         const user = await getCurrentUser(ctx);
 
         const object = await ctx.db.get('objects', id);

@@ -5,3 +5,11 @@ interface SharedMarker {
 }
 
 export const sharedMarker = $state<SharedMarker>({});
+
+export function setSharedMarkerObject(object: Object) {
+    sharedMarker.object = object;
+}
+
+export function clearSharedMarker() {
+    sharedMarker.object = undefined;
+}

@@ -1,6 +1,7 @@
 <script lang="ts">
     import {page} from '$app/state';
     import {fade, fly} from 'svelte/transition';
+    import type {Id} from '$convex/_generated/dataModel';
     import {mapState} from '$lib/state/map.svelte.ts';
     import Marker from '$lib/components/map/marker.svelte';
     import ObjectDetails from '$lib/components/objectDetails/objectDetails.svelte';
@@ -12,12 +13,30 @@
     import {api} from '$convex/_generated/api.js';
     import {useClerkContext} from 'svelte-clerk';
     import {cubicInOut} from 'svelte/easing';
+    import {setSharedMarkerObject, sharedMarker} from '$lib/state/sharedMarker.svelte.ts';
 
     let {data, children} = $props();
     let lastRouteObjectId: string | null = null;
+    const initialObjects = $derived(data.objects);
 
     const ctx = useClerkContext();
-    const objects = useQuery(api.markers.list, {}, {initialData: data.objects});
+    const objects = useQuery(
+        api.markers.list,
+        () => (ctx.auth.userId ? {} : 'skip'),
+        () => ({initialData: initialObjects}),
+    );
+    const markerPoints = $derived(objects.data ?? initialObjects);
+    const routeObjectId = $derived.by(() => {
+        const id = page.params.id;
+        return id && id !== 'create' ? (id as Id<'objects'>) : null;
+    });
+    // TODO: in the future it's probably best to move off of that duplication (the same query in here and the /object/[id] layout)
+    const routeObjectQuery = useQuery(
+        api.objects.getDetails,
+        () => (routeObjectId ? {id: routeObjectId} : 'skip'),
+        () => ({initialData: (page.data as {activeObject?: ObjectType}).activeObject}),
+    );
+    const routeObject = $derived((routeObjectQuery.data ?? null) as ObjectType | null);
 
     $effect(() => {
         const routeObjectId = page.params.id;
@@ -49,6 +68,19 @@
     const isPublic = $derived(
         (createDraftState.initialValues as ObjectType | undefined)?.isPublic ?? false,
     );
+
+    $effect(() => {
+        if (!routeObject) {
+            return;
+        }
+
+        if (
+            !markerPoints.some(item => item.id === routeObject.id) &&
+            sharedMarker.object?.id !== routeObject.id
+        ) {
+            setSharedMarkerObject(routeObject);
+        }
+    });
 </script>
 
 {@render children?.()}
@@ -81,7 +113,7 @@
 {/if}
 
 {#if mapState.map}
-    {#each objects.data ?? data.objects as point (point.id)}
+    {#each markerPoints as point (point.id)}
         <Marker
             id={point.id}
             lat={point.latitude}

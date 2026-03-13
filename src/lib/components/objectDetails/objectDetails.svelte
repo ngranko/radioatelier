@@ -79,7 +79,7 @@
     }
 
     function handleClose() {
-        if (!activeObject.detailsId && !isLoading) {
+        if (!initialValues && !isLoading) {
             return;
         }
 

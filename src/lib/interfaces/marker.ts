@@ -1,3 +1,5 @@
+import type {Id} from '$convex/_generated/dataModel';
+
 export interface MarkerOptions {
     icon: string;
     color: string;
@@ -17,4 +19,14 @@ export type MarkerId = string;
 export interface MarkerStateUpdate {
     isVisited?: boolean;
     isRemoved?: boolean;
+}
+
+export interface MarkerListItem {
+    id: Id<'objects'>;
+    latitude: number;
+    longitude: number;
+    isRemoved: boolean;
+    isVisited: boolean;
+    isPublic: boolean;
+    isOwner: boolean;
 }
