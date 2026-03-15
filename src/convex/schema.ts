@@ -5,19 +5,15 @@ import {mapPointTableFields, objectTableFields} from './sharedValidators';
 export default defineSchema({
     categories: defineTable({
         name: v.string(),
-        mysqlId: v.optional(v.string()),
-    })
-        .index('byMysqlId', ['mysqlId'])
-        .index('byName', ['name']),
+    }).index('byName', ['name']),
     counters: defineTable({
         name: v.string(),
         value: v.number(),
     }).index('byName', ['name']),
     images: defineTable({
-        mysqlId: v.optional(v.string()),
         originalStorageId: v.id('_storage'),
         previewStorageId: v.optional(v.id('_storage')),
-    }).index('byMysqlId', ['mysqlId']),
+    }),
     importJobs: defineTable({
         createdById: v.id('users'),
         status: v.union(
@@ -44,8 +40,7 @@ export default defineSchema({
     }),
     mapPoints: defineTable(mapPointTableFields)
         .index('byLatitudeAndLongitude', ['latitude', 'longitude'])
-        .index('byAddressCityCountry', ['address', 'city', 'country'])
-        .index('byMysqlId', ['mysqlId']),
+        .index('byAddressCityCountry', ['address', 'city', 'country']),
     markers: defineTable({
         objectId: v.id('objects'),
         latitude: v.number(),
@@ -71,17 +66,12 @@ export default defineSchema({
     privateTags: defineTable({
         name: v.string(),
         createdById: v.id('users'),
-        mysqlId: v.optional(v.string()),
     })
         .index('byCreatedById', ['createdById'])
-        .index('byNameCreatedById', ['name', 'createdById'])
-        .index('byMysqlId', ['mysqlId']),
+        .index('byNameCreatedById', ['name', 'createdById']),
     tags: defineTable({
         name: v.string(),
-        mysqlId: v.optional(v.string()),
-    })
-        .index('byMysqlId', ['mysqlId'])
-        .index('byName', ['name']),
+    }).index('byName', ['name']),
     users: defineTable({
         email: v.string(),
         // this is the Clerk ID, stored in the subject JWT field
@@ -89,11 +79,8 @@ export default defineSchema({
         role: v.string(),
         lastActiveAt: v.nullable(v.number()),
         lastLoginAt: v.nullable(v.number()),
-        mysqlId: v.optional(v.string()),
         isDeleted: v.boolean(),
-    })
-        .index('byExternalIdIsDeleted', ['externalId', 'isDeleted'])
-        .index('byMysqlId', ['mysqlId']),
+    }).index('byExternalIdIsDeleted', ['externalId', 'isDeleted']),
     userVisitedChunks: defineTable({
         userId: v.id('users'),
         chunkId: v.string(),

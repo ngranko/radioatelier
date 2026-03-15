@@ -18,7 +18,6 @@ import type * as imports from "../imports.js";
 import type * as importsNode from "../importsNode.js";
 import type * as locations from "../locations.js";
 import type * as markers from "../markers.js";
-import type * as migrations from "../migrations.js";
 import type * as objects from "../objects.js";
 import type * as privateTags from "../privateTags.js";
 import type * as search from "../search.js";
@@ -50,7 +49,6 @@ declare const fullApi: ApiFromModules<{
   importsNode: typeof importsNode;
   locations: typeof locations;
   markers: typeof markers;
-  migrations: typeof migrations;
   objects: typeof objects;
   privateTags: typeof privateTags;
   search: typeof search;

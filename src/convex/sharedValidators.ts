@@ -14,7 +14,6 @@ const mapPointCoreFields = {
 
 export const mapPointTableFields = {
     ...mapPointCoreFields,
-    mysqlId: v.optional(v.string()),
 };
 
 const objectCoreFields = {
@@ -28,11 +27,11 @@ const objectCoreFields = {
     categoryId: v.id('categories'),
     isPublic: v.boolean(),
     tagIds: v.array(v.id('tags')),
-    mysqlId: v.optional(v.string()),
 };
 
 export const objectTableFields = {
     ...objectCoreFields,
+    mysqlId: v.optional(v.string()),
     mapPointId: v.id('mapPoints'),
     createdById: v.id('users'),
     internalId: v.string(),
