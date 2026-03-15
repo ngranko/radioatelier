@@ -5,7 +5,7 @@ import {getCurrentUserOrThrow} from './users';
 export const generateUploadUrl = mutation({
     args: {},
     handler: async ctx => {
-        getCurrentUserOrThrow(ctx);
+        await getCurrentUserOrThrow(ctx);
         return await ctx.storage.generateUploadUrl();
     },
 });
@@ -15,7 +15,7 @@ export const create = mutation({
         storageId: v.id('_storage'),
     },
     handler: async (ctx, {storageId}) => {
-        getCurrentUserOrThrow(ctx);
+        await getCurrentUserOrThrow(ctx);
         const imageId = await ctx.db.insert('images', {
             originalStorageId: storageId,
         });
@@ -34,7 +34,7 @@ export const updatePreview = mutation({
         storageId: v.id('_storage'),
     },
     handler: async (ctx, {id, storageId}) => {
-        getCurrentUserOrThrow(ctx);
+        await getCurrentUserOrThrow(ctx);
 
         const image = await ctx.db.get(id);
         if (!image) {
