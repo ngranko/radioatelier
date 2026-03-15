@@ -19,13 +19,14 @@ export const upsertFromClerk = internalMutation({
                 typeof data.public_metadata.role === 'string' ? data.public_metadata.role : 'user',
             lastActiveAt: data.last_active_at,
             lastLoginAt: data.last_sign_in_at,
+            isDeleted: false,
         };
 
         const user = await userByExternalId(ctx, data.id);
         if (user === null) {
             await ctx.db.insert('users', userAttributes);
         } else {
-            await ctx.db.patch(user._id, userAttributes);
+            await ctx.db.patch('users', user._id, userAttributes);
         }
     },
 });
@@ -36,7 +37,7 @@ export const deleteFromClerk = internalMutation({
         const user = await userByExternalId(ctx, clerkUserId);
 
         if (user !== null) {
-            await ctx.db.delete(user._id);
+            await ctx.db.patch('users', user._id, {isDeleted: true});
         } else {
             console.warn(`Can't delete user, there is none for Clerk user ID: ${clerkUserId}`);
         }
@@ -45,7 +46,7 @@ export const deleteFromClerk = internalMutation({
 
 export async function getCurrentUserOrThrow(ctx: QueryCtx) {
     const userRecord = await getCurrentUser(ctx);
-    if (!userRecord) {
+    if (!userRecord || userRecord.isDeleted) {
         throw new Error("Can't get current user");
     }
     return userRecord;
@@ -62,6 +63,8 @@ export async function getCurrentUser(ctx: QueryCtx) {
 async function userByExternalId(ctx: QueryCtx, externalId: string) {
     return await ctx.db
         .query('users')
-        .withIndex('byExternalId', q => q.eq('externalId', externalId))
+        .withIndex('byExternalIdIsDeleted', q =>
+            q.eq('externalId', externalId).eq('isDeleted', false),
+        )
         .unique();
 }

@@ -90,8 +90,9 @@ export default defineSchema({
         lastActiveAt: v.nullable(v.number()),
         lastLoginAt: v.nullable(v.number()),
         mysqlId: v.optional(v.string()),
+        isDeleted: v.boolean(),
     })
-        .index('byExternalId', ['externalId'])
+        .index('byExternalIdIsDeleted', ['externalId', 'isDeleted'])
         .index('byMysqlId', ['mysqlId']),
     userVisitedChunks: defineTable({
         userId: v.id('users'),
