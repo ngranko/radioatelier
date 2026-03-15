@@ -102,6 +102,34 @@ export const getDetails = query({
     },
 });
 
+export const resolveShareId = query({
+    args: {
+        id: v.string(),
+    },
+    handler: async (ctx, {id}) => {
+        const canonicalId = await ctx.db.normalizeId('objects', id);
+        if (canonicalId) {
+            return {
+                canonicalId,
+                shouldRedirect: false,
+            };
+        }
+
+        const object = await ctx.db
+            .query('objects')
+            .withIndex('byMysqlId', q => q.eq('mysqlId', id))
+            .unique();
+        if (!object) {
+            return null;
+        }
+
+        return {
+            canonicalId: object._id,
+            shouldRedirect: true,
+        };
+    },
+});
+
 export const create = mutation({
     args: {
         data: v.object(createObjectRecordFields),
