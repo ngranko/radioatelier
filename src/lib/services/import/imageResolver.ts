@@ -122,24 +122,14 @@ async function uploadFromDataUrl(
 }
 
 async function uploadFromUrl(client: ConvexClient, url: string, cache: Map<string, Id<'images'>>) {
-    let rawBytes = new Uint8Array();
-    let contentType = 'application/octet-stream';
-
-    try {
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-        }
-        rawBytes = new Uint8Array(await response.arrayBuffer());
-        contentType =
-            response.headers.get('content-type')?.split(';')[0] ?? 'application/octet-stream';
-    } catch {
-        const fallback = await client.action(api.importsNode.fetchImageBytesFromUrl, {
-            url,
-        });
-        rawBytes = base64ToBytes(fallback.bytesBase64);
-        contentType = fallback.contentType || 'application/octet-stream';
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
     }
+
+    const rawBytes = new Uint8Array(await response.arrayBuffer());
+    const contentType =
+        response.headers.get('content-type')?.split(';')[0] ?? 'application/octet-stream';
     const supportedContentType = assertSupportedImportImageType(contentType);
 
     const {bytes, contentType: resizedContentType} = await resizeImageBytesIfNeeded(
