@@ -1,0 +1,105 @@
+export const fieldList = [
+    {
+        name: 'coordinates',
+        label: 'Координаты',
+        required: true,
+        validation:
+            'Должны быть в формате [широта,долгота]. Например: 41.8420113,-89.4859696. Пробел после запятой опционален.',
+    },
+    {
+        name: 'name',
+        label: 'Название',
+        required: true,
+        validation: 'Максимальная длина - 256 символов. Слишком длинные названия будут обрезаны.',
+    },
+    {
+        name: 'isVisited',
+        label: 'Посещена',
+        required: false,
+        validation:
+            'Понимает true-значения: 1, true, yes, y, да (регистр не важен). Остальные значения считаются false.',
+    },
+    {
+        name: 'isPublic',
+        label: 'Публичная',
+        required: false,
+        validation:
+            'Понимает true-значения: 1, true, yes, y, да (регистр не важен). Остальные значения считаются false.',
+    },
+    {
+        name: 'isRemoved',
+        label: 'Утрачена',
+        required: false,
+        validation:
+            'Понимает true-значения: 1, true, yes, y, да (регистр не важен). Остальные значения считаются false.',
+    },
+    {
+        name: 'category',
+        label: 'Категория',
+        required: true,
+        validation: 'Максимальная длина - 128 символов. Слишком длинные названия будут обрезаны.',
+    },
+    {
+        name: 'tags',
+        label: 'Теги',
+        required: false,
+        validation:
+            'Список тегов, разделенных точкой с запятой. Например: tag1; tag2; tag3. Максимальная длина каждого тега - 128 символов. Слишком длинные теги будут обрезаны.',
+    },
+    {
+        name: 'privateTags',
+        label: 'Приватные теги',
+        required: false,
+        validation:
+            'Список тегов, разделенных точкой с запятой. Например: tag1; tag2; tag3. Максимальная длина каждого тега - 128 символов. Слишком длинные теги будут обрезаны.',
+    },
+    {
+        name: 'address',
+        label: 'Адрес',
+        required: false,
+        validation: 'Максимальная длина - 256 символов. Слишком длинные адреса будут обрезаны.',
+    },
+    {
+        name: 'city',
+        label: 'Город',
+        required: false,
+        validation: 'Максимальная длина - 128 символов. Слишком длинные названия будут обрезаны.',
+    },
+    {
+        name: 'country',
+        label: 'Страна',
+        required: false,
+        validation: 'Максимальная длина - 128 символов. Слишком длинные названия будут обрезаны.',
+    },
+    {
+        name: 'installedPeriod',
+        label: 'Период создания',
+        required: false,
+        validation: 'Максимальная длина - 64 символа. Слишком длинные строки будут обрезаны.',
+    },
+    {
+        name: 'removalPeriod',
+        label: 'Период пропажи',
+        required: false,
+        validation: 'Максимальная длина - 64 символа. Слишком длинные строки будут обрезаны.',
+    },
+    {
+        name: 'description',
+        label: 'Информация',
+        required: false,
+        validation: '',
+    },
+    {
+        name: 'source',
+        label: 'Ссылка на источник',
+        required: false,
+        validation:
+            'Должна быть валидной HTTP/HTTPS ссылкой. Невалидные значения будут проигнорированы.',
+    },
+    {
+        name: 'image',
+        label: 'Фотография',
+        required: false,
+        validation: 'Может быть ссылкой на фотографию или base64-кодированным содержанием.',
+    },
+];

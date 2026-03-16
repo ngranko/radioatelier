@@ -2,7 +2,7 @@ name: Docker Image CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "deleted" ]
 
 jobs:
   build:
@@ -10,7 +10,7 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         fetch-depth: 0
 
@@ -48,39 +48,36 @@ jobs:
         # If true, the branch will be used to select the maximum version.
         version_from_branch: false
 
-
-    - name: Build the api docker image
-      run: |
-        cd api
-        docker build --compress --file docker/go/Dockerfile -t registry.radioatelier.one/radioatelier/go:${{ steps.calculate-version.outputs.version }} -t registry.radioatelier.one/radioatelier/go:latest --target prod .
-        docker push registry.radioatelier.one/radioatelier/go:${{ steps.calculate-version.outputs.version }}
-        docker push registry.radioatelier.one/radioatelier/go:latest
-
     - name: Build the web docker image
       run: |
-        cd web
         docker build --compress --file docker/app/Dockerfile -t registry.radioatelier.one/radioatelier/web:${{ steps.calculate-version.outputs.version }} -t registry.radioatelier.one/radioatelier/web:latest --target prod .
         docker push registry.radioatelier.one/radioatelier/web:${{ steps.calculate-version.outputs.version }}
         docker push registry.radioatelier.one/radioatelier/web:latest
 
     - name: Tag the current commit
       run: |
-        git tag v${{ steps.calculate-version.outputs.version }}
-        git push origin v${{ steps.calculate-version.outputs.version }}
+        if git rev-parse "v${{ steps.calculate-version.outputs.version }}" >/dev/null 2>&1; then
+          echo "Tag v${{ steps.calculate-version.outputs.version }} already exists, skipping"
+        else
+          git tag v${{ steps.calculate-version.outputs.version }}
+          git push origin v${{ steps.calculate-version.outputs.version }}
+        fi
 
   deploy:
     runs-on: ubuntu-latest
     needs: build
 
     steps:
-      - name: install ssh keys
-        run: |
-          install -m 600 -D /dev/null ~/.ssh/id_rsa
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.SSH_HOST }} > ~/.ssh/known_hosts
-
-      - name: connect and pull
-        run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cd ${{ secrets.SSH_WORKDIR }} && docker compose pull && docker compose up -d && docker system prune -af && exit"
-
-      - name: cleanup
-        run: rm -rf ~/.ssh
+      - name: Connect and deploy
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+              set -e
+              cd ${{ secrets.SSH_WORKDIR }}
+              docker compose pull
+              docker compose up -d
+              docker system prune -af

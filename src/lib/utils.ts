@@ -1,0 +1,42 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import {clsx, type ClassValue} from 'clsx';
+import {twMerge} from 'tailwind-merge';
+
+export function cn(...inputs: ClassValue[]) {
+    return twMerge(clsx(inputs));
+}
+
+export type WithoutChild<T> = T extends {child?: any} ? Omit<T, 'child'> : T;
+export type WithoutChildren<T> = T extends {children?: any} ? Omit<T, 'children'> : T;
+export type WithoutChildrenOrChild<T> = WithoutChildren<WithoutChild<T>>;
+export type WithElementRef<T, U extends HTMLElement = HTMLElement> = T & {ref?: U | null};
+
+export function throttle<T extends (...args: any[]) => any>(
+    fn: T,
+    delay: number,
+): (...args: Parameters<T>) => void {
+    let isThr = false;
+
+    return function (this: any, ...args: Parameters<T>) {
+        if (!isThr) {
+            fn.apply(this, args);
+            isThr = true;
+
+            setTimeout(() => {
+                isThr = false;
+            }, delay);
+        }
+    };
+}
+
+export function normalizeRef(value: string | null, baseUrl: string): string {
+    if (!value) {
+        return '/';
+    }
+    try {
+        const {pathname} = new URL(value, baseUrl);
+        return pathname.startsWith('/') ? pathname : '/';
+    } catch {
+        return '/';
+    }
+}

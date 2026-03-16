@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ru">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, shrink-to-fit=no"/>
+
+        <link rel="icon" type="image/png" sizes="96x96" href="%sveltekit.assets%/favicon/favicon-96x96.png">
+		<link rel="icon" type="image/svg+xml" sizes="any" href="%sveltekit.assets%/favicon/favicon-light.svg" media="(prefers-color-scheme: light)">
+		<link rel="icon" type="image/svg+xml" sizes="any" href="%sveltekit.assets%/favicon/favicon-dark.svg" media="(prefers-color-scheme: dark)">
+		<link rel="icon" href="%sveltekit.assets%/favicon/favicon.ico">
+		<link rel="apple-touch-icon" href="%sveltekit.assets%/favicon/apple-touch-icon.png">
+		<!-- TODO: figure out how to have separate light/dark icons for ios -->
+		<link rel="apple-touch-icon" href="%sveltekit.assets%/favicon/apple-touch-icon-light.png" media="(prefers-color-scheme: light)">
+		<link rel="apple-touch-icon" href="%sveltekit.assets%/favicon/apple-touch-icon-dark.png" media="(prefers-color-scheme: dark)">
+		<link rel="manifest" href="%sveltekit.assets%/favicon/site.webmanifest">
+        <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+        <meta name="theme-color" content="#0e1319" media="(prefers-color-scheme: dark)">
+
+        <meta property="og:title" content="Радиоателье"/>
+		<meta property="og:url" content="https://radioatelier.one"/>
+		<meta property="og:description" content="Мы любим старые вывески и документируем те, которые еще сохранились"/>
+		<meta property="og:locale" content="ru_RU"/>
+		<meta property="og:image" content="%sveltekit.assets%/meta_img.jpg"/>
+		<meta property="og:site_name" content="Радиоателье. Архив"/>
+
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:image" content="%sveltekit.assets%/meta_img.jpg" />
+
+		<title>Радиоателье. Архив</title>
+
+		<link rel="stylesheet" href="https://use.typekit.net/pps7ann.css">
+
+		<script src="https://kit.fontawesome.com/5f2ce4df4c.js" crossorigin="anonymous"></script>
+
+		<script>
+			(function() {
+				var t = localStorage.getItem('theme');
+				var dark = t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme:dark)').matches);
+				if (dark) document.documentElement.classList.add('dark');
+			})();
+		</script>
+
+		<script>
+			// Disable page-level pinch-zoom and double-tap zoom (iOS/Android)
+			(function() {
+				var lastTouchEnd = 0;
+				document.addEventListener('touchend', function(event) {
+					var now = Date.now();
+					if (now - lastTouchEnd <= 300) {
+						event.preventDefault();
+					}
+					lastTouchEnd = now;
+				}, { passive: false });
+
+				// iOS Safari specific: prevent viewport pinch gestures
+				document.addEventListener('gesturestart', function(event) { event.preventDefault(); }, { passive: false });
+				document.addEventListener('gesturechange', function(event) { event.preventDefault(); }, { passive: false });
+				document.addEventListener('gestureend', function(event) { event.preventDefault(); }, { passive: false });
+			})();
+		</script>
+
+		%sveltekit.head%
+	</head>
+	<body data-sveltekit-preload-data="hover">
+		<div style="display: contents">%sveltekit.body%</div>
+	</body>
+</html>
