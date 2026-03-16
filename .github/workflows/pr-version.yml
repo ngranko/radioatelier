@@ -1,0 +1,147 @@
+name: PR Version Sync
+
+on:
+  pull_request_target:
+    branches:
+      - main
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+      - closed
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-package-version:
+    if: github.event.action != 'closed' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Calculate version
+        id: calculate-version
+        uses: paulhatch/semantic-version@v5.4.0
+        with:
+          tag_prefix: "v"
+          major_pattern: "(MAJOR)"
+          minor_pattern: "(MINOR)"
+          version_format: "${major}.${minor}.${patch}"
+          bump_each_commit: false
+          search_commit_body: false
+          user_format_type: "csv"
+          enable_prerelease_mode: true
+          debug: false
+          version_from_branch: false
+
+      - name: Update package version
+        env:
+          VERSION: ${{ steps.calculate-version.outputs.version }}
+        run: |
+          current_version="$(node -p "JSON.parse(require('node:fs').readFileSync('package.json', 'utf8')).version")"
+
+          if [ "$current_version" = "$VERSION" ]; then
+            echo "package.json already uses version $VERSION"
+            exit 0
+          fi
+
+          node <<'EOF'
+          const fs = require('node:fs');
+          const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+
+          pkg.version = process.env.VERSION;
+
+          fs.writeFileSync('package.json', `${JSON.stringify(pkg, null, 4)}\n`);
+          EOF
+
+      - name: Commit version update
+        env:
+          VERSION: ${{ steps.calculate-version.outputs.version }}
+        run: |
+          if git diff --quiet -- package.json; then
+            echo "No package.json changes to commit"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json
+          git commit -m "chore: sync package version to v$VERSION"
+          git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
+
+      - name: Comment with calculated version
+        uses: actions/github-script@v8
+        env:
+          VERSION: ${{ steps.calculate-version.outputs.version }}
+        with:
+          script: |
+            const marker = '<!-- pr-version-sync -->';
+            const body = `${marker}
+            Package version for this PR has been synced to \`v${process.env.VERSION}\`.
+
+            The merge commit will be tagged with \`v${process.env.VERSION}\` after this PR is merged.`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existingComment = comments.find((comment) =>
+              comment.user?.type === 'Bot' && comment.body?.includes(marker)
+            );
+
+            if (existingComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body,
+              });
+              return;
+            }
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });
+
+  tag-merged-commit:
+    if: github.event.action == 'closed' && github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout merged commit
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          fetch-depth: 0
+
+      - name: Read merged package version
+        id: package-version
+        run: |
+          version="$(node -p "JSON.parse(require('node:fs').readFileSync('package.json', 'utf8')).version")"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Tag merged commit
+        env:
+          VERSION: ${{ steps.package-version.outputs.version }}
+        run: |
+          if git rev-parse "v$VERSION" >/dev/null 2>&1; then
+            echo "Tag v$VERSION already exists, skipping"
+            exit 0
+          fi
+
+          git tag "v$VERSION"
+          git push origin "v$VERSION"
