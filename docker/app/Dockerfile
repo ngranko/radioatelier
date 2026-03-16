@@ -13,6 +13,8 @@ CMD ["bun", "run", "dev", "--", "--host"]
 # most likely because of the incompatibility with docker build environment
 FROM node:22-alpine AS build
 WORKDIR /app
+ARG PUBLIC_CONVEX_URL
+ENV PUBLIC_CONVEX_URL=$PUBLIC_CONVEX_URL
 COPY --from=base /app .
 RUN npm run build && npm prune --production
 
