@@ -1,12 +1,12 @@
 Access the application at **https://radioatelier.test**, do not try to start a new dev server.
 
-Do not run the build command directly — it is run automatically by the Docker container.
+Don't regenerate convex functions, assume that convex dev environment is already running.
+
+Do not run the build command directly — it is run automatically when needed.
 
 If there were any frontend changes as a result of your run – always run the lint command to make sure there aren't any code style problems.
 
 Use bun as the package manager for the project.
-
-Do not add eslint-disable instructions anywhere. If there are eslint errors – fix them, not instruct the linter to ignore them.
 
 Don't put comments in the code that just describe what the next code block does. Comments should explain why, not what. Only put comments in code when the reasoning behind the current implementation should be clarified to not create confusion.
 
