@@ -9,7 +9,11 @@
       "Bash(bun run format:*)",
       "Bash(tail:*)",
       "Bash(bun run:*)",
-      "Bash(ls \"/Users/nikita/Projects/radioatelier/src/routes/\\(app\\)/\")"
+      "Bash(ls \"/Users/nikita/Projects/radioatelier/src/routes/\\(app\\)/\")",
+      "Bash(git checkout:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(gh pr:*)"
     ]
   }
 }
