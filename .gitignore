@@ -19,3 +19,5 @@ vite.config.ts.timestamp-*
 !.gitkeep
 
 scripts/mysql-to-convex/output/*
+
+.claude/settings.local.json
