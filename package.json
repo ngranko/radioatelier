@@ -1,5 +1,5 @@
 {
-    "name": "archive",
+    "name": "Radioatelier. Archive",
     "version": "0.6.1",
     "private": true,
     "engines": {
@@ -14,7 +14,7 @@
         "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
         "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
         "lint": "eslint --fix .",
-        "format": "prettier --plugin=prettier-plugin-svelte --plugin=prettier-plugin-organize-imports --plugin=prettier-plugin-tailwindcss --write .",
+        "format": "prettier --plugin=prettier-plugin-svelte --plugin=prettier-plugin-organize-imports --plugin=prettier-plugin-tailwindcss --write ."
     },
     "devDependencies": {
         "@eslint/js": "^9.12.0",
