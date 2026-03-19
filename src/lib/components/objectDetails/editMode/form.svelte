@@ -201,13 +201,6 @@
 </script>
 
 <form method="POST" action="?/save" use:enhance>
-    <button
-        type="submit"
-        formaction="?/delete"
-        hidden
-        bind:this={deleteButton}
-        aria-label="Удалить"
-    ></button>
     <div class="bg-muted/40 flex items-center justify-between gap-3 border-b px-4 py-2.5">
         <Button type="submit" disabled={$submitting} class="px-6 text-base">Сохранить</Button>
         {#if $formData.id}
@@ -216,6 +209,13 @@
             <DeleteButton onClick={handleDelete} />
         {/if}
     </div>
+    <button
+        type="submit"
+        formaction="?/delete"
+        hidden
+        bind:this={deleteButton}
+        aria-label="Удалить"
+    ></button>
     <div class="h-[calc(100vh-8px*2-57px*2)] overflow-x-hidden overflow-y-auto p-4">
         <FormField {form} name="cover" class="mb-6">
             <FormControl>
