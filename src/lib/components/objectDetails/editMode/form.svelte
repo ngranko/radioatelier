@@ -43,7 +43,6 @@
     let imagePreviewUrl: string | undefined = $derived(initialValues.cover?.previewUrl);
 
     let lastAction = '';
-    let deleteButton: HTMLButtonElement;
     let submitPromise: {resolve(value: unknown): void; reject(value?: unknown): void} | null = null;
 
     function getFormData() {
@@ -149,10 +148,6 @@
         }
     });
 
-    function handleDelete() {
-        deleteButton.click();
-    }
-
     function handleBack() {
         activeObject.isEditing = false;
     }
@@ -206,16 +201,9 @@
         {#if $formData.id}
             <BackButton isConfirmationRequired={isTainted()} onClick={handleBack} />
             <span class="flex-1"></span>
-            <DeleteButton onClick={handleDelete} />
+            <DeleteButton disabled={$submitting} />
         {/if}
     </div>
-    <button
-        type="submit"
-        formaction="?/delete"
-        hidden
-        bind:this={deleteButton}
-        aria-label="Удалить"
-    ></button>
     <div class="h-[calc(100vh-8px*2-57px*2)] overflow-x-hidden overflow-y-auto p-4">
         <FormField {form} name="cover" class="mb-6">
             <FormControl>
