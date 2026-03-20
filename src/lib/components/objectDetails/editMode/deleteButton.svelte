@@ -56,11 +56,7 @@
         </Header>
         <Footer>
             <Cancel>Отменить</Cancel>
-            <Action
-                class="bg-destructive hover:bg-destructive/70"
-                onclick={handleClick}
-                {disabled}
-            >
+            <Action class="bg-destructive hover:bg-destructive/70" onclick={handleClick} {disabled}>
                 Удалить
             </Action>
         </Footer>
