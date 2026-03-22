@@ -98,6 +98,7 @@ export const getDetails = query({
             })),
             isVisited,
             isOwner: object.createdById === user?._id,
+            internalId: user ? object.internalId : null,
         };
     },
 });
