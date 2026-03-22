@@ -4,10 +4,9 @@
     import type {LooseObject, Object} from '$lib/interfaces/object';
     import ObjectDetailsLive from '$lib/components/objectDetails/objectDetailsLive.svelte';
     import Form from '$lib/components/objectDetails/editMode/form.svelte';
-    import LightForm from '$lib/components/objectDetails/editMode/lightForm.svelte';
-    import ViewMode from '$lib/components/objectDetails/viewMode/viewMode.svelte';
     import {activeMarker} from '$lib/stores/map';
     import {Button} from '$lib/components/ui/button';
+    import {Badge} from '$lib/components/ui/badge';
     import CloseButton from './closeButton.svelte';
     import Background from './background.svelte';
     import {mapState} from '$lib/state/map.svelte';
@@ -62,20 +61,6 @@
         return fade(node, {duration: 150});
     }
 
-    const canEditAll = $derived.by(() => {
-        if (!initialValues || initialValues.id === null) {
-            return permissions.canEditAll;
-        }
-        return permissions.canEditAll && (initialValues.isOwner ?? false);
-    });
-
-    const canEditPersonal = $derived.by(() => {
-        if (!initialValues || initialValues.id === null) {
-            return permissions.canEditPersonal;
-        }
-        return permissions.canEditPersonal && !(initialValues.isOwner ?? false);
-    });
-
     function handleMinimizeClick() {
         activeObject.isMinimized = !activeObject.isMinimized;
     }
@@ -118,14 +103,22 @@
     out:fly={{x: -100, duration: 200, easing: cubicInOut}}
 >
     <section class="flex items-center gap-1 border-b p-3">
-        <span
-            class={cn('mr-2 flex-1 overflow-hidden text-nowrap text-ellipsis transition-colors', {
-                'text-foreground': activeObject.isMinimized,
-                'text-transparent': !activeObject.isMinimized,
-            })}
-        >
-            {initialValues?.name ?? ''}
-        </span>
+        <div class="mr-2 flex min-w-0 flex-1 items-center gap-2">
+            <div class="flex items-baseline gap-2">
+                {#if initialValues?.internalId}
+                    <Badge variant="outline" class="shrink-0 font-mono text-xs tracking-wider">
+                        {initialValues.internalId}
+                    </Badge>
+                {/if}
+                {#if activeObject.isMinimized}
+                    <span
+                        class="text-foreground overflow-hidden text-nowrap text-ellipsis transition-colors"
+                    >
+                        {initialValues?.name ?? 'Новый маркер'}
+                    </span>
+                {/if}
+            </div>
+        </div>
         <Button variant="ghost" size="icon" class="h-8 w-8" onclick={handleMinimizeClick}>
             {#if activeObject.isMinimized}
                 <ChevronUpIcon class="stroke-3" />
@@ -145,12 +138,8 @@
                             {isEditing}
                             {permissions}
                         />
-                    {:else if canEditAll && isEditing}
-                        <Form {initialValues} />
-                    {:else if canEditPersonal && isEditing}
-                        <LightForm {initialValues} />
                     {:else}
-                        <ViewMode {initialValues} permissions={{canEditAll, canEditPersonal}} />
+                        <Form {initialValues} />
                     {/if}
                 </div>
             {/if}

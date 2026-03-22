@@ -4,7 +4,7 @@
     import {Button} from '$lib/components/ui/button';
     import {activeObject} from '$lib/state/activeObject.svelte.ts';
     import type {Permissions} from '$lib/interfaces/permissions';
-    import PencilIcon from '@lucide/svelte/icons/pencil';
+    import PenIcon from '@lucide/svelte/icons/pen';
     import UserPenIcon from '@lucide/svelte/icons/user-pen';
     import RouteIcon from '@lucide/svelte/icons/route';
     import BinocularsIcon from '@lucide/svelte/icons/binoculars';
@@ -39,11 +39,11 @@
 <div class="bg-muted/40 flex items-center justify-end gap-2 border-b px-4 py-2.5">
     {#if permissions.canEditAll}
         <Button variant="default" size="icon" onclick={handleEditClick}>
-            <PencilIcon />
+            <PenIcon class="fill-current" />
         </Button>
     {:else if permissions.canEditPersonal}
         <Button variant="default" size="icon" onclick={handleEditClick}>
-            <UserPenIcon />
+            <UserPenIcon class="fill-current" />
         </Button>
     {/if}
     <Button

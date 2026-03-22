@@ -40,7 +40,9 @@
     </div>
     <div class={!initialValues.tags?.length && !initialValues.privateTags?.length ? 'mb-4' : ''}>
         <div class="flex items-center justify-between">
-            <div class="text-muted-foreground text-sm">{initialValues.category?.name ?? ''}</div>
+            <div class="text-muted-foreground text-sm">
+                {initialValues.category?.name ?? ''}
+            </div>
             <Flags
                 isPublic={initialValues.isPublic ?? false}
                 isVisited={initialValues.isVisited ?? false}

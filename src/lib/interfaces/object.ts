@@ -18,6 +18,7 @@ interface TaxonomlessObject {
     isPublic: boolean;
     isVisited: boolean;
     isOwner: boolean;
+    readonly internalId: string;
 }
 
 interface BaseObject extends TaxonomlessObject {
