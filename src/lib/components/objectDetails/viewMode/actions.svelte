@@ -4,6 +4,10 @@
     import {Button} from '$lib/components/ui/button';
     import {activeObject} from '$lib/state/activeObject.svelte.ts';
     import type {Permissions} from '$lib/interfaces/permissions';
+    import PencilIcon from '@lucide/svelte/icons/pencil';
+    import UserPenIcon from '@lucide/svelte/icons/user-pen';
+    import RouteIcon from '@lucide/svelte/icons/route';
+    import BinocularsIcon from '@lucide/svelte/icons/binoculars';
 
     interface Props {
         lat: string;
@@ -34,28 +38,28 @@
 
 <div class="bg-muted/40 flex items-center justify-end gap-2 border-b px-4 py-2.5">
     {#if permissions.canEditAll}
-        <Button variant="default" size="icon" class="text-base" onclick={handleEditClick}>
-            <i class="fa-solid fa-pen"></i>
+        <Button variant="default" size="icon" onclick={handleEditClick}>
+            <PencilIcon />
         </Button>
     {:else if permissions.canEditPersonal}
-        <Button variant="default" size="icon" class="text-base" onclick={handleEditClick}>
-            <i class="fa-solid fa-user-pen"></i>
+        <Button variant="default" size="icon" onclick={handleEditClick}>
+            <UserPenIcon />
         </Button>
     {/if}
     <Button
         variant="ghost"
         size="icon"
-        class="text-muted-foreground hover:text-foreground text-base"
+        class="text-muted-foreground hover:text-foreground"
         onclick={handleRouteClick}
     >
-        <i class="fa-solid fa-route"></i>
+        <RouteIcon />
     </Button>
     <Button
         variant="ghost"
         size="icon"
-        class="text-muted-foreground hover:text-foreground text-base"
+        class="text-muted-foreground hover:text-foreground"
         onclick={handleStreetViewClick}
     >
-        <i class="fa-solid fa-street-view"></i>
+        <BinocularsIcon />
     </Button>
 </div>

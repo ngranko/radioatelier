@@ -1,6 +1,9 @@
 <script lang="ts">
+    import MarkerIcon from '$lib/components/map/markerIcon.svelte';
     import {onMount, onDestroy} from 'svelte';
     import {mapState} from '$lib/state/map.svelte';
+    import DotIcon from '@lucide/svelte/icons/dot';
+    import {mount, unmount} from 'svelte';
 
     interface Props {
         orientationEnabled: boolean;
@@ -13,12 +16,19 @@
     let {orientationEnabled}: Props = $props();
 
     let marker: google.maps.marker.AdvancedMarkerElement | undefined = $state();
+    let markerIcon: ReturnType<typeof mount> | undefined;
     let updateLocationInterval: ReturnType<typeof setInterval> | undefined;
 
     onMount(async () => {
         const icon = document.createElement('div');
-        icon.innerHTML = '<i class="fa-solid fa-circle-dot block"></i>';
         icon.className = 'nav-marker';
+        markerIcon = mount(MarkerIcon, {
+            target: icon,
+            props: {
+                icon: DotIcon,
+                className: 'stroke-3',
+            },
+        });
 
         const {AdvancedMarkerElement, CollisionBehavior} =
             await mapState.loader.importLibrary('marker');
@@ -38,6 +48,9 @@
     onDestroy(() => {
         if (updateLocationInterval) {
             clearInterval(updateLocationInterval);
+        }
+        if (markerIcon) {
+            unmount(markerIcon);
         }
     });
 

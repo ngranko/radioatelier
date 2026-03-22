@@ -12,6 +12,9 @@
     import LogoutDialog from '$lib/components/userMenu/logoutDialog.svelte';
     import ThemeSwitcher from '$lib/components/themeSwitcher.svelte';
     import {goto} from '$app/navigation';
+    import KeyRoundIcon from '@lucide/svelte/icons/key-round';
+    import LogOutIcon from '@lucide/svelte/icons/log-out';
+    import FileInputIcon from '@lucide/svelte/icons/file-input';
 
     let isLogoutDialogOpen = $state(false);
 
@@ -51,11 +54,11 @@
     <DropdownMenuContent class="mr-4">
         <Group>
             <DropdownMenuItem onclick={handleImportClick}>
-                <i class="fa-solid fa-file-import"></i>
+                <FileInputIcon />
                 Импорт точек
             </DropdownMenuItem>
             <DropdownMenuItem onclick={handleChangePasswordClick}>
-                <i class="fa-solid fa-key"></i>
+                <KeyRoundIcon />
                 Сменить пароль
             </DropdownMenuItem>
             <DropdownMenuSeparator />
@@ -64,7 +67,7 @@
             </div>
             <DropdownMenuSeparator />
             <DropdownMenuItem onclick={handleLogoutClick}>
-                <i class="fa-solid fa-right-from-bracket"></i>
+                <LogOutIcon />
                 Выйти
             </DropdownMenuItem>
         </Group>

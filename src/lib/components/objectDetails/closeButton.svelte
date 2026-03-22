@@ -12,6 +12,7 @@
     } from '$lib/components/ui/alert-dialog';
     import {Button, buttonVariants} from '$lib/components/ui/button';
     import {cn} from '$lib/utils.ts';
+    import XMarkIcon from '@lucide/svelte/icons/x';
 
     interface Props {
         isConfirmationRequired?: boolean;
@@ -25,9 +26,9 @@
     <AlertDialogRoot>
         <Trigger
             type="button"
-            class={cn([buttonVariants({variant: 'ghost', size: 'icon'}), 'h-8 w-8 text-lg'])}
+            class={cn([buttonVariants({variant: 'ghost', size: 'icon'}), 'h-8 w-8'])}
         >
-            <i class="fa-solid fa-xmark"></i>
+            <XMarkIcon class="stroke-3" />
         </Trigger>
         <Content>
             <Header>
@@ -43,7 +44,7 @@
         </Content>
     </AlertDialogRoot>
 {:else}
-    <Button variant="ghost" size="icon" class="h-8 w-8 text-lg" onclick={onClick}>
-        <i class="fa-solid fa-xmark"></i>
+    <Button variant="ghost" size="icon" class="h-8 w-8" onclick={onClick}>
+        <XMarkIcon class="stroke-3" />
     </Button>
 {/if}

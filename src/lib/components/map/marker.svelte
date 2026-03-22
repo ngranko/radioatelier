@@ -3,7 +3,7 @@
     import {activeMarker, searchPointList} from '$lib/stores/map.ts';
     import {mapState} from '$lib/state/map.svelte';
     import {Marker as MarkerObject} from '$lib/services/map/marker';
-    import type {MarkerSource} from '$lib/interfaces/marker';
+    import type {MarkerIcon, MarkerSource} from '$lib/interfaces/marker';
     import {toast} from 'svelte-sonner';
     import {activeObject, resetActiveObject} from '$lib/state/activeObject.svelte.ts';
     import {setCenter} from '$lib/services/map/map.svelte.ts';
@@ -20,7 +20,8 @@
         lng: number;
         isRemoved?: boolean;
         isVisited?: boolean;
-        icon: string;
+        icon: MarkerIcon;
+        iconClassName?: string;
         color: string;
         isDraggable?: boolean;
         source: MarkerSource;
@@ -34,6 +35,7 @@
         isRemoved = false,
         isVisited = false,
         icon,
+        iconClassName = '',
         color,
         isDraggable = false,
         source,
@@ -77,6 +79,7 @@
 
         marker = mapState.markerManager.addMarker(markerId, position, {
             icon,
+            iconClassName,
             color,
             isDraggable,
             source,

@@ -11,6 +11,9 @@
     import {Input} from '$lib/components/ui/input';
     import {Button} from '$lib/components/ui/button';
     import LoadingDots from '$lib/components/loadingDots.svelte';
+    import KeyRoundIcon from '@lucide/svelte/icons/key-round';
+    import CircleAlertIcon from '@lucide/svelte/icons/circle-alert';
+    import ArrowLeftIcon from '@lucide/svelte/icons/arrow-left';
 
     interface Props {
         requestedEmail: string;
@@ -84,7 +87,7 @@
     <div
         class="bg-warning/10 dark:bg-warning/15 border-warning/30 mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border"
     >
-        <i class="fa-solid fa-key text-warning text-2xl"></i>
+        <KeyRoundIcon class="text-warning size-6 stroke-2" />
     </div>
 
     <p class="text-muted-foreground text-center text-sm leading-relaxed">
@@ -104,7 +107,7 @@
         />
         {#if $errors.email}
             <p class="text-destructive flex items-center gap-1.5 text-sm">
-                <i class="fa-solid fa-circle-exclamation text-xs"></i>
+                <CircleAlertIcon class="size-3.5" />
                 {getErrorArray($errors.email)?.[0] ?? 'Это непохоже на email'}
             </p>
         {/if}
@@ -126,7 +129,7 @@
             href={$submitting ? undefined : buildBackUrl()}
             aria-disabled={$submitting || undefined}
         >
-            <i class="fa-solid fa-arrow-left mr-2 text-sm"></i>
+            <ArrowLeftIcon class="mr-1" />
             <span>Назад</span>
         </Button>
     </div>

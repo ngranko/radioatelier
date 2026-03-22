@@ -1,5 +1,6 @@
 <script lang="ts">
     import {Button} from '$lib/components/ui/button';
+    import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
 
     let {onLoadMoreClick} = $props();
 </script>
@@ -10,7 +11,5 @@
     onclick={onLoadMoreClick}
 >
     Все результаты
-    <i
-        class="fa-solid fa-chevron-down text-[10px] transition-transform group-hover:translate-y-0.5"
-    ></i>
+    <ChevronDownIcon class="size-3.5 translate-y-0.5 transition-transform" />
 </Button>

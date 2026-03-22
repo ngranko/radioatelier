@@ -13,6 +13,9 @@
     import PasswordInput from '$lib/components/input/passwordInput.svelte';
     import {Button} from '$lib/components/ui/button';
     import LoadingDots from '$lib/components/loadingDots.svelte';
+    import CircleAlertIcon from '@lucide/svelte/icons/circle-alert';
+    import ArrowLeftIcon from '@lucide/svelte/icons/arrow-left';
+    import MailCheckIcon from '@lucide/svelte/icons/mail-check';
 
     interface Props {
         requestedEmail: string;
@@ -80,7 +83,7 @@
     <div
         class="bg-success/10 dark:bg-success/15 border-success/30 mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border"
     >
-        <i class="fa-solid fa-envelope-circle-check text-success text-xl"></i>
+        <MailCheckIcon class="text-success size-6 stroke-2" />
     </div>
 
     <p class="text-muted-foreground text-center text-sm leading-relaxed">
@@ -109,7 +112,7 @@
                 id="error-verificationCode"
                 class="text-destructive flex items-center gap-1.5 text-sm"
             >
-                <i class="fa-solid fa-circle-exclamation text-xs"></i>
+                <CircleAlertIcon class="size-3.5" />
                 {getErrorArray($errors.verificationCode)?.[0] ?? 'Введите код подтверждения'}
             </p>
         {/if}
@@ -130,7 +133,7 @@
         />
         {#if $errors.password}
             <p id="error-password" class="text-destructive flex items-center gap-1.5 text-sm">
-                <i class="fa-solid fa-circle-exclamation text-xs"></i>
+                <CircleAlertIcon class="size-3.5" />
                 {getErrorArray($errors.password)?.[0] ?? 'Введите новый пароль'}
             </p>
         {/if}
@@ -154,7 +157,7 @@
                 id="error-confirmPassword"
                 class="text-destructive flex items-center gap-1.5 text-sm"
             >
-                <i class="fa-solid fa-circle-exclamation text-xs"></i>
+                <CircleAlertIcon class="size-3.5" />
                 {getErrorArray($errors.confirmPassword)?.[0] ?? 'Пароли не совпадают'}
             </p>
         {/if}
@@ -177,7 +180,7 @@
             onclick={onBack}
             disabled={$submitting}
         >
-            <i class="fa-solid fa-arrow-left mr-2 text-sm"></i>
+            <ArrowLeftIcon class="mr-1" />
             <span>Назад</span>
         </Button>
     </div>

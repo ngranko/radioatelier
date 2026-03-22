@@ -1,4 +1,6 @@
+import MarkerIcon from '$lib/components/map/markerIcon.svelte';
 import type {Marker} from '$lib/services/map/marker';
+import {mount} from 'svelte';
 
 export class Factory {
     public create(marker: Marker): void {
@@ -12,16 +14,19 @@ export class Factory {
         iconElement.className =
             'w-6 h-6 translate-y-1/2 flex justify-center items-center rounded-full transition-transform transition-opacity duration-100 ease-in-out text-sm text-white';
         iconElement.style.backgroundColor = marker.getColor();
-        iconElement.appendChild(this.createIcon(marker));
+        const baseIconClassName =
+            typeof marker.getIcon() === 'string' ? 'block text-sm leading-none' : 'block size-3.5';
+        const iconClassName = [baseIconClassName, marker.getIconClassName()]
+            .filter(Boolean)
+            .join(' ');
+        mount(MarkerIcon, {
+            target: iconElement,
+            props: {
+                icon: marker.getIcon(),
+                className: iconClassName,
+            },
+        });
         return iconElement;
-    }
-
-    private createIcon(marker: Marker): HTMLElement {
-        const icon = document.createElement('i');
-        for (const cls of marker.getIcon().split(/\s+/).filter(Boolean)) {
-            icon.classList.add(cls);
-        }
-        return icon;
     }
 
     private createAdvancedMarkerElement(

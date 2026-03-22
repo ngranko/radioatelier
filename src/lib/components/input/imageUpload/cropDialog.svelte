@@ -12,6 +12,11 @@
     import {useConvexClient} from 'convex-svelte';
     import Cropper from 'svelte-easy-crop';
     import {toast} from 'svelte-sonner';
+    import XMarkIcon from '@lucide/svelte/icons/x';
+    import PlusIcon from '@lucide/svelte/icons/plus';
+    import MinusIcon from '@lucide/svelte/icons/minus';
+    import LoaderCircleIcon from '@lucide/svelte/icons/loader-circle';
+    import MoveIcon from '@lucide/svelte/icons/move';
 
     type CropArea = {
         x: number;
@@ -155,8 +160,8 @@
 
 <DialogRoot bind:open={isOpen}>
     <DialogTrigger type="button">
-        <Button variant="secondary" size="icon" class="text-base" aria-label="Кадрировать превью">
-            <i class="fa-solid fa-up-down-left-right"></i>
+        <Button variant="secondary" size="icon" aria-label="Кадрировать превью">
+            <MoveIcon />
         </Button>
     </DialogTrigger>
     <Content
@@ -171,7 +176,7 @@
                 class="flex h-7 w-7 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-black/5 hover:text-zinc-600 dark:text-zinc-500 dark:hover:bg-white/8 dark:hover:text-zinc-300"
                 disabled={isSubmitting}
             >
-                <i class="fa-solid fa-xmark text-sm"></i>
+                <XMarkIcon class="size-3.5 stroke-3" />
             </DialogClose>
         </div>
 
@@ -195,7 +200,7 @@
                     disabled={zoom <= MIN_ZOOM}
                     aria-label="Уменьшить"
                 >
-                    <i class="fa-solid fa-minus text-xs"></i>
+                    <MinusIcon class="size-3.5 stroke-3" />
                 </button>
 
                 <div class="relative flex flex-1 items-center">
@@ -219,7 +224,7 @@
                     disabled={zoom >= MAX_ZOOM}
                     aria-label="Увеличить"
                 >
-                    <i class="fa-solid fa-plus text-xs"></i>
+                    <PlusIcon class="size-3.5 stroke-3" />
                 </button>
 
                 <span class="text-muted-foreground w-10 text-right font-mono text-xs tabular-nums">
@@ -240,7 +245,7 @@
                 </DialogClose>
                 <Button size="sm" onclick={handleClick} disabled={isSubmitting} class="min-w-24">
                     {#if isSubmitting}
-                        <i class="fa-solid fa-circle-notch animate-spin"></i>
+                        <LoaderCircleIcon class="animate-spin" />
                     {/if}
                     Применить
                 </Button>

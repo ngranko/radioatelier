@@ -2,6 +2,7 @@
     import {Button} from '$lib/components/ui/button';
     import {DialogClose, DialogFooter} from '$lib/components/ui/dialog';
     import {importState, resetImportState} from '$lib/state/import.svelte.ts';
+    import CircleXMarkIcon from '@lucide/svelte/icons/circle-x';
 
     function handleReset() {
         resetImportState();
@@ -12,7 +13,7 @@
     <div class="w-full max-w-md space-y-6">
         <div class="flex flex-col items-center gap-4">
             <div class="bg-destructive/10 flex h-16 w-16 items-center justify-center rounded-full">
-                <i class="fa-regular fa-circle-xmark text-destructive text-2xl"></i>
+                <CircleXMarkIcon class="text-destructive size-6 stroke-2" />
             </div>
             <div class="space-y-2 text-center">
                 <p class="text-lg font-medium">Импорт провалился</p>

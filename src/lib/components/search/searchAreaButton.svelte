@@ -3,6 +3,7 @@
     import {cubicInOut} from 'svelte/easing';
     import {searchState} from '$lib/components/search/search.svelte.ts';
     import {Button} from '$lib/components/ui/button';
+    import RefreshCwIcon from '@lucide/svelte/icons/refresh-cw';
 
     interface Props {
         lat: string;
@@ -22,10 +23,10 @@
     transition:fade={{duration: 100, easing: cubicInOut}}
 >
     <Button
-        class="glass text-foreground rounded-full bg-white/90 transition-all duration-200 hover:bg-white hover:shadow-xl active:scale-[0.97] dark:bg-white/[0.1] dark:hover:bg-white/[0.15]"
+        class="glass text-foreground rounded-full bg-white/90 text-sm transition-all duration-200 hover:bg-white hover:shadow-xl active:scale-[0.97] dark:bg-white/[0.1] dark:hover:bg-white/[0.15]"
         onclick={handleClick}
     >
-        <i class="fa-solid fa-rotate text-xs"></i>
+        <RefreshCwIcon class="size-3.5" />
         Искать в этой области
     </Button>
 </div>

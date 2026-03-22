@@ -14,6 +14,7 @@
     import {useClerkContext} from 'svelte-clerk';
     import {cubicInOut} from 'svelte/easing';
     import {setSharedMarkerObject, sharedMarker} from '$lib/state/sharedMarker.svelte.ts';
+    import ZapIcon from '@lucide/svelte/icons/zap';
 
     let {data, children} = $props();
     let lastRouteObjectId: string | null = null;
@@ -121,7 +122,8 @@
             isVisited={point.isVisited}
             isRemoved={point.isRemoved}
             isDraggable={point.isOwner}
-            icon="fa-solid fa-bolt"
+            icon={ZapIcon}
+            iconClassName="fill-current"
             color="#000000"
             source="list"
         />

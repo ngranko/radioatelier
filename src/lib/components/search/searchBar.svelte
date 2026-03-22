@@ -6,6 +6,7 @@
     import {Input} from '$lib/components/ui/input';
     import {fade} from 'svelte/transition';
     import {cubicInOut} from 'svelte/easing';
+    import SearchIcon from '@lucide/svelte/icons/search';
 
     let val: string = $state('');
     let timeout: number | undefined;
@@ -44,7 +45,7 @@
         class="pointer-events-none absolute top-1/2 left-3.5 z-10 -translate-y-1/2 text-sm transition-colors
             {isFocused ? 'text-primary' : 'text-muted-foreground'}"
     >
-        <i class="fa-solid fa-magnifying-glass"></i>
+        <SearchIcon class="size-4" />
     </div>
     <Input
         type="text"

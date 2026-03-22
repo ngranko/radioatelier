@@ -6,6 +6,8 @@
     import {Root as SelectRoot, Trigger, Content, Item} from '$lib/components/ui/select';
     import {importState, resetImportState} from '$lib/state/import.svelte.ts';
     import {parseCsv} from '$lib/services/import/csv';
+    import TrashIcon from '@lucide/svelte/icons/trash-2';
+    import FileSpreadsheetIcon from '@lucide/svelte/icons/file-spreadsheet';
 
     function getSeparator() {
         return importState.separator;
@@ -63,7 +65,7 @@
     <div class="flex items-start justify-between">
         <div class="flex items-center gap-3">
             <div class="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-md">
-                <i class="fa-solid fa-file-csv text-primary ml-1 text-2xl"></i>
+                <FileSpreadsheetIcon class="text-primary size-6 stroke-2" />
             </div>
             <div>
                 <p class="font-bold">{importState.name}</p>
@@ -72,8 +74,13 @@
                 </p>
             </div>
         </div>
-        <Button variant="outline" size="icon" onclick={handleRemoveFile}>
-            <i class="fa-solid fa-trash text-destructive"></i>
+        <Button
+            variant="outline"
+            size="icon"
+            class="text-destructive hover:text-destructive hover:bg-destructive/10"
+            onclick={handleRemoveFile}
+        >
+            <TrashIcon />
         </Button>
     </div>
     <div class="flex flex-col gap-2 pl-13">

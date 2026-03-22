@@ -2,6 +2,8 @@
     import Badge from '$lib/components/ui/badge/badge.svelte';
     import type {Tag} from '$lib/interfaces/tag.js';
     import type {PrivateTag} from '$lib/interfaces/privateTag.ts';
+    import LockIcon from '@lucide/svelte/icons/lock';
+    import TagIcon from '@lucide/svelte/icons/tag';
 
     interface Props {
         tags: Tag[];
@@ -21,13 +23,13 @@
 <div class="flex flex-wrap gap-2">
     {#each sortedTags as tag (tag.id)}
         <Badge variant="secondary" class="text-primary border-primary/15 bg-primary/10">
-            <i class="fa-solid fa-tag"></i>
+            <TagIcon />
             <span class="lowercase">{tag.name}</span>
         </Badge>
     {/each}
     {#each sortedPrivateTags as tag (tag.id)}
         <Badge variant="secondary" class="border-border bg-muted text-muted-foreground">
-            <i class="fa-solid fa-lock"></i>
+            <LockIcon />
             <span class="lowercase">{tag.name}</span>
         </Badge>
     {/each}

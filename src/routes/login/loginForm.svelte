@@ -14,6 +14,7 @@
     import {Input} from '$lib/components/ui/input';
     import PasswordInput from '$lib/components/input/passwordInput.svelte';
     import {Button} from '$lib/components/ui/button';
+    import CircleAlertIcon from '@lucide/svelte/icons/circle-alert';
 
     interface Props {
         onNeedsSecondFactor: () => void;
@@ -119,7 +120,7 @@
         />
         {#if $errors.email}
             <p class="text-destructive flex items-center gap-1.5 text-sm">
-                <i class="fa-solid fa-circle-exclamation text-xs"></i>
+                <CircleAlertIcon class="size-3.5" />
                 {getErrorArray($errors.email)?.[0] ?? 'Это непохоже на email'}
             </p>
         {/if}
@@ -137,7 +138,7 @@
         />
         {#if $errors.password}
             <p class="text-destructive flex items-center gap-1.5 text-sm">
-                <i class="fa-solid fa-circle-exclamation text-xs"></i>
+                <CircleAlertIcon class="size-3.5" />
                 {getErrorArray($errors.password)?.[0] ?? 'Пожалуйста, введите пароль'}
             </p>
         {/if}

@@ -13,6 +13,7 @@
     import {clearSharedMarker} from '$lib/state/sharedMarker.svelte.ts';
     import {useClerkContext} from 'svelte-clerk';
     import {toast} from 'svelte-sonner';
+    import LoaderCircleIcon from '@lucide/svelte/icons/loader-circle';
 
     interface Props {
         isOpen: boolean;
@@ -67,7 +68,7 @@
             <Cancel disabled={isLoggingOut}>Отмена</Cancel>
             <Action onclick={handleClick} disabled={isLoggingOut}>
                 {#if isLoggingOut}
-                    <i class="fa-solid fa-circle-notch animate-spin"></i>
+                    <LoaderCircleIcon class="animate-spin" />
                 {:else}
                     Выйти
                 {/if}

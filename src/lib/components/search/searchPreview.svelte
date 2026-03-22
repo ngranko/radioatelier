@@ -9,6 +9,8 @@
     import {cubicInOut} from 'svelte/easing';
     import {fade} from 'svelte/transition';
     import {api} from '$convex/_generated/api';
+    import ZoomOutIcon from '@lucide/svelte/icons/zoom-out';
+    import CircleAlertIcon from '@lucide/svelte/icons/circle-alert';
 
     const client = useConvexClient();
 
@@ -69,13 +71,13 @@
                 </div>
             {:else if isError}
                 <div class="text-muted-foreground flex items-center gap-2.5 px-4 py-4 text-sm">
-                    <i class="fa-solid fa-circle-exclamation text-destructive/70 shrink-0"></i>
+                    <CircleAlertIcon class="text-destructive/70 size-4" />
                     Что-то пошло не так
                 </div>
             {:else if results}
                 {#if results.items.length === 0}
                     <div class="text-muted-foreground flex items-center gap-2.5 px-4 py-4 text-sm">
-                        <i class="fa-solid fa-magnifying-glass-minus shrink-0"></i>
+                        <ZoomOutIcon class="size-4" />
                         Ничего не найдено
                     </div>
                 {:else}

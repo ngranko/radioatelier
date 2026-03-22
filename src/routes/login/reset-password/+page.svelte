@@ -5,6 +5,7 @@
     import {normalizeRef} from '$lib/utils';
     import Logo from '../logo.svelte';
     import {Button} from '$lib/components/ui/button';
+    import LockIcon from '@lucide/svelte/icons/lock';
 
     const ctx = useClerkContext();
     let taskContainer: HTMLDivElement | null = $state(null);
@@ -39,7 +40,7 @@
     <div
         class="bg-warning/10 dark:bg-warning/15 border-warning/30 mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border"
     >
-        <i class="fa-solid fa-lock text-warning text-2xl"></i>
+        <LockIcon class="text-warning size-6 stroke-2" />
     </div>
 
     <p class="text-muted-foreground text-center text-sm leading-relaxed">

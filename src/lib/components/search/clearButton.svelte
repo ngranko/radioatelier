@@ -1,5 +1,6 @@
 <script lang="ts">
     import {Button} from '$lib/components/ui/button';
+    import XMarkIcon from '@lucide/svelte/icons/x';
 
     let {onClick} = $props();
 </script>
@@ -11,5 +12,5 @@
     aria-label="Очистить"
     onclick={onClick}
 >
-    <i class="fa-solid fa-xmark block w-4 text-sm"></i>
+    <XMarkIcon class="stroke-3" />
 </Button>

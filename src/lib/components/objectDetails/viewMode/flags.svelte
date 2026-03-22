@@ -1,5 +1,9 @@
 <script lang="ts">
     import Tooltip from '$lib/components/tooltip.svelte';
+    import LockOpenIcon from '@lucide/svelte/icons/lock-open';
+    import LockIcon from '@lucide/svelte/icons/lock';
+    import GhostIcon from '@lucide/svelte/icons/ghost';
+    import UserCheckIcon from '@lucide/svelte/icons/user-check';
 
     interface Props {
         isPublic: boolean;
@@ -14,14 +18,14 @@
     {#if isPublic}
         <Tooltip>
             {#snippet button()}
-                <i class="fa-solid fa-lock-open"></i>
+                <LockOpenIcon class="size-4" />
             {/snippet}
             Публичная
         </Tooltip>
     {:else}
         <Tooltip>
             {#snippet button()}
-                <i class="fa-solid fa-lock"></i>
+                <LockIcon class="size-4" />
             {/snippet}
             Приватная
         </Tooltip>
@@ -29,7 +33,7 @@
     {#if isVisited}
         <Tooltip>
             {#snippet button()}
-                <i class="fa-solid fa-person-circle-check"></i>
+                <UserCheckIcon class="size-4" />
             {/snippet}
             Посещена
         </Tooltip>
@@ -37,7 +41,7 @@
     {#if isRemoved}
         <Tooltip>
             {#snippet button()}
-                <i class="fa-solid fa-ghost"></i>
+                <GhostIcon class="size-4" />
             {/snippet}
             Утрачена
         </Tooltip>

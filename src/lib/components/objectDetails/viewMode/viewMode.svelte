@@ -6,6 +6,7 @@
     import Actions from './actions.svelte';
     import ImageUpload from '$lib/components/input/imageUpload/index.svelte';
     import type {Permissions} from '$lib/interfaces/permissions';
+    import ExternalLinkIcon from '@lucide/svelte/icons/external-link';
 
     interface Props {
         initialValues: Partial<LooseObject>;
@@ -96,7 +97,7 @@
                 class="text-primary hover:text-primary/90 inline-flex items-center gap-1 text-sm hover:underline"
             >
                 Источник
-                <i class="fa-solid fa-arrow-up-right-from-square ml-1 text-xs"></i>
+                <ExternalLinkIcon class="ml-1 size-3.5" />
             </a>
         </div>
     {/if}
