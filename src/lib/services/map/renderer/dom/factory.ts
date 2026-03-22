@@ -14,6 +14,7 @@ export class Factory {
         iconElement.className =
             'w-6 h-6 translate-y-1/2 flex justify-center items-center rounded-full transition-transform transition-opacity duration-100 ease-in-out text-sm text-white';
         iconElement.style.backgroundColor = marker.getColor();
+        iconElement.style.setProperty('--marker-color', marker.getColor());
         const baseIconClassName =
             typeof marker.getIcon() === 'string' ? 'block text-sm leading-none' : 'block size-3.5';
         const iconClassName = [baseIconClassName, marker.getIconClassName()]
