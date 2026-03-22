@@ -98,7 +98,7 @@ export const getDetails = query({
             })),
             isVisited,
             isOwner: object.createdById === user?._id,
-            internalId: object.internalId,
+            internalId: user ? object.internalId : null,
         };
     },
 });
