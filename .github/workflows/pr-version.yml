@@ -145,3 +145,147 @@ jobs:
 
           git tag "v$VERSION"
           git push origin "v$VERSION"
+
+  discover-open-prs:
+    if: github.event.action == 'closed' && github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    outputs:
+      hasOpenPrs: ${{ steps.collect-open-prs.outputs.hasOpenPrs }}
+      matrix: ${{ steps.collect-open-prs.outputs.matrix }}
+
+    steps:
+      - name: Collect open PR branches
+        id: collect-open-prs
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const openPulls = await github.paginate(github.rest.pulls.list, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              base: 'main',
+              per_page: 100,
+            });
+
+            const sameRepoPulls = openPulls.filter((pull) =>
+              pull.head.repo?.full_name === `${context.repo.owner}/${context.repo.repo}`
+            );
+
+            core.setOutput('hasOpenPrs', sameRepoPulls.length > 0 ? 'true' : 'false');
+            core.setOutput(
+              'matrix',
+              JSON.stringify({
+                include: sameRepoPulls.map((pull) => ({
+                  prNumber: pull.number,
+                  headRef: pull.head.ref,
+                  headRepo: pull.head.repo.full_name,
+                })),
+              })
+            );
+
+  refresh-open-pr-versions:
+    if: needs.discover-open-prs.outputs.hasOpenPrs == 'true'
+    needs:
+      - discover-open-prs
+      - tag-merged-commit
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.discover-open-prs.outputs.matrix) }}
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ matrix.headRepo }}
+          ref: ${{ matrix.headRef }}
+          fetch-depth: 0
+
+      - name: Calculate version
+        id: calculate-version
+        uses: paulhatch/semantic-version@v6.0.2
+        with:
+          tag_prefix: "v"
+          major_pattern: "(MAJOR)"
+          minor_pattern: "(MINOR)"
+          version_format: "${major}.${minor}.${patch}"
+          bump_each_commit: false
+          search_commit_body: false
+          user_format_type: "csv"
+          enable_prerelease_mode: true
+          debug: false
+          version_from_branch: false
+
+      - name: Update package version
+        env:
+          VERSION: ${{ steps.calculate-version.outputs.version }}
+        run: |
+          current_version="$(node -p "JSON.parse(require('node:fs').readFileSync('package.json', 'utf8')).version")"
+
+          if [ "$current_version" = "$VERSION" ]; then
+            echo "package.json already uses version $VERSION"
+            exit 0
+          fi
+
+          node <<'EOF'
+          const fs = require('node:fs');
+          const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+
+          pkg.version = process.env.VERSION;
+
+          fs.writeFileSync('package.json', `${JSON.stringify(pkg, null, 4)}\n`);
+          EOF
+
+      - name: Commit version update
+        env:
+          VERSION: ${{ steps.calculate-version.outputs.version }}
+        run: |
+          if git diff --quiet -- package.json; then
+            echo "No package.json changes to commit"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json
+          git commit -m "chore: sync package version to v$VERSION"
+          git push origin "HEAD:${{ matrix.headRef }}"
+
+      - name: Comment with calculated version
+        uses: actions/github-script@v8
+        env:
+          VERSION: ${{ steps.calculate-version.outputs.version }}
+        with:
+          script: |
+            const marker = '<!-- pr-version-sync -->';
+            const body = `${marker}
+            Package version for this PR has been synced to \`v${process.env.VERSION}\`.
+
+            The merge commit will be tagged with \`v${process.env.VERSION}\` after this PR is merged.`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: Number('${{ matrix.prNumber }}'),
+            });
+
+            const existingComment = comments.find((comment) =>
+              comment.user?.type === 'Bot' && comment.body?.includes(marker)
+            );
+
+            if (existingComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body,
+              });
+              return;
+            }
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: Number('${{ matrix.prNumber }}'),
+              body,
+            });
