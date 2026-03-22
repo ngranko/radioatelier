@@ -8,6 +8,9 @@
     import SearchResultsItem from './searchResultsItem.svelte';
     import SearchItemSkeleton from './searchItemSkeleton.svelte';
     import {api} from '$convex/_generated/api';
+    import ZoomOutIcon from '@lucide/svelte/icons/zoom-out';
+    import CircleAlertIcon from '@lucide/svelte/icons/circle-alert';
+    import LoaderCircleIcon from '@lucide/svelte/icons/loader-circle';
 
     let {isActive} = $props();
     const client = useConvexClient();
@@ -92,13 +95,13 @@
         </div>
     {:else if isError}
         <div class="text-muted-foreground flex items-center gap-2.5 px-4 py-6 text-sm">
-            <i class="fa-solid fa-circle-exclamation text-destructive/70 shrink-0"></i>
+            <CircleAlertIcon class="text-destructive/70" />
             Не удалось загрузить результаты
         </div>
     {:else if hasLoaded}
         {#if Object.keys($searchPointList).length === 0}
             <div class="flex flex-col items-center gap-2 px-4 py-8 text-center">
-                <i class="fa-solid fa-magnifying-glass-minus text-muted-foreground/50 text-xl"></i>
+                <ZoomOutIcon class="text-muted-foreground/50" />
                 <span class="text-muted-foreground text-sm">Ничего не найдено</span>
             </div>
         {:else}
@@ -121,7 +124,7 @@
                     disabled={isLoadingMore}
                 >
                     {#if isLoadingMore}
-                        <i class="fa-solid fa-spinner fa-spin"></i>
+                        <LoaderCircleIcon class="animate-spin" />
                         Загрузка...
                     {:else}
                         Загрузить ещё

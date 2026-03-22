@@ -1,6 +1,8 @@
 <script lang="ts">
     import {Button} from '$lib/components/ui/button';
     import {searchState} from '$lib/components/search/search.svelte.ts';
+    import ChevronUpIcon from '@lucide/svelte/icons/chevron-up';
+    import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
 
     function handleMinimizeClick() {
         searchState.isResultsMinimized = !searchState.isResultsMinimized;
@@ -15,8 +17,8 @@
     aria-label={searchState.isResultsMinimized ? 'Развернуть' : 'Свернуть'}
 >
     {#if searchState.isResultsMinimized}
-        <i class="fa-solid fa-chevron-down text-xs"></i>
+        <ChevronDownIcon />
     {:else}
-        <i class="fa-solid fa-chevron-up text-xs"></i>
+        <ChevronUpIcon />
     {/if}
 </Button>

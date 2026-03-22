@@ -8,6 +8,11 @@
     import ConvexClerkAuth from '$lib/components/convexClerkAuth.svelte';
     import {initTheme, themeState} from '$lib/state/theme.svelte';
     import {onMount} from 'svelte';
+    import CheckCircleIcon from '@lucide/svelte/icons/check-circle';
+    import CircleXMarkIcon from '@lucide/svelte/icons/circle-x';
+    import InfoIcon from '@lucide/svelte/icons/info';
+    import TriangleAlertIcon from '@lucide/svelte/icons/triangle-alert';
+    import LoaderCircleIcon from '@lucide/svelte/icons/loader-circle';
 
     setupConvex(PUBLIC_CONVEX_URL);
 
@@ -40,19 +45,19 @@
             }}
         >
             {#snippet loadingIcon()}
-                <i class="fa-solid fa-circle-notch animate-spin text-base"></i>
+                <LoaderCircleIcon class="size-5 animate-spin" />
             {/snippet}
             {#snippet successIcon()}
-                <i class="fa-solid fa-circle-check text-base"></i>
+                <CheckCircleIcon class="size-5" />
             {/snippet}
             {#snippet errorIcon()}
-                <i class="fa-solid fa-circle-xmark text-base"></i>
+                <CircleXMarkIcon class="size-5" />
             {/snippet}
             {#snippet infoIcon()}
-                <i class="fa-solid fa-circle-info text-base"></i>
+                <InfoIcon class="size-5" />
             {/snippet}
             {#snippet warningIcon()}
-                <i class="fa-solid fa-triangle-exclamation text-base"></i>
+                <TriangleAlertIcon class="size-5" />
             {/snippet}
         </Toaster>
         <div id="portal"></div>

@@ -5,6 +5,8 @@
     import ImageViewer from '$lib/components/input/imageUpload/imageViewer.svelte';
     import {toast} from 'svelte-sonner';
     import LoadingOverlay from './loadingOverlay.svelte';
+    import TrashIcon from '@lucide/svelte/icons/trash-2';
+    import UploadIcon from '@lucide/svelte/icons/upload';
 
     interface Props {
         id?: string;
@@ -95,12 +97,12 @@
             <Button
                 variant="secondary"
                 size="icon"
-                class="text-foreground/80 hover:bg-secondary/90 text-base shadow-sm"
+                class="text-foreground/80 hover:bg-secondary/90 shadow-sm"
                 onclick={handleUploadClick}
                 disabled={isUploading}
                 aria-label="Загрузить изображение"
             >
-                <i class="fa-solid fa-arrow-up-from-bracket"></i>
+                <UploadIcon />
             </Button>
             {#if value && !isUploading}
                 {#if url}
@@ -109,12 +111,12 @@
                 <Button
                     variant="secondary"
                     size="icon"
-                    class="text-destructive text-base"
+                    class="text-destructive hover:text-destructive"
                     onclick={handleRemoveClick}
                     disabled={isUploading}
                     aria-label="Удалить изображение"
                 >
-                    <i class="fa-solid fa-trash"></i>
+                    <TrashIcon />
                 </Button>
             {/if}
         </div>

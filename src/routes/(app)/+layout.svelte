@@ -22,6 +22,9 @@
     import {useClerkContext} from 'svelte-clerk';
     import {activeObject} from '$lib/state/activeObject.svelte';
     import {type LooseObject} from '$lib/interfaces/object';
+    import SearchIcon from '@lucide/svelte/icons/search';
+    import StarIcon from '@lucide/svelte/icons/star';
+    import SproutIcon from '@lucide/svelte/icons/sprout';
 
     // this is needed to avoid deck.gl error
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
@@ -115,9 +118,7 @@
                 {searchPointId}
                 lat={searchPoint.object.latitude}
                 lng={searchPoint.object.longitude}
-                icon={searchPoint.object.type === 'local'
-                    ? 'fa-solid fa-magnifying-glass'
-                    : 'fa-brands fa-google'}
+                icon={searchPoint.object.type === 'local' ? SearchIcon : 'fa-brands fa-google'}
                 color="#dc2626"
                 source="search"
             />
@@ -130,7 +131,8 @@
                 id={sharedMarker.object.id}
                 lat={sharedMarker.object.latitude}
                 lng={sharedMarker.object.longitude}
-                icon="fa-solid fa-star"
+                icon={StarIcon}
+                iconClassName="fill-current"
                 color="#008e92"
                 source="share"
             />
@@ -142,7 +144,8 @@
             <Marker
                 lat={createDraftState.position.lat}
                 lng={createDraftState.position.lng}
-                icon="fa-solid fa-seedling"
+                icon={SproutIcon}
+                iconClassName="fill-current"
                 color="#000000"
                 source="map"
             />

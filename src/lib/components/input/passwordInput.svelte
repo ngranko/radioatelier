@@ -1,6 +1,8 @@
 <script lang="ts">
     import {Input} from '$lib/components/ui/input';
     import type {HTMLInputAttributes} from 'svelte/elements';
+    import EyeIcon from '@lucide/svelte/icons/eye';
+    import EyeOffIcon from '@lucide/svelte/icons/eye-off';
 
     type Props = Omit<HTMLInputAttributes, 'type' | 'files'>;
 
@@ -22,9 +24,9 @@
         aria-label={isPlainPassword ? 'Скрыть пароль' : 'Показать пароль'}
     >
         {#if isPlainPassword}
-            <i class="fa-regular fa-eye-slash text-lg"></i>
+            <EyeOffIcon />
         {:else}
-            <i class="fa-regular fa-eye text-lg"></i>
+            <EyeIcon />
         {/if}
     </button>
 </div>

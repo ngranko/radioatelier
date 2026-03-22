@@ -4,6 +4,7 @@
     import {cn} from '$lib/utils';
     import Button from '../ui/button/button.svelte';
     import {mapState} from '$lib/state/map.svelte';
+    import XMarkIcon from '@lucide/svelte/icons/x';
 
     interface Props {
         panorama: google.maps.StreetViewPanorama | null;
@@ -133,7 +134,7 @@
         class="pointer-events-auto absolute top-3 right-3"
         onclick={exitStreetView}
     >
-        <i class="fa-solid fa-xmark"></i>
+        <XMarkIcon class="stroke-3" />
     </Button>
 
     <div

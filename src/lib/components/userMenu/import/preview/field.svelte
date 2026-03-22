@@ -5,6 +5,7 @@
     import {type SuperForm} from 'sveltekit-superforms';
     import {cn} from '$lib/utils.ts';
     import {importState} from '$lib/state/import.svelte.ts';
+    import XMarkIcon from '@lucide/svelte/icons/x';
 
     interface Props {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -66,7 +67,7 @@
                         <Content>
                             <Item value="">
                                 <span class="text-muted-foreground flex items-center gap-2">
-                                    <i class="fa-solid fa-xmark"></i>
+                                    <XMarkIcon class="size-3.5" />
                                     Не выбрано
                                 </span>
                             </Item>

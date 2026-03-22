@@ -2,6 +2,9 @@
     import {Button} from '$lib/components/ui/button';
     import {DialogClose, DialogFooter} from '$lib/components/ui/dialog';
     import {importState, resetImportState} from '$lib/state/import.svelte.ts';
+    import CheckCircleIcon from '@lucide/svelte/icons/check-circle';
+    import CircleXMarkIcon from '@lucide/svelte/icons/circle-x';
+    import TriangleAlertIcon from '@lucide/svelte/icons/triangle-alert';
 
     const warningCount = $derived(
         importState.lineFeedback.filter(item => item.severity === 'warning').length,
@@ -18,7 +21,7 @@
 <div class="flex-1 space-y-6 overflow-y-auto">
     <div class="flex flex-col items-center gap-4 py-6">
         <div class="flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-            <i class="fa-regular fa-circle-check text-2xl text-green-600"></i>
+            <CheckCircleIcon class="size-6 stroke-2 text-green-600" />
         </div>
         <div class="space-y-2 text-center">
             <p class="text-lg font-medium">Импорт успешно завершен</p>
@@ -51,13 +54,13 @@
                     {#each importState.lineFeedback as item (item.line)}
                         <div class="flex items-start gap-3 p-4">
                             {#if item.severity === 'error'}
-                                <i
-                                    class="fa-solid fa-circle-xmark text-destructive mt-0.5 flex-shrink-0 text-lg"
-                                ></i>
+                                <CircleXMarkIcon
+                                    class="text-destructive mt-0.5 size-5 flex-shrink-0"
+                                />
                             {:else}
-                                <i
-                                    class="fa-solid fa-triangle-exclamation mt-0.5 flex-shrink-0 text-lg text-amber-600"
-                                ></i>
+                                <TriangleAlertIcon
+                                    class="mt-0.5 size-5 flex-shrink-0 text-amber-600"
+                                />
                             {/if}
                             <div class="min-w-0 flex-1">
                                 <span class="text-sm font-medium">Строка {item.line}</span>

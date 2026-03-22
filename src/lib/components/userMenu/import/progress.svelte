@@ -6,6 +6,7 @@
     import {Progress} from '$lib/components/ui/progress';
     import {applyImportJobSnapshot, importState} from '$lib/state/import.svelte.ts';
     import {useQuery} from 'convex-svelte';
+    import LoaderCircleIcon from '@lucide/svelte/icons/loader-circle';
 
     function toImportJobSnapshot(job: Doc<'importJobs'> | null): ImportJobSnapshot | null {
         if (!job) {
@@ -39,7 +40,7 @@
     <div class="w-full max-w-md space-y-6">
         <div class="flex flex-col items-center gap-4">
             <div class="bg-primary/10 flex h-16 w-16 items-center justify-center rounded-full">
-                <i class="fa-solid fa-circle-notch text-primary animate-spin text-2xl"></i>
+                <LoaderCircleIcon class="text-primary size-6 animate-spin stroke-2" />
             </div>
             <div class="space-y-2 text-center">
                 <p class="text-lg font-medium">Импортирую данные...</p>

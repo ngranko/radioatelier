@@ -12,6 +12,7 @@
     import ThemeSwitcher from '$lib/components/themeSwitcher.svelte';
     import {goto} from '$app/navigation';
     import {page} from '$app/state';
+    import LogInIcon from '@lucide/svelte/icons/log-in';
 
     function handleLoginClick() {
         goto(`/login?ref=${encodeURIComponent(page.url.pathname)}`);
@@ -41,7 +42,7 @@
     <DropdownMenuContent class="mr-4">
         <Group>
             <DropdownMenuItem onclick={handleLoginClick}>
-                <i class="fa-solid fa-right-to-bracket"></i>
+                <LogInIcon />
                 Войти
             </DropdownMenuItem>
             <DropdownMenuSeparator />

@@ -3,6 +3,7 @@
     import {ImportStepPreview} from '$lib/interfaces/import.ts';
     import {importState} from '$lib/state/import.svelte.ts';
     import {parseCsv, readCsvFile} from '$lib/services/import/csv';
+    import FileSpreadsheetIcon from '@lucide/svelte/icons/file-spreadsheet';
 
     let isDragging = $state(false);
 
@@ -90,7 +91,7 @@
 >
     <label class="flex cursor-pointer flex-col items-center justify-center gap-4 px-6 py-16">
         <div class="bg-primary/10 flex h-16 w-16 items-center justify-center rounded-full">
-            <i class="fa-solid fa-file-csv text-primary text-2xl ml-1"></i>
+            <FileSpreadsheetIcon class="text-primary size-6 stroke-2" />
         </div>
         <div class="space-y-2 text-center">
             <p class="text-lg">

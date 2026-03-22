@@ -1,6 +1,7 @@
 <script lang="ts">
     import {onMount} from 'svelte';
     import {cn} from '$lib/utils.ts';
+    import CompassIcon from '@lucide/svelte/icons/compass';
 
     interface DeviceOrientationEventMaybeExtended extends DeviceOrientationEvent {
         requestPermission?(): Promise<'granted' | 'denied'>;
@@ -49,7 +50,7 @@
 
 <button
     class={cn([
-        'bg-map-control align-center absolute right-2.5 bottom-30 z-1 flex w-10 justify-center rounded-xs border-0 p-2.5 text-xl shadow-md transition-colors',
+        'bg-map-control align-center absolute right-2.5 bottom-30 z-1 flex w-10 justify-center rounded-xs border-0 p-2.5 shadow-md transition-colors',
         {
             'text-map-control-muted-foreground': !isEnabled,
             'text-map-control-active-foreground': isEnabled,
@@ -58,5 +59,5 @@
     onclick={toggleOrientation}
     aria-label="Toggle orientation"
 >
-    <i class="fa-solid fa-compass -mb-0.5 block"></i>
+    <CompassIcon class="size-5" />
 </button>

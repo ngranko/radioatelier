@@ -20,6 +20,8 @@
     import type {Permissions} from '$lib/interfaces/permissions';
     import {goto} from '$app/navigation';
     import {useClerkContext} from 'svelte-clerk';
+    import ChevronUpIcon from '@lucide/svelte/icons/chevron-up';
+    import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
 
     interface Props {
         key: string;
@@ -124,10 +126,12 @@
         >
             {initialValues?.name ?? ''}
         </span>
-        <Button variant="ghost" size="icon" class="h-8 w-8 text-lg" onclick={handleMinimizeClick}>
-            <i
-                class={`fa-solid ${activeObject.isMinimized ? 'fa-chevron-up' : 'fa-chevron-down'}`}
-            ></i>
+        <Button variant="ghost" size="icon" class="h-8 w-8" onclick={handleMinimizeClick}>
+            {#if activeObject.isMinimized}
+                <ChevronUpIcon class="stroke-3" />
+            {:else}
+                <ChevronDownIcon class="stroke-3" />
+            {/if}
         </Button>
         <CloseButton onClick={handleClose} isConfirmationRequired={activeObject.isDirty} />
     </section>

@@ -1,4 +1,4 @@
-import type {MarkerOptions, MarkerSource} from '$lib/interfaces/marker';
+import type {MarkerIcon, MarkerOptions, MarkerSource} from '$lib/interfaces/marker';
 
 export class Marker {
     private marker?: google.maps.marker.AdvancedMarkerElement;
@@ -65,8 +65,12 @@ export class Marker {
         return this.options.onDragEnd;
     }
 
-    public getIcon(): string {
+    public getIcon(): MarkerIcon {
         return this.options.icon;
+    }
+
+    public getIconClassName(): string | undefined {
+        return this.options.iconClassName;
     }
 
     public getState() {
