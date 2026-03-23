@@ -87,17 +87,26 @@ export class DeckOverlayRenderer implements MarkerRenderer {
             };
         });
 
-        const baseLayer = new ScatterplotLayer({
+        const baseLayer = this.createBaseLayer(data);
+        const visitedOutlineLayer = this.createVisitedOutlineLayer(data);
+
+        this.overlay.setProps({layers: [baseLayer, visitedOutlineLayer]});
+    }
+
+    private createBaseLayer(data: DeckPointInfo[]): ScatterplotLayer {
+        return new ScatterplotLayer({
             id: 'markers-scatterplot-fill',
             data,
             getPosition: (d: DeckPointInfo) => d.position,
             getFillColor: (d: DeckPointInfo) => d.fillColor,
             radiusUnits: 'pixels',
             getRadius: 6,
-            pickable: true,
+            pickable: false,
         });
+    }
 
-        const visitedOutlineLayer = new ScatterplotLayer({
+    private createVisitedOutlineLayer(data: DeckPointInfo[]): ScatterplotLayer {
+        return new ScatterplotLayer({
             id: 'markers-scatterplot-visited-outline',
             data: data.filter(marker => marker.isVisited),
             getPosition: (d: DeckPointInfo) => d.position,
@@ -110,7 +119,5 @@ export class DeckOverlayRenderer implements MarkerRenderer {
             filled: false,
             pickable: false,
         });
-
-        this.overlay.setProps({layers: [baseLayer, visitedOutlineLayer]});
     }
 }
