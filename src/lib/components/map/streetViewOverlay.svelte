@@ -138,9 +138,9 @@
     </Button>
 
     <div
-        class="pointer-events-auto absolute top-3 left-3 h-40 w-55 overflow-hidden rounded-xl bg-white shadow-[0_2px_10px_rgba(0,0,0,0.25)] sm:top-auto sm:right-3 sm:bottom-3 sm:left-auto"
-        bind:this={miniMapContainer}
+        class="pointer-events-auto absolute relative top-3 left-3 h-40 w-55 overflow-hidden rounded-xl bg-white shadow-[0_2px_10px_rgba(0,0,0,0.25)] sm:top-auto sm:right-3 sm:bottom-3 sm:left-auto"
     >
+        <div bind:this={miniMapContainer} class="absolute inset-0"></div>
         <div
             bind:this={pegmanOverlay}
             class="pointer-events-none absolute top-1/2 left-1/2 z-10 h-8 w-8 origin-[50%_60%] -translate-x-1/2 -translate-y-1/2"
