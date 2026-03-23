@@ -1,4 +1,4 @@
-import {hexToRgb} from '$lib/services/colorConverter';
+import {getContrastingColor, hexToRgb} from '$lib/services/colorConverter';
 import type {Marker} from '$lib/services/map/marker';
 import type {MarkerRenderer} from '$lib/services/map/renderer/markerRenderer';
 import {GoogleMapsOverlay} from '@deck.gl/google-maps';
@@ -6,7 +6,9 @@ import {ScatterplotLayer} from '@deck.gl/layers';
 
 interface DeckPointInfo {
     position: [number, number];
-    color: [number, number, number];
+    fillColor: [number, number, number, number];
+    outlineColor: [number, number, number];
+    isVisited: boolean;
 }
 
 export class DeckOverlayRenderer implements MarkerRenderer {
@@ -49,7 +51,7 @@ export class DeckOverlayRenderer implements MarkerRenderer {
     }
 
     public applyState(_marker: Marker): void {
-        // No-op; all markers rendered in one deck.gl layer
+        this.scheduleRender();
     }
 
     public destroy(): void {
@@ -74,24 +76,48 @@ export class DeckOverlayRenderer implements MarkerRenderer {
     private render() {
         const data: DeckPointInfo[] = Array.from(this.allMarkers).map(marker => {
             const pos = marker.getPosition();
+            const {isVisited, isRemoved} = marker.getState();
             const {r, g, b} = hexToRgb(marker.getColor());
+            const outline = hexToRgb(getContrastingColor(marker.getColor()));
             return {
                 position: [pos.lng, pos.lat],
-                color: [r, g, b] as [number, number, number],
+                fillColor: [r, g, b, isRemoved ? 128 : 255] as [number, number, number, number],
+                outlineColor: [outline.r, outline.g, outline.b] as [number, number, number],
+                isVisited,
             };
         });
 
-        const layer = new ScatterplotLayer({
-            id: 'markers-scatterplot',
+        const baseLayer = this.createBaseLayer(data);
+        const visitedOutlineLayer = this.createVisitedOutlineLayer(data);
+
+        this.overlay.setProps({layers: [baseLayer, visitedOutlineLayer]});
+    }
+
+    private createBaseLayer(data: DeckPointInfo[]): ScatterplotLayer {
+        return new ScatterplotLayer({
+            id: 'markers-scatterplot-fill',
             data,
             getPosition: (d: DeckPointInfo) => d.position,
-            getFillColor: (d: DeckPointInfo) => d.color,
-            // TODO: no isVisited/isRemoved support for deck for now
+            getFillColor: (d: DeckPointInfo) => d.fillColor,
             radiusUnits: 'pixels',
             getRadius: 6,
-            pickable: true,
+            pickable: false,
         });
+    }
 
-        this.overlay.setProps({layers: [layer]});
+    private createVisitedOutlineLayer(data: DeckPointInfo[]): ScatterplotLayer {
+        return new ScatterplotLayer({
+            id: 'markers-scatterplot-visited-outline',
+            data: data.filter(marker => marker.isVisited),
+            getPosition: (d: DeckPointInfo) => d.position,
+            getLineColor: (d: DeckPointInfo) => d.outlineColor,
+            radiusUnits: 'pixels',
+            lineWidthUnits: 'pixels',
+            getRadius: 8,
+            getLineWidth: 4,
+            stroked: true,
+            filled: false,
+            pickable: false,
+        });
     }
 }
