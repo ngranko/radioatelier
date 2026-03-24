@@ -4,7 +4,7 @@
     import type {LooseObject, Object} from '$lib/interfaces/object';
     import ObjectDetailsLive from '$lib/components/objectDetails/objectDetailsLive.svelte';
     import Form from '$lib/components/objectDetails/editMode/form.svelte';
-    import {activeMarker} from '$lib/stores/map';
+    import {clearActiveMarker, deactivateActiveMarker} from '$lib/state/activeMarker.svelte.ts';
     import {Button} from '$lib/components/ui/button';
     import {Badge} from '$lib/components/ui/badge';
     import CloseButton from './closeButton.svelte';
@@ -75,8 +75,8 @@
             setCreateDraftPosition(null);
         }
 
-        activeMarker.deactivate();
-        activeMarker.set(null);
+        deactivateActiveMarker();
+        clearActiveMarker();
         resetActiveObject();
         if (mapState.map) {
             mapState.map.getStreetView().setVisible(false);

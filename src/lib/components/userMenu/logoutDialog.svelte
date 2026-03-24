@@ -8,7 +8,7 @@
         Cancel,
         Action,
     } from '$lib/components/ui/alert-dialog';
-    import {searchPointList} from '$lib/stores/map.ts';
+    import {clearSearchPointList} from '$lib/state/searchPointList.svelte.ts';
     import {resetActiveObject} from '$lib/state/activeObject.svelte.ts';
     import {clearSharedMarker} from '$lib/state/sharedMarker.svelte.ts';
     import {useClerkContext} from 'svelte-clerk';
@@ -36,7 +36,7 @@
             // might cause issues if the logout call fails (because we already cleaned everything up)
             // TODO: fix sometime in the future when I have nothing else to do
             resetActiveObject();
-            searchPointList.clear();
+            clearSearchPointList();
             clearSharedMarker();
             localStorage.removeItem('lastCenter');
             localStorage.removeItem('lastPosition');

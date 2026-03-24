@@ -2,7 +2,7 @@
     import {searchState} from '$lib/components/search/search.svelte.ts';
     import type {SearchItem} from '$lib/interfaces/object';
     import {fitMarkerList} from '$lib/services/map/map.svelte';
-    import {searchPointList} from '$lib/stores/map';
+    import {replaceSearchPointList, searchPointList} from '$lib/state/searchPointList.svelte.ts';
     import {useConvexClient} from 'convex-svelte';
     import {Button} from '$lib/components/ui/button';
     import SearchResultsItem from './searchResultsItem.svelte';
@@ -31,7 +31,7 @@
 
     $effect(() => {
         if (isActive) {
-            searchPointList.set(items.map(item => ({object: item})));
+            replaceSearchPointList(items.map(item => ({object: item})));
             fitMarkerList(items, {
                 latitude: Number(searchState.lat),
                 longitude: Number(searchState.lng),
@@ -99,15 +99,15 @@
             Не удалось загрузить результаты
         </div>
     {:else if hasLoaded}
-        {#if Object.keys($searchPointList).length === 0}
+        {#if Object.keys(searchPointList).length === 0}
             <div class="flex flex-col items-center gap-2 px-4 py-8 text-center">
                 <ZoomOutIcon class="text-muted-foreground/50" />
                 <span class="text-muted-foreground text-sm">Ничего не найдено</span>
             </div>
         {:else}
             <div class="divide-y divide-black/[0.04] dark:divide-white/[0.06]">
-                {#each Object.keys($searchPointList) as id (id)}
-                    {@const searchPoint = $searchPointList[id]}
+                {#each Object.keys(searchPointList) as id (id)}
+                    {@const searchPoint = searchPointList[id]}
                     {#if searchPoint?.object}
                         <SearchResultsItem {id} object={searchPoint.object} />
                     {/if}

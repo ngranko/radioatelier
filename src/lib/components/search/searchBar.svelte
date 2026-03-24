@@ -1,6 +1,6 @@
 <script lang="ts">
     import ClearButton from '$lib/components/search/clearButton.svelte';
-    import {searchPointList} from '$lib/stores/map';
+    import {clearSearchPointList} from '$lib/state/searchPointList.svelte.ts';
     import {searchState} from '$lib/components/search/search.svelte.ts';
     import {mapState} from '$lib/state/map.svelte';
     import {Input} from '$lib/components/ui/input';
@@ -36,7 +36,7 @@
         val = '';
         clearTimeout(timeout);
         timeout = undefined;
-        searchPointList.clear();
+        clearSearchPointList();
     }
 </script>
 

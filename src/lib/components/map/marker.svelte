@@ -1,6 +1,7 @@
 <script lang="ts">
     import {onMount, onDestroy} from 'svelte';
-    import {activeMarker, searchPointList} from '$lib/stores/map.ts';
+    import {activateActiveMarker, setActiveMarker} from '$lib/state/activeMarker.svelte.ts';
+    import {searchPointList} from '$lib/state/searchPointList.svelte.ts';
     import {mapState} from '$lib/state/map.svelte';
     import {Marker as MarkerObject} from '$lib/services/map/marker';
     import type {MarkerIcon, MarkerSource} from '$lib/interfaces/marker';
@@ -57,8 +58,8 @@
 
     $effect(() => {
         if (activeObject.detailsId === activeTargetId && marker) {
-            activeMarker.set(marker);
-            activeMarker.activate();
+            setActiveMarker(marker);
+            activateActiveMarker();
             setCenter(Number(lat), Number(lng));
         }
     });
@@ -134,7 +135,7 @@
     }
 
     function changeActiveMarker() {
-        const searchPoint = searchPointId ? $searchPointList[searchPointId] : null;
+        const searchPoint = searchPointId ? searchPointList[searchPointId] : null;
 
         if (source === 'search' && searchPoint?.object.id === null && searchPointId) {
             activeObject.isMinimized = false;
