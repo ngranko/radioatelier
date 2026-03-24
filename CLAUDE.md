@@ -1,4 +1,4 @@
-Access the application at **https://radioatelier.test**, do not try to start a new dev server.
+Do not try to start a new dev server, assume it's already running.
 
 Don't regenerate convex functions, assume that convex dev environment is already running.
 

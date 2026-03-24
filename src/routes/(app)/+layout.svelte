@@ -10,7 +10,7 @@
         setCreateDraftInitialValues,
         setCreateDraftPosition,
     } from '$lib/state/createDraft.svelte.ts';
-    import {searchPointList} from '$lib/stores/map.ts';
+    import {searchPointList} from '$lib/state/searchPointList.svelte.ts';
     import {mapState} from '$lib/state/map.svelte.ts';
     import LocationMarker from '$lib/components/map/locationMarker.svelte';
     import Marker from '$lib/components/map/marker.svelte';
@@ -110,8 +110,8 @@
 {#if mapState.map}
     <LocationMarker {orientationEnabled} />
 
-    {#each Object.keys($searchPointList) as searchPointId (searchPointId)}
-        {@const searchPoint = $searchPointList[searchPointId]}
+    {#each Object.keys(searchPointList) as searchPointId (searchPointId)}
+        {@const searchPoint = searchPointList[searchPointId]}
         {#if searchPoint?.object}
             <Marker
                 id={searchPoint.object.id}

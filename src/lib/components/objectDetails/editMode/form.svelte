@@ -2,7 +2,7 @@
     import type {LooseObject} from '$lib/interfaces/object';
     import DeleteButton from '$lib/components/objectDetails/editMode/deleteButton.svelte';
     import BackButton from '$lib/components/objectDetails/editMode/backButton.svelte';
-    import {searchPointList} from '$lib/stores/map';
+    import {removeSearchPoint} from '$lib/state/searchPointList.svelte.ts';
     import {superForm, defaults} from 'sveltekit-superforms';
     import {zod4Client} from 'sveltekit-superforms/adapters';
     import CategorySelect from '$lib/components/objectDetails/editMode/categorySelect.svelte';
@@ -189,7 +189,7 @@
     }
 
     function handleDeleteSuccess(id: string) {
-        searchPointList.remove(id);
+        removeSearchPoint(id);
 
         goto('/');
     }
