@@ -7,6 +7,7 @@ interface MapState {
     map?: google.maps.Map;
     markerManager?: MarkerManager;
     deckEnabled: boolean;
+    streetViewVisible: boolean;
 }
 
 export const mapState = $state<MapState>({
@@ -18,4 +19,5 @@ export const mapState = $state<MapState>({
     map: undefined,
     markerManager: undefined,
     deckEnabled: false,
+    streetViewVisible: false,
 });

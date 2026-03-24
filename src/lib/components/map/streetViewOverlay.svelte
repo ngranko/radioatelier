@@ -19,7 +19,8 @@
     let position: google.maps.LatLng | google.maps.LatLngLiteral | null = null;
 
     let miniMap: google.maps.Map | null = null;
-    let pegmanOverlay: HTMLDivElement | null = null;
+    let miniMapMarker: google.maps.marker.AdvancedMarkerElement | null = null;
+    let miniMapMarkerContent: HTMLDivElement | null = null;
 
     let listeners: google.maps.MapsEventListener[] = [];
 
@@ -47,7 +48,10 @@
             return;
         }
 
-        const {Map} = await mapState.loader.importLibrary('maps');
+        const [{Map}, {AdvancedMarkerElement}] = await Promise.all([
+            mapState.loader.importLibrary('maps'),
+            mapState.loader.importLibrary('marker'),
+        ]);
         const center = position ?? mapState.map?.getCenter() ?? undefined;
 
         miniMap = new Map(miniMapContainer, {
@@ -59,21 +63,68 @@
             center,
         } as google.maps.MapOptions);
 
+        miniMapMarkerContent = createMiniMapMarkerContent();
+        miniMapMarker = new AdvancedMarkerElement({
+            map: miniMap,
+            position: center,
+            content: miniMapMarkerContent,
+            gmpClickable: false,
+            zIndex: 100,
+        });
+
         updateMiniMap();
     }
 
     function updateMiniMap() {
-        if (!miniMap || !isVisible) {
+        if (!miniMap || !miniMapMarker || !isVisible) {
             return;
         }
 
         if (position) {
             miniMap.setCenter(position);
+            miniMapMarker.position = position;
         }
 
-        if (pegmanOverlay) {
-            pegmanOverlay.style.rotate = `${heading}deg`;
+        if (miniMapMarkerContent) {
+            miniMapMarkerContent.style.transform = `translateY(50%) rotate(${heading}deg)`;
         }
+    }
+
+    function createMiniMapMarkerContent() {
+        const markerContent = document.createElement('div');
+        markerContent.style.position = 'relative';
+        markerContent.style.width = '28px';
+        markerContent.style.height = '28px';
+        markerContent.style.transform = 'translateY(50%)';
+        markerContent.style.transformOrigin = '50% 65%';
+        markerContent.style.filter = 'drop-shadow(0 2px 6px rgba(0, 0, 0, 0.28))';
+
+        const arrow = document.createElement('div');
+        arrow.style.position = 'absolute';
+        arrow.style.top = '0';
+        arrow.style.left = '50%';
+        arrow.style.width = '0';
+        arrow.style.height = '0';
+        arrow.style.transform = 'translateX(-50%)';
+        arrow.style.borderLeft = '7px solid transparent';
+        arrow.style.borderRight = '7px solid transparent';
+        arrow.style.borderBottom = '12px solid #1a73e8';
+
+        const pin = document.createElement('div');
+        pin.style.position = 'absolute';
+        pin.style.left = '50%';
+        pin.style.bottom = '1px';
+        pin.style.width = '16px';
+        pin.style.height = '16px';
+        pin.style.transform = 'translateX(-50%)';
+        pin.style.border = '2px solid white';
+        pin.style.borderRadius = '9999px';
+        pin.style.background = '#fbbc04';
+        pin.style.boxSizing = 'border-box';
+
+        markerContent.append(arrow, pin);
+
+        return markerContent;
     }
 
     function cleanupListeners() {
@@ -122,7 +173,11 @@
 
     onDestroy(() => {
         cleanupListeners();
-        pegmanOverlay = null;
+        if (miniMapMarker) {
+            miniMapMarker.map = null;
+        }
+        miniMapMarker = null;
+        miniMapMarkerContent = null;
         miniMap = null;
     });
 </script>
@@ -141,15 +196,5 @@
         class="pointer-events-auto absolute relative top-3 left-3 h-40 w-55 overflow-hidden rounded-xl bg-white shadow-[0_2px_10px_rgba(0,0,0,0.25)] sm:top-auto sm:right-3 sm:bottom-3 sm:left-auto"
     >
         <div bind:this={miniMapContainer} class="absolute inset-0"></div>
-        <div
-            bind:this={pegmanOverlay}
-            class="pointer-events-none absolute top-1/2 left-1/2 z-10 h-8 w-8 origin-[50%_60%] -translate-x-1/2 -translate-y-1/2"
-        >
-            <img
-                class="h-8 w-8 object-contain drop-shadow-sm"
-                alt="Street View heading"
-                src="data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%227%22%20r%3D%224%22%20fill%3D%22%23fbbc04%22/%3E%3Crect%20x%3D%227%22%20y%3D%2212%22%20width%3D%2210%22%20height%3D%226%22%20rx%3D%223%22%20fill%3D%22%231a73e8%22/%3E%3C/svg%3E"
-            />
-        </div>
     </div>
 </div>

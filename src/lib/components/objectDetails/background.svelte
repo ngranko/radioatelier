@@ -1,4 +1,5 @@
 <script lang="ts">
+    import {mapState} from '$lib/state/map.svelte';
     import {
         Root as DialogRoot,
         Trigger,
@@ -21,7 +22,11 @@
 
 {#if isConfirmationRequired}
     <DialogRoot>
-        <Trigger class="fixed inset-0 z-2 bg-transparent"></Trigger>
+        <Trigger
+            class={`fixed inset-0 z-1 bg-transparent ${
+                mapState.streetViewVisible ? 'pointer-events-none' : ''
+            }`}
+        ></Trigger>
         <Content>
             <Header>
                 <Title>Вы действительно хотите выйти из редактирования точки?</Title>
@@ -42,5 +47,11 @@
         </Content>
     </DialogRoot>
 {:else}
-    <div class="fixed inset-0 z-1 bg-transparent" onclick={onClick}></div>
+    <button
+        type="button"
+        aria-label="Close object details"
+        class="fixed inset-0 z-1 bg-transparent"
+        class:pointer-events-none={mapState.streetViewVisible}
+        onclick={onClick}
+    ></button>
 {/if}

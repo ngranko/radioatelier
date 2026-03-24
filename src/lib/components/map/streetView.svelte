@@ -60,6 +60,7 @@
         listeners.push(
             panorama.addListener('visible_changed', () => {
                 isStreetViewVisible = panorama!.getVisible();
+                mapState.streetViewVisible = isStreetViewVisible;
                 if (!isStreetViewVisible) {
                     panorama!.setZoom(1);
                     activeObject.isMinimized = false;
@@ -70,6 +71,7 @@
 
     onDestroy(() => {
         cleanupListeners();
+        mapState.streetViewVisible = false;
         panorama = null;
     });
 </script>
