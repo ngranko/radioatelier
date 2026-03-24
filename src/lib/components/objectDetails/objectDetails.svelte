@@ -104,7 +104,7 @@
 >
     <section class="flex items-center gap-1 border-b p-3">
         <div class="mr-2 flex min-w-0 flex-1 items-center gap-2">
-            <div class="flex items-baseline gap-2">
+            <div class="flex min-w-0 flex-1 items-baseline gap-2">
                 {#if initialValues?.internalId}
                     <Badge variant="outline" class="shrink-0 font-mono text-xs tracking-wider">
                         {initialValues.internalId}
@@ -112,14 +112,14 @@
                 {/if}
                 {#if activeObject.isMinimized}
                     <span
-                        class="text-foreground overflow-hidden text-nowrap text-ellipsis transition-colors"
+                        class="text-foreground block min-w-0 flex-1 overflow-hidden text-nowrap text-ellipsis transition-colors"
                     >
                         {initialValues?.name ?? 'Новый маркер'}
                     </span>
                 {/if}
             </div>
         </div>
-        <Button variant="ghost" size="icon" class="h-8 w-8" onclick={handleMinimizeClick}>
+        <Button variant="ghost" size="icon" class="h-8 w-8 shrink-0" onclick={handleMinimizeClick}>
             {#if activeObject.isMinimized}
                 <ChevronUpIcon class="stroke-3" />
             {:else}
