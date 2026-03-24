@@ -52,6 +52,7 @@
     let open = $state(false);
     let searchValue = $state('');
     let isCreating = $state(false);
+    let createOptionRef = $state<HTMLElement | null>(null);
 
     const selectedValues = $derived.by(() => {
         if (!value) {
@@ -125,6 +126,10 @@
         }
     }
 
+    function isCreateOptionHighlighted() {
+        return createOptionRef?.getAttribute('aria-selected') === 'true';
+    }
+
     function handleClear(e: MouseEvent) {
         e.stopPropagation();
         if (multiple) {
@@ -173,7 +178,12 @@
                 bind:value={searchValue}
                 placeholder="Поиск..."
                 onkeydown={(e: KeyboardEvent) => {
-                    if (e.key === 'Enter' && showCreateOption && !isCreating) {
+                    if (
+                        e.key === 'Enter' &&
+                        showCreateOption &&
+                        !isCreating &&
+                        isCreateOptionHighlighted()
+                    ) {
                         e.preventDefault();
                         e.stopPropagation();
                         handleCreate();
@@ -184,6 +194,7 @@
             <CommandList>
                 {#if showCreateOption}
                     <CommandItem
+                        bind:ref={createOptionRef}
                         value={searchValue}
                         onclick={() => {
                             if (!isCreating) {
