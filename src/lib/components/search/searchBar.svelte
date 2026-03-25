@@ -12,6 +12,12 @@
     let timeout: number | undefined;
     let isFocused = $state(false);
 
+    $effect(() => {
+        if (!isFocused && !timeout && val !== searchState.query) {
+            val = searchState.query;
+        }
+    });
+
     function handleInput(evt: Event) {
         val = (evt.target as HTMLInputElement).value;
         clearTimeout(timeout);
