@@ -16,8 +16,8 @@ export function clearActiveMarker() {
     activeMarker.marker = null;
 }
 
-export function deactivateActiveMarker() {
-    const markerElement = getActiveMarkerElement();
+export function deactivateMarker(marker: Marker | null = activeMarker.marker) {
+    const markerElement = getMarkerElement(marker);
     if (!markerElement) {
         return;
     }
@@ -26,8 +26,8 @@ export function deactivateActiveMarker() {
     markerElement.classList.remove('duration-100');
 }
 
-export function activateActiveMarker() {
-    const markerElement = getActiveMarkerElement();
+export function activateMarker(marker: Marker | null = activeMarker.marker) {
+    const markerElement = getMarkerElement(marker);
     if (!markerElement) {
         return;
     }
@@ -38,8 +38,8 @@ export function activateActiveMarker() {
     });
 }
 
-function getActiveMarkerElement() {
-    const rawMarker = activeMarker.marker?.getRaw();
+function getMarkerElement(marker: Marker | null) {
+    const rawMarker = marker?.getRaw();
     if (!rawMarker) {
         return null;
     }

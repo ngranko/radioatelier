@@ -1,3 +1,4 @@
+<!-- TODO: refactor the crap out of that file, it looks like shit and does everything at once -->
 <script lang="ts">
     import {goto} from '$app/navigation';
     import {page} from '$app/state';
@@ -32,6 +33,7 @@
     let hasConsumedInitialOverlay = $state(Boolean(initialServerObjectId));
     let dismissedRouteObjectId = $state<string | null>(null);
     let isOverlayClosing = $state(false);
+    let isObjectOverlayPending = $state(false);
 
     const ctx = useClerkContext();
     const objects = useQuery(
@@ -75,12 +77,14 @@
             : ((overlayObjectQuery.data ?? null) as ObjectType | null),
     );
     const isLoading = $derived(
-        Boolean(overlayObjectId) && overlayObjectQuery.isLoading && !renderedObject,
+        Boolean(overlayObjectId) &&
+            (isObjectOverlayPending || overlayObjectQuery.isLoading) &&
+            !renderedObject,
     );
     const showObjectOverlay = $derived(
         !createDraftState.initialValues &&
             overlayVisible &&
-            overlayObjectId &&
+            Boolean(overlayObjectId) &&
             (isLoading || renderedObject),
     );
     const showCreateOverlay = $derived(Boolean(createDraftState.initialValues) && overlayVisible);
@@ -144,6 +148,7 @@
         }
 
         overlayObjectId = overlayRequestObjectId;
+        isObjectOverlayPending = true;
         overlayVisible = true;
         isOverlayClosing = false;
         disableOverlayIntro =
@@ -155,12 +160,19 @@
     });
 
     $effect(() => {
+        if (!overlayObjectId || !renderedObject || renderedObject.id !== overlayObjectId) {
+            return;
+        }
+
+        isObjectOverlayPending = false;
+    });
+
+    $effect(() => {
         if (!createDraftState.initialValues || overlayVisible) {
             return;
         }
 
         overlayVisible = true;
-        disableOverlayIntro = false;
     });
 
     $effect(() => {
@@ -183,6 +195,7 @@
     function handleCloseRequest() {
         isOverlayClosing = true;
         overlayVisible = false;
+        isObjectOverlayPending = false;
         if (routeObjectId === overlayObjectId) {
             dismissedRouteObjectId = routeObjectId;
         }
@@ -191,6 +204,7 @@
     function handleOverlayOutroEnd() {
         isOverlayClosing = false;
         overlayObjectId = null;
+        isObjectOverlayPending = false;
         if (ctx.auth.userId) {
             goto(getActiveSearchUrl() ?? '/');
         }

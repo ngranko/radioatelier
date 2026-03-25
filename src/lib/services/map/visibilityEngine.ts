@@ -1,6 +1,6 @@
 import type {MarkerId} from '$lib/interfaces/marker';
 import {setCenter} from '$lib/services/map/map.svelte.ts';
-import {activateActiveMarker, setActiveMarker} from '$lib/state/activeMarker.svelte.ts';
+import {activateMarker, setActiveMarker} from '$lib/state/activeMarker.svelte.ts';
 import {activeObject} from '$lib/state/activeObject.svelte.ts';
 import type {MarkerRepository} from './markerRepository';
 import type {MarkerRenderer} from './renderer/markerRenderer';
@@ -82,7 +82,7 @@ export class VisibilityEngine {
         // activate required marker on first viewport update
         if (activeObject.detailsId === id) {
             setActiveMarker(marker);
-            activateActiveMarker();
+            activateMarker(marker);
             const pos = marker.getPosition();
             setCenter(pos.lat, pos.lng);
         }

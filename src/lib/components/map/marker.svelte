@@ -1,6 +1,6 @@
 <script lang="ts">
     import {onMount, onDestroy} from 'svelte';
-    import {activateActiveMarker, setActiveMarker} from '$lib/state/activeMarker.svelte.ts';
+    import {activateMarker, setActiveMarker} from '$lib/state/activeMarker.svelte.ts';
     import {searchPointList} from '$lib/state/searchPointList.svelte.ts';
     import {mapState} from '$lib/state/map.svelte';
     import {Marker as MarkerObject} from '$lib/services/map/marker';
@@ -59,7 +59,7 @@
     $effect(() => {
         if (activeObject.detailsId === activeTargetId && marker) {
             setActiveMarker(marker);
-            activateActiveMarker();
+            activateMarker(marker);
             setCenter(Number(lat), Number(lng));
         }
     });

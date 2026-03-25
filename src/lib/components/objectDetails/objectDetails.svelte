@@ -5,7 +5,7 @@
     import ObjectDetailsLive from '$lib/components/objectDetails/objectDetailsLive.svelte';
     import ViewModeSkeleton from '$lib/components/objectDetails/viewMode/viewModeSkeleton.svelte';
     import Form from '$lib/components/objectDetails/editMode/form.svelte';
-    import {clearActiveMarker, deactivateActiveMarker} from '$lib/state/activeMarker.svelte.ts';
+    import {clearActiveMarker, deactivateMarker} from '$lib/state/activeMarker.svelte.ts';
     import {Button} from '$lib/components/ui/button';
     import {Badge} from '$lib/components/ui/badge';
     import CloseButton from './closeButton.svelte';
@@ -76,7 +76,7 @@
             setCreateDraftPosition(null);
         }
 
-        deactivateActiveMarker();
+        deactivateMarker();
         clearActiveMarker();
         resetActiveObject();
         if (mapState.map) {
