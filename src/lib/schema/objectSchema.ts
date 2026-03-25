@@ -65,7 +65,7 @@ export const schema = z.object({
         z.string().max(20, 'Слишком длинный период утраты').nullable(),
     ),
     source: z.preprocess(
-        v => (v === '' ? null : v),
+        emptyOrMissingToNull,
         z.union([z.url('Должна быть валидной ссылкой'), z.null()]),
     ),
 });
