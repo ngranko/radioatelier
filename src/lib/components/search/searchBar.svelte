@@ -6,11 +6,18 @@
     import {Input} from '$lib/components/ui/input';
     import {fade} from 'svelte/transition';
     import {cubicInOut} from 'svelte/easing';
+    import {onMount} from 'svelte';
     import SearchIcon from '@lucide/svelte/icons/search';
 
     let val: string = $state('');
     let timeout: number | undefined;
     let isFocused = $state(false);
+
+    onMount(() => {
+        if (searchState.query) {
+            val = searchState.query;
+        }
+    });
 
     function handleInput(evt: Event) {
         val = (evt.target as HTMLInputElement).value;

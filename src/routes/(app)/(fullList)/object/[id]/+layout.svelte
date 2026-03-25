@@ -8,6 +8,7 @@
     import type {Id} from '$convex/_generated/dataModel';
     import {useClerkContext} from 'svelte-clerk';
     import {activeObject} from '$lib/state/activeObject.svelte.ts';
+    import {getActiveSearchUrl} from '$lib/components/search/search.svelte.ts';
     import ObjectDetails from '$lib/components/objectDetails/objectDetails.svelte';
     import type {Object as ObjectType} from '$lib/interfaces/object.ts';
 
@@ -59,7 +60,7 @@
 
     function handleOverlayOutroEnd() {
         if (ctx.auth.userId) {
-            goto('/');
+            goto(getActiveSearchUrl() ?? '/');
         }
     }
 
