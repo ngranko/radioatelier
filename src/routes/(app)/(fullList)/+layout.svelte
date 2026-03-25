@@ -1,24 +1,37 @@
 <script lang="ts">
+    import {goto} from '$app/navigation';
     import {page} from '$app/state';
-    import {fade, fly} from 'svelte/transition';
+    import {cubicInOut} from 'svelte/easing';
+    import {untrack} from 'svelte';
+    import {fly} from 'svelte/transition';
     import type {Id} from '$convex/_generated/dataModel';
-    import {mapState} from '$lib/state/map.svelte.ts';
-    import Marker from '$lib/components/map/marker.svelte';
+    import {useQuery} from 'convex-svelte';
+    import {useClerkContext} from 'svelte-clerk';
+    import ZapIcon from '@lucide/svelte/icons/zap';
     import ObjectDetails from '$lib/components/objectDetails/objectDetails.svelte';
-    import ViewModeSkeleton from '$lib/components/objectDetails/viewMode/viewModeSkeleton.svelte';
+    import Marker from '$lib/components/map/marker.svelte';
+    import {getActiveSearchUrl} from '$lib/components/search/search.svelte.ts';
+    import type {Object as ObjectType} from '$lib/interfaces/object.ts';
+    import {api} from '$convex/_generated/api.js';
     import {activeObject, resetActiveObject} from '$lib/state/activeObject.svelte.ts';
     import {createDraftState} from '$lib/state/createDraft.svelte.ts';
-    import type {Object as ObjectType} from '$lib/interfaces/object.ts';
-    import {useQuery} from 'convex-svelte';
-    import {api} from '$convex/_generated/api.js';
-    import {useClerkContext} from 'svelte-clerk';
-    import {cubicInOut} from 'svelte/easing';
+    import {mapState} from '$lib/state/map.svelte.ts';
     import {setSharedMarkerObject, sharedMarker} from '$lib/state/sharedMarker.svelte.ts';
-    import ZapIcon from '@lucide/svelte/icons/zap';
 
     let {data, children} = $props();
     let lastRouteObjectId: string | null = null;
     const initialObjects = $derived(data.objects);
+    const initialServerObjectId = untrack(
+        () => (data as {activeObject?: ObjectType}).activeObject?.id ?? null,
+    );
+    let overlayObjectId = $state<Id<'objects'> | null>(
+        (initialServerObjectId as Id<'objects'> | null) ?? null,
+    );
+    let overlayVisible = $state(Boolean(initialServerObjectId));
+    let disableOverlayIntro = $state(Boolean(initialServerObjectId));
+    let hasConsumedInitialOverlay = $state(Boolean(initialServerObjectId));
+    let dismissedRouteObjectId = $state<string | null>(null);
+    let isOverlayClosing = $state(false);
 
     const ctx = useClerkContext();
     const objects = useQuery(
@@ -31,13 +44,67 @@
         const id = page.params.id;
         return id && id !== 'create' ? (id as Id<'objects'>) : null;
     });
-    // TODO: in the future it's probably best to move off of that duplication (the same query in here and the /object/[id] layout)
-    const routeObjectQuery = useQuery(
+    const overlayRequestObjectId = $derived.by(() => {
+        if (createDraftState.initialValues) {
+            return null;
+        }
+
+        if (activeObject.detailsId) {
+            return activeObject.detailsId as Id<'objects'>;
+        }
+
+        if (routeObjectId && routeObjectId !== dismissedRouteObjectId) {
+            return routeObjectId;
+        }
+
+        return null;
+    });
+    const overlayObjectQuery = useQuery(
         api.objects.getDetails,
-        () => (routeObjectId ? {id: routeObjectId} : 'skip'),
-        () => ({initialData: (page.data as {activeObject?: ObjectType}).activeObject}),
+        () => (overlayObjectId ? {id: overlayObjectId} : 'skip'),
+        () => ({
+            initialData:
+                overlayObjectId && overlayObjectId === routeObjectId
+                    ? (data as {activeObject?: ObjectType}).activeObject
+                    : undefined,
+        }),
     );
-    const routeObject = $derived((routeObjectQuery.data ?? null) as ObjectType | null);
+    const renderedObject = $derived(
+        createDraftState.initialValues
+            ? null
+            : ((overlayObjectQuery.data ?? null) as ObjectType | null),
+    );
+    const isLoading = $derived(
+        Boolean(overlayObjectId) && overlayObjectQuery.isLoading && !renderedObject,
+    );
+    const showObjectOverlay = $derived(
+        !createDraftState.initialValues &&
+            overlayVisible &&
+            overlayObjectId &&
+            (isLoading || renderedObject),
+    );
+    const showCreateOverlay = $derived(Boolean(createDraftState.initialValues) && overlayVisible);
+    const showOverlay = $derived(Boolean(showObjectOverlay || showCreateOverlay));
+    const detailsKey = $derived(
+        overlayObjectId ?? createDraftState.initialValues?.id ?? 'object-details',
+    );
+    const isOwner = $derived(
+        renderedObject?.isOwner ??
+            (createDraftState.initialValues as ObjectType | undefined)?.isOwner ??
+            false,
+    );
+    const isPublic = $derived(
+        renderedObject?.isPublic ??
+            (createDraftState.initialValues as ObjectType | undefined)?.isPublic ??
+            false,
+    );
+    const overlayInitialValues = $derived(
+        showCreateOverlay
+            ? (createDraftState.initialValues ?? undefined)
+            : (renderedObject ?? undefined),
+    );
+    const overlayIsLoading = $derived(showCreateOverlay ? false : isLoading);
+    const overlayDisableIntroAnimation = $derived(showCreateOverlay ? false : disableOverlayIntro);
 
     $effect(() => {
         const routeObjectId = page.params.id;
@@ -55,62 +122,102 @@
         lastRouteObjectId = routeObjectId;
     });
 
-    const detailsKey = $derived(
-        (activeObject.detailsId || createDraftState.initialValues?.id) ?? 'object-details',
-    );
-    const showPendingObjectOverlay = $derived(
-        Boolean(
-            activeObject.isLoading && activeObject.detailsId && !createDraftState.initialValues,
-        ),
-    );
-    const isOwner = $derived(
-        (createDraftState.initialValues as ObjectType | undefined)?.isOwner ?? false,
-    );
-    const isPublic = $derived(
-        (createDraftState.initialValues as ObjectType | undefined)?.isPublic ?? false,
-    );
+    $effect(() => {
+        if (!dismissedRouteObjectId || routeObjectId === dismissedRouteObjectId) {
+            return;
+        }
+
+        dismissedRouteObjectId = null;
+    });
 
     $effect(() => {
-        if (!routeObject) {
+        if (!overlayRequestObjectId) {
+            return;
+        }
+
+        if (isOverlayClosing) {
+            return;
+        }
+
+        if (overlayVisible && overlayObjectId) {
+            return;
+        }
+
+        overlayObjectId = overlayRequestObjectId;
+        overlayVisible = true;
+        isOverlayClosing = false;
+        disableOverlayIntro =
+            !hasConsumedInitialOverlay &&
+            overlayRequestObjectId === routeObjectId &&
+            overlayRequestObjectId === initialServerObjectId;
+        hasConsumedInitialOverlay = true;
+        activeObject.detailsId = overlayRequestObjectId;
+    });
+
+    $effect(() => {
+        if (!createDraftState.initialValues || overlayVisible) {
+            return;
+        }
+
+        overlayVisible = true;
+        disableOverlayIntro = false;
+    });
+
+    $effect(() => {
+        activeObject.isLoading = isLoading;
+    });
+
+    $effect(() => {
+        if (!renderedObject || !routeObjectId || overlayObjectId !== routeObjectId) {
             return;
         }
 
         if (
-            !markerPoints.some(item => item.id === routeObject.id) &&
-            sharedMarker.object?.id !== routeObject.id
+            !markerPoints.some(item => item.id === renderedObject.id) &&
+            sharedMarker.object?.id !== renderedObject.id
         ) {
-            setSharedMarkerObject(routeObject);
+            setSharedMarkerObject(renderedObject);
         }
     });
+
+    function handleCloseRequest() {
+        isOverlayClosing = true;
+        overlayVisible = false;
+        if (routeObjectId === overlayObjectId) {
+            dismissedRouteObjectId = routeObjectId;
+        }
+    }
+
+    function handleOverlayOutroEnd() {
+        isOverlayClosing = false;
+        overlayObjectId = null;
+        if (ctx.auth.userId) {
+            goto(getActiveSearchUrl() ?? '/');
+        }
+    }
 </script>
 
 {@render children?.()}
 
-{#if showPendingObjectOverlay}
+{#if showOverlay}
     <div
-        class="bg-background pointer-events-none absolute bottom-0 z-4 m-2 flex w-[calc(100dvw-8px*2)] max-w-100 flex-col rounded-lg"
-        in:fly={{x: -100, duration: 200, easing: cubicInOut}}
-        out:fade={{duration: 140}}
+        out:fly={{x: -100, duration: 200, easing: cubicInOut}}
+        onoutroend={handleOverlayOutroEnd}
+        class="absolute right-0 bottom-0 left-0 z-3"
     >
-        <div class="flex h-14 items-center border-b p-3">
-            <span class="mr-2 flex-1 animate-pulse rounded text-transparent">Загрузка...</span>
-        </div>
-        <div class="flex-1 overflow-hidden">
-            <ViewModeSkeleton />
-        </div>
+        <ObjectDetails
+            initialValues={overlayInitialValues}
+            key={detailsKey}
+            isEditing={activeObject.isEditing}
+            isLoading={overlayIsLoading}
+            disableIntroAnimation={overlayDisableIntroAnimation}
+            onCloseRequest={handleCloseRequest}
+            permissions={{
+                canEditAll: Boolean(ctx.auth.userId) && (isOwner || !renderedObject),
+                canEditPersonal: Boolean(ctx.auth.userId) && !isOwner && isPublic,
+            }}
+        />
     </div>
-{:else if createDraftState.initialValues}
-    <ObjectDetails
-        initialValues={createDraftState.initialValues}
-        key={detailsKey}
-        isEditing={activeObject.isEditing}
-        isLoading={false}
-        disableIntroAnimation={false}
-        permissions={{
-            canEditAll: Boolean(ctx.auth.userId),
-            canEditPersonal: Boolean(ctx.auth.userId) && !isOwner && isPublic,
-        }}
-    />
 {/if}
 
 {#if mapState.map}

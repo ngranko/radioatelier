@@ -3,6 +3,7 @@
     import {cubicInOut} from 'svelte/easing';
     import type {LooseObject, Object} from '$lib/interfaces/object';
     import ObjectDetailsLive from '$lib/components/objectDetails/objectDetailsLive.svelte';
+    import ViewModeSkeleton from '$lib/components/objectDetails/viewMode/viewModeSkeleton.svelte';
     import Form from '$lib/components/objectDetails/editMode/form.svelte';
     import {clearActiveMarker, deactivateActiveMarker} from '$lib/state/activeMarker.svelte.ts';
     import {Button} from '$lib/components/ui/button';
@@ -141,6 +142,10 @@
                     {:else}
                         <Form {initialValues} />
                     {/if}
+                </div>
+            {:else if isLoading}
+                <div class="absolute inset-0" in:fadeTransition out:fade={{duration: 150}}>
+                    <ViewModeSkeleton />
                 </div>
             {/if}
         </div>

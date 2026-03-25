@@ -2,9 +2,8 @@
     import {Skeleton} from '$lib/components/ui/skeleton';
 </script>
 
-<!-- Actions skeleton -->
-<div class="bg-muted/40 flex items-center justify-between gap-3 border-b px-4 py-2.5">
-    <Skeleton class="h-9 w-24" />
+<div class="bg-muted/40 flex items-center justify-end gap-3 border-b px-4 py-2.5">
+    <Skeleton class="h-8 w-8 rounded" />
     <Skeleton class="h-8 w-8 rounded" />
     <Skeleton class="h-8 w-8 rounded" />
 </div>
