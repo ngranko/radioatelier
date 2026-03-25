@@ -2,7 +2,11 @@
     import SearchBar from '$lib/components/search/searchBar.svelte';
     import SearchPreview from '$lib/components/search/searchPreview.svelte';
     import SearchResults from '$lib/components/search/searchResults.svelte';
-    import {searchState, applyUrlToSearchState, buildSearchUrl} from '$lib/components/search/search.svelte.ts';
+    import {
+        searchState,
+        applyUrlToSearchState,
+        buildSearchUrl,
+    } from '$lib/components/search/search.svelte.ts';
     import {onDestroy, onMount} from 'svelte';
     import SearchAreaButton from './searchAreaButton.svelte';
     import {mapState} from '$lib/state/map.svelte';
@@ -21,6 +25,8 @@
         const applied = applyUrlToSearchState(page.url);
         if (applied) {
             setCenter(Number(searchState.lat), Number(searchState.lng));
+            centerLat = searchState.lat;
+            centerLng = searchState.lng;
         }
     });
 

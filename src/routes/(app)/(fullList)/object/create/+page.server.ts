@@ -1,6 +1,7 @@
 import {api} from '$convex/_generated/api.js';
 import {schema} from '$lib/schema/objectSchema.ts';
 import {getConvexClient} from '$lib/server/convexClient';
+import {normalizeLatitude, normalizeLongitude} from '$lib/utils/coordinates.ts';
 import {type Actions, error, fail, redirect} from '@sveltejs/kit';
 import {superValidate} from 'sveltekit-superforms';
 import {zod4} from 'sveltekit-superforms/adapters';
@@ -11,8 +12,11 @@ export const load = async ({url, locals}) => {
         redirect(307, `/login?ref=${encodeURIComponent(url.pathname)}`);
     }
 
-    const latitude = normalizeLattitude(url.searchParams.get('lat') ?? '');
-    const longitude = normalizeLongitude(url.searchParams.get('lng') ?? '');
+    const latitude = normalizeLatitude(url.searchParams.get('lat'));
+    const longitude = normalizeLongitude(url.searchParams.get('lng'));
+    if (latitude === null || longitude === null) {
+        redirect(307, '/');
+    }
 
     const address = client.action(api.locations.getAddress, {latitude, longitude});
 
@@ -70,19 +74,3 @@ export const actions: Actions = {
         }
     },
 };
-
-function normalizeLattitude(value: string): number {
-    const normalizedValue = parseFloat(value);
-    if (isFinite(normalizedValue) && Math.abs(normalizedValue) <= 90) {
-        return normalizedValue;
-    }
-    redirect(307, '/');
-}
-
-function normalizeLongitude(value: string): number {
-    const normalizedValue = parseFloat(value);
-    if (isFinite(normalizedValue) && Math.abs(normalizedValue) <= 180) {
-        return normalizedValue;
-    }
-    redirect(307, '/');
-}

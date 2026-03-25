@@ -6,15 +6,14 @@
     import {Input} from '$lib/components/ui/input';
     import {fade} from 'svelte/transition';
     import {cubicInOut} from 'svelte/easing';
-    import {onMount} from 'svelte';
     import SearchIcon from '@lucide/svelte/icons/search';
 
     let val: string = $state('');
     let timeout: number | undefined;
     let isFocused = $state(false);
 
-    onMount(() => {
-        if (searchState.query) {
+    $effect(() => {
+        if (!isFocused && !timeout && val !== searchState.query) {
             val = searchState.query;
         }
     });
