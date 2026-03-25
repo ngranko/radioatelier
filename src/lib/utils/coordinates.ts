@@ -2,7 +2,7 @@ const LATITUDE_LIMIT = 90;
 const LONGITUDE_LIMIT = 180;
 
 function normalizeCoordinate(value: string | null, limit: number): number | null {
-    if (value === null) {
+    if (value === null || value.trim() === '') {
         return null;
     }
 
