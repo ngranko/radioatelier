@@ -7,7 +7,8 @@
     import Form from '$lib/components/objectDetails/editMode/form.svelte';
     import {clearActiveMarker, deactivateMarker} from '$lib/state/activeMarker.svelte.ts';
     import {Button} from '$lib/components/ui/button';
-    import {Badge} from '$lib/components/ui/badge';
+    import {badgeVariants} from '$lib/components/ui/badge';
+    import {toast} from 'svelte-sonner';
     import CloseButton from './closeButton.svelte';
     import Background from './background.svelte';
     import {mapState} from '$lib/state/map.svelte';
@@ -66,6 +67,15 @@
         activeObject.isMinimized = !activeObject.isMinimized;
     }
 
+    async function copyInternalId(text: string) {
+        try {
+            await navigator.clipboard.writeText(text);
+            toast.success('ID скопирован');
+        } catch {
+            toast.error('Не удалось скопировать');
+        }
+    }
+
     function handleClose() {
         if (!initialValues && !isLoading) {
             return;
@@ -107,9 +117,17 @@
         <div class="mr-2 flex min-w-0 flex-1 items-center gap-2">
             <div class="flex min-w-0 flex-1 items-baseline gap-2">
                 {#if initialValues?.internalId}
-                    <Badge variant="outline" class="shrink-0 font-mono text-xs tracking-wider">
+                    <button
+                        type="button"
+                        class={cn(
+                            badgeVariants({variant: 'outline'}),
+                            'hover:bg-accent hover:text-accent-foreground shrink-0 font-mono text-xs tracking-wider',
+                        )}
+                        title="Нажмите, чтобы скопировать"
+                        onclick={() => copyInternalId(initialValues.internalId ?? '')}
+                    >
                         {initialValues.internalId}
-                    </Badge>
+                    </button>
                 {/if}
                 {#if activeObject.isMinimized}
                     <span
