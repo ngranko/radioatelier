@@ -183,8 +183,10 @@
     }
 
     function handleSaveSuccess(id: Id<'objects'>) {
+        activeObject.isDirty = false;
         activeObject.isEditing = false;
-        // in case we were creating a new object
+        activeObject.isLoading = true;
+        activeObject.detailsId = id;
         goto(`/object/${id}`);
     }
 
