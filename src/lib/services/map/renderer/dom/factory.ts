@@ -1,5 +1,6 @@
 import MarkerIcon from '$lib/components/map/markerIcon.svelte';
 import type {Marker} from '$lib/services/map/marker';
+import {cn} from '$lib/utils';
 import {mount} from 'svelte';
 
 export class Factory {
@@ -10,24 +11,22 @@ export class Factory {
     }
 
     private createMarkerContent(marker: Marker): HTMLElement {
-        const iconElement = document.createElement('div');
-        iconElement.className =
+        const markerElement = document.createElement('div');
+        markerElement.className =
             'w-6 h-6 translate-y-1/2 flex justify-center items-center rounded-full transition-transform transition-opacity duration-100 ease-in-out text-sm text-white';
-        iconElement.style.backgroundColor = marker.getColor();
-        iconElement.style.setProperty('--marker-color', marker.getColor());
+        markerElement.style.backgroundColor = marker.getColor();
+        markerElement.style.boxShadow = `0 0 0 3px white, 0 0 0 5px ${marker.getColor()}40, 0 2px 4px rgba(0,0,0,0.2)`;
+        markerElement.style.setProperty('--marker-color', marker.getColor());
         const baseIconClassName =
             typeof marker.getIcon() === 'string' ? 'block text-sm leading-none' : 'block size-3.5';
-        const iconClassName = [baseIconClassName, marker.getIconClassName()]
-            .filter(Boolean)
-            .join(' ');
         mount(MarkerIcon, {
-            target: iconElement,
+            target: markerElement,
             props: {
                 icon: marker.getIcon(),
-                className: iconClassName,
+                className: cn(baseIconClassName, marker.getIconClassName()),
             },
         });
-        return iconElement;
+        return markerElement;
     }
 
     private createAdvancedMarkerElement(

@@ -14,11 +14,11 @@ export class Styler {
     }
 
     private applyVisited(markerContent: HTMLElement, isVisited: boolean, markerColor: string) {
-        markerContent.style.removeProperty('box-shadow');
+        markerContent.style.boxShadow = `0 0 0 3px white, 0 0 0 5px ${markerColor}40, 0 2px 4px rgba(0,0,0,0.2)`;
 
         if (isVisited) {
             const borderColor = getContrastingColor(markerColor);
-            markerContent.style.boxShadow = `0 0 0 4px ${borderColor}`;
+            markerContent.style.boxShadow = `0 0 0 3px ${borderColor}, 0 0 0 5px ${markerColor}40, 0 2px 4px rgba(0,0,0,0.2)`;
         }
     }
 
