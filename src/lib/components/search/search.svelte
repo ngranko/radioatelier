@@ -13,6 +13,7 @@
     import {page} from '$app/state';
     import {replaceState} from '$app/navigation';
     import {setCenter} from '$lib/services/map/map.svelte';
+    import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte.ts';
 
     let centerLat = $state('');
     let centerLng = $state('');
@@ -57,9 +58,9 @@
     });
 </script>
 
-<div class="w-full max-w-sm p-2">
+<div class="w-full max-w-sm p-2" inert={objectDetailsOverlay.isOpen}>
     <div class="relative z-2">
-        <SearchBar />
+        <SearchBar disabled={objectDetailsOverlay.isOpen} />
         {#if searchState.query && !searchState.isResultsShown}
             {#key searchState.query}
                 <SearchPreview />

@@ -8,6 +8,8 @@
     import {cubicInOut} from 'svelte/easing';
     import SearchIcon from '@lucide/svelte/icons/search';
 
+    let {disabled = false}: {disabled?: boolean} = $props();
+
     let val: string = $state('');
     let timeout: number | undefined;
     let isFocused = $state(false);
@@ -49,7 +51,11 @@
 <div class="group relative z-1">
     <div
         class="pointer-events-none absolute top-1/2 left-3.5 z-10 -translate-y-1/2 text-sm transition-colors
-            {isFocused ? 'text-primary' : 'text-muted-foreground'}"
+            {disabled
+            ? 'text-muted-foreground/50'
+            : isFocused
+              ? 'text-primary'
+              : 'text-muted-foreground'}"
     >
         <SearchIcon class="size-4" />
     </div>
@@ -57,6 +63,7 @@
         type="text"
         name="search"
         placeholder="Искать..."
+        {disabled}
         oninput={handleInput}
         onfocus={() => (isFocused = true)}
         onblur={() => (isFocused = false)}

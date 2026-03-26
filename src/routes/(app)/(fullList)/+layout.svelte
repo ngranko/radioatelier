@@ -3,7 +3,7 @@
     import {goto} from '$app/navigation';
     import {page} from '$app/state';
     import {cubicInOut} from 'svelte/easing';
-    import {untrack} from 'svelte';
+    import {onDestroy, untrack} from 'svelte';
     import {fly} from 'svelte/transition';
     import type {Id} from '$convex/_generated/dataModel';
     import {useQuery} from 'convex-svelte';
@@ -17,6 +17,7 @@
     import {activeObject, resetActiveObject} from '$lib/state/activeObject.svelte.ts';
     import {createDraftState} from '$lib/state/createDraft.svelte.ts';
     import {mapState} from '$lib/state/map.svelte.ts';
+    import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte.ts';
     import {setSharedMarkerObject, sharedMarker} from '$lib/state/sharedMarker.svelte.ts';
 
     let {data, children} = $props();
@@ -89,6 +90,15 @@
     );
     const showCreateOverlay = $derived(Boolean(createDraftState.initialValues) && overlayVisible);
     const showOverlay = $derived(Boolean(showObjectOverlay || showCreateOverlay));
+
+    $effect(() => {
+        objectDetailsOverlay.isOpen = showOverlay;
+    });
+
+    onDestroy(() => {
+        objectDetailsOverlay.isOpen = false;
+    });
+
     const detailsKey = $derived(
         overlayObjectId ?? createDraftState.initialValues?.id ?? 'object-details',
     );
