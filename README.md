@@ -1,38 +1,49 @@
-# create-svelte
+# Radioatelier. Archive
 
-Everything you need to build a Svelte project, powered by [`create-svelte`](https://github.com/sveltejs/kit/tree/main/packages/create-svelte).
+An archive of urban artifacts — old signs, plaques, mosaics, and other details found on city streets. Users can add items to an interactive map, attach photos and metadata, view, search and share points with others.
 
-## Creating a project
+## Prerequisites
 
-If you're seeing this, you've probably already done this step. Congrats!
+- Node.js >= 22.9.0
+- Bun >= 1.3.8 as a package manager
+- A running Convex project
+- Clerk application
+- Typesense instance
+- Google Maps API key
 
-```bash
-# create a new project in the current directory
-npm create svelte@latest
+## Getting Started
 
-# create a new project in my-app
-npm create svelte@latest my-app
-```
+1. Install dependencies:
 
-## Developing
+   ```bash
+   bun install
+   ```
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+2. Copy the environment file and fill in your credentials:
 
-```bash
-npm run dev
+   ```bash
+   cp .env.local.example .env.local
+   ```
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
+3. Start the development environment (runs Convex + Vite concurrently):
 
-## Building
+   ```bash
+   bun run dev
+   ```
 
-To create a production version of your app:
+## Key Scripts
 
-```bash
-npm run build
-```
+| Command | Description |
+| --- | --- |
+| `bun run dev` | Start dev server (Convex + Vite) |
+| `bun run check` | Type-check with `svelte-check` |
+| `bun run lint` | Lint and auto-fix with ESLint |
+| `bun run format` | Format with Prettier (Tailwind class sorting) |
 
-You can preview the production build with `npm run preview`.
+## Features
 
-> To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your target environment.
+- **Interactive map** — Google Maps + Deck.gl layers, Street View integration
+- **Object archive** — Create and manage archive entries with location, metadata, categories, tags, and images
+- **Search** — Full-text search via Typesense and Google Places
+- **Data import** — CSV import to migrate data from other sources
+- **User accounts** — Clerk authentication, role-based access, personal (private) tags and visited markers tracking
