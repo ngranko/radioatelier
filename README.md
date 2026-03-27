@@ -1,6 +1,6 @@
-# Радиоателье. Архив
+# Radioatelier. Archive
 
-A web application for documenting and archiving old signs and storefronts. Users can discover, catalog, and share information about historical signage through an interactive map interface.
+A web app for documenting and archiving urban details (old signs, plaques, mosaics, etc) where users can store, see and share info about items they find.
 
 ## Prerequisites
 
