@@ -123,7 +123,6 @@
             {:else if objectDetailsOverlay.isEditing}
                 <EditMode initialValues={initialValues as Object} {permissions} />
             {:else}
-                {console.log(initialValues)}
                 <ViewMode initialValues={initialValues as Object} {permissions} />
             {/if}
         </div>
