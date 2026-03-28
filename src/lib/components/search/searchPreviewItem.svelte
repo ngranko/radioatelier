@@ -3,7 +3,7 @@
     import {setCenter} from '$lib/services/map/map.svelte';
     import type {SearchItem} from '$lib/interfaces/object';
     import {mapState} from '$lib/state/map.svelte.ts';
-    import {activeObject} from '$lib/state/activeObject.svelte.ts';
+    import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
     import {goto} from '$app/navigation';
 
     interface Props {
@@ -22,17 +22,17 @@
         if (marker?.getRaw()) {
             google.maps.event.trigger(marker.getRaw()!, 'gmp-click');
         } else if (object.id) {
-            activeObject.isMinimized = false;
-            activeObject.isDirty = false;
-            activeObject.detailsId = object.id;
-            activeObject.isEditing = false;
-            activeObject.isLoading = true;
+            objectDetailsOverlay.isMinimized = false;
+            objectDetailsOverlay.isDirty = false;
+            objectDetailsOverlay.detailsId = object.id;
+            objectDetailsOverlay.isEditing = false;
+            objectDetailsOverlay.isLoading = true;
             goto(`/object/${object.id}`);
         } else {
-            activeObject.isMinimized = false;
-            activeObject.isEditing = true;
-            activeObject.isDirty = false;
-            activeObject.detailsId = new Date().getTime().toString();
+            objectDetailsOverlay.isMinimized = false;
+            objectDetailsOverlay.isEditing = true;
+            objectDetailsOverlay.isDirty = false;
+            objectDetailsOverlay.detailsId = new Date().getTime().toString();
             goto(`/object/create?lat=${object.latitude}&lng=${object.longitude}`);
         }
     }

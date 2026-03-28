@@ -15,7 +15,7 @@
     import {Separator} from '$lib/components/ui/separator';
     import {Checkbox} from '$lib/components/ui/checkbox';
     import {Textarea} from '$lib/components/ui/textarea';
-    import {activeObject} from '$lib/state/activeObject.svelte.ts';
+    import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
     import {getErrorArray} from '$lib/utils/formErrors.ts';
     import {
         FormField,
@@ -143,13 +143,13 @@
     });
 
     $effect(() => {
-        if (isTainted() && !activeObject.isDirty) {
-            activeObject.isDirty = true;
+        if (isTainted() && !objectDetailsOverlay.isDirty) {
+            objectDetailsOverlay.isDirty = true;
         }
     });
 
     function handleBack() {
-        activeObject.isEditing = false;
+        objectDetailsOverlay.isEditing = false;
     }
 
     function handleImageChange(file: File): Promise<void> {
@@ -183,10 +183,10 @@
     }
 
     function handleSaveSuccess(id: Id<'objects'>) {
-        activeObject.isDirty = false;
-        activeObject.isEditing = false;
-        activeObject.isLoading = true;
-        activeObject.detailsId = id;
+        objectDetailsOverlay.isDirty = false;
+        objectDetailsOverlay.isEditing = false;
+        objectDetailsOverlay.isLoading = true;
+        objectDetailsOverlay.detailsId = id;
         goto(`/object/${id}`);
     }
 
@@ -338,7 +338,7 @@
                             <FormLabel>адрес</FormLabel>
                             <div class="relative">
                                 <Input type="text" {...props} bind:value={$formData.address} />
-                                {#if activeObject.addressLoading}
+                                {#if objectDetailsOverlay.isAddressLoading}
                                     <AddressLoadingIndicator />
                                 {/if}
                             </div>
@@ -354,7 +354,7 @@
                             <FormLabel>город</FormLabel>
                             <div class="relative">
                                 <Input type="text" {...props} bind:value={$formData.city} />
-                                {#if activeObject.addressLoading}
+                                {#if objectDetailsOverlay.isAddressLoading}
                                     <AddressLoadingIndicator />
                                 {/if}
                             </div>
@@ -370,7 +370,7 @@
                             <FormLabel>страна</FormLabel>
                             <div class="relative">
                                 <Input type="text" {...props} bind:value={$formData.country} />
-                                {#if activeObject.addressLoading}
+                                {#if objectDetailsOverlay.isAddressLoading}
                                     <AddressLoadingIndicator />
                                 {/if}
                             </div>

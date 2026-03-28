@@ -6,6 +6,35 @@ import {type Actions, error, fail, redirect} from '@sveltejs/kit';
 import {superValidate} from 'sveltekit-superforms';
 import {zod4} from 'sveltekit-superforms/adapters';
 
+export const load = async ({params, locals, isDataRequest, url}) => {
+    const {client} = await getConvexClient(locals);
+    const resolvedShareId = await client.query(api.objects.resolveShareId, {id: params.id});
+
+    if (!resolvedShareId) {
+        error(404, 'Object not found');
+    }
+
+    if (resolvedShareId.shouldRedirect) {
+        redirect(307, `/object/${resolvedShareId.canonicalId}${url.search}`);
+    }
+
+    const object = client.query(api.objects.getDetails, {
+        id: resolvedShareId.canonicalId as Id<'objects'>,
+    });
+
+    return {
+        isServerRequest: !isDataRequest,
+        activeObject: isDataRequest
+            ? undefined
+            : await object.then(result => {
+                  if (!result) {
+                      error(404, 'Object not found');
+                  }
+                  return result;
+              }),
+    };
+};
+
 export const actions: Actions = {
     save: async ({request, params, url, locals}) => {
         const {client, token} = await getConvexClient(locals);

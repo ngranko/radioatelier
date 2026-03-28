@@ -1,7 +1,7 @@
 <script lang="ts">
     import {fade} from 'svelte/transition';
     import {cubicInOut} from 'svelte/easing';
-    import {searchState} from '$lib/components/search/search.svelte.ts';
+    import {searchState} from '$lib/state/search.svelte';
     import {Button} from '$lib/components/ui/button';
     import RefreshCwIcon from '@lucide/svelte/icons/refresh-cw';
 

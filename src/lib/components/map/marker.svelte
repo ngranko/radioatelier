@@ -6,7 +6,12 @@
     import {Marker as MarkerObject} from '$lib/services/map/marker';
     import type {MarkerIcon, MarkerSource} from '$lib/interfaces/marker';
     import {toast} from 'svelte-sonner';
-    import {activeObject, resetActiveObject} from '$lib/state/activeObject.svelte.ts';
+    import {
+        objectDetailsOverlay,
+        closeDetailsOverlay,
+        showLoadingDetailsOverlay,
+        showObjectDetailsOverlay,
+    } from '$lib/state/objectDetailsOverlay.svelte';
     import {setCenter} from '$lib/services/map/map.svelte.ts';
     import {goto} from '$app/navigation';
     import {page} from '$app/state';
@@ -57,7 +62,7 @@
     });
 
     $effect(() => {
-        if (activeObject.detailsId === activeTargetId && marker) {
+        if (objectDetailsOverlay.detailsId === activeTargetId && marker) {
             setActiveMarker(marker);
             activateMarker(marker);
             setCenter(Number(lat), Number(lng));
@@ -106,8 +111,8 @@
             mapState.markerManager.removeMarker(markerId!);
         }
 
-        if (activeObject.detailsId === activeTargetId) {
-            resetActiveObject();
+        if (objectDetailsOverlay.detailsId === activeTargetId) {
+            closeDetailsOverlay();
         }
     });
 
@@ -131,18 +136,10 @@
     }
 
     function handleMarkerClick() {
-        changeActiveMarker();
-    }
-
-    function changeActiveMarker() {
         const searchPoint = searchPointId ? searchPointList[searchPointId] : null;
 
         if (source === 'search' && searchPoint?.object.id === null && searchPointId) {
-            activeObject.isMinimized = false;
-            activeObject.isEditing = true;
-            activeObject.isDirty = false;
-            activeObject.isLoading = true;
-            activeObject.detailsId = searchPointId;
+            showLoadingDetailsOverlay(searchPointId);
             goto(
                 `/object/create?lat=${searchPoint.object.latitude}&lng=${searchPoint.object.longitude}`,
             );
@@ -153,18 +150,13 @@
             }
 
             if (page.params.id === targetId) {
-                activeObject.isMinimized = false;
-                activeObject.isDirty = false;
-                activeObject.isLoading = false;
-                activeObject.detailsId = targetId;
+                // this is a case for anonymous users accessing a shared page
+                // the details are not set here because there is a workaround in the objectDetails.svelte
+                showObjectDetailsOverlay(targetId);
                 return;
             }
 
-            activeObject.isMinimized = false;
-            activeObject.isDirty = false;
-            activeObject.isEditing = false;
-            activeObject.isLoading = true;
-            activeObject.detailsId = targetId;
+            showLoadingDetailsOverlay(targetId);
             goto(`/object/${targetId}`);
         }
     }

@@ -2,18 +2,14 @@
     import SearchBar from '$lib/components/search/searchBar.svelte';
     import SearchPreview from '$lib/components/search/searchPreview.svelte';
     import SearchResults from '$lib/components/search/searchResults.svelte';
-    import {
-        searchState,
-        applyUrlToSearchState,
-        buildSearchUrl,
-    } from '$lib/components/search/search.svelte.ts';
+    import {searchState, applyUrlToSearchState, buildSearchUrl} from '$lib/state/search.svelte';
     import {onDestroy, onMount} from 'svelte';
     import SearchAreaButton from './searchAreaButton.svelte';
     import {mapState} from '$lib/state/map.svelte';
     import {page} from '$app/state';
     import {replaceState} from '$app/navigation';
     import {setCenter} from '$lib/services/map/map.svelte';
-    import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte.ts';
+    import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
 
     let centerLat = $state('');
     let centerLng = $state('');

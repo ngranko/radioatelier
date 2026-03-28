@@ -13,7 +13,7 @@
         FormFieldErrors,
         FormLabel,
     } from '$lib/components/ui/form';
-    import {activeObject} from '$lib/state/activeObject.svelte.ts';
+    import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
     import ImageUpload from '$lib/components/input/imageUpload/index.svelte';
     import Flags from '$lib/components/objectDetails/viewMode/flags.svelte';
     import {Separator} from '$lib/components/ui/separator';
@@ -84,17 +84,17 @@
     const {form: formData, errors, enhance, isTainted, submitting} = form;
 
     $effect(() => {
-        if (isTainted() && !activeObject.isDirty) {
-            activeObject.isDirty = true;
+        if (isTainted() && !objectDetailsOverlay.isDirty) {
+            objectDetailsOverlay.isDirty = true;
         }
     });
 
     function handleSaveSuccess() {
-        activeObject.isEditing = false;
+        objectDetailsOverlay.isEditing = false;
     }
 
     function handleBack() {
-        activeObject.isEditing = false;
+        objectDetailsOverlay.isEditing = false;
     }
 </script>
 

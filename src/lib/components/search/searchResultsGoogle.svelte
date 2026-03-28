@@ -1,5 +1,5 @@
 <script lang="ts">
-    import {searchState} from '$lib/components/search/search.svelte.ts';
+    import {searchState} from '$lib/state/search.svelte';
     import type {SearchItem} from '$lib/interfaces/object';
     import {fitMarkerList} from '$lib/services/map/map.svelte';
     import {replaceSearchPointList, searchPointList} from '$lib/state/searchPointList.svelte.ts';

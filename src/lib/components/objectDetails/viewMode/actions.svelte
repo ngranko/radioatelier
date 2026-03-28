@@ -2,7 +2,7 @@
     import {toast} from 'svelte-sonner';
     import {getStreetView} from '$lib/services/map/streetView.svelte';
     import {Button} from '$lib/components/ui/button';
-    import {activeObject} from '$lib/state/activeObject.svelte.ts';
+    import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
     import type {Permissions} from '$lib/interfaces/permissions';
     import PenIcon from '@lucide/svelte/icons/pen';
     import UserPenIcon from '@lucide/svelte/icons/user-pen';
@@ -18,10 +18,10 @@
     let {lat, lng, permissions = {canEditAll: true, canEditPersonal: true}}: Props = $props();
 
     function handleEditClick() {
-        if (!activeObject.detailsId) {
+        if (!objectDetailsOverlay.detailsId) {
             return;
         }
-        activeObject.isEditing = true;
+        objectDetailsOverlay.isEditing = true;
     }
 
     function handleRouteClick() {

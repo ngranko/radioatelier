@@ -41,7 +41,7 @@ export function applyUrlToSearchState(url: URL): boolean {
     return false;
 }
 
-export function getActiveSearchUrl(): string | null {
+export function getActiveSearchUrl(): string {
     if (searchState.query && searchState.lat && searchState.lng && searchState.isResultsShown) {
         return buildSearchUrl({
             query: searchState.query,
@@ -49,5 +49,5 @@ export function getActiveSearchUrl(): string | null {
             lng: searchState.lng,
         });
     }
-    return null;
+    return '/';
 }

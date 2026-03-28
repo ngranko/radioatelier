@@ -1,6 +1,6 @@
 <script lang="ts">
     import {Button} from '$lib/components/ui/button';
-    import {searchState} from '$lib/components/search/search.svelte.ts';
+    import {searchState} from '$lib/state/search.svelte';
     import ChevronUpIcon from '@lucide/svelte/icons/chevron-up';
     import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
 
