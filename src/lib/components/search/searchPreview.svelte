@@ -1,7 +1,7 @@
 <script lang="ts">
-    import {searchState} from '$lib/components/search/search.svelte.ts';
+    import {searchState} from '$lib/state/search.svelte';
     import type {SearchPreviewResponsePayload} from '$lib/interfaces/object';
-    import {activeObject} from '$lib/state/activeObject.svelte.ts';
+    import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
     import {useConvexClient} from 'convex-svelte';
     import SearchPreviewItem from './searchPreviewItem.svelte';
     import LoadMoreButton from './loadMoreButton.svelte';
@@ -57,7 +57,7 @@
     }
 </script>
 
-{#if !activeObject.detailsId}
+{#if !objectDetailsOverlay.detailsId}
     <div
         class="glass absolute top-0 flex max-h-[calc(100dvh-24px)] w-full flex-col overflow-hidden rounded-t-2xl rounded-b-xl pt-11"
         transition:fade={{duration: 120, easing: cubicInOut}}

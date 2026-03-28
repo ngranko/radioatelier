@@ -5,11 +5,7 @@
     import type {LayoutProps} from './$types';
     import Map from '$lib/components/map/map.svelte';
     import type {Location} from '$lib/interfaces/location.ts';
-    import {
-        createDraftState,
-        setCreateDraftInitialValues,
-        setCreateDraftPosition,
-    } from '$lib/state/createDraft.svelte.ts';
+    import {createDraftState, setCreateDraftPosition} from '$lib/state/createDraft.svelte.ts';
     import {searchPointList} from '$lib/state/searchPointList.svelte.ts';
     import {mapState} from '$lib/state/map.svelte.ts';
     import LocationMarker from '$lib/components/map/locationMarker.svelte';
@@ -20,8 +16,7 @@
     import {goto} from '$app/navigation';
     import {page} from '$app/state';
     import {useClerkContext} from 'svelte-clerk';
-    import {activeObject} from '$lib/state/activeObject.svelte';
-    import {type LooseObject} from '$lib/interfaces/object';
+    import {showLoadingDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
     import SearchIcon from '@lucide/svelte/icons/search';
     import StarIcon from '@lucide/svelte/icons/star';
     import SproutIcon from '@lucide/svelte/icons/sprout';
@@ -41,26 +36,9 @@
             return;
         }
 
-        const draft: Partial<LooseObject> = {
-            id: null,
-            latitude: location.lat,
-            longitude: location.lng,
-            isPublic: false,
-            isVisited: false,
-            isRemoved: false,
-            isOwner: true,
-        };
-
         setCreateDraftPosition({lat: location.lat, lng: location.lng});
-        setCreateDraftInitialValues(draft);
 
-        activeObject.isMinimized = false;
-        activeObject.isEditing = true;
-        activeObject.isDirty = false;
-        activeObject.isLoading = true;
-        activeObject.detailsId = new Date().getTime().toString();
-        activeObject.addressLoading = true;
-
+        showLoadingDetailsOverlay(new Date().getTime().toString());
         goto(`/object/create?lat=${location.lat}&lng=${location.lng}`);
     }
 

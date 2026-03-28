@@ -1,7 +1,7 @@
 <script lang="ts">
     import ClearButton from '$lib/components/search/clearButton.svelte';
     import {clearSearchPointList} from '$lib/state/searchPointList.svelte.ts';
-    import {searchState} from '$lib/components/search/search.svelte.ts';
+    import {searchState} from '$lib/state/search.svelte';
     import {mapState} from '$lib/state/map.svelte';
     import {Input} from '$lib/components/ui/input';
     import {fade} from 'svelte/transition';

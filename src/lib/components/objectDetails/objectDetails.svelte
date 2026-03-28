@@ -1,10 +1,7 @@
 <script lang="ts">
-    import {fly, fade} from 'svelte/transition';
-    import {cubicInOut} from 'svelte/easing';
+    import {fade} from 'svelte/transition';
     import type {LooseObject, Object} from '$lib/interfaces/object';
-    import ObjectDetailsLive from '$lib/components/objectDetails/objectDetailsLive.svelte';
     import ViewModeSkeleton from '$lib/components/objectDetails/viewMode/viewModeSkeleton.svelte';
-    import Form from '$lib/components/objectDetails/editMode/form.svelte';
     import {clearActiveMarker, deactivateMarker} from '$lib/state/activeMarker.svelte.ts';
     import {Button} from '$lib/components/ui/button';
     import {badgeVariants} from '$lib/components/ui/badge';
@@ -13,58 +10,34 @@
     import Background from './background.svelte';
     import {mapState} from '$lib/state/map.svelte';
     import {cn} from '$lib/utils.ts';
-    import {activeObject, resetActiveObject} from '$lib/state/activeObject.svelte.ts';
     import {
-        setCreateDraftInitialValues,
-        setCreateDraftPosition,
-    } from '$lib/state/createDraft.svelte.ts';
+        objectDetailsOverlay,
+        closeDetailsOverlay,
+    } from '$lib/state/objectDetailsOverlay.svelte';
     import type {Permissions} from '$lib/interfaces/permissions';
     import {goto} from '$app/navigation';
     import {useClerkContext} from 'svelte-clerk';
     import ChevronUpIcon from '@lucide/svelte/icons/chevron-up';
     import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
+    import {getActiveSearchUrl} from '$lib/state/search.svelte';
+    import {setCreateDraftPosition} from '$lib/state/createDraft.svelte';
+    import EditMode from '$lib/components/objectDetails/editMode/editMode.svelte';
+    import ViewMode from './viewMode/viewMode.svelte';
 
     interface Props {
-        key: string;
         initialValues?: Partial<LooseObject>;
-        isEditing?: boolean;
-        isLoading?: boolean;
-        disableIntroAnimation?: boolean;
         permissions?: Permissions;
-        /** When set, close triggers this instead of navigating; caller handles transition then navigation */
-        onCloseRequest?: () => void;
     }
 
     const ctx = useClerkContext();
 
     let {
-        key,
         initialValues = $bindable(),
-        isEditing = false,
-        isLoading = false,
-        disableIntroAnimation = false,
         permissions = {canEditAll: true, canEditPersonal: true},
-        onCloseRequest,
     }: Props = $props();
 
-    // Custom transition that skips animation on SSR hydration
-    function flyTransition(node: HTMLElement) {
-        if (disableIntroAnimation) {
-            return {duration: 0, css: () => ''};
-        }
-        return fly(node, {x: -100, duration: 200, easing: cubicInOut});
-    }
-
-    // Custom fade transition that skips animation on SSR hydration
-    function fadeTransition(node: HTMLElement) {
-        if (disableIntroAnimation) {
-            return {duration: 0, css: () => ''};
-        }
-        return fade(node, {duration: 150});
-    }
-
     function handleMinimizeClick() {
-        activeObject.isMinimized = !activeObject.isMinimized;
+        objectDetailsOverlay.isMinimized = !objectDetailsOverlay.isMinimized;
     }
 
     async function copyInternalId(text: string) {
@@ -77,41 +50,37 @@
     }
 
     function handleClose() {
-        if (!initialValues && !isLoading) {
-            return;
-        }
-
-        if (initialValues?.id === null) {
-            setCreateDraftInitialValues(null);
-            setCreateDraftPosition(null);
-        }
-
+        setCreateDraftPosition(null);
         deactivateMarker();
         clearActiveMarker();
-        resetActiveObject();
+        closeDetailsOverlay();
         if (mapState.map) {
             mapState.map.getStreetView().setVisible(false);
         }
 
-        if (onCloseRequest) {
-            onCloseRequest();
-        } else if (ctx.auth.userId) {
-            goto('/');
+        if (ctx.auth.userId) {
+            closeDetailsOverlay();
+            goto(getActiveSearchUrl());
+        } else {
+            // this is for a case when a user is not logged in and wants to close the details overlay
+            // otherwise I'll lose the values and will use the server fallback
+            // TODO: in the future it's best to come up with a better solution
+            const object = objectDetailsOverlay.details;
+            closeDetailsOverlay();
+            objectDetailsOverlay.details = object;
         }
     }
 </script>
 
-<Background onClick={handleClose} isConfirmationRequired={activeObject.isDirty} />
+<Background onClick={handleClose} isConfirmationRequired={objectDetailsOverlay.isDirty} />
 <aside
     class={cn([
         'bg-background absolute bottom-0 z-3 m-2 flex w-[calc(100dvw-8px*2)] max-w-100 flex-col rounded-lg transition-[height]',
         {
-            'h-14 overflow-hidden': activeObject.isMinimized,
-            'h-[calc(100dvh-8px*2)]': !activeObject.isMinimized,
+            'h-14 overflow-hidden': objectDetailsOverlay.isMinimized,
+            'h-[calc(100dvh-8px*2)]': !objectDetailsOverlay.isMinimized,
         },
     ])}
-    in:flyTransition
-    out:fly={{x: -100, duration: 200, easing: cubicInOut}}
 >
     <section class="flex items-center gap-1 border-b p-3">
         <div class="mr-2 flex min-w-0 flex-1 items-center gap-2">
@@ -129,7 +98,7 @@
                         {initialValues.internalId}
                     </button>
                 {/if}
-                {#if activeObject.isMinimized}
+                {#if objectDetailsOverlay.isMinimized}
                     <span
                         class="text-foreground block min-w-0 flex-1 overflow-hidden text-nowrap text-ellipsis transition-colors"
                     >
@@ -139,33 +108,23 @@
             </div>
         </div>
         <Button variant="ghost" size="icon" class="h-8 w-8 shrink-0" onclick={handleMinimizeClick}>
-            {#if activeObject.isMinimized}
+            {#if objectDetailsOverlay.isMinimized}
                 <ChevronUpIcon class="stroke-3" />
             {:else}
                 <ChevronDownIcon class="stroke-3" />
             {/if}
         </Button>
-        <CloseButton onClick={handleClose} isConfirmationRequired={activeObject.isDirty} />
+        <CloseButton onClick={handleClose} isConfirmationRequired={objectDetailsOverlay.isDirty} />
     </section>
-    {#key key}
-        <div class="relative flex-1 overflow-hidden">
-            {#if initialValues}
-                <div class="absolute inset-0" in:fadeTransition out:fade={{duration: 150}}>
-                    {#if initialValues.id}
-                        <ObjectDetailsLive
-                            initialValues={initialValues as Object}
-                            {isEditing}
-                            {permissions}
-                        />
-                    {:else}
-                        <Form {initialValues} />
-                    {/if}
-                </div>
-            {:else if isLoading}
-                <div class="absolute inset-0" in:fadeTransition out:fade={{duration: 150}}>
-                    <ViewModeSkeleton />
-                </div>
+    <div class="relative flex-1 overflow-hidden">
+        <div class="absolute inset-0" in:fade={{duration: 150}} out:fade={{duration: 150}}>
+            {#if objectDetailsOverlay.isLoading}
+                <ViewModeSkeleton />
+            {:else if objectDetailsOverlay.isEditing}
+                <EditMode initialValues={initialValues as Object} {permissions} />
+            {:else}
+                <ViewMode initialValues={initialValues as Object} {permissions} />
             {/if}
         </div>
-    {/key}
+    </div>
 </aside>
