@@ -1,14 +1,21 @@
 import type {Marker} from '$lib/services/map/marker';
-import {DeckOverlayRenderer} from '$lib/services/map/renderer/deckOverlayRenderer';
 import {DomMarkerRenderer} from '$lib/services/map/renderer/domMarkerRenderer';
 import type {MarkerRenderer} from '$lib/services/map/renderer/markerRenderer';
+import type {IMapProvider} from '$lib/interfaces/map';
+import {DeckOverlayRenderer} from './deckOverlayRenderer';
+import type {GoogleMapsProvider} from './provider';
 
 export class HybridMarkerRenderer implements MarkerRenderer {
-    private dom = new DomMarkerRenderer();
+    private dom: DomMarkerRenderer;
     private deck: DeckOverlayRenderer;
 
-    public constructor(map: google.maps.Map) {
-        this.deck = new DeckOverlayRenderer(map);
+    public constructor(provider: IMapProvider) {
+        this.dom = new DomMarkerRenderer(provider);
+        const googleMap = (provider as GoogleMapsProvider).getGoogleMap();
+        if (!googleMap) {
+            throw new Error('GoogleMapsProvider map not initialized');
+        }
+        this.deck = new DeckOverlayRenderer(googleMap);
     }
 
     public ensureCreated(marker: Marker): void {

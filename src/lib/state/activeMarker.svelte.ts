@@ -17,32 +17,23 @@ export function clearActiveMarker() {
 }
 
 export function deactivateMarker(marker: Marker | null = activeMarker.marker) {
-    const markerElement = getMarkerElement(marker);
-    if (!markerElement) {
+    const element = marker?.getHandle()?.getElement();
+    if (!element) {
         return;
     }
 
-    markerElement.classList.remove('scale-120');
-    markerElement.classList.remove('duration-100');
+    element.classList.remove('scale-120');
+    element.classList.remove('duration-100');
 }
 
 export function activateMarker(marker: Marker | null = activeMarker.marker) {
-    const markerElement = getMarkerElement(marker);
-    if (!markerElement) {
+    const element = marker?.getHandle()?.getElement();
+    if (!element) {
         return;
     }
 
-    markerElement.classList.add('duration-100');
+    element.classList.add('duration-100');
     requestAnimationFrame(() => {
-        markerElement.classList.add('scale-120');
+        element.classList.add('scale-120');
     });
-}
-
-function getMarkerElement(marker: Marker | null) {
-    const rawMarker = marker?.getRaw();
-    if (!rawMarker) {
-        return null;
-    }
-
-    return rawMarker.content instanceof HTMLElement ? rawMarker.content : null;
 }

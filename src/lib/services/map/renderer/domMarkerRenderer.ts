@@ -1,3 +1,4 @@
+import type {IMapProvider} from '$lib/interfaces/map';
 import type {Marker} from '$lib/services/map/marker';
 import {DragController} from '$lib/services/map/renderer/dom/dragController';
 import {Factory} from '$lib/services/map/renderer/dom/factory';
@@ -5,9 +6,14 @@ import {Styler} from '$lib/services/map/renderer/dom/styler';
 import type {MarkerRenderer} from '$lib/services/map/renderer/markerRenderer';
 
 export class DomMarkerRenderer implements MarkerRenderer {
-    private factory = new Factory();
-    private dragController = new DragController();
+    private factory: Factory;
+    private dragController: DragController;
     private styler = new Styler();
+
+    public constructor(provider: IMapProvider) {
+        this.factory = new Factory(provider);
+        this.dragController = new DragController(provider);
+    }
 
     public ensureCreated(marker: Marker): void {
         if (!marker.isCreated()) {
@@ -22,13 +28,12 @@ export class DomMarkerRenderer implements MarkerRenderer {
     }
 
     public show(marker: Marker): void {
-        const raw = marker.getRaw();
-        if (!raw) {
+        const element = marker.getHandle()?.getElement();
+        if (!element) {
             return;
         }
 
         this.applyState(marker);
-        const element = raw.content as HTMLElement;
         element.classList.add('animate-popin');
         setTimeout(() => {
             element.classList.remove('animate-popin');
@@ -42,13 +47,12 @@ export class DomMarkerRenderer implements MarkerRenderer {
     }
 
     public remove(marker: Marker, onRemoved?: () => void): void {
-        const raw = marker.getRaw();
-        if (!raw) {
+        const element = marker.getHandle()?.getElement();
+        if (!element) {
             onRemoved?.();
             return;
         }
 
-        const element = raw.content as HTMLElement;
         element.classList.add('animate-popout');
         setTimeout(() => {
             element.classList.remove('animate-popout');

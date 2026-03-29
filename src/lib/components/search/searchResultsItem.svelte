@@ -15,9 +15,7 @@
         setCenter(object.latitude, object.longitude);
         if (id && mapState.markerManager) {
             const marker = mapState.markerManager.getMarker(id);
-            if (marker?.getRaw()) {
-                google.maps.event.trigger(marker.getRaw()!, 'gmp-click');
-            }
+            marker?.getOnClick()?.();
         }
     }
 </script>

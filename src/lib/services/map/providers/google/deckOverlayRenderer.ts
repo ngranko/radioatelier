@@ -16,9 +16,9 @@ export class DeckOverlayRenderer implements MarkerRenderer {
     private allMarkers = new Set<Marker>();
     private scheduled = false;
 
-    public constructor(private map: google.maps.Map) {
+    public constructor(map: google.maps.Map) {
         this.overlay = new GoogleMapsOverlay({layers: []});
-        this.overlay.setMap(this.map);
+        this.overlay.setMap(map);
     }
 
     public ensureCreated(marker: Marker): void {
@@ -45,9 +45,7 @@ export class DeckOverlayRenderer implements MarkerRenderer {
     public remove(marker: Marker, onRemoved?: () => void): void {
         this.allMarkers.delete(marker);
         this.scheduleRender();
-        if (onRemoved) {
-            onRemoved();
-        }
+        onRemoved?.();
     }
 
     public applyState(_marker: Marker): void {

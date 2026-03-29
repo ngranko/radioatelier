@@ -1,14 +1,16 @@
+import type {IMapProvider, LatLngLiteral} from '$lib/interfaces/map';
 import type {Marker} from '$lib/services/map/marker';
-import {mapState} from '$lib/state/map.svelte';
 import {removeDragTimeout, setDragTimeout} from '$lib/state/marker.svelte';
 import {setDraggable} from '../../map.svelte';
 
 export class DragController {
     private skipClick = false;
 
+    public constructor(private provider: IMapProvider) {}
+
     public attach(marker: Marker): void {
-        const raw = marker.getRaw();
-        if (!raw) {
+        const handle = marker.getHandle();
+        if (!handle) {
             return;
         }
 
@@ -17,28 +19,20 @@ export class DragController {
     }
 
     public detach(marker: Marker): void {
-        const raw = marker.getRaw();
-        if (!raw) {
-            return;
-        }
-
-        google.maps.event.clearInstanceListeners(raw);
+        marker.clickListener?.();
+        marker.clickListener = undefined;
         this.removeDomPointerListeners(marker);
         this.removeMapMoveListener(marker);
     }
 
     private attachClick(marker: Marker): void {
-        const raw = marker.getRaw();
-        if (!raw) {
+        const handle = marker.getHandle();
+        if (!handle) {
             return;
         }
 
-        if (marker.clickListener) {
-            google.maps.event.removeListener(marker.clickListener);
-            marker.clickListener = undefined;
-        }
-
-        marker.clickListener = raw.addListener('gmp-click', this.handleClick(marker));
+        marker.clickListener?.();
+        marker.clickListener = handle.addClickListener(this.handleClick(marker));
     }
 
     private handleClick(marker: Marker) {
@@ -47,8 +41,7 @@ export class DragController {
                 this.skipClick = false;
                 return;
             }
-            const onClick = marker.getOnClick();
-            onClick?.();
+            marker.getOnClick()?.();
         };
     }
 
@@ -61,17 +54,17 @@ export class DragController {
     }
 
     private attachPointerDown(marker: Marker): void {
-        const markerContent = marker.getRaw()?.content;
-        if (!markerContent || !(markerContent instanceof HTMLElement)) {
+        const element = marker.getHandle()?.getElement();
+        if (!element) {
             return;
         }
 
         if (marker.pointerDownListener) {
-            markerContent.removeEventListener('pointerdown', marker.pointerDownListener);
+            element.removeEventListener('pointerdown', marker.pointerDownListener);
         }
 
         const onPointerDown = this.handlePointerDown(marker);
-        markerContent.addEventListener('pointerdown', onPointerDown);
+        element.addEventListener('pointerdown', onPointerDown);
         marker.pointerDownListener = onPointerDown;
     }
 
@@ -82,51 +75,36 @@ export class DragController {
     }
 
     private startDrag(marker: Marker) {
-        const markerContent = marker.getRaw()?.content;
-        if (!markerContent || !(markerContent instanceof HTMLElement)) {
+        const element = marker.getHandle()?.getElement();
+        if (!element) {
             return;
         }
-        marker.pointerMoveListener = this.createMapMoveListener(marker);
-        this.skipClick = true;
-        setDraggable(false);
-        const start = marker.getOnDragStart();
-        start?.();
-        markerContent.classList.add('marker-dragging');
-    }
-
-    private createMapMoveListener(marker: Marker): google.maps.MapsEventListener {
-        if (!mapState.map) {
-            throw new Error('Map is not initialized');
-        }
-
-        return google.maps.event.addListener(
-            mapState.map,
-            'mousemove',
-            (event: google.maps.MapMouseEvent) => {
-                if (!event.latLng) {
-                    return;
-                }
-
+        marker.pointerMoveListener = this.provider.onPointerMove(
+            (latLng: LatLngLiteral) => {
                 marker.isDragged = true;
-                marker.setPosition({lat: event.latLng.lat(), lng: event.latLng.lng()});
+                marker.setPosition(latLng);
             },
         );
+        this.skipClick = true;
+        setDraggable(false);
+        marker.getOnDragStart()?.();
+        element.classList.add('marker-dragging');
     }
 
     private attachPointerUp(marker: Marker): void {
-        const markerContent = marker.getRaw()?.content;
-        if (!markerContent || !(markerContent instanceof HTMLElement)) {
+        const element = marker.getHandle()?.getElement();
+        if (!element) {
             return;
         }
 
         if (marker.pointerUpListener) {
-            markerContent.removeEventListener('pointerup', marker.pointerUpListener);
-            markerContent.removeEventListener('pointercancel', marker.pointerUpListener);
+            element.removeEventListener('pointerup', marker.pointerUpListener);
+            element.removeEventListener('pointercancel', marker.pointerUpListener);
         }
 
         const onPointerUp = this.handlePointerUp(marker);
-        markerContent.addEventListener('pointerup', onPointerUp);
-        markerContent.addEventListener('pointercancel', onPointerUp);
+        element.addEventListener('pointerup', onPointerUp);
+        element.addEventListener('pointercancel', onPointerUp);
         marker.pointerUpListener = onPointerUp;
     }
 
@@ -137,37 +115,33 @@ export class DragController {
             setDraggable(true);
             if (marker.isDragged) {
                 marker.isDragged = false;
-                const end = marker.getOnDragEnd();
-                end?.();
+                marker.getOnDragEnd()?.();
             }
-            const markerContent = marker.getRaw()?.content;
-            if (markerContent && markerContent instanceof HTMLElement) {
-                markerContent.classList.remove('marker-dragging');
-            }
+            marker.getHandle()?.getElement()?.classList.remove('marker-dragging');
         };
     }
 
     private removeMapMoveListener(marker: Marker) {
         if (marker.pointerMoveListener) {
-            google.maps.event.removeListener(marker.pointerMoveListener);
+            marker.pointerMoveListener();
             marker.pointerMoveListener = undefined;
         }
     }
 
     private removeDomPointerListeners(marker: Marker) {
-        const markerContent = marker.getRaw()?.content;
-        if (!markerContent || !(markerContent instanceof HTMLElement)) {
+        const element = marker.getHandle()?.getElement();
+        if (!element) {
             return;
         }
 
         if (marker.pointerDownListener) {
-            markerContent.removeEventListener('pointerdown', marker.pointerDownListener);
+            element.removeEventListener('pointerdown', marker.pointerDownListener);
             marker.pointerDownListener = undefined;
         }
 
         if (marker.pointerUpListener) {
-            markerContent.removeEventListener('pointerup', marker.pointerUpListener);
-            markerContent.removeEventListener('pointercancel', marker.pointerUpListener);
+            element.removeEventListener('pointerup', marker.pointerUpListener);
+            element.removeEventListener('pointercancel', marker.pointerUpListener);
             marker.pointerUpListener = undefined;
         }
     }

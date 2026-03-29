@@ -24,14 +24,14 @@
         val = (evt.target as HTMLInputElement).value;
         clearTimeout(timeout);
         timeout = window.setTimeout(() => {
-            const center = mapState.map?.getCenter();
+            const center = mapState.provider.getCenter();
             if (!center) {
                 timeout = undefined;
                 return;
             }
             searchState.query = (evt.target as HTMLInputElement).value;
-            searchState.lat = center.lat().toString();
-            searchState.lng = center.lng().toString();
+            searchState.lat = center.lat.toString();
+            searchState.lng = center.lng.toString();
             timeout = undefined;
         }, 400);
     }

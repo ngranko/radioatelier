@@ -13,11 +13,11 @@
 
     let centerLat = $state('');
     let centerLng = $state('');
-    let listener: google.maps.MapsEventListener | undefined = $state();
+    let unsubDragEnd: (() => void) | undefined;
 
     onMount(() => {
         updateCenter();
-        listener = mapState.map!.addListener('dragend', updateCenter);
+        unsubDragEnd = mapState.provider.onDragEnd(updateCenter);
 
         const applied = applyUrlToSearchState(page.url);
         if (applied) {
@@ -43,14 +43,14 @@
     });
 
     function updateCenter() {
-        centerLat = mapState.map!.getCenter()!.lat().toString();
-        centerLng = mapState.map!.getCenter()!.lng().toString();
+        const center = mapState.provider.getCenter();
+        if (!center) return;
+        centerLat = center.lat.toString();
+        centerLng = center.lng.toString();
     }
 
     onDestroy(() => {
-        if (listener) {
-            google.maps.event.removeListener(listener);
-        }
+        unsubDragEnd?.();
     });
 </script>
 

@@ -111,7 +111,7 @@
     </div>
 {/if}
 
-{#if mapState.map}
+{#if mapState.isReady}
     {#each markerPoints as point (point.id)}
         <Marker
             id={point.id}

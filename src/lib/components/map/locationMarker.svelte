@@ -2,6 +2,7 @@
     import MarkerIcon from '$lib/components/map/markerIcon.svelte';
     import {onMount, onDestroy} from 'svelte';
     import {mapState} from '$lib/state/map.svelte';
+    import type {IMarkerHandle} from '$lib/interfaces/map';
     import DotIcon from '@lucide/svelte/icons/dot';
     import {mount, unmount} from 'svelte';
 
@@ -15,7 +16,7 @@
 
     let {orientationEnabled}: Props = $props();
 
-    let marker: google.maps.marker.AdvancedMarkerElement | undefined = $state();
+    let handle: IMarkerHandle | undefined = $state();
     let markerIcon: ReturnType<typeof mount> | undefined;
     let updateLocationInterval: ReturnType<typeof setInterval> | undefined;
 
@@ -30,16 +31,13 @@
             },
         });
 
-        const {AdvancedMarkerElement, CollisionBehavior} =
-            await mapState.loader.importLibrary('marker');
+        await mapState.provider.preloadMarkerLibrary();
 
-        marker = new AdvancedMarkerElement({
-            map: mapState.map,
-            content: icon,
-            collisionBehavior: CollisionBehavior.REQUIRED,
-            gmpClickable: false,
+        handle = mapState.provider.createMarkerHandle({lat: 0, lng: 0}, icon, {
             zIndex: 10,
+            clickable: false,
         });
+        handle.show();
 
         updateCurrentPosition(true);
         updateLocationInterval = setInterval(updateCurrentPosition, 1000);
@@ -52,19 +50,21 @@
         if (markerIcon) {
             unmount(markerIcon);
         }
+        handle?.remove();
     });
 
     function handleOrientation(event: DeviceOrientationEventExtended) {
-        if (!marker) {
+        const element = handle?.getElement();
+        if (!element) {
             return;
         }
 
         const degrees = event.webkitCompassHeading ? event.webkitCompassHeading : event.alpha;
-        (marker.content as HTMLElement).style.rotate = `${degrees}deg`;
+        element.style.rotate = `${degrees}deg`;
     }
 
     function updateCurrentPosition(forceStale = false) {
-        if (!marker) {
+        if (!handle) {
             return;
         }
 
@@ -73,26 +73,24 @@
             position = JSON.parse(localStorage.getItem('lastPosition') as string);
         }
 
-        marker.position = {lat: position.lat, lng: position.lng};
+        handle.setPosition({lat: position.lat, lng: position.lng});
+        const element = handle.getElement();
         if (!position.isCurrent || forceStale) {
-            (marker.content as HTMLDivElement).classList.add('nav-marker-stale');
-            (marker.content as HTMLDivElement).classList.add('nav-marker-oriented-stale');
+            element?.classList.add('nav-marker-stale');
+            element?.classList.add('nav-marker-oriented-stale');
         } else {
-            (marker.content as HTMLDivElement).classList.remove('nav-marker-stale');
-            (marker.content as HTMLDivElement).classList.remove('nav-marker-oriented-stale');
+            element?.classList.remove('nav-marker-stale');
+            element?.classList.remove('nav-marker-oriented-stale');
         }
     }
 
     $effect(() => {
+        const element = handle?.getElement();
         if (orientationEnabled) {
-            if (marker && marker.content) {
-                (marker.content as HTMLDivElement).classList.add('nav-marker-oriented');
-            }
+            element?.classList.add('nav-marker-oriented');
             window.addEventListener('deviceorientation', handleOrientation, true);
         } else {
-            if (marker && marker.content) {
-                (marker.content as HTMLDivElement).classList.remove('nav-marker-oriented');
-            }
+            element?.classList.remove('nav-marker-oriented');
             window.removeEventListener('deviceorientation', handleOrientation, true);
         }
     });

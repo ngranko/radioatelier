@@ -2,7 +2,7 @@
     import StreetViewOverlay from './streetViewOverlay.svelte';
     import {cn} from '$lib/utils';
     import {onDestroy} from 'svelte';
-    import {mapState} from '$lib/state/map.svelte';
+    import {mapState, getGoogleProvider} from '$lib/state/map.svelte';
     import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
 
     let streetViewContainer: HTMLDivElement | undefined = $state();
@@ -13,7 +13,7 @@
 
     let instantiated = false;
     $effect(() => {
-        if (mapState.map && !instantiated) {
+        if (mapState.isReady && !instantiated) {
             createStreetView()
                 .then(() => (instantiated = true))
                 .catch(error => console.error(error));
@@ -21,11 +21,12 @@
     });
 
     async function createStreetView() {
-        if (!mapState.map || !streetViewContainer) {
+        if (!mapState.isReady || !streetViewContainer) {
             throw new Error('Prerequisites for Street View instantiation are not met');
         }
 
-        const {StreetViewPanorama} = await mapState.loader.importLibrary('streetView');
+        const provider = getGoogleProvider();
+        const {StreetViewPanorama} = await provider.loader.importLibrary('streetView');
 
         panorama = new StreetViewPanorama(streetViewContainer, {
             visible: false,
@@ -38,7 +39,7 @@
             zoomControl: false,
         });
 
-        mapState.map.setStreetView(panorama);
+        provider.getGoogleMap()?.setStreetView(panorama);
 
         addListeners();
     }
