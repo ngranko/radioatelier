@@ -38,14 +38,7 @@ describe('createImageResizer', () => {
 
         expect(createCanvas).toHaveBeenNthCalledWith(1, 1024, 768);
         expect(createCanvas).toHaveBeenNthCalledWith(2, 768, 1024);
-        expect(drawImage).toHaveBeenNthCalledWith(
-            1,
-            {tag: 'raw-phone-jpeg'},
-            0,
-            0,
-            1024,
-            768,
-        );
+        expect(drawImage).toHaveBeenNthCalledWith(1, {tag: 'raw-phone-jpeg'}, 0, 0, 1024, 768);
         expect(setTransform).toHaveBeenCalledWith(0, 1, -1, 0, 768, 0);
         expect(result.name).toBe('portrait.jpg');
         expect(result.type).toBe('image/jpeg');
