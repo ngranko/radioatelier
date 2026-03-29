@@ -40,10 +40,6 @@ function findExifSegmentOffset(data: DataView): number | null {
         const marker = data.getUint16(offset, false);
         offset += MARKER_SIZE;
 
-        if (marker === EXIF_APP1_MARKER) {
-            return offset;
-        }
-
         if (
             (marker & MARKER_PREFIX_MASK) !== MARKER_PREFIX ||
             !hasBytes(data, offset, SEGMENT_LENGTH_SIZE)
@@ -56,10 +52,18 @@ function findExifSegmentOffset(data: DataView): number | null {
             return null;
         }
 
+        if (marker === EXIF_APP1_MARKER && hasExifHeader(data, offset + SEGMENT_LENGTH_SIZE)) {
+            return offset;
+        }
+
         offset += segmentLength;
     }
 
     return null;
+}
+
+function hasExifHeader(data: DataView, offset: number): boolean {
+    return hasBytes(data, offset, EXIF_IDENTIFIER_SIZE) && data.getUint32(offset, false) === EXIF_HEADER_MAGIC;
 }
 
 function readOrientationFromExifSegment(data: DataView, segmentOffset: number): number | null {

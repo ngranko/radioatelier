@@ -1,3 +1,4 @@
+import {readExifOrientation} from '$lib/utils/image/exif';
 import {createImageResizer} from '$lib/utils/imageResizer';
 import {describe, expect, it, vi} from 'vitest';
 
@@ -42,5 +43,65 @@ describe('createImageResizer', () => {
         expect(setTransform).toHaveBeenCalledWith(0, 1, -1, 0, 768, 0);
         expect(result.name).toBe('portrait.jpg');
         expect(result.type).toBe('image/jpeg');
+    });
+});
+
+describe('readExifOrientation', () => {
+    it('finds orientation in a later APP1 EXIF segment', async () => {
+        const bytes = new Uint8Array([
+            0xff,
+            0xd8,
+            0xff,
+            0xe1,
+            0x00,
+            0x0a,
+            0x48,
+            0x65,
+            0x6c,
+            0x6c,
+            0x6f,
+            0x21,
+            0xff,
+            0xe1,
+            0x00,
+            0x22,
+            0x45,
+            0x78,
+            0x69,
+            0x66,
+            0x00,
+            0x00,
+            0x4d,
+            0x4d,
+            0x00,
+            0x2a,
+            0x00,
+            0x00,
+            0x00,
+            0x08,
+            0x00,
+            0x01,
+            0x01,
+            0x12,
+            0x00,
+            0x03,
+            0x00,
+            0x00,
+            0x00,
+            0x01,
+            0x00,
+            0x06,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0xff,
+            0xd9,
+        ]);
+        const file = new File([bytes], 'portrait.jpg', {type: 'image/jpeg'});
+
+        await expect(readExifOrientation(file)).resolves.toBe(6);
     });
 });
