@@ -3,6 +3,11 @@ import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
 
 export function getStreetView(lat: number, lng: number) {
     const provider = getGoogleProvider();
+    const googleMap = provider.getGoogleMap();
+    if (!googleMap) {
+        return Promise.reject(new Error('Map not initialized'));
+    }
+
     const streetView = new google.maps.StreetViewService();
     return streetView
         .getPanorama({
@@ -11,12 +16,9 @@ export function getStreetView(lat: number, lng: number) {
         })
         .then(({data}: google.maps.StreetViewResponse) => {
             const location = data.location!;
-            const googleMap = provider.getGoogleMap();
-            if (googleMap) {
-                const pano = googleMap.getStreetView();
-                pano.setPano(location.pano as string);
-                pano.setVisible(true);
-                objectDetailsOverlay.isMinimized = true;
-            }
+            const pano = googleMap.getStreetView();
+            pano.setPano(location.pano as string);
+            pano.setVisible(true);
+            objectDetailsOverlay.isMinimized = true;
         });
 }

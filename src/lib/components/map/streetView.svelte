@@ -28,6 +28,11 @@
         const provider = getGoogleProvider();
         const {StreetViewPanorama} = await provider.loader.importLibrary('streetView');
 
+        const googleMap = provider.getGoogleMap();
+        if (!googleMap) {
+            throw new Error('Google Maps instance not available for Street View');
+        }
+
         panorama = new StreetViewPanorama(streetViewContainer, {
             visible: false,
             addressControl: false,
@@ -39,8 +44,7 @@
             zoomControl: false,
         });
 
-        provider.getGoogleMap()?.setStreetView(panorama);
-
+        googleMap.setStreetView(panorama);
         addListeners();
     }
 

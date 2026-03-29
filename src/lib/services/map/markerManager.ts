@@ -2,7 +2,6 @@ import type {IMapProvider, LatLngLiteral} from '$lib/interfaces/map';
 import type {MarkerId, MarkerOptions, MarkerStateUpdate} from '$lib/interfaces/marker';
 import {Marker} from './marker';
 import {MarkerRepository} from './markerRepository';
-import {DomMarkerRenderer} from './renderer/domMarkerRenderer';
 import type {MarkerRenderer} from './renderer/markerRenderer';
 import {UpdateScheduler} from './updateScheduler';
 import {ViewportIndex} from './viewportIndex';

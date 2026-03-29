@@ -1,4 +1,9 @@
-import type {EventUnsubscribe, IMarkerHandle, LatLngLiteral, MarkerHandleOptions} from '$lib/interfaces/map';
+import type {
+    EventUnsubscribe,
+    IMarkerHandle,
+    LatLngLiteral,
+    MarkerHandleOptions,
+} from '$lib/interfaces/map';
 
 export class GoogleMarkerHandle implements IMarkerHandle {
     private marker: google.maps.marker.AdvancedMarkerElement;
@@ -24,7 +29,9 @@ export class GoogleMarkerHandle implements IMarkerHandle {
 
     getPosition(): LatLngLiteral {
         const pos = this.marker.position;
-        if (!pos) return {lat: 0, lng: 0};
+        if (!pos) {
+            return {lat: 0, lng: 0};
+        }
         if (typeof (pos as google.maps.LatLng).lat === 'function') {
             const latlng = pos as google.maps.LatLng;
             return {lat: latlng.lat(), lng: latlng.lng()};
@@ -43,7 +50,7 @@ export class GoogleMarkerHandle implements IMarkerHandle {
     }
 
     remove(): void {
-        this.marker.map = null;
+        this.hide();
     }
 
     getElement(): HTMLElement | null {

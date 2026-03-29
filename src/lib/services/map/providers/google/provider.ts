@@ -22,7 +22,7 @@ export class GoogleMapsProvider implements IMapProvider {
         this.loader = new Loader({
             apiKey: config.googleMapsApiKey,
             version: 'weekly',
-            libraries: ['places', 'marker'],
+            libraries: ['places'],
         });
     }
 
