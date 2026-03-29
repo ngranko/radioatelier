@@ -1,8 +1,15 @@
-import type {OutputPolicy} from '$lib/utils/image/resizer/types';
+import type {DecodedImage, OutputPolicy} from '$lib/utils/image/resizer/types';
 
-export async function decodeImageFile(file: File): Promise<HTMLImageElement> {
-    const dataUrl = await readAsDataUrl(file);
-    return loadImage(dataUrl);
+export async function decodeImageFile(file: File): Promise<DecodedImage> {
+    if (typeof createImageBitmap === 'function') {
+        try {
+            return await decodeImageBitmap(file);
+        } catch (error) {
+            console.warn('Falling back to HTML image decoding:', error);
+        }
+    }
+
+    return decodeHtmlImage(file);
 }
 
 export function createOutputFile(
@@ -36,6 +43,28 @@ function loadImage(src: string): Promise<HTMLImageElement> {
         image.onerror = () => reject(new Error('Не удалось загрузить изображение'));
         image.src = src;
     });
+}
+
+async function decodeImageBitmap(file: File): Promise<DecodedImage> {
+    const bitmap = await createImageBitmap(file, {imageOrientation: 'none'});
+    return {
+        source: bitmap,
+        width: bitmap.width,
+        height: bitmap.height,
+        release: () => bitmap.close(),
+    };
+}
+
+async function decodeHtmlImage(file: File): Promise<DecodedImage> {
+    const dataUrl = await readAsDataUrl(file);
+    const image = await loadImage(dataUrl);
+    image.style.imageOrientation = 'none';
+
+    return {
+        source: image,
+        width: image.naturalWidth,
+        height: image.naturalHeight,
+    };
 }
 
 export function toBlobOrThrow(

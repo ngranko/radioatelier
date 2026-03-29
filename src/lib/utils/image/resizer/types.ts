@@ -34,9 +34,16 @@ export type ResizePlan = {
     outputHeight: number;
 };
 
+export type DecodedImage = {
+    source: CanvasImageSource;
+    width: number;
+    height: number;
+    release?: () => void;
+};
+
 export type ResizeImageDependencies = {
     readOrientation: (file: File) => Promise<number>;
-    decodeImage: (file: File) => Promise<HTMLImageElement>;
+    decodeImage: (file: File) => Promise<DecodedImage>;
     createCanvas: (width: number, height: number) => HTMLCanvasElement;
     toBlob: (canvas: HTMLCanvasElement, type: string, quality: number) => Promise<Blob>;
     now: () => number;

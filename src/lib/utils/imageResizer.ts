@@ -30,36 +30,47 @@ export function createImageResizer(
     ): Promise<ResizeImageResult> {
         const policy = resolveOutputPolicy(file, options);
         const image = await dependencies.decodeImage(file);
-        const orientation =
-            file.type === 'image/jpeg'
-                ? await dependencies.readOrientation(file)
-                : DEFAULT_ORIENTATION;
-        const plan = buildResizePlan({
-            sourceWidth: image.width,
-            sourceHeight: image.height,
-            orientation,
-            maxEdge: options.maxEdge,
-        });
 
-        const scaledCanvas = dependencies.createCanvas(
-            plan.scaledSourceWidth,
-            plan.scaledSourceHeight,
-        );
-        const scaledContext = getContextOrThrow(scaledCanvas);
-        scaledContext.drawImage(image, 0, 0, plan.scaledSourceWidth, plan.scaledSourceHeight);
+        try {
+            const orientation =
+                file.type === 'image/jpeg'
+                    ? await dependencies.readOrientation(file)
+                    : DEFAULT_ORIENTATION;
+            const plan = buildResizePlan({
+                sourceWidth: image.width,
+                sourceHeight: image.height,
+                orientation,
+                maxEdge: options.maxEdge,
+            });
 
-        const outputCanvas = dependencies.createCanvas(plan.outputWidth, plan.outputHeight);
-        const outputContext = getContextOrThrow(outputCanvas);
-        drawWithOrientation(
-            outputContext,
-            scaledCanvas,
-            orientation,
-            plan.outputWidth,
-            plan.outputHeight,
-        );
+            const scaledCanvas = dependencies.createCanvas(
+                plan.scaledSourceWidth,
+                plan.scaledSourceHeight,
+            );
+            const scaledContext = getContextOrThrow(scaledCanvas);
+            scaledContext.drawImage(
+                image.source,
+                0,
+                0,
+                plan.scaledSourceWidth,
+                plan.scaledSourceHeight,
+            );
 
-        const blob = await dependencies.toBlob(outputCanvas, policy.type, policy.quality);
-        return createOutputFile(blob, file.name, policy, dependencies.now());
+            const outputCanvas = dependencies.createCanvas(plan.outputWidth, plan.outputHeight);
+            const outputContext = getContextOrThrow(outputCanvas);
+            drawWithOrientation(
+                outputContext,
+                scaledCanvas,
+                orientation,
+                plan.outputWidth,
+                plan.outputHeight,
+            );
+
+            const blob = await dependencies.toBlob(outputCanvas, policy.type, policy.quality);
+            return createOutputFile(blob, file.name, policy, dependencies.now());
+        } finally {
+            image.release?.();
+        }
     };
 }
 
