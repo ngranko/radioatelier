@@ -1,7 +1,7 @@
+import type {IMapProvider} from '$lib/interfaces/map';
 import type {Marker} from '$lib/services/map/marker';
 import {DomMarkerRenderer} from '$lib/services/map/renderer/domMarkerRenderer';
 import type {MarkerRenderer} from '$lib/services/map/renderer/markerRenderer';
-import type {IMapProvider} from '$lib/interfaces/map';
 import {DeckOverlayRenderer} from './deckOverlayRenderer';
 import type {GoogleMapsProvider} from './provider';
 

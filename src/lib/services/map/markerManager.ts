@@ -57,11 +57,7 @@ export class MarkerManager {
         }
     }
 
-    public addMarker(
-        id: MarkerId,
-        position: LatLngLiteral,
-        options: MarkerOptions,
-    ): Marker | null {
+    public addMarker(id: MarkerId, position: LatLngLiteral, options: MarkerOptions): Marker | null {
         const isLazy = options.source === 'list';
 
         const upsert = this.repo.upsertWithPolicy(

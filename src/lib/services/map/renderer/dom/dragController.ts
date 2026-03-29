@@ -79,12 +79,10 @@ export class DragController {
         if (!element) {
             return;
         }
-        marker.pointerMoveListener = this.provider.onPointerMove(
-            (latLng: LatLngLiteral) => {
-                marker.isDragged = true;
-                marker.setPosition(latLng);
-            },
-        );
+        marker.pointerMoveListener = this.provider.onPointerMove((latLng: LatLngLiteral) => {
+            marker.isDragged = true;
+            marker.setPosition(latLng);
+        });
         this.skipClick = true;
         setDraggable(false);
         marker.getOnDragStart()?.();
