@@ -1,3 +1,5 @@
+import config from '$lib/config';
+import type {Location} from '$lib/interfaces/location';
 import type {
     BoundsPadding,
     EventUnsubscribe,
@@ -7,12 +9,18 @@ import type {
     MapBounds,
     MarkerHandleOptions,
 } from '$lib/interfaces/map';
-import type {Location} from '$lib/interfaces/location';
-import config from '$lib/config';
+import {mapState} from '$lib/state/map.svelte';
 import {themeState} from '$lib/state/theme.svelte';
 import {Loader} from '@googlemaps/js-api-loader';
 import {GoogleMapBounds} from './bounds';
 import {GoogleMarkerHandle} from './markerHandle';
+
+export function getGoogleProvider(): GoogleMapsProvider {
+    if (!(mapState.provider instanceof GoogleMapsProvider)) {
+        throw new Error('Expected GoogleMapsProvider');
+    }
+    return mapState.provider;
+}
 
 export class GoogleMapsProvider implements IMapProvider {
     readonly loader: Loader;
@@ -94,13 +102,17 @@ export class GoogleMapsProvider implements IMapProvider {
     }
 
     onIdle(callback: () => void): EventUnsubscribe {
-        if (!this.map) return () => {};
+        if (!this.map) {
+            return () => {};
+        }
         const listener = google.maps.event.addListener(this.map, 'idle', callback);
         return () => google.maps.event.removeListener(listener);
     }
 
     onClick(callback: (latLng: LatLngLiteral) => void): EventUnsubscribe {
-        if (!this.map) return () => {};
+        if (!this.map) {
+            return () => {};
+        }
         const listener = google.maps.event.addListener(
             this.map,
             'click',
@@ -114,15 +126,17 @@ export class GoogleMapsProvider implements IMapProvider {
     }
 
     onDragEnd(callback: () => void): EventUnsubscribe {
-        if (!this.map) return () => {};
+        if (!this.map) {
+            return () => {};
+        }
         const listener = google.maps.event.addListener(this.map, 'dragend', callback);
         return () => google.maps.event.removeListener(listener);
     }
 
-    onCenterChanged(
-        callback: (center: LatLngLiteral, zoom: number) => void,
-    ): EventUnsubscribe {
-        if (!this.map) return () => {};
+    onCenterChanged(callback: (center: LatLngLiteral, zoom: number) => void): EventUnsubscribe {
+        if (!this.map) {
+            return () => {};
+        }
         const listener = google.maps.event.addListener(this.map, 'center_changed', () => {
             const center = this.map!.getCenter();
             if (center) {
@@ -133,7 +147,9 @@ export class GoogleMapsProvider implements IMapProvider {
     }
 
     onPointerMove(callback: (latLng: LatLngLiteral) => void): EventUnsubscribe {
-        if (!this.map) return () => {};
+        if (!this.map) {
+            return () => {};
+        }
         const listener = google.maps.event.addListener(
             this.map,
             'mousemove',

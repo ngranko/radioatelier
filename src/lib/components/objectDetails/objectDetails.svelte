@@ -55,7 +55,7 @@
         clearActiveMarker();
         closeDetailsOverlay();
         if (mapState.isReady) {
-            mapState.provider.closeStreetView();
+            mapState.provider!.closeStreetView();
         }
 
         if (ctx.auth.userId) {

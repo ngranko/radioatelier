@@ -13,7 +13,7 @@
         }
 
         if (mapState.isReady) {
-            mapState.provider.setCenter(position.lat, position.lng);
+            mapState.provider!.setCenter(position.lat, position.lng);
         }
     }
 </script>

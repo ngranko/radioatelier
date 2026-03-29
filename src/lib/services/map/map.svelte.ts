@@ -3,13 +3,13 @@ import {mapState} from '$lib/state/map.svelte';
 
 export function setCenter(lat: number, lng: number) {
     if (mapState.isReady) {
-        mapState.provider.setCenter(lat, lng);
+        mapState.provider!.setCenter(lat, lng);
     }
 }
 
 export function setDraggable(isDraggable: boolean) {
     if (mapState.isReady) {
-        mapState.provider.setDraggable(isDraggable);
+        mapState.provider!.setDraggable(isDraggable);
     }
 }
 
@@ -18,7 +18,7 @@ export function fitMarkerList(objects: MapPlaceable[], currentCenter?: MapPlacea
         return;
     }
 
-    const bounds = mapState.provider.createBounds();
+    const bounds = mapState.provider!.createBounds();
     if (currentCenter) {
         bounds.extend({lat: currentCenter.latitude, lng: currentCenter.longitude});
     }
@@ -26,7 +26,7 @@ export function fitMarkerList(objects: MapPlaceable[], currentCenter?: MapPlacea
         bounds.extend({lat: object.latitude, lng: object.longitude});
     }
 
-    mapState.provider.fitBounds(
+    mapState.provider!.fitBounds(
         bounds,
         document.body.clientWidth > 640
             ? {left: 424, top: 24, bottom: 24, right: 24}

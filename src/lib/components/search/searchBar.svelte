@@ -25,7 +25,7 @@
         clearTimeout(timeout);
         timeout = window.setTimeout(() => {
             searchState.query = (evt.target as HTMLInputElement).value;
-            const center = mapState.provider.getCenter();
+            const center = mapState.provider?.getCenter();
             if (center) {
                 searchState.lat = center.lat.toString();
                 searchState.lng = center.lng.toString();

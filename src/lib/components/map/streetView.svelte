@@ -2,7 +2,8 @@
     import StreetViewOverlay from './streetViewOverlay.svelte';
     import {cn} from '$lib/utils';
     import {onDestroy} from 'svelte';
-    import {mapState, getGoogleProvider} from '$lib/state/map.svelte';
+    import {mapState} from '$lib/state/map.svelte';
+    import {getGoogleProvider} from '$lib/services/map/providers/google/provider';
     import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
 
     let streetViewContainer: HTMLDivElement | undefined = $state();

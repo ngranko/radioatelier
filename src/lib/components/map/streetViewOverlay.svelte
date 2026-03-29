@@ -3,7 +3,7 @@
     import config from '$lib/config';
     import {cn} from '$lib/utils';
     import Button from '../ui/button/button.svelte';
-    import {getGoogleProvider} from '$lib/state/map.svelte';
+    import {getGoogleProvider} from '$lib/services/map/providers/google/provider';
     import XMarkIcon from '@lucide/svelte/icons/x';
 
     interface Props {

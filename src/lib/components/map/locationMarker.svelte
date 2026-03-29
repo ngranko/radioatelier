@@ -31,9 +31,9 @@
             },
         });
 
-        await mapState.provider.preloadMarkerLibrary();
+        await mapState.provider!.preloadMarkerLibrary();
 
-        handle = mapState.provider.createMarkerHandle({lat: 0, lng: 0}, icon, {
+        handle = mapState.provider!.createMarkerHandle({lat: 0, lng: 0}, icon, {
             zIndex: 10,
             clickable: false,
         });

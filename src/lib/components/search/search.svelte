@@ -17,7 +17,7 @@
 
     onMount(() => {
         updateCenter();
-        unsubDragEnd = mapState.provider.onDragEnd(updateCenter);
+        unsubDragEnd = mapState.provider!.onDragEnd(updateCenter);
 
         const applied = applyUrlToSearchState(page.url);
         if (applied) {
@@ -43,8 +43,10 @@
     });
 
     function updateCenter() {
-        const center = mapState.provider.getCenter();
-        if (!center) return;
+        const center = mapState.provider!.getCenter();
+        if (!center) {
+            return;
+        }
         centerLat = center.lat.toString();
         centerLng = center.lng.toString();
     }

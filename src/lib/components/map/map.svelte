@@ -1,12 +1,12 @@
 <script lang="ts">
     import {onMount, onDestroy} from 'svelte';
     import {mapState} from '$lib/state/map.svelte';
+    import type {IMapProvider} from '$lib/interfaces/map';
     import type {Location} from '$lib/interfaces/location';
+    import {GoogleMapsProvider} from '$lib/services/map/providers/google/provider';
     import {MarkerManager} from '$lib/services/map/markerManager';
     import {DomMarkerRenderer} from '$lib/services/map/renderer/domMarkerRenderer';
-    import {
-        HybridMarkerRenderer,
-    } from '$lib/services/map/providers/google/hybridMarkerRenderer';
+    import {HybridMarkerRenderer} from '$lib/services/map/providers/google/hybridMarkerRenderer';
     import {
         getInitialCenter,
         startPositionPolling,
@@ -36,9 +36,11 @@
         positionInterval = startPositionPolling(5000);
 
         try {
+            const provider = new GoogleMapsProvider();
             const center = await getInitialCenter();
-            await mapState.provider.initialize(container!, center);
-            mapState.markerManager = await initMarkerManager();
+            await provider.initialize(container!, center);
+            mapState.provider = provider;
+            mapState.markerManager = await initMarkerManager(provider);
             mapState.isReady = true;
             mapState.markerManager.scheduleViewportUpdate();
         } catch (e) {
@@ -50,8 +52,8 @@
             initListeners();
 
             new PointerDragZoomController({
-                getZoom: () => mapState.provider.getZoom(),
-                setZoom: zoom => mapState.provider.setZoom(zoom),
+                getZoom: () => mapState.provider!.getZoom(),
+                setZoom: zoom => mapState.provider!.setZoom(zoom),
                 onStart: () => {
                     clearTimeout(clickTimeout);
                     clickTimeout = undefined;
@@ -67,9 +69,8 @@
         }
     });
 
-    async function initMarkerManager(): Promise<MarkerManager> {
-        const provider = mapState.provider;
-        const initialMode = shouldUseDeck() ? 'deck' : 'dom';
+    async function initMarkerManager(provider: IMapProvider): Promise<MarkerManager> {
+        const initialMode = shouldUseDeck(provider) ? 'deck' : 'dom';
         const manager = new MarkerManager(
             provider,
             mode =>
@@ -83,13 +84,15 @@
     }
 
     function initListeners() {
-        unsubIdle = mapState.provider.onIdle(handleIdle);
-        unsubClick = mapState.provider.onClick(handleClick);
-        unsubCenterChanged = mapState.provider.onCenterChanged(handleCenterChanged);
+        unsubIdle = mapState.provider!.onIdle(handleIdle);
+        unsubClick = mapState.provider!.onClick(handleClick);
+        unsubCenterChanged = mapState.provider!.onCenterChanged(handleCenterChanged);
     }
 
     function handleIdle() {
-        const mode = mapState.markerManager?.setRendererMode(shouldUseDeck() ? 'deck' : 'dom');
+        const mode = mapState.markerManager?.setRendererMode(
+            shouldUseDeck(mapState.provider!) ? 'deck' : 'dom',
+        );
         mapState.deckEnabled = mode === 'deck';
         mapState.markerManager?.scheduleViewportUpdate();
     }
@@ -116,8 +119,8 @@
         );
     }
 
-    function shouldUseDeck(): boolean {
-        return mapState.provider.getZoom() <= config.deckZoomThreshold;
+    function shouldUseDeck(provider: IMapProvider): boolean {
+        return provider.getZoom() <= config.deckZoomThreshold;
     }
 
     onDestroy(() => {
@@ -129,7 +132,8 @@
         unsubClick?.();
         unsubCenterChanged?.();
         mapState.markerManager?.destroy();
-        mapState.provider.destroy();
+        mapState.provider?.destroy();
+        mapState.provider = null;
         mapState.isReady = false;
     });
 </script>
