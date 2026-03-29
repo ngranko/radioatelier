@@ -63,7 +63,10 @@ function findExifSegmentOffset(data: DataView): number | null {
 }
 
 function hasExifHeader(data: DataView, offset: number): boolean {
-    return hasBytes(data, offset, EXIF_IDENTIFIER_SIZE) && data.getUint32(offset, false) === EXIF_HEADER_MAGIC;
+    return (
+        hasBytes(data, offset, EXIF_IDENTIFIER_SIZE) &&
+        data.getUint32(offset, false) === EXIF_HEADER_MAGIC
+    );
 }
 
 function readOrientationFromExifSegment(data: DataView, segmentOffset: number): number | null {
