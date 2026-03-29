@@ -1,4 +1,4 @@
-import {getGoogleProvider} from '$lib/state/map.svelte';
+import {getGoogleProvider} from '$lib/services/map/providers/google/provider';
 import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
 
 export function getStreetView(lat: number, lng: number) {
