@@ -15,7 +15,10 @@
     import {Separator} from '$lib/components/ui/separator';
     import {Checkbox} from '$lib/components/ui/checkbox';
     import {Textarea} from '$lib/components/ui/textarea';
-    import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
+    import {
+        objectDetailsOverlay,
+        showLoadingDetailsOverlay,
+    } from '$lib/state/objectDetailsOverlay.svelte';
     import {getErrorArray} from '$lib/utils/formErrors.ts';
     import {
         FormField,
@@ -31,6 +34,7 @@
     import {useConvexClient} from 'convex-svelte';
     import {api} from '$convex/_generated/api';
     import {resizeImage} from '$lib/utils/imageResizer';
+    import {getActiveSearchUrl} from '$lib/state/search.svelte';
 
     interface Props {
         initialValues: Partial<LooseObject>;
@@ -43,7 +47,20 @@
     let imagePreviewUrl: string | undefined = $derived(initialValues.cover?.previewUrl);
 
     let lastAction = '';
-    let submitPromise: {resolve(value: unknown): void; reject(value?: unknown): void} | null = null;
+    let submitToastId: string | number | undefined;
+
+    function getSubmitErrorMessage(error: unknown, fallback: string): string {
+        if (error instanceof Error) {
+            return error.message;
+        }
+        if (typeof error === 'object' && error !== null && 'message' in error) {
+            return String((error as {message: unknown}).message);
+        }
+        if (typeof error === 'string') {
+            return error;
+        }
+        return fallback;
+    }
 
     function getFormData() {
         if (page.data.form) {
@@ -58,33 +75,31 @@
         invalidateAll: false,
         onSubmit: ({action}) => {
             lastAction = action.search.replace('?/', '');
-            const promise = new Promise((resolve, reject) => {
-                submitPromise = {resolve, reject};
-            });
-
-            toast.promise(promise, {
-                loading: lastAction === 'delete' ? 'Удаляю...' : 'Сохраняю...',
-                success: lastAction === 'delete' ? 'Точка удалена!' : 'Точка сохранена!',
-                error: err => {
-                    console.log(err);
-                    if (!err) {
-                        return 'Произошла чудовищная ошибка';
-                    }
-                    return (err as Error).message;
-                },
-            });
+            const loading = lastAction === 'delete' ? 'Удаляю...' : 'Сохраняю...';
+            submitToastId = toast.loading(loading);
         },
         onResult: ({result}) => {
+            if (submitToastId === undefined) {
+                throw new Error('Не удалось получить информацию о процессе');
+            }
+
             if (result.type === 'redirect') {
-                submitPromise?.reject(new Error('Пользователь не авторизован'));
+                toast.error('Пользователь не авторизован', {id: submitToastId});
+                submitToastId = undefined;
+                return;
             }
 
             if (result.type === 'failure') {
-                submitPromise?.reject(new Error('Что-то не так во введенных данных'));
+                toast.error('Что-то не так во введенных данных', {id: submitToastId});
+                submitToastId = undefined;
+                return;
             }
 
             if (result.type === 'success') {
-                submitPromise?.resolve(null);
+                toast.success(lastAction === 'delete' ? 'Точка удалена!' : 'Точка сохранена!', {
+                    id: submitToastId,
+                });
+                submitToastId = undefined;
 
                 if (lastAction === 'delete' && result.data?.id) {
                     handleDeleteSuccess(result.data.id);
@@ -93,22 +108,28 @@
                 if (lastAction === 'save' && result.data?.id) {
                     handleSaveSuccess(result.data.id);
                 }
+                return;
             }
-
-            submitPromise = null;
         },
         onError: ({result}) => {
+            let message: string;
             switch (lastAction) {
                 case 'save':
-                    submitPromise?.reject(result.error ?? new Error('Не удалось сохранить точку'));
+                    message = getSubmitErrorMessage(result.error, 'Не удалось сохранить точку');
                     break;
                 case 'delete':
-                    submitPromise?.reject(result.error ?? new Error('Не удалось удалить точку'));
+                    message = getSubmitErrorMessage(result.error, 'Не удалось удалить точку');
                     break;
                 default:
-                    submitPromise?.reject(result.error ?? new Error('Произошла ошибка'));
+                    message = getSubmitErrorMessage(result.error, 'Произошла ошибка');
             }
-            submitPromise = null;
+
+            if (submitToastId !== undefined) {
+                toast.error(message, {id: submitToastId});
+            } else {
+                toast.error(message);
+            }
+            submitToastId = undefined;
         },
     });
 
@@ -183,17 +204,20 @@
     }
 
     function handleSaveSuccess(id: Id<'objects'>) {
-        objectDetailsOverlay.isDirty = false;
-        objectDetailsOverlay.isEditing = false;
-        objectDetailsOverlay.isLoading = true;
-        objectDetailsOverlay.detailsId = id;
-        goto(`/object/${id}`);
+        if (objectDetailsOverlay.detailsId !== id) {
+            // this was object creation case
+            showLoadingDetailsOverlay(id);
+            goto(`/object/${id}`);
+        } else {
+            objectDetailsOverlay.isDirty = false;
+            objectDetailsOverlay.isEditing = false;
+        }
     }
 
     function handleDeleteSuccess(id: string) {
         removeSearchPoint(id);
 
-        goto('/');
+        goto(getActiveSearchUrl());
     }
 </script>
 
