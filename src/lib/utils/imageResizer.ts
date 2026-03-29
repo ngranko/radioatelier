@@ -11,6 +11,22 @@ import type {
 } from '$lib/utils/image/resizer/types';
 import {DEFAULT_ORIENTATION} from '$lib/utils/image/resizer/types';
 
+async function resolveManualOrientation(
+    file: File,
+    readOrientation: ResizeImageDependencies['readOrientation'],
+): Promise<number> {
+    if (file.type === 'image/jpeg' || file.type === 'image/pjpeg') {
+        return readOrientation(file);
+    }
+
+    const head = new Uint8Array(await file.slice(0, 3).arrayBuffer());
+    if (head.length >= 3 && head[0] === 0xff && head[1] === 0xd8 && head[2] === 0xff) {
+        return readOrientation(file);
+    }
+
+    return DEFAULT_ORIENTATION;
+}
+
 function createDefaultDependencies(): ResizeImageDependencies {
     return {
         readOrientation: readExifOrientation,
@@ -32,10 +48,9 @@ export function createImageResizer(
         const image = await dependencies.decodeImage(file);
 
         try {
-            const orientation =
-                file.type === 'image/jpeg'
-                    ? await dependencies.readOrientation(file)
-                    : DEFAULT_ORIENTATION;
+            const orientation = image.needsManualExif
+                ? await resolveManualOrientation(file, dependencies.readOrientation)
+                : DEFAULT_ORIENTATION;
             const plan = buildResizePlan({
                 sourceWidth: image.width,
                 sourceHeight: image.height,

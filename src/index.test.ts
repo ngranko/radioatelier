@@ -27,6 +27,7 @@ describe('createImageResizer', () => {
                 width: 4032,
                 height: 3024,
                 release: vi.fn(),
+                needsManualExif: true,
             }),
             createCanvas,
             toBlob: vi.fn().mockResolvedValue(new Blob(['mock'], {type: 'image/jpeg'})),

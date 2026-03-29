@@ -39,6 +39,7 @@ export type DecodedImage = {
     width: number;
     height: number;
     release?: () => void;
+    needsManualExif?: boolean;
 };
 
 export type ResizeImageDependencies = {

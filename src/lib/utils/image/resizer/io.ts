@@ -46,24 +46,36 @@ function loadImage(src: string): Promise<HTMLImageElement> {
 }
 
 async function decodeImageBitmap(file: File): Promise<DecodedImage> {
-    const bitmap = await createImageBitmap(file, {imageOrientation: 'none'});
-    return {
-        source: bitmap,
-        width: bitmap.width,
-        height: bitmap.height,
-        release: () => bitmap.close(),
-    };
+    try {
+        const bitmap = await createImageBitmap(file, {imageOrientation: 'from-image'});
+        return {
+            source: bitmap,
+            width: bitmap.width,
+            height: bitmap.height,
+            release: () => bitmap.close(),
+        };
+    } catch {
+        const bitmap = await createImageBitmap(file, {imageOrientation: 'none'});
+        return {
+            source: bitmap,
+            width: bitmap.width,
+            height: bitmap.height,
+            release: () => bitmap.close(),
+            needsManualExif: true,
+        };
+    }
 }
 
 async function decodeHtmlImage(file: File): Promise<DecodedImage> {
     const dataUrl = await readAsDataUrl(file);
     const image = await loadImage(dataUrl);
-    image.style.imageOrientation = 'none';
+    image.style.setProperty('image-orientation', 'none');
 
     return {
         source: image,
         width: image.naturalWidth,
         height: image.naturalHeight,
+        needsManualExif: true,
     };
 }
 
