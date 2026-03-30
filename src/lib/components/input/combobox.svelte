@@ -89,6 +89,7 @@
             }
             value = newValues;
             onChange?.(value.length > 0 ? value : []);
+            searchValue = '';
         } else {
             value = option[valueField];
             onChange?.(value);
