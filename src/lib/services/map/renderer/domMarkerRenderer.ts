@@ -8,6 +8,8 @@ export class DomMarkerRenderer implements MarkerRenderer {
     private factory = new Factory();
     private dragController = new DragController();
     private styler = new Styler();
+    private pendingRemoval = new WeakSet<Marker>();
+    private pendingShow = new WeakSet<Marker>();
 
     public ensureCreated(marker: Marker): void {
         if (!marker.isCreated()) {
@@ -28,16 +30,27 @@ export class DomMarkerRenderer implements MarkerRenderer {
         }
 
         this.applyState(marker);
+        marker.show();
+
+        if (this.pendingShow.has(marker)) {
+            return;
+        }
+        this.pendingShow.add(marker);
+
         const element = raw.content as HTMLElement;
         element.classList.add('animate-popin');
         setTimeout(() => {
+            this.pendingShow.delete(marker);
             element.classList.remove('animate-popin');
         }, 200);
-
-        marker.show();
     }
 
     public hide(marker: Marker): void {
+        const raw = marker.getRaw();
+        if (raw) {
+            this.pendingShow.delete(marker);
+            (raw.content as HTMLElement).classList.remove('animate-popin');
+        }
         marker.hide();
     }
 
@@ -48,9 +61,15 @@ export class DomMarkerRenderer implements MarkerRenderer {
             return;
         }
 
+        if (this.pendingRemoval.has(marker)) {
+            return;
+        }
+        this.pendingRemoval.add(marker);
+
         const element = raw.content as HTMLElement;
         element.classList.add('animate-popout');
         setTimeout(() => {
+            this.pendingRemoval.delete(marker);
             element.classList.remove('animate-popout');
             this.dragController.detach(marker);
             marker.remove(() => onRemoved?.());
