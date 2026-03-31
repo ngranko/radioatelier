@@ -29,7 +29,20 @@
 
     let {initialValues}: Props = $props();
 
-    let submitPromise: {resolve(value: unknown): void; reject(value?: unknown): void} | null = null;
+    let submitToastId: string | number | undefined;
+
+    function getSubmitErrorMessage(error: unknown, fallback: string): string {
+        if (error instanceof Error) {
+            return error.message;
+        }
+        if (typeof error === 'object' && error !== null && 'message' in error) {
+            return String((error as {message: unknown}).message);
+        }
+        if (typeof error === 'string') {
+            return error;
+        }
+        return fallback;
+    }
 
     // During client-side navigation, page.data.form may be undefined
     // In that case, create form data from initialValues
@@ -44,40 +57,36 @@
         validators: zod4Client(schema),
         invalidateAll: false,
         onSubmit: () => {
-            const promise = new Promise((resolve, reject) => {
-                submitPromise = {resolve, reject};
-            });
-
-            toast.promise(promise, {
-                loading: 'Сохраняю...',
-                success: 'Точка сохранена!',
-                error: err => {
-                    if (!err) {
-                        return 'Произошла чудовищная ошибка';
-                    }
-                    return (err as Error).message;
-                },
-            });
+            submitToastId = toast.loading('Сохраняю...');
         },
         onResult: ({result}) => {
             if (result.type === 'redirect') {
-                submitPromise?.reject(new Error('Пользователь не авторизован'));
+                toast.error('Пользователь не авторизован', {id: submitToastId});
+                submitToastId = undefined;
+                return;
             }
 
             if (result.type === 'failure') {
-                submitPromise?.reject(new Error('Что-то не так во введенных данных'));
+                toast.error('Что-то не так во введенных данных', {id: submitToastId});
+                submitToastId = undefined;
+                return;
             }
 
-            if (result.type === 'success' && result.data?.id) {
-                submitPromise?.resolve(null);
+            if (result.type === 'success') {
+                toast.success('Точка сохранена!', {id: submitToastId});
+                submitToastId = undefined;
                 handleSaveSuccess();
+                return;
             }
-
-            submitPromise = null;
         },
         onError: ({result}) => {
-            submitPromise?.reject(result.error ?? new Error('Не удалось сохранить точку'));
-            submitPromise = null;
+            const message = getSubmitErrorMessage(result.error, 'Не удалось сохранить точку');
+            if (submitToastId !== undefined) {
+                toast.error(message, {id: submitToastId});
+            } else {
+                toast.error(message);
+            }
+            submitToastId = undefined;
         },
     });
 

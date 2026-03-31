@@ -9,6 +9,8 @@ export class DomMarkerRenderer implements MarkerRenderer {
     private factory: Factory;
     private dragController: DragController;
     private styler = new Styler();
+    private pendingRemoval = new WeakSet<Marker>();
+    private pendingShow = new WeakSet<Marker>();
 
     public constructor(provider: MapProvider) {
         this.factory = new Factory(provider);
@@ -34,15 +36,26 @@ export class DomMarkerRenderer implements MarkerRenderer {
         }
 
         this.applyState(marker);
+        marker.show();
+
+        if (this.pendingShow.has(marker)) {
+            return;
+        }
+        this.pendingShow.add(marker);
+
         element.classList.add('animate-popin');
         setTimeout(() => {
+            this.pendingShow.delete(marker);
             element.classList.remove('animate-popin');
         }, 200);
-
-        marker.show();
     }
 
     public hide(marker: Marker): void {
+        const element = marker.getHandle()?.getElement();
+        if (element) {
+            this.pendingShow.delete(marker);
+            element.classList.remove('animate-popin');
+        }
         marker.hide();
     }
 
@@ -53,8 +66,14 @@ export class DomMarkerRenderer implements MarkerRenderer {
             return;
         }
 
+        if (this.pendingRemoval.has(marker)) {
+            return;
+        }
+        this.pendingRemoval.add(marker);
+
         element.classList.add('animate-popout');
         setTimeout(() => {
+            this.pendingRemoval.delete(marker);
             element.classList.remove('animate-popout');
             this.dragController.detach(marker);
             marker.remove(() => onRemoved?.());

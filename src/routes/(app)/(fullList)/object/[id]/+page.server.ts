@@ -77,16 +77,18 @@ export const actions: Actions = {
             throw error(500, 'Не удалось сохранить точку');
         }
     },
-    delete: async ({params, url, locals}) => {
+    delete: async ({request, params, url, locals}) => {
         const {client, token} = await getConvexClient(locals);
         if (!token) {
             redirect(307, `/login?ref=${encodeURIComponent(url.pathname)}`);
         }
 
+        const form = await superValidate(request, zod4(schema));
+
         const id = params.id as Id<'objects'>;
         try {
             await client.mutation(api.objects.remove, {id});
-            return {id};
+            return {form, id};
         } catch (err) {
             console.error('Failed to delete object:', err);
             throw error(500, 'Не удалось удалить точку');

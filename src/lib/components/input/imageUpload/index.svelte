@@ -31,6 +31,7 @@
     let isViewerOpen = $state(false);
     let isUploading = $state(false);
     let imageUploadRef: HTMLInputElement | undefined = $state();
+    let displayUrl = $derived(previewUrl || url);
 
     async function handleImageChange(event: Event) {
         const file = (event.target as HTMLInputElement).files?.[0];
@@ -68,23 +69,24 @@
     }
 
     function handleViewerOpen() {
-        if (url) {
+        if (displayUrl) {
             isViewerOpen = true;
         }
     }
 </script>
 
 <div class="bg-muted/30 border-border relative w-full overflow-hidden rounded-lg border">
-    {#if previewUrl || url}
+    {#if displayUrl}
         <button
             type="button"
-            class="block aspect-2/1 w-full border-none bg-cover bg-center bg-no-repeat"
-            style={`background-image:url('${previewUrl || url}')`}
+            class="bg-muted block aspect-2/1 w-full border-none"
             onclick={handleViewerOpen}
             disabled={isUploading}
             aria-label="Изображение"
             aria-busy={isUploading}
-        ></button>
+        >
+            <img class="h-full w-full object-cover" src={displayUrl} alt="Изображение" />
+        </button>
     {:else}
         <EmptyPlaceholder />
     {/if}
