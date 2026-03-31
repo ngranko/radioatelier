@@ -32,37 +32,46 @@
     let unsubClick: (() => void) | undefined;
     let unsubCenterChanged: (() => void) | undefined;
 
+    async function setupProviderAndMarkers() {
+        const provider = new GoogleMapsProvider();
+        const center = await getInitialCenter();
+        await provider.initialize(container!, center);
+        mapState.provider = provider;
+        mapState.markerManager = await initMarkerManager(provider);
+        mapState.deckEnabled = mapState.markerManager.isDeckRenderer;
+        mapState.isReady = true;
+        mapState.markerManager.scheduleViewportUpdate();
+    }
+
+    function setupListenersAndGestures() {
+        initListeners();
+
+        new PointerDragZoomController({
+            getZoom: () => mapState.provider!.getZoom(),
+            setZoom: zoom => mapState.provider!.setZoom(zoom),
+            onStart: () => {
+                clearTimeout(clickTimeout);
+                clickTimeout = undefined;
+                isInZoomMode = true;
+            },
+            onEnd: () => {
+                isInZoomMode = false;
+            },
+        }).attachDoubleTapDragZoom(container!);
+    }
+
     onMount(async () => {
         positionInterval = startPositionPolling(5000);
 
         try {
-            const provider = new GoogleMapsProvider();
-            const center = await getInitialCenter();
-            await provider.initialize(container!, center);
-            mapState.provider = provider;
-            mapState.markerManager = await initMarkerManager(provider);
-            mapState.isReady = true;
-            mapState.markerManager.scheduleViewportUpdate();
+            await setupProviderAndMarkers();
         } catch (e) {
             console.error('error instantiating map');
             console.error(e);
         }
 
         try {
-            initListeners();
-
-            new PointerDragZoomController({
-                getZoom: () => mapState.provider!.getZoom(),
-                setZoom: zoom => mapState.provider!.setZoom(zoom),
-                onStart: () => {
-                    clearTimeout(clickTimeout);
-                    clickTimeout = undefined;
-                    isInZoomMode = true;
-                },
-                onEnd: () => {
-                    isInZoomMode = false;
-                },
-            }).attachDoubleTapDragZoom(container!);
+            setupListenersAndGestures();
         } catch (e) {
             console.error('error initialising map event listeners');
             console.error(e);
@@ -134,6 +143,7 @@
         mapState.markerManager?.destroy();
         mapState.provider?.destroy();
         mapState.provider = null;
+        mapState.deckEnabled = false;
         mapState.isReady = false;
     });
 </script>

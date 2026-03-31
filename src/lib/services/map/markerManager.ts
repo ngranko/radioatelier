@@ -49,11 +49,16 @@ export class MarkerManager {
         );
     }
 
+    public get isDeckRenderer(): boolean {
+        return this.isDeck;
+    }
+
     public async initialize() {
         try {
             await this.provider.preloadMarkerLibrary();
         } catch (error: unknown) {
             console.error('Failed to pre-load marker library:', error);
+            throw error;
         }
     }
 
