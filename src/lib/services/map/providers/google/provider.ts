@@ -74,7 +74,6 @@ export class GoogleMapsProvider implements MapProvider {
     }
 
     setCenter(lat: number, lng: number): void {
-        this.map?.setZoom(15);
         this.map?.panTo(new google.maps.LatLng(lat, lng));
     }
 

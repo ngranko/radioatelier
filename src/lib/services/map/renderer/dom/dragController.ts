@@ -1,5 +1,4 @@
 import type {LatLngLiteral, MapProvider} from '$lib/interfaces/map';
-import {setDraggable} from '$lib/services/map/map.svelte';
 import type {Marker} from '$lib/services/map/marker';
 import {removeDragTimeout, setDragTimeout} from '$lib/state/marker.svelte';
 
@@ -81,7 +80,7 @@ export class DragController {
             marker.setPosition(latLng);
         });
         this.skipClick = true;
-        setDraggable(false);
+        this.provider.setDraggable(false);
         marker.getOnDragStart()?.();
         element.classList.add('marker-dragging');
     }
@@ -106,7 +105,7 @@ export class DragController {
         return () => {
             removeDragTimeout();
             this.removeMapMoveListener(marker);
-            setDraggable(true);
+            this.provider.setDraggable(true);
             if (marker.isDragged) {
                 marker.isDragged = false;
                 marker.getOnDragEnd()?.();

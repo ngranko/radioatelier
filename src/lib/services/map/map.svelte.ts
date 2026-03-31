@@ -3,13 +3,8 @@ import {mapState} from '$lib/state/map.svelte';
 
 export function setCenter(lat: number, lng: number) {
     if (mapState.isReady) {
+        mapState.provider!.setZoom(15);
         mapState.provider!.setCenter(lat, lng);
-    }
-}
-
-export function setDraggable(isDraggable: boolean) {
-    if (mapState.isReady) {
-        mapState.provider!.setDraggable(isDraggable);
     }
 }
 

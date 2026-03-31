@@ -116,9 +116,14 @@ export class Marker {
             return;
         }
 
-        this.pointerDownListener = undefined;
+        this.unsubClick?.();
+        this.unsubClick = undefined;
+        this.unsubPointerDown?.();
+        this.unsubPointerDown = undefined;
+        this.unsubPointerMove?.();
         this.unsubPointerMove = undefined;
-        this.pointerUpListener = undefined;
+        this.unsubPointerUp?.();
+        this.unsubPointerUp = undefined;
         this.handle.remove();
         this.handle = undefined;
         onSuccess();
