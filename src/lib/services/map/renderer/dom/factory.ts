@@ -1,11 +1,11 @@
 import MarkerIcon from '$lib/components/map/markerIcon.svelte';
-import type {IMapProvider} from '$lib/interfaces/map';
+import type {MapProvider} from '$lib/interfaces/map';
 import type {Marker} from '$lib/services/map/marker';
 import {cn} from '$lib/utils';
 import {mount} from 'svelte';
 
 export class Factory {
-    public constructor(private provider: IMapProvider) {}
+    public constructor(private provider: MapProvider) {}
 
     public create(marker: Marker): void {
         const content = this.createMarkerContent(marker);

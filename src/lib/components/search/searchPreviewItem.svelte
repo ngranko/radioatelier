@@ -1,5 +1,5 @@
 <script lang="ts">
-    import SearchItemCard from './searchItemCard.svelte';
+    import SearchItemCard from '$lib/components/search/searchItemCard.svelte';
     import {setCenter} from '$lib/services/map/map.svelte';
     import type {SearchItem} from '$lib/interfaces/object';
     import {mapState} from '$lib/state/map.svelte.ts';

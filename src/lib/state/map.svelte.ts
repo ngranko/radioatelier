@@ -1,8 +1,8 @@
-import type {IMapProvider} from '$lib/interfaces/map';
+import type {MapProvider} from '$lib/interfaces/map';
 import type {MarkerManager} from '$lib/services/map/markerManager';
 
 interface MapState {
-    provider: IMapProvider | null;
+    provider: MapProvider | null;
     isReady: boolean;
     markerManager?: MarkerManager;
     deckEnabled: boolean;

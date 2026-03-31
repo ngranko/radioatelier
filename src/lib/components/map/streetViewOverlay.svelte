@@ -2,8 +2,9 @@
     import {onDestroy} from 'svelte';
     import config from '$lib/config';
     import {cn} from '$lib/utils';
-    import Button from '../ui/button/button.svelte';
-    import {getGoogleProvider} from '$lib/services/map/providers/google/provider';
+    import Button from '$lib/components/ui/button/button.svelte';
+    import {GoogleMapsProvider} from '$lib/services/map/providers/google/provider';
+    import {mapState} from '$lib/state/map.svelte';
     import XMarkIcon from '@lucide/svelte/icons/x';
 
     interface Props {
@@ -48,7 +49,11 @@
             return;
         }
 
-        const provider = getGoogleProvider();
+        const provider = mapState.provider;
+        if (!(provider instanceof GoogleMapsProvider)) {
+            return;
+        }
+
         const [{Map}, {AdvancedMarkerElement}] = await Promise.all([
             provider.loader.importLibrary('maps'),
             provider.loader.importLibrary('marker'),

@@ -2,7 +2,7 @@
     import MarkerIcon from '$lib/components/map/markerIcon.svelte';
     import {onMount, onDestroy} from 'svelte';
     import {mapState} from '$lib/state/map.svelte';
-    import type {IMarkerHandle} from '$lib/interfaces/map';
+    import type {MarkerHandle} from '$lib/interfaces/map';
     import DotIcon from '@lucide/svelte/icons/dot';
     import {mount, unmount} from 'svelte';
 
@@ -16,7 +16,7 @@
 
     let {orientationEnabled}: Props = $props();
 
-    let handle: IMarkerHandle | undefined = $state();
+    let handle: MarkerHandle | undefined = $state();
     let markerIcon: ReturnType<typeof mount> | undefined;
     let updateLocationInterval: ReturnType<typeof setInterval> | undefined;
 

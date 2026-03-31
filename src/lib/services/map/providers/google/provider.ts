@@ -3,26 +3,18 @@ import type {Location} from '$lib/interfaces/location';
 import type {
     BoundsPadding,
     EventUnsubscribe,
-    IMapProvider,
-    IMarkerHandle,
     LatLngLiteral,
     MapBounds,
+    MapProvider,
+    MarkerHandle,
     MarkerHandleOptions,
 } from '$lib/interfaces/map';
-import {mapState} from '$lib/state/map.svelte';
+import {GoogleMapBounds} from '$lib/services/map/providers/google/bounds';
+import {GoogleMarkerHandle} from '$lib/services/map/providers/google/markerHandle';
 import {themeState} from '$lib/state/theme.svelte';
 import {Loader} from '@googlemaps/js-api-loader';
-import {GoogleMapBounds} from './bounds';
-import {GoogleMarkerHandle} from './markerHandle';
 
-export function getGoogleProvider(): GoogleMapsProvider {
-    if (!(mapState.provider instanceof GoogleMapsProvider)) {
-        throw new Error('Expected GoogleMapsProvider');
-    }
-    return mapState.provider;
-}
-
-export class GoogleMapsProvider implements IMapProvider {
+export class GoogleMapsProvider implements MapProvider {
     readonly loader: Loader;
     private map?: google.maps.Map;
 
@@ -166,7 +158,7 @@ export class GoogleMapsProvider implements IMapProvider {
         position: LatLngLiteral,
         content: HTMLElement,
         options: MarkerHandleOptions = {},
-    ): IMarkerHandle {
+    ): MarkerHandle {
         if (!this.map) {
             throw new Error('Map not initialized');
         }

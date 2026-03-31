@@ -4,7 +4,7 @@
     import SearchResults from '$lib/components/search/searchResults.svelte';
     import {searchState, applyUrlToSearchState, buildSearchUrl} from '$lib/state/search.svelte';
     import {onDestroy, onMount} from 'svelte';
-    import SearchAreaButton from './searchAreaButton.svelte';
+    import SearchAreaButton from '$lib/components/search/searchAreaButton.svelte';
     import {mapState} from '$lib/state/map.svelte';
     import {page} from '$app/state';
     import {replaceState} from '$app/navigation';

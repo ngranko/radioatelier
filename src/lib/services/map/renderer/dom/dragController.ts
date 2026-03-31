@@ -1,12 +1,12 @@
-import type {IMapProvider, LatLngLiteral} from '$lib/interfaces/map';
+import type {LatLngLiteral, MapProvider} from '$lib/interfaces/map';
+import {setDraggable} from '$lib/services/map/map.svelte';
 import type {Marker} from '$lib/services/map/marker';
 import {removeDragTimeout, setDragTimeout} from '$lib/state/marker.svelte';
-import {setDraggable} from '../../map.svelte';
 
 export class DragController {
     private skipClick = false;
 
-    public constructor(private provider: IMapProvider) {}
+    public constructor(private provider: MapProvider) {}
 
     public attach(marker: Marker): void {
         const handle = marker.getHandle();
@@ -19,8 +19,8 @@ export class DragController {
     }
 
     public detach(marker: Marker): void {
-        marker.clickListener?.();
-        marker.clickListener = undefined;
+        marker.unsubClick?.();
+        marker.unsubClick = undefined;
         this.removeDomPointerListeners(marker);
         this.removeMapMoveListener(marker);
     }
@@ -31,8 +31,8 @@ export class DragController {
             return;
         }
 
-        marker.clickListener?.();
-        marker.clickListener = handle.addClickListener(this.handleClick(marker));
+        marker.unsubClick?.();
+        marker.unsubClick = handle.addClickListener(this.handleClick(marker));
     }
 
     private handleClick(marker: Marker) {
@@ -59,13 +59,10 @@ export class DragController {
             return;
         }
 
-        if (marker.pointerDownListener) {
-            element.removeEventListener('pointerdown', marker.pointerDownListener);
-        }
-
-        const onPointerDown = this.handlePointerDown(marker);
-        element.addEventListener('pointerdown', onPointerDown);
-        marker.pointerDownListener = onPointerDown;
+        marker.unsubPointerDown?.();
+        const handler = this.handlePointerDown(marker);
+        element.addEventListener('pointerdown', handler);
+        marker.unsubPointerDown = () => element.removeEventListener('pointerdown', handler);
     }
 
     private handlePointerDown(marker: Marker) {
@@ -79,7 +76,7 @@ export class DragController {
         if (!element) {
             return;
         }
-        marker.pointerMoveListener = this.provider.onPointerMove((latLng: LatLngLiteral) => {
+        marker.unsubPointerMove = this.provider.onPointerMove((latLng: LatLngLiteral) => {
             marker.isDragged = true;
             marker.setPosition(latLng);
         });
@@ -95,15 +92,14 @@ export class DragController {
             return;
         }
 
-        if (marker.pointerUpListener) {
-            element.removeEventListener('pointerup', marker.pointerUpListener);
-            element.removeEventListener('pointercancel', marker.pointerUpListener);
-        }
-
-        const onPointerUp = this.handlePointerUp(marker);
-        element.addEventListener('pointerup', onPointerUp);
-        element.addEventListener('pointercancel', onPointerUp);
-        marker.pointerUpListener = onPointerUp;
+        marker.unsubPointerUp?.();
+        const handler = this.handlePointerUp(marker);
+        element.addEventListener('pointerup', handler);
+        element.addEventListener('pointercancel', handler);
+        marker.unsubPointerUp = () => {
+            element.removeEventListener('pointerup', handler);
+            element.removeEventListener('pointercancel', handler);
+        };
     }
 
     private handlePointerUp(marker: Marker) {
@@ -120,27 +116,16 @@ export class DragController {
     }
 
     private removeMapMoveListener(marker: Marker) {
-        if (marker.pointerMoveListener) {
-            marker.pointerMoveListener();
-            marker.pointerMoveListener = undefined;
+        if (marker.unsubPointerMove) {
+            marker.unsubPointerMove();
+            marker.unsubPointerMove = undefined;
         }
     }
 
     private removeDomPointerListeners(marker: Marker) {
-        const element = marker.getHandle()?.getElement();
-        if (!element) {
-            return;
-        }
-
-        if (marker.pointerDownListener) {
-            element.removeEventListener('pointerdown', marker.pointerDownListener);
-            marker.pointerDownListener = undefined;
-        }
-
-        if (marker.pointerUpListener) {
-            element.removeEventListener('pointerup', marker.pointerUpListener);
-            element.removeEventListener('pointercancel', marker.pointerUpListener);
-            marker.pointerUpListener = undefined;
-        }
+        marker.unsubPointerDown?.();
+        marker.unsubPointerDown = undefined;
+        marker.unsubPointerUp?.();
+        marker.unsubPointerUp = undefined;
     }
 }

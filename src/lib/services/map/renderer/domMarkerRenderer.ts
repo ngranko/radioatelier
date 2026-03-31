@@ -1,4 +1,4 @@
-import type {IMapProvider} from '$lib/interfaces/map';
+import type {MapProvider} from '$lib/interfaces/map';
 import type {Marker} from '$lib/services/map/marker';
 import {DragController} from '$lib/services/map/renderer/dom/dragController';
 import {Factory} from '$lib/services/map/renderer/dom/factory';
@@ -10,7 +10,7 @@ export class DomMarkerRenderer implements MarkerRenderer {
     private dragController: DragController;
     private styler = new Styler();
 
-    public constructor(provider: IMapProvider) {
+    public constructor(provider: MapProvider) {
         this.factory = new Factory(provider);
         this.dragController = new DragController(provider);
     }

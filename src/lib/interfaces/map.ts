@@ -23,7 +23,7 @@ export interface MarkerHandleOptions {
     clickable?: boolean;
 }
 
-export interface IMarkerHandle {
+export interface MarkerHandle {
     setPosition(latLng: LatLngLiteral): void;
     getPosition(): LatLngLiteral;
     show(): void;
@@ -33,7 +33,7 @@ export interface IMarkerHandle {
     addClickListener(callback: () => void): EventUnsubscribe;
 }
 
-export interface IMapProvider {
+export interface MapProvider {
     getZoom(): number;
     setZoom(zoom: number): void;
     getCenter(): LatLngLiteral | undefined;
@@ -53,7 +53,7 @@ export interface IMapProvider {
         position: LatLngLiteral,
         content: HTMLElement,
         options?: MarkerHandleOptions,
-    ): IMarkerHandle;
+    ): MarkerHandle;
     preloadMarkerLibrary(): Promise<void>;
 
     closeStreetView(): void;

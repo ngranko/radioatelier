@@ -1,7 +1,7 @@
 <script lang="ts">
     import {onMount, onDestroy} from 'svelte';
     import {mapState} from '$lib/state/map.svelte';
-    import type {IMapProvider} from '$lib/interfaces/map';
+    import type {MapProvider} from '$lib/interfaces/map';
     import type {Location} from '$lib/interfaces/location';
     import {GoogleMapsProvider} from '$lib/services/map/providers/google/provider';
     import {MarkerManager} from '$lib/services/map/markerManager';
@@ -14,7 +14,7 @@
     } from '$lib/services/map/geolocation';
     import {PointerDragZoomController} from '$lib/services/map/pointerDragZoom';
     import config from '$lib/config';
-    import StreetView from './streetView.svelte';
+    import StreetView from '$lib/components/map/streetView.svelte';
     import {removeDragTimeout} from '$lib/state/marker.svelte';
 
     interface Props {
@@ -78,7 +78,7 @@
         }
     });
 
-    async function initMarkerManager(provider: IMapProvider): Promise<MarkerManager> {
+    async function initMarkerManager(provider: MapProvider): Promise<MarkerManager> {
         const initialMode = shouldUseDeck(provider) ? 'deck' : 'dom';
         const manager = new MarkerManager(
             provider,
@@ -99,10 +99,8 @@
     }
 
     function handleIdle() {
-        const mode = mapState.markerManager?.setRendererMode(
-            shouldUseDeck(mapState.provider!) ? 'deck' : 'dom',
-        );
-        mapState.deckEnabled = mode === 'deck';
+        mapState.markerManager?.setRendererMode(shouldUseDeck(mapState.provider!) ? 'deck' : 'dom');
+        mapState.deckEnabled = mapState.markerManager?.isDeckRenderer ?? false;
         mapState.markerManager?.scheduleViewportUpdate();
     }
 
@@ -128,7 +126,7 @@
         );
     }
 
-    function shouldUseDeck(provider: IMapProvider): boolean {
+    function shouldUseDeck(provider: MapProvider): boolean {
         return provider.getZoom() <= config.deckZoomThreshold;
     }
 

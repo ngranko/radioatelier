@@ -1,9 +1,9 @@
 <script lang="ts">
-    import StreetViewOverlay from './streetViewOverlay.svelte';
+    import StreetViewOverlay from '$lib/components/map/streetViewOverlay.svelte';
     import {cn} from '$lib/utils';
     import {onDestroy} from 'svelte';
     import {mapState} from '$lib/state/map.svelte';
-    import {getGoogleProvider} from '$lib/services/map/providers/google/provider';
+    import {GoogleMapsProvider} from '$lib/services/map/providers/google/provider';
     import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
 
     let streetViewContainer: HTMLDivElement | undefined = $state();
@@ -26,7 +26,11 @@
             throw new Error('Prerequisites for Street View instantiation are not met');
         }
 
-        const provider = getGoogleProvider();
+        const provider = mapState.provider;
+        if (!(provider instanceof GoogleMapsProvider)) {
+            return;
+        }
+
         const {StreetViewPanorama} = await provider.loader.importLibrary('streetView');
 
         const googleMap = provider.getGoogleMap();

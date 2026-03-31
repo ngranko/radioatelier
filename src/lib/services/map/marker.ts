@@ -1,12 +1,12 @@
-import type {IMarkerHandle, LatLngLiteral} from '$lib/interfaces/map';
+import type {LatLngLiteral, MarkerHandle} from '$lib/interfaces/map';
 import type {MarkerIcon, MarkerOptions, MarkerSource} from '$lib/interfaces/marker';
 
 export class Marker {
-    private handle?: IMarkerHandle;
-    public clickListener?: () => void;
-    public pointerDownListener?: () => void;
-    public pointerMoveListener?: () => void;
-    public pointerUpListener?: () => void;
+    private handle?: MarkerHandle;
+    public unsubClick?: () => void;
+    public unsubPointerDown?: () => void;
+    public unsubPointerMove?: () => void;
+    public unsubPointerUp?: () => void;
     public isDragged = false;
     private isVisited = false;
     private isRemoved = false;
@@ -83,11 +83,11 @@ export class Marker {
         return Boolean(this.handle);
     }
 
-    public getHandle(): IMarkerHandle | undefined {
+    public getHandle(): MarkerHandle | undefined {
         return this.handle;
     }
 
-    public setHandle(handle: IMarkerHandle) {
+    public setHandle(handle: MarkerHandle) {
         this.handle = handle;
     }
 
@@ -117,7 +117,7 @@ export class Marker {
         }
 
         this.pointerDownListener = undefined;
-        this.pointerMoveListener = undefined;
+        this.unsubPointerMove = undefined;
         this.pointerUpListener = undefined;
         this.handle.remove();
         this.handle = undefined;

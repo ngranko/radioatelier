@@ -4,7 +4,7 @@
     import CropDialog from '$lib/components/input/imageUpload/cropDialog.svelte';
     import ImageViewer from '$lib/components/input/imageUpload/imageViewer.svelte';
     import {toast} from 'svelte-sonner';
-    import LoadingOverlay from './loadingOverlay.svelte';
+    import LoadingOverlay from '$lib/components/input/imageUpload/loadingOverlay.svelte';
     import TrashIcon from '@lucide/svelte/icons/trash-2';
     import UploadIcon from '@lucide/svelte/icons/upload';
 

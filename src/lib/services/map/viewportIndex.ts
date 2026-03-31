@@ -1,6 +1,6 @@
 import type {LatLngLiteral, MapBounds} from '$lib/interfaces/map';
 import type {MarkerId} from '$lib/interfaces/marker';
-import type {MarkerRepository} from './markerRepository';
+import type {MarkerRepository} from '$lib/services/map/markerRepository';
 
 export interface ViewportCandidate {
     id: MarkerId;

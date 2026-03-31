@@ -1,11 +1,11 @@
 import type {
     EventUnsubscribe,
-    IMarkerHandle,
     LatLngLiteral,
+    MarkerHandle,
     MarkerHandleOptions,
 } from '$lib/interfaces/map';
 
-export class GoogleMarkerHandle implements IMarkerHandle {
+export class GoogleMarkerHandle implements MarkerHandle {
     private marker: google.maps.marker.AdvancedMarkerElement;
 
     constructor(

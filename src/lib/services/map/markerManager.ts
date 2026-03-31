@@ -1,11 +1,11 @@
-import type {IMapProvider, LatLngLiteral} from '$lib/interfaces/map';
+import type {LatLngLiteral, MapProvider} from '$lib/interfaces/map';
 import type {MarkerId, MarkerOptions, MarkerStateUpdate} from '$lib/interfaces/marker';
-import {Marker} from './marker';
-import {MarkerRepository} from './markerRepository';
-import type {MarkerRenderer} from './renderer/markerRenderer';
-import {UpdateScheduler} from './updateScheduler';
-import {ViewportIndex} from './viewportIndex';
-import {VisibilityEngine} from './visibilityEngine';
+import {Marker} from '$lib/services/map/marker';
+import {MarkerRepository} from '$lib/services/map/markerRepository';
+import type {MarkerRenderer} from '$lib/services/map/renderer/markerRenderer';
+import {UpdateScheduler} from '$lib/services/map/updateScheduler';
+import {ViewportIndex} from '$lib/services/map/viewportIndex';
+import {VisibilityEngine} from '$lib/services/map/visibilityEngine';
 
 export type RendererMode = 'dom' | 'deck';
 export type RendererFactory = (mode: RendererMode) => MarkerRenderer;
@@ -28,7 +28,7 @@ export class MarkerManager {
     private isDeck = false;
 
     public constructor(
-        private provider: IMapProvider,
+        private provider: MapProvider,
         private createRenderer: RendererFactory,
         options: Partial<MarkerManagerOptions> = {},
     ) {
@@ -124,12 +124,12 @@ export class MarkerManager {
         this.visibilityEngine.setSuppressed(false);
     }
 
-    public setRendererMode(renderer: RendererMode): RendererMode {
+    public setRendererMode(renderer: RendererMode): void {
         const wasDeck = this.isDeck;
         this.isDeck = renderer === 'deck';
 
         if (wasDeck === this.isDeck) {
-            return renderer;
+            return;
         }
 
         this.disableMarkers();
@@ -142,8 +142,6 @@ export class MarkerManager {
 
         this.enableMarkers();
         this.scheduleViewportUpdate();
-
-        return renderer;
     }
 
     public removeMarker(id: MarkerId) {
