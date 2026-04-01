@@ -1,13 +1,14 @@
+import type {LatLngLiteral, MapBounds} from '$lib/interfaces/map';
 import type {MarkerId} from '$lib/interfaces/marker';
-import type {MarkerRepository} from './markerRepository';
+import type {MarkerRepository} from '$lib/services/map/markerRepository';
 
 export interface ViewportCandidate {
     id: MarkerId;
-    position: google.maps.LatLngLiteral;
+    position: LatLngLiteral;
 }
 
 export class ViewportIndex {
-    public collect(bounds: google.maps.LatLngBounds, repo: MarkerRepository): ViewportCandidate[] {
+    public collect(bounds: MapBounds, repo: MarkerRepository): ViewportCandidate[] {
         const allMarkersInViewport: ViewportCandidate[] = [];
 
         for (const id of repo.ids()) {
@@ -22,7 +23,7 @@ export class ViewportIndex {
 
     public selectVisible(
         candidates: ViewportCandidate[],
-        center: google.maps.LatLngLiteral,
+        center: LatLngLiteral,
         limit: number,
     ): Set<string> {
         const sorted = this.sortByDistance(candidates, center);
@@ -31,7 +32,7 @@ export class ViewportIndex {
 
     private sortByDistance(
         markers: ViewportCandidate[],
-        center: google.maps.LatLngLiteral,
+        center: LatLngLiteral,
     ): ViewportCandidate[] {
         return markers.sort((a, b) => {
             const distanceA = this.calculateDistance(a.position, center);
@@ -51,10 +52,7 @@ export class ViewportIndex {
         return visibleIds;
     }
 
-    private calculateDistance(
-        pos1: google.maps.LatLngLiteral,
-        pos2: google.maps.LatLngLiteral,
-    ): number {
+    private calculateDistance(pos1: LatLngLiteral, pos2: LatLngLiteral): number {
         const lat1 = (pos1.lat * Math.PI) / 180;
         const lat2 = (pos2.lat * Math.PI) / 180;
         const deltaLat = ((pos2.lat - pos1.lat) * Math.PI) / 180;

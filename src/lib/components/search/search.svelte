@@ -4,7 +4,7 @@
     import SearchResults from '$lib/components/search/searchResults.svelte';
     import {searchState, applyUrlToSearchState, buildSearchUrl} from '$lib/state/search.svelte';
     import {onDestroy, onMount} from 'svelte';
-    import SearchAreaButton from './searchAreaButton.svelte';
+    import SearchAreaButton from '$lib/components/search/searchAreaButton.svelte';
     import {mapState} from '$lib/state/map.svelte';
     import {page} from '$app/state';
     import {replaceState} from '$app/navigation';
@@ -13,11 +13,11 @@
 
     let centerLat = $state('');
     let centerLng = $state('');
-    let listener: google.maps.MapsEventListener | undefined = $state();
+    let unsubDragEnd: (() => void) | undefined;
 
     onMount(() => {
         updateCenter();
-        listener = mapState.map!.addListener('dragend', updateCenter);
+        unsubDragEnd = mapState.provider!.onDragEnd(updateCenter);
 
         const applied = applyUrlToSearchState(page.url);
         if (applied) {
@@ -43,14 +43,16 @@
     });
 
     function updateCenter() {
-        centerLat = mapState.map!.getCenter()!.lat().toString();
-        centerLng = mapState.map!.getCenter()!.lng().toString();
+        const center = mapState.provider!.getCenter();
+        if (!center) {
+            return;
+        }
+        centerLat = center.lat.toString();
+        centerLng = center.lng.toString();
     }
 
     onDestroy(() => {
-        if (listener) {
-            google.maps.event.removeListener(listener);
-        }
+        unsubDragEnd?.();
     });
 </script>
 

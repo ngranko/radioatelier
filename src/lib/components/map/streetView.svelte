@@ -1,8 +1,9 @@
 <script lang="ts">
-    import StreetViewOverlay from './streetViewOverlay.svelte';
+    import StreetViewOverlay from '$lib/components/map/streetViewOverlay.svelte';
     import {cn} from '$lib/utils';
     import {onDestroy} from 'svelte';
     import {mapState} from '$lib/state/map.svelte';
+    import {GoogleMapsProvider} from '$lib/services/map/providers/google/provider';
     import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
 
     let streetViewContainer: HTMLDivElement | undefined = $state();
@@ -13,7 +14,7 @@
 
     let instantiated = false;
     $effect(() => {
-        if (mapState.map && !instantiated) {
+        if (mapState.isReady && !instantiated) {
             createStreetView()
                 .then(() => (instantiated = true))
                 .catch(error => console.error(error));
@@ -21,11 +22,21 @@
     });
 
     async function createStreetView() {
-        if (!mapState.map || !streetViewContainer) {
+        if (!mapState.isReady || !streetViewContainer) {
             throw new Error('Prerequisites for Street View instantiation are not met');
         }
 
-        const {StreetViewPanorama} = await mapState.loader.importLibrary('streetView');
+        const provider = mapState.provider;
+        if (!(provider instanceof GoogleMapsProvider)) {
+            return;
+        }
+
+        const {StreetViewPanorama} = await provider.loader.importLibrary('streetView');
+
+        const googleMap = provider.getGoogleMap();
+        if (!googleMap) {
+            throw new Error('Google Maps instance not available for Street View');
+        }
 
         panorama = new StreetViewPanorama(streetViewContainer, {
             visible: false,
@@ -38,8 +49,7 @@
             zoomControl: false,
         });
 
-        mapState.map.setStreetView(panorama);
-
+        googleMap.setStreetView(panorama);
         addListeners();
     }
 

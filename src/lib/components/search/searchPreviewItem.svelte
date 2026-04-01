@@ -1,5 +1,5 @@
 <script lang="ts">
-    import SearchItemCard from './searchItemCard.svelte';
+    import SearchItemCard from '$lib/components/search/searchItemCard.svelte';
     import {setCenter} from '$lib/services/map/map.svelte';
     import type {SearchItem} from '$lib/interfaces/object';
     import {mapState} from '$lib/state/map.svelte.ts';
@@ -19,8 +19,8 @@
 
         setCenter(object.latitude, object.longitude);
         const marker = object.id ? mapState.markerManager.getMarker(object.id) : null;
-        if (marker?.getRaw()) {
-            google.maps.event.trigger(marker.getRaw()!, 'gmp-click');
+        if (marker) {
+            marker.getOnClick()?.();
         } else if (object.id) {
             objectDetailsOverlay.isMinimized = false;
             objectDetailsOverlay.isDirty = false;

@@ -6,8 +6,8 @@
     import {Button} from '$lib/components/ui/button';
     import {badgeVariants} from '$lib/components/ui/badge';
     import {toast} from 'svelte-sonner';
-    import CloseButton from './closeButton.svelte';
-    import Background from './background.svelte';
+    import CloseButton from '$lib/components/objectDetails/closeButton.svelte';
+    import Background from '$lib/components/objectDetails/background.svelte';
     import {mapState} from '$lib/state/map.svelte';
     import {cn} from '$lib/utils.ts';
     import {
@@ -22,7 +22,7 @@
     import {getActiveSearchUrl} from '$lib/state/search.svelte';
     import {setCreateDraftPosition} from '$lib/state/createDraft.svelte';
     import EditMode from '$lib/components/objectDetails/editMode/editMode.svelte';
-    import ViewMode from './viewMode/viewMode.svelte';
+    import ViewMode from '$lib/components/objectDetails/viewMode/viewMode.svelte';
 
     interface Props {
         initialValues?: Partial<LooseObject>;
@@ -54,8 +54,8 @@
         deactivateMarker();
         clearActiveMarker();
         closeDetailsOverlay();
-        if (mapState.map) {
-            mapState.map.getStreetView().setVisible(false);
+        if (mapState.isReady) {
+            mapState.provider!.closeStreetView();
         }
 
         if (ctx.auth.userId) {

@@ -1,14 +1,15 @@
+import type {LatLngLiteral, MapProvider} from '$lib/interfaces/map';
 import type {Marker} from '$lib/services/map/marker';
-import {mapState} from '$lib/state/map.svelte';
 import {removeDragTimeout, setDragTimeout} from '$lib/state/marker.svelte';
-import {setDraggable} from '../../map.svelte';
 
 export class DragController {
     private skipClick = false;
 
+    public constructor(private provider: MapProvider) {}
+
     public attach(marker: Marker): void {
-        const raw = marker.getRaw();
-        if (!raw) {
+        const handle = marker.getHandle();
+        if (!handle) {
             return;
         }
 
@@ -17,28 +18,20 @@ export class DragController {
     }
 
     public detach(marker: Marker): void {
-        const raw = marker.getRaw();
-        if (!raw) {
-            return;
-        }
-
-        google.maps.event.clearInstanceListeners(raw);
+        marker.unsubClick?.();
+        marker.unsubClick = undefined;
         this.removeDomPointerListeners(marker);
         this.removeMapMoveListener(marker);
     }
 
     private attachClick(marker: Marker): void {
-        const raw = marker.getRaw();
-        if (!raw) {
+        const handle = marker.getHandle();
+        if (!handle) {
             return;
         }
 
-        if (marker.clickListener) {
-            google.maps.event.removeListener(marker.clickListener);
-            marker.clickListener = undefined;
-        }
-
-        marker.clickListener = raw.addListener('gmp-click', this.handleClick(marker));
+        marker.unsubClick?.();
+        marker.unsubClick = handle.addClickListener(this.handleClick(marker));
     }
 
     private handleClick(marker: Marker) {
@@ -47,8 +40,7 @@ export class DragController {
                 this.skipClick = false;
                 return;
             }
-            const onClick = marker.getOnClick();
-            onClick?.();
+            marker.getOnClick()?.();
         };
     }
 
@@ -61,18 +53,15 @@ export class DragController {
     }
 
     private attachPointerDown(marker: Marker): void {
-        const markerContent = marker.getRaw()?.content;
-        if (!markerContent || !(markerContent instanceof HTMLElement)) {
+        const element = marker.getHandle()?.getElement();
+        if (!element) {
             return;
         }
 
-        if (marker.pointerDownListener) {
-            markerContent.removeEventListener('pointerdown', marker.pointerDownListener);
-        }
-
-        const onPointerDown = this.handlePointerDown(marker);
-        markerContent.addEventListener('pointerdown', onPointerDown);
-        marker.pointerDownListener = onPointerDown;
+        marker.unsubPointerDown?.();
+        const handler = this.handlePointerDown(marker);
+        element.addEventListener('pointerdown', handler);
+        marker.unsubPointerDown = () => element.removeEventListener('pointerdown', handler);
     }
 
     private handlePointerDown(marker: Marker) {
@@ -82,93 +71,60 @@ export class DragController {
     }
 
     private startDrag(marker: Marker) {
-        const markerContent = marker.getRaw()?.content;
-        if (!markerContent || !(markerContent instanceof HTMLElement)) {
+        const element = marker.getHandle()?.getElement();
+        if (!element) {
             return;
         }
-        marker.pointerMoveListener = this.createMapMoveListener(marker);
+        marker.unsubPointerMove = this.provider.onPointerMove((latLng: LatLngLiteral) => {
+            marker.isDragged = true;
+            marker.setPosition(latLng);
+        });
         this.skipClick = true;
-        setDraggable(false);
-        const start = marker.getOnDragStart();
-        start?.();
-        markerContent.classList.add('marker-dragging');
-    }
-
-    private createMapMoveListener(marker: Marker): google.maps.MapsEventListener {
-        if (!mapState.map) {
-            throw new Error('Map is not initialized');
-        }
-
-        return google.maps.event.addListener(
-            mapState.map,
-            'mousemove',
-            (event: google.maps.MapMouseEvent) => {
-                if (!event.latLng) {
-                    return;
-                }
-
-                marker.isDragged = true;
-                marker.setPosition({lat: event.latLng.lat(), lng: event.latLng.lng()});
-            },
-        );
+        this.provider.setDraggable(false);
+        marker.getOnDragStart()?.();
+        element.classList.add('marker-dragging');
     }
 
     private attachPointerUp(marker: Marker): void {
-        const markerContent = marker.getRaw()?.content;
-        if (!markerContent || !(markerContent instanceof HTMLElement)) {
+        const element = marker.getHandle()?.getElement();
+        if (!element) {
             return;
         }
 
-        if (marker.pointerUpListener) {
-            markerContent.removeEventListener('pointerup', marker.pointerUpListener);
-            markerContent.removeEventListener('pointercancel', marker.pointerUpListener);
-        }
-
-        const onPointerUp = this.handlePointerUp(marker);
-        markerContent.addEventListener('pointerup', onPointerUp);
-        markerContent.addEventListener('pointercancel', onPointerUp);
-        marker.pointerUpListener = onPointerUp;
+        marker.unsubPointerUp?.();
+        const handler = this.handlePointerUp(marker);
+        element.addEventListener('pointerup', handler);
+        element.addEventListener('pointercancel', handler);
+        marker.unsubPointerUp = () => {
+            element.removeEventListener('pointerup', handler);
+            element.removeEventListener('pointercancel', handler);
+        };
     }
 
     private handlePointerUp(marker: Marker) {
         return () => {
             removeDragTimeout();
             this.removeMapMoveListener(marker);
-            setDraggable(true);
+            this.provider.setDraggable(true);
             if (marker.isDragged) {
                 marker.isDragged = false;
-                const end = marker.getOnDragEnd();
-                end?.();
+                marker.getOnDragEnd()?.();
             }
-            const markerContent = marker.getRaw()?.content;
-            if (markerContent && markerContent instanceof HTMLElement) {
-                markerContent.classList.remove('marker-dragging');
-            }
+            marker.getHandle()?.getElement()?.classList.remove('marker-dragging');
         };
     }
 
     private removeMapMoveListener(marker: Marker) {
-        if (marker.pointerMoveListener) {
-            google.maps.event.removeListener(marker.pointerMoveListener);
-            marker.pointerMoveListener = undefined;
+        if (marker.unsubPointerMove) {
+            marker.unsubPointerMove();
+            marker.unsubPointerMove = undefined;
         }
     }
 
     private removeDomPointerListeners(marker: Marker) {
-        const markerContent = marker.getRaw()?.content;
-        if (!markerContent || !(markerContent instanceof HTMLElement)) {
-            return;
-        }
-
-        if (marker.pointerDownListener) {
-            markerContent.removeEventListener('pointerdown', marker.pointerDownListener);
-            marker.pointerDownListener = undefined;
-        }
-
-        if (marker.pointerUpListener) {
-            markerContent.removeEventListener('pointerup', marker.pointerUpListener);
-            markerContent.removeEventListener('pointercancel', marker.pointerUpListener);
-            marker.pointerUpListener = undefined;
-        }
+        marker.unsubPointerDown?.();
+        marker.unsubPointerDown = undefined;
+        marker.unsubPointerUp?.();
+        marker.unsubPointerUp = undefined;
     }
 }

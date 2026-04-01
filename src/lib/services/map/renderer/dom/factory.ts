@@ -1,12 +1,18 @@
 import MarkerIcon from '$lib/components/map/markerIcon.svelte';
+import type {MapProvider} from '$lib/interfaces/map';
 import type {Marker} from '$lib/services/map/marker';
 import {cn} from '$lib/utils';
 import {mount} from 'svelte';
 
 export class Factory {
+    public constructor(private provider: MapProvider) {}
+
     public create(marker: Marker): void {
-        const raw = this.createAdvancedMarkerElement(marker, this.createMarkerContent(marker));
-        marker.setRaw(raw);
+        const content = this.createMarkerContent(marker);
+        const handle = this.provider.createMarkerHandle(marker.getPosition(), content, {
+            zIndex: marker.getSource() === 'search' ? 1 : 0,
+        });
+        marker.setHandle(handle);
         marker.create();
     }
 
@@ -27,18 +33,5 @@ export class Factory {
             },
         });
         return markerElement;
-    }
-
-    private createAdvancedMarkerElement(
-        marker: Marker,
-        content: HTMLElement,
-    ): google.maps.marker.AdvancedMarkerElement {
-        return new google.maps.marker.AdvancedMarkerElement({
-            position: marker.getPosition(),
-            content,
-            collisionBehavior: google.maps.CollisionBehavior.REQUIRED,
-            gmpClickable: true,
-            zIndex: marker.getSource() === 'search' ? 1 : 0,
-        });
     }
 }

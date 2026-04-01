@@ -2,39 +2,29 @@ import type {MapPlaceable} from '$lib/interfaces/object';
 import {mapState} from '$lib/state/map.svelte';
 
 export function setCenter(lat: number, lng: number) {
-    if (mapState.map) {
-        mapState.map.setZoom(15);
-        mapState.map.panTo(new google.maps.LatLng(lat, lng));
-    }
-}
-
-export function setDraggable(isDraggable: boolean) {
-    if (mapState.map) {
-        mapState.map.set('draggable', isDraggable);
+    if (mapState.isReady) {
+        mapState.provider!.setZoom(15);
+        mapState.provider!.setCenter(lat, lng);
     }
 }
 
 export function fitMarkerList(objects: MapPlaceable[], currentCenter?: MapPlaceable) {
-    if (objects.length === 0) {
+    if (objects.length === 0 || !mapState.isReady) {
         return;
     }
 
-    if (mapState.map) {
-        const latlngbounds = new google.maps.LatLngBounds();
-        if (currentCenter) {
-            latlngbounds.extend(
-                new google.maps.LatLng(currentCenter.latitude, currentCenter.longitude),
-            );
-        }
-
-        for (const object of objects) {
-            latlngbounds.extend(new google.maps.LatLng(object.latitude, object.longitude));
-        }
-        mapState.map.fitBounds(
-            latlngbounds,
-            document.body.clientWidth > 640
-                ? {left: 424, top: 24, bottom: 24, right: 24}
-                : {left: 24, top: 132, bottom: 24, right: 24},
-        );
+    const bounds = mapState.provider!.createBounds();
+    if (currentCenter) {
+        bounds.extend({lat: currentCenter.latitude, lng: currentCenter.longitude});
     }
+    for (const object of objects) {
+        bounds.extend({lat: object.latitude, lng: object.longitude});
+    }
+
+    mapState.provider!.fitBounds(
+        bounds,
+        document.body.clientWidth > 640
+            ? {left: 424, top: 24, bottom: 24, right: 24}
+            : {left: 24, top: 132, bottom: 24, right: 24},
+    );
 }

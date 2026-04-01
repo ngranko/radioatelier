@@ -1,8 +1,12 @@
 <script lang="ts">
     import {onMount, onDestroy} from 'svelte';
     import {mapState} from '$lib/state/map.svelte';
+    import type {MapProvider} from '$lib/interfaces/map';
     import type {Location} from '$lib/interfaces/location';
+    import {GoogleMapsProvider} from '$lib/services/map/providers/google/provider';
     import {MarkerManager} from '$lib/services/map/markerManager';
+    import {DomMarkerRenderer} from '$lib/services/map/renderer/domMarkerRenderer';
+    import {HybridMarkerRenderer} from '$lib/services/map/providers/google/hybridMarkerRenderer';
     import {
         getInitialCenter,
         startPositionPolling,
@@ -10,8 +14,7 @@
     } from '$lib/services/map/geolocation';
     import {PointerDragZoomController} from '$lib/services/map/pointerDragZoom';
     import config from '$lib/config';
-    import {themeState} from '$lib/state/theme.svelte';
-    import StreetView from './streetView.svelte';
+    import StreetView from '$lib/components/map/streetView.svelte';
     import {removeDragTimeout} from '$lib/state/marker.svelte';
 
     interface Props {
@@ -25,139 +28,106 @@
     let positionInterval: number | undefined;
     let isInZoomMode = false;
 
+    let unsubIdle: (() => void) | undefined;
+    let unsubClick: (() => void) | undefined;
+    let unsubCenterChanged: (() => void) | undefined;
+
+    async function setupProviderAndMarkers() {
+        const provider = new GoogleMapsProvider();
+        const center = await getInitialCenter();
+        await provider.initialize(container!, center);
+        mapState.provider = provider;
+        mapState.markerManager = await initMarkerManager(provider);
+        mapState.deckEnabled = mapState.markerManager.isDeckRenderer;
+        mapState.isReady = true;
+        mapState.markerManager.scheduleViewportUpdate();
+    }
+
+    function setupListenersAndGestures() {
+        initListeners();
+
+        new PointerDragZoomController({
+            getZoom: () => mapState.provider!.getZoom(),
+            setZoom: zoom => mapState.provider!.setZoom(zoom),
+            onStart: () => {
+                clearTimeout(clickTimeout);
+                clickTimeout = undefined;
+                isInZoomMode = true;
+            },
+            onEnd: () => {
+                isInZoomMode = false;
+            },
+        }).attachDoubleTapDragZoom(container!);
+    }
+
     onMount(async () => {
         positionInterval = startPositionPolling(5000);
 
         try {
-            const mapInstance = await initMap();
-            mapState.markerManager = await initMarkerManager(mapInstance);
-            mapState.map = mapInstance;
-            mapState.markerManager!.scheduleViewportUpdate();
+            await setupProviderAndMarkers();
         } catch (e) {
             console.error('error instantiating map');
             console.error(e);
         }
 
         try {
-            initListeners();
-
-            new PointerDragZoomController({
-                getZoom: () => mapState.map?.getZoom() ?? 15,
-                setZoom: zoom => mapState.map?.setZoom(zoom),
-                onStart: () => {
-                    clearTimeout(clickTimeout);
-                    clickTimeout = undefined;
-                    isInZoomMode = true;
-                },
-                onEnd: () => {
-                    isInZoomMode = false;
-                },
-            }).attachDoubleTapDragZoom(container!);
+            setupListenersAndGestures();
         } catch (e) {
             console.error('error initialising map event listeners');
             console.error(e);
         }
     });
 
-    async function initMap(): Promise<google.maps.Map> {
-        const [{Map}, {ColorScheme}] = await Promise.all([
-            mapState.loader.importLibrary('maps'),
-            mapState.loader.importLibrary('core'),
-        ]);
-
-        const center = await getInitialCenter();
-
-        return new Map(container!, {
-            zoom: center.zoom ?? 15,
-            center,
-            mapId: config.googleMapsId,
-            controlSize: 40,
-            mapTypeControl: false,
-            cameraControl: false,
-            fullscreenControl: false,
-            zoomControl: false,
-            clickableIcons: false,
-            colorScheme: getMapColorScheme(ColorScheme),
-        });
-    }
-
-    function getMapColorScheme(
-        ColorScheme: typeof google.maps.ColorScheme,
-    ): google.maps.ColorScheme {
-        if (themeState.preference === 'system') {
-            return ColorScheme.FOLLOW_SYSTEM;
-        }
-
-        return themeState.resolved === 'dark' ? ColorScheme.DARK : ColorScheme.LIGHT;
-    }
-
-    async function initMarkerManager(mapInstance: google.maps.Map): Promise<MarkerManager> {
-        const manager = new MarkerManager(mapInstance, {
-            renderer: shouldUseDeck(mapInstance) ? 'deck' : 'dom',
-        });
-        await manager.initialize(mapState.loader);
+    async function initMarkerManager(provider: MapProvider): Promise<MarkerManager> {
+        const initialMode = shouldUseDeck(provider) ? 'deck' : 'dom';
+        const manager = new MarkerManager(
+            provider,
+            mode =>
+                mode === 'deck'
+                    ? new HybridMarkerRenderer(provider)
+                    : new DomMarkerRenderer(provider),
+            {renderer: initialMode},
+        );
+        await manager.initialize();
         return manager;
     }
 
     function initListeners() {
-        if (!mapState.map) {
-            return;
-        }
-
-        google.maps.event.addListener(mapState.map, 'idle', handleIdle);
-        google.maps.event.addListener(mapState.map, 'click', handleClick);
-        google.maps.event.addListener(mapState.map, 'center_changed', handleCenterChanged);
+        unsubIdle = mapState.provider!.onIdle(handleIdle);
+        unsubClick = mapState.provider!.onClick(handleClick);
+        unsubCenterChanged = mapState.provider!.onCenterChanged(handleCenterChanged);
     }
 
     function handleIdle() {
-        mapState.markerManager?.setRendererMode(shouldUseDeck(mapState.map!) ? 'deck' : 'dom');
+        mapState.markerManager?.setRendererMode(shouldUseDeck(mapState.provider!) ? 'deck' : 'dom');
+        mapState.deckEnabled = mapState.markerManager?.isDeckRenderer ?? false;
         mapState.markerManager?.scheduleViewportUpdate();
     }
 
-    function handleClick(event: google.maps.MapMouseEvent) {
+    function handleClick(latLng: {lat: number; lng: number}) {
         if (mapState.deckEnabled || isInZoomMode) {
             return;
         }
 
         clickTimeout = setTimeout(() => {
             if (!isInZoomMode && onClick) {
-                onClick({
-                    lat: event.latLng?.lat() ?? 0,
-                    lng: event.latLng?.lng() ?? 0,
-                });
+                onClick(latLng);
             }
             clickTimeout = undefined;
         }, 300);
     }
 
-    function handleCenterChanged() {
-        if (!mapState.map) {
-            return;
-        }
-
+    function handleCenterChanged(center: {lat: number; lng: number}, zoom: number) {
         removeDragTimeout();
 
-        const center = mapState.map.getCenter();
         localStorage.setItem(
             'lastCenter',
-            JSON.stringify({
-                lat: (center as google.maps.LatLng).lat(),
-                lng: (center as google.maps.LatLng).lng(),
-                zoom: mapState.map.getZoom(),
-            }),
+            JSON.stringify({lat: center.lat, lng: center.lng, zoom}),
         );
     }
 
-    function cleanupListeners() {
-        if (!mapState.map) {
-            return;
-        }
-
-        google.maps.event.clearInstanceListeners(mapState.map);
-    }
-
-    function shouldUseDeck(map: google.maps.Map): boolean {
-        return (map.getZoom() ?? 15) <= config.deckZoomThreshold;
+    function shouldUseDeck(provider: MapProvider): boolean {
+        return provider.getZoom() <= config.deckZoomThreshold;
     }
 
     onDestroy(() => {
@@ -165,9 +135,14 @@
             stopPositionPolling(positionInterval);
         }
 
-        cleanupListeners();
+        unsubIdle?.();
+        unsubClick?.();
+        unsubCenterChanged?.();
         mapState.markerManager?.destroy();
-        mapState.map = undefined;
+        mapState.provider?.destroy();
+        mapState.provider = null;
+        mapState.deckEnabled = false;
+        mapState.isReady = false;
     });
 </script>
 

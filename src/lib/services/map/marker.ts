@@ -1,40 +1,37 @@
+import type {LatLngLiteral, MarkerHandle} from '$lib/interfaces/map';
 import type {MarkerIcon, MarkerOptions, MarkerSource} from '$lib/interfaces/marker';
 
 export class Marker {
-    private marker?: google.maps.marker.AdvancedMarkerElement;
-    public clickListener?: google.maps.MapsEventListener;
-    public pointerDownListener?: () => void;
-    public pointerMoveListener?: google.maps.MapsEventListener;
-    public pointerUpListener?: () => void;
+    private handle?: MarkerHandle;
+    public unsubClick?: () => void;
+    public unsubPointerDown?: () => void;
+    public unsubPointerMove?: () => void;
+    public unsubPointerUp?: () => void;
     public isDragged = false;
     private isVisited = false;
     private isRemoved = false;
 
     public constructor(
-        private map: google.maps.Map,
-        private position: google.maps.LatLngLiteral,
+        private position: LatLngLiteral,
         private options: MarkerOptions,
     ) {
         this.isVisited = Boolean(options.isVisited);
         this.isRemoved = Boolean(options.isRemoved);
     }
 
-    public getPosition(): google.maps.LatLngLiteral {
+    public getPosition(): LatLngLiteral {
         return this.position;
     }
 
-    public setPosition(position: google.maps.LatLngLiteral) {
-        if (this.marker) {
-            this.marker.position = position;
-        }
+    public setPosition(position: LatLngLiteral) {
+        this.handle?.setPosition(position);
         this.position = position;
     }
 
     public revertPosition() {
-        if (!this.marker) {
-            return;
+        if (this.handle) {
+            this.handle.setPosition(this.position);
         }
-        this.marker.position = this.position;
     }
 
     public getSource(): MarkerSource {
@@ -43,10 +40,6 @@ export class Marker {
 
     public getColor(): string {
         return this.options.color;
-    }
-
-    public getMap(): google.maps.Map {
-        return this.map;
     }
 
     public isDraggable(): boolean {
@@ -87,15 +80,15 @@ export class Marker {
     }
 
     public isCreated(): boolean {
-        return Boolean(this.marker);
+        return Boolean(this.handle);
     }
 
-    public getRaw() {
-        return this.marker;
+    public getHandle(): MarkerHandle | undefined {
+        return this.handle;
     }
 
-    public setRaw(raw: google.maps.marker.AdvancedMarkerElement) {
-        this.marker = raw;
+    public setHandle(handle: MarkerHandle) {
+        this.handle = handle;
     }
 
     public create() {
@@ -103,41 +96,36 @@ export class Marker {
     }
 
     public show() {
-        if (!this.marker) {
-            return;
-        }
-
-        if (!this.marker.map) {
-            this.marker.map = this.map;
-        }
+        this.handle?.show();
     }
 
     // this function hides a marker without an animation because we do it when a marker either moves
     // out of viewport bounds (in which case we don't see it, so no need for an animation), or if we
     // hide all markers while moving to deck overlay, in which case an animation causes weird jitter,
-    // so for now it is sipler to just hide without animation.
+    // so for now it is simpler to just hide without animation.
     // There is an edge-case where a marker can be out of viewport only partially, in which case the lack
     // of animation will be visible, but I'm willing to live with that for now
     // TODO: Consider implementing true lazy loading (DOM destruction/recreation) if memory usage becomes an issue.
     // Current approach: DOM caching for better performance and smooth UX
     public hide() {
-        if (!this.marker || !this.marker.map) {
-            return;
-        }
-
-        this.marker.map = null;
+        this.handle?.hide();
     }
 
     public remove(onSuccess: () => void) {
-        if (!this.marker) {
+        if (!this.handle) {
             return;
         }
 
-        this.pointerDownListener = undefined;
-        this.pointerMoveListener = undefined;
-        this.pointerUpListener = undefined;
-        this.marker.map = null;
-        this.marker = undefined;
+        this.unsubClick?.();
+        this.unsubClick = undefined;
+        this.unsubPointerDown?.();
+        this.unsubPointerDown = undefined;
+        this.unsubPointerMove?.();
+        this.unsubPointerMove = undefined;
+        this.unsubPointerUp?.();
+        this.unsubPointerUp = undefined;
+        this.handle.remove();
+        this.handle = undefined;
         onSuccess();
     }
 }

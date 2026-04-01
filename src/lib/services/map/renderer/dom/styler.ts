@@ -4,29 +4,29 @@ import type {Marker} from '$lib/services/map/marker';
 export class Styler {
     public apply(marker: Marker) {
         const {isVisited, isRemoved} = marker.getState();
-        const markerContent = marker.getRaw()?.content;
-        if (!markerContent || !(markerContent instanceof HTMLElement)) {
+        const element = marker.getHandle()?.getElement();
+        if (!element) {
             return;
         }
 
-        this.applyVisited(markerContent, isVisited, marker.getColor());
-        this.applyRemoved(markerContent, isRemoved);
+        this.applyVisited(element, isVisited, marker.getColor());
+        this.applyRemoved(element, isRemoved);
     }
 
-    private applyVisited(markerContent: HTMLElement, isVisited: boolean, markerColor: string) {
-        markerContent.style.boxShadow = `0 0 0 3px white, 0 0 0 5px ${markerColor}40, 0 2px 4px rgba(0,0,0,0.2)`;
+    private applyVisited(element: HTMLElement, isVisited: boolean, markerColor: string) {
+        element.style.boxShadow = `0 0 0 3px white, 0 0 0 5px ${markerColor}40, 0 2px 4px rgba(0,0,0,0.2)`;
 
         if (isVisited) {
             const borderColor = getContrastingColor(markerColor);
-            markerContent.style.boxShadow = `0 0 0 3px ${borderColor}, 0 0 0 5px ${markerColor}40, 0 2px 4px rgba(0,0,0,0.2)`;
+            element.style.boxShadow = `0 0 0 3px ${borderColor}, 0 0 0 5px ${markerColor}40, 0 2px 4px rgba(0,0,0,0.2)`;
         }
     }
 
-    private applyRemoved(markerContent: HTMLElement, isRemoved: boolean) {
-        markerContent.classList.remove('opacity-50');
+    private applyRemoved(element: HTMLElement, isRemoved: boolean) {
+        element.classList.remove('opacity-50');
 
         if (isRemoved) {
-            markerContent.classList.add('opacity-50');
+            element.classList.add('opacity-50');
         }
     }
 }

@@ -9,7 +9,7 @@
     } from '$lib/components/ui/command';
     import CheckIcon from '@lucide/svelte/icons/check';
     import PlusIcon from '@lucide/svelte/icons/plus';
-    import ComboboxTrigger from './combobox/comboboxTrigger.svelte';
+    import ComboboxTrigger from '$lib/components/input/combobox/comboboxTrigger.svelte';
     import type {Option} from '$lib/interfaces/option';
     type ComboboxValue = string | string[] | null | undefined;
 

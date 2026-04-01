@@ -12,8 +12,9 @@
             return;
         }
 
-        if (mapState.map) {
-            mapState.map.setCenter(position);
+        if (mapState.isReady) {
+            mapState.provider!.setZoom(15);
+            mapState.provider!.setCenter(position.lat, position.lng);
         }
     }
 </script>

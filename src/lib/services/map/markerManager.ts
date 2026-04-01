@@ -1,19 +1,20 @@
+import type {LatLngLiteral, MapProvider} from '$lib/interfaces/map';
 import type {MarkerId, MarkerOptions, MarkerStateUpdate} from '$lib/interfaces/marker';
-import type {Loader} from '@googlemaps/js-api-loader';
-import {Marker} from './marker';
-import {MarkerRepository} from './markerRepository';
-import {DomMarkerRenderer} from './renderer/domMarkerRenderer';
-import {HybridMarkerRenderer} from './renderer/hybridMarkerRenderer';
-import type {MarkerRenderer} from './renderer/markerRenderer';
-import {UpdateScheduler} from './updateScheduler';
-import {ViewportIndex} from './viewportIndex';
-import {VisibilityEngine} from './visibilityEngine';
+import {Marker} from '$lib/services/map/marker';
+import {MarkerRepository} from '$lib/services/map/markerRepository';
+import type {MarkerRenderer} from '$lib/services/map/renderer/markerRenderer';
+import {UpdateScheduler} from '$lib/services/map/updateScheduler';
+import {ViewportIndex} from '$lib/services/map/viewportIndex';
+import {VisibilityEngine} from '$lib/services/map/visibilityEngine';
+
+export type RendererMode = 'dom' | 'deck';
+export type RendererFactory = (mode: RendererMode) => MarkerRenderer;
 
 export interface MarkerManagerOptions {
-    chunkSize: number; // Number of markers to process per animation frame
-    maxVisibleMarkers: number; // Maximum markers to display on screen at once
-    maxZoom: number; // Maximum zoom level to display markers
-    renderer?: 'dom' | 'deck';
+    chunkSize: number;
+    maxVisibleMarkers: number;
+    maxZoom: number;
+    renderer?: RendererMode;
 }
 
 export class MarkerManager {
@@ -27,7 +28,8 @@ export class MarkerManager {
     private isDeck = false;
 
     public constructor(
-        private map: google.maps.Map,
+        private provider: MapProvider,
+        private createRenderer: RendererFactory,
         options: Partial<MarkerManagerOptions> = {},
     ) {
         this.options = {
@@ -39,7 +41,7 @@ export class MarkerManager {
         };
 
         this.isDeck = this.options.renderer === 'deck';
-        this.renderer = this.isDeck ? new HybridMarkerRenderer(this.map) : new DomMarkerRenderer();
+        this.renderer = createRenderer(this.isDeck ? 'deck' : 'dom');
         this.visibilityEngine = new VisibilityEngine(
             this.repo,
             {chunkSize: this.options.chunkSize},
@@ -47,24 +49,25 @@ export class MarkerManager {
         );
     }
 
-    public async initialize(mapLoader: Loader) {
+    public get isDeckRenderer(): boolean {
+        return this.isDeck;
+    }
+
+    public async initialize() {
         try {
-            await mapLoader.importLibrary('marker');
+            await this.provider.preloadMarkerLibrary();
         } catch (error: unknown) {
             console.error('Failed to pre-load marker library:', error);
+            throw error;
         }
     }
 
-    public addMarker(
-        id: MarkerId,
-        position: google.maps.LatLngLiteral,
-        options: MarkerOptions,
-    ): Marker | null {
+    public addMarker(id: MarkerId, position: LatLngLiteral, options: MarkerOptions): Marker | null {
         const isLazy = options.source === 'list';
 
         const upsert = this.repo.upsertWithPolicy(
             id,
-            () => new Marker(this.map, position, options),
+            () => new Marker(position, options),
             options.source,
         );
 
@@ -121,7 +124,7 @@ export class MarkerManager {
         this.visibilityEngine.setSuppressed(false);
     }
 
-    public setRendererMode(renderer: 'dom' | 'deck') {
+    public setRendererMode(renderer: RendererMode): void {
         const wasDeck = this.isDeck;
         this.isDeck = renderer === 'deck';
 
@@ -132,7 +135,7 @@ export class MarkerManager {
         this.disableMarkers();
 
         this.renderer.destroy();
-        this.renderer = this.isDeck ? new HybridMarkerRenderer(this.map) : new DomMarkerRenderer();
+        this.renderer = this.createRenderer(this.isDeck ? 'deck' : 'dom');
         this.visibilityEngine.setRenderer(this.renderer);
 
         this.renderer.syncAll(this.repo.values());
@@ -167,7 +170,7 @@ export class MarkerManager {
     }
 
     private updateMarkersInViewport() {
-        const bounds = this.map.getBounds();
+        const bounds = this.provider.getBounds();
         if (!bounds || this.scheduler.isSuppressed) {
             this.scheduler.complete();
             return;
@@ -175,10 +178,9 @@ export class MarkerManager {
 
         const candidates = this.viewportIndex.collect(bounds, this.repo);
         const center = bounds.getCenter();
-        const centerPosition = {lat: center.lat(), lng: center.lng()};
         const visibleIds = this.viewportIndex.selectVisible(
             candidates,
-            centerPosition,
+            center,
             this.options.maxVisibleMarkers,
         );
 

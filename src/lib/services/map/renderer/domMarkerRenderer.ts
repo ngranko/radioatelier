@@ -1,3 +1,4 @@
+import type {MapProvider} from '$lib/interfaces/map';
 import type {Marker} from '$lib/services/map/marker';
 import {DragController} from '$lib/services/map/renderer/dom/dragController';
 import {Factory} from '$lib/services/map/renderer/dom/factory';
@@ -5,11 +6,16 @@ import {Styler} from '$lib/services/map/renderer/dom/styler';
 import type {MarkerRenderer} from '$lib/services/map/renderer/markerRenderer';
 
 export class DomMarkerRenderer implements MarkerRenderer {
-    private factory = new Factory();
-    private dragController = new DragController();
+    private factory: Factory;
+    private dragController: DragController;
     private styler = new Styler();
     private pendingRemoval = new WeakSet<Marker>();
     private pendingShow = new WeakSet<Marker>();
+
+    public constructor(provider: MapProvider) {
+        this.factory = new Factory(provider);
+        this.dragController = new DragController(provider);
+    }
 
     public ensureCreated(marker: Marker): void {
         if (!marker.isCreated()) {
@@ -24,8 +30,8 @@ export class DomMarkerRenderer implements MarkerRenderer {
     }
 
     public show(marker: Marker): void {
-        const raw = marker.getRaw();
-        if (!raw) {
+        const element = marker.getHandle()?.getElement();
+        if (!element) {
             return;
         }
 
@@ -37,7 +43,6 @@ export class DomMarkerRenderer implements MarkerRenderer {
         }
         this.pendingShow.add(marker);
 
-        const element = raw.content as HTMLElement;
         element.classList.add('animate-popin');
         setTimeout(() => {
             this.pendingShow.delete(marker);
@@ -46,17 +51,17 @@ export class DomMarkerRenderer implements MarkerRenderer {
     }
 
     public hide(marker: Marker): void {
-        const raw = marker.getRaw();
-        if (raw) {
+        const element = marker.getHandle()?.getElement();
+        if (element) {
             this.pendingShow.delete(marker);
-            (raw.content as HTMLElement).classList.remove('animate-popin');
+            element.classList.remove('animate-popin');
         }
         marker.hide();
     }
 
     public remove(marker: Marker, onRemoved?: () => void): void {
-        const raw = marker.getRaw();
-        if (!raw) {
+        const element = marker.getHandle()?.getElement();
+        if (!element) {
             onRemoved?.();
             return;
         }
@@ -66,7 +71,6 @@ export class DomMarkerRenderer implements MarkerRenderer {
         }
         this.pendingRemoval.add(marker);
 
-        const element = raw.content as HTMLElement;
         element.classList.add('animate-popout');
         setTimeout(() => {
             this.pendingRemoval.delete(marker);

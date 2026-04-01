@@ -70,7 +70,7 @@
 <div bind:this={consoleElement}></div>
 
 <div class="menu absolute top-2 right-4 left-2 flex items-center justify-between gap-4">
-    {#if mapState.map && clerkCtx.auth.userId}
+    {#if mapState.isReady && clerkCtx.auth.userId}
         <Search />
     {:else}
         <div></div>
@@ -85,7 +85,7 @@
 
 {@render children?.()}
 
-{#if mapState.map}
+{#if mapState.isReady}
     <LocationMarker {orientationEnabled} />
 
     {#each Object.keys(searchPointList) as searchPointId (searchPointId)}

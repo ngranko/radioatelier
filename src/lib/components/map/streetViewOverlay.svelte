@@ -2,7 +2,8 @@
     import {onDestroy} from 'svelte';
     import config from '$lib/config';
     import {cn} from '$lib/utils';
-    import Button from '../ui/button/button.svelte';
+    import Button from '$lib/components/ui/button/button.svelte';
+    import {GoogleMapsProvider} from '$lib/services/map/providers/google/provider';
     import {mapState} from '$lib/state/map.svelte';
     import XMarkIcon from '@lucide/svelte/icons/x';
 
@@ -48,11 +49,16 @@
             return;
         }
 
+        const provider = mapState.provider;
+        if (!(provider instanceof GoogleMapsProvider)) {
+            return;
+        }
+
         const [{Map}, {AdvancedMarkerElement}] = await Promise.all([
-            mapState.loader.importLibrary('maps'),
-            mapState.loader.importLibrary('marker'),
+            provider.loader.importLibrary('maps'),
+            provider.loader.importLibrary('marker'),
         ]);
-        const center = position ?? mapState.map?.getCenter() ?? undefined;
+        const center = position ?? provider.getCenter() ?? undefined;
 
         miniMap = new Map(miniMapContainer, {
             mapId: config.googleMapsId,

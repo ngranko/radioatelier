@@ -1,22 +1,17 @@
-import config from '$lib/config';
+import type {MapProvider} from '$lib/interfaces/map';
 import type {MarkerManager} from '$lib/services/map/markerManager';
-import {Loader} from '@googlemaps/js-api-loader';
 
 interface MapState {
-    loader: Loader;
-    map?: google.maps.Map;
+    provider: MapProvider | null;
+    isReady: boolean;
     markerManager?: MarkerManager;
     deckEnabled: boolean;
     streetViewVisible: boolean;
 }
 
 export const mapState = $state<MapState>({
-    loader: new Loader({
-        apiKey: config.googleMapsApiKey,
-        version: 'weekly',
-        libraries: ['places', 'marker'],
-    }),
-    map: undefined,
+    provider: null,
+    isReady: false,
     markerManager: undefined,
     deckEnabled: false,
     streetViewVisible: false,
