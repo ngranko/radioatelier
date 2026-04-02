@@ -36,6 +36,8 @@ export interface MarkerHandle {
 export interface MapProvider {
     getZoom(): number;
     setZoom(zoom: number): void;
+    getMinZoom(): number;
+    getMaxZoom(): number;
     getCenter(): LatLngLiteral | undefined;
     getBounds(): MapBounds | undefined;
     setCenter(lat: number, lng: number): void;

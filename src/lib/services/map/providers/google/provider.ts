@@ -9,14 +9,20 @@ import type {
     MarkerHandle,
     MarkerHandleOptions,
 } from '$lib/interfaces/map';
+import {computeMinZoomForContainer} from '$lib/services/map/mapMinZoom';
+import {MERCATOR_WORLD_RESTRICTION} from '$lib/services/map/mapRestriction';
 import {GoogleMapBounds} from '$lib/services/map/providers/google/bounds';
 import {GoogleMarkerHandle} from '$lib/services/map/providers/google/markerHandle';
 import {themeState} from '$lib/state/theme.svelte';
 import {Loader} from '@googlemaps/js-api-loader';
 
+const MAP_MAX_ZOOM = 21;
+
 export class GoogleMapsProvider implements MapProvider {
     readonly loader: Loader;
     private map?: google.maps.Map;
+    private minZoom = 2;
+    private resizeObserver?: ResizeObserver;
 
     constructor() {
         this.loader = new Loader({
@@ -32,9 +38,14 @@ export class GoogleMapsProvider implements MapProvider {
             this.loader.importLibrary('core'),
         ]);
 
+        this.minZoom = computeMinZoomForContainer(container);
+        const initialZoom = Math.max(center.zoom ?? 15, this.minZoom);
+
         this.map = new Map(container, {
-            zoom: center.zoom ?? 15,
+            zoom: initialZoom,
             center,
+            minZoom: this.minZoom,
+            maxZoom: MAP_MAX_ZOOM,
             mapId: config.googleMapsId,
             controlSize: 40,
             mapTypeControl: false,
@@ -43,7 +54,18 @@ export class GoogleMapsProvider implements MapProvider {
             zoomControl: false,
             clickableIcons: false,
             colorScheme: this.resolveColorScheme(ColorScheme),
+            restriction: MERCATOR_WORLD_RESTRICTION,
         });
+
+        this.resizeObserver = new ResizeObserver(() => {
+            const next = computeMinZoomForContainer(container);
+            if (next === this.minZoom) {
+                return;
+            }
+            this.minZoom = next;
+            this.map?.setOptions({minZoom: next});
+        });
+        this.resizeObserver.observe(container);
     }
 
     private resolveColorScheme(
@@ -57,6 +79,14 @@ export class GoogleMapsProvider implements MapProvider {
 
     getZoom(): number {
         return this.map?.getZoom() ?? 15;
+    }
+
+    getMinZoom(): number {
+        return this.minZoom;
+    }
+
+    getMaxZoom(): number {
+        return MAP_MAX_ZOOM;
     }
 
     setZoom(zoom: number): void {
@@ -173,6 +203,8 @@ export class GoogleMapsProvider implements MapProvider {
     }
 
     destroy(): void {
+        this.resizeObserver?.disconnect();
+        this.resizeObserver = undefined;
         if (this.map) {
             google.maps.event.clearInstanceListeners(this.map);
         }
