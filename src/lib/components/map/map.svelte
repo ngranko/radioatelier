@@ -30,7 +30,7 @@
 
     let unsubIdle: (() => void) | undefined;
     let unsubClick: (() => void) | undefined;
-    let unsubCenterChanged: (() => void) | undefined;
+    let disposeDoubleTapDragZoom: (() => void) | undefined;
 
     async function setupProviderAndMarkers() {
         const provider = new GoogleMapsProvider();
@@ -46,7 +46,7 @@
     function setupListenersAndGestures() {
         initListeners();
 
-        new PointerDragZoomController({
+        disposeDoubleTapDragZoom = new PointerDragZoomController({
             getZoom: () => mapState.provider!.getZoom(),
             setZoom: zoom => mapState.provider!.setZoom(zoom),
             getMinZoom: () => mapState.provider!.getMinZoom(),
@@ -55,9 +55,11 @@
                 clearTimeout(clickTimeout);
                 clickTimeout = undefined;
                 isInZoomMode = true;
+                mapState.provider?.setDraggable(false);
             },
             onEnd: () => {
                 isInZoomMode = false;
+                mapState.provider?.setDraggable(true);
             },
         }).attachDoubleTapDragZoom(container!);
     }
@@ -97,10 +99,11 @@
     function initListeners() {
         unsubIdle = mapState.provider!.onIdle(handleIdle);
         unsubClick = mapState.provider!.onClick(handleClick);
-        unsubCenterChanged = mapState.provider!.onCenterChanged(handleCenterChanged);
     }
 
     function handleIdle() {
+        removeDragTimeout();
+        persistMapView();
         mapState.markerManager?.setRendererMode(shouldUseDeck(mapState.provider!) ? 'deck' : 'dom');
         mapState.deckEnabled = mapState.markerManager?.isDeckRenderer ?? false;
         mapState.markerManager?.scheduleViewportUpdate();
@@ -119,12 +122,18 @@
         }, 300);
     }
 
-    function handleCenterChanged(center: {lat: number; lng: number}, zoom: number) {
-        removeDragTimeout();
-
+    function persistMapView() {
+        const center = mapState.provider?.getCenter();
+        if (!center) {
+            return;
+        }
         localStorage.setItem(
             'lastCenter',
-            JSON.stringify({lat: center.lat, lng: center.lng, zoom}),
+            JSON.stringify({
+                lat: center.lat,
+                lng: center.lng,
+                zoom: mapState.provider?.getZoom() ?? 15,
+            }),
         );
     }
 
@@ -139,7 +148,7 @@
 
         unsubIdle?.();
         unsubClick?.();
-        unsubCenterChanged?.();
+        disposeDoubleTapDragZoom?.();
         mapState.markerManager?.destroy();
         mapState.provider?.destroy();
         mapState.provider = null;

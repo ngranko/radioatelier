@@ -48,7 +48,6 @@ export interface MapProvider {
     onIdle(callback: () => void): EventUnsubscribe;
     onClick(callback: (latLng: LatLngLiteral) => void): EventUnsubscribe;
     onDragEnd(callback: () => void): EventUnsubscribe;
-    onCenterChanged(callback: (center: LatLngLiteral, zoom: number) => void): EventUnsubscribe;
     onPointerMove(callback: (latLng: LatLngLiteral) => void): EventUnsubscribe;
 
     createMarkerHandle(
