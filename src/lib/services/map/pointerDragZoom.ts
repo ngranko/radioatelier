@@ -3,6 +3,8 @@ import {throttle} from '$lib/utils';
 export type PointerDragZoomOptions = {
     getZoom(): number;
     setZoom(zoom: number): void;
+    getMinZoom?(): number;
+    getMaxZoom?(): number;
     onStart?(): void;
     onEnd?(): void;
 };
@@ -104,7 +106,9 @@ export class PointerDragZoomController {
         }
         const deltaY = currentY - this.initialY;
         const zoomDelta = deltaY / 50;
-        const newZoom = Math.max(1, Math.min(20, this.initialZoom + zoomDelta));
+        const minZ = this.options.getMinZoom?.() ?? 1;
+        const maxZ = this.options.getMaxZoom?.() ?? 20;
+        const newZoom = Math.max(minZ, Math.min(maxZ, this.initialZoom + zoomDelta));
         this.options.setZoom(newZoom);
     }
 

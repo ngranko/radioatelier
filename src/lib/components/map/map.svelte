@@ -49,6 +49,8 @@
         new PointerDragZoomController({
             getZoom: () => mapState.provider!.getZoom(),
             setZoom: zoom => mapState.provider!.setZoom(zoom),
+            getMinZoom: () => mapState.provider!.getMinZoom(),
+            getMaxZoom: () => mapState.provider!.getMaxZoom(),
             onStart: () => {
                 clearTimeout(clickTimeout);
                 clickTimeout = undefined;
