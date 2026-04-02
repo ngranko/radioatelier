@@ -46,6 +46,7 @@ export class GoogleMapsProvider implements MapProvider {
             center,
             minZoom: this.minZoom,
             maxZoom: MAP_MAX_ZOOM,
+            isFractionalZoomEnabled: true,
             mapId: config.googleMapsId,
             controlSize: 40,
             mapTypeControl: false,
@@ -90,7 +91,10 @@ export class GoogleMapsProvider implements MapProvider {
     }
 
     setZoom(zoom: number): void {
-        this.map?.setZoom(zoom);
+        if (!this.map) {
+            return;
+        }
+        this.map.moveCamera({zoom});
     }
 
     getCenter(): LatLngLiteral | undefined {
@@ -151,19 +155,6 @@ export class GoogleMapsProvider implements MapProvider {
             return () => {};
         }
         const listener = google.maps.event.addListener(this.map, 'dragend', callback);
-        return () => google.maps.event.removeListener(listener);
-    }
-
-    onCenterChanged(callback: (center: LatLngLiteral, zoom: number) => void): EventUnsubscribe {
-        if (!this.map) {
-            return () => {};
-        }
-        const listener = google.maps.event.addListener(this.map, 'center_changed', () => {
-            const center = this.map!.getCenter();
-            if (center) {
-                callback({lat: center.lat(), lng: center.lng()}, this.map!.getZoom() ?? 15);
-            }
-        });
         return () => google.maps.event.removeListener(listener);
     }
 

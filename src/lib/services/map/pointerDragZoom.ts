@@ -1,5 +1,3 @@
-import {throttle} from '$lib/utils';
-
 export type PointerDragZoomOptions = {
     getZoom(): number;
     setZoom(zoom: number): void;
@@ -15,6 +13,9 @@ export class PointerDragZoomController {
     private initialY = 0;
     private initialZoom = 0;
     private activePointerId: number | null = null;
+    private pendingClientY: number | null = null;
+    private frameId: number | null = null;
+    private lastAppliedZoom: number | null = null;
 
     constructor(options: PointerDragZoomOptions) {
         this.options = options;
@@ -54,13 +55,14 @@ export class PointerDragZoomController {
             }
         };
 
-        const onPointerMove = throttle((event: PointerEvent) => {
+        const onPointerMove = (event: PointerEvent) => {
             if (!this.isActive || event.pointerId !== this.activePointerId) {
                 return;
             }
             event.preventDefault();
-            this.update(event.clientY);
-        }, 16); // ~60fps
+            this.pendingClientY = event.clientY;
+            this.scheduleUpdate();
+        };
 
         const endGesture = (event: PointerEvent) => {
             if (event.pointerType === 'touch') {
@@ -97,7 +99,22 @@ export class PointerDragZoomController {
         this.isActive = true;
         this.initialY = initialY;
         this.initialZoom = this.options.getZoom();
+        this.pendingClientY = initialY;
+        this.lastAppliedZoom = null;
         this.options.onStart?.();
+    }
+
+    private scheduleUpdate() {
+        if (this.frameId !== null) {
+            return;
+        }
+        this.frameId = requestAnimationFrame(() => {
+            this.frameId = null;
+            if (!this.isActive || this.pendingClientY === null) {
+                return;
+            }
+            this.update(this.pendingClientY);
+        });
     }
 
     private update(currentY: number) {
@@ -109,6 +126,10 @@ export class PointerDragZoomController {
         const minZ = this.options.getMinZoom?.() ?? 1;
         const maxZ = this.options.getMaxZoom?.() ?? 20;
         const newZoom = Math.max(minZ, Math.min(maxZ, this.initialZoom + zoomDelta));
+        if (this.lastAppliedZoom !== null && Math.abs(newZoom - this.lastAppliedZoom) < 0.01) {
+            return;
+        }
+        this.lastAppliedZoom = newZoom;
         this.options.setZoom(newZoom);
     }
 
@@ -116,7 +137,16 @@ export class PointerDragZoomController {
         if (!this.isActive) {
             return;
         }
+        if (this.pendingClientY !== null) {
+            this.update(this.pendingClientY);
+        }
         this.isActive = false;
+        this.pendingClientY = null;
+        this.lastAppliedZoom = null;
+        if (this.frameId !== null) {
+            cancelAnimationFrame(this.frameId);
+            this.frameId = null;
+        }
         this.options.onEnd?.();
     }
 }
