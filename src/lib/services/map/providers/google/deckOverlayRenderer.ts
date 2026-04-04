@@ -4,11 +4,16 @@ import type {MarkerRenderer} from '$lib/services/map/renderer/markerRenderer';
 import {GoogleMapsOverlay} from '@deck.gl/google-maps';
 import {ScatterplotLayer} from '@deck.gl/layers';
 
+const DOT_RADIUS_PX = 6;
+const OUTLINE_WIDTH_PX = 2;
+const HALO_RADIUS_PX = 9;
+const HALO_ALPHA = 0x60 / 255;
+
 interface DeckPointInfo {
     position: [number, number];
     fillColor: [number, number, number, number];
     outlineColor: [number, number, number];
-    isVisited: boolean;
+    haloColor: [number, number, number, number];
 }
 
 export class DeckOverlayRenderer implements MarkerRenderer {
@@ -76,45 +81,60 @@ export class DeckOverlayRenderer implements MarkerRenderer {
             const pos = marker.getPosition();
             const {isVisited, isRemoved} = marker.getState();
             const {r, g, b} = hexToRgb(marker.getColor());
-            const outline = hexToRgb(getContrastingColor(marker.getColor()));
+            const outline = isVisited
+                ? hexToRgb(getContrastingColor(marker.getColor()))
+                : hexToRgb('#ffffff');
+            const opacityMult = isRemoved ? 0.5 : 1;
             return {
                 position: [pos.lng, pos.lat],
-                fillColor: [r, g, b, isRemoved ? 128 : 255] as [number, number, number, number],
+                fillColor: [r, g, b, Math.round(255 * opacityMult)] as [
+                    number,
+                    number,
+                    number,
+                    number,
+                ],
                 outlineColor: [outline.r, outline.g, outline.b] as [number, number, number],
-                isVisited,
+                haloColor: [r, g, b, Math.round(255 * HALO_ALPHA * opacityMult)] as [
+                    number,
+                    number,
+                    number,
+                    number,
+                ],
             };
         });
 
-        const baseLayer = this.createBaseLayer(data);
-        const visitedOutlineLayer = this.createVisitedOutlineLayer(data);
-
-        this.overlay.setProps({layers: [baseLayer, visitedOutlineLayer]});
+        this.overlay.setProps({
+            layers: [this.createHaloLayer(data), this.createMarkerLayer(data)],
+        });
     }
 
-    private createBaseLayer(data: DeckPointInfo[]): ScatterplotLayer {
+    private createHaloLayer(data: DeckPointInfo[]): ScatterplotLayer {
         return new ScatterplotLayer({
-            id: 'markers-scatterplot-fill',
+            id: 'markers-scatterplot-halo',
             data,
             getPosition: (d: DeckPointInfo) => d.position,
-            getFillColor: (d: DeckPointInfo) => d.fillColor,
+            getFillColor: (d: DeckPointInfo) => d.haloColor,
             radiusUnits: 'pixels',
-            getRadius: 6,
+            getRadius: HALO_RADIUS_PX,
+            stroked: false,
+            filled: true,
             pickable: false,
         });
     }
 
-    private createVisitedOutlineLayer(data: DeckPointInfo[]): ScatterplotLayer {
+    private createMarkerLayer(data: DeckPointInfo[]): ScatterplotLayer {
         return new ScatterplotLayer({
-            id: 'markers-scatterplot-visited-outline',
-            data: data.filter(marker => marker.isVisited),
+            id: 'markers-scatterplot',
+            data,
             getPosition: (d: DeckPointInfo) => d.position,
-            getLineColor: (d: DeckPointInfo) => d.outlineColor,
+            getFillColor: (d: DeckPointInfo) => d.fillColor,
+            getLineColor: (d: DeckPointInfo) => [...d.outlineColor, d.fillColor[3]],
             radiusUnits: 'pixels',
+            getRadius: DOT_RADIUS_PX,
             lineWidthUnits: 'pixels',
-            getRadius: 8,
-            getLineWidth: 4,
+            getLineWidth: OUTLINE_WIDTH_PX,
             stroked: true,
-            filled: false,
+            filled: true,
             pickable: false,
         });
     }
