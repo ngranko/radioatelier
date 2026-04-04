@@ -194,7 +194,7 @@
     }
 
     .nav-marker {
-        @apply relative flex h-5 w-5 translate-[0_50%] items-center justify-center rounded-full text-white transition-[background-color,box-shadow] duration-400 ease-in-out;
+        @apply relative flex size-5 translate-[0_50%] items-center justify-center rounded-full text-white transition-[background-color,box-shadow] ease-in-out;
         background-color: var(--primary);
         box-shadow:
             0 0 0 2px white,
