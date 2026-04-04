@@ -97,7 +97,7 @@
                 lat={searchPoint.object.latitude}
                 lng={searchPoint.object.longitude}
                 icon={searchPoint.object.type === 'local' ? SearchIcon : 'fa-brands fa-google'}
-                color="#dc2626"
+                color="#f43f6e"
                 source="search"
             />
         {/if}
@@ -111,7 +111,7 @@
                 lng={sharedMarker.object.longitude}
                 icon={StarIcon}
                 iconClassName="fill-current"
-                color="#008e92"
+                color="#f59e0b"
                 source="share"
             />
         {/key}
