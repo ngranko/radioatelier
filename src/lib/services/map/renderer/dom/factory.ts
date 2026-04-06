@@ -18,11 +18,15 @@ export class Factory {
 
     private createMarkerContent(marker: Marker): HTMLElement {
         const markerElement = document.createElement('div');
-        markerElement.className =
-            'w-6 h-6 translate-y-1/2 flex justify-center items-center rounded-full transition-transform transition-opacity duration-100 ease-in-out text-sm text-white';
-        markerElement.style.backgroundColor = marker.getColor();
-        markerElement.style.boxShadow = `0 0 0 3px white, 0 0 0 5px ${marker.getColor()}40, 0 2px 4px rgba(0,0,0,0.2)`;
-        markerElement.style.setProperty('--marker-color', marker.getColor());
+        const isInverted = marker.getSource() === 'share' || marker.getSource() === 'search';
+        const color = marker.getColor();
+        markerElement.className = `w-6 h-6 translate-y-1/2 flex justify-center items-center rounded-full transition-transform transition-opacity duration-100 ease-in-out text-sm ${isInverted ? '' : 'text-white'}`;
+        markerElement.style.backgroundColor = isInverted ? 'white' : color;
+        markerElement.style.color = isInverted ? color : '';
+        markerElement.style.boxShadow = isInverted
+            ? `0 0 0 3px ${color}, 0 0 0 5px rgba(255,255,255,0.25), 0 2px 4px rgba(0,0,0,0.2)`
+            : `0 0 0 3px white, 0 0 0 5px ${color}40, 0 2px 4px rgba(0,0,0,0.2)`;
+        markerElement.style.setProperty('--marker-color', isInverted ? 'white' : color);
         const baseIconClassName =
             typeof marker.getIcon() === 'string' ? 'block text-sm leading-none' : 'block size-3.5';
         mount(MarkerIcon, {

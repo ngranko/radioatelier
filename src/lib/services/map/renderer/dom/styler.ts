@@ -3,6 +3,10 @@ import type {Marker} from '$lib/services/map/marker';
 
 export class Styler {
     public apply(marker: Marker) {
+        if (marker.getSource() === 'share' || marker.getSource() === 'search') {
+            return;
+        }
+
         const {isVisited, isRemoved} = marker.getState();
         const element = marker.getHandle()?.getElement();
         if (!element) {
