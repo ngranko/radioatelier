@@ -111,6 +111,13 @@ export class DragController {
                 marker.getOnDragEnd()?.();
             }
             marker.getHandle()?.getElement()?.classList.remove('marker-dragging');
+
+            // gmp-click often does not fire after drag release; skipClick would otherwise stay true.
+            setTimeout(() => {
+                if (this.skipClick) {
+                    this.skipClick = false;
+                }
+            }, 0);
         };
     }
 
