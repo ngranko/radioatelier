@@ -1,6 +1,5 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "archive",
@@ -10,6 +9,7 @@
         "@deck.gl/google-maps": "^9.0",
         "@deck.gl/layers": "^9.0",
         "@googlemaps/js-api-loader": "^1.16.8",
+        "@lucide/svelte": "^1.7.0",
         "@tailwindcss/vite": "^4.1.7",
         "clsx": "^2.1.1",
         "convex": "^1.31.7",
@@ -25,7 +25,6 @@
       },
       "devDependencies": {
         "@eslint/js": "^9.12.0",
-        "@lucide/svelte": "^0.544.0",
         "@sveltejs/adapter-auto": "^3.3.1",
         "@sveltejs/adapter-node": "^5.2.9",
         "@sveltejs/kit": "^2.53.4",
@@ -210,7 +209,7 @@
 
     "@loaders.gl/worker-utils": ["@loaders.gl/worker-utils@4.3.4", "", { "peerDependencies": { "@loaders.gl/core": "^4.3.0" } }, "sha512-EbsszrASgT85GH3B7jkx7YXfQyIYo/rlobwMx6V3ewETapPUwdSAInv+89flnk5n2eu2Lpdeh+2zS6PvqbL2RA=="],
 
-    "@lucide/svelte": ["@lucide/svelte@0.544.0", "", { "peerDependencies": { "svelte": "^5" } }, "sha512-9f9O6uxng2pLB01sxNySHduJN3HTl5p0HDu4H26VR51vhZfiMzyOMe9Mhof3XAk4l813eTtl+/DYRvGyoRR+yw=="],
+    "@lucide/svelte": ["@lucide/svelte@1.7.0", "", { "peerDependencies": { "svelte": "^5" } }, "sha512-YytBKOUBGox7yWcykZnYxOkn5WpR5G1qYXLYXV/j1B79SOTTEKzB+s5yF5Rq9l9OkweDStNH2b4yTqfvhEhV8g=="],
 
     "@luma.gl/constants": ["@luma.gl/constants@9.1.10", "", {}, "sha512-O4Nx8UbWmrHHZ7ihKB8WiscX1cz05l1KvKorYTgq+xeXwz2Beh3MkXBMnA46uuyEtimN945OEdYshZnbh80jyw=="],
 
