@@ -47,6 +47,7 @@ export interface MapProvider {
 
     onIdle(callback: () => void): EventUnsubscribe;
     onClick(callback: (latLng: LatLngLiteral) => void): EventUnsubscribe;
+    onDragStart(callback: () => void): EventUnsubscribe;
     onDragEnd(callback: () => void): EventUnsubscribe;
     onPointerMove(callback: (latLng: LatLngLiteral) => void): EventUnsubscribe;
 

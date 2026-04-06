@@ -30,6 +30,7 @@
 
     let unsubIdle: (() => void) | undefined;
     let unsubClick: (() => void) | undefined;
+    let unsubDragStart: (() => void) | undefined;
     let disposeDoubleTapDragZoom: (() => void) | undefined;
 
     async function setupProviderAndMarkers() {
@@ -99,6 +100,13 @@
     function initListeners() {
         unsubIdle = mapState.provider!.onIdle(handleIdle);
         unsubClick = mapState.provider!.onClick(handleClick);
+        unsubDragStart = mapState.provider!.onDragStart(handleMapDragStart);
+    }
+
+    function handleMapDragStart() {
+        removeDragTimeout();
+        clearTimeout(clickTimeout);
+        clickTimeout = undefined;
     }
 
     function handleIdle() {
@@ -148,6 +156,7 @@
 
         unsubIdle?.();
         unsubClick?.();
+        unsubDragStart?.();
         disposeDoubleTapDragZoom?.();
         mapState.markerManager?.destroy();
         mapState.provider?.destroy();

@@ -150,6 +150,14 @@ export class GoogleMapsProvider implements MapProvider {
         return () => google.maps.event.removeListener(listener);
     }
 
+    onDragStart(callback: () => void): EventUnsubscribe {
+        if (!this.map) {
+            return () => {};
+        }
+        const listener = google.maps.event.addListener(this.map, 'dragstart', callback);
+        return () => google.maps.event.removeListener(listener);
+    }
+
     onDragEnd(callback: () => void): EventUnsubscribe {
         if (!this.map) {
             return () => {};
