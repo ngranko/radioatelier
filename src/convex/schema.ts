@@ -5,6 +5,8 @@ import {mapPointTableFields, objectTableFields} from './sharedValidators';
 export default defineSchema({
     categories: defineTable({
         name: v.string(),
+        markerColor: v.string(),
+        markerIcon: v.string(),
     }).index('byName', ['name']),
     counters: defineTable({
         name: v.string(),
@@ -81,6 +83,15 @@ export default defineSchema({
         lastLoginAt: v.nullable(v.number()),
         isDeleted: v.boolean(),
     }).index('byExternalIdIsDeleted', ['externalId', 'isDeleted']),
+    userCategoryMarkerStyles: defineTable({
+        userId: v.id('users'),
+        categoryId: v.id('categories'),
+        markerColor: v.string(),
+        markerIcon: v.string(),
+        isHidden: v.boolean(),
+    })
+        .index('byUserId', ['userId'])
+        .index('byUserIdCategoryId', ['userId', 'categoryId']),
     userVisitedChunks: defineTable({
         userId: v.id('users'),
         chunkId: v.string(),
