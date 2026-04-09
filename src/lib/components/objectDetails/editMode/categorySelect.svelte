@@ -1,8 +1,8 @@
 <script lang="ts">
     import Combobox from '$lib/components/input/combobox.svelte';
-    import {Skeleton} from '$lib/components/ui/skeleton';
-    import {useConvexClient, useQuery} from 'convex-svelte';
+    import {useConvexClient} from 'convex-svelte';
     import {api} from '$convex/_generated/api';
+    import {categoriesState} from '$lib/state/categories.svelte';
 
     interface Props {
         name?: string | undefined;
@@ -14,9 +14,11 @@
 
     let {name = undefined, value = $bindable(), error = null}: Props = $props();
 
-    const categories = useQuery(api.categories.list);
-    const sortedCategories = $derived(
-        categories.data ? [...categories.data].sort((a, b) => a.name.localeCompare(b.name)) : [],
+    const preparedCategories = $derived(
+        Object.values(categoriesState.categories)
+            .filter(item => !item.isHidden)
+            .map(item => ({id: item.id, name: item.name}))
+            .sort((a, b) => a.name.localeCompare(b.name)),
     );
 
     // TODO: add an error state
@@ -26,19 +28,14 @@
     }
 </script>
 
-<!-- TODO: add an error state -->
-{#if categories.isLoading}
-    <Skeleton class="h-12 w-full rounded-md" />
-{:else}
-    <Combobox
-        placeholder="Не выбрана"
-        creatable={true}
-        options={sortedCategories}
-        {name}
-        bind:value
-        onCreate={handleCreate}
-        error={Boolean(error)}
-        class="px-3 py-1 transition-colors"
-        wrapperClass="w-full"
-    />
-{/if}
+<Combobox
+    placeholder="Не выбрана"
+    creatable={true}
+    options={preparedCategories}
+    {name}
+    bind:value
+    onCreate={handleCreate}
+    error={Boolean(error)}
+    class="px-3 py-1 transition-colors"
+    wrapperClass="w-full"
+/>

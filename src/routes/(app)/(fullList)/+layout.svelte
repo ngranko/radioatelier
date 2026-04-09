@@ -6,7 +6,6 @@
     import type {Id} from '$convex/_generated/dataModel';
     import {useQuery} from 'convex-svelte';
     import {useClerkContext} from 'svelte-clerk';
-    import ZapIcon from '@lucide/svelte/icons/zap';
     import ObjectDetails from '$lib/components/objectDetails/objectDetails.svelte';
     import Marker from '$lib/components/map/marker.svelte';
     import type {Object as ObjectType} from '$lib/interfaces/object.ts';
@@ -18,9 +17,10 @@
     import {createDraftState} from '$lib/state/createDraft.svelte.ts';
     import {mapState} from '$lib/state/map.svelte.ts';
     import {setSharedMarkerObject, sharedMarker} from '$lib/state/sharedMarker.svelte.ts';
+    import {categoriesState} from '$lib/state/categories.svelte.js';
+    import {markerIconMap, type MarkerIconKey} from '$lib/services/map/markerStyling.js';
 
     let {data, children} = $props();
-    const initialObjects = $derived(data.objects);
     // eslint-disable-next-line svelte/prefer-writable-derived
     let disableOverlayIntro = $state(page.data.isServerRequest);
 
@@ -29,12 +29,12 @@
     const objects = useQuery(
         api.markers.list,
         () => (ctx.auth.userId ? {} : 'skip'),
-        () => ({initialData: initialObjects}),
+        () => ({initialData: data.objects}),
     );
 
     const overlayValues = $derived(objectDetailsOverlay.details ?? page.data.activeObject ?? null);
 
-    const markerPoints = $derived(objects.data ?? initialObjects);
+    const markerPoints = $derived(objects.data ?? data.objects);
     const routeObjectId = $derived.by(() => {
         const id = page.params.id;
         return id && id !== 'create' ? (id as Id<'objects'>) : null;
@@ -113,6 +113,8 @@
 
 {#if mapState.isReady}
     {#each markerPoints as point (point.id)}
+        {@const category = categoriesState.categories[point.categoryId]}
+        {@const markerIcon = markerIconMap[category.markerIcon as MarkerIconKey]}
         <Marker
             id={point.id}
             lat={point.latitude}
@@ -120,9 +122,9 @@
             isVisited={point.isVisited}
             isRemoved={point.isRemoved}
             isDraggable={point.isOwner}
-            icon={ZapIcon}
-            iconClassName="fill-current"
-            color="#000000"
+            icon={markerIcon.component}
+            iconClassName={markerIcon.className}
+            color={category.markerColor}
             source="list"
         />
     {/each}

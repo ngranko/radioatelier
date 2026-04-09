@@ -1,4 +1,4 @@
-import {getContrastingColor, hexToRgb} from '$lib/services/colorConverter';
+import {cssColorToRgb} from '$lib/services/colorConverter';
 import type {Marker} from '$lib/services/map/marker';
 import type {MarkerRenderer} from '$lib/services/map/renderer/markerRenderer';
 import {GoogleMapsOverlay} from '@deck.gl/google-maps';
@@ -80,10 +80,8 @@ export class DeckOverlayRenderer implements MarkerRenderer {
         const data: DeckPointInfo[] = Array.from(this.allMarkers).map(marker => {
             const pos = marker.getPosition();
             const {isVisited, isRemoved} = marker.getState();
-            const {r, g, b} = hexToRgb(marker.getColor());
-            const outline = isVisited
-                ? hexToRgb(getContrastingColor(marker.getColor()))
-                : hexToRgb('#ffffff');
+            const {r, g, b} = cssColorToRgb(marker.getColor());
+            const outline = isVisited ? cssColorToRgb('#39ff14') : cssColorToRgb('#ffffff');
             const opacityMult = isRemoved ? 0.5 : 1;
             return {
                 position: [pos.lng, pos.lat],

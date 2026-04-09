@@ -1,5 +1,7 @@
-import {getContrastingColor} from '$lib/services/colorConverter';
+import {markerHaloColor} from '$lib/services/colorConverter';
 import type {Marker} from '$lib/services/map/marker';
+
+const VISITED_BRIGHT = '#39ff14';
 
 export class Styler {
     public apply(marker: Marker) {
@@ -18,11 +20,12 @@ export class Styler {
     }
 
     private applyVisited(element: HTMLElement, isVisited: boolean, markerColor: string) {
-        element.style.boxShadow = `0 0 0 3px white, 0 0 0 5px ${markerColor}40, 0 2px 4px rgba(0,0,0,0.2)`;
+        const haloColor = markerHaloColor(markerColor);
 
         if (isVisited) {
-            const borderColor = getContrastingColor(markerColor);
-            element.style.boxShadow = `0 0 0 3px ${borderColor}, 0 0 0 5px ${markerColor}40, 0 2px 4px rgba(0,0,0,0.2)`;
+            element.style.boxShadow = `0 0 0 1px rgba(0,0,0,0.3), 0 0 0 3px ${VISITED_BRIGHT}, 0 0 0 5px ${haloColor}, 0 2px 4px rgba(0,0,0,0.2)`;
+        } else {
+            element.style.boxShadow = `0 0 0 3px white, 0 0 0 5px ${haloColor}, 0 2px 4px rgba(0,0,0,0.2)`;
         }
     }
 

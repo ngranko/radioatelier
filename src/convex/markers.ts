@@ -35,6 +35,7 @@ export const list = query({
             longitude: item.longitude,
             isRemoved: item.isRemoved,
             isVisited: visitedMarkers.includes(item.objectId),
+            categoryId: item.categoryId,
             isPublic: item.isPublic,
             isOwner: item.createdById === user._id,
         }));

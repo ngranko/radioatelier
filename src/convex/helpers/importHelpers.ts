@@ -1,3 +1,4 @@
+import {randomMarkerColor, randomMarkerIconKey} from '../../lib/services/map/markerStyling.data';
 import type {Id} from '../_generated/dataModel';
 import type {MutationCtx} from '../_generated/server';
 
@@ -9,7 +10,11 @@ export async function ensureCategory(ctx: MutationCtx, normalizedName: string) {
     if (existing) {
         return existing._id;
     }
-    return await ctx.db.insert('categories', {name: normalizedName});
+    return await ctx.db.insert('categories', {
+        name: normalizedName,
+        markerColor: randomMarkerColor(),
+        markerIcon: randomMarkerIconKey(),
+    });
 }
 
 export async function ensureTags(ctx: MutationCtx, tags: string[]) {

@@ -20,16 +20,21 @@
     import SearchIcon from '@lucide/svelte/icons/search';
     import StarIcon from '@lucide/svelte/icons/star';
     import SproutIcon from '@lucide/svelte/icons/sprout';
+    import {useQuery} from 'convex-svelte';
+    import {api} from '$convex/_generated/api';
+    import {setCategories} from '$lib/state/categories.svelte';
 
     // this is needed to avoid deck.gl error
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     webgl2Adapter;
 
-    let {children}: LayoutProps = $props();
+    let {children, data}: LayoutProps = $props();
 
     let consoleElement: HTMLElement | undefined = $state();
     let orientationEnabled = $state(false);
     const clerkCtx = useClerkContext();
+
+    const categories = useQuery(api.categories.list, {}, () => ({initialData: data.categories}));
 
     function handleMapClick(location: Location) {
         if (!clerkCtx.auth.userId) {
@@ -41,6 +46,10 @@
         showLoadingDetailsOverlay(new Date().getTime().toString());
         goto(`/object/create?lat=${location.lat}&lng=${location.lng}`);
     }
+
+    $effect(() => {
+        setCategories(categories.data ?? data.categories);
+    });
 
     $effect(() => {
         if (!clerkCtx.isLoaded) {

@@ -1,17 +1,27 @@
 import {ConvexError, v} from 'convex/values';
+import {randomMarkerColor, randomMarkerIconKey} from '../lib/services/map/markerStyling.data';
 import {mutation, query} from './_generated/server';
+import {getCurrentUserOrThrow} from './users';
 
 export const list = query({
     args: {},
     handler: async ctx => {
-        const identity = await ctx.auth.getUserIdentity();
-        if (identity === null) {
-            throw new ConvexError('Unauthorized');
-        }
+        const user = await getCurrentUserOrThrow(ctx);
 
         const categories = await ctx.db.query('categories').collect();
+        const userCategories = await ctx.db
+            .query('userCategoryMarkerStyles')
+            .withIndex('byUserId', q => q.eq('userId', user._id))
+            .collect();
 
-        return categories.map(item => ({id: item._id, name: item.name}));
+        const byKey = new Map(userCategories.map(item => [item.categoryId, item]));
+        return categories.map(item => ({
+            id: item._id,
+            name: item.name,
+            markerColor: byKey.get(item._id)?.markerColor ?? item.markerColor,
+            markerIcon: byKey.get(item._id)?.markerIcon ?? item.markerIcon,
+            isHidden: byKey.get(item._id)?.isHidden ?? false,
+        }));
     },
 });
 
@@ -38,7 +48,11 @@ export const create = mutation({
             return existing._id;
         }
 
-        const result = await ctx.db.insert('categories', {name: normalizedName});
+        const result = await ctx.db.insert('categories', {
+            name: normalizedName,
+            markerColor: randomMarkerColor(),
+            markerIcon: randomMarkerIconKey(),
+        });
         return result;
     },
 });

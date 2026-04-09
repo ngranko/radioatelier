@@ -4,9 +4,9 @@ import {getConvexClient} from '$lib/server/convexClient';
 export const load = async ({locals}) => {
     const {client, token} = await getConvexClient(locals);
     if (!token) {
-        return {objects: []};
+        return {categories: []};
     }
 
-    const objects = await client.query(api.markers.list);
-    return {objects};
+    const categories = await client.query(api.categories.list, {});
+    return {categories};
 };
