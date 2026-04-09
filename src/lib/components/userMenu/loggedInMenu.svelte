@@ -15,11 +15,16 @@
     import KeyRoundIcon from '@lucide/svelte/icons/key-round';
     import LogOutIcon from '@lucide/svelte/icons/log-out';
     import FileInputIcon from '@lucide/svelte/icons/file-input';
+    import PaletteIcon from '@lucide/svelte/icons/palette';
 
     let isLogoutDialogOpen = $state(false);
 
     function handleImportClick() {
         goto('/import');
+    }
+
+    function handleSettingsClick() {
+        goto('/settings');
     }
 
     function handleChangePasswordClick() {
@@ -56,6 +61,10 @@
             <DropdownMenuItem onclick={handleImportClick}>
                 <FileInputIcon />
                 Импорт точек
+            </DropdownMenuItem>
+            <DropdownMenuItem onclick={handleSettingsClick}>
+                <PaletteIcon />
+                Настройки категорий
             </DropdownMenuItem>
             <DropdownMenuItem onclick={handleChangePasswordClick}>
                 <KeyRoundIcon />

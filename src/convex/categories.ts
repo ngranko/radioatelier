@@ -25,6 +25,47 @@ export const list = query({
     },
 });
 
+export const updateStyles = mutation({
+    args: {
+        styles: v.array(
+            v.object({
+                categoryId: v.id('categories'),
+                markerColor: v.string(),
+                markerIcon: v.string(),
+                isHidden: v.boolean(),
+            }),
+        ),
+    },
+    handler: async (ctx, args) => {
+        const user = await getCurrentUserOrThrow(ctx);
+
+        for (const style of args.styles) {
+            const existing = await ctx.db
+                .query('userCategoryMarkerStyles')
+                .withIndex('byUserIdCategoryId', q =>
+                    q.eq('userId', user._id).eq('categoryId', style.categoryId),
+                )
+                .first();
+
+            if (existing) {
+                await ctx.db.patch(existing._id, {
+                    markerColor: style.markerColor,
+                    markerIcon: style.markerIcon,
+                    isHidden: style.isHidden,
+                });
+            } else {
+                await ctx.db.insert('userCategoryMarkerStyles', {
+                    userId: user._id,
+                    categoryId: style.categoryId,
+                    markerColor: style.markerColor,
+                    markerIcon: style.markerIcon,
+                    isHidden: style.isHidden,
+                });
+            }
+        }
+    },
+});
+
 export const create = mutation({
     args: {
         name: v.string(),
