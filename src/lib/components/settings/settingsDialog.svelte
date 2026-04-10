@@ -111,6 +111,11 @@
         }
     }
 
+    $effect(() => {
+        console.log(categoriesState.list);
+        console.log(categoriesState.categories);
+    });
+
     const changedEntries = $derived.by(() => {
         return Object.entries(edits)
             .filter(([id]) => isEdited(id as Id<'categories'>))
