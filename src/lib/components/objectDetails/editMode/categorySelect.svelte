@@ -15,7 +15,7 @@
     let {name = undefined, value = $bindable(), error = null}: Props = $props();
 
     const preparedCategories = $derived(
-        categoriesState.list
+        Object.values(categoriesState.categories)
             .filter(item => !item.isHidden)
             .map(item => ({id: item.id, name: item.name}))
             .sort((a, b) => a.name.localeCompare(b.name)),
