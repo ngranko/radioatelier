@@ -40,8 +40,7 @@
     let closeRedirectTimer: ReturnType<typeof setTimeout> | undefined;
 
     const categoryList = $derived(
-        Object.values(categoriesState.categories).sort((a, b) => a.name.localeCompare(b.name)) ??
-            [],
+        [...categoriesState.list].sort((a, b) => a.name.localeCompare(b.name)),
     );
     const filteredCategories = $derived(
         searchQuery.trim()
