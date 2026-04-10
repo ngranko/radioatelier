@@ -28,17 +28,25 @@ function isMarkerIconKey(value: string): value is MarkerIconKey {
 }
 
 export function setCategories(categories: RawCategory[]) {
-    const normalizedCategories = categories.map(item => ({
-        ...item,
-        markerColor: isMarkerColor(item.markerColor) ? item.markerColor : MARKER_COLORS[0],
-        markerIcon: isMarkerIconKey(item.markerIcon) ? item.markerIcon : MARKER_ICON_KEYS[0],
-    }));
+    console.log(categories);
+    const byId = {} as {[id: Id<'categories'>]: Category};
+    const normalizedCategories: Category[] = [];
+
+    for (const item of categories) {
+        if (byId[item.id]) {
+            continue;
+        }
+
+        const normalizedCategory: Category = {
+            ...item,
+            markerColor: isMarkerColor(item.markerColor) ? item.markerColor : MARKER_COLORS[0],
+            markerIcon: isMarkerIconKey(item.markerIcon) ? item.markerIcon : MARKER_ICON_KEYS[0],
+        };
+
+        byId[normalizedCategory.id] = normalizedCategory;
+        normalizedCategories.push(normalizedCategory);
+    }
+
     categoriesState.list = normalizedCategories;
-    categoriesState.categories = normalizedCategories.reduce(
-        (acc, item) => {
-            acc[item.id] = item;
-            return acc;
-        },
-        {} as {[id: Id<'categories'>]: Category},
-    );
+    categoriesState.categories = byId;
 }
