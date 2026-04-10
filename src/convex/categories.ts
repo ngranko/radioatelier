@@ -1,5 +1,10 @@
 import {ConvexError, v} from 'convex/values';
-import {randomMarkerColor, randomMarkerIconKey} from '../lib/services/map/markerStyling.data';
+import {
+    MARKER_COLORS,
+    MARKER_ICON_KEYS,
+    randomMarkerColor,
+    randomMarkerIconKey,
+} from '../lib/services/map/markerStyling.data';
 import {mutation, query} from './_generated/server';
 import {getCurrentUserOrThrow} from './users';
 
@@ -22,6 +27,54 @@ export const list = query({
             markerIcon: byKey.get(item._id)?.markerIcon ?? item.markerIcon,
             isHidden: byKey.get(item._id)?.isHidden ?? false,
         }));
+    },
+});
+
+export const updateStyles = mutation({
+    args: {
+        styles: v.array(
+            v.object({
+                categoryId: v.id('categories'),
+                markerColor: v.string(),
+                markerIcon: v.string(),
+                isHidden: v.boolean(),
+            }),
+        ),
+    },
+    handler: async (ctx, args) => {
+        const user = await getCurrentUserOrThrow(ctx);
+
+        for (const style of args.styles) {
+            if (
+                !MARKER_COLORS.includes(style.markerColor as (typeof MARKER_COLORS)[number]) ||
+                !MARKER_ICON_KEYS.includes(style.markerIcon as (typeof MARKER_ICON_KEYS)[number])
+            ) {
+                throw new ConvexError('Invalid category style');
+            }
+
+            const existing = await ctx.db
+                .query('userCategoryMarkerStyles')
+                .withIndex('byUserIdCategoryId', q =>
+                    q.eq('userId', user._id).eq('categoryId', style.categoryId),
+                )
+                .first();
+
+            if (existing) {
+                await ctx.db.patch(existing._id, {
+                    markerColor: style.markerColor,
+                    markerIcon: style.markerIcon,
+                    isHidden: style.isHidden,
+                });
+            } else {
+                await ctx.db.insert('userCategoryMarkerStyles', {
+                    userId: user._id,
+                    categoryId: style.categoryId,
+                    markerColor: style.markerColor,
+                    markerIcon: style.markerIcon,
+                    isHidden: style.isHidden,
+                });
+            }
+        }
     },
 });
 
