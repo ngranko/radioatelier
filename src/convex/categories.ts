@@ -1,5 +1,10 @@
 import {ConvexError, v} from 'convex/values';
-import {randomMarkerColor, randomMarkerIconKey} from '../lib/services/map/markerStyling.data';
+import {
+    MARKER_COLORS,
+    MARKER_ICON_KEYS,
+    randomMarkerColor,
+    randomMarkerIconKey,
+} from '../lib/services/map/markerStyling.data';
 import {mutation, query} from './_generated/server';
 import {getCurrentUserOrThrow} from './users';
 
@@ -40,6 +45,13 @@ export const updateStyles = mutation({
         const user = await getCurrentUserOrThrow(ctx);
 
         for (const style of args.styles) {
+            if (
+                !MARKER_COLORS.includes(style.markerColor as (typeof MARKER_COLORS)[number]) ||
+                !MARKER_ICON_KEYS.includes(style.markerIcon as (typeof MARKER_ICON_KEYS)[number])
+            ) {
+                throw new ConvexError('Invalid category style');
+            }
+
             const existing = await ctx.db
                 .query('userCategoryMarkerStyles')
                 .withIndex('byUserIdCategoryId', q =>

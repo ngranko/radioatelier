@@ -1,10 +1,10 @@
 <script lang="ts">
-    import {MARKER_COLORS} from '$lib/services/map/markerStyling.data';
+    import {MARKER_COLORS, type MarkerColor} from '$lib/services/map/markerStyling.data';
     import CheckIcon from '@lucide/svelte/icons/check';
 
     interface Props {
-        value: string;
-        onchange: (color: string) => void;
+        value: MarkerColor;
+        onchange: (color: MarkerColor) => void;
     }
 
     let {value, onchange}: Props = $props();
@@ -20,7 +20,8 @@
                 : 'ring-1 ring-black/10'}"
             style:background-color={color}
             onclick={() => onchange(color)}
-            aria-label="Выбрать цвет"
+            aria-label={`Выбрать цвет ${color}`}
+            aria-pressed={value === color}
         >
             {#if value === color}
                 <CheckIcon class="size-3.5 text-white drop-shadow-sm" />

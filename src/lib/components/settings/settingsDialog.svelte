@@ -12,7 +12,10 @@
     import PaletteIcon from '@lucide/svelte/icons/palette';
     import SearchIcon from '@lucide/svelte/icons/search';
     import LoaderCircleIcon from '@lucide/svelte/icons/loader-circle';
+    import type {Category} from '$lib/interfaces/category';
     import {categoriesState} from '$lib/state/categories.svelte';
+    import {onDestroy} from 'svelte';
+    import {MARKER_ICON_KEYS, markerColorMap} from '$lib/services/map/markerStyling';
 
     const DIALOG_ANIMATION_DURATION = 200;
 
@@ -20,11 +23,7 @@
         isOpen: boolean;
     }
 
-    interface StyleState {
-        markerColor: string;
-        markerIcon: string;
-        isHidden: boolean;
-    }
+    type StyleState = Pick<Category, 'markerColor' | 'markerIcon' | 'isHidden'>;
 
     interface EditEntry {
         original: StyleState;
@@ -38,6 +37,7 @@
     let edits: Record<string, EditEntry> = $state({});
     let isSaving = $state(false);
     let searchQuery = $state('');
+    let closeRedirectTimer: ReturnType<typeof setTimeout> | undefined;
 
     const categoryList = $derived(
         Object.values(categoriesState.categories).sort((a, b) => a.name.localeCompare(b.name)) ??
@@ -55,11 +55,21 @@
         if (edits[id]) {
             return edits[id].current;
         }
-        const cat = categoryList.find(c => c.id === id);
-        if (!cat) {
-            return {markerColor: '', markerIcon: '', isHidden: false};
+
+        const category = categoriesState.categories[id];
+        if (!category) {
+            return {
+                markerColor: markerColorMap[0],
+                markerIcon: MARKER_ICON_KEYS[0],
+                isHidden: false,
+            };
         }
-        return {markerColor: cat.markerColor, markerIcon: cat.markerIcon, isHidden: cat.isHidden};
+
+        return {
+            markerColor: category.markerColor,
+            markerIcon: category.markerIcon,
+            isHidden: category.isHidden,
+        };
     }
 
     function isEdited(id: Id<'categories'>): boolean {
@@ -76,16 +86,24 @@
     }
 
     function handleUpdate(id: Id<'categories'>, patch: Partial<StyleState>) {
-        const current = getDisplayStyle(id);
+        const category = categoriesState.categories[id];
+        if (!category) {
+            return;
+        }
+
+        const current = edits[id]?.current ?? {
+            markerColor: category.markerColor,
+            markerIcon: category.markerIcon,
+            isHidden: category.isHidden,
+        };
         const updated = {...current, ...patch};
 
         if (!edits[id]) {
-            const cat = categoryList.find(c => c.id === id)!;
             edits[id] = {
                 original: {
-                    markerColor: cat.markerColor,
-                    markerIcon: cat.markerIcon,
-                    isHidden: cat.isHidden,
+                    markerColor: category.markerColor,
+                    markerIcon: category.markerIcon,
+                    isHidden: category.isHidden,
                 },
                 current: updated,
             };
@@ -123,19 +141,45 @@
         return isOpen;
     }
 
+    function clearCloseRedirectTimer() {
+        if (closeRedirectTimer !== undefined) {
+            clearTimeout(closeRedirectTimer);
+            closeRedirectTimer = undefined;
+        }
+    }
+
     function setIsOpen(newOpen: boolean) {
+        clearCloseRedirectTimer();
         isOpen = newOpen;
+
         if (!newOpen) {
             edits = {};
             searchQuery = '';
-            setTimeout(() => goto('/'), DIALOG_ANIMATION_DURATION);
+            closeRedirectTimer = setTimeout(() => {
+                closeRedirectTimer = undefined;
+                goto('/');
+            }, DIALOG_ANIMATION_DURATION);
         }
     }
+
+    function preventCloseWhileSaving(event: Event) {
+        if (isSaving) {
+            event.preventDefault();
+        }
+    }
+
+    onDestroy(() => {
+        clearCloseRedirectTimer();
+    });
 </script>
 
 <!-- prettier-ignore -->
 <DialogRoot bind:open={getIsOpen, setIsOpen}>
-    <Content class="flex max-h-[85vh] flex-col overflow-hidden border-t-0 p-0 sm:max-w-lg">
+    <Content
+        class="flex max-h-[85vh] flex-col overflow-hidden border-t-0 p-0 sm:max-w-lg"
+        onEscapeKeydown={preventCloseWhileSaving}
+        onInteractOutside={preventCloseWhileSaving}
+    >
         <div
             class="absolute top-0 right-0 left-0 h-0.5 bg-gradient-to-r from-primary via-primary/60 to-transparent"
         ></div>

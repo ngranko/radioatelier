@@ -1,15 +1,12 @@
 <script lang="ts">
+    import type {Category} from '$lib/interfaces/category';
     import MarkerPreview from './markerPreview.svelte';
     import ColorPicker from './colorPicker.svelte';
     import IconPicker from './iconPicker.svelte';
     import {Checkbox} from '$lib/components/ui/checkbox';
     import ListXIcon from '@lucide/svelte/icons/list-x';
 
-    interface CategoryStyle {
-        markerColor: string;
-        markerIcon: string;
-        isHidden: boolean;
-    }
+    type CategoryStyle = Pick<Category, 'markerColor' | 'markerIcon' | 'isHidden'>;
 
     interface Props {
         name: string;

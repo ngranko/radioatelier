@@ -7,16 +7,16 @@
     import type {MarkerIcon as MarkerIconType} from '$lib/interfaces/marker';
 
     interface Props {
-        value: string;
-        onchange: (icon: string) => void;
+        value: MarkerIconKey;
+        onchange: (icon: MarkerIconKey) => void;
     }
 
     let {value, onchange}: Props = $props();
     let isOpen = $state(false);
 
-    const activeIcon = $derived(markerIconMap[value as MarkerIconKey]);
+    const activeIcon = $derived(markerIconMap[value]);
 
-    function handleSelect(key: string) {
+    function handleSelect(key: MarkerIconKey) {
         onchange(key);
         isOpen = false;
     }

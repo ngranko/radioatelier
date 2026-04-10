@@ -10,6 +10,8 @@ export const MARKER_COLORS = [
     'oklch(0.65 0.27 340)',
 ] as const;
 
+export type MarkerColor = (typeof MARKER_COLORS)[number];
+
 export const MARKER_ICON_KEYS = [
     'activity',
     'anchor',
@@ -45,7 +47,7 @@ export const MARKER_ICON_KEYS = [
 
 export type MarkerIconKey = (typeof MARKER_ICON_KEYS)[number];
 
-export function randomMarkerColor(): string {
+export function randomMarkerColor(): MarkerColor {
     return MARKER_COLORS[Math.floor(Math.random() * MARKER_COLORS.length)];
 }
 

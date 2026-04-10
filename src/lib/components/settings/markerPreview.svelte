@@ -5,7 +5,7 @@
 
     interface Props {
         color: string;
-        iconKey: string;
+        iconKey: MarkerIconKey;
         size?: 'sm' | 'md';
     }
 
@@ -13,7 +13,7 @@
 
     const sizeClass = $derived(size === 'sm' ? 'size-7' : 'size-10');
     const iconSizeClass = $derived(size === 'sm' ? 'size-3.5' : 'size-5');
-    const icon = $derived(markerIconMap[iconKey as MarkerIconKey]);
+    const icon = $derived(markerIconMap[iconKey]);
 </script>
 
 <div
