@@ -54,11 +54,24 @@ export interface SearchItem {
     city: string;
     country: string;
     type: 'local' | 'google';
+    googlePlaceId: string | null;
 }
 
 export interface SearchPreviewResponsePayload {
     items: SearchItem[];
     hasMore: boolean;
+}
+
+export interface PointPreviewDetails {
+    latitude: number;
+    longitude: number;
+    name: string;
+    categoryName: string;
+    address: string;
+    city: string;
+    country: string;
+    type: 'map' | 'google';
+    googlePlaceId: string | null;
 }
 
 export interface MapPlaceable {

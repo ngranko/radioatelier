@@ -1,6 +1,10 @@
 <script lang="ts">
     import {fade} from 'svelte/transition';
-    import type {LooseObject, Object} from '$lib/interfaces/object';
+    import type {
+        LooseObject,
+        Object as ObjectType,
+        PointPreviewDetails,
+    } from '$lib/interfaces/object';
     import ViewModeSkeleton from '$lib/components/objectDetails/viewMode/viewModeSkeleton.svelte';
     import {clearActiveMarker, deactivateMarker} from '$lib/state/activeMarker.svelte.ts';
     import {Button} from '$lib/components/ui/button';
@@ -21,11 +25,16 @@
     import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
     import {getActiveSearchUrl} from '$lib/state/search.svelte';
     import {setCreateDraftPosition} from '$lib/state/createDraft.svelte';
-    import EditMode from '$lib/components/objectDetails/editMode/editMode.svelte';
+    import ObjectEdit from '$lib/components/objectDetails/objectEdit.svelte';
+    import PointCreate from '$lib/components/objectDetails/pointCreate.svelte';
+    import PointPreview from '$lib/components/objectDetails/pointPreview.svelte';
     import ViewMode from '$lib/components/objectDetails/viewMode/viewMode.svelte';
+    import type {ObjectDetailsOverlayMode} from '$lib/state/objectDetailsOverlay.svelte';
 
     interface Props {
         initialValues?: Partial<LooseObject>;
+        pointDetails?: PointPreviewDetails | null;
+        mode?: ObjectDetailsOverlayMode;
         permissions?: Permissions;
     }
 
@@ -33,8 +42,18 @@
 
     let {
         initialValues = $bindable(),
+        pointDetails = null,
+        mode = 'objectView',
         permissions = {canEditAll: true, canEditPersonal: true},
     }: Props = $props();
+
+    const resolvedInitialValues = $derived(initialValues ?? {});
+    const resolvedMode = $derived(objectDetailsOverlay.isOpen ? objectDetailsOverlay.mode : mode);
+    const resolvedPointDetails = $derived(
+        objectDetailsOverlay.isOpen
+            ? (objectDetailsOverlay.pointDetails ?? pointDetails)
+            : pointDetails,
+    );
 
     function handleMinimizeClick() {
         objectDetailsOverlay.isMinimized = !objectDetailsOverlay.isMinimized;
@@ -120,10 +139,14 @@
         <div class="absolute inset-0" in:fade={{duration: 150}} out:fade={{duration: 150}}>
             {#if objectDetailsOverlay.isLoading}
                 <ViewModeSkeleton />
-            {:else if objectDetailsOverlay.isEditing}
-                <EditMode initialValues={initialValues as Object} {permissions} />
+            {:else if resolvedMode === 'objectEdit' && resolvedInitialValues.id}
+                <ObjectEdit initialValues={resolvedInitialValues as ObjectType} {permissions} />
+            {:else if resolvedMode === 'pointPreview' && resolvedPointDetails}
+                <PointPreview details={resolvedPointDetails} />
+            {:else if resolvedMode === 'pointCreate'}
+                <PointCreate initialValues={resolvedInitialValues} />
             {:else}
-                <ViewMode initialValues={initialValues as Object} {permissions} />
+                <ViewMode initialValues={resolvedInitialValues} {permissions} />
             {/if}
         </div>
     </div>

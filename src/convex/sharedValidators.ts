@@ -1,5 +1,18 @@
 import {v} from 'convex/values';
 
+export function assertValidMapPointCoordinates(latitude: number, longitude: number): void {
+    if (
+        !Number.isFinite(latitude) ||
+        !Number.isFinite(longitude) ||
+        latitude < -90 ||
+        latitude > 90 ||
+        longitude < -180 ||
+        longitude > 180
+    ) {
+        throw new Error('Invalid map coordinates');
+    }
+}
+
 const mapPointAddressFields = {
     address: v.nullable(v.string()),
     city: v.nullable(v.string()),

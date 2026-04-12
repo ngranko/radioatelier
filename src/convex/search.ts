@@ -1,8 +1,7 @@
 import {makeFunctionReference} from 'convex/server';
 import {ConvexError, v} from 'convex/values';
-import type {Id} from './_generated/dataModel';
 import {action, type ActionCtx} from './_generated/server';
-import {searchGooglePlaces} from './search/googlePlaces';
+import {getGooglePlaceDetails, searchGooglePlaces} from './search/googlePlaces';
 import {createTypesenseSearchClient} from './typesense/client';
 import {searchObjectsInTypesense} from './typesense/objects';
 
@@ -114,13 +113,23 @@ export const google = action({
     },
 });
 
+export const googlePlaceDetails = action({
+    args: {
+        placeId: v.string(),
+    },
+    handler: async (ctx, args) => {
+        await requireCurrentUserId(ctx);
+        return await getGooglePlaceDetails(args.placeId);
+    },
+});
+
 async function requireCurrentUserId(ctx: ActionCtx) {
     const user = await ctx.runQuery(currentUser, {});
     if (!user) {
         throw new ConvexError('Unauthorized');
     }
 
-    return user._id as Id<'users'>;
+    return user._id;
 }
 
 function toCoordinateSearchItem(query: string) {
@@ -138,7 +147,8 @@ function toCoordinateSearchItem(query: string) {
         address: '',
         city: '',
         country: '',
-        type: 'local' as const,
+        type: 'local',
+        googlePlaceId: null,
     };
 }
 

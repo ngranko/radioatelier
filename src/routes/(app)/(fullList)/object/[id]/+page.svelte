@@ -29,7 +29,7 @@
     });
 
     onMount(() => {
-        objectDetailsOverlay.isEditing = false;
+        objectDetailsOverlay.mode = 'objectView';
         objectDetailsOverlay.isDirty = false;
     });
 </script>

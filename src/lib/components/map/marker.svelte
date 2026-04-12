@@ -18,6 +18,7 @@
     import {useConvexClient} from 'convex-svelte';
     import {api} from '$convex/_generated/api';
     import type {Id} from '$convex/_generated/dataModel';
+    import {buildPointUrl} from '$lib/utils/pointRoute.ts';
 
     interface Props {
         id?: Id<'objects'> | null;
@@ -141,7 +142,11 @@
         if (source === 'search' && searchPoint?.object.id === null && searchPointId) {
             showLoadingDetailsOverlay(searchPointId);
             goto(
-                `/object/create?lat=${searchPoint.object.latitude}&lng=${searchPoint.object.longitude}`,
+                buildPointUrl({
+                    latitude: searchPoint.object.latitude,
+                    longitude: searchPoint.object.longitude,
+                    placeId: searchPoint.object.googlePlaceId,
+                }),
             );
         } else {
             const targetId = searchPoint?.object.id ?? id;

@@ -2,8 +2,8 @@
     import type {Id} from '$convex/_generated/dataModel';
     import type {Object} from '$lib/interfaces/object';
     import type {Permissions} from '$lib/interfaces/permissions';
-    import Form from '$lib/components/objectDetails/editMode/form.svelte';
-    import LightForm from '$lib/components/objectDetails/editMode/lightForm.svelte';
+    import Form from '$lib/components/objectDetails/objectForm/form.svelte';
+    import LightForm from '$lib/components/objectDetails/objectForm/lightForm.svelte';
 
     interface Props {
         initialValues: Object;
@@ -26,10 +26,6 @@
     let snapshotObjectId = $state<Id<'objects'> | null>(null);
 
     $effect(() => {
-        if (!liveValues.id) {
-            return;
-        }
-
         const currentId = liveValues.id;
         if (!editSnapshot || snapshotObjectId !== currentId) {
             editSnapshot = cloneObjectSnapshot(liveValues);
@@ -37,7 +33,7 @@
         }
     });
 
-    const formValues = $derived((editSnapshot ? editSnapshot : liveValues) as Object);
+    const formValues = $derived(editSnapshot ?? liveValues);
 </script>
 
 <!-- TODO: add an error state -->

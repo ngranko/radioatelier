@@ -32,12 +32,31 @@
         () => ({initialData: data.objects}),
     );
 
-    const overlayValues = $derived(objectDetailsOverlay.details ?? page.data.activeObject ?? null);
+    const overlayValues = $derived(
+        objectDetailsOverlay.details ??
+            page.data.activeObject ??
+            page.data.activePoint?.draft ??
+            null,
+    );
+    const overlayPointDetails = $derived(
+        objectDetailsOverlay.pointDetails ?? page.data.activePoint?.preview ?? null,
+    );
+    const overlayMode = $derived.by(() => {
+        if (objectDetailsOverlay.isOpen) {
+            return objectDetailsOverlay.mode;
+        }
+
+        if (page.data.activePoint) {
+            return 'pointPreview';
+        }
+
+        return 'objectView';
+    });
 
     const markerPoints = $derived(objects.data ?? data.objects);
     const routeObjectId = $derived.by(() => {
         const id = page.params.id;
-        return id && id !== 'create' ? (id as Id<'objects'>) : null;
+        return id ? (id as Id<'objects'>) : null;
     });
 
     // we need this query here to figure out the shared marker
@@ -103,6 +122,8 @@
     >
         <ObjectDetails
             initialValues={overlayValues}
+            pointDetails={overlayPointDetails}
+            mode={overlayMode}
             permissions={{
                 canEditAll: Boolean(ctx.auth.userId) && (isOwner || !renderedObject),
                 canEditPersonal: Boolean(ctx.auth.userId) && !isOwner && isPublic,

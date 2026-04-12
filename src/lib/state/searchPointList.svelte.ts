@@ -4,10 +4,14 @@ import {untrack} from 'svelte';
 
 export const searchPointList = $state<KeyVal<SearchPointListItem>>({});
 
+function getSearchPointKey(point: SearchPointListItem) {
+    return point.object.id ?? point.object.googlePlaceId ?? window.crypto.randomUUID();
+}
+
 export function replaceSearchPointList(points: SearchPointListItem[]) {
     const nextPoints: KeyVal<SearchPointListItem> = {};
     for (const point of points) {
-        nextPoints[point.object.id ?? window.crypto.randomUUID()] = point;
+        nextPoints[getSearchPointKey(point)] = point;
     }
 
     clearSearchPointList();
@@ -25,6 +29,10 @@ export function updateSearchPoint(id: string, updatedFields: Partial<SearchPoint
     }
 
     searchPointList[id] = {...point, ...updatedFields};
+}
+
+export function upsertSearchPoint(id: string, point: SearchPointListItem) {
+    searchPointList[id] = point;
 }
 
 export function clearSearchPointList() {

@@ -4,6 +4,12 @@ import {z} from 'zod';
 
 const emptyOrMissingToNull = (v: unknown) => (!v ? null : v);
 
+const coordinateField = (min: number, max: number, message: string) =>
+    z.preprocess(
+        value => (value === '' || value === null || value === undefined ? NaN : Number(value)),
+        z.number().min(min, message).max(max, message),
+    );
+
 export type ObjectFormData = z.infer<typeof schema>;
 
 export function toFormDefaults(obj: Partial<LooseObject>): Partial<ObjectFormData> {
@@ -24,8 +30,8 @@ export const schema = z.object({
             .transform(v => v as Id<'objects'>)
             .nullable(),
     ),
-    latitude: z.coerce.number(),
-    longitude: z.coerce.number(),
+    latitude: coordinateField(-90, 90, 'Широта должна быть от -90 до 90'),
+    longitude: coordinateField(-180, 180, 'Долгота должна быть от -180 до 180'),
     cover: z.preprocess(
         emptyOrMissingToNull,
         z

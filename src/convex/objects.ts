@@ -10,6 +10,7 @@ import {
     updateIsVisited,
 } from './helpers/objectHelpers';
 import {
+    assertValidMapPointCoordinates,
     createObjectRecordFields,
     repositionObjectRecordFields,
     updateObjectRecordFields,
@@ -137,6 +138,7 @@ export const create = mutation({
     },
     handler: async (ctx, {data}) => {
         const user = await getCurrentUserOrThrow(ctx);
+        assertValidMapPointCoordinates(data.latitude, data.longitude);
 
         const mapPointId = await ctx.db.insert('mapPoints', {
             latitude: data.latitude,
@@ -352,6 +354,7 @@ export const reposition = mutation({
     },
     handler: async (ctx, {id, data}) => {
         const user = await getCurrentUserOrThrow(ctx);
+        assertValidMapPointCoordinates(data.latitude, data.longitude);
 
         const object = await ctx.db.get('objects', id);
         if (!object) {

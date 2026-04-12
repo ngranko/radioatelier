@@ -2,7 +2,7 @@
     import type {LooseObject} from '$lib/interfaces/object';
     import {superForm, defaults} from 'sveltekit-superforms';
     import {zod4Client} from 'sveltekit-superforms/adapters';
-    import PrivateTagsSelect from '$lib/components/objectDetails/editMode/privateTagsSelect.svelte';
+    import PrivateTagsSelect from '$lib/components/objectDetails/objectForm/privateTagsSelect.svelte';
     import {toast} from 'svelte-sonner';
     import {Button} from '$lib/components/ui/button';
     import {Checkbox} from '$lib/components/ui/checkbox';
@@ -21,7 +21,7 @@
     import {getErrorArray} from '$lib/utils/formErrors';
     import {page} from '$app/state';
     import {schema, toFormDefaults} from '$lib/schema/objectSchema.ts';
-    import BackButton from '$lib/components/objectDetails/editMode/backButton.svelte';
+    import BackButton from '$lib/components/objectDetails/objectForm/backButton.svelte';
 
     interface Props {
         initialValues: Partial<LooseObject>;
@@ -99,11 +99,11 @@
     });
 
     function handleSaveSuccess() {
-        objectDetailsOverlay.isEditing = false;
+        objectDetailsOverlay.mode = 'objectView';
     }
 
     function handleBack() {
-        objectDetailsOverlay.isEditing = false;
+        objectDetailsOverlay.mode = 'objectView';
     }
 </script>
 
