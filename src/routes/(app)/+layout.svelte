@@ -134,8 +134,8 @@
                 lng={createDraftState.position.lng}
                 icon={SproutIcon}
                 iconClassName="fill-current"
-                color="#000000"
-                source="map"
+                color="#16a34a"
+                source="draft"
             />
         {/key}
     {/if}

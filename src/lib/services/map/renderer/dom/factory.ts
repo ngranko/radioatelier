@@ -11,7 +11,7 @@ export class Factory {
     public create(marker: Marker): void {
         const content = this.createMarkerContent(marker);
         const handle = this.provider.createMarkerHandle(marker.getPosition(), content, {
-            zIndex: marker.getSource() === 'search' ? 1 : 0,
+            zIndex: marker.getZIndex(),
         });
         marker.setHandle(handle);
         marker.create();
@@ -19,7 +19,7 @@ export class Factory {
 
     private createMarkerContent(marker: Marker): HTMLElement {
         const markerElement = document.createElement('div');
-        const isInverted = marker.getSource() === 'share' || marker.getSource() === 'search';
+        const isInverted = marker.isServiceMarker();
         const color = marker.getColor();
         markerElement.className = `w-6 h-6 translate-y-1/2 flex justify-center items-center rounded-full transition-transform transition-opacity duration-100 ease-in-out text-sm ${isInverted ? '' : 'text-white'}`;
         markerElement.style.backgroundColor = isInverted ? 'white' : color;

@@ -38,6 +38,30 @@ export class Marker {
         return this.options.source;
     }
 
+    public isLazy(): boolean {
+        return this.options.source === 'list';
+    }
+
+    public isServiceMarker(): boolean {
+        return (
+            this.options.source === 'share' ||
+            this.options.source === 'search' ||
+            this.options.source === 'draft'
+        );
+    }
+
+    public usesDomRenderer(): boolean {
+        return this.isServiceMarker();
+    }
+
+    public getZIndex(): number {
+        return this.isServiceMarker() ? 1 : 0;
+    }
+
+    public isViewportManaged(): boolean {
+        return this.options.source !== 'share';
+    }
+
     public getColor(): string {
         return this.options.color;
     }

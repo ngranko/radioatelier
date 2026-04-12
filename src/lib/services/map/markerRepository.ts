@@ -1,4 +1,4 @@
-import type {MarkerId} from '$lib/interfaces/marker';
+import type {MarkerId, MarkerSource} from '$lib/interfaces/marker';
 import {Marker} from './marker';
 
 export class MarkerRepository {
@@ -57,7 +57,7 @@ export class MarkerRepository {
     public upsertWithPolicy(
         id: MarkerId,
         createMarker: () => Marker,
-        source: 'map' | 'list' | 'search' | 'share',
+        source: MarkerSource,
     ): {action: 'inserted' | 'ignored' | 'replaced'; marker: Marker} {
         const existing = this.markerCache.get(id);
         if (!existing) {

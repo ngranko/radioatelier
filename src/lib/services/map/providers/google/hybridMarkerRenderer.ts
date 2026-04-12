@@ -22,54 +22,35 @@ export class HybridMarkerRenderer implements MarkerRenderer {
     }
 
     public ensureCreated(marker: Marker): void {
-        if (marker.getSource() === 'search') {
-            this.dom.ensureCreated(marker);
-        } else {
-            this.deck.ensureCreated(marker);
-        }
+        this.rendererFor(marker).ensureCreated(marker);
     }
 
     public syncAll(iterable: Iterable<Marker>): void {
-        // Only non-search markers are part of deck layer's global sync
-        const nonSearch: Marker[] = [];
+        const deckMarkers: Marker[] = [];
         for (const marker of iterable) {
-            if (marker.getSource() !== 'search') {
-                nonSearch.push(marker);
+            if (marker.usesDomRenderer()) {
+                this.dom.ensureCreated(marker);
+            } else {
+                deckMarkers.push(marker);
             }
         }
-        this.deck.syncAll(nonSearch);
+        this.deck.syncAll(deckMarkers);
     }
 
     public show(marker: Marker): void {
-        if (marker.getSource() === 'search') {
-            this.dom.show(marker);
-        } else {
-            this.deck.show(marker);
-        }
+        this.rendererFor(marker).show(marker);
     }
 
     public hide(marker: Marker): void {
-        if (marker.getSource() === 'search') {
-            this.dom.hide(marker);
-        } else {
-            this.deck.hide(marker);
-        }
+        this.rendererFor(marker).hide(marker);
     }
 
     public remove(marker: Marker, onRemoved?: () => void): void {
-        if (marker.getSource() === 'search') {
-            this.dom.remove(marker, onRemoved);
-        } else {
-            this.deck.remove(marker, onRemoved);
-        }
+        this.rendererFor(marker).remove(marker, onRemoved);
     }
 
     public applyState(marker: Marker): void {
-        if (marker.getSource() === 'search') {
-            this.dom.applyState(marker);
-        } else {
-            this.deck.applyState(marker);
-        }
+        this.rendererFor(marker).applyState(marker);
     }
 
     public destroy(): void {
@@ -83,5 +64,9 @@ export class HybridMarkerRenderer implements MarkerRenderer {
         } catch (e) {
             console.error('error destroying DeckOverlayRenderer:', e);
         }
+    }
+
+    private rendererFor(marker: Marker): MarkerRenderer {
+        return marker.usesDomRenderer() ? this.dom : this.deck;
     }
 }

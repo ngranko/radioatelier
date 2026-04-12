@@ -5,7 +5,7 @@ const VISITED_BRIGHT = '#39ff14';
 
 export class Styler {
     public apply(marker: Marker) {
-        if (marker.getSource() === 'share' || marker.getSource() === 'search') {
+        if (marker.isServiceMarker()) {
             return;
         }
 
