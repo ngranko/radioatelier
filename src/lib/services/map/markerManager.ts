@@ -63,8 +63,6 @@ export class MarkerManager {
     }
 
     public addMarker(id: MarkerId, position: LatLngLiteral, options: MarkerOptions): Marker | null {
-        const isLazy = options.source === 'list';
-
         const upsert = this.repo.upsertWithPolicy(
             id,
             () => new Marker(position, options),
@@ -79,7 +77,7 @@ export class MarkerManager {
             this.renderer.ensureCreated(upsert.marker);
         }
 
-        if (isLazy) {
+        if (upsert.marker.isLazy()) {
             this.scheduleViewportUpdate();
             return upsert.marker;
         }
@@ -94,12 +92,17 @@ export class MarkerManager {
         }
 
         this.renderer.ensureCreated(marker);
-
-        if (marker.getSource() === 'map' || marker.getSource() === 'search') {
-            this.scheduleViewportUpdate();
-        }
+        this.scheduleViewportUpdateFor(marker);
 
         return marker;
+    }
+
+    private scheduleViewportUpdateFor(marker: Marker) {
+        if (!marker.isViewportManaged()) {
+            return;
+        }
+
+        this.scheduleViewportUpdate();
     }
 
     public getMarker(id: MarkerId): Marker | undefined {
