@@ -1,13 +1,13 @@
 <script lang="ts">
     import type {LooseObject} from '$lib/interfaces/object';
-    import DeleteButton from '$lib/components/objectDetails/editMode/deleteButton.svelte';
-    import BackButton from '$lib/components/objectDetails/editMode/backButton.svelte';
+    import DeleteButton from '$lib/components/objectDetails/objectForm/deleteButton.svelte';
+    import BackButton from '$lib/components/objectDetails/objectForm/backButton.svelte';
     import {removeSearchPoint} from '$lib/state/searchPointList.svelte.ts';
     import {superForm, defaults} from 'sveltekit-superforms';
     import {zod4Client} from 'sveltekit-superforms/adapters';
-    import CategorySelect from '$lib/components/objectDetails/editMode/categorySelect.svelte';
-    import PrivateTagsSelect from '$lib/components/objectDetails/editMode/privateTagsSelect.svelte';
-    import TagsSelect from '$lib/components/objectDetails/editMode/tagsSelect.svelte';
+    import CategorySelect from '$lib/components/objectDetails/objectForm/categorySelect.svelte';
+    import PrivateTagsSelect from '$lib/components/objectDetails/objectForm/privateTagsSelect.svelte';
+    import TagsSelect from '$lib/components/objectDetails/objectForm/tagsSelect.svelte';
     import {toast} from 'svelte-sonner';
     import ImageUpload from '$lib/components/input/imageUpload/index.svelte';
     import {Button} from '$lib/components/ui/button';
@@ -29,7 +29,7 @@
     import {goto} from '$app/navigation';
     import {page} from '$app/state';
     import {schema, toFormDefaults} from '$lib/schema/objectSchema.ts';
-    import AddressLoadingIndicator from '$lib/components/objectDetails/editMode/addressLoadingIndicator.svelte';
+    import AddressLoadingIndicator from '$lib/components/objectDetails/objectForm/addressLoadingIndicator.svelte';
     import type {Id} from '$convex/_generated/dataModel';
     import {useConvexClient} from 'convex-svelte';
     import {api} from '$convex/_generated/api';
@@ -170,7 +170,14 @@
     });
 
     function handleBack() {
-        objectDetailsOverlay.isEditing = false;
+        objectDetailsOverlay.isDirty = false;
+
+        if ($formData.id) {
+            objectDetailsOverlay.mode = 'objectView';
+            return;
+        }
+
+        objectDetailsOverlay.mode = 'pointPreview';
     }
 
     function handleImageChange(file: File): Promise<void> {
@@ -210,7 +217,7 @@
             goto(`/object/${id}`);
         } else {
             objectDetailsOverlay.isDirty = false;
-            objectDetailsOverlay.isEditing = false;
+            objectDetailsOverlay.mode = 'objectView';
         }
     }
 
@@ -224,9 +231,9 @@
 <form method="POST" action="?/save" use:enhance>
     <div class="bg-muted/40 flex items-center justify-between gap-3 border-b px-4 py-2.5">
         <Button type="submit" disabled={$submitting} class="px-6 text-base">Сохранить</Button>
+        <BackButton isConfirmationRequired={isTainted()} onClick={handleBack} />
+        <span class="flex-1"></span>
         {#if $formData.id}
-            <BackButton isConfirmationRequired={isTainted()} onClick={handleBack} />
-            <span class="flex-1"></span>
             <DeleteButton disabled={$submitting} />
         {/if}
     </div>

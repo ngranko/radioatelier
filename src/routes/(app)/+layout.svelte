@@ -23,6 +23,7 @@
     import {useQuery} from 'convex-svelte';
     import {api} from '$convex/_generated/api';
     import {setCategories} from '$lib/state/categories.svelte';
+    import {buildPointUrl} from '$lib/utils/pointRoute.ts';
 
     // this is needed to avoid deck.gl error
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
@@ -44,7 +45,7 @@
         setCreateDraftPosition({lat: location.lat, lng: location.lng});
 
         showLoadingDetailsOverlay(new Date().getTime().toString());
-        goto(`/object/create?lat=${location.lat}&lng=${location.lng}`);
+        goto(buildPointUrl({latitude: location.lat, longitude: location.lng}));
     }
 
     $effect(() => {

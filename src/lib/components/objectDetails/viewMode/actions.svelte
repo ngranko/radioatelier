@@ -21,7 +21,7 @@
         if (!objectDetailsOverlay.detailsId) {
             return;
         }
-        objectDetailsOverlay.isEditing = true;
+        objectDetailsOverlay.mode = 'objectEdit';
     }
 
     function handleRouteClick() {

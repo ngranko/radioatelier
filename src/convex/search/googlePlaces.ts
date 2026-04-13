@@ -6,6 +6,7 @@ type GooglePlaceSearchResponse = {
 };
 
 type GooglePlace = {
+    id?: string;
     displayName?: {
         text?: string;
     };
@@ -36,6 +37,7 @@ export interface GoogleSearchItem {
     city: string;
     country: string;
     type: 'google';
+    googlePlaceId: string | null;
 }
 
 export interface GoogleSearchResults {
@@ -52,6 +54,7 @@ interface SearchOptions {
 }
 
 const GOOGLE_TEXT_SEARCH_FIELD_MASK = [
+    'places.id',
     'places.displayName',
     'places.primaryTypeDisplayName',
     'places.formattedAddress',
@@ -60,41 +63,77 @@ const GOOGLE_TEXT_SEARCH_FIELD_MASK = [
     'nextPageToken',
 ].join(',');
 
-export async function searchGooglePlaces(options: SearchOptions): Promise<GoogleSearchResults> {
+const GOOGLE_PLACE_DETAILS_FIELD_MASK = [
+    'id',
+    'displayName',
+    'primaryTypeDisplayName',
+    'formattedAddress',
+    'addressComponents',
+    'location',
+].join(',');
+
+async function fetchGooglePlacesResource(
+    url: string,
+    fieldMask: string,
+    init?: Omit<RequestInit, 'headers'> & {headers?: Record<string, string>},
+): Promise<unknown | null> {
     const apiKey = process.env.GOOGLE_API_KEY?.trim();
     if (!apiKey) {
         throw new Error('Missing GOOGLE_API_KEY environment variable');
     }
 
-    const response = await fetch('https://places.googleapis.com/v1/places:searchText', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-Goog-Api-Key': apiKey,
-            'X-Goog-FieldMask': GOOGLE_TEXT_SEARCH_FIELD_MASK,
-        },
-        body: JSON.stringify({
-            textQuery: options.query,
-            languageCode: 'ru',
-            locationBias: {
-                circle: {
-                    center: {
-                        latitude: options.latitude,
-                        longitude: options.longitude,
-                    },
-                    radius: 50000,
-                },
-            },
-            pageSize: options.limit,
-            ...(options.pageToken ? {pageToken: options.pageToken} : {}),
-        }),
-    });
-
-    if (!response.ok) {
-        throw new Error(`Google Places search failed with status ${response.status}`);
+    const headers: Record<string, string> = {
+        'X-Goog-Api-Key': apiKey,
+        'X-Goog-FieldMask': fieldMask,
+        ...init?.headers,
+    };
+    if (init?.body !== undefined) {
+        headers['Content-Type'] = 'application/json';
     }
 
-    const data = (await response.json()) as GooglePlaceSearchResponse;
+    const response = await fetch(url, {
+        ...init,
+        headers,
+    });
+
+    if (response.status === 404) {
+        return null;
+    }
+
+    if (!response.ok) {
+        throw new Error(`Google Places request failed with status ${response.status}`);
+    }
+
+    return response.json();
+}
+
+export async function searchGooglePlaces(options: SearchOptions): Promise<GoogleSearchResults> {
+    const data = (await fetchGooglePlacesResource(
+        'https://places.googleapis.com/v1/places:searchText',
+        GOOGLE_TEXT_SEARCH_FIELD_MASK,
+        {
+            method: 'POST',
+            body: JSON.stringify({
+                textQuery: options.query,
+                languageCode: 'ru',
+                locationBias: {
+                    circle: {
+                        center: {
+                            latitude: options.latitude,
+                            longitude: options.longitude,
+                        },
+                        radius: 50000,
+                    },
+                },
+                pageSize: options.limit,
+                ...(options.pageToken ? {pageToken: options.pageToken} : {}),
+            }),
+        },
+    )) as GooglePlaceSearchResponse | null;
+
+    if (!data) {
+        return {items: [], nextPageToken: ''};
+    }
 
     return {
         items: (data.places ?? [])
@@ -102,6 +141,19 @@ export async function searchGooglePlaces(options: SearchOptions): Promise<Google
             .filter((item): item is GoogleSearchItem => item !== null),
         nextPageToken: data.nextPageToken ?? '',
     };
+}
+
+export async function getGooglePlaceDetails(placeId: string): Promise<GoogleSearchItem | null> {
+    const place = (await fetchGooglePlacesResource(
+        `https://places.googleapis.com/v1/places/${placeId}`,
+        GOOGLE_PLACE_DETAILS_FIELD_MASK,
+    )) as GooglePlace | null;
+
+    if (!place) {
+        return null;
+    }
+
+    return toGoogleSearchItem(place);
 }
 
 function toGoogleSearchItem(place: GooglePlace): GoogleSearchItem | null {
@@ -130,5 +182,6 @@ function toGoogleSearchItem(place: GooglePlace): GoogleSearchItem | null {
         city: parsedAddress.city,
         country: parsedAddress.country,
         type: 'google' as const,
+        googlePlaceId: place.id ?? null,
     };
 }

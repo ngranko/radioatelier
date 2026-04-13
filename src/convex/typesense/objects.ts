@@ -24,6 +24,7 @@ export interface LocalSearchItem {
     city: string;
     country: string;
     type: 'local';
+    googlePlaceId: null;
 }
 
 interface TypesenseSearchHit {
@@ -95,6 +96,7 @@ export async function searchObjectsInTypesense(
             city: document.city ?? '',
             country: document.country ?? '',
             type: 'local' as const,
+            googlePlaceId: null,
         }));
 }
 

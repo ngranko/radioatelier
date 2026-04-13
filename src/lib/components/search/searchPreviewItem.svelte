@@ -3,8 +3,10 @@
     import {setCenter} from '$lib/services/map/map.svelte';
     import type {SearchItem} from '$lib/interfaces/object';
     import {mapState} from '$lib/state/map.svelte.ts';
-    import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
+    import {upsertSearchPoint} from '$lib/state/searchPointList.svelte.ts';
+    import {showLoadingDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
     import {goto} from '$app/navigation';
+    import {buildPointUrl} from '$lib/utils/pointRoute.ts';
 
     interface Props {
         object: SearchItem;
@@ -22,18 +24,19 @@
         if (marker) {
             marker.getOnClick()?.();
         } else if (object.id) {
-            objectDetailsOverlay.isMinimized = false;
-            objectDetailsOverlay.isDirty = false;
-            objectDetailsOverlay.detailsId = object.id;
-            objectDetailsOverlay.isEditing = false;
-            objectDetailsOverlay.isLoading = true;
+            showLoadingDetailsOverlay(object.id);
             goto(`/object/${object.id}`);
         } else {
-            objectDetailsOverlay.isMinimized = false;
-            objectDetailsOverlay.isEditing = true;
-            objectDetailsOverlay.isDirty = false;
-            objectDetailsOverlay.detailsId = new Date().getTime().toString();
-            goto(`/object/create?lat=${object.latitude}&lng=${object.longitude}`);
+            const overlayId = object.googlePlaceId ?? window.crypto.randomUUID();
+            upsertSearchPoint(overlayId, {object});
+            showLoadingDetailsOverlay(overlayId);
+            goto(
+                buildPointUrl({
+                    latitude: object.latitude,
+                    longitude: object.longitude,
+                    placeId: object.googlePlaceId,
+                }),
+            );
         }
     }
 </script>
