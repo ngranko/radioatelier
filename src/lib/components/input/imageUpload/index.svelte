@@ -66,6 +66,8 @@
 
     function handleRemoveClick() {
         value = undefined;
+        url = undefined;
+        previewUrl = undefined;
     }
 
     function handleViewerOpen() {
