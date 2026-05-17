@@ -86,13 +86,35 @@ export async function updateIsVisited(
             });
         }
     } else if (!isVisited && wasVisited && visitedData) {
-        const newIds = visitedData.visitedObjectIds.filter(id => id !== objectId);
-        if (newIds.length === 0) {
-            await ctx.db.delete('userVisitedChunks', visitedData._id);
-        } else {
-            await ctx.db.patch('userVisitedChunks', visitedData._id, {
-                visitedObjectIds: newIds,
-            });
+        await removeObjectFromVisitedChunk(ctx, visitedData, objectId);
+    }
+}
+
+async function removeObjectFromVisitedChunk(
+    ctx: MutationCtx,
+    visitedData: Doc<'userVisitedChunks'>,
+    objectId: Id<'objects'>,
+) {
+    const newIds = visitedData.visitedObjectIds.filter(id => id !== objectId);
+    if (newIds.length === 0) {
+        await ctx.db.delete('userVisitedChunks', visitedData._id);
+    } else {
+        await ctx.db.patch('userVisitedChunks', visitedData._id, {
+            visitedObjectIds: newIds,
+        });
+    }
+}
+
+export async function removeVisitedForObject(ctx: MutationCtx, objectId: Id<'objects'>) {
+    const chunkId = getVisitedChunkId(objectId);
+    const visitedChunks = await ctx.db
+        .query('userVisitedChunks')
+        .withIndex('byChunkId', q => q.eq('chunkId', chunkId))
+        .collect();
+
+    for (const visitedData of visitedChunks) {
+        if (visitedData.visitedObjectIds.includes(objectId)) {
+            await removeObjectFromVisitedChunk(ctx, visitedData, objectId);
         }
     }
 }

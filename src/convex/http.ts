@@ -3,6 +3,8 @@ import {httpRouter} from 'convex/server';
 import {Webhook} from 'svix';
 import {internal} from './_generated/api';
 import {httpAction} from './_generated/server';
+import {getNotionWebhookVerificationToken} from './notion/config';
+import {verifyNotionWebhookSignature} from './notion/webhooks';
 
 const http = httpRouter();
 
@@ -34,6 +36,58 @@ http.route({
             default:
                 console.log('Ignored Clerk webhook event', event.type);
         }
+
+        return new Response(null, {status: 200});
+    }),
+});
+
+http.route({
+    path: '/notion-webhook',
+    method: 'POST',
+    handler: httpAction(async (ctx, request) => {
+        const payload = await request.text();
+        let body: Record<string, unknown>;
+        try {
+            body = JSON.parse(payload) as Record<string, unknown>;
+        } catch {
+            return new Response('Invalid JSON payload', {status: 400});
+        }
+
+        if (typeof body.verification_token === 'string') {
+            // this is a verification request, we need to paste this token into Notion
+            console.log(`Received Notion webhook verification token: ${body.verification_token}`);
+            return new Response(null, {status: 200});
+        }
+
+        const signature = request.headers.get('x-notion-signature');
+        if (!signature) {
+            return new Response('Missing Notion signature', {status: 401});
+        }
+
+        const isTrusted = await verifyNotionWebhookSignature(
+            payload,
+            signature,
+            getNotionWebhookVerificationToken(),
+        );
+        if (!isTrusted) {
+            return new Response('Invalid Notion signature', {status: 401});
+        }
+
+        const eventType = typeof body.type === 'string' ? body.type : null;
+        const pageId =
+            body.entity &&
+            typeof body.entity === 'object' &&
+            typeof (body.entity as {id?: unknown}).id === 'string'
+                ? (body.entity as {id: string}).id
+                : null;
+        if (!eventType || !pageId || !isSupportedNotionEvent(eventType)) {
+            return new Response(null, {status: 200});
+        }
+
+        await ctx.runAction(internal.notionSync.inbound.processWebhookEvent, {
+            pageId,
+            eventType,
+        });
 
         return new Response(null, {status: 200});
     }),
@@ -72,3 +126,12 @@ async function validateRequest(req: Request): Promise<WebhookEvent | null> {
 }
 
 export default http;
+
+function isSupportedNotionEvent(eventType: string) {
+    return (
+        eventType === 'page.created' ||
+        eventType === 'page.properties_updated' ||
+        eventType === 'page.deleted' ||
+        eventType === 'page.undeleted'
+    );
+}

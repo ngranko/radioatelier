@@ -1,5 +1,7 @@
 import {ConvexError, v} from 'convex/values';
 import type {ImportJobStatus, ImportLineFeedback} from '../lib/interfaces/importShared';
+import {internal} from './_generated/api';
+import type {Id} from './_generated/dataModel';
 import {internalMutation, mutation, query} from './_generated/server';
 import {ensureCategory, ensurePrivateTags, ensureTags} from './helpers/importHelpers';
 import {getNextInternalId, updateIsVisited} from './helpers/objectHelpers';
@@ -202,6 +204,7 @@ export const importBatch = mutation({
         let processedRows = job.processedRows;
         let successfulRows = job.successfulRows;
         let feedback: ImportLineFeedback[] = [...job.feedback];
+        const importedObjectIds: Id<'objects'>[] = [];
 
         for (const row of rows) {
             const rowFeedback: ImportLineFeedback[] = [];
@@ -323,6 +326,9 @@ export const importBatch = mutation({
                 });
 
                 await updateIsVisited(ctx, objectId, user._id, row.isVisited);
+                if (user.notionSyncEnabled) {
+                    importedObjectIds.push(objectId);
+                }
 
                 processedRows += 1;
                 successfulRows += 1;
@@ -355,6 +361,11 @@ export const importBatch = mutation({
             feedback: trimFeedback(feedback),
             lastBatchSequence: sequence,
         });
+        if (importedObjectIds.length > 0) {
+            ctx.scheduler.runAfter(0, internal.notionSync.outbound.enqueueOutboundObjectSyncBatch, {
+                objectIds: importedObjectIds,
+            });
+        }
 
         return {
             processedRows,

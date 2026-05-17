@@ -3,12 +3,14 @@ import {v} from 'convex/values';
 import {internal} from './_generated/api';
 import type {Doc} from './_generated/dataModel';
 import {internalQuery, mutation, query} from './_generated/server';
+import {buildObjectSearchRecord, deleteObjectAggregate} from './helpers/objectAggregate';
 import {
     getIsVisited,
     getNextInternalId,
     getPrivateTags,
     updateIsVisited,
 } from './helpers/objectHelpers';
+import {deleteSyncStateForObject} from './notionSync/state';
 import {
     assertValidMapPointCoordinates,
     createObjectRecordFields,
@@ -191,18 +193,26 @@ export const create = mutation({
         }
 
         ctx.scheduler.runAfter(0, internal.typesense.createInTypesense, {
-            object: {
+            object: buildObjectSearchRecord({
                 id: objectId,
                 name: data.name,
-                address: data.address ?? null,
-                city: data.city ?? null,
-                country: data.country ?? null,
+                mapPoint: {
+                    latitude: data.latitude,
+                    longitude: data.longitude,
+                    address: data.address ?? null,
+                    city: data.city ?? null,
+                    country: data.country ?? null,
+                },
                 categoryName: category.name,
-                location: [data.latitude, data.longitude] as [number, number],
                 createdBy: user._id,
                 isPublic: data.isPublic,
-            },
+            }),
         });
+        if (user.notionSyncEnabled) {
+            ctx.scheduler.runAfter(0, internal.notionSync.outbound.enqueueOutboundObjectSync, {
+                objectId,
+            });
+        }
 
         return objectId;
     },
@@ -288,19 +298,27 @@ export const update = mutation({
             throw new Error('Category not found');
         }
 
-        ctx.scheduler.runAfter(0, internal.typesense.createInTypesense, {
-            object: {
+        ctx.scheduler.runAfter(0, internal.typesense.updateInTypesense, {
+            object: buildObjectSearchRecord({
                 id,
                 name: data.name,
-                address: data.address ?? null,
-                city: data.city ?? null,
-                country: data.country ?? null,
+                mapPoint: {
+                    latitude: mapPoint.latitude,
+                    longitude: mapPoint.longitude,
+                    address: data.address ?? null,
+                    city: data.city ?? null,
+                    country: data.country ?? null,
+                },
                 categoryName: category.name,
-                location: [mapPoint.latitude, mapPoint.longitude] as [number, number],
                 createdBy: user._id,
                 isPublic: data.isPublic,
-            },
+            }),
         });
+        if (isOwner && user.notionSyncEnabled) {
+            ctx.scheduler.runAfter(0, internal.notionSync.outbound.enqueueOutboundObjectSync, {
+                objectId: id,
+            });
+        }
 
         return id;
     },
@@ -318,31 +336,18 @@ export const remove = mutation({
         if (object.createdById !== user._id) {
             throw new Error('Only the owner can delete this object');
         }
-
-        const marker = await ctx.db
-            .query('markers')
-            .withIndex('byObjectId', q => q.eq('objectId', id))
-            .first();
-        if (marker) {
-            await ctx.db.delete('markers', marker._id);
-        }
-
-        const privateTagRows = await ctx.db
-            .query('objectPrivateTags')
-            .withIndex('byObjectIdUserId', q => q.eq('objectId', id))
-            .collect();
-        for (const row of privateTagRows) {
-            await ctx.db.delete('objectPrivateTags', row._id);
-        }
-
-        updateIsVisited(ctx, id, user._id, false);
-
-        await ctx.db.delete('mapPoints', object.mapPointId);
-        await ctx.db.delete('objects', id);
+        const notionSyncRecord = await deleteSyncStateForObject(ctx, id);
+        await deleteObjectAggregate(ctx, object);
 
         ctx.scheduler.runAfter(0, internal.typesense.removeFromTypesense, {
             objectId: id,
         });
+        if (user.notionSyncEnabled && notionSyncRecord) {
+            ctx.scheduler.runAfter(0, internal.notionSync.outbound.archiveDeletedObjectPage, {
+                objectId: id,
+                notionPageId: notionSyncRecord.notionPageId,
+            });
+        }
         return id;
     },
 });
@@ -393,17 +398,18 @@ export const reposition = mutation({
         }
 
         ctx.scheduler.runAfter(0, internal.typesense.updateInTypesense, {
-            object: {
+            object: buildObjectSearchRecord({
                 id,
                 name: object.name,
-                address: mapPoint.address ?? null,
-                city: mapPoint.city ?? null,
-                country: mapPoint.country ?? null,
+                mapPoint: {
+                    ...mapPoint,
+                    latitude: data.latitude,
+                    longitude: data.longitude,
+                },
                 categoryName: category.name,
                 createdBy: object.createdById,
                 isPublic: object.isPublic,
-                location: [data.latitude, data.longitude] as [number, number],
-            },
+            }),
         });
     },
 });
@@ -430,15 +436,14 @@ export const listForTypesenseBackfill = internalQuery({
                 }
 
                 return {
-                    id: object._id,
-                    name: object.name,
-                    address: mapPoint.address,
-                    city: mapPoint.city,
-                    country: mapPoint.country,
-                    categoryName: category.name,
-                    location: [mapPoint.latitude, mapPoint.longitude] as [number, number],
-                    createdBy: object.createdById,
-                    isPublic: object.isPublic,
+                    ...buildObjectSearchRecord({
+                        id: object._id,
+                        name: object.name,
+                        mapPoint,
+                        categoryName: category.name,
+                        createdBy: object.createdById,
+                        isPublic: object.isPublic,
+                    }),
                 };
             }),
         );

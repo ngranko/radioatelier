@@ -79,10 +79,26 @@ export default defineSchema({
         // this is the Clerk ID, stored in the subject JWT field
         externalId: v.string(),
         role: v.string(),
+        notionSyncEnabled: v.optional(v.boolean()),
+        notionUserId: v.optional(v.string()),
         lastActiveAt: v.nullable(v.number()),
         lastLoginAt: v.nullable(v.number()),
         isDeleted: v.boolean(),
-    }).index('byExternalIdIsDeleted', ['externalId', 'isDeleted']),
+    })
+        .index('byExternalIdIsDeleted', ['externalId', 'isDeleted'])
+        .index('byNotionSyncEnabled', ['notionSyncEnabled'])
+        .index('byNotionUserId', ['notionUserId']),
+    objectNotionSync: defineTable({
+        objectId: v.id('objects'),
+        notionPageId: v.string(),
+        lastOutboundHash: v.nullable(v.string()),
+        lastInboundEditedTime: v.nullable(v.string()),
+        archivedAt: v.nullable(v.number()),
+        lastSyncError: v.nullable(v.string()),
+        lastSyncedAt: v.nullable(v.number()),
+    })
+        .index('byObjectId', ['objectId'])
+        .index('byNotionPageId', ['notionPageId']),
     userCategoryMarkerStyles: defineTable({
         userId: v.id('users'),
         categoryId: v.id('categories'),
@@ -96,5 +112,7 @@ export default defineSchema({
         userId: v.id('users'),
         chunkId: v.string(),
         visitedObjectIds: v.array(v.id('objects')),
-    }).index('byUserIdAndChunkId', ['userId', 'chunkId']),
+    })
+        .index('byUserIdAndChunkId', ['userId', 'chunkId'])
+        .index('byChunkId', ['chunkId']),
 });
