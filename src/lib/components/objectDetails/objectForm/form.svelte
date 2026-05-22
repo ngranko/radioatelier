@@ -43,8 +43,8 @@
     const client = useConvexClient();
 
     let {initialValues}: Props = $props();
-    let imageUrl: string | undefined = $derived(initialValues.cover?.url);
-    let imagePreviewUrl: string | undefined = $derived(initialValues.cover?.previewUrl);
+    let imageUrl = $state(initialValues.cover?.url);
+    let imagePreviewUrl = $state(initialValues.cover?.previewUrl);
 
     let lastAction = '';
     let submitToastId: string | number | undefined;
@@ -134,6 +134,7 @@
     });
 
     const {form: formData, errors, enhance, isTainted, submitting} = form;
+
     const addressFields = ['address', 'city', 'country'] as const;
     const lastAutoFilledAddress = $state<Record<(typeof addressFields)[number], string>>({
         address: '',
@@ -196,7 +197,8 @@
         const image = await uploadImage(resizedFile);
 
         $formData.cover = image.id;
-        initialValues.cover = image;
+        imageUrl = image.url;
+        imagePreviewUrl = image.previewUrl;
     }
 
     async function uploadImage(file: File) {
