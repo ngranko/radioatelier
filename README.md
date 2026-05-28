@@ -9,7 +9,8 @@ An archive of urban artifacts — old signs, plaques, mosaics, and other details
 - A running Convex project
 - Clerk application
 - Typesense instance
-- Google Maps API key
+- Google Maps API key (frontend map rendering)
+- Google API key in Convex env (`GOOGLE_API_KEY`) for Places search and reverse geocoding
 
 ## Getting Started
 
@@ -47,3 +48,25 @@ An archive of urban artifacts — old signs, plaques, mosaics, and other details
 - **Search** — Full-text search via Typesense and Google Places
 - **Data import** — CSV import to migrate data from other sources
 - **User accounts** — Clerk authentication, role-based access, personal (private) tags and visited markers tracking
+
+## Documentation
+
+Engineering guides for recently evolved subsystems:
+
+| Guide | Topics |
+| --- | --- |
+| [docs/README.md](./docs/README.md) | Index and Typesense setup commands |
+| [docs/map.md](./docs/map.md) | Marker pipeline, DOM vs deck rendering, Street View |
+| [docs/object-details.md](./docs/object-details.md) | Overlay modes, point preview/create flow |
+| [docs/categories-and-search.md](./docs/categories-and-search.md) | Category styling, Typesense sync, search |
+
+## Environment variables
+
+Copy `.env.local.example` to `.env.local` for local frontend and Typesense variables. Set Convex dashboard variables separately:
+
+| Variable | Where | Purpose |
+| --- | --- | --- |
+| `GOOGLE_API_KEY` | Convex dashboard | Google Places search, place details, reverse geocoding |
+| `TYPESENSE_*` | `.env.local` + Convex | Search index URL and keys |
+| `PUBLIC_CLERK_*`, `CLERK_SECRET_KEY` | `.env.local` | Authentication |
+| `PUBLIC_CONVEX_*`, `CONVEX_DEPLOYMENT` | `.env.local` | Convex client connection |
