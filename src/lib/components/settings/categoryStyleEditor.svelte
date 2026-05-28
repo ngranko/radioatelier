@@ -51,10 +51,10 @@
         </div>
     </div>
 
-    <div class="border-border/40 mt-3 flex items-center justify-between border-t pt-3">
-        <IconPicker value={style.markerIcon} onchange={icon => onupdate({markerIcon: icon})} />
-        <div class="flex flex-col items-end gap-1">
-            <label class="flex cursor-pointer items-center gap-2 select-none">
+    <div class="border-border/40 mt-3 border-t pt-3">
+        <div class="flex items-center justify-between gap-3">
+            <IconPicker value={style.markerIcon} onchange={icon => onupdate({markerIcon: icon})} />
+            <label class="flex shrink-0 cursor-pointer items-center gap-2 select-none">
                 <ListXIcon class="text-muted-foreground size-3.5" />
                 <span class="text-muted-foreground text-xs">Скрыть из списка</span>
                 <Checkbox
@@ -62,11 +62,11 @@
                     onCheckedChange={checked => onupdate({isHidden: Boolean(checked)})}
                 />
             </label>
-            {#if style.isHidden}
-                <span class="text-muted-foreground/70 text-xs leading-tight">
-                    Не будет показана при выборе категории
-                </span>
-            {/if}
         </div>
+        {#if style.isHidden}
+            <p class="text-muted-foreground/70 mt-2 text-right text-xs leading-tight">
+                Не будет показана при выборе категории
+            </p>
+        {/if}
     </div>
 </div>
