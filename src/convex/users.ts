@@ -17,12 +17,17 @@ export const upsertFromClerk = internalMutation({
             externalId: data.id,
             role:
                 typeof data.public_metadata.role === 'string' ? data.public_metadata.role : 'user',
+            notionSyncEnabled: data.public_metadata.notionSyncEnabled === true,
+            notionUserId:
+                typeof data.public_metadata.notionUserId === 'string'
+                    ? data.public_metadata.notionUserId
+                    : undefined,
             lastActiveAt: data.last_active_at,
             lastLoginAt: data.last_sign_in_at,
             isDeleted: false,
         };
 
-        const user = await userByExternalId(ctx, data.id);
+        const user = await getUserByExternalId(ctx, data.id);
         if (user === null) {
             await ctx.db.insert('users', userAttributes);
         } else {
@@ -34,7 +39,7 @@ export const upsertFromClerk = internalMutation({
 export const deleteFromClerk = internalMutation({
     args: {clerkUserId: v.string()},
     async handler(ctx, {clerkUserId}) {
-        const user = await userByExternalId(ctx, clerkUserId);
+        const user = await getUserByExternalId(ctx, clerkUserId);
 
         if (user !== null) {
             await ctx.db.patch('users', user._id, {isDeleted: true});
@@ -57,14 +62,22 @@ export async function getCurrentUser(ctx: QueryCtx) {
     if (identity === null) {
         return null;
     }
-    return await userByExternalId(ctx, identity.subject);
+    return await getUserByExternalId(ctx, identity.subject);
 }
 
-async function userByExternalId(ctx: QueryCtx, externalId: string) {
+export async function getUserByExternalId(ctx: QueryCtx, externalId: string) {
     return await ctx.db
         .query('users')
         .withIndex('byExternalIdIsDeleted', q =>
             q.eq('externalId', externalId).eq('isDeleted', false),
         )
+        .unique();
+}
+
+export async function getUserByNotionUserId(ctx: QueryCtx, notionUserId: string) {
+    return await ctx.db
+        .query('users')
+        .withIndex('byNotionUserId', q => q.eq('notionUserId', notionUserId))
+        .filter(q => q.eq(q.field('isDeleted'), false))
         .unique();
 }

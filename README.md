@@ -4,46 +4,50 @@ An archive of urban artifacts — old signs, plaques, mosaics, and other details
 
 ## Prerequisites
 
-- Node.js >= 22.9.0
-- Bun >= 1.3.8 as a package manager
-- A running Convex project
-- Clerk application
-- Typesense instance
-- Google Maps API key
+-   Node.js >= 22.9.0
+-   Bun >= 1.3.8 as a package manager
+-   A running Convex project
+-   Clerk application
+-   Typesense instance
+-   Google Maps API key and Map ID (browser, via `.env.local`)
+-   Google API key for server geocoding/Places (Convex env)
 
 ## Getting Started
 
 1. Install dependencies:
 
-   ```bash
-   bun install
-   ```
+    ```bash
+    bun install
+    ```
 
-2. Copy the environment file and fill in your credentials:
+2. Configure environment variables:
 
-   ```bash
-   cp .env.local.example .env.local
-   ```
+    -   **Local app:** copy `.env.local.example` to `.env.local` (SvelteKit + Convex CLI + scripts).
+    -   **Convex backend:** set secrets on the dev deployment — see [docs/environment.md](docs/environment.md).
+
+    ```bash
+    cp .env.local.example .env.local
+    ```
 
 3. Start the development environment (runs Convex + Vite concurrently):
 
-   ```bash
-   bun run dev
-   ```
+    ```bash
+    bun run dev
+    ```
 
 ## Key Scripts
 
-| Command | Description |
-| --- | --- |
-| `bun run dev` | Start dev server (Convex + Vite) |
-| `bun run check` | Type-check with `svelte-check` |
-| `bun run lint` | Lint and auto-fix with ESLint |
+| Command          | Description                                   |
+| ---------------- | --------------------------------------------- |
+| `bun run dev`    | Start dev server (Convex + Vite)              |
+| `bun run check`  | Type-check with `svelte-check`                |
+| `bun run lint`   | Lint and auto-fix with ESLint                 |
 | `bun run format` | Format with Prettier (Tailwind class sorting) |
 
 ## Features
 
-- **Interactive map** — Google Maps + Deck.gl layers, Street View integration
-- **Object archive** — Create and manage archive entries with location, metadata, categories, tags, and images
-- **Search** — Full-text search via Typesense and Google Places
-- **Data import** — CSV import to migrate data from other sources
-- **User accounts** — Clerk authentication, role-based access, personal (private) tags and visited markers tracking
+-   **Interactive map** — Google Maps + Deck.gl layers, Street View integration
+-   **Object archive** — Create and manage archive entries with location, metadata, categories, tags, and images
+-   **Search** — Full-text search via Typesense and Google Places
+-   **Data import** — CSV import to migrate data from other sources
+-   **User accounts** — Clerk authentication, role-based access, personal (private) tags and visited markers tracking

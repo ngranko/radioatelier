@@ -1,14 +1,13 @@
 {
     "permissions": {
-      "allow": [
-        "Bash(ls:*)",
-        "Bash(find:*)",
-        "Bash(bun run check:*)",
-        "Bash(bun run format:*)",
-        "Bash(tail:*)",
-        "Bash(bun run:*)",
-        "Bash(git checkout:*)"
-      ]
+        "allow": [
+            "Bash(ls:*)",
+            "Bash(find:*)",
+            "Bash(bun run check:*)",
+            "Bash(bun run format:*)",
+            "Bash(tail:*)",
+            "Bash(bun run:*)",
+            "Bash(git checkout:*)"
+        ]
     }
-  }
-  
+}
