@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="ru">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Фильтр по категориям и тегам · макеты</title>
+        <link rel="stylesheet" href="shared.css" />
+        <style>
+            body {
+                overflow: auto;
+            }
+            .wrap {
+                max-width: 880px;
+                margin: 0 auto;
+                padding: 48px 20px 80px;
+            }
+            h1 {
+                font-size: 26px;
+                margin: 0 0 6px;
+            }
+            .sub {
+                color: var(--muted-foreground);
+                font-size: 14px;
+                margin: 0 0 4px;
+                max-width: 60ch;
+            }
+            .grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+                gap: 16px;
+                margin-top: 28px;
+            }
+            a.cardlink {
+                text-decoration: none;
+                color: inherit;
+                border: 1px solid var(--border);
+                border-radius: 18px;
+                padding: 18px;
+                background: var(--card);
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+            }
+            a.cardlink:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 14px 30px -16px rgba(0, 0, 0, 0.4);
+                border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
+            }
+            .num {
+                width: 30px;
+                height: 30px;
+                border-radius: 9px;
+                background: color-mix(in srgb, var(--primary) 12%, transparent);
+                color: var(--primary);
+                font-weight: 800;
+                display: grid;
+                place-items: center;
+                font-size: 14px;
+            }
+            .cardlink h3 {
+                margin: 4px 0 0;
+                font-size: 16px;
+            }
+            .cardlink p {
+                margin: 0;
+                font-size: 13px;
+                color: var(--muted-foreground);
+                line-height: 1.45;
+            }
+            .tagline {
+                margin-top: auto;
+                padding-top: 8px;
+                font-size: 12px;
+                font-weight: 600;
+                color: var(--primary);
+            }
+            .note {
+                margin-top: 28px;
+                font-size: 13px;
+                color: var(--muted-foreground);
+                border-left: 3px solid var(--border);
+                padding: 4px 0 4px 14px;
+            }
+            .toggle {
+                float: right;
+                border: 1px solid var(--border);
+                background: var(--card);
+                color: var(--foreground);
+                border-radius: 999px;
+                padding: 7px 14px;
+                font-size: 13px;
+                font-weight: 600;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="wrap">
+            <button class="toggle" onclick="document.body.classList.toggle('dark')">Свет / Тьма</button>
+            <h1>Фильтр по категориям и тегам</h1>
+            <p class="sub">
+                Пять разных подходов к фильтрации точек на карте по категориям, публичным и личным
+                тегам. Каждый макет интерактивен и реагирует на карту. В правом нижнем углу каждого
+                макета — переключатели <b>светлой / тёмной</b> темы и <b>десктоп / телефон</b>.
+            </p>
+            <div class="grid">
+                <a class="cardlink" href="mock1.html">
+                    <div class="num">1</div>
+                    <h3>Лента-пилюля</h3>
+                    <p>
+                        Маленькая пилюля «Фильтр» под поиском раскрывается в горизонтальную ленту
+                        чипов с переключателем «Категории / Теги / Личные». Минимум места, всё в одну
+                        строку.
+                    </p>
+                    <div class="tagline">Самый компактный →</div>
+                </a>
+                <a class="cardlink" href="mock2.html">
+                    <div class="num">2</div>
+                    <h3>Фасетный поповер</h3>
+                    <p>
+                        Кнопка-иконка открывает аккуратный поповер с поиском внутри, секциями-чипами
+                        и живым счётчиком «Показано N из 137». На телефоне — нижний лист.
+                    </p>
+                    <div class="tagline">Классика и порядок →</div>
+                </a>
+                <a class="cardlink" href="mock3.html">
+                    <div class="num">3</div>
+                    <h3>Панель-шторка</h3>
+                    <p>
+                        Боковая шторка на десктопе и нижний лист на телефоне. Аккордеоны, чекбоксы,
+                        счётчики у категорий. Просторно — хорошо для большого числа тегов.
+                    </p>
+                    <div class="tagline">Простор и масштаб →</div>
+                </a>
+                <a class="cardlink" href="mock4.html">
+                    <div class="num">4</div>
+                    <h3>Командное меню</h3>
+                    <p>
+                        Палитра в стиле ⌘K: начните печатать — и фильтр ищет сразу по всем категориям
+                        и тегам. Выбранное собирается в трей. Полностью с клавиатуры (<code>/</code>).
+                    </p>
+                    <div class="tagline">Для тех, кто печатает →</div>
+                </a>
+                <a class="cardlink" href="mock5.html">
+                    <div class="num">5</div>
+                    <h3>Контрол карты</h3>
+                    <p>
+                        Квадратная кнопка в правой панели управления картой (рядом с компасом и
+                        геолокацией) раскрывает компактную карточку. Активные фильтры — лентой над
+                        картой.
+                    </p>
+                    <div class="tagline">Родной для карты →</div>
+                </a>
+            </div>
+            <p class="note">
+                Это визуальные макеты на статическом HTML — они не подключены к Convex и к настоящей
+                карте. Цвета, стекло, шрифты и токены взяты из <code>src/styles/app.css</code>, чтобы
+                ощущение совпадало с приложением. Данные категорий и тегов — примерные.
+            </p>
+        </div>
+    </body>
+</html>
