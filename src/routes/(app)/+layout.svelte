@@ -12,6 +12,7 @@
     import Marker from '$lib/components/map/marker.svelte';
     import UserMenu from '$lib/components/userMenu/userMenu.svelte';
     import Search from '$lib/components/search/search.svelte';
+    import EscapeCloseHandler from '$lib/components/escapeCloseHandler.svelte';
     import {sharedMarker} from '$lib/state/sharedMarker.svelte.ts';
     import {goto} from '$app/navigation';
     import {page} from '$app/state';
@@ -89,6 +90,8 @@
 </div>
 
 <Map onClick={handleMapClick} />
+
+<EscapeCloseHandler />
 
 <OrientationButton bind:isEnabled={orientationEnabled} />
 <PositionButton />
