@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="ru">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+        <title>Макет 1 · Лента-пилюля</title>
+        <link rel="stylesheet" href="shared.css" />
+        <style>
+            /* Mock 1 — an inline pill that expands into a horizontal chip rail.
+               Lives directly under the search pill; one line tall when collapsed. */
+            .f1 {
+                position: absolute;
+                top: 56px;
+                left: 8px;
+                right: 16px;
+                max-width: 520px;
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+            .f1-row {
+                display: flex;
+                gap: 8px;
+                align-items: center;
+            }
+            .f1-trigger {
+                height: 34px;
+                padding: 0 12px 0 11px;
+                border-radius: 999px;
+                border: none;
+                display: inline-flex;
+                align-items: center;
+                gap: 7px;
+                font-size: 13px;
+                font-weight: 600;
+                color: var(--foreground);
+                background: rgba(255, 255, 255, 0.85);
+                white-space: nowrap;
+                transition: background 0.2s;
+            }
+            .dark .f1-trigger {
+                background: rgba(255, 255, 255, 0.1);
+            }
+            .f1-trigger svg {
+                width: 15px;
+                height: 15px;
+                color: var(--muted-foreground);
+            }
+            .f1-trigger.on {
+                color: var(--primary);
+            }
+            .f1-trigger.on svg {
+                color: var(--primary);
+            }
+            .f1-clear {
+                height: 34px;
+                width: 34px;
+                border-radius: 999px;
+                border: none;
+                display: none;
+                place-items: center;
+                background: rgba(255, 255, 255, 0.85);
+                color: var(--muted-foreground);
+            }
+            .dark .f1-clear {
+                background: rgba(255, 255, 255, 0.1);
+            }
+            .f1-clear svg {
+                width: 15px;
+                height: 15px;
+            }
+            .f1.dirty .f1-clear {
+                display: grid;
+            }
+
+            /* segmented switch */
+            .f1-seg {
+                display: inline-flex;
+                padding: 3px;
+                border-radius: 999px;
+                background: color-mix(in srgb, var(--muted) 70%, transparent);
+                gap: 2px;
+            }
+            .f1-seg button {
+                border: none;
+                background: transparent;
+                color: var(--muted-foreground);
+                font-size: 12px;
+                font-weight: 600;
+                padding: 5px 12px;
+                border-radius: 999px;
+            }
+            .f1-seg button.active {
+                background: var(--card);
+                color: var(--foreground);
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+            }
+
+            /* the scrollable rail */
+            .f1-panel {
+                display: none;
+                border-radius: 18px;
+                padding: 10px;
+                flex-direction: column;
+                gap: 10px;
+            }
+            .f1.open .f1-panel {
+                display: flex;
+                animation: pop 0.18s ease;
+            }
+            @keyframes pop {
+                from {
+                    opacity: 0;
+                    transform: translateY(-6px);
+                }
+            }
+            .f1-rail {
+                display: flex;
+                gap: 7px;
+                overflow-x: auto;
+                padding-bottom: 2px;
+                scrollbar-width: none;
+                -webkit-overflow-scrolling: touch;
+            }
+            .f1-rail::-webkit-scrollbar {
+                display: none;
+            }
+            .chip {
+                flex: none;
+                height: 32px;
+                padding: 0 12px;
+                border-radius: 999px;
+                border: 1px solid var(--border);
+                background: var(--card);
+                color: var(--foreground);
+                font-size: 13px;
+                display: inline-flex;
+                align-items: center;
+                gap: 7px;
+                white-space: nowrap;
+                transition: all 0.15s;
+            }
+            .chip svg {
+                width: 13px;
+                height: 13px;
+                color: var(--muted-foreground);
+            }
+            .chip.sel {
+                border-color: transparent;
+                background: color-mix(in srgb, var(--primary) 12%, var(--card));
+                color: var(--primary);
+                box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--primary) 35%, transparent);
+            }
+            .chip.sel svg {
+                color: var(--primary);
+            }
+            .chip .n {
+                font-size: 11px;
+                color: var(--muted-foreground);
+            }
+            .chip.cat .dot {
+                width: 9px;
+                height: 9px;
+            }
+            .f1-hint {
+                font-size: 11px;
+                color: var(--muted-foreground);
+                padding: 0 2px;
+            }
+        </style>
+    </head>
+    <body>
+        <script src="shared.js"></script>
+        <script>
+            const layer = buildScaffold({title: 'Макет 1 · Лента-пилюля'});
+
+            const sel = {cat: new Set(), tag: new Set(), priv: new Set()};
+            let tab = 'cat';
+
+            const root = document.createElement('div');
+            root.className = 'f1';
+            layer.appendChild(root);
+
+            function totalSel() {
+                return sel.cat.size + sel.tag.size + sel.priv.size;
+            }
+
+            function render() {
+                const t = totalSel();
+                root.classList.toggle('dirty', t > 0);
+                root.innerHTML = `
+                    <div class="f1-row">
+                        <button class="f1-trigger glass ${t ? 'on' : ''}" data-x="toggle">
+                            ${ICON.sliders}<span>Фильтр</span>
+                            ${t ? `<span class="count-badge">${t}</span>` : ''}
+                            ${ICON.chevron}
+                        </button>
+                        <button class="f1-clear glass" data-x="clear" aria-label="Сбросить">${ICON.x}</button>
+                    </div>
+                    <div class="f1-panel glass">
+                        <div class="f1-seg">
+                            <button data-tab="cat" class="${tab === 'cat' ? 'active' : ''}">Категории</button>
+                            <button data-tab="tag" class="${tab === 'tag' ? 'active' : ''}">Теги</button>
+                            <button data-tab="priv" class="${tab === 'priv' ? 'active' : ''}">Личные</button>
+                        </div>
+                        <div class="f1-rail">${railHtml()}</div>
+                        <div class="f1-hint">Проведите вбок, чтобы листать · нажмите, чтобы включить</div>
+                    </div>`;
+                root.classList.toggle('open', root.dataset.open === '1');
+                applyPinFilter(sel.cat);
+            }
+
+            function railHtml() {
+                if (tab === 'cat')
+                    return CATEGORIES.map(
+                        c => `<button class="chip cat ${sel.cat.has(c.id) ? 'sel' : ''}" data-pick="cat:${c.id}">
+                            <span class="dot" style="--c:${c.c}"></span>${c.name}<span class="n">${c.n}</span></button>`,
+                    ).join('');
+                if (tab === 'tag')
+                    return TAGS.map(
+                        t => `<button class="chip ${sel.tag.has(t) ? 'sel' : ''}" data-pick="tag:${t}">${ICON.tag}${t}</button>`,
+                    ).join('');
+                return PRIVATE_TAGS.map(
+                    t => `<button class="chip ${sel.priv.has(t) ? 'sel' : ''}" data-pick="priv:${t}">${ICON.lock}${t}</button>`,
+                ).join('');
+            }
+
+            root.addEventListener('click', e => {
+                const trg = e.target.closest('[data-x],[data-tab],[data-pick]');
+                if (!trg) return;
+                if (trg.dataset.x === 'toggle') {
+                    root.dataset.open = root.dataset.open === '1' ? '0' : '1';
+                } else if (trg.dataset.x === 'clear') {
+                    sel.cat.clear();
+                    sel.tag.clear();
+                    sel.priv.clear();
+                } else if (trg.dataset.tab) {
+                    tab = trg.dataset.tab;
+                } else if (trg.dataset.pick) {
+                    const [k, v] = trg.dataset.pick.split(/:(.*)/);
+                    sel[k].has(v) ? sel[k].delete(v) : sel[k].add(v);
+                }
+                render();
+            });
+
+            render();
+        </script>
+    </body>
+</html>

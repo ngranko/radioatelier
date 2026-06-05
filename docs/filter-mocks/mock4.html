@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="ru">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+        <title>Макет 4 · Командное меню</title>
+        <link rel="stylesheet" href="shared.css" />
+        <style>
+            /* Mock 4 — ⌘K command palette that filters categories + tags by typing. */
+            .f4-trigger {
+                position: absolute;
+                top: 56px;
+                left: 8px;
+                height: 40px;
+                padding: 0 10px 0 14px;
+                border-radius: 999px;
+                border: none;
+                display: inline-flex;
+                align-items: center;
+                gap: 9px;
+                font-size: 13px;
+                font-weight: 600;
+                color: var(--foreground);
+                background: rgba(255, 255, 255, 0.85);
+            }
+            .dark .f4-trigger {
+                background: rgba(255, 255, 255, 0.1);
+            }
+            .f4-trigger svg {
+                width: 16px;
+                height: 16px;
+                color: var(--muted-foreground);
+            }
+            .f4-trigger.on,
+            .f4-trigger.on svg {
+                color: var(--primary);
+            }
+            .kbd {
+                font-size: 11px;
+                font-weight: 700;
+                color: var(--muted-foreground);
+                background: color-mix(in srgb, var(--muted) 70%, transparent);
+                border: 1px solid var(--border);
+                border-radius: 6px;
+                padding: 2px 6px;
+                line-height: 1;
+            }
+
+            .f4-scrim {
+                position: absolute;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.32);
+                backdrop-filter: blur(2px);
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.18s;
+                display: grid;
+                place-items: start center;
+                padding-top: 78px;
+            }
+            .f4.open .f4-scrim {
+                opacity: 1;
+                pointer-events: auto;
+            }
+            body.phone .f4-scrim {
+                padding-top: 0;
+                place-items: end center;
+            }
+
+            .f4-cmd {
+                width: 460px;
+                max-width: calc(100% - 24px);
+                border-radius: 18px;
+                overflow: hidden;
+                display: flex;
+                flex-direction: column;
+                max-height: 70%;
+                transform: translateY(-8px) scale(0.98);
+                opacity: 0;
+                transition: transform 0.18s ease, opacity 0.18s ease;
+            }
+            .f4.open .f4-cmd {
+                transform: none;
+                opacity: 1;
+            }
+            body.phone .f4-cmd {
+                max-width: 100%;
+                width: 100%;
+                border-radius: 20px 20px 0 0;
+                max-height: 82%;
+            }
+
+            .f4-input {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 14px 16px;
+                border-bottom: 1px solid var(--border);
+            }
+            .f4-input svg {
+                width: 18px;
+                height: 18px;
+                color: var(--muted-foreground);
+            }
+            .f4-input input {
+                flex: 1;
+                border: none;
+                background: transparent;
+                outline: none;
+                font-size: 15px;
+                color: var(--foreground);
+            }
+            .f4-input input::placeholder {
+                color: var(--muted-foreground);
+            }
+
+            /* selected facets tray */
+            .f4-tray {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 6px;
+                padding: 10px 14px;
+                border-bottom: 1px solid var(--border);
+            }
+            .f4-tray:empty {
+                display: none;
+            }
+            .tchip {
+                height: 26px;
+                padding: 0 6px 0 9px;
+                border-radius: 999px;
+                background: color-mix(in srgb, var(--primary) 13%, var(--card));
+                color: var(--primary);
+                font-size: 12px;
+                font-weight: 500;
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--primary) 30%, transparent);
+            }
+            .tchip .dot {
+                width: 8px;
+                height: 8px;
+            }
+            .tchip .rm {
+                display: grid;
+                place-items: center;
+                width: 16px;
+                height: 16px;
+                border-radius: 999px;
+                background: color-mix(in srgb, var(--primary) 18%, transparent);
+            }
+            .tchip .rm svg {
+                width: 10px;
+                height: 10px;
+            }
+
+            .f4-list {
+                overflow-y: auto;
+                padding: 6px;
+            }
+            .f4-sec {
+                font-size: 11px;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.04em;
+                color: var(--muted-foreground);
+                padding: 10px 10px 4px;
+            }
+            .opt {
+                width: 100%;
+                background: transparent;
+                border: none;
+                display: flex;
+                align-items: center;
+                gap: 11px;
+                padding: 9px 10px;
+                border-radius: 10px;
+                color: var(--foreground);
+                font-size: 14px;
+                text-align: left;
+            }
+            .opt .lead {
+                width: 22px;
+                height: 22px;
+                border-radius: 7px;
+                display: grid;
+                place-items: center;
+                background: color-mix(in srgb, var(--muted) 60%, transparent);
+                color: var(--muted-foreground);
+                flex: none;
+            }
+            .opt .lead svg {
+                width: 13px;
+                height: 13px;
+            }
+            .opt .lead .dot {
+                width: 11px;
+                height: 11px;
+            }
+            .opt .n {
+                margin-left: auto;
+                font-size: 12px;
+                color: var(--muted-foreground);
+            }
+            .opt .ck {
+                width: 18px;
+                height: 18px;
+                color: var(--primary);
+                opacity: 0;
+            }
+            .opt .ck svg {
+                width: 18px;
+                height: 18px;
+            }
+            .opt.sel .ck {
+                opacity: 1;
+            }
+            .opt.active,
+            .opt:hover {
+                background: color-mix(in srgb, var(--muted) 55%, transparent);
+            }
+            .opt.active {
+                background: color-mix(in srgb, var(--primary) 10%, transparent);
+            }
+
+            .f4-foot {
+                display: flex;
+                align-items: center;
+                gap: 14px;
+                padding: 9px 14px;
+                border-top: 1px solid var(--border);
+                font-size: 11.5px;
+                color: var(--muted-foreground);
+            }
+            .f4-foot .sp {
+                margin-left: auto;
+            }
+            .f4-foot .kbd {
+                margin-right: 4px;
+            }
+            .f4-empty {
+                padding: 28px;
+                text-align: center;
+                color: var(--muted-foreground);
+                font-size: 13px;
+            }
+        </style>
+    </head>
+    <body>
+        <script src="shared.js"></script>
+        <script>
+            const layer = buildScaffold({title: 'Макет 4 · Командное меню'});
+            const sel = {cat: new Set(), tag: new Set(), priv: new Set()};
+            let query = '';
+            let active = 0;
+
+            const root = document.createElement('div');
+            root.className = 'f4';
+            layer.appendChild(root);
+
+            const total = () => sel.cat.size + sel.tag.size + sel.priv.size;
+
+            // flat searchable index
+            function index() {
+                return [
+                    ...CATEGORIES.map(c => ({kind: 'cat', id: c.id, label: c.name, c: c.c, n: c.n})),
+                    ...TAGS.map(t => ({kind: 'tag', id: t, label: t})),
+                    ...PRIVATE_TAGS.map(t => ({kind: 'priv', id: t, label: t})),
+                ];
+            }
+            function matches() {
+                const q = query.trim().toLowerCase();
+                return index().filter(o => !q || o.label.toLowerCase().includes(q));
+            }
+
+            function lead(o) {
+                if (o.kind === 'cat') return `<span class="dot" style="--c:${o.c}"></span>`;
+                return o.kind === 'priv' ? ICON.lock : ICON.tag;
+            }
+            function trayChip(kind, id) {
+                const o = index().find(x => x.kind === kind && x.id === id);
+                const dot = kind === 'cat' ? `<span class="dot" style="--c:${o.c}"></span>` : '';
+                return `<span class="tchip">${dot}${o.label}<button class="rm" data-pick="${kind}:${id}">${ICON.x}</button></span>`;
+            }
+
+            function render() {
+                const t = total();
+                const ms = matches();
+                if (active >= ms.length) active = Math.max(0, ms.length - 1);
+                let lastSec = '';
+                const labels = {cat: 'Категории', tag: 'Теги', priv: 'Личные теги'};
+                const listHtml =
+                    ms.length === 0
+                        ? `<div class="f4-empty">Ничего не найдено по запросу «${query}»</div>`
+                        : ms
+                              .map((o, i) => {
+                                  let head = '';
+                                  if (o.kind !== lastSec) {
+                                      head = `<div class="f4-sec">${labels[o.kind]}</div>`;
+                                      lastSec = o.kind;
+                                  }
+                                  return `${head}<button class="opt ${sel[o.kind].has(o.id) ? 'sel' : ''} ${
+                                      i === active ? 'active' : ''
+                                  }" data-pick="${o.kind}:${o.id}">
+                                    <span class="lead">${lead(o)}</span><span>${o.label}</span>
+                                    ${o.n ? `<span class="n">${o.n}</span>` : ''}
+                                    <span class="ck">${ICON.check}</span></button>`;
+                              })
+                              .join('');
+
+                const tray = [
+                    ...[...sel.cat].map(id => trayChip('cat', id)),
+                    ...[...sel.tag].map(id => trayChip('tag', id)),
+                    ...[...sel.priv].map(id => trayChip('priv', id)),
+                ].join('');
+
+                root.innerHTML = `
+                    <button class="f4-trigger glass ${t ? 'on' : ''}" data-x="open">
+                        ${ICON.sliders}<span>Фильтр</span>${
+                            t ? `<span class="count-badge">${t}</span>` : '<span class="kbd">/</span>'
+                        }
+                    </button>
+                    <div class="f4-scrim" data-x="close">
+                        <div class="f4-cmd glass" data-stop>
+                            <div class="f4-input">${ICON.search}
+                                <input id="f4q" placeholder="Фильтр по категории или тегу…" value="${query.replace(/"/g, '&quot;')}" />
+                                <span class="kbd">esc</span>
+                            </div>
+                            <div class="f4-tray">${tray}</div>
+                            <div class="f4-list">${listHtml}</div>
+                            <div class="f4-foot">
+                                <span><span class="kbd">↑↓</span>выбрать</span>
+                                <span><span class="kbd">↵</span>включить</span>
+                                <span class="sp"></span>
+                                ${t ? `<button class="kbd" data-x="clear" style="cursor:pointer">сбросить (${t})</button>` : ''}
+                            </div>
+                        </div>
+                    </div>`;
+                applyPinFilter(sel.cat);
+
+                if (root.classList.contains('open')) {
+                    const inp = root.querySelector('#f4q');
+                    inp.focus();
+                    inp.setSelectionRange(query.length, query.length);
+                }
+            }
+
+            function toggle(kind, id) {
+                sel[kind].has(id) ? sel[kind].delete(id) : sel[kind].add(id);
+            }
+
+            root.addEventListener('click', e => {
+                if (e.target.closest('[data-stop]') && !e.target.closest('[data-pick],[data-x]')) return;
+                const trg = e.target.closest('[data-x],[data-pick]');
+                if (!trg) return;
+                if (trg.dataset.x === 'open') {
+                    root.classList.add('open');
+                    render();
+                } else if (trg.dataset.x === 'close') {
+                    root.classList.remove('open');
+                    render();
+                } else if (trg.dataset.x === 'clear') {
+                    sel.cat.clear();
+                    sel.tag.clear();
+                    sel.priv.clear();
+                    render();
+                } else if (trg.dataset.pick) {
+                    const [k, v] = trg.dataset.pick.split(/:(.*)/);
+                    toggle(k, v);
+                    render();
+                }
+            });
+
+            root.addEventListener('input', e => {
+                if (e.target.id === 'f4q') {
+                    query = e.target.value;
+                    active = 0;
+                    render();
+                }
+            });
+
+            document.addEventListener('keydown', e => {
+                if ((e.key === '/' || (e.key.toLowerCase() === 'k' && (e.metaKey || e.ctrlKey))) && !root.classList.contains('open')) {
+                    e.preventDefault();
+                    root.classList.add('open');
+                    render();
+                    return;
+                }
+                if (!root.classList.contains('open')) return;
+                const ms = matches();
+                if (e.key === 'Escape') {
+                    root.classList.remove('open');
+                    render();
+                } else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    active = Math.min(ms.length - 1, active + 1);
+                    render();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    active = Math.max(0, active - 1);
+                    render();
+                } else if (e.key === 'Enter' && ms[active]) {
+                    e.preventDefault();
+                    toggle(ms[active].kind, ms[active].id);
+                    render();
+                }
+            });
+
+            render();
+        </script>
+    </body>
+</html>
