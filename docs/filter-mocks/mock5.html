@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="ru">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+        <title>Макет 5 · Контрол карты</title>
+        <link rel="stylesheet" href="shared.css" />
+        <style>
+            /* Mock 5 — a map-native control on the right rail (matches positionButton.svelte)
+               that opens a compact card; active filters ride a strip at the bottom. */
+            :root {
+                --map-control: #ffffff;
+                --map-control-fg: var(--primary);
+                --map-control-muted: #6b7280;
+            }
+            .dark {
+                --map-control: #444444;
+                --map-control-fg: #ffffffdb;
+                --map-control-muted: #ffffffdb;
+            }
+
+            /* right-side control rail */
+            .rail {
+                position: absolute;
+                right: 10px;
+                bottom: 28px;
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-end;
+            }
+            .mc {
+                width: 40px;
+                height: 40px;
+                border-radius: 4px;
+                border: none;
+                background: var(--map-control);
+                color: var(--map-control-fg);
+                display: grid;
+                place-items: center;
+                box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+                position: relative;
+            }
+            .mc svg {
+                width: 20px;
+                height: 20px;
+            }
+            .mc.muted {
+                color: var(--map-control-muted);
+            }
+            .mc.filter.on {
+                color: var(--map-control-fg);
+                box-shadow: 0 0 0 2px var(--primary), 0 1px 4px rgba(0, 0, 0, 0.3);
+            }
+            .mc .count-badge {
+                position: absolute;
+                top: -6px;
+                right: -6px;
+                box-shadow: 0 0 0 2px var(--map-control);
+            }
+
+            /* the popout card, anchored above the rail */
+            .card {
+                position: absolute;
+                right: 10px;
+                bottom: 78px;
+                width: 320px;
+                max-width: calc(100% - 20px);
+                border-radius: 18px;
+                padding: 14px;
+                display: none;
+                flex-direction: column;
+                gap: 14px;
+                transform-origin: bottom right;
+            }
+            .f5.open .card {
+                display: flex;
+                animation: grow 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+            }
+            @keyframes grow {
+                from {
+                    opacity: 0;
+                    transform: scale(0.92) translateY(6px);
+                }
+            }
+            .card-top {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            .card-count {
+                font-size: 13px;
+                font-weight: 600;
+            }
+            .card-count b {
+                color: var(--primary);
+                font-size: 15px;
+            }
+            .card-eye {
+                margin-left: auto;
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                font-size: 11.5px;
+                color: var(--muted-foreground);
+                background: color-mix(in srgb, var(--muted) 60%, transparent);
+                border: none;
+                padding: 5px 9px;
+                border-radius: 999px;
+                font-weight: 600;
+            }
+            .card-eye svg {
+                width: 13px;
+                height: 13px;
+            }
+            .card-eye.on {
+                color: var(--primary);
+                background: color-mix(in srgb, var(--primary) 12%, transparent);
+            }
+
+            .sec-label {
+                font-size: 10.5px;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.04em;
+                color: var(--muted-foreground);
+                margin-bottom: 8px;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+            .sec-label svg {
+                width: 12px;
+                height: 12px;
+            }
+
+            /* category grid of color-dot toggles */
+            .cat-grid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 6px;
+            }
+            .cat-cell {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding: 7px 9px;
+                border-radius: 10px;
+                border: 1px solid var(--border);
+                background: var(--card);
+                color: var(--foreground);
+                font-size: 12.5px;
+            }
+            .cat-cell .dot {
+                width: 11px;
+                height: 11px;
+                box-shadow: 0 0 0 0 transparent;
+            }
+            .cat-cell .n {
+                margin-left: auto;
+                font-size: 11px;
+                color: var(--muted-foreground);
+            }
+            .cat-cell.sel {
+                border-color: transparent;
+                box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--c) 60%, transparent);
+                background: color-mix(in srgb, var(--c) 10%, var(--card));
+            }
+            .cat-cell.sel .dot {
+                box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 25%, transparent);
+            }
+
+            .tag-wrap {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+            .chip {
+                height: 28px;
+                padding: 0 10px;
+                border-radius: 999px;
+                border: 1px solid var(--border);
+                background: var(--card);
+                color: var(--foreground);
+                font-size: 12px;
+                display: inline-flex;
+                align-items: center;
+                gap: 5px;
+            }
+            .chip svg {
+                width: 12px;
+                height: 12px;
+                color: var(--muted-foreground);
+            }
+            .chip.sel {
+                border-color: transparent;
+                background: color-mix(in srgb, var(--primary) 12%, var(--card));
+                color: var(--primary);
+                box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--primary) 35%, transparent);
+            }
+            .chip.sel svg {
+                color: var(--primary);
+            }
+            .chip.more {
+                color: var(--muted-foreground);
+                border-style: dashed;
+            }
+            .card-reset {
+                border: none;
+                background: transparent;
+                color: var(--muted-foreground);
+                font-size: 12.5px;
+                font-weight: 600;
+                padding: 2px;
+                align-self: flex-start;
+            }
+
+            /* active-filter strip, floats bottom-center over the map */
+            .strip {
+                position: absolute;
+                left: 50%;
+                bottom: 16px;
+                transform: translateX(-50%);
+                display: none;
+                gap: 6px;
+                max-width: min(680px, calc(100% - 90px));
+                overflow-x: auto;
+                padding: 7px 9px;
+                border-radius: 999px;
+                scrollbar-width: none;
+            }
+            .strip::-webkit-scrollbar {
+                display: none;
+            }
+            .f5.dirty .strip {
+                display: flex;
+            }
+            .schip {
+                flex: none;
+                height: 28px;
+                padding: 0 6px 0 10px;
+                border-radius: 999px;
+                background: var(--card);
+                color: var(--foreground);
+                font-size: 12px;
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                border: 1px solid var(--border);
+                white-space: nowrap;
+            }
+            .schip .dot {
+                width: 8px;
+                height: 8px;
+            }
+            .schip svg {
+                width: 11px;
+                height: 11px;
+            }
+            .schip .rm {
+                display: grid;
+                place-items: center;
+                width: 16px;
+                height: 16px;
+                border-radius: 999px;
+                color: var(--muted-foreground);
+                background: color-mix(in srgb, var(--muted) 70%, transparent);
+            }
+            .schip .rm svg {
+                width: 10px;
+                height: 10px;
+                color: inherit;
+            }
+            .schip.clear {
+                padding: 0 12px;
+                color: var(--muted-foreground);
+                font-weight: 600;
+                cursor: pointer;
+            }
+            body.phone .strip {
+                bottom: 78px;
+                max-width: calc(100% - 64px);
+                left: 8px;
+                transform: none;
+            }
+        </style>
+    </head>
+    <body>
+        <script src="shared.js"></script>
+        <script>
+            const layer = buildScaffold({title: 'Макет 5 · Контрол карты'});
+            const sel = {cat: new Set(), tag: new Set(), priv: new Set()};
+            let tagsExpanded = false;
+            let invert = false;
+
+            const root = document.createElement('div');
+            root.className = 'f5';
+            layer.appendChild(root);
+
+            const total = () => sel.cat.size + sel.tag.size + sel.priv.size;
+            const resultCount = () => {
+                if (!total()) return TOTAL;
+                let base = sel.cat.size
+                    ? CATEGORIES.filter(c => sel.cat.has(c.id)).reduce((s, c) => s + c.n, 0)
+                    : TOTAL;
+                let r = Math.max(1, Math.round(base * (1 - Math.min(0.6, (sel.tag.size + sel.priv.size) * 0.15))));
+                return invert ? TOTAL - r : r;
+            };
+
+            function catGrid() {
+                return CATEGORIES.map(
+                    c => `<button class="cat-cell ${sel.cat.has(c.id) ? 'sel' : ''}" style="--c:${c.c}" data-pick="cat:${c.id}">
+                        <span class="dot" style="--c:${c.c}"></span>${c.name}<span class="n">${c.n}</span></button>`,
+                ).join('');
+            }
+            function tagChips() {
+                const shown = tagsExpanded ? TAGS : TAGS.slice(0, 5);
+                let html = shown
+                    .map(t => `<button class="chip ${sel.tag.has(t) ? 'sel' : ''}" data-pick="tag:${t}">${ICON.tag}${t}</button>`)
+                    .join('');
+                if (!tagsExpanded && TAGS.length > 5)
+                    html += `<button class="chip more" data-x="more">+${TAGS.length - 5}</button>`;
+                return html;
+            }
+            function privChips() {
+                return PRIVATE_TAGS.map(
+                    t => `<button class="chip ${sel.priv.has(t) ? 'sel' : ''}" data-pick="priv:${t}">${ICON.lock}${t}</button>`,
+                ).join('');
+            }
+            function strip() {
+                const items = [
+                    ...[...sel.cat].map(id => {
+                        const c = CATEGORIES.find(x => x.id === id);
+                        return `<span class="schip"><span class="dot" style="--c:${c.c}"></span>${c.name}<button class="rm" data-pick="cat:${id}">${ICON.x}</button></span>`;
+                    }),
+                    ...[...sel.tag].map(t => `<span class="schip">${ICON.tag}${t}<button class="rm" data-pick="tag:${t}">${ICON.x}</button></span>`),
+                    ...[...sel.priv].map(t => `<span class="schip">${ICON.lock}${t}<button class="rm" data-pick="priv:${t}">${ICON.x}</button></span>`),
+                ];
+                if (items.length > 1) items.push(`<span class="schip clear" data-x="clear">Сбросить всё</span>`);
+                return items.join('');
+            }
+
+            function render() {
+                const t = total();
+                root.classList.toggle('dirty', t > 0);
+                root.innerHTML = `
+                    <div class="rail">
+                        <div class="card glass">
+                            <div class="card-top">
+                                <div class="card-count">Показано <b>${resultCount()}</b> из ${TOTAL}</div>
+                                <button class="card-eye ${invert ? 'on' : ''}" data-x="invert">${ICON.eye}${invert ? 'инверсия' : 'инверт.'}</button>
+                            </div>
+                            <div>
+                                <div class="sec-label">${ICON.map} Категории</div>
+                                <div class="cat-grid">${catGrid()}</div>
+                            </div>
+                            <div>
+                                <div class="sec-label">${ICON.tag} Теги</div>
+                                <div class="tag-wrap">${tagChips()}</div>
+                            </div>
+                            <div>
+                                <div class="sec-label">${ICON.lock} Личные теги</div>
+                                <div class="tag-wrap">${privChips()}</div>
+                            </div>
+                            ${t ? `<button class="card-reset" data-x="clear">Сбросить фильтр · ${t}</button>` : ''}
+                        </div>
+                        <button class="mc muted" data-x="noop" aria-label="Компас">${ICON.rotate}</button>
+                        <button class="mc filter ${t ? 'on' : ''}" data-x="toggle" aria-label="Фильтр">
+                            ${ICON.sliders}${t ? `<span class="count-badge">${t}</span>` : ''}
+                        </button>
+                    </div>
+                    <div class="strip glass">${strip()}</div>`;
+                root.classList.toggle('open', root.dataset.open === '1');
+                applyPinFilter(sel.cat);
+            }
+
+            root.addEventListener('click', e => {
+                const trg = e.target.closest('[data-x],[data-pick]');
+                if (!trg) return;
+                const x = trg.dataset.x;
+                if (x === 'toggle') root.dataset.open = root.dataset.open === '1' ? '0' : '1';
+                else if (x === 'noop') return;
+                else if (x === 'more') tagsExpanded = true;
+                else if (x === 'invert') invert = !invert;
+                else if (x === 'clear') {
+                    sel.cat.clear();
+                    sel.tag.clear();
+                    sel.priv.clear();
+                } else if (trg.dataset.pick) {
+                    const [k, v] = trg.dataset.pick.split(/:(.*)/);
+                    sel[k].has(v) ? sel[k].delete(v) : sel[k].add(v);
+                }
+                render();
+            });
+
+            render();
+        </script>
+    </body>
+</html>
