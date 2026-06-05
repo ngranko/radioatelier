@@ -1,4 +1,5 @@
 <script lang="ts">
+    import {api} from '$convex/_generated/api';
     import {useConvexClient} from 'convex-svelte';
     import {useClerkContext} from 'svelte-clerk';
     import type {Snippet} from 'svelte';
@@ -24,6 +25,7 @@
         }
 
         if (nextAuthUserId) {
+            const isLogin = appliedAuthUserId === null;
             convexClient.setAuth(async ({forceRefreshToken}) => {
                 try {
                     if (!clerkCtx.session) {
@@ -40,6 +42,7 @@
                     return null;
                 }
             });
+            void convexClient.mutation(api.users.recordActivity, {isLogin});
         } else {
             convexClient.client.clearAuth();
         }
