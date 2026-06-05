@@ -13,7 +13,7 @@ Domain vocabulary for Radioatelier. Use these terms consistently in code, commen
 ## Notion sync
 
 -   **Notion adapter** — `src/convex/notion/`. The low-level integration with Notion's API: client, field reading/writing, webhook signature verification, matching, types. Knows Notion's wire format. Speaks `NotionPageFields`.
--   **Object Sync Fields** (`AppSyncFields` in code) — the projection of an Object in the sync vocabulary. The field set that flows in and out of any sync target. Includes `mapLink` (the URL pointing back to the app Object).
+-   **Object Sync Fields** (`AppSyncFields` in code) — the projection of an Object in the sync vocabulary. The field set that flows in and out of any sync target. Includes `mapLink` (the URL pointing back to the app Object) and `internalId` (the app-assigned `RA-{n}` identifier, outbound-only).
 -   **Sync state record** — `objectNotionSync` table. One row per synced Object: link to the Notion page, last outbound hash, last inbound edited time, last sync error. The durability layer of sync.
 -   **Sync identity** — maps a Notion workspace user id (from the page’s `created_by` / `last_edited_by`) to a sync-enabled Convex user, falling back to the configured sync user when needed.
 -   **Outbound sync** — app → Notion. Triggered when a sync-enabled user creates/updates/deletes an Object.
