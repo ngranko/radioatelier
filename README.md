@@ -37,17 +37,33 @@ An archive of urban artifacts — old signs, plaques, mosaics, and other details
 
 ## Key Scripts
 
-| Command          | Description                                   |
-| ---------------- | --------------------------------------------- |
-| `bun run dev`    | Start dev server (Convex + Vite)              |
-| `bun run check`  | Type-check with `svelte-check`                |
-| `bun run lint`   | Lint and auto-fix with ESLint                 |
-| `bun run format` | Format with Prettier (Tailwind class sorting) |
+| Command              | Description                                   |
+| -------------------- | --------------------------------------------- |
+| `bun run dev`        | Start dev server (Convex + Vite)              |
+| `bun run check`      | Type-check with `svelte-check`                |
+| `bun run lint`       | Lint and auto-fix with ESLint                 |
+| `bun run format`     | Format with Prettier (Tailwind class sorting) |
+| `bun run test`       | Run Vitest test suite                         |
+| `bun run test:watch` | Run Vitest in watch mode                      |
 
 ## Features
 
--   **Interactive map** — Google Maps + Deck.gl layers, Street View integration
--   **Object archive** — Create and manage archive entries with location, metadata, categories, tags, and images
+-   **Interactive map** — Provider abstraction over Google Maps; Deck.gl at low zoom, DOM markers at high zoom; Street View with minimap ([docs/map-architecture.md](docs/map-architecture.md), [docs/street-view.md](docs/street-view.md))
+-   **Object archive** — Create and manage archive entries with location, metadata, categories, tags, and images; point preview/create overlay ([docs/object-details-overlay.md](docs/object-details-overlay.md))
+-   **Category settings** — Per-user marker color, icon, and form-picker visibility ([docs/category-settings.md](docs/category-settings.md))
 -   **Search** — Full-text search via Typesense and Google Places
+-   **Notion sync** — Bidirectional sync between app objects and a Notion database ([docs/notion-sync.md](docs/notion-sync.md))
 -   **Data import** — CSV import to migrate data from other sources
 -   **User accounts** — Clerk authentication, role-based access, personal (private) tags and visited markers tracking
+
+## Documentation
+
+| Doc | Topics |
+| --- | ------ |
+| [docs/environment.md](docs/environment.md) | `.env.local` vs Convex env vars, setup checklist |
+| [docs/notion-sync.md](docs/notion-sync.md) | Notion webhook setup, sync invariants, audit action |
+| [docs/map-architecture.md](docs/map-architecture.md) | Map provider, marker pipeline, DOM vs Deck.gl |
+| [docs/category-settings.md](docs/category-settings.md) | Per-user category marker styles |
+| [docs/object-details-overlay.md](docs/object-details-overlay.md) | View/edit/create overlay modes and routes |
+| [docs/street-view.md](docs/street-view.md) | Panorama, minimap sync, lookup caching |
+| [docs/testing.md](docs/testing.md) | Vitest commands, test layout, adding tests |
