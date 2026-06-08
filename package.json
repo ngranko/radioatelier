@@ -56,7 +56,7 @@
         "typescript-eslint": "^8.56.1",
         "vite": "^6.4.1",
         "vite-plugin-cjs-interop": "^2.1.5",
-        "vitest": "^3.0.9"
+        "vitest": "^4.1.8"
     },
     "type": "module",
     "dependencies": {
