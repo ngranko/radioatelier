@@ -1,10 +1,11 @@
 <script lang="ts">
     import StreetViewOverlay from '$lib/components/map/streetViewOverlay.svelte';
     import {cn} from '$lib/utils';
-    import {onDestroy} from 'svelte';
+    import {onDestroy, onMount} from 'svelte';
     import {mapState} from '$lib/state/map.svelte';
     import {GoogleMapsProvider} from '$lib/services/map/providers/google/provider';
     import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
+    import {registerEscapeCloseHandler} from '$lib/utils/escapeClose';
 
     let streetViewContainer: HTMLDivElement | undefined = $state();
     let panorama: google.maps.StreetViewPanorama | null = $state(null);
@@ -84,6 +85,14 @@
         mapState.streetViewVisible = false;
         panorama = null;
     });
+
+    onMount(() =>
+        registerEscapeCloseHandler({
+            priority: 40,
+            isActive: () => mapState.streetViewVisible,
+            close: () => mapState.provider?.closeStreetView(),
+        }),
+    );
 </script>
 
 <div class="pointer-events-none fixed inset-0 z-2">

@@ -1,5 +1,6 @@
 <script lang="ts">
     import {fade} from 'svelte/transition';
+    import {onMount} from 'svelte';
     import type {
         LooseObject,
         Object as ObjectType,
@@ -30,6 +31,17 @@
     import PointPreview from '$lib/components/objectDetails/pointPreview.svelte';
     import ViewMode from '$lib/components/objectDetails/viewMode/viewMode.svelte';
     import type {ObjectDetailsOverlayMode} from '$lib/state/objectDetailsOverlay.svelte';
+    import {
+        Root as AlertDialogRoot,
+        Content,
+        Header,
+        Title,
+        Description,
+        Footer,
+        Cancel,
+        Action,
+    } from '$lib/components/ui/alert-dialog';
+    import {registerEscapeCloseHandler} from '$lib/utils/escapeClose';
 
     interface Props {
         initialValues?: Partial<LooseObject>;
@@ -46,6 +58,8 @@
         mode = 'objectView',
         permissions = {canEditAll: true, canEditPersonal: true},
     }: Props = $props();
+
+    let isCloseConfirmOpen = $state(false);
 
     const resolvedInitialValues = $derived(initialValues ?? {});
     const resolvedMode = $derived(objectDetailsOverlay.isOpen ? objectDetailsOverlay.mode : mode);
@@ -69,6 +83,7 @@
     }
 
     function handleClose() {
+        isCloseConfirmOpen = false;
         setCreateDraftPosition(null);
         deactivateMarker();
         clearActiveMarker();
@@ -89,9 +104,42 @@
             objectDetailsOverlay.details = object;
         }
     }
+
+    function requestClose() {
+        if (objectDetailsOverlay.isDirty) {
+            isCloseConfirmOpen = true;
+            return;
+        }
+
+        handleClose();
+    }
+
+    onMount(() =>
+        registerEscapeCloseHandler({
+            priority: 20,
+            isActive: () => objectDetailsOverlay.isOpen,
+            close: requestClose,
+        }),
+    );
 </script>
 
-<Background onClick={handleClose} isConfirmationRequired={objectDetailsOverlay.isDirty} />
+<Background onRequestClose={requestClose} />
+{#if objectDetailsOverlay.isDirty}
+    <AlertDialogRoot bind:open={isCloseConfirmOpen}>
+        <Content>
+            <Header>
+                <Title>Вы действительно хотите выйти из редактирования точки?</Title>
+                <Description>Изменения не будут сохранены</Description>
+            </Header>
+            <Footer>
+                <Cancel>Отменить</Cancel>
+                <Action class="bg-destructive hover:bg-destructive/70" onclick={handleClose}>
+                    Закрыть
+                </Action>
+            </Footer>
+        </Content>
+    </AlertDialogRoot>
+{/if}
 <aside
     class={cn([
         'bg-background absolute bottom-0 z-3 m-2 flex w-[calc(100dvw-8px*2)] max-w-100 flex-col rounded-lg transition-[height]',
@@ -133,7 +181,7 @@
                 <ChevronDownIcon class="stroke-3" />
             {/if}
         </Button>
-        <CloseButton onClick={handleClose} isConfirmationRequired={objectDetailsOverlay.isDirty} />
+        <CloseButton onRequestClose={requestClose} />
     </section>
     <div class="relative flex-1 overflow-hidden">
         <div class="absolute inset-0" in:fade={{duration: 150}} out:fade={{duration: 150}}>
