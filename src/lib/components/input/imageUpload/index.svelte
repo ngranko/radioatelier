@@ -33,6 +33,8 @@
     let imageUploadRef: HTMLInputElement | undefined = $state();
     let displayUrl = $derived(previewUrl || url);
 
+    const SUPPORTED_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
+
     async function handleImageChange(event: Event) {
         const file = (event.target as HTMLInputElement).files?.[0];
 
@@ -42,7 +44,7 @@
             return;
         }
 
-        if (!['image/png', 'image/jpeg'].includes(file.type)) {
+        if (!SUPPORTED_IMAGE_TYPES.has(file.type)) {
             console.error('Неподдерживаемый тип файла', file.type);
             toast.warning('Неподдерживаемый тип файла');
             return;
@@ -131,7 +133,7 @@
         class="hidden"
         {id}
         type="file"
-        accept="image/jpeg,image/png"
+        accept={[...SUPPORTED_IMAGE_TYPES].join(',')}
         onchange={handleImageChange}
         {disabled}
     />
