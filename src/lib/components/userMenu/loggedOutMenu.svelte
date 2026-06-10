@@ -13,6 +13,7 @@
     import {goto} from '$app/navigation';
     import {page} from '$app/state';
     import LogInIcon from '@lucide/svelte/icons/log-in';
+    import UserRoundXIcon from '@lucide/svelte/icons/user-round-x';
 
     function handleLoginClick() {
         goto(`/login?ref=${encodeURIComponent(page.url.pathname)}`);
@@ -29,11 +30,11 @@
                 class="glass group text-foreground/50 hover:text-foreground/70 relative z-2 size-11 rounded-full bg-white/75 text-lg shadow-md transition-all hover:bg-white/90 hover:shadow-lg active:scale-[0.97] dark:bg-white/10 dark:shadow-black/30 dark:hover:bg-white/15"
                 aria-label="Показать меню"
             >
-                <AvatarRoot class="size-11 rounded-full bg-transparent">
+                <AvatarRoot class="size-10 rounded-full bg-transparent">
                     <Fallback
-                        class="text-foreground/50 group-hover:text-foreground/70 rounded-full bg-transparent text-lg transition-all group-hover:scale-110"
+                        class="text-foreground/50 group-hover:text-foreground/70 rounded-full bg-transparent transition-transform group-hover:scale-110"
                     >
-                        <i class="fa-solid fa-user-slash"></i>
+                        <UserRoundXIcon class="size-5 translate-x-0.5" />
                     </Fallback>
                 </AvatarRoot>
             </Button>

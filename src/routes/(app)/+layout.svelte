@@ -21,6 +21,7 @@
     import SearchIcon from '@lucide/svelte/icons/search';
     import StarIcon from '@lucide/svelte/icons/star';
     import SproutIcon from '@lucide/svelte/icons/sprout';
+    import {SvglGoogleLogo} from '@selemondev/svgl-svelte';
     import {useQuery} from 'convex-svelte';
     import {api} from '$convex/_generated/api';
     import {setCategories} from '$lib/state/categories.svelte';
@@ -109,7 +110,7 @@
                 {searchPointId}
                 lat={searchPoint.object.latitude}
                 lng={searchPoint.object.longitude}
-                icon={searchPoint.object.type === 'local' ? SearchIcon : 'fa-brands fa-google'}
+                icon={searchPoint.object.type === 'local' ? SearchIcon : SvglGoogleLogo}
                 iconClassName="stroke-3"
                 color="#e11d48"
                 source="search"

@@ -66,6 +66,7 @@
         "@deck.gl/layers": "^9.0",
         "@googlemaps/js-api-loader": "^1.16.8",
         "@lucide/svelte": "^1.7.0",
+        "@selemondev/svgl-svelte": "^2.15.0",
         "@tailwindcss/vite": "^4.1.7",
         "clsx": "^2.1.1",
         "convex": "^1.31.7",

@@ -7,11 +7,9 @@
     }
 
     let {icon, className = ''}: Props = $props();
+
+    const Icon = icon;
+    const markerIconSize = 14;
 </script>
 
-{#if typeof icon === 'string'}
-    <i class={`${icon} ${className}`.trim()}></i>
-{:else}
-    {@const Icon = icon}
-    <Icon class={className} />
-{/if}
+<Icon class={className} width={markerIconSize} height={markerIconSize} />

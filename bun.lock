@@ -1,6 +1,5 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "archive",
@@ -11,6 +10,7 @@
         "@deck.gl/layers": "^9.0",
         "@googlemaps/js-api-loader": "^1.16.8",
         "@lucide/svelte": "^1.7.0",
+        "@selemondev/svgl-svelte": "^2.15.0",
         "@tailwindcss/vite": "^4.1.7",
         "clsx": "^2.1.1",
         "convex": "^1.31.7",
@@ -321,6 +321,8 @@
     "@rollup/rollup-win32-ia32-msvc": ["@rollup/rollup-win32-ia32-msvc@4.41.1", "", { "os": "win32", "cpu": "ia32" }, "sha512-+psFT9+pIh2iuGsxFYYa/LhS5MFKmuivRsx9iPJWNSGbh2XVEjk90fmpUEjCnILPEPJnikAU6SFDiEUyOv90Pg=="],
 
     "@rollup/rollup-win32-x64-msvc": ["@rollup/rollup-win32-x64-msvc@4.41.1", "", { "os": "win32", "cpu": "x64" }, "sha512-Wq2zpapRYLfi4aKxf2Xff0tN+7slj2d4R87WEzqw7ZLsVvO5zwYCIuEGSZYiK41+GlwUo1HiR+GdkLEJnCKTCw=="],
+
+    "@selemondev/svgl-svelte": ["@selemondev/svgl-svelte@2.15.0", "", { "peerDependencies": { "svelte": "^5.0.0" } }, "sha512-dooxsxL2ztjZ7n4fQGGZRqhxFgpbsa34CQl0/sTWqT6NoBOVaV0tGYTxFmJfkx6gMmBIjFtMcpGHKIhjWednUQ=="],
 
     "@sideway/address": ["@sideway/address@4.1.5", "", { "dependencies": { "@hapi/hoek": "^9.0.0" } }, "sha512-IqO/DUQHUkPeixNQ8n0JA6102hT9CmaljNTPmQ1u8MEhBo/R4Q8eKLN/vGZxuebwOroDB4cbpjheD4+/sKFK4Q=="],
 

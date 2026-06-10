@@ -16,6 +16,7 @@
     import LogOutIcon from '@lucide/svelte/icons/log-out';
     import FileInputIcon from '@lucide/svelte/icons/file-input';
     import PaletteIcon from '@lucide/svelte/icons/palette';
+    import UserRoundIcon from '@lucide/svelte/icons/user-round';
 
     let isLogoutDialogOpen = $state(false);
 
@@ -50,7 +51,7 @@
                     <Fallback
                         class="text-foreground rounded-full bg-transparent text-lg transition-transform group-hover:scale-110"
                     >
-                        <i class="fa-solid fa-user-ninja"></i>
+                        <UserRoundIcon class="size-5" />
                     </Fallback>
                 </AvatarRoot>
             </Button>

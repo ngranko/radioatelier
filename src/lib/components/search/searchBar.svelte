@@ -47,9 +47,7 @@
         registerEscapeCloseHandler({
             priority: 10,
             isActive: () =>
-                Boolean(searchState.query || val) &&
-                !objectDetailsOverlay.isOpen &&
-                !disabled,
+                Boolean(searchState.query || val) && !objectDetailsOverlay.isOpen && !disabled,
             close: handleClearClick,
         }),
     );

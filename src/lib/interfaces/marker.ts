@@ -1,7 +1,7 @@
 import type {Id} from '$convex/_generated/dataModel';
 import type {Component} from 'svelte';
 
-export type MarkerIcon = string | Component<{class?: string}>;
+export type MarkerIcon = Component<{class?: string; width?: number; height?: number}>;
 
 export interface MarkerOptions {
     icon: MarkerIcon;
