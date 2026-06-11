@@ -4,7 +4,8 @@ import {internal} from './_generated/api';
 import type {Id} from './_generated/dataModel';
 import {internalMutation, mutation, query} from './_generated/server';
 import {ensureCategory, ensurePrivateTags, ensureTags} from './helpers/importHelpers';
-import {getNextInternalId, updateIsVisited} from './helpers/objectHelpers';
+import {updateIsVisited} from './helpers/objectHelpers';
+import {createObjectRecords, upsertPrivateTags} from './helpers/objectWriter';
 import {getCurrentUserOrThrow} from './users';
 
 const importMappingsValidator = {
@@ -69,6 +70,11 @@ function trimToLimit(value: string, maxLength: number) {
 function toNullableString(value: string | undefined) {
     const normalized = value?.trim();
     return normalized || null;
+}
+
+function toLimitedNullable(value: string | undefined, maxLength: number) {
+    const normalized = toNullableString(value);
+    return normalized ? trimToLimit(normalized, maxLength) : null;
 }
 
 function normalizeTagList(values: string[]) {
@@ -275,7 +281,17 @@ export const importBatch = mutation({
                     });
                 }
 
-                const mapPointId = await ctx.db.insert('mapPoints', {
+                const {objectId} = await createObjectRecords(ctx, user._id, {
+                    name: objectName,
+                    description: toLimitedNullable(row.description, LIMITS.description),
+                    installedPeriod: toLimitedNullable(row.installedPeriod, LIMITS.period),
+                    isRemoved: row.isRemoved,
+                    removalPeriod: toLimitedNullable(row.removalPeriod, LIMITS.period),
+                    source: validatedSource,
+                    coverId: row.imageId ?? null,
+                    categoryId,
+                    isPublic: row.isPublic,
+                    tagIds,
                     latitude: coordinates.latitude,
                     longitude: coordinates.longitude,
                     address: trimToLimit(toNullableString(row.address) ?? '', LIMITS.address),
@@ -283,48 +299,7 @@ export const importBatch = mutation({
                     country: trimToLimit(toNullableString(row.country) ?? '', LIMITS.country),
                 });
 
-                const objectId = await ctx.db.insert('objects', {
-                    name: objectName,
-                    description: trimToLimit(
-                        toNullableString(row.description) ?? '',
-                        LIMITS.description,
-                    ),
-                    installedPeriod: trimToLimit(
-                        toNullableString(row.installedPeriod) ?? '',
-                        LIMITS.period,
-                    ),
-                    isRemoved: row.isRemoved,
-                    removalPeriod: trimToLimit(
-                        toNullableString(row.removalPeriod) ?? '',
-                        LIMITS.period,
-                    ),
-                    source: validatedSource,
-                    coverId: row.imageId ?? null,
-                    categoryId,
-                    isPublic: row.isPublic,
-                    tagIds,
-                    mapPointId,
-                    createdById: user._id,
-                    internalId: await getNextInternalId(ctx),
-                });
-
-                await ctx.db.insert('objectPrivateTags', {
-                    objectId,
-                    privateTagIds,
-                    userId: user._id,
-                });
-
-                await ctx.db.insert('markers', {
-                    objectId,
-                    latitude: coordinates.latitude,
-                    longitude: coordinates.longitude,
-                    createdById: user._id,
-                    categoryId,
-                    tagIds,
-                    isRemoved: row.isRemoved,
-                    isPublic: row.isPublic,
-                });
-
+                await upsertPrivateTags(ctx, objectId, user._id, privateTagIds);
                 await updateIsVisited(ctx, objectId, user._id, row.isVisited);
                 if (user.notionSyncEnabled) {
                     importedObjectIds.push(objectId);
