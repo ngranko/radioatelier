@@ -15,6 +15,7 @@ export interface MarkerManagerOptions {
     maxVisibleMarkers: number;
     maxZoom: number;
     renderer?: RendererMode;
+    onMarkerShown?: (id: MarkerId, marker: Marker) => void;
 }
 
 export class MarkerManager {
@@ -44,7 +45,7 @@ export class MarkerManager {
         this.renderer = createRenderer(this.isDeck ? 'deck' : 'dom');
         this.visibilityEngine = new VisibilityEngine(
             this.repo,
-            {chunkSize: this.options.chunkSize},
+            {chunkSize: this.options.chunkSize, onShown: this.options.onMarkerShown},
             this.renderer,
         );
     }
