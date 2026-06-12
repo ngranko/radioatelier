@@ -4,7 +4,7 @@
     import {onDestroy, onMount} from 'svelte';
     import {mapState} from '$lib/state/map.svelte';
     import {GoogleMapsProvider} from '$lib/services/map/providers/google/provider';
-    import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
+    import {setOverlayMinimized} from '$lib/state/objectDetailsOverlay.svelte';
     import {registerEscapeCloseHandler} from '$lib/utils/escapeClose';
 
     let streetViewContainer: HTMLDivElement | undefined = $state();
@@ -74,7 +74,7 @@
                 mapState.streetViewVisible = isStreetViewVisible;
                 if (!isStreetViewVisible) {
                     panorama!.setZoom(1);
-                    objectDetailsOverlay.isMinimized = false;
+                    setOverlayMinimized(false);
                 }
             }),
         );

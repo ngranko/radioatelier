@@ -17,6 +17,9 @@
     import {Textarea} from '$lib/components/ui/textarea';
     import {
         objectDetailsOverlay,
+        returnToPointPreview,
+        returnToViewMode,
+        setOverlayDirty,
         showLoadingDetailsOverlay,
     } from '$lib/state/objectDetailsOverlay.svelte';
     import {getErrorArray} from '$lib/utils/formErrors.ts';
@@ -166,19 +169,19 @@
 
     $effect(() => {
         if (isTainted() && !objectDetailsOverlay.isDirty) {
-            objectDetailsOverlay.isDirty = true;
+            setOverlayDirty(true);
         }
     });
 
     function handleBack() {
-        objectDetailsOverlay.isDirty = false;
+        setOverlayDirty(false);
 
         if ($formData.id) {
-            objectDetailsOverlay.mode = 'objectView';
+            returnToViewMode();
             return;
         }
 
-        objectDetailsOverlay.mode = 'pointPreview';
+        returnToPointPreview();
     }
 
     function handleImageChange(file: File): Promise<void> {
@@ -218,8 +221,8 @@
             showLoadingDetailsOverlay(id);
             goto(`/object/${id}`);
         } else {
-            objectDetailsOverlay.isDirty = false;
-            objectDetailsOverlay.mode = 'objectView';
+            setOverlayDirty(false);
+            returnToViewMode();
         }
     }
 

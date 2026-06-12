@@ -1,6 +1,6 @@
 import {GoogleMapsProvider} from '$lib/services/map/providers/google/provider';
 import {mapState} from '$lib/state/map.svelte';
-import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
+import {setOverlayMinimized} from '$lib/state/objectDetailsOverlay.svelte';
 
 let streetViewService: google.maps.StreetViewService | null = null;
 const lookupCache: Record<string, google.maps.StreetViewLocation | undefined> = {};
@@ -140,6 +140,6 @@ export function getStreetView(lat: number, lng: number) {
     return resolveStreetViewLocation(lat, lng).then(location => {
         const pano = googleMap.getStreetView();
         applyStreetViewLocation(pano, location);
-        objectDetailsOverlay.isMinimized = true;
+        setOverlayMinimized(true);
     });
 }
