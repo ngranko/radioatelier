@@ -12,7 +12,7 @@
         showLoadingDetailsOverlay,
         showObjectDetailsOverlay,
     } from '$lib/state/objectDetailsOverlay.svelte';
-    import {setCenter} from '$lib/services/map/map.svelte.ts';
+    import {focusDetailsTarget} from '$lib/services/map/map.svelte.ts';
     import {goto} from '$app/navigation';
     import {page} from '$app/state';
     import {useConvexClient} from 'convex-svelte';
@@ -66,7 +66,7 @@
         if (objectDetailsOverlay.detailsId === activeTargetId && marker) {
             setActiveMarker(marker);
             activateMarker(marker);
-            setCenter(Number(lat), Number(lng));
+            focusDetailsTarget(Number(lat), Number(lng));
         }
     });
 
