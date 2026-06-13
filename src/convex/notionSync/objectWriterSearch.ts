@@ -2,11 +2,8 @@ import {internal} from '../_generated/api';
 import type {Id} from '../_generated/dataModel';
 import type {MutationCtx} from '../_generated/server';
 import {buildObjectSearchRecord} from '../helpers/objectAggregate';
-import type {
-    CreateSyncedObjectInput,
-    PatchSyncedObjectInput,
-    PatchTarget,
-} from './objectWriterTypes';
+import type {ObjectTarget} from '../helpers/objectWriter';
+import type {CreateSyncedObjectInput, PatchSyncedObjectInput} from './objectWriterTypes';
 
 export function scheduleCreateSearch(
     ctx: MutationCtx,
@@ -35,7 +32,7 @@ export function scheduleCreateSearch(
 export function scheduleUpdateSearch(
     ctx: MutationCtx,
     input: PatchSyncedObjectInput,
-    target: PatchTarget,
+    target: ObjectTarget,
     categoryName: string,
 ) {
     ctx.scheduler.runAfter(0, internal.typesense.updateInTypesense, {

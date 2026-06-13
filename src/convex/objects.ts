@@ -4,12 +4,14 @@ import {internal} from './_generated/api';
 import type {Doc} from './_generated/dataModel';
 import {internalQuery, mutation, query} from './_generated/server';
 import {buildObjectSearchRecord, deleteObjectAggregate} from './helpers/objectAggregate';
+import {getIsVisited, getPrivateTags, updateIsVisited} from './helpers/objectHelpers';
 import {
-    getIsVisited,
-    getNextInternalId,
-    getPrivateTags,
-    updateIsVisited,
-} from './helpers/objectHelpers';
+    createObjectRecords,
+    loadObjectTarget,
+    patchObjectRecords,
+    replaceObjectRecords,
+    upsertPrivateTags,
+} from './helpers/objectWriter';
 import {deleteSyncStateForObject} from './notionSync/state';
 import {
     assertValidMapPointCoordinates,
@@ -142,15 +144,7 @@ export const create = mutation({
         const user = await getCurrentUserOrThrow(ctx);
         assertValidMapPointCoordinates(data.latitude, data.longitude);
 
-        const mapPointId = await ctx.db.insert('mapPoints', {
-            latitude: data.latitude,
-            longitude: data.longitude,
-            address: data.address ?? '',
-            city: data.city ?? '',
-            country: data.country ?? '',
-        });
-
-        const objectId = await ctx.db.insert('objects', {
+        const {objectId} = await createObjectRecords(ctx, user._id, {
             name: data.name,
             description: data.description ?? null,
             installedPeriod: data.installedPeriod ?? null,
@@ -161,31 +155,17 @@ export const create = mutation({
             tagIds: data.tagIds,
             isPublic: data.isPublic,
             isRemoved: data.isRemoved,
-            internalId: await getNextInternalId(ctx),
-            mapPointId,
-            createdById: user._id,
-        });
-
-        await ctx.db.insert('objectPrivateTags', {
-            objectId,
-            privateTagIds: data.privateTags,
-            userId: user._id,
-        });
-
-        if (data.isVisited) {
-            updateIsVisited(ctx, objectId, user._id, true);
-        }
-
-        await ctx.db.insert('markers', {
-            objectId,
             latitude: data.latitude,
             longitude: data.longitude,
-            createdById: user._id,
-            categoryId: data.categoryId,
-            tagIds: data.tagIds,
-            isRemoved: data.isRemoved,
-            isPublic: data.isPublic,
+            address: data.address ?? '',
+            city: data.city ?? '',
+            country: data.country ?? '',
         });
+
+        await upsertPrivateTags(ctx, objectId, user._id, data.privateTags);
+        if (data.isVisited) {
+            await updateIsVisited(ctx, objectId, user._id, true);
+        }
 
         const category = await ctx.db.get('categories', data.categoryId);
         if (!category) {
@@ -226,22 +206,15 @@ export const update = mutation({
     handler: async (ctx, {id, data}) => {
         const user = await getCurrentUserOrThrow(ctx);
 
-        const object = await ctx.db.get('objects', id);
-        if (!object) {
-            throw new Error('Object not found');
-        }
-        const mapPoint = await ctx.db.get('mapPoints', object.mapPointId);
-        if (!mapPoint) {
-            throw new Error('Map point not found');
-        }
+        const target = await loadObjectTarget(ctx, id);
 
-        const isOwner = object.createdById === user._id;
-        if (!isOwner && !object.isPublic) {
+        const isOwner = target.object.createdById === user._id;
+        if (!isOwner && !target.object.isPublic) {
             throw new Error('Not allowed to update this object');
         }
 
         if (isOwner) {
-            const objectPatch: Record<string, unknown> = {
+            await replaceObjectRecords(ctx, target, {
                 name: data.name,
                 description: data.description,
                 coverId: data.coverId,
@@ -252,73 +225,43 @@ export const update = mutation({
                 installedPeriod: data.installedPeriod,
                 removalPeriod: data.removalPeriod,
                 source: data.source,
-            };
-            await ctx.db.patch('objects', id, objectPatch);
-
-            await ctx.db.patch('mapPoints', object.mapPointId, {
                 address: data.address ?? '',
                 city: data.city ?? '',
                 country: data.country ?? '',
             });
 
-            const marker = await ctx.db
-                .query('markers')
-                .withIndex('byObjectId', q => q.eq('objectId', id))
-                .first();
-            if (marker) {
-                await ctx.db.patch('markers', marker._id, {
-                    categoryId: data.categoryId,
-                    tagIds: data.tagIds,
-                    isRemoved: data.isRemoved,
+            const category = await ctx.db.get('categories', data.categoryId);
+            if (!category) {
+                throw new Error('Category not found');
+            }
+
+            // Non-owners only touch per-user state (private tags, visited), so
+            // the search record and outbound sync stay untouched for them.
+            ctx.scheduler.runAfter(0, internal.typesense.updateInTypesense, {
+                object: buildObjectSearchRecord({
+                    id,
+                    name: data.name,
+                    mapPoint: {
+                        latitude: target.mapPoint.latitude,
+                        longitude: target.mapPoint.longitude,
+                        address: data.address ?? null,
+                        city: data.city ?? null,
+                        country: data.country ?? null,
+                    },
+                    categoryName: category.name,
+                    createdBy: target.object.createdById,
                     isPublic: data.isPublic,
+                }),
+            });
+            if (user.notionSyncEnabled) {
+                ctx.scheduler.runAfter(0, internal.notionSync.outbound.enqueueOutboundObjectSync, {
+                    objectId: id,
                 });
             }
         }
 
-        const privateTagsRecord = await ctx.db
-            .query('objectPrivateTags')
-            .withIndex('byObjectIdUserId', q => q.eq('objectId', id).eq('userId', user._id))
-            .first();
-        if (privateTagsRecord) {
-            await ctx.db.patch('objectPrivateTags', privateTagsRecord._id, {
-                privateTagIds: data.privateTags,
-            });
-        } else {
-            await ctx.db.insert('objectPrivateTags', {
-                objectId: id,
-                userId: user._id,
-                privateTagIds: data.privateTags,
-            });
-        }
-
-        updateIsVisited(ctx, id, user._id, data.isVisited);
-
-        const category = await ctx.db.get('categories', data.categoryId);
-        if (!category) {
-            throw new Error('Category not found');
-        }
-
-        ctx.scheduler.runAfter(0, internal.typesense.updateInTypesense, {
-            object: buildObjectSearchRecord({
-                id,
-                name: data.name,
-                mapPoint: {
-                    latitude: mapPoint.latitude,
-                    longitude: mapPoint.longitude,
-                    address: data.address ?? null,
-                    city: data.city ?? null,
-                    country: data.country ?? null,
-                },
-                categoryName: category.name,
-                createdBy: user._id,
-                isPublic: data.isPublic,
-            }),
-        });
-        if (isOwner && user.notionSyncEnabled) {
-            ctx.scheduler.runAfter(0, internal.notionSync.outbound.enqueueOutboundObjectSync, {
-                objectId: id,
-            });
-        }
+        await upsertPrivateTags(ctx, id, user._id, data.privateTags);
+        await updateIsVisited(ctx, id, user._id, data.isVisited);
 
         return id;
     },
@@ -361,54 +304,28 @@ export const reposition = mutation({
         const user = await getCurrentUserOrThrow(ctx);
         assertValidMapPointCoordinates(data.latitude, data.longitude);
 
-        const object = await ctx.db.get('objects', id);
-        if (!object) {
-            throw new Error('Object not found');
-        }
-        if (object.createdById !== user._id) {
+        const target = await loadObjectTarget(ctx, id);
+        if (target.object.createdById !== user._id) {
             throw new Error('Not allowed to update this object');
         }
 
-        const mapPoint = await ctx.db.get('mapPoints', object.mapPointId);
-        if (!mapPoint) {
-            throw new Error('Map point not found');
-        }
-
-        const marker = await ctx.db
-            .query('markers')
-            .withIndex('byObjectId', q => q.eq('objectId', id))
-            .first();
-        if (!marker) {
-            throw new Error('Marker not found');
-        }
-
-        await ctx.db.patch('mapPoints', object.mapPointId, {
+        await patchObjectRecords(ctx, target, {
             latitude: data.latitude,
             longitude: data.longitude,
         });
-
-        await ctx.db.patch('markers', marker._id, {
-            latitude: data.latitude,
-            longitude: data.longitude,
-        });
-
-        const category = await ctx.db.get('categories', object.categoryId);
-        if (!category) {
-            throw new Error('Category not found');
-        }
 
         ctx.scheduler.runAfter(0, internal.typesense.updateInTypesense, {
             object: buildObjectSearchRecord({
                 id,
-                name: object.name,
+                name: target.object.name,
                 mapPoint: {
-                    ...mapPoint,
+                    ...target.mapPoint,
                     latitude: data.latitude,
                     longitude: data.longitude,
                 },
-                categoryName: category.name,
-                createdBy: object.createdById,
-                isPublic: object.isPublic,
+                categoryName: target.category.name,
+                createdBy: target.object.createdById,
+                isPublic: target.object.isPublic,
             }),
         });
     },

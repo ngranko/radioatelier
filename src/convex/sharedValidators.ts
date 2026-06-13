@@ -1,4 +1,4 @@
-import {v} from 'convex/values';
+import {type Infer, v} from 'convex/values';
 
 export function assertValidMapPointCoordinates(latitude: number, longitude: number): void {
     if (
@@ -19,17 +19,19 @@ const mapPointAddressFields = {
     country: v.nullable(v.string()),
 };
 
-const mapPointCoreFields = {
+export const mapPointCoreFields = {
     latitude: v.number(),
     longitude: v.number(),
     ...mapPointAddressFields,
 };
 
+export type MapPointCoreData = Infer<ReturnType<typeof v.object<typeof mapPointCoreFields>>>;
+
 export const mapPointTableFields = {
     ...mapPointCoreFields,
 };
 
-const objectCoreFields = {
+export const objectCoreFields = {
     name: v.string(),
     description: v.nullable(v.string()),
     installedPeriod: v.nullable(v.string()),
@@ -41,6 +43,8 @@ const objectCoreFields = {
     isPublic: v.boolean(),
     tagIds: v.array(v.id('tags')),
 };
+
+export type ObjectCoreData = Infer<ReturnType<typeof v.object<typeof objectCoreFields>>>;
 
 export const objectTableFields = {
     ...objectCoreFields,

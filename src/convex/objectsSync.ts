@@ -3,16 +3,20 @@ import {internal} from './_generated/api';
 import type {Id} from './_generated/dataModel';
 import {internalMutation, type MutationCtx} from './_generated/server';
 import {deleteObjectAggregate} from './helpers/objectAggregate';
+import {updateIsVisited} from './helpers/objectHelpers';
 import {
-    applyObjectPatch,
+    createObjectRecords,
+    loadObjectTarget,
+    patchObjectRecords,
+    upsertPrivateTags,
+} from './helpers/objectWriter';
+import {
     buildPatchedFields,
-    insertMapPoint,
-    insertObject,
-    insertObjectRelations,
-    loadPatchTarget,
+    buildSyncCreateData,
+    buildSyncRecordPatch,
     resolveCreateClassification,
     resolvePatchClassification,
-} from './notionSync/objectWriterRecords';
+} from './notionSync/objectWriterAdapter';
 import {scheduleCreateSearch, scheduleUpdateSearch} from './notionSync/objectWriterSearch';
 import type {CreateSyncedObjectInput, PatchSyncedObjectInput} from './notionSync/objectWriterTypes';
 import {
@@ -66,20 +70,32 @@ export const patchObjectFromSync = internalMutation({
 async function createSyncedObject(ctx: MutationCtx, input: CreateSyncedObjectInput) {
     await requireActiveOwner(ctx, input.ownerId);
     const classification = await resolveCreateClassification(ctx, input);
-    const mapPointId = await insertMapPoint(ctx, input);
-    const objectId = await insertObject(ctx, input, classification, mapPointId);
+    const {objectId} = await createObjectRecords(
+        ctx,
+        input.ownerId,
+        buildSyncCreateData(input, classification),
+    );
 
-    await insertObjectRelations(ctx, input, classification, objectId);
+    await upsertPrivateTags(ctx, objectId, input.ownerId, []);
+    await updateIsVisited(ctx, objectId, input.ownerId, input.fields.isVisited);
     scheduleCreateSearch(ctx, input, classification.categoryName, objectId);
     await recordInboundSync(ctx, objectId, input.notionPageId, input.lastInboundEditedTime);
     return objectId;
 }
 
 async function patchSyncedObject(ctx: MutationCtx, input: PatchSyncedObjectInput) {
-    const target = await loadPatchTarget(ctx, input.objectId);
+    const target = await loadObjectTarget(ctx, input.objectId);
     const classification = await resolvePatchClassification(ctx, target, input);
 
-    await applyObjectPatch(ctx, target, input, classification);
+    await patchObjectRecords(ctx, target, buildSyncRecordPatch(input.patch, classification));
+    if (input.patch.isVisited !== undefined) {
+        await updateIsVisited(
+            ctx,
+            target.object._id,
+            target.object.createdById,
+            input.patch.isVisited,
+        );
+    }
     scheduleUpdateSearch(ctx, input, target, classification.categoryName);
     const nextFields = await buildPatchedFields(ctx, target, input, classification);
     await recordInboundSync(ctx, input.objectId, input.notionPageId, input.lastInboundEditedTime);

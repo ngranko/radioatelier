@@ -47,7 +47,7 @@ export async function getPrivateTags(ctx: QueryCtx, objectId: Id<'objects'>, use
     const objectPrivateTags = await ctx.db
         .query('objectPrivateTags')
         .withIndex('byObjectIdUserId', q => q.eq('objectId', objectId).eq('userId', userId))
-        .first();
+        .unique();
 
     if (!objectPrivateTags) {
         return [];
