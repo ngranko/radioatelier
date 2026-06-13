@@ -42,12 +42,18 @@
                     return null;
                 }
             });
-            void convexClient.mutation(api.users.recordActivity, {isLogin});
+            void (async () => {
+                try {
+                    await convexClient.mutation(api.users.recordActivity, {isLogin});
+                    appliedAuthUserId = nextAuthUserId;
+                } catch (err) {
+                    console.error('Failed to record Convex user activity', err);
+                }
+            })();
         } else {
             convexClient.client.clearAuth();
+            appliedAuthUserId = null;
         }
-
-        appliedAuthUserId = nextAuthUserId;
     });
 </script>
 

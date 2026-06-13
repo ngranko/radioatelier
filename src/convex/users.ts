@@ -44,10 +44,16 @@ export const upsertFromClerk = internalMutation({
         }
 
         const patch: Partial<Doc<'users'>> = {...userAttributes};
-        if (timestampFields.lastActiveAt !== null) {
+        if (
+            timestampFields.lastActiveAt !== null &&
+            (user.lastActiveAt === null || timestampFields.lastActiveAt > user.lastActiveAt)
+        ) {
             patch.lastActiveAt = timestampFields.lastActiveAt;
         }
-        if (timestampFields.lastLoginAt !== null) {
+        if (
+            timestampFields.lastLoginAt !== null &&
+            (user.lastLoginAt === null || timestampFields.lastLoginAt > user.lastLoginAt)
+        ) {
             patch.lastLoginAt = timestampFields.lastLoginAt;
         }
         await ctx.db.patch(user._id, patch);
@@ -63,11 +69,23 @@ export const recordSessionFromClerk = internalMutation({
     handler: async (ctx, {clerkUserId, lastActiveAt, lastLoginAt}) => {
         const user = await getUserByExternalId(ctx, clerkUserId);
         if (user === null) {
-            console.warn(`Can't record session, there is no user for Clerk user ID: ${clerkUserId}`);
+            console.warn(
+                `Can't record session, there is no user for Clerk user ID: ${clerkUserId}`,
+            );
             return;
         }
 
-        await ctx.db.patch(user._id, {lastActiveAt, lastLoginAt});
+        const patch: Partial<Doc<'users'>> = {};
+        if (user.lastActiveAt === null || lastActiveAt > user.lastActiveAt) {
+            patch.lastActiveAt = lastActiveAt;
+        }
+        if (user.lastLoginAt === null || lastLoginAt > user.lastLoginAt) {
+            patch.lastLoginAt = lastLoginAt;
+        }
+
+        if ('lastActiveAt' in patch || 'lastLoginAt' in patch) {
+            await ctx.db.patch(user._id, patch);
+        }
     },
 });
 
@@ -121,8 +139,7 @@ function buildClerkUserAttributes(data: UserJSON) {
     return {
         email: data.email_addresses[0]?.email_address ?? '',
         externalId: data.id,
-        role:
-            typeof data.public_metadata.role === 'string' ? data.public_metadata.role : 'user',
+        role: typeof data.public_metadata.role === 'string' ? data.public_metadata.role : 'user',
         notionSyncEnabled: data.public_metadata.notionSyncEnabled === true,
         notionUserId:
             typeof data.public_metadata.notionUserId === 'string'

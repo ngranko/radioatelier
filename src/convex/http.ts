@@ -38,8 +38,7 @@ http.route({
                 const session = event.data as SessionJSON;
                 const clerkUserId = session.user_id;
                 const lastLoginAt = clerkTimestamp(session.created_at);
-                const lastActiveAt =
-                    clerkTimestamp(session.last_active_at) ?? lastLoginAt;
+                const lastActiveAt = clerkTimestamp(session.last_active_at) ?? lastLoginAt;
                 if (!clerkUserId || lastLoginAt === null || lastActiveAt === null) {
                     console.error('Received session.created event without required session data');
                     return new Response('Invalid event data', {status: 400});
