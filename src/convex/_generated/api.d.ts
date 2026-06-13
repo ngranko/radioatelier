@@ -35,7 +35,6 @@ import type * as notionSync_objectWriterAdapter from "../notionSync/objectWriter
 import type * as notionSync_objectWriterSearch from "../notionSync/objectWriterSearch.js";
 import type * as notionSync_objectWriterTypes from "../notionSync/objectWriterTypes.js";
 import type * as notionSync_outbound from "../notionSync/outbound.js";
-import type * as notionSync_outboundObjectSync from "../notionSync/outboundObjectSync.js";
 import type * as notionSync_reconcile from "../notionSync/reconcile.js";
 import type * as notionSync_snapshot from "../notionSync/snapshot.js";
 import type * as notionSync_snapshotCache from "../notionSync/snapshotCache.js";
@@ -90,7 +89,6 @@ declare const fullApi: ApiFromModules<{
   "notionSync/objectWriterSearch": typeof notionSync_objectWriterSearch;
   "notionSync/objectWriterTypes": typeof notionSync_objectWriterTypes;
   "notionSync/outbound": typeof notionSync_outbound;
-  "notionSync/outboundObjectSync": typeof notionSync_outboundObjectSync;
   "notionSync/reconcile": typeof notionSync_reconcile;
   "notionSync/snapshot": typeof notionSync_snapshot;
   "notionSync/snapshotCache": typeof notionSync_snapshotCache;

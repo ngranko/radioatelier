@@ -16,6 +16,11 @@
     import config from '$lib/config';
     import StreetView from '$lib/components/map/streetView.svelte';
     import {removeDragTimeout} from '$lib/state/marker.svelte';
+    import type {Marker} from '$lib/services/map/marker';
+    import type {MarkerId} from '$lib/interfaces/marker';
+    import {setCenter} from '$lib/services/map/map.svelte.ts';
+    import {activateMarker, setActiveMarker} from '$lib/state/activeMarker.svelte.ts';
+    import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
 
     interface Props {
         onClick?(location: Location): void;
@@ -83,6 +88,20 @@
         }
     });
 
+    // this is needed so that share pages will load with active correct marker
+    // as at the point of page load no markers are displayed, we need this block to
+    // activate required marker on first viewport update
+    function focusDetailsMarker(id: MarkerId, marker: Marker) {
+        if (objectDetailsOverlay.detailsId !== id) {
+            return;
+        }
+
+        setActiveMarker(marker);
+        activateMarker(marker);
+        const pos = marker.getPosition();
+        setCenter(pos.lat, pos.lng);
+    }
+
     async function initMarkerManager(provider: MapProvider): Promise<MarkerManager> {
         const initialMode = shouldUseDeck(provider) ? 'deck' : 'dom';
         const manager = new MarkerManager(
@@ -91,7 +110,7 @@
                 mode === 'deck'
                     ? new HybridMarkerRenderer(provider)
                     : new DomMarkerRenderer(provider),
-            {renderer: initialMode},
+            {renderer: initialMode, onMarkerShown: focusDetailsMarker},
         );
         await manager.initialize();
         return manager;

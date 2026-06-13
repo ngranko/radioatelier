@@ -1,16 +1,21 @@
 import type {MarkerId} from '$lib/interfaces/marker';
-import {setCenter} from '$lib/services/map/map.svelte.ts';
-import {activateMarker, setActiveMarker} from '$lib/state/activeMarker.svelte.ts';
-import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
+import type {Marker} from './marker';
 import type {MarkerRepository} from './markerRepository';
 import type {MarkerRenderer} from './renderer/markerRenderer';
+
+export interface VisibilityEngineOptions {
+    chunkSize: number;
+    // Notification only — what happens when a marker becomes visible
+    // (e.g. focusing the shared Object's marker) is the caller's policy.
+    onShown?: (id: MarkerId, marker: Marker) => void;
+}
 
 export class VisibilityEngine {
     private suppressed = false;
 
     public constructor(
         private repo: MarkerRepository,
-        private options: {chunkSize: number},
+        private options: VisibilityEngineOptions,
         private renderer: MarkerRenderer,
     ) {}
 
@@ -76,16 +81,7 @@ export class VisibilityEngine {
         this.renderer.ensureCreated(marker);
         this.renderer.show(marker);
         this.repo.markVisible(id);
-
-        // this is needed so that share pages will load with active correct marker
-        // as at the point of page load no markers are displayed, we need this block to
-        // activate required marker on first viewport update
-        if (objectDetailsOverlay.detailsId === id) {
-            setActiveMarker(marker);
-            activateMarker(marker);
-            const pos = marker.getPosition();
-            setCenter(pos.lat, pos.lng);
-        }
+        this.options.onShown?.(id, marker);
     }
 
     public hide(id: MarkerId) {
