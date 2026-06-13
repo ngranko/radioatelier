@@ -15,9 +15,12 @@
     import EscapeCloseHandler from '$lib/components/escapeCloseHandler.svelte';
     import {sharedMarker} from '$lib/state/sharedMarker.svelte.ts';
     import {goto} from '$app/navigation';
-    import {page} from '$app/state';
+    import {navigating, page} from '$app/state';
     import {useClerkContext} from 'svelte-clerk';
-    import {showLoadingDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
+    import {
+        setOverlayAddressLoading,
+        showLoadingDetailsOverlay,
+    } from '$lib/state/objectDetailsOverlay.svelte';
     import SearchIcon from '@lucide/svelte/icons/search';
     import StarIcon from '@lucide/svelte/icons/star';
     import SproutIcon from '@lucide/svelte/icons/sprout';
@@ -52,6 +55,13 @@
 
     $effect(() => {
         setCategories(categories.data ?? data.categories);
+    });
+
+    // The /point load geocodes the address server-side, so while that
+    // navigation is pending the open overlay shows stale address fields —
+    // surface it via the address spinners.
+    $effect(() => {
+        setOverlayAddressLoading(navigating.to?.url.pathname === '/point');
     });
 
     $effect(() => {

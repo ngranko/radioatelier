@@ -13,7 +13,11 @@
         FormFieldErrors,
         FormLabel,
     } from '$lib/components/ui/form';
-    import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
+    import {
+        objectDetailsOverlay,
+        returnToViewMode,
+        setOverlayDirty,
+    } from '$lib/state/objectDetailsOverlay.svelte';
     import ImageUpload from '$lib/components/input/imageUpload/index.svelte';
     import Flags from '$lib/components/objectDetails/viewMode/flags.svelte';
     import {Separator} from '$lib/components/ui/separator';
@@ -94,16 +98,16 @@
 
     $effect(() => {
         if (isTainted() && !objectDetailsOverlay.isDirty) {
-            objectDetailsOverlay.isDirty = true;
+            setOverlayDirty(true);
         }
     });
 
     function handleSaveSuccess() {
-        objectDetailsOverlay.mode = 'objectView';
+        returnToViewMode();
     }
 
     function handleBack() {
-        objectDetailsOverlay.mode = 'objectView';
+        returnToViewMode();
     }
 </script>
 

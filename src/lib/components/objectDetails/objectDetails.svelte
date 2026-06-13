@@ -18,6 +18,7 @@
     import {
         objectDetailsOverlay,
         closeDetailsOverlay,
+        setOverlayMinimized,
     } from '$lib/state/objectDetailsOverlay.svelte';
     import type {Permissions} from '$lib/interfaces/permissions';
     import {goto} from '$app/navigation';
@@ -70,7 +71,7 @@
     );
 
     function handleMinimizeClick() {
-        objectDetailsOverlay.isMinimized = !objectDetailsOverlay.isMinimized;
+        setOverlayMinimized(!objectDetailsOverlay.isMinimized);
     }
 
     async function copyInternalId(text: string) {
@@ -99,9 +100,7 @@
             // this is for a case when a user is not logged in and wants to close the details overlay
             // otherwise I'll lose the values and will use the server fallback
             // TODO: in the future it's best to come up with a better solution
-            const object = objectDetailsOverlay.details;
-            closeDetailsOverlay();
-            objectDetailsOverlay.details = object;
+            closeDetailsOverlay({preserveDetails: true});
         }
     }
 
