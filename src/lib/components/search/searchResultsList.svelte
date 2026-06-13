@@ -1,31 +1,33 @@
 <script lang="ts">
     import {searchState} from '$lib/state/search.svelte';
-    import type {SearchItem} from '$lib/interfaces/object';
+    import type {SearchItem, SearchPageSource, SearchResultsPage} from '$lib/interfaces/object';
     import {fitMarkerList} from '$lib/services/map/map.svelte';
     import {replaceSearchPointList, searchPointList} from '$lib/state/searchPointList.svelte.ts';
-    import {useConvexClient} from 'convex-svelte';
     import {Button} from '$lib/components/ui/button';
     import SearchResultsItem from './searchResultsItem.svelte';
     import SearchItemSkeleton from './searchItemSkeleton.svelte';
-    import {api} from '$convex/_generated/api';
     import ZoomOutIcon from '@lucide/svelte/icons/zoom-out';
     import CircleAlertIcon from '@lucide/svelte/icons/circle-alert';
     import LoaderCircleIcon from '@lucide/svelte/icons/loader-circle';
 
-    let {isActive} = $props();
-    const client = useConvexClient();
+    let {
+        isActive,
+        source,
+        sourceName,
+    }: {isActive: boolean; source: SearchPageSource; sourceName: string} = $props();
 
     let items = $state<SearchItem[]>([]);
     let hasMore = $state(false);
-    let nextOffset = $state(0);
+    let nextCursor = $state('');
     let isLoading = $state(false);
     let isLoadingMore = $state(false);
     let isError = $state(false);
+    let isAppendError = $state(false);
     let hasLoaded = $state(false);
 
     $effect(() => {
         if (isActive && !hasLoaded) {
-            void loadPage(0, 'replace');
+            void loadPageReplace('');
         }
     });
 
@@ -44,43 +46,55 @@
             return;
         }
 
-        void loadPage(nextOffset, 'append');
+        void loadPageAppend(nextCursor);
     }
 
-    async function loadPage(offset: number, mode: 'replace' | 'append') {
-        if (mode === 'replace' && isLoading) {
-            return;
-        }
-        if (mode === 'append' && (isLoading || isLoadingMore)) {
-            return;
-        }
-
-        if (mode === 'replace') {
-            isLoading = true;
-            isError = false;
-        } else {
-            isLoadingMore = true;
-        }
-
+    async function fetchPage(cursor: string): Promise<SearchResultsPage | null> {
         try {
-            const page = await client.action(api.search.local, {
-                query: searchState.query,
-                latitude: Number(searchState.lat),
-                longitude: Number(searchState.lng),
-                offset,
-            });
-
-            items = mode === 'append' ? [...items, ...page.items] : page.items;
-            hasMore = page.hasMore;
-            nextOffset = page.offset;
-            hasLoaded = true;
+            return await source(cursor);
         } catch (error) {
-            console.error('Local search failed', error);
-            isError = true;
-        } finally {
-            isLoading = false;
-            isLoadingMore = false;
+            console.error(`${sourceName} search failed`, error);
+            return null;
         }
+    }
+
+    async function loadPageReplace(cursor: string) {
+        if (isLoading) {
+            return;
+        }
+        isLoading = true;
+        isError = false;
+
+        const page = await fetchPage(cursor);
+        isLoading = false;
+        if (!page) {
+            isError = true;
+            return;
+        }
+
+        items = page.items;
+        hasMore = page.hasMore;
+        nextCursor = page.nextCursor;
+        hasLoaded = true;
+    }
+
+    async function loadPageAppend(cursor: string) {
+        if (isLoading || isLoadingMore) {
+            return;
+        }
+        isLoadingMore = true;
+        isAppendError = false;
+
+        const page = await fetchPage(cursor);
+        isLoadingMore = false;
+        if (!page) {
+            isAppendError = true;
+            return;
+        }
+
+        items = [...items, ...page.items];
+        hasMore = page.hasMore;
+        nextCursor = page.nextCursor;
     }
 </script>
 
@@ -112,6 +126,15 @@
                         <SearchResultsItem {id} object={searchPoint.object} />
                     {/if}
                 {/each}
+            </div>
+        {/if}
+
+        {#if isAppendError}
+            <div
+                class="text-muted-foreground flex items-center gap-2.5 border-t border-black/[0.04] px-4 py-3 text-sm dark:border-white/[0.06]"
+            >
+                <CircleAlertIcon class="text-destructive/70" />
+                Не удалось загрузить ещё
             </div>
         {/if}
 

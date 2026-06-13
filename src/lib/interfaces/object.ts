@@ -62,6 +62,16 @@ export interface SearchPreviewResponsePayload {
     hasMore: boolean;
 }
 
+export interface SearchResultsPage {
+    items: SearchItem[];
+    hasMore: boolean;
+    nextCursor: string;
+}
+
+// The cursor is opaque to the results list: it hands back whatever it last
+// received (starting with ''), so sources can encode offsets or page tokens.
+export type SearchPageSource = (cursor: string) => Promise<SearchResultsPage>;
+
 export interface PointPreviewDetails {
     latitude: number;
     longitude: number;

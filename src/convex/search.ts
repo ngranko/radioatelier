@@ -1,5 +1,6 @@
 import {makeFunctionReference} from 'convex/server';
 import {ConvexError, v} from 'convex/values';
+import type {Id} from './_generated/dataModel';
 import {action, type ActionCtx} from './_generated/server';
 import {getGooglePlaceDetails, searchGooglePlaces} from './search/googlePlaces';
 import {createTypesenseSearchClient} from './typesense/client';
@@ -30,14 +31,7 @@ export const preview = action({
             };
         }
 
-        const client = createTypesenseSearchClient();
-        const localItems = await searchObjectsInTypesense(client, {
-            query: args.query,
-            latitude: args.latitude,
-            longitude: args.longitude,
-            ownerId: userId,
-            limit: PREVIEW_LOCAL_LIMIT + 1,
-        });
+        const localPage = await searchLocalPage(userId, args, PREVIEW_LOCAL_LIMIT);
 
         let googleItems: Awaited<ReturnType<typeof searchGooglePlaces>>['items'] = [];
         try {
@@ -54,13 +48,8 @@ export const preview = action({
         }
 
         return {
-            items: [
-                ...localItems.slice(0, PREVIEW_LOCAL_LIMIT),
-                ...googleItems.slice(0, PREVIEW_GOOGLE_LIMIT),
-            ],
-            hasMore:
-                localItems.length > PREVIEW_LOCAL_LIMIT ||
-                googleItems.length > PREVIEW_GOOGLE_LIMIT,
+            items: [...localPage.items, ...googleItems.slice(0, PREVIEW_GOOGLE_LIMIT)],
+            hasMore: localPage.hasMore || googleItems.length > PREVIEW_GOOGLE_LIMIT,
         };
     },
 });
@@ -72,19 +61,10 @@ export const local = action({
     },
     handler: async (ctx, args) => {
         const userId = await requireCurrentUserId(ctx);
-        const client = createTypesenseSearchClient();
-        const items = await searchObjectsInTypesense(client, {
-            query: args.query,
-            latitude: args.latitude,
-            longitude: args.longitude,
-            ownerId: userId,
-            offset: args.offset,
-            limit: LOCAL_PAGE_SIZE + 1,
-        });
+        const page = await searchLocalPage(userId, args, LOCAL_PAGE_SIZE, args.offset);
 
         return {
-            items: items.slice(0, LOCAL_PAGE_SIZE),
-            hasMore: items.length > LOCAL_PAGE_SIZE,
+            ...page,
             offset: args.offset + LOCAL_PAGE_SIZE,
         };
     },
@@ -123,6 +103,30 @@ export const googlePlaceDetails = action({
     },
 });
 
+// Fetches one extra row so hasMore reflects the actual index state instead of
+// guessing from a full page.
+async function searchLocalPage(
+    userId: Id<'users'>,
+    args: {query: string; latitude: number; longitude: number},
+    limit: number,
+    offset = 0,
+) {
+    const client = createTypesenseSearchClient();
+    const items = await searchObjectsInTypesense(client, {
+        query: args.query,
+        latitude: args.latitude,
+        longitude: args.longitude,
+        ownerId: userId,
+        offset,
+        limit: limit + 1,
+    });
+
+    return {
+        items: items.slice(0, limit),
+        hasMore: items.length > limit,
+    };
+}
+
 async function requireCurrentUserId(ctx: ActionCtx) {
     const user = await ctx.runQuery(currentUser, {});
     if (!user) {
@@ -147,7 +151,7 @@ function toCoordinateSearchItem(query: string) {
         address: '',
         city: '',
         country: '',
-        type: 'local',
+        type: 'local' as const,
         googlePlaceId: null,
     };
 }

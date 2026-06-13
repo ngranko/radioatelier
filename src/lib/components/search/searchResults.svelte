@@ -8,11 +8,39 @@
         Trigger,
         Content as TabsContent,
     } from '$lib/components/ui/tabs/index.js';
-    import SearchResultsLocal from './searchResultsLocal.svelte';
-    import SearchResultsGoogle from './searchResultsGoogle.svelte';
+    import SearchResultsList from './searchResultsList.svelte';
     import {searchState} from '$lib/state/search.svelte';
     import MinimizeButton from './minimizeButton.svelte';
     import {cn} from '$lib/utils.ts';
+    import type {SearchPageSource} from '$lib/interfaces/object';
+    import {useConvexClient} from 'convex-svelte';
+    import {api} from '$convex/_generated/api';
+
+    const client = useConvexClient();
+
+    function searchArgs() {
+        return {
+            query: searchState.query,
+            latitude: Number(searchState.lat),
+            longitude: Number(searchState.lng),
+        };
+    }
+
+    const localSource: SearchPageSource = async cursor => {
+        const page = await client.action(api.search.local, {
+            ...searchArgs(),
+            offset: Number(cursor || '0'),
+        });
+        return {items: page.items, hasMore: page.hasMore, nextCursor: String(page.offset)};
+    };
+
+    const googleSource: SearchPageSource = async cursor => {
+        const page = await client.action(api.search.google, {
+            ...searchArgs(),
+            pageToken: cursor,
+        });
+        return {items: page.items, hasMore: page.hasMore, nextCursor: page.nextPageToken};
+    };
 
     let currentTab = $state('local');
     let classes: string = $derived(
@@ -45,8 +73,12 @@
             )}
         >
             <div class="h-full min-h-0">
-                {#key `${searchState.lat}:${searchState.lng}`}
-                    <SearchResultsLocal isActive={currentTab === 'local'} />
+                {#key `${searchState.lat}:${searchState.lng}:${searchState.query}`}
+                    <SearchResultsList
+                        isActive={currentTab === 'local'}
+                        source={localSource}
+                        sourceName="Local"
+                    />
                 {/key}
             </div>
         </TabsContent>
@@ -58,8 +90,12 @@
             )}
         >
             <div class="h-full min-h-0">
-                {#key `${searchState.lat}:${searchState.lng}`}
-                    <SearchResultsGoogle isActive={currentTab === 'google'} />
+                {#key `${searchState.lat}:${searchState.lng}:${searchState.query}`}
+                    <SearchResultsList
+                        isActive={currentTab === 'google'}
+                        source={googleSource}
+                        sourceName="Google"
+                    />
                 {/key}
             </div>
         </TabsContent>
