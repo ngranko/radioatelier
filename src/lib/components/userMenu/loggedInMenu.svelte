@@ -16,6 +16,7 @@
     import LogOutIcon from '@lucide/svelte/icons/log-out';
     import FileInputIcon from '@lucide/svelte/icons/file-input';
     import PaletteIcon from '@lucide/svelte/icons/palette';
+    import SlidersHorizontalIcon from '@lucide/svelte/icons/sliders-horizontal';
     import UserRoundIcon from '@lucide/svelte/icons/user-round';
 
     let isLogoutDialogOpen = $state(false);
@@ -30,6 +31,12 @@
 
     function handleChangePasswordClick() {
         goto('/change-password');
+    }
+
+    function handleFilterMocksClick() {
+        // Static prototypes served from /static, outside the SPA router — open
+        // them in a new tab so the current map/app state is preserved.
+        window.open('/filter-mocks/index.html', '_blank');
     }
 
     function handleLogoutClick() {
@@ -70,6 +77,10 @@
             <DropdownMenuItem onclick={handleChangePasswordClick}>
                 <KeyRoundIcon />
                 Сменить пароль
+            </DropdownMenuItem>
+            <DropdownMenuItem onclick={handleFilterMocksClick}>
+                <SlidersHorizontalIcon />
+                Макеты фильтров
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <div class="flex justify-center px-2 py-1.5">
