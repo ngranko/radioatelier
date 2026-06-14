@@ -7,7 +7,7 @@ export const notionPropertyNames = {
     city: 'Город',
     country: 'Страна',
     mapLink: 'Ссылка на архив',
-    internalId: 'internal_id',
+    internalId: 'Внутренний ID',
     installedPeriod: 'Период установки',
     isRemoved: 'Демонтирован',
     removalPeriod: 'Период демонтажа',
