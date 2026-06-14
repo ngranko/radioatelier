@@ -373,7 +373,7 @@ describe('notion sync fields', () => {
                 Город: {type: 'rich_text'},
                 Страна: {type: 'rich_text'},
                 'Ссылка на архив': {type: 'url'},
-                internal_id: {type: 'rich_text'},
+                'Внутренний ID': {type: 'rich_text'},
                 'Период установки': {type: 'rich_text'},
                 Демонтирован: {type: 'checkbox'},
                 'Период демонтажа': {type: 'rich_text'},
@@ -398,7 +398,7 @@ describe('notion sync fields', () => {
             'Ссылка на архив': {
                 url: 'https://radioatelier.app/object/abc123',
             },
-            internal_id: {
+            'Внутренний ID': {
                 rich_text: [{text: {content: 'RA-1'}}],
             },
             'Период установки': {
@@ -450,7 +450,7 @@ describe('notion sync fields', () => {
                     type: 'url',
                     url: 'https://radioatelier.app/object/abc123',
                 },
-                internal_id: {
+                'Внутренний ID': {
                     type: 'rich_text',
                     rich_text: [{plain_text: 'RA-1'}],
                 },
@@ -508,7 +508,7 @@ describe('notion sync fields', () => {
                 Город: {type: 'rich_text'},
                 Страна: {type: 'rich_text'},
                 'Ссылка на архив': {type: 'url'},
-                internal_id: {type: 'rich_text'},
+                'Внутренний ID': {type: 'rich_text'},
                 'Период установки': {type: 'rich_text'},
                 Демонтирован: {type: 'checkbox'},
                 'Период демонтажа': {type: 'rich_text'},
