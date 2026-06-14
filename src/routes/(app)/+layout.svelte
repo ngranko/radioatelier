@@ -8,6 +8,7 @@
     import Marker from '$lib/components/map/marker.svelte';
     import OrientationButton from '$lib/components/map/orientationButton.svelte';
     import PositionButton from '$lib/components/map/positionButton.svelte';
+    import MarkerFilter from '$lib/components/markerFilter/markerFilter.svelte';
     import Search from '$lib/components/search/search.svelte';
     import UserMenu from '$lib/components/userMenu/userMenu.svelte';
     import type {Location} from '$lib/interfaces/location.ts';
@@ -87,7 +88,7 @@
 
 <div bind:this={consoleElement}></div>
 
-<div class="menu absolute top-2 right-4 left-2 flex items-center justify-between gap-4">
+<div class="menu absolute top-2 right-4 left-2 z-20 flex items-center justify-between gap-4">
     {#if mapState.isReady && clerkCtx.auth.userId}
         <Search />
     {:else}
@@ -95,6 +96,10 @@
     {/if}
     <UserMenu />
 </div>
+
+{#if mapState.isReady && clerkCtx.auth.userId}
+    <MarkerFilter />
+{/if}
 
 <Map onClick={handleMapClick} />
 

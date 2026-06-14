@@ -1,4 +1,5 @@
 <script lang="ts">
+    import MarkerFilterTrigger from '$lib/components/markerFilter/markerFilterTrigger.svelte';
     import ClearButton from '$lib/components/search/clearButton.svelte';
     import {Input} from '$lib/components/ui/input';
     import {mapState} from '$lib/state/map.svelte';
@@ -83,17 +84,20 @@
         onfocus={() => (isFocused = true)}
         onblur={() => (isFocused = false)}
         bind:value={val}
-        class="glass placeholder:text-muted-foreground/60 focus:ring-primary/25 h-10 w-full rounded-full border-none bg-white/95 pt-2 pr-10
+        class="glass placeholder:text-muted-foreground/60 focus:ring-primary/25 h-10 w-full rounded-full border-none bg-white/95 pt-2 pr-[4.5rem]
             pb-2 pl-9.5 text-sm shadow-sm transition-all
             ease-out focus:bg-white focus:shadow-md
             dark:bg-neutral-800/90 dark:focus:bg-neutral-800"
     />
     {#if val}
         <div
-            class="absolute top-1/2 right-0.5 -translate-y-1/2"
+            class="absolute top-1/2 right-9 -translate-y-1/2"
             transition:fade={{duration: 100, easing: cubicInOut}}
         >
             <ClearButton onClick={handleClearClick} />
         </div>
+    {/if}
+    {#if !disabled}
+        <MarkerFilterTrigger />
     {/if}
 </div>
