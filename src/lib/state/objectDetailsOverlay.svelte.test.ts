@@ -55,6 +55,33 @@ describe('objectDetailsOverlay transitions', () => {
         expect(objectDetailsOverlay.details).toEqual({name: 'Plaque'});
     });
 
+    it('keeps edit state when current object details refresh', () => {
+        showObjectDetailsOverlay('object-1', {name: 'Plaque'} as never);
+        enterEditMode();
+        setOverlayDirty(true);
+        setOverlayMinimized(true);
+
+        showObjectDetailsOverlay('object-1', {name: 'Updated plaque'} as never);
+
+        expect(objectDetailsOverlay.mode).toBe('objectEdit');
+        expect(objectDetailsOverlay.isDirty).toBe(true);
+        expect(objectDetailsOverlay.isMinimized).toBe(true);
+        expect(objectDetailsOverlay.details).toEqual({name: 'Updated plaque'});
+    });
+
+    it('resets edit state when opening after close', () => {
+        showObjectDetailsOverlay('object-1', {name: 'Plaque'} as never);
+        enterEditMode();
+        setOverlayDirty(true);
+        closeDetailsOverlay();
+
+        showObjectDetailsOverlay('object-2', {name: 'Mosaic'} as never);
+
+        expect(objectDetailsOverlay.detailsId).toBe('object-2');
+        expect(objectDetailsOverlay.mode).toBe('objectView');
+        expect(objectDetailsOverlay.isDirty).toBe(false);
+    });
+
     it('mode verbs move between view and edit without touching the rest', () => {
         showObjectDetailsOverlay('object-1');
         setOverlayDirty(true);

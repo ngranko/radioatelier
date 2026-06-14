@@ -1,4 +1,5 @@
 import type {LooseObject, Object, PointPreviewDetails} from '$lib/interfaces/object';
+import {untrack} from 'svelte';
 
 export type ObjectDetailsOverlayMode = 'objectView' | 'objectEdit' | 'pointPreview' | 'pointCreate';
 
@@ -65,33 +66,15 @@ export const objectDetailsOverlay = {
 function transition(next: Partial<ObjectDetailsOverlay>) {
     const nextState = {...defaultState(), ...next};
 
-    if (overlay.isOpen !== nextState.isOpen) {
-        overlay.isOpen = nextState.isOpen;
-    }
-    if (overlay.isMinimized !== nextState.isMinimized) {
-        overlay.isMinimized = nextState.isMinimized;
-    }
-    if (overlay.isDirty !== nextState.isDirty) {
-        overlay.isDirty = nextState.isDirty;
-    }
-    if (overlay.isLoading !== nextState.isLoading) {
-        overlay.isLoading = nextState.isLoading;
-    }
-    if (overlay.isAddressLoading !== nextState.isAddressLoading) {
-        overlay.isAddressLoading = nextState.isAddressLoading;
-    }
-    if (overlay.detailsId !== nextState.detailsId) {
-        overlay.detailsId = nextState.detailsId;
-    }
-    if (overlay.mode !== nextState.mode) {
-        overlay.mode = nextState.mode;
-    }
-    if (!Object.is(overlay.details, nextState.details)) {
-        overlay.details = nextState.details;
-    }
-    if (!Object.is(overlay.pointDetails, nextState.pointDetails)) {
-        overlay.pointDetails = nextState.pointDetails;
-    }
+    overlay.isOpen = nextState.isOpen;
+    overlay.isMinimized = nextState.isMinimized;
+    overlay.isDirty = nextState.isDirty;
+    overlay.isLoading = nextState.isLoading;
+    overlay.isAddressLoading = nextState.isAddressLoading;
+    overlay.detailsId = nextState.detailsId;
+    overlay.mode = nextState.mode;
+    overlay.details = nextState.details;
+    overlay.pointDetails = nextState.pointDetails;
 }
 
 export function showLoadingDetailsOverlay(id: string) {
@@ -99,12 +82,25 @@ export function showLoadingDetailsOverlay(id: string) {
 }
 
 export function showObjectDetailsOverlay(id: string, initialValues?: Object) {
+    const current = untrack(() => ({
+        details: overlay.details,
+        isAddressLoading: overlay.isAddressLoading,
+        isDirty: overlay.isDirty,
+        isMinimized: overlay.isMinimized,
+        isOpen: overlay.isOpen,
+        mode: overlay.mode,
+    }));
+
     transition({
         isOpen: true,
         detailsId: id,
+        mode: current.isOpen ? current.mode : 'objectView',
+        isDirty: current.isOpen ? current.isDirty : false,
+        isMinimized: current.isOpen ? current.isMinimized : false,
+        isAddressLoading: current.isOpen ? current.isAddressLoading : false,
         // Without fresh values the previously shown details stay visible
         // instead of flashing an empty overlay while the query re-runs.
-        details: initialValues ?? overlay.details,
+        details: initialValues ?? current.details,
     });
 }
 
@@ -137,7 +133,9 @@ export function showPointCreateOverlay(
 }
 
 export function closeDetailsOverlay(options?: {preserveDetails?: boolean}) {
-    transition(options?.preserveDetails ? {details: overlay.details} : {});
+    const details = options?.preserveDetails ? untrack(() => overlay.details) : undefined;
+
+    transition(options?.preserveDetails ? {details} : {});
 }
 
 export function enterEditMode() {
