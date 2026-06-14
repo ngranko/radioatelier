@@ -6,7 +6,6 @@ export type ObjectDetailsOverlayMode = 'objectView' | 'objectEdit' | 'pointPrevi
 interface ObjectDetailsOverlay {
     isOpen: boolean;
     isMinimized: boolean;
-    isDirty: boolean;
     isLoading: boolean;
     isAddressLoading: boolean;
     detailsId: string;
@@ -19,7 +18,6 @@ function defaultState(): ObjectDetailsOverlay {
     return {
         isOpen: false,
         isMinimized: false,
-        isDirty: false,
         isLoading: false,
         isAddressLoading: false,
         detailsId: '',
@@ -39,9 +37,6 @@ export const objectDetailsOverlay = {
     },
     get isMinimized() {
         return overlay.isMinimized;
-    },
-    get isDirty() {
-        return overlay.isDirty;
     },
     get isLoading() {
         return overlay.isLoading;
@@ -68,7 +63,6 @@ function transition(next: Partial<ObjectDetailsOverlay>) {
 
     overlay.isOpen = nextState.isOpen;
     overlay.isMinimized = nextState.isMinimized;
-    overlay.isDirty = nextState.isDirty;
     overlay.isLoading = nextState.isLoading;
     overlay.isAddressLoading = nextState.isAddressLoading;
     overlay.detailsId = nextState.detailsId;
@@ -85,7 +79,6 @@ export function showObjectDetailsOverlay(id: string, initialValues?: Object) {
     const current = untrack(() => ({
         details: overlay.details,
         isAddressLoading: overlay.isAddressLoading,
-        isDirty: overlay.isDirty,
         isMinimized: overlay.isMinimized,
         isOpen: overlay.isOpen,
         mode: overlay.mode,
@@ -95,7 +88,6 @@ export function showObjectDetailsOverlay(id: string, initialValues?: Object) {
         isOpen: true,
         detailsId: id,
         mode: current.isOpen ? current.mode : 'objectView',
-        isDirty: current.isOpen ? current.isDirty : false,
         isMinimized: current.isOpen ? current.isMinimized : false,
         isAddressLoading: current.isOpen ? current.isAddressLoading : false,
         // Without fresh values the previously shown details stay visible
@@ -148,10 +140,6 @@ export function returnToViewMode() {
 
 export function returnToPointPreview() {
     overlay.mode = 'pointPreview';
-}
-
-export function setOverlayDirty(isDirty: boolean) {
-    overlay.isDirty = isDirty;
 }
 
 export function setOverlayMinimized(isMinimized: boolean) {

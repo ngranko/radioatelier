@@ -61,6 +61,7 @@
     }: Props = $props();
 
     let isCloseConfirmOpen = $state(false);
+    let closeConfirmationCheck = $state<(() => boolean) | null>(null);
 
     const resolvedInitialValues = $derived(initialValues ?? {});
     const resolvedMode = $derived(objectDetailsOverlay.isOpen ? objectDetailsOverlay.mode : mode);
@@ -104,8 +105,22 @@
         }
     }
 
+    function registerCloseConfirmationCheck(check: () => boolean) {
+        closeConfirmationCheck = check;
+
+        return () => {
+            if (closeConfirmationCheck === check) {
+                closeConfirmationCheck = null;
+            }
+        };
+    }
+
+    function isCloseConfirmationRequired() {
+        return closeConfirmationCheck?.() === true;
+    }
+
     function requestClose() {
-        if (objectDetailsOverlay.isDirty) {
+        if (isCloseConfirmationRequired()) {
             isCloseConfirmOpen = true;
             return;
         }
@@ -123,22 +138,20 @@
 </script>
 
 <Background onRequestClose={requestClose} />
-{#if objectDetailsOverlay.isDirty}
-    <AlertDialogRoot bind:open={isCloseConfirmOpen}>
-        <Content>
-            <Header>
-                <Title>Вы действительно хотите выйти из редактирования точки?</Title>
-                <Description>Изменения не будут сохранены</Description>
-            </Header>
-            <Footer>
-                <Cancel>Отменить</Cancel>
-                <Action class="bg-destructive hover:bg-destructive/70" onclick={handleClose}>
-                    Закрыть
-                </Action>
-            </Footer>
-        </Content>
-    </AlertDialogRoot>
-{/if}
+<AlertDialogRoot bind:open={isCloseConfirmOpen}>
+    <Content>
+        <Header>
+            <Title>Вы действительно хотите выйти из редактирования точки?</Title>
+            <Description>Изменения не будут сохранены</Description>
+        </Header>
+        <Footer>
+            <Cancel>Отменить</Cancel>
+            <Action class="bg-destructive hover:bg-destructive/70" onclick={handleClose}>
+                Закрыть
+            </Action>
+        </Footer>
+    </Content>
+</AlertDialogRoot>
 <aside
     class={cn([
         'bg-background absolute bottom-0 z-3 m-2 flex w-[calc(100dvw-8px*2)] max-w-100 flex-col rounded-lg transition-[height]',
@@ -187,11 +200,18 @@
             {#if objectDetailsOverlay.isLoading}
                 <ViewModeSkeleton />
             {:else if resolvedMode === 'objectEdit' && resolvedInitialValues.id}
-                <ObjectEdit initialValues={resolvedInitialValues as ObjectType} {permissions} />
+                <ObjectEdit
+                    initialValues={resolvedInitialValues as ObjectType}
+                    {permissions}
+                    {registerCloseConfirmationCheck}
+                />
             {:else if resolvedMode === 'pointPreview' && resolvedPointDetails}
                 <PointPreview details={resolvedPointDetails} />
             {:else if resolvedMode === 'pointCreate'}
-                <PointCreate initialValues={resolvedInitialValues} />
+                <PointCreate
+                    initialValues={resolvedInitialValues}
+                    {registerCloseConfirmationCheck}
+                />
             {:else}
                 <ViewMode initialValues={resolvedInitialValues} {permissions} />
             {/if}

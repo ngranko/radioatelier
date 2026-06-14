@@ -6,7 +6,6 @@ import {
     objectDetailsOverlay,
     returnToViewMode,
     setOverlayAddressLoading,
-    setOverlayDirty,
     setOverlayMinimized,
     showLoadingDetailsOverlay,
     showObjectDetailsOverlay,
@@ -32,7 +31,6 @@ describe('objectDetailsOverlay transitions', () => {
 
     it('opening resets leftovers from the previous overlay', () => {
         showPointCreateOverlay('point-1', {name: 'Draft'}, pointDetails);
-        setOverlayDirty(true);
         setOverlayMinimized(true);
         setOverlayAddressLoading(true);
 
@@ -41,7 +39,6 @@ describe('objectDetailsOverlay transitions', () => {
         expect(objectDetailsOverlay.isOpen).toBe(true);
         expect(objectDetailsOverlay.isLoading).toBe(true);
         expect(objectDetailsOverlay.detailsId).toBe('object-1');
-        expect(objectDetailsOverlay.isDirty).toBe(false);
         expect(objectDetailsOverlay.isMinimized).toBe(false);
         expect(objectDetailsOverlay.isAddressLoading).toBe(false);
         expect(objectDetailsOverlay.mode).toBe('objectView');
@@ -58,13 +55,11 @@ describe('objectDetailsOverlay transitions', () => {
     it('keeps edit state when current object details refresh', () => {
         showObjectDetailsOverlay('object-1', {name: 'Plaque'} as never);
         enterEditMode();
-        setOverlayDirty(true);
         setOverlayMinimized(true);
 
         showObjectDetailsOverlay('object-1', {name: 'Updated plaque'} as never);
 
         expect(objectDetailsOverlay.mode).toBe('objectEdit');
-        expect(objectDetailsOverlay.isDirty).toBe(true);
         expect(objectDetailsOverlay.isMinimized).toBe(true);
         expect(objectDetailsOverlay.details).toEqual({name: 'Updated plaque'});
     });
@@ -72,23 +67,19 @@ describe('objectDetailsOverlay transitions', () => {
     it('resets edit state when opening after close', () => {
         showObjectDetailsOverlay('object-1', {name: 'Plaque'} as never);
         enterEditMode();
-        setOverlayDirty(true);
         closeDetailsOverlay();
 
         showObjectDetailsOverlay('object-2', {name: 'Mosaic'} as never);
 
         expect(objectDetailsOverlay.detailsId).toBe('object-2');
         expect(objectDetailsOverlay.mode).toBe('objectView');
-        expect(objectDetailsOverlay.isDirty).toBe(false);
     });
 
     it('mode verbs move between view and edit without touching the rest', () => {
         showObjectDetailsOverlay('object-1');
-        setOverlayDirty(true);
 
         enterEditMode();
         expect(objectDetailsOverlay.mode).toBe('objectEdit');
-        expect(objectDetailsOverlay.isDirty).toBe(true);
 
         returnToViewMode();
         expect(objectDetailsOverlay.mode).toBe('objectView');
