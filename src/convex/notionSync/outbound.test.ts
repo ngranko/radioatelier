@@ -32,6 +32,7 @@ const fields: AppSyncFields = {
     city: 'Moscow',
     country: 'Russia',
     mapLink: 'https://radioatelier.app/object/object-1',
+    internalId: 'RA-1',
     installedPeriod: null,
     isRemoved: false,
     removalPeriod: null,

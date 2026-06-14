@@ -1,20 +1,25 @@
 import {paginationOptsValidator} from 'convex/server';
 import {ConvexError, v} from 'convex/values';
 import {internal} from '../_generated/api';
+import type {Id} from '../_generated/dataModel';
 import {action, internalQuery} from '../_generated/server';
+
+type SyncedObjectIdsPage = {
+    page: Id<'objects'>[];
+    isDone: boolean;
+    continueCursor: string;
+};
 
 export const listSyncedObjectIdsPage = internalQuery({
     args: {
         paginationOpts: paginationOptsValidator,
     },
-    handler: async (ctx, {paginationOpts}) => {
+    handler: async (ctx, {paginationOpts}): Promise<SyncedObjectIdsPage> => {
         const result = await ctx.db.query('objectNotionSync').paginate(paginationOpts);
         return {
             isDone: result.isDone,
             continueCursor: result.continueCursor,
-            page: result.page
-                .filter(sync => sync.archivedAt == null)
-                .map(sync => sync.objectId),
+            page: result.page.filter(sync => sync.archivedAt == null).map(sync => sync.objectId),
         };
     },
 });
@@ -24,7 +29,7 @@ export const backfillInternalIdPage = action({
         backfillKey: v.string(),
         paginationOpts: paginationOptsValidator,
     },
-    handler: async (ctx, {backfillKey, paginationOpts}) => {
+    handler: async (ctx, {backfillKey, paginationOpts}): Promise<SyncedObjectIdsPage> => {
         const expectedKey = process.env.NOTION_BACKFILL_KEY?.trim();
         if (!expectedKey) {
             throw new ConvexError('Missing NOTION_BACKFILL_KEY environment variable');
@@ -33,9 +38,12 @@ export const backfillInternalIdPage = action({
             throw new ConvexError('Unauthorized');
         }
 
-        const page = await ctx.runQuery(internal.notionSync.backfill.listSyncedObjectIdsPage, {
-            paginationOpts,
-        });
+        const page: SyncedObjectIdsPage = await ctx.runQuery(
+            internal.notionSync.backfill.listSyncedObjectIdsPage,
+            {
+                paginationOpts,
+            },
+        );
         if (page.page.length > 0) {
             await ctx.runAction(internal.notionSync.outbound.enqueueOutboundObjectSyncBatch, {
                 objectIds: page.page,

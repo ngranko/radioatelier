@@ -16,7 +16,9 @@ export type AppSyncFields = {
     source: string | null;
 };
 
-export type AppSyncPatch = Partial<Omit<AppSyncFields, 'mapLink' | 'internalId' | 'categoryName'>> & {
+export type AppSyncPatch = Partial<
+    Omit<AppSyncFields, 'mapLink' | 'internalId' | 'categoryName'>
+> & {
     categoryName?: string | null;
 };
 

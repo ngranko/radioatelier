@@ -19,6 +19,9 @@
     import {setSharedMarkerObject, sharedMarker} from '$lib/state/sharedMarker.svelte.ts';
     import {categoriesState} from '$lib/state/categories.svelte.js';
     import {markerIconMap, type MarkerIconKey} from '$lib/services/map/markerStyling.js';
+    import type {MarkerListItem} from '$lib/interfaces/marker.ts';
+
+    type MarkerPoint = MarkerListItem & {categoryId: Id<'categories'>};
 
     let {data, children} = $props();
     // eslint-disable-next-line svelte/prefer-writable-derived
@@ -53,7 +56,7 @@
         return 'objectView';
     });
 
-    const markerPoints = $derived(objects.data ?? data.objects);
+    const markerPoints = $derived((objects.data ?? data.objects) as MarkerPoint[]);
     const routeObjectId = $derived.by(() => {
         const id = page.params.id;
         return id ? (id as Id<'objects'>) : null;
