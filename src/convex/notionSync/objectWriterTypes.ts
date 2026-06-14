@@ -1,4 +1,4 @@
-import type {Doc, Id} from '../_generated/dataModel';
+import type {Id} from '../_generated/dataModel';
 import type {NotionPageFields} from '../notion/types';
 import type {AppSyncPatch} from './types';
 
@@ -16,13 +16,6 @@ export type PatchSyncedObjectInput = {
     notionPageId: string;
     patch: AppSyncPatch;
     lastInboundEditedTime: string | null;
-};
-
-export type PatchTarget = {
-    object: Doc<'objects'>;
-    mapPoint: Doc<'mapPoints'>;
-    category: Doc<'categories'>;
-    marker: Doc<'markers'>;
 };
 
 export type SyncClassification = {

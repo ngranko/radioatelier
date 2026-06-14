@@ -7,6 +7,7 @@
         CommandItem,
         CommandEmpty,
     } from '$lib/components/ui/command';
+    import {tick} from 'svelte';
     import CheckIcon from '@lucide/svelte/icons/check';
     import PlusIcon from '@lucide/svelte/icons/plus';
     import ComboboxTrigger from '$lib/components/input/combobox/comboboxTrigger.svelte';
@@ -53,6 +54,13 @@
     let searchValue = $state('');
     let isCreating = $state(false);
     let createOptionRef = $state<HTMLElement | null>(null);
+    let searchInputRef = $state<HTMLInputElement | null>(null);
+
+    // Pointer-based selection moves focus to the clicked item; return it to the
+    // search field so the user can type the next query right away.
+    function refocusSearchInput() {
+        tick().then(() => searchInputRef?.focus());
+    }
 
     const selectedValues = $derived.by(() => {
         if (!value) {
@@ -90,6 +98,7 @@
             value = newValues;
             onChange?.(value.length > 0 ? value : []);
             searchValue = '';
+            refocusSearchInput();
         } else {
             value = option[valueField];
             onChange?.(value);
@@ -114,6 +123,7 @@
             if (multiple) {
                 value = [...selectedValues, newOption];
                 onChange?.(value.length > 0 ? value : []);
+                refocusSearchInput();
             } else {
                 value = newOption;
                 onChange?.(value);
@@ -176,6 +186,7 @@
     <PopoverContent class="w-(--bits-popover-anchor-width) p-0" align="start">
         <Command>
             <CommandInput
+                bind:ref={searchInputRef}
                 bind:value={searchValue}
                 placeholder="Поиск..."
                 onkeydown={(e: KeyboardEvent) => {

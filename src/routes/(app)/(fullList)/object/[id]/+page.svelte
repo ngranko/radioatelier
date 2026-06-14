@@ -1,7 +1,7 @@
 <script lang="ts">
     import {onMount} from 'svelte';
     import {
-        objectDetailsOverlay,
+        returnToViewMode,
         showObjectDetailsOverlay,
     } from '$lib/state/objectDetailsOverlay.svelte.js';
     import {useQuery} from 'convex-svelte';
@@ -29,7 +29,6 @@
     });
 
     onMount(() => {
-        objectDetailsOverlay.mode = 'objectView';
-        objectDetailsOverlay.isDirty = false;
+        returnToViewMode();
     });
 </script>

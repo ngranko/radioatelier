@@ -9,6 +9,7 @@ Domain vocabulary for Radioatelier. Use these terms consistently in code, commen
 -   **Map point** — the geographic coordinates and address of an Object (`mapPoints`).
 -   **Tag** — global, public label on Objects.
 -   **Private tag** — per-user label on an Object, scoped to the user who created it.
+-   **Object writer** — `src/convex/helpers/objectWriter.ts`. The single module that writes Object records (`objects`, `mapPoints`, `markers`) plus the per-user verbs for private tags. Speaks resolved category/tag **IDs**; verbs are `create`, `replace` (full-field), `patch` (present-fields-only, including coordinates). Form mutations, Sync-flavoured mutations, and the import adapter (`importBatch` in `src/convex/imports.ts`, which routes through `createObjectRecords` and `upsertPrivateTags`) are the three adapters at its seam. Auth, classification (name→ID resolution), Typesense scheduling, and sync bookkeeping stay in the callers.
 
 ## Notion sync
 

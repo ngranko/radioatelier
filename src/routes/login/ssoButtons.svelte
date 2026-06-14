@@ -4,6 +4,7 @@
     import {toast} from 'svelte-sonner';
     import {page} from '$app/state';
     import {normalizeRef} from '$lib/utils';
+    import {SvglAppleLogo, SvglGitHubLogo, SvglGoogleLogo} from '@selemondev/svgl-svelte';
     import LoadingDots from '$lib/components/loadingDots.svelte';
     import Button from '$lib/components/ui/button/button.svelte';
 
@@ -75,7 +76,7 @@
                     {#if oauthLoading === 'oauth_google'}
                         <LoadingDots />
                     {:else}
-                        <i class="fa-brands fa-google text-lg"></i>
+                        <SvglGoogleLogo width={18} height={18} />
                         <span>Войти с Google</span>
                     {/if}
                 </Button>
@@ -93,7 +94,7 @@
                     {#if oauthLoading === 'oauth_apple'}
                         <LoadingDots />
                     {:else}
-                        <i class="fa-brands fa-apple text-lg"></i>
+                        <SvglAppleLogo width={18} height={18} />
                         <span>Войти с Apple</span>
                     {/if}
                 </Button>
@@ -111,7 +112,7 @@
                     {#if oauthLoading === 'oauth_github'}
                         <LoadingDots />
                     {:else}
-                        <i class="fa-brands fa-github text-lg"></i>
+                        <SvglGitHubLogo width={18} height={18} />
                         <span>Войти с GitHub</span>
                     {/if}
                 </Button>

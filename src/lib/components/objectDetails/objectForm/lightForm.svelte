@@ -1,4 +1,5 @@
 <script lang="ts">
+    import {onMount} from 'svelte';
     import type {LooseObject} from '$lib/interfaces/object';
     import {superForm, defaults} from 'sveltekit-superforms';
     import {zod4Client} from 'sveltekit-superforms/adapters';
@@ -13,7 +14,7 @@
         FormFieldErrors,
         FormLabel,
     } from '$lib/components/ui/form';
-    import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
+    import {returnToViewMode} from '$lib/state/objectDetailsOverlay.svelte';
     import ImageUpload from '$lib/components/input/imageUpload/index.svelte';
     import Flags from '$lib/components/objectDetails/viewMode/flags.svelte';
     import {Separator} from '$lib/components/ui/separator';
@@ -25,9 +26,10 @@
 
     interface Props {
         initialValues: Partial<LooseObject>;
+        registerCloseConfirmationCheck?: (check: () => boolean) => () => void;
     }
 
-    let {initialValues}: Props = $props();
+    let {initialValues, registerCloseConfirmationCheck}: Props = $props();
 
     let submitToastId: string | number | undefined;
 
@@ -92,18 +94,14 @@
 
     const {form: formData, errors, enhance, isTainted, submitting} = form;
 
-    $effect(() => {
-        if (isTainted() && !objectDetailsOverlay.isDirty) {
-            objectDetailsOverlay.isDirty = true;
-        }
-    });
+    onMount(() => registerCloseConfirmationCheck?.(() => isTainted()) ?? undefined);
 
     function handleSaveSuccess() {
-        objectDetailsOverlay.mode = 'objectView';
+        returnToViewMode();
     }
 
     function handleBack() {
-        objectDetailsOverlay.mode = 'objectView';
+        returnToViewMode();
     }
 </script>
 

@@ -12,14 +12,19 @@
     import Marker from '$lib/components/map/marker.svelte';
     import UserMenu from '$lib/components/userMenu/userMenu.svelte';
     import Search from '$lib/components/search/search.svelte';
+    import EscapeCloseHandler from '$lib/components/escapeCloseHandler.svelte';
     import {sharedMarker} from '$lib/state/sharedMarker.svelte.ts';
     import {goto} from '$app/navigation';
-    import {page} from '$app/state';
+    import {navigating, page} from '$app/state';
     import {useClerkContext} from 'svelte-clerk';
-    import {showLoadingDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
+    import {
+        setOverlayAddressLoading,
+        showLoadingDetailsOverlay,
+    } from '$lib/state/objectDetailsOverlay.svelte';
     import SearchIcon from '@lucide/svelte/icons/search';
     import StarIcon from '@lucide/svelte/icons/star';
     import SproutIcon from '@lucide/svelte/icons/sprout';
+    import {SvglGoogleLogo} from '@selemondev/svgl-svelte';
     import {useQuery} from 'convex-svelte';
     import {api} from '$convex/_generated/api';
     import {setCategories} from '$lib/state/categories.svelte';
@@ -50,6 +55,13 @@
 
     $effect(() => {
         setCategories(categories.data ?? data.categories);
+    });
+
+    // The /point load geocodes the address server-side, so while that
+    // navigation is pending the open overlay shows stale address fields —
+    // surface it via the address spinners.
+    $effect(() => {
+        setOverlayAddressLoading(navigating.to?.url.pathname === '/point');
     });
 
     $effect(() => {
@@ -90,6 +102,8 @@
 
 <Map onClick={handleMapClick} />
 
+<EscapeCloseHandler />
+
 <OrientationButton bind:isEnabled={orientationEnabled} />
 <PositionButton />
 
@@ -106,7 +120,7 @@
                 {searchPointId}
                 lat={searchPoint.object.latitude}
                 lng={searchPoint.object.longitude}
-                icon={searchPoint.object.type === 'local' ? SearchIcon : 'fa-brands fa-google'}
+                icon={searchPoint.object.type === 'local' ? SearchIcon : SvglGoogleLogo}
                 iconClassName="stroke-3"
                 color="#e11d48"
                 source="search"

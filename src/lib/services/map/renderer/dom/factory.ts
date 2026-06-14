@@ -28,8 +28,7 @@ export class Factory {
             ? `0 0 0 3px ${color}, 0 0 0 5px rgba(255,255,255,0.25), 0 2px 4px rgba(0,0,0,0.2)`
             : `0 0 0 3px white, 0 0 0 5px ${markerHaloColor(color)}, 0 2px 4px rgba(0,0,0,0.2)`;
         markerElement.style.setProperty('--marker-color', isInverted ? 'white' : color);
-        const baseIconClassName =
-            typeof marker.getIcon() === 'string' ? 'block text-sm leading-none' : 'block size-3.5';
+        const baseIconClassName = 'block size-3.5';
         mount(MarkerIcon, {
             target: markerElement,
             props: {

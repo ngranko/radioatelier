@@ -1,5 +1,6 @@
 <script lang="ts">
     import {fade} from 'svelte/transition';
+    import {onMount} from 'svelte';
     import type {
         LooseObject,
         Object as ObjectType,
@@ -17,6 +18,7 @@
     import {
         objectDetailsOverlay,
         closeDetailsOverlay,
+        setOverlayMinimized,
     } from '$lib/state/objectDetailsOverlay.svelte';
     import type {Permissions} from '$lib/interfaces/permissions';
     import {goto} from '$app/navigation';
@@ -30,6 +32,17 @@
     import PointPreview from '$lib/components/objectDetails/pointPreview.svelte';
     import ViewMode from '$lib/components/objectDetails/viewMode/viewMode.svelte';
     import type {ObjectDetailsOverlayMode} from '$lib/state/objectDetailsOverlay.svelte';
+    import {
+        Root as AlertDialogRoot,
+        Content,
+        Header,
+        Title,
+        Description,
+        Footer,
+        Cancel,
+        Action,
+    } from '$lib/components/ui/alert-dialog';
+    import {registerEscapeCloseHandler} from '$lib/utils/escapeClose';
 
     interface Props {
         initialValues?: Partial<LooseObject>;
@@ -47,6 +60,9 @@
         permissions = {canEditAll: true, canEditPersonal: true},
     }: Props = $props();
 
+    let isCloseConfirmOpen = $state(false);
+    let closeConfirmationCheck = $state<(() => boolean) | null>(null);
+
     const resolvedInitialValues = $derived(initialValues ?? {});
     const resolvedMode = $derived(objectDetailsOverlay.isOpen ? objectDetailsOverlay.mode : mode);
     const resolvedPointDetails = $derived(
@@ -56,7 +72,7 @@
     );
 
     function handleMinimizeClick() {
-        objectDetailsOverlay.isMinimized = !objectDetailsOverlay.isMinimized;
+        setOverlayMinimized(!objectDetailsOverlay.isMinimized);
     }
 
     async function copyInternalId(text: string) {
@@ -69,6 +85,7 @@
     }
 
     function handleClose() {
+        isCloseConfirmOpen = false;
         setCreateDraftPosition(null);
         deactivateMarker();
         clearActiveMarker();
@@ -84,14 +101,57 @@
             // this is for a case when a user is not logged in and wants to close the details overlay
             // otherwise I'll lose the values and will use the server fallback
             // TODO: in the future it's best to come up with a better solution
-            const object = objectDetailsOverlay.details;
-            closeDetailsOverlay();
-            objectDetailsOverlay.details = object;
+            closeDetailsOverlay({preserveDetails: true});
         }
     }
+
+    function registerCloseConfirmationCheck(check: () => boolean) {
+        closeConfirmationCheck = check;
+
+        return () => {
+            if (closeConfirmationCheck === check) {
+                closeConfirmationCheck = null;
+            }
+        };
+    }
+
+    function isCloseConfirmationRequired() {
+        return closeConfirmationCheck?.() === true;
+    }
+
+    function requestClose() {
+        if (isCloseConfirmationRequired()) {
+            isCloseConfirmOpen = true;
+            return;
+        }
+
+        handleClose();
+    }
+
+    onMount(() =>
+        registerEscapeCloseHandler({
+            priority: 20,
+            isActive: () => objectDetailsOverlay.isOpen,
+            close: requestClose,
+        }),
+    );
 </script>
 
-<Background onClick={handleClose} isConfirmationRequired={objectDetailsOverlay.isDirty} />
+<Background onRequestClose={requestClose} />
+<AlertDialogRoot bind:open={isCloseConfirmOpen}>
+    <Content>
+        <Header>
+            <Title>Вы действительно хотите выйти из редактирования точки?</Title>
+            <Description>Изменения не будут сохранены</Description>
+        </Header>
+        <Footer>
+            <Cancel>Отменить</Cancel>
+            <Action class="bg-destructive hover:bg-destructive/70" onclick={handleClose}>
+                Закрыть
+            </Action>
+        </Footer>
+    </Content>
+</AlertDialogRoot>
 <aside
     class={cn([
         'bg-background absolute bottom-0 z-3 m-2 flex w-[calc(100dvw-8px*2)] max-w-100 flex-col rounded-lg transition-[height]',
@@ -133,18 +193,25 @@
                 <ChevronDownIcon class="stroke-3" />
             {/if}
         </Button>
-        <CloseButton onClick={handleClose} isConfirmationRequired={objectDetailsOverlay.isDirty} />
+        <CloseButton onRequestClose={requestClose} />
     </section>
     <div class="relative flex-1 overflow-hidden">
         <div class="absolute inset-0" in:fade={{duration: 150}} out:fade={{duration: 150}}>
             {#if objectDetailsOverlay.isLoading}
                 <ViewModeSkeleton />
             {:else if resolvedMode === 'objectEdit' && resolvedInitialValues.id}
-                <ObjectEdit initialValues={resolvedInitialValues as ObjectType} {permissions} />
+                <ObjectEdit
+                    initialValues={resolvedInitialValues as ObjectType}
+                    {permissions}
+                    {registerCloseConfirmationCheck}
+                />
             {:else if resolvedMode === 'pointPreview' && resolvedPointDetails}
                 <PointPreview details={resolvedPointDetails} />
             {:else if resolvedMode === 'pointCreate'}
-                <PointCreate initialValues={resolvedInitialValues} />
+                <PointCreate
+                    initialValues={resolvedInitialValues}
+                    {registerCloseConfirmationCheck}
+                />
             {:else}
                 <ViewMode initialValues={resolvedInitialValues} {permissions} />
             {/if}

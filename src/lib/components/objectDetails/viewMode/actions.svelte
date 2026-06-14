@@ -2,7 +2,7 @@
     import {toast} from 'svelte-sonner';
     import {getStreetView} from '$lib/services/map/streetView.svelte';
     import {Button} from '$lib/components/ui/button';
-    import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
+    import {enterEditMode, objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
     import type {Permissions} from '$lib/interfaces/permissions';
     import PenIcon from '@lucide/svelte/icons/pen';
     import UserPenIcon from '@lucide/svelte/icons/user-pen';
@@ -21,7 +21,7 @@
         if (!objectDetailsOverlay.detailsId) {
             return;
         }
-        objectDetailsOverlay.mode = 'objectEdit';
+        enterEditMode();
     }
 
     function handleRouteClick() {

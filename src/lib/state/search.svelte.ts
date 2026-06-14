@@ -1,3 +1,4 @@
+import {clearSearchPointList} from '$lib/state/searchPointList.svelte.ts';
 import {normalizeLatitude, normalizeLongitude} from '$lib/utils/coordinates.ts';
 
 export const searchState = $state({
@@ -39,6 +40,14 @@ export function applyUrlToSearchState(url: URL): boolean {
     }
 
     return false;
+}
+
+export function clearSearch() {
+    searchState.query = '';
+    searchState.lat = '';
+    searchState.lng = '';
+    searchState.isResultsShown = false;
+    clearSearchPointList();
 }
 
 export function getActiveSearchUrl(): string {

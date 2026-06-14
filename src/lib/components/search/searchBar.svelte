@@ -1,11 +1,13 @@
 <script lang="ts">
     import ClearButton from '$lib/components/search/clearButton.svelte';
-    import {clearSearchPointList} from '$lib/state/searchPointList.svelte.ts';
-    import {searchState} from '$lib/state/search.svelte';
+    import {clearSearch, searchState} from '$lib/state/search.svelte';
+    import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
     import {mapState} from '$lib/state/map.svelte';
     import {Input} from '$lib/components/ui/input';
     import {fade} from 'svelte/transition';
     import {cubicInOut} from 'svelte/easing';
+    import {onMount} from 'svelte';
+    import {registerEscapeCloseHandler} from '$lib/utils/escapeClose';
     import SearchIcon from '@lucide/svelte/icons/search';
 
     let {disabled = false}: {disabled?: boolean} = $props();
@@ -35,15 +37,20 @@
     }
 
     function handleClearClick() {
-        searchState.query = '';
-        searchState.lat = '';
-        searchState.lng = '';
-        searchState.isResultsShown = false;
+        clearSearch();
         val = '';
         clearTimeout(timeout);
         timeout = undefined;
-        clearSearchPointList();
     }
+
+    onMount(() =>
+        registerEscapeCloseHandler({
+            priority: 10,
+            isActive: () =>
+                Boolean(searchState.query || val) && !objectDetailsOverlay.isOpen && !disabled,
+            close: handleClearClick,
+        }),
+    );
 </script>
 
 <div class="group relative z-1">

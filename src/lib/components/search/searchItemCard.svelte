@@ -1,5 +1,6 @@
 <script lang="ts">
     import type {SearchItem} from '$lib/interfaces/object';
+    import {SvglGoogleLogo} from '@selemondev/svgl-svelte';
     import {Button} from '$lib/components/ui/button';
 
     let {object, onClick}: {object: SearchItem; onClick: () => void} = $props();
@@ -37,7 +38,7 @@
                 {object.latitude.toFixed(5)}, {object.longitude.toFixed(5)}
             </div>
             {#if object.type === 'google'}
-                <i class="fa-brands fa-google text-xs opacity-50"></i>
+                <SvglGoogleLogo width={12} height={12} class="opacity-50" />
             {/if}
         </div>
     {:else}
@@ -46,7 +47,7 @@
                 {address}
             </div>
             {#if object.type === 'google'}
-                <i class="fa-brands fa-google text-xs opacity-50"></i>
+                <SvglGoogleLogo width={12} height={12} class="opacity-50" />
             {/if}
         </div>
         {#if object.categoryName}

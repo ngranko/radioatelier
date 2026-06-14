@@ -10,10 +10,12 @@
 
 import type * as categories from "../categories.js";
 import type * as crons from "../crons.js";
+import type * as helpers_clerkTimestamps from "../helpers/clerkTimestamps.js";
 import type * as helpers_geocode from "../helpers/geocode.js";
 import type * as helpers_importHelpers from "../helpers/importHelpers.js";
 import type * as helpers_objectAggregate from "../helpers/objectAggregate.js";
 import type * as helpers_objectHelpers from "../helpers/objectHelpers.js";
+import type * as helpers_objectWriter from "../helpers/objectWriter.js";
 import type * as http from "../http.js";
 import type * as images from "../images.js";
 import type * as imports from "../imports.js";
@@ -31,11 +33,10 @@ import type * as notionSync_discrepancyReportTypes from "../notionSync/discrepan
 import type * as notionSync_identity from "../notionSync/identity.js";
 import type * as notionSync_inbound from "../notionSync/inbound.js";
 import type * as notionSync_inboundDecision from "../notionSync/inboundDecision.js";
-import type * as notionSync_objectWriterRecords from "../notionSync/objectWriterRecords.js";
+import type * as notionSync_objectWriterAdapter from "../notionSync/objectWriterAdapter.js";
 import type * as notionSync_objectWriterSearch from "../notionSync/objectWriterSearch.js";
 import type * as notionSync_objectWriterTypes from "../notionSync/objectWriterTypes.js";
 import type * as notionSync_outbound from "../notionSync/outbound.js";
-import type * as notionSync_outboundObjectSync from "../notionSync/outboundObjectSync.js";
 import type * as notionSync_reconcile from "../notionSync/reconcile.js";
 import type * as notionSync_snapshot from "../notionSync/snapshot.js";
 import type * as notionSync_snapshotCache from "../notionSync/snapshotCache.js";
@@ -65,10 +66,12 @@ import type {
 declare const fullApi: ApiFromModules<{
   categories: typeof categories;
   crons: typeof crons;
+  "helpers/clerkTimestamps": typeof helpers_clerkTimestamps;
   "helpers/geocode": typeof helpers_geocode;
   "helpers/importHelpers": typeof helpers_importHelpers;
   "helpers/objectAggregate": typeof helpers_objectAggregate;
   "helpers/objectHelpers": typeof helpers_objectHelpers;
+  "helpers/objectWriter": typeof helpers_objectWriter;
   http: typeof http;
   images: typeof images;
   imports: typeof imports;
@@ -86,11 +89,10 @@ declare const fullApi: ApiFromModules<{
   "notionSync/identity": typeof notionSync_identity;
   "notionSync/inbound": typeof notionSync_inbound;
   "notionSync/inboundDecision": typeof notionSync_inboundDecision;
-  "notionSync/objectWriterRecords": typeof notionSync_objectWriterRecords;
+  "notionSync/objectWriterAdapter": typeof notionSync_objectWriterAdapter;
   "notionSync/objectWriterSearch": typeof notionSync_objectWriterSearch;
   "notionSync/objectWriterTypes": typeof notionSync_objectWriterTypes;
   "notionSync/outbound": typeof notionSync_outbound;
-  "notionSync/outboundObjectSync": typeof notionSync_outboundObjectSync;
   "notionSync/reconcile": typeof notionSync_reconcile;
   "notionSync/snapshot": typeof notionSync_snapshot;
   "notionSync/snapshotCache": typeof notionSync_snapshotCache;

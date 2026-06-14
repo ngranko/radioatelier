@@ -52,14 +52,6 @@
 
         const isInitialSyncForPoint =
             lastActivePointId === null || lastActivePointId !== activePoint.id;
-        if (
-            objectDetailsOverlay.isDirty &&
-            lastActivePointId !== null &&
-            lastActivePointId === activePoint.id
-        ) {
-            return;
-        }
-
         const shouldSyncOverlay = objectDetailsOverlay.isOpen || isInitialSyncForPoint;
         if (!shouldSyncOverlay) {
             return;
@@ -83,7 +75,6 @@
         }
 
         lastActivePointId = activePoint.id;
-        objectDetailsOverlay.isDirty = false;
     });
 
     onDestroy(() => {
