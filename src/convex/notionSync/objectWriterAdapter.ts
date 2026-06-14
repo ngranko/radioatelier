@@ -97,6 +97,7 @@ export async function buildPatchedFields(
 ) {
     return buildAppFields({
         objectId: target.object._id,
+        internalId: target.object.internalId,
         name: input.patch.name ?? target.object.name,
         categoryName: classification.categoryName,
         address: input.patch.address ?? target.mapPoint.address,

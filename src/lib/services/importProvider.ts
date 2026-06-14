@@ -37,7 +37,7 @@ export class ImportProvider {
         return this.isStarted && !this.isFinished;
     }
 
-    public getJobId() {
+    public getJobId(): Id<'importJobs'> | undefined {
         return this.currentJobId;
     }
 
@@ -57,17 +57,21 @@ export class ImportProvider {
         this.progressHandler = handler;
     }
 
-    public async start(rows: NormalizedImportRow[], mappings: ImportMappingsForJob) {
+    public async start(
+        rows: NormalizedImportRow[],
+        mappings: ImportMappingsForJob,
+    ): Promise<Id<'importJobs'>> {
         this.isStarted = true;
         this.isFinished = false;
         this.isCancelled = false;
-        this.currentJobId = await this.client.mutation(api.imports.startJob, {
+        const jobId = await this.client.mutation(api.imports.startJob, {
             totalRows: rows.length,
             mappings,
         });
+        this.currentJobId = jobId;
 
-        void this.runImport(this.currentJobId, rows);
-        return this.currentJobId;
+        void this.runImport(jobId, rows);
+        return jobId;
     }
 
     public cancel() {

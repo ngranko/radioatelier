@@ -7,6 +7,7 @@ export type AppSyncFields = {
     city: string | null;
     country: string | null;
     mapLink: string;
+    internalId: string;
     installedPeriod: string | null;
     isRemoved: boolean;
     removalPeriod: string | null;
@@ -15,7 +16,9 @@ export type AppSyncFields = {
     source: string | null;
 };
 
-export type AppSyncPatch = Partial<Omit<AppSyncFields, 'mapLink' | 'categoryName'>> & {
+export type AppSyncPatch = Partial<
+    Omit<AppSyncFields, 'mapLink' | 'internalId' | 'categoryName'>
+> & {
     categoryName?: string | null;
 };
 
@@ -28,6 +31,7 @@ export const notionFieldsValidator = {
     city: nullableString,
     country: nullableString,
     mapLink: nullableString,
+    internalId: nullableString,
     installedPeriod: nullableString,
     isRemoved: v.boolean(),
     removalPeriod: nullableString,

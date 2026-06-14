@@ -27,6 +27,7 @@ const appFields: AppSyncFields = {
     city: 'Paris',
     country: 'France',
     mapLink: 'https://radioatelier.app/object/abc123',
+    internalId: 'RA-1',
     installedPeriod: '2020',
     isRemoved: false,
     removalPeriod: null,
@@ -62,6 +63,18 @@ describe('notion sync matching', () => {
         const {appPatch} = computeNotionToAppDiff(appFields, {
             ...appFields,
             mapLink: 'https://radioatelier.app/object/changed',
+            city: 'Berlin',
+        });
+
+        expect(appPatch).toEqual({
+            city: 'Berlin',
+        });
+    });
+
+    it('keeps internalId out of inbound app patches', () => {
+        const {appPatch} = computeNotionToAppDiff(appFields, {
+            ...appFields,
+            internalId: 'RA-999',
             city: 'Berlin',
         });
 
@@ -360,6 +373,7 @@ describe('notion sync fields', () => {
                 Город: {type: 'rich_text'},
                 Страна: {type: 'rich_text'},
                 'Ссылка на архив': {type: 'url'},
+                'Внутренний ID': {type: 'rich_text'},
                 'Период установки': {type: 'rich_text'},
                 Демонтирован: {type: 'checkbox'},
                 'Период демонтажа': {type: 'rich_text'},
@@ -383,6 +397,9 @@ describe('notion sync fields', () => {
             },
             'Ссылка на архив': {
                 url: 'https://radioatelier.app/object/abc123',
+            },
+            'Внутренний ID': {
+                rich_text: [{text: {content: 'RA-1'}}],
             },
             'Период установки': {
                 rich_text: [{text: {content: '2020'}}],
@@ -433,6 +450,10 @@ describe('notion sync fields', () => {
                     type: 'url',
                     url: 'https://radioatelier.app/object/abc123',
                 },
+                'Внутренний ID': {
+                    type: 'rich_text',
+                    rich_text: [{plain_text: 'RA-1'}],
+                },
                 'Период установки': {
                     type: 'rich_text',
                     rich_text: [{plain_text: '2020'}],
@@ -467,6 +488,7 @@ describe('notion sync fields', () => {
             city: 'Paris',
             country: 'France',
             mapLink: 'https://radioatelier.app/object/abc123',
+            internalId: 'RA-1',
             installedPeriod: '2020',
             isRemoved: true,
             removalPeriod: '2024',
@@ -486,6 +508,7 @@ describe('notion sync fields', () => {
                 Город: {type: 'rich_text'},
                 Страна: {type: 'rich_text'},
                 'Ссылка на архив': {type: 'url'},
+                'Внутренний ID': {type: 'rich_text'},
                 'Период установки': {type: 'rich_text'},
                 Демонтирован: {type: 'checkbox'},
                 'Период демонтажа': {type: 'rich_text'},
