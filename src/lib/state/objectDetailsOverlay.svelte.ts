@@ -63,7 +63,35 @@ export const objectDetailsOverlay = {
 };
 
 function transition(next: Partial<ObjectDetailsOverlay>) {
-    Object.assign(overlay, defaultState(), next);
+    const nextState = {...defaultState(), ...next};
+
+    if (overlay.isOpen !== nextState.isOpen) {
+        overlay.isOpen = nextState.isOpen;
+    }
+    if (overlay.isMinimized !== nextState.isMinimized) {
+        overlay.isMinimized = nextState.isMinimized;
+    }
+    if (overlay.isDirty !== nextState.isDirty) {
+        overlay.isDirty = nextState.isDirty;
+    }
+    if (overlay.isLoading !== nextState.isLoading) {
+        overlay.isLoading = nextState.isLoading;
+    }
+    if (overlay.isAddressLoading !== nextState.isAddressLoading) {
+        overlay.isAddressLoading = nextState.isAddressLoading;
+    }
+    if (overlay.detailsId !== nextState.detailsId) {
+        overlay.detailsId = nextState.detailsId;
+    }
+    if (overlay.mode !== nextState.mode) {
+        overlay.mode = nextState.mode;
+    }
+    if (!Object.is(overlay.details, nextState.details)) {
+        overlay.details = nextState.details;
+    }
+    if (!Object.is(overlay.pointDetails, nextState.pointDetails)) {
+        overlay.pointDetails = nextState.pointDetails;
+    }
 }
 
 export function showLoadingDetailsOverlay(id: string) {
