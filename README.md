@@ -40,6 +40,7 @@ An archive of urban artifacts — old signs, plaques, mosaics, and other details
 | Command              | Description                                   |
 | -------------------- | --------------------------------------------- |
 | `bun run dev`        | Start dev server (Convex + Vite)              |
+| `bun run deploy`     | Deploy Convex functions and build the frontend |
 | `bun run check`      | Type-check with `svelte-check`                |
 | `bun run lint`       | Lint and auto-fix with ESLint                 |
 | `bun run format`     | Format with Prettier (Tailwind class sorting) |
@@ -51,7 +52,7 @@ An archive of urban artifacts — old signs, plaques, mosaics, and other details
 -   **Interactive map** — Provider abstraction over Google Maps; Deck.gl at low zoom, DOM markers at high zoom; Street View with minimap ([docs/map-architecture.md](docs/map-architecture.md), [docs/street-view.md](docs/street-view.md))
 -   **Object archive** — Create and manage archive entries with location, metadata, categories, tags, and images; point preview/create overlay ([docs/object-details-overlay.md](docs/object-details-overlay.md))
 -   **Category settings** — Per-user marker color, icon, and form-picker visibility ([docs/category-settings.md](docs/category-settings.md))
--   **Search** — Full-text search via Typesense and Google Places
+-   **Search** — Unified local (Typesense) and Google Places search with preview dropdown and tabbed results ([docs/search.md](docs/search.md))
 -   **Notion sync** — Bidirectional sync between app objects and a Notion database ([docs/notion-sync.md](docs/notion-sync.md))
 -   **Data import** — CSV import to migrate data from other sources
 -   **User accounts** — Clerk authentication, role-based access, personal (private) tags and visited markers tracking
@@ -65,5 +66,6 @@ An archive of urban artifacts — old signs, plaques, mosaics, and other details
 | [docs/map-architecture.md](docs/map-architecture.md) | Map provider, marker pipeline, DOM vs Deck.gl |
 | [docs/category-settings.md](docs/category-settings.md) | Per-user category marker styles |
 | [docs/object-details-overlay.md](docs/object-details-overlay.md) | View/edit/create overlay modes and routes |
+| [docs/search.md](docs/search.md) | Local + Google search actions and UI flow |
 | [docs/street-view.md](docs/street-view.md) | Panorama, minimap sync, lookup caching |
 | [docs/testing.md](docs/testing.md) | Vitest commands, test layout, adding tests |

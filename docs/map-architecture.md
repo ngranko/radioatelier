@@ -60,6 +60,8 @@ At low zoom, list markers (`source: 'list'`) batch-render on a Deck.gl overlay f
 
 Service markers (`search`, `share`, `draft`) call `usesDomRenderer()` and render as DOM overlays inside `HybridMarkerRenderer` so they stay interactive above the Deck layer.
 
+**Share markers** render in `src/routes/(app)/+layout.svelte` when a deep-linked object is not in the user's marker list. They use a distinct star icon and `source="share"`. The marker id is prefixed with `share-` so it does not collide with list markers for the same object id.
+
 ## Viewport culling
 
 `MarkerManager` keeps only visible markers rendered:
@@ -77,6 +79,17 @@ List markers are lazy: they are created in the renderer only when entering the v
 - **Idle** — persists center/zoom to `localStorage` (`lastCenter`), switches renderer mode, schedules viewport update.
 - **Min zoom** — computed from container size so the map cannot zoom out far enough to show duplicate tile instances (`computeMinZoomForContainer` in the Google provider).
 
+## Focus and overlay offset
+
+When the details overlay opens for a marker, the map recenters so the pin sits in the visible area beside the panel:
+
+- `focusDetailsTarget(lat, lng)` (`src/lib/services/map/map.svelte.ts`) zooms in if below `FOCUS_MIN_ZOOM` (13), then shifts the center west by half the overlay width (`DETAILS_OVERLAY_WIDTH = 424px`).
+- On narrow viewports where less than 400 px of map remains beside the overlay, the offset is skipped and the marker is centered normally.
+- `marker.svelte` calls `focusDetailsTarget` when `objectDetailsOverlay.detailsId` matches the marker.
+- `map.svelte` registers `onMarkerShown: focusDetailsMarker` on `MarkerManager` so share/deep-link pages focus the correct marker once it enters the viewport.
+
+Search result selection uses `setCenter`, which always zooms to `FOCUS_ZOOM` (15) without the overlay offset.
+
 ## Marker styling on the map
 
 Archive marker color and icon come from the object's category, merged with per-user overrides from `api.categories.list`. See [category-settings.md](./category-settings.md).
@@ -85,3 +98,4 @@ Archive marker color and icon come from the object's category, merged with per-u
 
 - [street-view.md](./street-view.md) — panorama overlay and minimap (requires `GoogleMapsProvider`)
 - [object-details-overlay.md](./object-details-overlay.md) — map click → `/point` create flow
+- [search.md](./search.md) — search result markers and map focus
