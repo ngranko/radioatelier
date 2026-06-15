@@ -1,6 +1,6 @@
 <script lang="ts">
     import SearchItemCard from '$lib/components/search/searchItemCard.svelte';
-    import {setCenter} from '$lib/services/map/map.svelte';
+    import {focusDetailsTarget} from '$lib/services/map/map.svelte';
     import type {SearchItem} from '$lib/interfaces/object';
     import {mapState} from '$lib/state/map.svelte.ts';
     import {upsertSearchPoint} from '$lib/state/searchPointList.svelte.ts';
@@ -19,7 +19,7 @@
             return;
         }
 
-        setCenter(object.latitude, object.longitude);
+        focusDetailsTarget(object.latitude, object.longitude);
         const marker = object.id ? mapState.markerManager.getMarker(object.id) : null;
         if (marker) {
             marker.getOnClick()?.();
