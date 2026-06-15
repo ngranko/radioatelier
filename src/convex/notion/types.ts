@@ -35,6 +35,7 @@ export type NotionPageFields = {
     city: string | null;
     country: string | null;
     mapLink: string | null;
+    internalId: string | null;
     installedPeriod: string | null;
     isRemoved: boolean;
     removalPeriod: string | null;

@@ -4,7 +4,6 @@
     import {setCreateDraftPosition} from '$lib/state/createDraft.svelte.js';
     import {
         objectDetailsOverlay,
-        setOverlayDirty,
         showPointCreateOverlay,
         showPointPreviewOverlay,
     } from '$lib/state/objectDetailsOverlay.svelte.js';
@@ -53,14 +52,6 @@
 
         const isInitialSyncForPoint =
             lastActivePointId === null || lastActivePointId !== activePoint.id;
-        if (
-            objectDetailsOverlay.isDirty &&
-            lastActivePointId !== null &&
-            lastActivePointId === activePoint.id
-        ) {
-            return;
-        }
-
         const shouldSyncOverlay = objectDetailsOverlay.isOpen || isInitialSyncForPoint;
         if (!shouldSyncOverlay) {
             return;
@@ -84,7 +75,6 @@
         }
 
         lastActivePointId = activePoint.id;
-        setOverlayDirty(false);
     });
 
     onDestroy(() => {

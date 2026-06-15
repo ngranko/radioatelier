@@ -8,9 +8,10 @@
     interface Props {
         initialValues: Object;
         permissions: Permissions;
+        registerCloseConfirmationCheck?: (check: () => boolean) => () => void;
     }
 
-    let {initialValues: liveValues, permissions}: Props = $props();
+    let {initialValues: liveValues, permissions, registerCloseConfirmationCheck}: Props = $props();
 
     function cloneObjectSnapshot(value: Object): Object {
         return {
@@ -38,7 +39,7 @@
 
 <!-- TODO: add an error state -->
 {#if permissions.canEditAll}
-    <Form initialValues={formValues} />
+    <Form initialValues={formValues} {registerCloseConfirmationCheck} />
 {:else if permissions.canEditPersonal}
-    <LightForm initialValues={formValues} />
+    <LightForm initialValues={formValues} {registerCloseConfirmationCheck} />
 {/if}

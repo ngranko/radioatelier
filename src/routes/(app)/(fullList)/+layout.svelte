@@ -16,9 +16,16 @@
     } from '$lib/state/objectDetailsOverlay.svelte.js';
     import {createDraftState} from '$lib/state/createDraft.svelte.ts';
     import {mapState} from '$lib/state/map.svelte.ts';
-    import {setSharedMarkerObject, sharedMarker} from '$lib/state/sharedMarker.svelte.ts';
+    import {
+        clearSharedMarker,
+        setSharedMarkerObject,
+        sharedMarker,
+    } from '$lib/state/sharedMarker.svelte.ts';
     import {categoriesState} from '$lib/state/categories.svelte.js';
     import {markerIconMap, type MarkerIconKey} from '$lib/services/map/markerStyling.js';
+    import type {MarkerListItem} from '$lib/interfaces/marker.ts';
+
+    type MarkerPoint = MarkerListItem & {categoryId: Id<'categories'>};
 
     let {data, children} = $props();
     // eslint-disable-next-line svelte/prefer-writable-derived
@@ -53,7 +60,7 @@
         return 'objectView';
     });
 
-    const markerPoints = $derived(objects.data ?? data.objects);
+    const markerPoints = $derived((objects.data ?? data.objects) as MarkerPoint[]);
     const routeObjectId = $derived.by(() => {
         const id = page.params.id;
         return id ? (id as Id<'objects'>) : null;
@@ -91,10 +98,15 @@
             return;
         }
 
-        if (
-            !markerPoints.some(item => item.id === renderedObject.id) &&
-            sharedMarker.object?.id !== renderedObject.id
-        ) {
+        const hasListMarker = markerPoints.some(item => item.id === renderedObject.id);
+        const shouldUseSharedMarker = !renderedObject.isOwner && !hasListMarker;
+
+        if (sharedMarker.object?.id === renderedObject.id && !shouldUseSharedMarker) {
+            clearSharedMarker();
+            return;
+        }
+
+        if (shouldUseSharedMarker && sharedMarker.object?.id !== renderedObject.id) {
             setSharedMarkerObject(renderedObject);
         }
     });

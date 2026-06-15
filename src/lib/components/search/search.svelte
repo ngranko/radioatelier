@@ -8,7 +8,6 @@
     import {mapState} from '$lib/state/map.svelte';
     import {page} from '$app/state';
     import {replaceState} from '$app/navigation';
-    import {setCenter} from '$lib/services/map/map.svelte';
     import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
 
     let centerLat = $state('');
@@ -21,7 +20,7 @@
 
         const applied = applyUrlToSearchState(page.url);
         if (applied) {
-            setCenter(Number(searchState.lat), Number(searchState.lng));
+            mapState.provider!.setCenter(Number(searchState.lat), Number(searchState.lng));
             centerLat = searchState.lat;
             centerLng = searchState.lng;
         }

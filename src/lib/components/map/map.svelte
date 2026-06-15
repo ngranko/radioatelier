@@ -18,7 +18,7 @@
     import {removeDragTimeout} from '$lib/state/marker.svelte';
     import type {Marker} from '$lib/services/map/marker';
     import type {MarkerId} from '$lib/interfaces/marker';
-    import {setCenter} from '$lib/services/map/map.svelte.ts';
+    import {focusDetailsTarget} from '$lib/services/map/map.svelte.ts';
     import {activateMarker, setActiveMarker} from '$lib/state/activeMarker.svelte.ts';
     import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
 
@@ -99,7 +99,7 @@
         setActiveMarker(marker);
         activateMarker(marker);
         const pos = marker.getPosition();
-        setCenter(pos.lat, pos.lng);
+        focusDetailsTarget(pos.lat, pos.lng);
     }
 
     async function initMarkerManager(provider: MapProvider): Promise<MarkerManager> {

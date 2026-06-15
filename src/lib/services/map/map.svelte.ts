@@ -8,13 +8,6 @@ const FOCUS_ZOOM = 15;
 const FOCUS_MIN_ZOOM = 13;
 const MIN_UNCOVERED_MAP_WIDTH = 400;
 
-export function setCenter(lat: number, lng: number) {
-    if (mapState.isReady) {
-        mapState.provider!.setZoom(FOCUS_ZOOM);
-        mapState.provider!.setCenter(lat, lng);
-    }
-}
-
 export function focusDetailsTarget(lat: number, lng: number) {
     if (!mapState.isReady) {
         return;

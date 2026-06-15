@@ -16,6 +16,7 @@ const syncFieldNames = [
     'city',
     'country',
     'mapLink',
+    'internalId',
     'installedPeriod',
     'isRemoved',
     'removalPeriod',
@@ -107,7 +108,7 @@ function computeDifferences(
     for (const fieldName of syncFieldNames) {
         const appValue = appFields[fieldName];
         const notionValue = notionFields[fieldName];
-        if (fieldName === 'mapLink') {
+        if (fieldName === 'mapLink' || fieldName === 'internalId') {
             if (source === 'app' && normalizeText(appValue) !== normalizeText(notionValue)) {
                 notionPatch[fieldName] = appValue as never;
             }

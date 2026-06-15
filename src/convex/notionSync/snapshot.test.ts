@@ -32,6 +32,7 @@ describe('notion snapshot batch loading', () => {
             fields: expect.objectContaining({
                 name: 'Radio House',
                 categoryName: 'installation',
+                internalId: 'RA-1',
                 tagNames: ['sound'],
                 isVisited: true,
             }),

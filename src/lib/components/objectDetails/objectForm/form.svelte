@@ -1,4 +1,5 @@
 <script lang="ts">
+    import {onMount} from 'svelte';
     import type {LooseObject} from '$lib/interfaces/object';
     import DeleteButton from '$lib/components/objectDetails/objectForm/deleteButton.svelte';
     import BackButton from '$lib/components/objectDetails/objectForm/backButton.svelte';
@@ -19,7 +20,6 @@
         objectDetailsOverlay,
         returnToPointPreview,
         returnToViewMode,
-        setOverlayDirty,
         showLoadingDetailsOverlay,
     } from '$lib/state/objectDetailsOverlay.svelte';
     import {getErrorArray} from '$lib/utils/formErrors.ts';
@@ -41,11 +41,12 @@
 
     interface Props {
         initialValues: Partial<LooseObject>;
+        registerCloseConfirmationCheck?: (check: () => boolean) => () => void;
     }
 
     const client = useConvexClient();
 
-    let {initialValues}: Props = $props();
+    let {initialValues, registerCloseConfirmationCheck}: Props = $props();
     let imageUrl = $state(initialValues.cover?.url);
     let imagePreviewUrl = $state(initialValues.cover?.previewUrl);
 
@@ -138,6 +139,8 @@
 
     const {form: formData, errors, enhance, isTainted, submitting} = form;
 
+    onMount(() => registerCloseConfirmationCheck?.(() => isTainted()) ?? undefined);
+
     const addressFields = ['address', 'city', 'country'] as const;
     const lastAutoFilledAddress = $state<Record<(typeof addressFields)[number], string>>({
         address: '',
@@ -167,15 +170,7 @@
         }
     });
 
-    $effect(() => {
-        if (isTainted() && !objectDetailsOverlay.isDirty) {
-            setOverlayDirty(true);
-        }
-    });
-
     function handleBack() {
-        setOverlayDirty(false);
-
         if ($formData.id) {
             returnToViewMode();
             return;
@@ -221,7 +216,6 @@
             showLoadingDetailsOverlay(id);
             goto(`/object/${id}`);
         } else {
-            setOverlayDirty(false);
             returnToViewMode();
         }
     }

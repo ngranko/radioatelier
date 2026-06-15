@@ -81,6 +81,7 @@ Restrict this key to server APIs (Geocoding, Places) in Google Cloud. Use `PUBLI
 | `NOTION_WEBHOOK_VERIFICATION_TOKEN` | `POST /notion-webhook` signature verification |
 | `NOTION_SYNC_APP_URL` | Builds `/object/[id]` map links in outbound sync |
 | `NOTION_SYNC_FALLBACK_USER_EXTERNAL_ID` | Clerk user id for pages without a mapped Notion owner |
+| `NOTION_BACKFILL_KEY` | `notionSync/backfill:backfillInternalIdPage` action; must match local backfill script |
 
 Webhook URL: `https://<deployment>.convex.site/notion-webhook` (use `PUBLIC_CONVEX_SITE_URL` from `.env.local` as the host prefix).
 
@@ -99,6 +100,6 @@ Further Notion setup: [notion-sync.md](./notion-sync.md).
 1. `CLERK_JWT_ISSUER_DOMAIN`, `CLERK_WEBHOOK_SECRET`
 2. `GOOGLE_API_KEY`
 3. `TYPESENSE_URL`, `TYPESENSE_SYNC_KEY`, `TYPESENSE_SEARCH_KEY`, `TYPESENSE_BACKFILL_KEY` (and optionally `TYPESENSE_COLLECTION`)
-4. All `NOTION_*` variables if sync is enabled
+4. All `NOTION_*` variables if sync is enabled (including `NOTION_BACKFILL_KEY` when running the internal_id backfill)
 
 Repeat the Convex step for production with production credentials.

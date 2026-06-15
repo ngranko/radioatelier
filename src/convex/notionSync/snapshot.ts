@@ -102,6 +102,7 @@ export function assembleObjectSnapshot(
         sync: cache.syncByObjectId.get(object._id) ?? null,
         fields: buildAppFields({
             objectId: object._id,
+            internalId: object.internalId,
             name: object.name,
             categoryName: category.name,
             address: mapPoint.address,
@@ -131,6 +132,7 @@ async function loadObjectSnapshot(
 
 export function buildAppFields(input: {
     objectId: string;
+    internalId: string;
     name: string;
     categoryName: string;
     address: string | null;
@@ -150,6 +152,7 @@ export function buildAppFields(input: {
         city: input.city,
         country: input.country,
         mapLink: buildObjectUrl(getNotionSyncAppUrl(), input.objectId),
+        internalId: input.internalId,
         installedPeriod: input.installedPeriod,
         isRemoved: input.isRemoved,
         removalPeriod: input.removalPeriod,

@@ -4,9 +4,10 @@
 
     interface Props {
         initialValues: Partial<LooseObject>;
+        registerCloseConfirmationCheck?: (check: () => boolean) => () => void;
     }
 
-    let {initialValues}: Props = $props();
+    let {initialValues, registerCloseConfirmationCheck}: Props = $props();
 </script>
 
-<Form {initialValues} />
+<Form {initialValues} {registerCloseConfirmationCheck} />
