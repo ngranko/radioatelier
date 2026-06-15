@@ -49,7 +49,13 @@
     }: Props = $props();
 
     const fallbackMarkerId = `map-${Date.now()}-${Math.random()}`;
-    const markerId = $derived(searchPointId ?? id ?? fallbackMarkerId);
+    const markerId = $derived.by(() => {
+        if (source === 'share' && id) {
+            return `share-${id}`;
+        }
+
+        return searchPointId ?? id ?? fallbackMarkerId;
+    });
     let marker: MarkerObject | null = $state(null);
 
     const client = useConvexClient();
