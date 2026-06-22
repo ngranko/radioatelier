@@ -89,7 +89,7 @@ Closing the overlay (close button, backdrop, or Esc) runs through `requestClose`
 
 ## Shared deep links
 
-When a user opens `/object/[id]` for an object they do not own and that object is not in their marker list, the full-list layout sets `sharedMarker` and renders a `source="share"` marker in the app layout. Once the object appears in the user's list (e.g. after creating a copy), the share marker is cleared automatically.
+When a user opens `/object/[id]` for an object they **do not own** and that object is **not** in their marker list (`api.markers.list`), the full-list layout sets `sharedMarker` and renders a `source="share"` marker in the app layout. The share marker is cleared when the object joins the user's list or when the viewer is the owner (owners always use list markers, never share markers).
 
 ## Overlay chrome
 
