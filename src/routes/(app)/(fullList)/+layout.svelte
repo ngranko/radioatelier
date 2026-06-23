@@ -25,7 +25,7 @@
     import {markerIconMap, type MarkerIconKey} from '$lib/services/map/markerStyling.js';
     import type {MarkerListItem} from '$lib/interfaces/marker.ts';
 
-    type MarkerPoint = MarkerListItem & {categoryId: Id<'categories'>};
+    type RenderedMarkerPoint = MarkerListItem & {isVisited: boolean};
 
     let {data, children} = $props();
     // eslint-disable-next-line svelte/prefer-writable-derived
@@ -37,6 +37,11 @@
         api.markers.list,
         () => (ctx.auth.userId ? {} : 'skip'),
         () => ({initialData: data.objects}),
+    );
+    const visitedObjectIds = useQuery(
+        api.markers.listVisitedIds,
+        () => (ctx.auth.userId ? {} : 'skip'),
+        () => ({initialData: data.visitedObjectIds}),
     );
 
     const overlayValues = $derived(
@@ -60,7 +65,18 @@
         return 'objectView';
     });
 
-    const markerPoints = $derived((objects.data ?? data.objects) as MarkerPoint[]);
+    const rawMarkerPoints = $derived((objects.data ?? data.objects) as MarkerListItem[]);
+    const visitedObjectIdSet = $derived.by(
+        () => new Set((visitedObjectIds.data ?? data.visitedObjectIds) as Id<'objects'>[]),
+    );
+    const markerPoints = $derived(
+        rawMarkerPoints.map(
+            (item): RenderedMarkerPoint => ({
+                ...item,
+                isVisited: visitedObjectIdSet.has(item.id),
+            }),
+        ),
+    );
     const routeObjectId = $derived.by(() => {
         const id = page.params.id;
         return id ? (id as Id<'objects'>) : null;
