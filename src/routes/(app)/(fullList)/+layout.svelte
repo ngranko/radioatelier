@@ -25,7 +25,7 @@
     import {markerIconMap, type MarkerIconKey} from '$lib/services/map/markerStyling.js';
     import type {MarkerListItem} from '$lib/interfaces/marker.ts';
 
-    type MarkerPoint = MarkerListItem & {categoryId: Id<'categories'>};
+    type RenderedMarkerPoint = MarkerListItem & {isVisited: boolean};
 
     let {data, children} = $props();
     // eslint-disable-next-line svelte/prefer-writable-derived
@@ -36,7 +36,12 @@
     const objects = useQuery(
         api.markers.list,
         () => (ctx.auth.userId ? {} : 'skip'),
-        () => ({initialData: data.objects}),
+        () => ({initialData: []}),
+    );
+    const visitedObjectIds = useQuery(
+        api.markers.listVisitedIds,
+        () => (ctx.auth.userId ? {} : 'skip'),
+        () => ({initialData: []}),
     );
 
     const overlayValues = $derived(
@@ -60,7 +65,6 @@
         return 'objectView';
     });
 
-    const markerPoints = $derived((objects.data ?? data.objects) as MarkerPoint[]);
     const routeObjectId = $derived.by(() => {
         const id = page.params.id;
         return id ? (id as Id<'objects'>) : null;
@@ -77,6 +81,25 @@
     const renderedObject = $derived(
         createDraftState.position ? null : ((overlayObjectQuery.data ?? null) as ObjectType | null),
     );
+    const rawMarkerPoints = $derived((objects.data ?? []) as MarkerListItem[]);
+    const visitedObjectIdSet = $derived.by(
+        () => new Set((visitedObjectIds.data ?? []) as Id<'objects'>[]),
+    );
+    const markerPoints = $derived.by(() => {
+        const catalogMarkers = rawMarkerPoints.map(
+            (item): RenderedMarkerPoint => ({
+                ...item,
+                isVisited: visitedObjectIdSet.has(item.id),
+            }),
+        );
+
+        const activeMarker = getActiveListMarker();
+        if (activeMarker && !catalogMarkers.some(item => item.id === activeMarker.id)) {
+            return [...catalogMarkers, activeMarker];
+        }
+
+        return catalogMarkers;
+    });
 
     const showOverlay = $derived(
         objectDetailsOverlay.isOpen || (page.data.isServerRequest && disableOverlayIntro),
@@ -98,8 +121,7 @@
             return;
         }
 
-        const hasListMarker = markerPoints.some(item => item.id === renderedObject.id);
-        const shouldUseSharedMarker = !renderedObject.isOwner && !hasListMarker;
+        const shouldUseSharedMarker = shouldRenderSharedMarker(renderedObject);
 
         if (sharedMarker.object?.id === renderedObject.id && !shouldUseSharedMarker) {
             clearSharedMarker();
@@ -121,6 +143,35 @@
             return {duration: 0, css: () => ''};
         }
         return fly(node, {x: -100, duration: 200, easing: cubicInOut});
+    }
+
+    function getActiveListMarker(): RenderedMarkerPoint | null {
+        if (!renderedObject || !shouldRenderActiveListMarker(renderedObject)) {
+            return null;
+        }
+
+        return {
+            id: renderedObject.id,
+            latitude: renderedObject.latitude,
+            longitude: renderedObject.longitude,
+            categoryId: renderedObject.category.id,
+            isRemoved: renderedObject.isRemoved,
+            isPublic: renderedObject.isPublic,
+            isOwner: renderedObject.isOwner,
+            isVisited: visitedObjectIdSet.has(renderedObject.id) || renderedObject.isVisited,
+        };
+    }
+
+    function shouldRenderActiveListMarker(object: ObjectType) {
+        return object.isOwner || (ctx.isLoaded && Boolean(ctx.auth.userId) && object.isPublic);
+    }
+
+    function shouldRenderSharedMarker(object: ObjectType) {
+        if (object.isOwner || (ctx.auth.userId && object.isPublic)) {
+            return false;
+        }
+
+        return ctx.isLoaded;
     }
 </script>
 

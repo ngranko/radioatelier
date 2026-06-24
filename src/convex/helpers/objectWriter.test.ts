@@ -1,9 +1,10 @@
 import {describe, expect, it} from 'vitest';
 import type {Id} from '../_generated/dataModel';
-import {splitObjectRecordPatch} from './objectWriter';
+import {filterChangedPatch, splitObjectRecordPatch} from './objectWriter';
 
 const categoryId = 'category-1' as Id<'categories'>;
 const tagIds = ['tag-1' as Id<'tags'>];
+const secondTagId = 'tag-2' as Id<'tags'>;
 
 describe('splitObjectRecordPatch', () => {
     it('routes fields to the records that store them', () => {
@@ -67,5 +68,43 @@ describe('splitObjectRecordPatch', () => {
         });
 
         expect(markerPatch).toEqual({});
+    });
+});
+
+describe('filterChangedPatch', () => {
+    it('removes unchanged scalar fields', () => {
+        const patch = filterChangedPatch(
+            {name: 'Mosaic', isRemoved: false},
+            {name: 'Mosaic', isRemoved: true},
+        );
+
+        expect(patch).toEqual({isRemoved: true});
+    });
+
+    it('treats tag order as unchanged', () => {
+        const patch = filterChangedPatch(
+            {tagIds: [tagIds[0], secondTagId]},
+            {tagIds: [secondTagId, tagIds[0]]},
+        );
+
+        expect(patch).toEqual({});
+    });
+
+    it('keeps changed tag sets', () => {
+        const patch = filterChangedPatch({tagIds}, {tagIds: [tagIds[0], secondTagId]});
+
+        expect(patch).toEqual({tagIds: [tagIds[0], secondTagId]});
+    });
+
+    it('returns an empty patch when no values changed', () => {
+        const patch = filterChangedPatch(
+            {latitude: 55.75, longitude: 37.61},
+            {
+                latitude: 55.75,
+                longitude: 37.61,
+            },
+        );
+
+        expect(patch).toEqual({});
     });
 });
