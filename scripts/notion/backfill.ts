@@ -1,6 +1,6 @@
 /**
  * Usage:
- * bun run notion:backfill --convex-url <convex-url> --backfill-key <backfill-key> [--batch-size <size>]
+ * bun run notion:backfill --convex-url <convex-url> --backfill-key <backfill-key> [--batch-size <size>] [--target internal-id|eligible-objects]
  *
  * Environment variables:
  * PUBLIC_CONVEX_URL
@@ -13,12 +13,16 @@ type CliConfig = {
     convexUrl: string;
     backfillKey: string;
     batchSize: number;
+    target: BackfillTarget;
 };
+
+type BackfillTarget = 'internal-id' | 'eligible-objects';
 
 type BackfillPageResult = {
     page: string[];
     isDone: boolean;
     continueCursor: string;
+    syncResult?: {synced: number; skipped: number; failed: number} | null;
 };
 
 const DEFAULT_BATCH_SIZE = 50;
@@ -28,6 +32,7 @@ function parseArgs(argv: string[]): CliConfig {
     let convexUrl = process.env.PUBLIC_CONVEX_URL?.trim() || '';
     let backfillKey = process.env.NOTION_BACKFILL_KEY?.trim() || '';
     let batchSize = DEFAULT_BATCH_SIZE;
+    let target: BackfillTarget = 'internal-id';
 
     for (let i = 0; i < args.length; i++) {
         const arg = args[i];
@@ -62,6 +67,16 @@ function parseArgs(argv: string[]): CliConfig {
             continue;
         }
 
+        if (arg.startsWith('--target=')) {
+            target = parseTarget(arg.slice('--target='.length));
+            continue;
+        }
+        if (arg === '--target') {
+            target = parseTarget(args[i + 1] || '');
+            i++;
+            continue;
+        }
+
         throw new Error(`Unknown argument: ${arg}`);
     }
 
@@ -76,6 +91,7 @@ function parseArgs(argv: string[]): CliConfig {
         convexUrl: normalizeBaseUrl(convexUrl),
         backfillKey,
         batchSize,
+        target,
     };
 }
 
@@ -91,13 +107,24 @@ function normalizeBaseUrl(url: string): string {
     return url.trim().replace(/\/+$/, '');
 }
 
+function parseTarget(value: string): BackfillTarget {
+    if (value === 'internal-id' || value === 'eligible-objects') {
+        return value;
+    }
+    throw new Error(`Invalid target: ${value}`);
+}
+
 async function fetchBackfillPage(
     client: ConvexHttpClient,
     config: CliConfig,
     cursor: string | null,
 ): Promise<BackfillPageResult> {
+    const actionName =
+        config.target === 'eligible-objects'
+            ? 'notionSync/backfill:backfillEligibleObjectsPage'
+            : 'notionSync/backfill:backfillInternalIdPage';
     return await client.action(
-        'notionSync/backfill:backfillInternalIdPage' as never,
+        actionName as never,
         {
             backfillKey: config.backfillKey,
             paginationOpts: {
@@ -119,10 +146,13 @@ async function main(): Promise<void> {
     while (true) {
         const page = await fetchBackfillPage(convexClient, config, cursor);
         pageCount += 1;
-        totalSynced += page.page.length;
+        totalSynced += page.syncResult?.synced ?? page.page.length;
+        const syncSummary = page.syncResult
+            ? `, synced=${page.syncResult.synced}, skipped=${page.syncResult.skipped}, failed=${page.syncResult.failed}`
+            : '';
 
         console.log(
-            `Synced page ${pageCount}: ${page.page.length} objects (total: ${totalSynced})`,
+            `Processed page ${pageCount}: ${page.page.length} objects${syncSummary} (total synced: ${totalSynced})`,
         );
 
         if (page.isDone) {
@@ -137,6 +167,7 @@ async function main(): Promise<void> {
             {
                 convexUrl: config.convexUrl,
                 batchSize: config.batchSize,
+                target: config.target,
                 pages: pageCount,
                 totalSynced,
             },

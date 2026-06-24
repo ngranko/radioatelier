@@ -17,6 +17,12 @@ import type {ObjectSyncSnapshot} from './snapshot';
 import {buildSyncStateArgs, needsSyncStateWrite} from './state';
 import type {AppSyncFields} from './types';
 
+type OutboundBatchResult = {
+    synced: number;
+    skipped: number;
+    failed: number;
+};
+
 export const enqueueOutboundObjectSync = internalAction({
     args: {
         objectId: v.id('objects'),
@@ -31,12 +37,7 @@ export const enqueueOutboundObjectSyncBatch = internalAction({
         objectIds: v.array(v.id('objects')),
     },
     handler: async (ctx, {objectIds}) => {
-        const uniqueObjectIds = [...new Set(objectIds)];
-        for (const objectId of uniqueObjectIds) {
-            await performOutboundObjectSync(ctx, objectId);
-        }
-
-        return uniqueObjectIds.length;
+        return await performOutboundObjectSyncBatch(ctx, objectIds);
     },
 });
 
@@ -87,6 +88,33 @@ export async function performOutboundObjectSync(
         });
         throw error;
     }
+}
+
+export async function performOutboundObjectSyncBatch(
+    ctx: ActionCtx,
+    objectIds: Id<'objects'>[],
+): Promise<OutboundBatchResult> {
+    const result: OutboundBatchResult = {synced: 0, skipped: 0, failed: 0};
+    const uniqueObjectIds = [...new Set(objectIds)];
+
+    for (const objectId of uniqueObjectIds) {
+        try {
+            const notionPageId = await performOutboundObjectSync(ctx, objectId);
+            if (notionPageId) {
+                result.synced += 1;
+            } else {
+                result.skipped += 1;
+            }
+        } catch (error) {
+            result.failed += 1;
+            console.error('[Notion sync] Failed to sync object from batch', {
+                objectId,
+                error: error instanceof Error ? error.message : error,
+            });
+        }
+    }
+
+    return result;
 }
 
 async function createNotionPageForSyncedObject(

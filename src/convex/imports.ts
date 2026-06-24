@@ -78,7 +78,10 @@ function toLimitedNullable(value: string | undefined, maxLength: number) {
 }
 
 function normalizeTagList(values: string[]) {
-    return values.map(item => trimToLimit(item.toLowerCase(), LIMITS.tag)).filter(Boolean);
+    return values
+        .flatMap(item => item.split(/[;,]/))
+        .map(item => trimToLimit(item.toLowerCase(), LIMITS.tag))
+        .filter(Boolean);
 }
 
 function parseCoordinates(rawCoordinates: string) {

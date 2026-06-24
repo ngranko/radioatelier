@@ -4,7 +4,7 @@ import type {ActionCtx} from '../_generated/server';
 import {createPage, retrieveDataSource, retrievePage, updatePage} from '../notion/client';
 import {readNotionPageFields} from '../notion/fields';
 import type {NotionDataSource, NotionPage} from '../notion/types';
-import {performOutboundObjectSync} from './outbound';
+import {performOutboundObjectSync, performOutboundObjectSyncBatch} from './outbound';
 import {computeSyncHash} from './reconcile';
 import type {ObjectSyncSnapshot} from './snapshot';
 import type {AppSyncFields} from './types';
@@ -67,6 +67,18 @@ function makeSyncRecord(overrides: Partial<Doc<'objectNotionSync'>> = {}) {
 
 function makeCtx(snapshot: ObjectSyncSnapshot | null) {
     const runQuery = vi.fn(async () => snapshot);
+    const runMutation = vi.fn(async (_ref: unknown, _args: Record<string, unknown>) => null);
+    return {
+        ctx: {runQuery, runMutation} as unknown as ActionCtx,
+        runQuery,
+        runMutation,
+    };
+}
+
+function makeBatchCtx(snapshots: Record<string, ObjectSyncSnapshot | null>) {
+    const runQuery = vi.fn(
+        async (_ref: unknown, args: {objectId: string}) => snapshots[args.objectId],
+    );
     const runMutation = vi.fn(async (_ref: unknown, _args: Record<string, unknown>) => null);
     return {
         ctx: {runQuery, runMutation} as unknown as ActionCtx,
@@ -159,6 +171,32 @@ describe('performOutboundObjectSync', () => {
         expect(runMutation.mock.calls[0][1]).toMatchObject({
             objectId: 'object-1',
             message: 'Notion is down',
+        });
+    });
+
+    it('continues batch sync when one object fails to create in Notion', async () => {
+        vi.mocked(createPage)
+            .mockResolvedValueOnce({id: 'page-1', last_edited_time: editedTime} as NotionPage)
+            .mockRejectedValueOnce(new Error('Notion rejected object-2'))
+            .mockResolvedValueOnce({id: 'page-3', last_edited_time: editedTime} as NotionPage);
+        const {ctx, runMutation} = makeBatchCtx({
+            'object-1': makeSnapshot({objectId: 'object-1' as Id<'objects'>}),
+            'object-2': makeSnapshot({objectId: 'object-2' as Id<'objects'>}),
+            'object-3': makeSnapshot({objectId: 'object-3' as Id<'objects'>}),
+        });
+
+        const result = await performOutboundObjectSyncBatch(ctx, [
+            'object-1',
+            'object-2',
+            'object-3',
+        ] as Id<'objects'>[]);
+
+        expect(result).toEqual({synced: 2, skipped: 0, failed: 1});
+        expect(createPage).toHaveBeenCalledTimes(3);
+        expect(runMutation).toHaveBeenCalledTimes(3);
+        expect(runMutation.mock.calls[1][1]).toMatchObject({
+            objectId: 'object-2',
+            message: 'Notion rejected object-2',
         });
     });
 });
