@@ -14,7 +14,7 @@ function splitTags(raw: string): string[] {
         return [];
     }
     return raw
-        .split(';')
+        .split(/[;,]/)
         .map(item => item.trim())
         .filter(Boolean);
 }

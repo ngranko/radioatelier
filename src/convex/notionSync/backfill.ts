@@ -10,6 +10,10 @@ type SyncedObjectIdsPage = {
     continueCursor: string;
 };
 
+type BackfillEligibleObjectsPageResult = SyncedObjectIdsPage & {
+    syncResult: {synced: number; skipped: number; failed: number} | null;
+};
+
 export const listSyncedObjectIdsPage = internalQuery({
     args: {
         paginationOpts: paginationOptsValidator,
@@ -30,13 +34,7 @@ export const backfillInternalIdPage = action({
         paginationOpts: paginationOptsValidator,
     },
     handler: async (ctx, {backfillKey, paginationOpts}): Promise<SyncedObjectIdsPage> => {
-        const expectedKey = process.env.NOTION_BACKFILL_KEY?.trim();
-        if (!expectedKey) {
-            throw new ConvexError('Missing NOTION_BACKFILL_KEY environment variable');
-        }
-        if (backfillKey !== expectedKey) {
-            throw new ConvexError('Unauthorized');
-        }
+        assertAuthorizedBackfill(backfillKey);
 
         const page: SyncedObjectIdsPage = await ctx.runQuery(
             internal.notionSync.backfill.listSyncedObjectIdsPage,
@@ -53,3 +51,47 @@ export const backfillInternalIdPage = action({
         return page;
     },
 });
+
+export const backfillEligibleObjectsPage = action({
+    args: {
+        backfillKey: v.string(),
+        paginationOpts: paginationOptsValidator,
+    },
+    handler: async (
+        ctx,
+        {backfillKey, paginationOpts},
+    ): Promise<BackfillEligibleObjectsPageResult> => {
+        assertAuthorizedBackfill(backfillKey);
+
+        const page: SyncedObjectIdsPage = await ctx.runQuery(
+            internal.notionSync.snapshot.listEligibleObjectIdsPage,
+            {
+                paginationOpts,
+            },
+        );
+        const syncResult =
+            page.page.length > 0
+                ? ((await ctx.runAction(
+                      internal.notionSync.outbound.enqueueOutboundObjectSyncBatchLenient,
+                      {
+                          objectIds: page.page,
+                      },
+                  )) as BackfillEligibleObjectsPageResult['syncResult'])
+                : null;
+
+        return {
+            ...page,
+            syncResult,
+        };
+    },
+});
+
+function assertAuthorizedBackfill(backfillKey: string) {
+    const expectedKey = process.env.NOTION_BACKFILL_KEY?.trim();
+    if (!expectedKey) {
+        throw new ConvexError('Missing NOTION_BACKFILL_KEY environment variable');
+    }
+    if (backfillKey !== expectedKey) {
+        throw new ConvexError('Unauthorized');
+    }
+}

@@ -97,13 +97,14 @@ export class ImportProvider {
 
     private async runImport(jobId: Id<'importJobs'>, rows: NormalizedImportRow[]) {
         try {
+            let latestProgress: ImportProviderPayload = {
+                total: rows.length,
+                successful: 0,
+                percentage: 0,
+                processed: 0,
+            };
             if (this.progressHandler) {
-                this.progressHandler({
-                    total: rows.length,
-                    successful: 0,
-                    percentage: 0,
-                    processed: 0,
-                });
+                this.progressHandler(latestProgress);
             }
 
             let sequence = 1;
@@ -133,13 +134,14 @@ export class ImportProvider {
                 });
                 sequence += 1;
 
+                latestProgress = {
+                    total: rows.length,
+                    successful: result.successfulRows,
+                    percentage: result.percentage,
+                    processed: result.processedRows,
+                };
                 if (this.progressHandler) {
-                    this.progressHandler({
-                        total: rows.length,
-                        successful: result.successfulRows,
-                        percentage: result.percentage,
-                        processed: result.processedRows,
-                    });
+                    this.progressHandler(latestProgress);
                 }
             }
 
@@ -148,15 +150,12 @@ export class ImportProvider {
                 return;
             }
 
-            await this.client.mutation(api.imports.finalizeJob, {jobId});
+            if (rows.length === 0 || latestProgress.processed < rows.length) {
+                await this.client.mutation(api.imports.finalizeJob, {jobId});
+            }
             this.isFinished = true;
             if (this.successHandler) {
-                this.successHandler({
-                    total: rows.length,
-                    successful: rows.length,
-                    percentage: 100,
-                    processed: rows.length,
-                });
+                this.successHandler({...latestProgress, percentage: 100});
             }
         } catch (error) {
             this.isFinished = true;
