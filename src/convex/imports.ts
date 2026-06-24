@@ -329,13 +329,22 @@ export const importBatch = mutation({
                 ? 100
                 : Math.min(100, Math.round((processedRows / job.totalRows) * 100));
 
-        await ctx.db.patch(jobId, {
+        const isComplete = processedRows >= job.totalRows;
+        const jobPatch = {
             processedRows,
             successfulRows,
-            percentage,
+            percentage: isComplete ? 100 : percentage,
             feedback: trimFeedback(feedback),
             lastBatchSequence: sequence,
-        });
+            ...(isComplete
+                ? {
+                      status: 'success' as const,
+                      finishedAt: Date.now(),
+                  }
+                : {}),
+        };
+
+        await ctx.db.patch(jobId, jobPatch);
         if (importedObjectIds.length > 0) {
             ctx.scheduler.runAfter(0, internal.notionSync.outbound.enqueueOutboundObjectSyncBatch, {
                 objectIds: importedObjectIds,
@@ -345,8 +354,8 @@ export const importBatch = mutation({
         return {
             processedRows,
             successfulRows,
-            percentage,
-            status: 'running' as ImportJobStatus,
+            percentage: jobPatch.percentage,
+            status: isComplete ? ('success' as ImportJobStatus) : ('running' as ImportJobStatus),
         };
     },
 });
@@ -363,7 +372,7 @@ export const finalizeJob = mutation({
         if (!job || job.createdById !== user._id) {
             throw new ConvexError('Import job not found');
         }
-        if (job.status === 'cancelled') {
+        if (job.status === 'cancelled' || job.status === 'success') {
             return;
         }
         if (failed) {
