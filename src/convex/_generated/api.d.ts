@@ -26,7 +26,6 @@ import type * as notion_config from "../notion/config.js";
 import type * as notion_fields from "../notion/fields.js";
 import type * as notion_types from "../notion/types.js";
 import type * as notion_webhooks from "../notion/webhooks.js";
-import type * as notionSync_backfill from "../notionSync/backfill.js";
 import type * as notionSync_discrepancyReport from "../notionSync/discrepancyReport.js";
 import type * as notionSync_discrepancyReportTypes from "../notionSync/discrepancyReportTypes.js";
 import type * as notionSync_identity from "../notionSync/identity.js";
@@ -81,7 +80,6 @@ declare const fullApi: ApiFromModules<{
   "notion/fields": typeof notion_fields;
   "notion/types": typeof notion_types;
   "notion/webhooks": typeof notion_webhooks;
-  "notionSync/backfill": typeof notionSync_backfill;
   "notionSync/discrepancyReport": typeof notionSync_discrepancyReport;
   "notionSync/discrepancyReportTypes": typeof notionSync_discrepancyReportTypes;
   "notionSync/identity": typeof notionSync_identity;

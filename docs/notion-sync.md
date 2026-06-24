@@ -51,20 +51,6 @@ When `summary.inSync` is `true`, both sides are aligned for matching, links, fie
 -   CSV imports enqueue one outbound sync batch after each successful import batch instead of scheduling a Notion action for every row.
 -   Notion API calls retry rate limits and transient server errors before surfacing `lastSyncError`.
 
-## Backfill `Внутренний ID`
-
-After adding the `Внутренний ID` property to the Notion database, run the backfill script to push `objects.internalId` to every linked Notion page:
-
-1. Add an `Внутренний ID` column (`rich_text`) to the Notion data source.
-2. Set `NOTION_BACKFILL_KEY` on the Convex deployment and locally (same value).
-3. Run:
-
-```bash
-bun run notion:backfill --convex-url <convex-url> --backfill-key <key>
-```
-
-The script paginates active `objectNotionSync` rows and enqueues outbound sync for each linked object. Re-run `reportDiscrepancies` afterward to confirm `summary.inSync` is `true`.
-
 ## Manual verification checklist
 
 -   Create an object in the app as a sync-enabled owner and confirm a Notion page is created.

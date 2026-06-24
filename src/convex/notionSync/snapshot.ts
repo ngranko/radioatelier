@@ -22,12 +22,6 @@ export type ObjectSyncSnapshotPage = {
     continueCursor: string;
 };
 
-export type EligibleObjectIdsPage = {
-    page: Id<'objects'>[];
-    isDone: boolean;
-    continueCursor: string;
-};
-
 export const getObjectSnapshot = internalQuery({
     args: {
         objectId: v.id('objects'),
@@ -82,26 +76,6 @@ export const listEligibleObjectSnapshotPage = internalQuery({
             page: result.page
                 .map(object => assembleObjectSnapshot(object, cache))
                 .filter((snapshot): snapshot is ObjectSyncSnapshot => snapshot !== null),
-        };
-    },
-});
-
-export const listEligibleObjectIdsPage = internalQuery({
-    args: {
-        paginationOpts: paginationOptsValidator,
-    },
-    handler: async (ctx, {paginationOpts}): Promise<EligibleObjectIdsPage> => {
-        const result = await ctx.db.query('objects').paginate(paginationOpts);
-        const owners = await Promise.all(result.page.map(object => ctx.db.get(object.createdById)));
-        return {
-            isDone: result.isDone,
-            continueCursor: result.continueCursor,
-            page: result.page
-                .filter((_object, index) => {
-                    const owner = owners[index];
-                    return owner?.isDeleted === false && owner.notionSyncEnabled === true;
-                })
-                .map(object => object._id),
         };
     },
 });

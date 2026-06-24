@@ -81,8 +81,6 @@ export default defineSchema({
         role: v.string(),
         notionSyncEnabled: v.optional(v.boolean()),
         notionUserId: v.optional(v.string()),
-        lastActiveAt: v.optional(v.nullable(v.number())),
-        lastLoginAt: v.optional(v.nullable(v.number())),
         isDeleted: v.boolean(),
     })
         .index('byExternalIdIsDeleted', ['externalId', 'isDeleted'])
