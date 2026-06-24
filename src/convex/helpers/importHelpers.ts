@@ -2,16 +2,35 @@ import {randomMarkerColor, randomMarkerIconKey} from '../../lib/services/map/mar
 import type {Id} from '../_generated/dataModel';
 import type {MutationCtx} from '../_generated/server';
 
-export async function ensureCategory(ctx: MutationCtx, normalizedName: string) {
-    const existing = await ctx.db
+export function capitalizeCategoryName(value: string) {
+    return value
+        .trim()
+        .toLowerCase()
+        .replace(/\p{L}+/gu, word => word.charAt(0).toUpperCase() + word.slice(1));
+}
+
+async function findCategoryByName(ctx: MutationCtx, name: string) {
+    const exactMatch = await ctx.db
         .query('categories')
-        .withIndex('byName', q => q.eq('name', normalizedName))
+        .withIndex('byName', q => q.eq('name', name))
         .first();
+    if (exactMatch) {
+        return exactMatch;
+    }
+
+    const normalizedName = name.toLowerCase();
+    const categories = await ctx.db.query('categories').collect();
+    return categories.find(category => category.name.toLowerCase() === normalizedName) ?? null;
+}
+
+export async function ensureCategory(ctx: MutationCtx, rawName: string) {
+    const name = capitalizeCategoryName(rawName);
+    const existing = await findCategoryByName(ctx, name);
     if (existing) {
         return existing._id;
     }
     return await ctx.db.insert('categories', {
-        name: normalizedName,
+        name,
         markerColor: randomMarkerColor(),
         markerIcon: randomMarkerIconKey(),
     });

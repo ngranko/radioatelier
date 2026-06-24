@@ -240,7 +240,7 @@ export const importBatch = mutation({
                 continue;
             }
 
-            const categoryName = trimToLimit(row.category.toLowerCase(), LIMITS.category);
+            const categoryName = trimToLimit(row.category, LIMITS.category);
             if (!categoryName) {
                 processedRows += 1;
                 feedback = appendFeedback(feedback, [
