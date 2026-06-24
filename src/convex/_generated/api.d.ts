@@ -10,7 +10,6 @@
 
 import type * as categories from "../categories.js";
 import type * as crons from "../crons.js";
-import type * as helpers_clerkTimestamps from "../helpers/clerkTimestamps.js";
 import type * as helpers_geocode from "../helpers/geocode.js";
 import type * as helpers_importHelpers from "../helpers/importHelpers.js";
 import type * as helpers_objectAggregate from "../helpers/objectAggregate.js";
@@ -66,7 +65,6 @@ import type {
 declare const fullApi: ApiFromModules<{
   categories: typeof categories;
   crons: typeof crons;
-  "helpers/clerkTimestamps": typeof helpers_clerkTimestamps;
   "helpers/geocode": typeof helpers_geocode;
   "helpers/importHelpers": typeof helpers_importHelpers;
   "helpers/objectAggregate": typeof helpers_objectAggregate;

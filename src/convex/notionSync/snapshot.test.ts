@@ -253,8 +253,6 @@ function makeOwner(ownerId: string): Doc<'users'> {
         role: 'user',
         isDeleted: false,
         notionSyncEnabled: true,
-        lastActiveAt: null,
-        lastLoginAt: null,
     };
 }
 

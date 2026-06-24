@@ -1,8 +1,6 @@
 import type {UserJSON} from '@clerk/backend';
 import {v, type Validator} from 'convex/values';
-import type {Doc} from './_generated/dataModel';
-import {internalMutation, mutation, query, type QueryCtx} from './_generated/server';
-import {clerkTimestamp} from './helpers/clerkTimestamps';
+import {internalMutation, query, type QueryCtx} from './_generated/server';
 
 export const current = query({
     args: {},
@@ -11,81 +9,18 @@ export const current = query({
     },
 });
 
-export const recordActivity = mutation({
-    args: {isLogin: v.optional(v.boolean())},
-    handler: async (ctx, {isLogin}) => {
-        const user = await getCurrentUser(ctx);
-        if (!user) {
-            return;
-        }
-
-        const now = Date.now();
-        await ctx.db.patch(user._id, {
-            lastActiveAt: now,
-            ...(isLogin ? {lastLoginAt: now} : {}),
-        });
-    },
-});
-
 export const upsertFromClerk = internalMutation({
     args: {data: v.any() as Validator<UserJSON>},
     async handler(ctx, {data}) {
         const userAttributes = buildClerkUserAttributes(data);
-        const timestampFields = buildClerkTimestampFields(data);
         const user = await getUserByExternalId(ctx, data.id);
 
         if (user === null) {
-            await ctx.db.insert('users', {
-                ...userAttributes,
-                lastActiveAt: timestampFields.lastActiveAt,
-                lastLoginAt: timestampFields.lastLoginAt,
-            });
+            await ctx.db.insert('users', userAttributes);
             return;
         }
 
-        const patch: Partial<Doc<'users'>> = {...userAttributes};
-        if (
-            timestampFields.lastActiveAt !== null &&
-            (user.lastActiveAt === null || timestampFields.lastActiveAt > user.lastActiveAt)
-        ) {
-            patch.lastActiveAt = timestampFields.lastActiveAt;
-        }
-        if (
-            timestampFields.lastLoginAt !== null &&
-            (user.lastLoginAt === null || timestampFields.lastLoginAt > user.lastLoginAt)
-        ) {
-            patch.lastLoginAt = timestampFields.lastLoginAt;
-        }
-        await ctx.db.patch(user._id, patch);
-    },
-});
-
-export const recordSessionFromClerk = internalMutation({
-    args: {
-        clerkUserId: v.string(),
-        lastActiveAt: v.number(),
-        lastLoginAt: v.number(),
-    },
-    handler: async (ctx, {clerkUserId, lastActiveAt, lastLoginAt}) => {
-        const user = await getUserByExternalId(ctx, clerkUserId);
-        if (user === null) {
-            console.warn(
-                `Can't record session, there is no user for Clerk user ID: ${clerkUserId}`,
-            );
-            return;
-        }
-
-        const patch: Partial<Doc<'users'>> = {};
-        if (user.lastActiveAt === null || lastActiveAt > user.lastActiveAt) {
-            patch.lastActiveAt = lastActiveAt;
-        }
-        if (user.lastLoginAt === null || lastLoginAt > user.lastLoginAt) {
-            patch.lastLoginAt = lastLoginAt;
-        }
-
-        if ('lastActiveAt' in patch || 'lastLoginAt' in patch) {
-            await ctx.db.patch(user._id, patch);
-        }
+        await ctx.db.patch(user._id, userAttributes);
     },
 });
 
@@ -146,12 +81,5 @@ function buildClerkUserAttributes(data: UserJSON) {
                 ? data.public_metadata.notionUserId
                 : undefined,
         isDeleted: false,
-    };
-}
-
-function buildClerkTimestampFields(data: Pick<UserJSON, 'last_active_at' | 'last_sign_in_at'>) {
-    return {
-        lastActiveAt: clerkTimestamp(data.last_active_at),
-        lastLoginAt: clerkTimestamp(data.last_sign_in_at),
     };
 }

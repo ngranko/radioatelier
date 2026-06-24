@@ -72,7 +72,10 @@ export async function patchObjectRecords(
     target: ObjectTarget,
     patch: ObjectRecordPatch,
 ) {
-    const {objectPatch, mapPointPatch, markerPatch} = splitObjectRecordPatch(patch);
+    const patches = splitObjectRecordPatch(patch);
+    const objectPatch = filterChangedPatch(target.object, patches.objectPatch);
+    const mapPointPatch = filterChangedPatch(target.mapPoint, patches.mapPointPatch);
+    const markerPatch = filterChangedPatch(target.marker, patches.markerPatch);
     if (hasKeys(objectPatch)) {
         await ctx.db.patch('objects', target.object._id, objectPatch);
     }
@@ -106,6 +109,17 @@ export function splitObjectRecordPatch(patch: ObjectRecordPatch) {
     };
 }
 
+export function filterChangedPatch<T extends object>(record: object, patch: T): T {
+    const result: Partial<Record<keyof T, unknown>> = {};
+    const source = record as Record<keyof T, unknown>;
+    for (const key of Object.keys(patch) as (keyof T)[]) {
+        if (!arePatchValuesEqual(source[key], patch[key])) {
+            result[key] = patch[key];
+        }
+    }
+    return result as T;
+}
+
 function pickPresent<K extends keyof ObjectRecordPatch>(
     patch: ObjectRecordPatch,
     keys: readonly K[],
@@ -121,6 +135,19 @@ function pickPresent<K extends keyof ObjectRecordPatch>(
 
 function hasKeys(patch: object) {
     return Object.keys(patch).length > 0;
+}
+
+function arePatchValuesEqual(current: unknown, next: unknown) {
+    if (Array.isArray(current) && Array.isArray(next)) {
+        return haveSameItems(current, next);
+    }
+    return current === next;
+}
+
+function haveSameItems(left: unknown[], right: unknown[]) {
+    const leftItems = new Set(left);
+    const rightItems = new Set(right);
+    return leftItems.size === rightItems.size && [...leftItems].every(item => rightItems.has(item));
 }
 
 export async function loadObjectTarget(

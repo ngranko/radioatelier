@@ -1,9 +1,8 @@
-import type {SessionJSON, WebhookEvent} from '@clerk/backend';
+import type {WebhookEvent} from '@clerk/backend';
 import {httpRouter} from 'convex/server';
 import {Webhook} from 'svix';
 import {internal} from './_generated/api';
 import {httpAction} from './_generated/server';
-import {clerkTimestamp} from './helpers/clerkTimestamps';
 import {getNotionWebhookVerificationToken} from './notion/config';
 import {verifyNotionWebhookSignature} from './notion/webhooks';
 
@@ -32,22 +31,6 @@ http.route({
                     return new Response('Invalid event data', {status: 400});
                 }
                 await ctx.runMutation(internal.users.deleteFromClerk, {clerkUserId});
-                break;
-            }
-            case 'session.created': {
-                const session = event.data as SessionJSON;
-                const clerkUserId = session.user_id;
-                const lastLoginAt = clerkTimestamp(session.created_at);
-                const lastActiveAt = clerkTimestamp(session.last_active_at) ?? lastLoginAt;
-                if (!clerkUserId || lastLoginAt === null || lastActiveAt === null) {
-                    console.error('Received session.created event without required session data');
-                    return new Response('Invalid event data', {status: 400});
-                }
-                await ctx.runMutation(internal.users.recordSessionFromClerk, {
-                    clerkUserId,
-                    lastActiveAt,
-                    lastLoginAt,
-                });
                 break;
             }
             default:
