@@ -72,7 +72,7 @@ export const backfillEligibleObjectsPage = action({
         const syncResult =
             page.page.length > 0
                 ? ((await ctx.runAction(
-                      internal.notionSync.outbound.enqueueOutboundObjectSyncBatch,
+                      internal.notionSync.outbound.enqueueOutboundObjectSyncBatchLenient,
                       {
                           objectIds: page.page,
                       },

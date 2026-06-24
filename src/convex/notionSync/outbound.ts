@@ -41,6 +41,15 @@ export const enqueueOutboundObjectSyncBatch = internalAction({
     },
 });
 
+export const enqueueOutboundObjectSyncBatchLenient = internalAction({
+    args: {
+        objectIds: v.array(v.id('objects')),
+    },
+    handler: async (ctx, {objectIds}) => {
+        return await performOutboundObjectSyncBatchLenient(ctx, objectIds);
+    },
+});
+
 export const archiveDeletedObjectPage = internalAction({
     args: {
         objectId: v.id('objects'),
@@ -91,6 +100,25 @@ export async function performOutboundObjectSync(
 }
 
 export async function performOutboundObjectSyncBatch(
+    ctx: ActionCtx,
+    objectIds: Id<'objects'>[],
+): Promise<OutboundBatchResult> {
+    const result: OutboundBatchResult = {synced: 0, skipped: 0, failed: 0};
+    const uniqueObjectIds = [...new Set(objectIds)];
+
+    for (const objectId of uniqueObjectIds) {
+        const notionPageId = await performOutboundObjectSync(ctx, objectId);
+        if (notionPageId) {
+            result.synced += 1;
+        } else {
+            result.skipped += 1;
+        }
+    }
+
+    return result;
+}
+
+export async function performOutboundObjectSyncBatchLenient(
     ctx: ActionCtx,
     objectIds: Id<'objects'>[],
 ): Promise<OutboundBatchResult> {

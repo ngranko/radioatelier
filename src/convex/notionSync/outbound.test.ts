@@ -4,7 +4,11 @@ import type {ActionCtx} from '../_generated/server';
 import {createPage, retrieveDataSource, retrievePage, updatePage} from '../notion/client';
 import {readNotionPageFields} from '../notion/fields';
 import type {NotionDataSource, NotionPage} from '../notion/types';
-import {performOutboundObjectSync, performOutboundObjectSyncBatch} from './outbound';
+import {
+    performOutboundObjectSync,
+    performOutboundObjectSyncBatch,
+    performOutboundObjectSyncBatchLenient,
+} from './outbound';
 import {computeSyncHash} from './reconcile';
 import type {ObjectSyncSnapshot} from './snapshot';
 import type {AppSyncFields} from './types';
@@ -174,7 +178,33 @@ describe('performOutboundObjectSync', () => {
         });
     });
 
-    it('continues batch sync when one object fails to create in Notion', async () => {
+    it('keeps strict batch failures visible to existing callers', async () => {
+        vi.mocked(createPage)
+            .mockResolvedValueOnce({id: 'page-1', last_edited_time: editedTime} as NotionPage)
+            .mockRejectedValueOnce(new Error('Notion rejected object-2'));
+        const {ctx, runMutation} = makeBatchCtx({
+            'object-1': makeSnapshot({objectId: 'object-1' as Id<'objects'>}),
+            'object-2': makeSnapshot({objectId: 'object-2' as Id<'objects'>}),
+            'object-3': makeSnapshot({objectId: 'object-3' as Id<'objects'>}),
+        });
+
+        await expect(
+            performOutboundObjectSyncBatch(ctx, [
+                'object-1',
+                'object-2',
+                'object-3',
+            ] as Id<'objects'>[]),
+        ).rejects.toThrow('Notion rejected object-2');
+
+        expect(createPage).toHaveBeenCalledTimes(2);
+        expect(runMutation).toHaveBeenCalledTimes(2);
+        expect(runMutation.mock.calls[1][1]).toMatchObject({
+            objectId: 'object-2',
+            message: 'Notion rejected object-2',
+        });
+    });
+
+    it('continues lenient batch sync when one object fails to create in Notion', async () => {
         vi.mocked(createPage)
             .mockResolvedValueOnce({id: 'page-1', last_edited_time: editedTime} as NotionPage)
             .mockRejectedValueOnce(new Error('Notion rejected object-2'))
@@ -185,7 +215,7 @@ describe('performOutboundObjectSync', () => {
             'object-3': makeSnapshot({objectId: 'object-3' as Id<'objects'>}),
         });
 
-        const result = await performOutboundObjectSyncBatch(ctx, [
+        const result = await performOutboundObjectSyncBatchLenient(ctx, [
             'object-1',
             'object-2',
             'object-3',
