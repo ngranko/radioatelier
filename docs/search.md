@@ -31,7 +31,13 @@ searchResultsList.svelte → SearchPageSource callback
 
 `searchPreview.svelte` calls `api.search.preview` whenever `searchState.query`, `lat`, and `lng` are set. It hides while an object details overlay is open (`objectDetailsOverlay.detailsId`).
 
-Selecting a preview item centers the map (`setCenter`) and, for Google results, navigates to `/point?lat=&lng=&placeId=`.
+Selecting a preview item calls `focusDetailsTarget` (same helper as the details overlay — zooms in when below `FOCUS_MIN_ZOOM`, then shifts center west for the overlay panel). Then:
+
+- **Existing list marker** — triggers the marker's `onClick` (opens object details).
+- **Known object id, no marker yet** — `showLoadingDetailsOverlay` + navigate to `/object/[id]`.
+- **Google / coordinate hit without id** — upsert into `searchPointList`, show loading overlay, navigate to `/point?lat=&lng=&placeId=`.
+
+Full results items (`searchResultsItem.svelte`) also call `focusDetailsTarget`, then fire the marker click when the result id is already on the map.
 
 ### Full results panel
 

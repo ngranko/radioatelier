@@ -88,7 +88,7 @@ When the details overlay opens for a marker, the map recenters so the pin sits i
 - `marker.svelte` calls `focusDetailsTarget` when `objectDetailsOverlay.detailsId` matches the marker.
 - `map.svelte` registers `onMarkerShown: focusDetailsMarker` on `MarkerManager` so share/deep-link pages focus the correct marker once it enters the viewport.
 
-Search result selection uses `setCenter`, which always zooms to `FOCUS_ZOOM` (15) without the overlay offset.
+Search result selection (`searchPreviewItem.svelte`, `searchResultsItem.svelte`) uses the same `focusDetailsTarget` helper as overlay focus — conditional zoom to `FOCUS_ZOOM` (15) when below `FOCUS_MIN_ZOOM` (13), plus the westward overlay offset when enough map width remains beside the panel.
 
 ## Marker styling on the map
 
