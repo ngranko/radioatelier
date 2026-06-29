@@ -54,7 +54,7 @@ An archive of urban artifacts — old signs, plaques, mosaics, and other details
 -   **Category settings** — Per-user marker color, icon, and form-picker visibility ([docs/category-settings.md](docs/category-settings.md))
 -   **Search** — Unified local (Typesense) and Google Places search with preview dropdown and tabbed results ([docs/search.md](docs/search.md))
 -   **Notion sync** — Bidirectional sync between app objects and a Notion database ([docs/notion-sync.md](docs/notion-sync.md))
--   **Data import** — CSV import to migrate data from other sources
+-   **Data import** — CSV import to migrate data from other sources ([docs/import.md](docs/import.md))
 -   **User accounts** — Clerk authentication, role-based access, personal (private) tags and visited markers tracking
 
 ## Documentation
@@ -69,3 +69,5 @@ An archive of urban artifacts — old signs, plaques, mosaics, and other details
 | [docs/search.md](docs/search.md) | Local + Google search actions and UI flow |
 | [docs/street-view.md](docs/street-view.md) | Panorama, minimap sync, lookup caching |
 | [docs/testing.md](docs/testing.md) | Vitest commands, test layout, adding tests |
+| [docs/import.md](docs/import.md) | CSV upload, column mapping, batch import, Notion enqueue |
+| [docs/collection-access-control.md](docs/collection-access-control.md) | Future collection-based marker access design |
