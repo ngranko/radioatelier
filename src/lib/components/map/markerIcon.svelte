@@ -8,7 +8,7 @@
 
     let {icon, className = ''}: Props = $props();
 
-    const Icon = icon;
+    const Icon = $derived(icon);
     const markerIconSize = 14;
 </script>
 
