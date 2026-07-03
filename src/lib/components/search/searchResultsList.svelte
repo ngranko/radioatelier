@@ -14,7 +14,13 @@
         isActive,
         source,
         sourceName,
-    }: {isActive: boolean; source: SearchPageSource; sourceName: string} = $props();
+        emptyAction,
+    }: {
+        isActive: boolean;
+        source: SearchPageSource;
+        sourceName: string;
+        emptyAction?: {label: string; onClick: () => void};
+    } = $props();
 
     let items = $state<SearchItem[]>([]);
     let hasMore = $state(false);
@@ -117,6 +123,11 @@
             <div class="flex flex-col items-center gap-2 px-4 py-8 text-center">
                 <ZoomOutIcon class="text-muted-foreground/50" />
                 <span class="text-muted-foreground text-sm">Ничего не найдено</span>
+                {#if emptyAction}
+                    <Button variant="outline" size="sm" class="mt-1" onclick={emptyAction.onClick}>
+                        {emptyAction.label}
+                    </Button>
+                {/if}
             </div>
         {:else}
             <div class="divide-y divide-black/[0.04] dark:divide-white/[0.06]">

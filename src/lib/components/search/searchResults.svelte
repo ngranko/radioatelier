@@ -78,6 +78,10 @@
                         isActive={currentTab === 'local'}
                         source={localSource}
                         sourceName="Local"
+                        emptyAction={{
+                            label: 'Поискать в Google',
+                            onClick: () => (currentTab = 'google'),
+                        }}
                     />
                 {/key}
             </div>
