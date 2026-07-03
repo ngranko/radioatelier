@@ -83,13 +83,17 @@
     {#if displayUrl}
         <button
             type="button"
-            class="bg-muted block aspect-2/1 w-full border-none"
+            class="group bg-muted relative block aspect-2/1 w-full cursor-zoom-in border-none"
             onclick={handleViewerOpen}
             disabled={isUploading}
-            aria-label="Изображение"
+            aria-label="Открыть оригинал изображения"
             aria-busy={isUploading}
         >
-            <img class="h-full w-full object-cover" src={displayUrl} alt="Изображение" />
+            <img
+                class="h-full w-full object-cover transition-transform ease-out group-hover:scale-[1.03]"
+                src={displayUrl}
+                alt="Изображение"
+            />
         </button>
     {:else}
         <EmptyPlaceholder />
