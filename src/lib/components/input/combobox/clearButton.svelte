@@ -14,7 +14,7 @@
     size="icon"
     onclick={onClick}
     class="hover:bg-accent rounded-sm p-0.5"
-    aria-label="Clear"
+    aria-label="Очистить"
 >
     <XIcon class="size-4" />
 </Button>

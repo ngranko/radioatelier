@@ -283,8 +283,8 @@
         variant="ghost"
         size="icon"
         class="absolute top-1.5 left-1.5 z-20 size-7 rounded-lg bg-white/80 shadow-sm ring-1 ring-black/[0.06] backdrop-blur-sm hover:bg-white dark:bg-black/50 dark:ring-white/[0.08] dark:hover:bg-black/70"
-        aria-label={isMiniMapExpanded ? 'Collapse minimap' : 'Expand minimap'}
-        title={isMiniMapExpanded ? 'Collapse minimap' : 'Expand minimap'}
+        aria-label={isMiniMapExpanded ? 'Свернуть миникарту' : 'Развернуть миникарту'}
+        title={isMiniMapExpanded ? 'Свернуть миникарту' : 'Развернуть миникарту'}
         onclick={toggleMiniMapSize}
     >
         {#if isMiniMapExpanded}

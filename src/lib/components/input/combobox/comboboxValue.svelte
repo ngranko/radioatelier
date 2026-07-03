@@ -32,7 +32,7 @@
                 <button
                     type="button"
                     onclick={() => onChange(option)}
-                    aria-label="Remove {option[labelField]}"
+                    aria-label="Убрать {option[labelField]}"
                     class="hover:bg-accent rounded-sm p-0.5"
                 >
                     <XIcon class="size-3" />

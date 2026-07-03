@@ -10,7 +10,7 @@
 
 <button
     type="button"
-    aria-label="Close object details"
+    aria-label="Закрыть карточку точки"
     class="fixed inset-0 z-1 bg-transparent"
     class:pointer-events-none={mapState.streetViewVisible}
     onclick={onRequestClose}
