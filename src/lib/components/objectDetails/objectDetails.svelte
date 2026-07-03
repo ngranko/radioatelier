@@ -1,47 +1,24 @@
 <script lang="ts">
-    import {fade} from 'svelte/transition';
     import {onMount} from 'svelte';
-    import type {
-        LooseObject,
-        Object as ObjectType,
-        PointPreviewDetails,
-    } from '$lib/interfaces/object';
-    import ViewModeSkeleton from '$lib/components/objectDetails/viewMode/viewModeSkeleton.svelte';
+    import type {LooseObject, PointPreviewDetails} from '$lib/interfaces/object';
     import {clearActiveMarker, deactivateMarker} from '$lib/state/activeMarker.svelte.ts';
-    import {Button} from '$lib/components/ui/button';
-    import {badgeVariants} from '$lib/components/ui/badge';
-    import {toast} from 'svelte-sonner';
-    import CloseButton from '$lib/components/objectDetails/closeButton.svelte';
     import Background from '$lib/components/objectDetails/background.svelte';
+    import CloseConfirmDialog from '$lib/components/objectDetails/closeConfirmDialog.svelte';
+    import DetailsContent from '$lib/components/objectDetails/detailsContent.svelte';
+    import DetailsHeader from '$lib/components/objectDetails/detailsHeader.svelte';
+    import DetailsSheet from '$lib/components/objectDetails/detailsSheet.svelte';
     import {mapState} from '$lib/state/map.svelte';
-    import {cn} from '$lib/utils.ts';
     import {
         objectDetailsOverlay,
         closeDetailsOverlay,
-        setOverlayMinimized,
+        setOverlayPosition,
     } from '$lib/state/objectDetailsOverlay.svelte';
     import type {Permissions} from '$lib/interfaces/permissions';
     import {goto} from '$app/navigation';
     import {useClerkContext} from 'svelte-clerk';
-    import ChevronUpIcon from '@lucide/svelte/icons/chevron-up';
-    import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
     import {getActiveSearchUrl} from '$lib/state/search.svelte';
     import {setCreateDraftPosition} from '$lib/state/createDraft.svelte';
-    import ObjectEdit from '$lib/components/objectDetails/objectEdit.svelte';
-    import PointCreate from '$lib/components/objectDetails/pointCreate.svelte';
-    import PointPreview from '$lib/components/objectDetails/pointPreview.svelte';
-    import ViewMode from '$lib/components/objectDetails/viewMode/viewMode.svelte';
     import type {ObjectDetailsOverlayMode} from '$lib/state/objectDetailsOverlay.svelte';
-    import {
-        Root as AlertDialogRoot,
-        Content,
-        Header,
-        Title,
-        Description,
-        Footer,
-        Cancel,
-        Action,
-    } from '$lib/components/ui/alert-dialog';
     import {registerEscapeCloseHandler} from '$lib/utils/escapeClose';
 
     interface Props {
@@ -72,16 +49,7 @@
     );
 
     function handleMinimizeClick() {
-        setOverlayMinimized(!objectDetailsOverlay.isMinimized);
-    }
-
-    async function copyInternalId(text: string) {
-        try {
-            await navigator.clipboard.writeText(text);
-            toast.success('ID скопирован');
-        } catch {
-            toast.error('Не удалось скопировать');
-        }
+        setOverlayPosition(objectDetailsOverlay.position === 'full' ? 'minimized' : 'full');
     }
 
     function handleClose() {
@@ -138,83 +106,28 @@
 </script>
 
 <Background onRequestClose={requestClose} />
-<AlertDialogRoot bind:open={isCloseConfirmOpen}>
-    <Content>
-        <Header>
-            <Title>Вы действительно хотите выйти из редактирования точки?</Title>
-            <Description>Изменения не будут сохранены</Description>
-        </Header>
-        <Footer>
-            <Cancel>Отменить</Cancel>
-            <Action class="bg-destructive hover:bg-destructive/70" onclick={handleClose}>
-                Закрыть
-            </Action>
-        </Footer>
-    </Content>
-</AlertDialogRoot>
-<aside
-    class={cn([
-        'bg-background absolute bottom-0 z-3 m-2 flex w-[calc(100dvw-8px*2)] max-w-100 flex-col rounded-lg transition-[height]',
-        {
-            'h-14 overflow-hidden': objectDetailsOverlay.isMinimized,
-            'h-[calc(100dvh-8px*2)]': !objectDetailsOverlay.isMinimized,
-        },
-    ])}
->
-    <section class="flex items-center gap-1 border-b p-3">
-        <div class="mr-2 flex min-w-0 flex-1 items-center gap-2">
-            <div class="flex min-w-0 flex-1 items-baseline gap-2">
-                {#if initialValues?.internalId}
-                    <button
-                        type="button"
-                        class={cn(
-                            badgeVariants({variant: 'outline'}),
-                            'hover:bg-accent hover:text-accent-foreground shrink-0 font-mono text-xs tracking-wider',
-                        )}
-                        title="Нажмите, чтобы скопировать"
-                        onclick={() => copyInternalId(initialValues.internalId ?? '')}
-                    >
-                        {initialValues.internalId}
-                    </button>
-                {/if}
-                {#if objectDetailsOverlay.isMinimized}
-                    <span
-                        class="text-foreground block min-w-0 flex-1 overflow-hidden text-nowrap text-ellipsis transition-colors"
-                    >
-                        {initialValues?.name ?? 'Новый маркер'}
-                    </span>
-                {/if}
-            </div>
-        </div>
-        <Button variant="ghost" size="icon" class="h-8 w-8 shrink-0" onclick={handleMinimizeClick}>
-            {#if objectDetailsOverlay.isMinimized}
-                <ChevronUpIcon class="stroke-3" />
-            {:else}
-                <ChevronDownIcon class="stroke-3" />
-            {/if}
-        </Button>
-        <CloseButton onRequestClose={requestClose} />
-    </section>
-    <div class="relative flex-1 overflow-hidden">
-        <div class="absolute inset-0" in:fade={{duration: 150}} out:fade={{duration: 150}}>
-            {#if objectDetailsOverlay.isLoading}
-                <ViewModeSkeleton />
-            {:else if resolvedMode === 'objectEdit' && resolvedInitialValues.id}
-                <ObjectEdit
-                    initialValues={resolvedInitialValues as ObjectType}
-                    {permissions}
-                    {registerCloseConfirmationCheck}
-                />
-            {:else if resolvedMode === 'pointPreview' && resolvedPointDetails}
-                <PointPreview details={resolvedPointDetails} />
-            {:else if resolvedMode === 'pointCreate'}
-                <PointCreate
-                    initialValues={resolvedInitialValues}
-                    {registerCloseConfirmationCheck}
-                />
-            {:else}
-                <ViewMode initialValues={resolvedInitialValues} {permissions} />
-            {/if}
-        </div>
-    </div>
-</aside>
+<CloseConfirmDialog bind:open={isCloseConfirmOpen} onConfirmClose={handleClose} />
+<DetailsSheet>
+    {#snippet header(sheet)}
+        <DetailsHeader
+            initialValues={resolvedInitialValues}
+            isDragging={sheet.isDragging}
+            isMinimized={objectDetailsOverlay.isMinimized}
+            position={objectDetailsOverlay.position}
+            onDragCancel={sheet.onDragCancel}
+            onDragEnd={sheet.onDragEnd}
+            onDragMove={sheet.onDragMove}
+            onDragStart={sheet.onDragStart}
+            onRequestClose={requestClose}
+            onTogglePosition={handleMinimizeClick}
+        />
+    {/snippet}
+    <DetailsContent
+        initialValues={resolvedInitialValues}
+        isLoading={objectDetailsOverlay.isLoading}
+        mode={resolvedMode}
+        {permissions}
+        pointDetails={resolvedPointDetails}
+        {registerCloseConfirmationCheck}
+    />
+</DetailsSheet>

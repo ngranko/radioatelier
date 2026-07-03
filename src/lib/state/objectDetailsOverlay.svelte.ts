@@ -3,9 +3,11 @@ import {untrack} from 'svelte';
 
 export type ObjectDetailsOverlayMode = 'objectView' | 'objectEdit' | 'pointPreview' | 'pointCreate';
 
+export type ObjectDetailsOverlayPosition = 'minimized' | 'peek' | 'full';
+
 interface ObjectDetailsOverlay {
     isOpen: boolean;
-    isMinimized: boolean;
+    position: ObjectDetailsOverlayPosition;
     isLoading: boolean;
     isAddressLoading: boolean;
     detailsId: string;
@@ -17,7 +19,7 @@ interface ObjectDetailsOverlay {
 function defaultState(): ObjectDetailsOverlay {
     return {
         isOpen: false,
-        isMinimized: false,
+        position: 'full',
         isLoading: false,
         isAddressLoading: false,
         detailsId: '',
@@ -36,7 +38,10 @@ export const objectDetailsOverlay = {
         return overlay.isOpen;
     },
     get isMinimized() {
-        return overlay.isMinimized;
+        return overlay.position === 'minimized';
+    },
+    get position() {
+        return overlay.position;
     },
     get isLoading() {
         return overlay.isLoading;
@@ -62,7 +67,7 @@ function transition(next: Partial<ObjectDetailsOverlay>) {
     const nextState = {...defaultState(), ...next};
 
     overlay.isOpen = nextState.isOpen;
-    overlay.isMinimized = nextState.isMinimized;
+    overlay.position = nextState.position;
     overlay.isLoading = nextState.isLoading;
     overlay.isAddressLoading = nextState.isAddressLoading;
     overlay.detailsId = nextState.detailsId;
@@ -79,7 +84,7 @@ export function showObjectDetailsOverlay(id: string, initialValues?: Object) {
     const current = untrack(() => ({
         details: overlay.details,
         isAddressLoading: overlay.isAddressLoading,
-        isMinimized: overlay.isMinimized,
+        position: overlay.position,
         isOpen: overlay.isOpen,
         mode: overlay.mode,
     }));
@@ -88,7 +93,7 @@ export function showObjectDetailsOverlay(id: string, initialValues?: Object) {
         isOpen: true,
         detailsId: id,
         mode: current.isOpen ? current.mode : 'objectView',
-        isMinimized: current.isOpen ? current.isMinimized : false,
+        position: current.isOpen ? current.position : 'full',
         isAddressLoading: current.isOpen ? current.isAddressLoading : false,
         // Without fresh values the previously shown details stay visible
         // instead of flashing an empty overlay while the query re-runs.
@@ -143,7 +148,11 @@ export function returnToPointPreview() {
 }
 
 export function setOverlayMinimized(isMinimized: boolean) {
-    overlay.isMinimized = isMinimized;
+    overlay.position = isMinimized ? 'minimized' : 'full';
+}
+
+export function setOverlayPosition(position: ObjectDetailsOverlayPosition) {
+    overlay.position = position;
 }
 
 export function refreshOverlayDetails(details: Partial<LooseObject>) {

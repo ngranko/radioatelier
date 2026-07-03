@@ -8,7 +8,7 @@
     <Skeleton class="h-8 w-8 rounded" />
 </div>
 
-<div class="relative h-[calc(100vh-8px*2-57px*2)] space-y-3 overflow-x-hidden overflow-y-auto p-4">
+<div class="relative min-h-0 flex-1 space-y-3 overflow-x-hidden overflow-y-auto p-4">
     <!-- Cover image skeleton -->
     <div class="mb-3">
         <Skeleton class="aspect-2/1 w-full rounded-lg" />
