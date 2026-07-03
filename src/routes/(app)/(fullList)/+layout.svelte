@@ -7,6 +7,7 @@
     import {useQuery} from 'convex-svelte';
     import {useClerkContext} from 'svelte-clerk';
     import ObjectDetails from '$lib/components/objectDetails/objectDetails.svelte';
+    import FirstRunHint from '$lib/components/map/firstRunHint.svelte';
     import Marker from '$lib/components/map/marker.svelte';
     import type {Object as ObjectType} from '$lib/interfaces/object.ts';
     import {api} from '$convex/_generated/api.js';
@@ -33,11 +34,10 @@
 
     const ctx = useClerkContext();
 
-    const objects = useQuery(
-        api.markers.list,
-        () => (ctx.auth.userId ? {} : 'skip'),
-        () => ({initialData: []}),
-    );
+    // No initialData here: the first-run hint below must distinguish "no
+    // markers yet" from "marker list not loaded yet", and with initialData the
+    // query reports data=[] with isLoading=false before the server responds.
+    const objects = useQuery(api.markers.list, () => (ctx.auth.userId ? {} : 'skip'));
     const visitedObjectIds = useQuery(
         api.markers.listVisitedIds,
         () => (ctx.auth.userId ? {} : 'skip'),
@@ -103,6 +103,14 @@
 
     const showOverlay = $derived(
         objectDetailsOverlay.isOpen || (page.data.isServerRequest && disableOverlayIntro),
+    );
+
+    const showFirstRunHint = $derived(
+        mapState.isReady &&
+            Boolean(ctx.auth.userId) &&
+            objects.data !== undefined &&
+            !rawMarkerPoints.some(point => point.isOwner) &&
+            !showOverlay,
     );
 
     const isOwner = $derived(
@@ -176,6 +184,10 @@
 </script>
 
 {@render children?.()}
+
+{#if showFirstRunHint}
+    <FirstRunHint />
+{/if}
 
 {#if showOverlay}
     <div
