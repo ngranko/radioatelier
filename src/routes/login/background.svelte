@@ -8,7 +8,7 @@
     ></div>
 
     <div
-        class="absolute -inset-[15%] bg-[radial-gradient(closest-side_at_50%_50%,transparent_0%,oklch(0.98_0.005_260)_100%)] opacity-40 dark:bg-[radial-gradient(closest-side_at_50%_50%,transparent_0%,oklch(0.12_0.03_260)_100%)] dark:opacity-60"
+        class="absolute -inset-[15%] bg-[radial-gradient(closest-side_at_50%_50%,transparent_0%,var(--background)_100%)] opacity-40 dark:opacity-60"
     ></div>
 
     <svg
