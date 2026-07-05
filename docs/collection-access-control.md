@@ -1,5 +1,7 @@
 # Collection Access Control Plan
 
+> **Status:** design document for future work. The production marker list today uses `markers.list` + `markers.listVisitedIds` as documented in [map-architecture.md](./map-architecture.md).
+
 ## Context
 
 The current marker list is optimized around a compact `markers` table that stores one map-facing projection per object. This exists to avoid reading full object records for map rendering and should remain the canonical marker payload projection.
