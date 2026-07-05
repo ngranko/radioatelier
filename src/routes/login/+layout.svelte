@@ -14,8 +14,8 @@
 </script>
 
 <section
-    aria-label="Login"
-    class="relative flex min-h-screen items-center justify-center overflow-hidden bg-[oklch(0.985_0.005_260)] p-5 dark:bg-[oklch(0.12_0.03_260)]"
+    aria-label="Вход"
+    class="bg-background relative flex min-h-screen items-center justify-center overflow-hidden p-5"
 >
     <div class="absolute top-4 right-4 z-20">
         <ThemeSwitcher />

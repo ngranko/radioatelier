@@ -74,10 +74,10 @@
         onfocus={() => (isFocused = true)}
         onblur={() => (isFocused = false)}
         bind:value={val}
-        class="glass placeholder:text-muted-foreground/60 focus:ring-primary/25 h-10 w-full rounded-full border-none bg-white/80 pt-2 pr-[4.5rem]
+        class="glass placeholder:text-muted-foreground/60 focus:ring-primary/25 h-10 w-full rounded-full border-none bg-white/95 pt-2 pr-10
             pb-2 pl-9.5 text-sm shadow-sm transition-all
-            ease-out focus:bg-white/95 focus:shadow-md
-            dark:focus:bg-white/[0.12]"
+            ease-out focus:bg-white focus:shadow-md
+            dark:bg-neutral-800/90 dark:focus:bg-neutral-800"
     />
     {#if val}
         <div

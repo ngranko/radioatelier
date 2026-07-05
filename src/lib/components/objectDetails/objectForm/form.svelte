@@ -14,8 +14,11 @@
     import {Button} from '$lib/components/ui/button';
     import {Input} from '$lib/components/ui/input';
     import {Separator} from '$lib/components/ui/separator';
-    import {Checkbox} from '$lib/components/ui/checkbox';
     import {Textarea} from '$lib/components/ui/textarea';
+    import FlagToggle from '$lib/components/objectDetails/objectForm/flagToggle.svelte';
+    import UserCheckIcon from '@lucide/svelte/icons/user-check';
+    import GhostIcon from '@lucide/svelte/icons/ghost';
+    import LockOpenIcon from '@lucide/svelte/icons/lock-open';
     import {
         objectDetailsOverlay,
         returnToPointPreview,
@@ -47,7 +50,10 @@
     const client = useConvexClient();
 
     let {initialValues, registerCloseConfirmationCheck}: Props = $props();
+    // the form intentionally captures only the initial cover
+    // svelte-ignore state_referenced_locally
     let imageUrl = $state(initialValues.cover?.url);
+    // svelte-ignore state_referenced_locally
     let imagePreviewUrl = $state(initialValues.cover?.previewUrl);
 
     let lastAction = '';
@@ -227,7 +233,7 @@
     }
 </script>
 
-<form method="POST" action="?/save" use:enhance>
+<form method="POST" action="?/save" class="flex min-h-0 flex-1 flex-col" use:enhance>
     <div class="bg-muted/40 flex items-center justify-between gap-3 border-b px-4 py-2.5">
         <Button type="submit" disabled={$submitting} class="px-6 text-base">Сохранить</Button>
         <BackButton isConfirmationRequired={isTainted()} onClick={handleBack} />
@@ -236,7 +242,7 @@
             <DeleteButton disabled={$submitting} />
         {/if}
     </div>
-    <div class="h-[calc(100vh-8px*2-57px*2)] overflow-x-hidden overflow-y-auto p-4">
+    <div class="min-h-0 flex-1 overflow-x-hidden overflow-y-auto p-4">
         <FormField {form} name="cover" class="mb-6">
             <FormControl>
                 {#snippet children({props})}
@@ -277,39 +283,26 @@
 
             <Separator class="col-span-full mt-2" />
 
-            <FormField {form} name="isVisited" class="space-y-0">
-                <FormControl>
-                    {#snippet children({props})}
-                        <div class="flex items-center space-x-2">
-                            <Checkbox {...props} bind:checked={$formData.isVisited} />
-                            <FormLabel class="mb-0">посещена</FormLabel>
-                        </div>
-                    {/snippet}
-                </FormControl>
-                <FormFieldErrors />
-            </FormField>
-            <FormField {form} name="isRemoved" class="space-y-0">
-                <FormControl>
-                    {#snippet children({props})}
-                        <div class="flex items-center space-x-2">
-                            <Checkbox {...props} bind:checked={$formData.isRemoved} />
-                            <FormLabel class="mb-0">утрачена</FormLabel>
-                        </div>
-                    {/snippet}
-                </FormControl>
-                <FormFieldErrors />
-            </FormField>
-            <FormField {form} name="isPublic" class="space-y-0">
-                <FormControl>
-                    {#snippet children({props})}
-                        <div class="flex items-center space-x-2">
-                            <Checkbox {...props} bind:checked={$formData.isPublic} />
-                            <FormLabel class="mb-0">публичная</FormLabel>
-                        </div>
-                    {/snippet}
-                </FormControl>
-                <FormFieldErrors />
-            </FormField>
+            <div class="col-span-full flex flex-wrap gap-2">
+                <FlagToggle
+                    name="isVisited"
+                    label="посещена"
+                    icon={UserCheckIcon}
+                    bind:checked={$formData.isVisited}
+                />
+                <FlagToggle
+                    name="isRemoved"
+                    label="утрачена"
+                    icon={GhostIcon}
+                    bind:checked={$formData.isRemoved}
+                />
+                <FlagToggle
+                    name="isPublic"
+                    label="публичная"
+                    icon={LockOpenIcon}
+                    bind:checked={$formData.isPublic}
+                />
+            </div>
 
             <Separator class="col-span-full mt-2" />
 

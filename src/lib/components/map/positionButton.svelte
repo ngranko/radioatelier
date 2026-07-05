@@ -1,5 +1,6 @@
 <script lang="ts">
     import {mapState} from '$lib/state/map.svelte';
+    import {toast} from 'svelte-sonner';
     import NavigationIcon from '@lucide/svelte/icons/navigation';
 
     function goToLastPosition() {
@@ -9,6 +10,7 @@
         }
 
         if (position.lat === 0 && position.lng === 0) {
+            toast.info('Последняя позиция ещё не сохранена');
             return;
         }
 
@@ -22,7 +24,7 @@
 <button
     class="bg-map-control text-primary absolute right-2.5 bottom-18 z-1 flex w-10 items-center justify-center rounded-xs border-0 p-2.5 shadow-md"
     onclick={goToLastPosition}
-    aria-label="Go to last position"
+    aria-label="Перейти к последней позиции"
 >
     <NavigationIcon class="text-primary size-5 fill-current" />
 </button>

@@ -5,6 +5,7 @@
     import Address from './address.svelte';
     import Actions from './actions.svelte';
     import ImageUpload from '$lib/components/input/imageUpload/index.svelte';
+    import CategoryBadge from '$lib/components/categoryBadge.svelte';
     import type {Permissions} from '$lib/interfaces/permissions';
     import ExternalLinkIcon from '@lucide/svelte/icons/external-link';
 
@@ -26,7 +27,7 @@
     lng={initialValues.longitude != null ? String(initialValues.longitude) : ''}
     {permissions}
 />
-<div class="relative h-[calc(100vh-8px*2-57px*2)] space-y-3 overflow-x-hidden overflow-y-auto p-4">
+<div class="relative min-h-0 flex-1 space-y-3 overflow-x-hidden overflow-y-auto p-4">
     <div class="mb-3">
         <ImageUpload
             value={initialValues.cover?.id}
@@ -40,16 +41,23 @@
     </div>
     <div class={!initialValues.tags?.length && !initialValues.privateTags?.length ? 'mb-4' : ''}>
         <div class="flex items-center justify-between">
-            <div class="text-muted-foreground text-sm">
-                {initialValues.category?.name ?? ''}
-            </div>
+            {#if initialValues.category}
+                <CategoryBadge
+                    name={initialValues.category.name}
+                    categoryId={initialValues.category.id}
+                />
+            {:else}
+                <span></span>
+            {/if}
             <Flags
                 isPublic={initialValues.isPublic ?? false}
                 isVisited={initialValues.isVisited ?? false}
                 isRemoved={initialValues.isRemoved ?? false}
             />
         </div>
-        <h1 class="text-foreground text-2xl leading-tight font-semibold">{initialValues.name}</h1>
+        <h1 class="text-foreground text-2xl leading-tight font-semibold">
+            {initialValues.name}
+        </h1>
     </div>
     {#if initialValues.tags?.length || initialValues.privateTags?.length}
         <div class="mb-4">

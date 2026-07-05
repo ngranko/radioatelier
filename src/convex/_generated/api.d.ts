@@ -10,7 +10,6 @@
 
 import type * as categories from "../categories.js";
 import type * as crons from "../crons.js";
-import type * as helpers_clerkTimestamps from "../helpers/clerkTimestamps.js";
 import type * as helpers_geocode from "../helpers/geocode.js";
 import type * as helpers_importHelpers from "../helpers/importHelpers.js";
 import type * as helpers_objectAggregate from "../helpers/objectAggregate.js";
@@ -27,7 +26,6 @@ import type * as notion_config from "../notion/config.js";
 import type * as notion_fields from "../notion/fields.js";
 import type * as notion_types from "../notion/types.js";
 import type * as notion_webhooks from "../notion/webhooks.js";
-import type * as notionSync_backfill from "../notionSync/backfill.js";
 import type * as notionSync_discrepancyReport from "../notionSync/discrepancyReport.js";
 import type * as notionSync_discrepancyReportTypes from "../notionSync/discrepancyReportTypes.js";
 import type * as notionSync_identity from "../notionSync/identity.js";
@@ -66,7 +64,6 @@ import type {
 declare const fullApi: ApiFromModules<{
   categories: typeof categories;
   crons: typeof crons;
-  "helpers/clerkTimestamps": typeof helpers_clerkTimestamps;
   "helpers/geocode": typeof helpers_geocode;
   "helpers/importHelpers": typeof helpers_importHelpers;
   "helpers/objectAggregate": typeof helpers_objectAggregate;
@@ -83,7 +80,6 @@ declare const fullApi: ApiFromModules<{
   "notion/fields": typeof notion_fields;
   "notion/types": typeof notion_types;
   "notion/webhooks": typeof notion_webhooks;
-  "notionSync/backfill": typeof notionSync_backfill;
   "notionSync/discrepancyReport": typeof notionSync_discrepancyReport;
   "notionSync/discrepancyReportTypes": typeof notionSync_discrepancyReportTypes;
   "notionSync/identity": typeof notionSync_identity;

@@ -1,5 +1,6 @@
 <script lang="ts">
     import type {SearchItem} from '$lib/interfaces/object';
+    import CategoryBadge from '$lib/components/categoryBadge.svelte';
     import {SvglGoogleLogo} from '@selemondev/svgl-svelte';
     import {Button} from '$lib/components/ui/button';
 
@@ -51,9 +52,7 @@
             {/if}
         </div>
         {#if object.categoryName}
-            <div class="text-primary/80 truncate text-xs font-bold">
-                {object.categoryName}
-            </div>
+            <CategoryBadge name={object.categoryName} size="sm" class="max-w-full" />
         {/if}
         {#if object.name}
             <div class="truncate text-sm">{object.name}</div>

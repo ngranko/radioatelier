@@ -17,7 +17,6 @@
         "lint": "eslint --fix .",
         "test": "vitest run",
         "test:watch": "vitest",
-        "notion:backfill": "bun run scripts/notion/backfill.ts",
         "format": "prettier --plugin=prettier-plugin-svelte --plugin=prettier-plugin-organize-imports --plugin=prettier-plugin-tailwindcss --write ."
     },
     "devDependencies": {

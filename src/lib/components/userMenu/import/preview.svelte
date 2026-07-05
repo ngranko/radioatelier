@@ -1,6 +1,5 @@
 <script lang="ts">
     import {
-        type ImportMappings,
         type ImportMappingsForJob,
         ImportStepError,
         ImportStepProgress,
@@ -58,13 +57,17 @@
 
     type ImportFormInputs = z.infer<typeof schema>;
 
+    let isImportStarting = $state(false);
+
     const form = superForm<ImportFormInputs>(defaults(zod4(schema)), {
         SPA: true,
         validators: zod4Client(schema),
-        async onUpdate({form}) {
-            if (form.valid) {
-                await handleImport(form.data);
+        onSubmit: async () => {
+            const validation = await form.validateForm({update: true});
+            if (!validation.valid) {
+                return;
             }
+            await handleImport(validation.data);
         },
     });
 
@@ -85,12 +88,17 @@
         Object.values($formData as Record<string, unknown>).filter(isMappedField).length,
     );
 
-    async function handleImport(values: ImportMappings) {
+    async function handleImport(values: ImportFormInputs) {
+        if (isImportStarting || importState.provider?.isRunning() || importState.importJobId) {
+            return;
+        }
+        isImportStarting = true;
         const provider = initializeImportProvider(client);
         const mappings = toJobMappings(values);
         if (!mappings) {
             importState.globalError = 'Проверьте обязательные поля';
             importState.step = ImportStepError;
+            isImportStarting = false;
             return;
         }
         const rows = normalizeRows(importState.parsedRows, mappings, importState.hasHeader);
@@ -103,10 +111,11 @@
             importState.globalError =
                 error instanceof Error ? error.message : 'Не удалось начать импорт';
             importState.step = ImportStepError;
+            isImportStarting = false;
         }
     }
 
-    function toJobMappings(values: ImportMappings): ImportMappingsForJob | null {
+    function toJobMappings(values: ImportFormInputs): ImportMappingsForJob | null {
         if (values.coordinates === null || values.name === null || values.category === null) {
             return null;
         }
@@ -141,6 +150,6 @@
     </div>
     <DialogFooter class="bg-background gap-4 border-t pt-2">
         <DialogClose>Отменить</DialogClose>
-        <Button type="submit" disabled={$submitting}>Импортировать</Button>
+        <Button type="submit" disabled={$submitting || isImportStarting}>Импортировать</Button>
     </DialogFooter>
 </form>

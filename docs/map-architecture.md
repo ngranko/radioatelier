@@ -23,7 +23,27 @@ Key entry points:
 | Map shell | `src/lib/components/map/map.svelte` | Bootstraps provider + `MarkerManager` |
 | Global state | `src/lib/state/map.svelte.ts` | `mapState.provider`, `deckEnabled`, `streetViewVisible` |
 | Marker pipeline | `src/lib/services/map/markerManager.ts` | Add/update/remove markers, renderer mode |
-| Data feed | `src/routes/(app)/(fullList)/+layout.svelte` | Renders `<Marker>` per `api.markers.list` row |
+| Data feed | `src/routes/(app)/(fullList)/+layout.svelte` | Renders `<Marker>` per merged marker list row |
+
+## Marker list data feed
+
+The map marker catalog is loaded client-side from two Convex queries in `(fullList)/+layout.svelte`:
+
+| Query | Returns | Why split |
+| ----- | ------- | --------- |
+| `api.markers.list` | Owner private markers + all public markers | Stable catalog payload for map rendering |
+| `api.markers.listVisitedIds` | Flat list of visited object ids for the user | Visited toggles change often; isolating them avoids invalidating the full marker list |
+
+`markers.list` reads the compact `markers` table (not full `objects` rows):
+
+- Owner markers: index `byCreatedByIdAndIsPublic` with `isPublic: false`
+- Public markers: index `byIsPublic` with `isPublic: true`
+
+The layout merges visited state in a `$derived` block: each list item gets `isVisited` from a `Set` built from `listVisitedIds`. Marker list data is **not** SSR-prefetched (no server load for markers); authenticated clients subscribe via `useQuery` with `initialData: []`.
+
+When the user opens `/object/[id]` for an object that is not already in the catalog (e.g. a newly shared private object they can view), `getActiveListMarker()` injects a synthetic list entry so the pin still renders. Share-only deep links use the separate share marker path in `(app)/+layout.svelte` instead — see **Share markers** below.
+
+Future collection-based access control is planned in [collection-access-control.md](./collection-access-control.md); the current query shape above is the production behavior today.
 
 ## Provider abstraction
 
@@ -88,7 +108,7 @@ When the details overlay opens for a marker, the map recenters so the pin sits i
 - `marker.svelte` calls `focusDetailsTarget` when `objectDetailsOverlay.detailsId` matches the marker.
 - `map.svelte` registers `onMarkerShown: focusDetailsMarker` on `MarkerManager` so share/deep-link pages focus the correct marker once it enters the viewport.
 
-Search result selection uses `setCenter`, which always zooms to `FOCUS_ZOOM` (15) without the overlay offset.
+Search result selection (`searchPreviewItem.svelte`, `searchResultsItem.svelte`) uses the same `focusDetailsTarget` helper as overlay focus — conditional zoom to `FOCUS_ZOOM` (15) when below `FOCUS_MIN_ZOOM` (13), plus the westward overlay offset when enough map width remains beside the panel.
 
 ## Marker styling on the map
 

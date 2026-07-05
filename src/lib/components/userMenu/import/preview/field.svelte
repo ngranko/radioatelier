@@ -22,6 +22,8 @@
 
     let {form, field}: Props = $props();
 
+    // superForm stores are stable for the component's lifetime
+    // svelte-ignore state_referenced_locally
     let {form: formData, errors} = form;
 
     const optionLabels = $derived.by(() => {

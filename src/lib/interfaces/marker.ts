@@ -29,8 +29,8 @@ export interface MarkerListItem {
     id: Id<'objects'>;
     latitude: number;
     longitude: number;
+    categoryId: Id<'categories'>;
     isRemoved: boolean;
-    isVisited: boolean;
     isPublic: boolean;
     isOwner: boolean;
 }

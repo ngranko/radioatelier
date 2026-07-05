@@ -6,7 +6,8 @@
     import PrivateTagsSelect from '$lib/components/objectDetails/objectForm/privateTagsSelect.svelte';
     import {toast} from 'svelte-sonner';
     import {Button} from '$lib/components/ui/button';
-    import {Checkbox} from '$lib/components/ui/checkbox';
+    import FlagToggle from '$lib/components/objectDetails/objectForm/flagToggle.svelte';
+    import UserCheckIcon from '@lucide/svelte/icons/user-check';
     import {
         FormControl,
         FormDescription,
@@ -16,6 +17,7 @@
     } from '$lib/components/ui/form';
     import {returnToViewMode} from '$lib/state/objectDetailsOverlay.svelte';
     import ImageUpload from '$lib/components/input/imageUpload/index.svelte';
+    import CategoryBadge from '$lib/components/categoryBadge.svelte';
     import Flags from '$lib/components/objectDetails/viewMode/flags.svelte';
     import {Separator} from '$lib/components/ui/separator';
     import {Input} from '$lib/components/ui/input';
@@ -105,12 +107,12 @@
     }
 </script>
 
-<form method="POST" action="?/save" use:enhance>
+<form method="POST" action="?/save" class="flex min-h-0 flex-1 flex-col" use:enhance>
     <div class="bg-muted/40 flex items-center justify-between gap-3 border-b px-4 py-2.5">
         <Button type="submit" disabled={$submitting} class="px-6 text-base">Сохранить</Button>
         <BackButton isConfirmationRequired={isTainted()} onClick={handleBack} />
     </div>
-    <div class="h-[calc(100vh-8px*2-57px*2)] overflow-x-hidden overflow-y-auto p-4">
+    <div class="min-h-0 flex-1 overflow-x-hidden overflow-y-auto p-4">
         <div class="mb-3">
             <ImageUpload
                 value={initialValues.cover?.id}
@@ -123,7 +125,14 @@
             />
         </div>
         <div class="flex items-center justify-between">
-            <div class="text-muted-foreground text-sm">{initialValues.category?.name ?? ''}</div>
+            {#if initialValues.category}
+                <CategoryBadge
+                    name={initialValues.category.name}
+                    categoryId={initialValues.category.id}
+                />
+            {:else}
+                <span></span>
+            {/if}
             <Flags
                 isPublic={initialValues.isPublic ?? false}
                 isVisited={initialValues.isVisited ?? false}
@@ -154,26 +163,15 @@
         {/each}
 
         <div class="bg-muted/40 space-y-4 rounded-lg border p-4">
-            <FormField {form} name="isVisited">
-                <FormControl>
-                    {#snippet children({props})}
-                        <div class="flex items-center gap-3">
-                            <Checkbox
-                                {...props}
-                                id="isVisited"
-                                bind:checked={$formData.isVisited}
-                            />
-                            <div class="flex flex-col">
-                                <FormLabel class="mb-0">посещена</FormLabel>
-                                <FormDescription class="text-muted-foreground text-xs">
-                                    Отметка видна только вам
-                                </FormDescription>
-                            </div>
-                        </div>
-                    {/snippet}
-                </FormControl>
-                <FormFieldErrors />
-            </FormField>
+            <div class="flex flex-col items-start gap-1.5">
+                <FlagToggle
+                    name="isVisited"
+                    label="посещена"
+                    icon={UserCheckIcon}
+                    bind:checked={$formData.isVisited}
+                />
+                <span class="text-muted-foreground text-xs">Отметка видна только вам</span>
+            </div>
 
             <Separator />
 
