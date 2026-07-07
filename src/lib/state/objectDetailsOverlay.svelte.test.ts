@@ -6,7 +6,7 @@ import {
     objectDetailsOverlay,
     returnToViewMode,
     setOverlayAddressLoading,
-    setOverlayMinimized,
+    setOverlayPosition,
     showLoadingDetailsOverlay,
     showObjectDetailsOverlay,
     showPointCreateOverlay,
@@ -31,7 +31,7 @@ describe('objectDetailsOverlay transitions', () => {
 
     it('opening resets leftovers from the previous overlay', () => {
         showPointCreateOverlay('point-1', {name: 'Draft'}, pointDetails);
-        setOverlayMinimized(true);
+        setOverlayPosition('minimized');
         setOverlayAddressLoading(true);
 
         showLoadingDetailsOverlay('object-1');
@@ -55,7 +55,7 @@ describe('objectDetailsOverlay transitions', () => {
     it('keeps edit state when current object details refresh', () => {
         showObjectDetailsOverlay('object-1', {name: 'Plaque'} as never);
         enterEditMode();
-        setOverlayMinimized(true);
+        setOverlayPosition('minimized');
 
         showObjectDetailsOverlay('object-1', {name: 'Updated plaque'} as never);
 

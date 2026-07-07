@@ -147,10 +147,6 @@ export function returnToPointPreview() {
     overlay.mode = 'pointPreview';
 }
 
-export function setOverlayMinimized(isMinimized: boolean) {
-    overlay.position = isMinimized ? 'minimized' : 'full';
-}
-
 export function setOverlayPosition(position: ObjectDetailsOverlayPosition) {
     overlay.position = position;
 }

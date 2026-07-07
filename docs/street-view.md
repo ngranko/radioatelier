@@ -20,7 +20,7 @@ Flow:
 
 1. `resolveStreetViewLocation` queries `google.maps.StreetViewService` (30 m radius).
 2. `applyStreetViewLocation` sets pano or position on the map's `StreetViewPanorama`.
-3. `objectDetailsOverlay.isMinimized = true` so the details panel stays out of the way.
+3. `setOverlayPosition('minimized')` so the details panel stays out of the way.
 
 Components: `streetView.svelte` (panorama host), `streetViewOverlay.svelte` (close control), `streetViewMinimap.svelte` (position minimap).
 
