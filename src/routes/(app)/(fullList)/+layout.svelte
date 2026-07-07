@@ -209,7 +209,7 @@
 {/if}
 
 {#if showOverlay}
-    <div in:flyTransition out:slideFromLeft class="absolute right-0 bottom-0 left-0 z-3">
+    <div in:flyTransition out:slideFromLeft class="absolute right-0 bottom-0 left-0 z-40">
         <ObjectDetails
             initialValues={overlayValues}
             pointDetails={overlayPointDetails}
