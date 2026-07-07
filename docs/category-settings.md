@@ -38,6 +38,10 @@ The settings UI uses `ColorPicker`, `IconPicker`, and `MarkerPreview` (`src/lib/
 
 `categoriesState` (`src/lib/state/categories.svelte.ts`) is populated from `api.categories.list` in the app layout. The full-list layout reads `categoriesState.categories[point.categoryId]` when rendering map markers.
 
+## `CategoryBadge` component
+
+`src/lib/components/categoryBadge.svelte` renders a category's marker icon and optional name using merged styles from `categoriesState`. It accepts `categoryId` (preferred) or falls back to a name lookup — search results often carry only the name. Used in the object details header (minimized row, icon-only) and view mode title row.
+
 ## What `isHidden` does
 
 The settings checkbox is labeled "hide from list" (`categoryStyleEditor.svelte`). In code, `isHidden` only affects the category picker in object forms:

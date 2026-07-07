@@ -110,6 +110,29 @@ When the details overlay opens for a marker, the map recenters so the pin sits i
 
 Search result selection (`searchPreviewItem.svelte`, `searchResultsItem.svelte`) uses the same `focusDetailsTarget` helper as overlay focus — conditional zoom to `FOCUS_ZOOM` (15) when below `FOCUS_MIN_ZOOM` (13), plus the westward overlay offset when enough map width remains beside the panel.
 
+## Map controls
+
+Floating controls in `src/routes/(app)/+layout.svelte` (bottom-right stack):
+
+| Control | File | Behavior |
+| ------- | ---- | -------- |
+| Last position | `positionButton.svelte` | Reads `localStorage` key `lastPosition` (updated by geolocation polling in `geolocation.ts`). If unset or `{lat:0,lng:0}`, shows `toast.info` instead of panning. Otherwise zooms to 15 and centers. Distinct from `lastCenter`, which stores the map viewport on idle. |
+| Compass orientation | `orientationButton.svelte` | Shown only when `DeviceOrientationEvent` exists and either iOS permission API is present or `navigator.maxTouchPoints > 0`. Requests permission on first enable; denied/explicit tap failures show `toast.error`. Silent auto-enable on mount may fail on iOS (no user gesture) without surfacing a toast. |
+
+Controls use `--map-control*` CSS tokens from `src/styles/app.css` (`bg-map-control`, `text-map-control-active-foreground`, etc.) so they stay readable over the map in light and dark themes.
+
+## First-run onboarding
+
+`firstRunHint.svelte` shows a dismissible chip above the map: "Нажмите на карту, чтобы добавить точку". It appears in `(fullList)/+layout.svelte` when **all** of:
+
+- Map is ready (`mapState.isReady`)
+- User is signed in
+- Marker list has loaded (`objects.data !== undefined`)
+- User owns no markers yet (`!rawMarkerPoints.some(point => point.isOwner)`)
+- Details overlay is closed
+
+Dismissal persists in `localStorage` under `firstRunHintDismissed`. The component starts hidden and reads storage in `onMount` to avoid a flash for returning users.
+
 ## Marker styling on the map
 
 Archive marker color and icon come from the object's category, merged with per-user overrides from `api.categories.list`. See [category-settings.md](./category-settings.md).

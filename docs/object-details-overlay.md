@@ -17,14 +17,28 @@ State helpers: `showObjectDetailsOverlay`, `showPointPreviewOverlay`, `showPoint
 
 Mode transitions: `enterEditMode`, `returnToViewMode`, `returnToPointPreview`.
 
+Position helpers: `setOverlayPosition`, `setOverlayMinimized` (Street View still uses the boolean helper to collapse the sheet).
+
 ## State model
 
 Overlay state is a single `$state` object exposed through read-only getters on `objectDetailsOverlay`. All writes go through **transition functions** that merge partial updates onto a fresh default state, so opening a new overlay clears leftovers from the previous one (loading flags, point details, minimized state).
 
+### Sheet positions
+
+`ObjectDetailsOverlayPosition` adds a third height between minimized and full:
+
+| Position | Height | How to reach |
+| -------- | ------ | ------------ |
+| `minimized` | 56 px header only | Chevron button, drag snap, or Street View open |
+| `peek` | ~42% viewport | Drag snap |
+| `full` | Viewport minus 16 px margin | Default on open; chevron from minimized/peek |
+
+`isMinimized` is derived (`position === 'minimized'`). `setOverlayMinimized(true)` still sets `position` to `minimized`; Street View and the panorama close button use this path.
+
 Notable behaviors:
 
 - `showObjectDetailsOverlay` keeps the previous `details` when called without `initialValues`, avoiding a flash while Convex re-fetches.
-- When the overlay is already open, reopening the same object preserves `mode` and `isMinimized` (e.g. staying in edit mode after a refresh).
+- When the overlay is already open, reopening the same object preserves `mode` and `position` (e.g. staying in edit mode or peek height after a refresh).
 - `closeDetailsOverlay({ preserveDetails: true })` keeps `details` in memory for anonymous users who close the panel without losing SSR values.
 
 ## Route-driven vs client-driven
@@ -91,12 +105,37 @@ Closing the overlay (close button, backdrop, or Esc) runs through `requestClose`
 
 When a user opens `/object/[id]` for an object they **do not own** and that object is **not** in their marker list (`api.markers.list`), the full-list layout sets `sharedMarker` and renders a `source="share"` marker in the app layout. The share marker is cleared when the object joins the user's list or when the viewer is the owner (owners always use list markers, never share markers).
 
-## Overlay chrome
+## Component layout
 
-`objectDetails.svelte` handles minimize/close, Street View entry, and mode-specific child components. `isMinimized` collapses the panel (also set automatically when Street View opens). The header shows `internalId` as a copyable badge when present.
+`objectDetails.svelte` is a thin orchestrator; chrome and content live in dedicated modules:
+
+| Component | Role |
+| --------- | ---- |
+| `background.svelte` | Backdrop click → `requestClose` |
+| `closeConfirmDialog.svelte` | Unsaved-changes alert (edit/create taint check) |
+| `detailsSheet.svelte` | Bottom sheet shell, drag-to-resize, position snap |
+| `detailsHeader.svelte` | Drag handle, `internalId` badge, minimized title row, chevron/close |
+| `detailsContent.svelte` | Mode router → view/edit/preview/create children |
+
+### Sheet drag gestures
+
+`detailsSheet.svelte` exposes pointer handlers to the header via a snippet. Dragging the header resizes the sheet live; on release, height snaps to the nearest of `minimized`, `peek`, or `full`. Button clicks inside the header do not start a drag (`closest('button')` guard).
+
+### Header chrome
+
+- **Drag handle** — centered pill at the top of the header.
+- **`internalId`** — outline badge; click copies to clipboard (`toast` on success/failure).
+- **Minimized row** — when `position === 'minimized'`, shows `CategoryBadge` (icon only) and object name beside the id badge.
+- **Chevron** — from `full`, collapses to `minimized`; from `minimized` or `peek`, expands to `full` (`handleMinimizeClick` in `objectDetails.svelte`).
+
+### View mode cover image
+
+In `viewMode.svelte`, the cover uses `ImageUpload` in read-only mode (`disabled`). When a cover URL exists, the image is a `cursor-zoom-in` button that opens `ImageViewer` for the full-resolution `url` (hover scales the preview slightly). Upload/remove controls are hidden while disabled.
 
 ## Related docs
 
 - [street-view.md](./street-view.md) — opening panorama from object/point actions
-- [map-architecture.md](./map-architecture.md) — map click constraints, marker focus offset
+- [map-architecture.md](./map-architecture.md) — map click constraints, marker focus offset, first-run hint
 - [search.md](./search.md) — search → point preview flow
+- [category-settings.md](./category-settings.md) — `CategoryBadge` reads merged category styles
+

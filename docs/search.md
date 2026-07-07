@@ -48,6 +48,10 @@ Full results items (`searchResultsItem.svelte`) also call `focusDetailsTarget`, 
 
 Both tabs share `searchResultsList.svelte`, which handles initial load, append pagination, error states, and marker rendering.
 
+### Empty local results
+
+When the **Local** tab returns no items, `searchResultsList.svelte` shows a centered empty state with a "Поискать в Google" button. `searchResults.svelte` passes `emptyAction` only on the local tab; clicking it switches `currentTab` to `google` so users can retry the same query against Places without retyping.
+
 ## Map integration
 
 When a results tab is active, `searchResultsList.svelte`:
