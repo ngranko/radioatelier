@@ -1,6 +1,8 @@
 <script lang="ts">
     import {categoriesState} from '$lib/state/categories.svelte';
     import {selectedFilterCount, type FilterOption} from '$lib/state/markerFilter.svelte';
+    import {privateTagsState} from '$lib/state/privateTags.svelte';
+    import {tagsState} from '$lib/state/tags.svelte';
     import MarkerFilterPanel from './markerFilterPanel.svelte';
 
     // Categories are real (already loaded into categoriesState).
@@ -14,34 +16,9 @@
             })),
     );
 
-    // TODO(wire): replace these stubs with api.tags.list / api.privateTags.list.
-    const tags: FilterOption[] = [
-        'советское',
-        'модерн',
-        'конструктивизм',
-        'кириллица',
-        'металл',
-        'керамика',
-        'дореволюционное',
-        'неон',
-        'утрачено',
-        'ар-деко',
-        'мозаика',
-        'барельеф',
-        'агитация',
-        'герб',
-        'звезда',
-        'орнамент',
-        'шрифтовая',
-        'витраж',
-    ].map((name, index) => ({id: `stub-tag-${index}`, name}));
+    const tags = $derived<FilterOption[]>(tagsState.tags);
 
-    const privateTags: FilterOption[] = [
-        'надо снять заново',
-        'под угрозой сноса',
-        'мой район',
-        'избранное',
-    ].map((name, index) => ({id: `stub-private-${index}`, name}));
+    const privateTags = $derived<FilterOption[]>(privateTagsState.privateTags);
 
     // TODO(wire): replace with real visible-marker totals once filtering is implemented.
     const STUB_TOTAL = 137;
