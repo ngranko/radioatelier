@@ -4,12 +4,12 @@
     import CategoryBadge from '$lib/components/categoryBadge.svelte';
     import TaxonomySheet from '$lib/components/objectDetails/objectForm/taxonomySheet.svelte';
     import TagChip from '$lib/components/tagChip.svelte';
-    import {Skeleton} from '$lib/components/ui/skeleton';
-    import type {Option} from '$lib/interfaces/option';
     import {categoriesState} from '$lib/state/categories.svelte';
+    import {privateTagsState} from '$lib/state/privateTags.svelte';
+    import {tagsState} from '$lib/state/tags.svelte';
     import {cn} from '$lib/utils.js';
     import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
-    import {useConvexClient, useQuery} from 'convex-svelte';
+    import {useConvexClient} from 'convex-svelte';
 
     type Section = 'category' | 'tags' | 'privateTags';
 
@@ -35,18 +35,15 @@
 
     let isOpen = $state(false);
 
-    const tagsQuery = useQuery(api.tags.list);
-    const privateTagsQuery = useQuery(api.privateTags.list);
-
-    const byName = (a: Option, b: Option) => a.name.localeCompare(b.name);
     const categories = $derived(
         Object.values(categoriesState.categories)
             .filter(item => !item.isHidden)
-            .map(item => ({id: item.id, name: item.name}))
-            .sort(byName),
+            .map(item => ({id: item.id, name: item.name})),
     );
-    const tagOptions = $derived([...(tagsQuery.data ?? [])].sort(byName));
-    const privateTagOptions = $derived([...(privateTagsQuery.data ?? [])].sort(byName));
+    const tagOptions = $derived(tagsState.tags.map(tag => ({id: tag.id, name: tag.name})));
+    const privateTagOptions = $derived(
+        privateTagsState.privateTags.map(tag => ({id: tag.id, name: tag.name})),
+    );
 
     const selectedCategory = $derived(categories.find(item => item.id === category));
     const selectedTags = $derived(tagOptions.filter(item => tags.includes(item.id)));
@@ -56,8 +53,6 @@
     const isEmpty = $derived(
         !selectedCategory && selectedTags.length === 0 && selectedPrivateTags.length === 0,
     );
-
-    const isLoading = $derived(tagsQuery.isLoading || privateTagsQuery.isLoading);
 
     const creators: Record<Section, (name: string) => Promise<string>> = {
         category: name => client.mutation(api.categories.create, {name}),
@@ -91,9 +86,7 @@
         {#each selectedPrivateTags as tag (tag.id)}
             <TagChip name={tag.name} isPrivate />
         {/each}
-        {#if isLoading}
-            <Skeleton class="h-5 w-32 rounded-full" />
-        {:else if isEmpty}
+        {#if isEmpty}
             <span class="text-muted-foreground/40 text-base">Не выбраны</span>
         {/if}
     </span>

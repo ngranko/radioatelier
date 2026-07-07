@@ -27,17 +27,21 @@ function isMarkerIconKey(value: string): value is MarkerIconKey {
 }
 
 export function setCategories(categories: RawCategory[]) {
-    categoriesState.categories = categories.reduce(
-        (acc, item) => {
-            acc[item.id] = {
-                ...item,
-                markerColor: isMarkerColor(item.markerColor) ? item.markerColor : MARKER_COLORS[0],
-                markerIcon: isMarkerIconKey(item.markerIcon)
-                    ? item.markerIcon
-                    : MARKER_ICON_KEYS[0],
-            };
-            return acc;
-        },
-        {} as {[id: Id<'categories'>]: Category},
-    );
+    categoriesState.categories = categories
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .reduce(
+            (acc, item) => {
+                acc[item.id] = {
+                    ...item,
+                    markerColor: isMarkerColor(item.markerColor)
+                        ? item.markerColor
+                        : MARKER_COLORS[0],
+                    markerIcon: isMarkerIconKey(item.markerIcon)
+                        ? item.markerIcon
+                        : MARKER_ICON_KEYS[0],
+                };
+                return acc;
+            },
+            {} as {[id: Id<'categories'>]: Category},
+        );
 }
