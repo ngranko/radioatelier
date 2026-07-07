@@ -19,8 +19,10 @@
         setOverlayAddressLoading,
         showLoadingDetailsOverlay,
     } from '$lib/state/objectDetailsOverlay.svelte';
+    import {setPrivateTags} from '$lib/state/privateTags.svelte';
     import {hasSearchPointAt, searchPointList} from '$lib/state/searchPointList.svelte.ts';
     import {sharedMarker} from '$lib/state/sharedMarker.svelte.ts';
+    import {setTags} from '$lib/state/tags.svelte';
     import {buildPointUrl} from '$lib/utils/pointRoute.ts';
     import SearchIcon from '@lucide/svelte/icons/search';
     import SproutIcon from '@lucide/svelte/icons/sprout';
@@ -43,6 +45,8 @@
     const clerkCtx = useClerkContext();
 
     const categories = useQuery(api.categories.list, {}, () => ({initialData: data.categories}));
+    const tags = useQuery(api.tags.list, {}, () => ({initialData: data.tags}));
+    const privateTags = useQuery(api.privateTags.list, {}, () => ({initialData: data.privateTags}));
 
     // A point picked from search is already pinned by its own search marker, so
     // the draft marker would only stack a second pin on the same spot.
@@ -65,6 +69,8 @@
 
     $effect(() => {
         setCategories(categories.data ?? data.categories);
+        setTags(tags.data ?? data.tags);
+        setPrivateTags(privateTags.data ?? data.privateTags);
     });
 
     // The /point load geocodes the address server-side, so while that
