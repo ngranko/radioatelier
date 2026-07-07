@@ -30,6 +30,8 @@
     import {api} from '$convex/_generated/api';
     import {setCategories} from '$lib/state/categories.svelte';
     import {buildPointUrl} from '$lib/utils/pointRoute.ts';
+    import {setTags} from '$lib/state/tags.svelte';
+    import {setPrivateTags} from '$lib/state/privateTags.svelte';
 
     // this is needed to avoid deck.gl error
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
@@ -42,6 +44,8 @@
     const clerkCtx = useClerkContext();
 
     const categories = useQuery(api.categories.list, {}, () => ({initialData: data.categories}));
+    const tags = useQuery(api.tags.list, {}, () => ({initialData: data.tags}));
+    const privateTags = useQuery(api.privateTags.list, {}, () => ({initialData: data.privateTags}));
 
     function handleMapClick(location: Location) {
         if (!clerkCtx.auth.userId) {
@@ -56,6 +60,8 @@
 
     $effect(() => {
         setCategories(categories.data ?? data.categories);
+        setTags(tags.data ?? data.tags);
+        setPrivateTags(privateTags.data ?? data.privateTags);
     });
 
     // The /point load geocodes the address server-side, so while that

@@ -17,8 +17,7 @@
     const preparedCategories = $derived(
         Object.values(categoriesState.categories)
             .filter(item => !item.isHidden)
-            .map(item => ({id: item.id, name: item.name}))
-            .sort((a, b) => a.name.localeCompare(b.name)),
+            .map(item => ({id: item.id, name: item.name})),
     );
 
     // TODO: add an error state

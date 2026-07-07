@@ -193,7 +193,7 @@
     <div
         in:flyTransition
         out:fly={{x: -100, duration: 200, easing: cubicInOut}}
-        class="absolute right-0 bottom-0 left-0 z-3"
+        class="absolute right-0 bottom-0 left-0 z-40"
     >
         <ObjectDetails
             initialValues={overlayValues}
