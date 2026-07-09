@@ -58,8 +58,13 @@ function projectReleaseHeight(
         return height;
     }
 
-    const velocity = (currentSample.height - previousSample.height) / (currentSample.time - previousSample.time);
-    const projectedDelta = clamp(velocity * INERTIA_PROJECTION_MS, -MAX_INERTIA_DELTA, MAX_INERTIA_DELTA);
+    const velocity =
+        (currentSample.height - previousSample.height) / (currentSample.time - previousSample.time);
+    const projectedDelta = clamp(
+        velocity * INERTIA_PROJECTION_MS,
+        -MAX_INERTIA_DELTA,
+        MAX_INERTIA_DELTA,
+    );
 
     return height + projectedDelta;
 }

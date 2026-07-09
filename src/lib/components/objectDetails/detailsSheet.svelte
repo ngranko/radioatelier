@@ -1,9 +1,6 @@
 <script lang="ts">
     import type {Snippet} from 'svelte';
-    import {
-        objectDetailsOverlay,
-        setOverlayPosition,
-    } from '$lib/state/objectDetailsOverlay.svelte';
+    import {objectDetailsOverlay, setOverlayPosition} from '$lib/state/objectDetailsOverlay.svelte';
     import {cn} from '$lib/utils.ts';
     import {
         clampSheetHeight,
@@ -49,7 +46,10 @@
             return;
         }
 
-        const height = clampSheetHeight(dragStart.height + (dragStart.y - evt.clientY), window.innerHeight);
+        const height = clampSheetHeight(
+            dragStart.height + (dragStart.y - evt.clientY),
+            window.innerHeight,
+        );
         previousDragSample = currentDragSample;
         currentDragSample = {height, time: performance.now()};
         asideElement.style.height = `${height}px`;
