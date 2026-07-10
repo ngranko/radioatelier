@@ -40,16 +40,18 @@ function makeRepo(ids: string[], initiallyVisible: string[] = []) {
 function makeRenderer() {
     const shown: Marker[] = [];
     const hidden: Marker[] = [];
+    const refreshed: Marker[] = [];
     const renderer: MarkerRenderer = {
         ensureCreated: () => {},
         syncAll: () => {},
         show: marker => void shown.push(marker),
+        refresh: marker => void refreshed.push(marker),
         hide: marker => void hidden.push(marker),
         remove: () => {},
         applyState: () => {},
         destroy: () => {},
     };
-    return {renderer, shown, hidden};
+    return {renderer, shown, hidden, refreshed};
 }
 
 describe('VisibilityEngine', () => {
@@ -125,5 +127,18 @@ describe('VisibilityEngine', () => {
 
         expect(onShown).toHaveBeenCalledTimes(1);
         expect(onShown).toHaveBeenCalledWith('a', markers.get('a'));
+    });
+
+    it('refreshes markers that remain visible without notifying onShown', () => {
+        const {repo, markers} = makeRepo(['a', 'b'], ['a']);
+        const {renderer, refreshed} = makeRenderer();
+        const onShown = vi.fn();
+        const engine = new VisibilityEngine(repo, {chunkSize: 10, onShown}, renderer);
+
+        engine.updateVisibility(new Set(['a']));
+        flushAllFrames();
+
+        expect(refreshed).toEqual([markers.get('a')]);
+        expect(onShown).not.toHaveBeenCalled();
     });
 });

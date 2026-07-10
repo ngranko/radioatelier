@@ -43,6 +43,10 @@ export class DeckOverlayRenderer implements MarkerRenderer {
         // No-op; all markers rendered in one deck.gl layer
     }
 
+    public refresh(_marker: Marker): void {
+        // No-op; all markers rendered in one deck.gl layer
+    }
+
     public hide(_marker: Marker): void {
         // No-op; all markers rendered in one deck.gl layer
     }

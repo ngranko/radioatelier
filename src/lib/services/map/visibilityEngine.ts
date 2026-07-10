@@ -55,6 +55,8 @@ export class VisibilityEngine {
 
                 if (shouldBeVisible && !isVisible) {
                     this.show(id);
+                } else if (shouldBeVisible) {
+                    this.refresh(id);
                 } else if (!shouldBeVisible && isVisible) {
                     this.hide(id);
                 }
@@ -82,6 +84,15 @@ export class VisibilityEngine {
         this.renderer.show(marker);
         this.repo.markVisible(id);
         this.options.onShown?.(id, marker);
+    }
+
+    private refresh(id: MarkerId) {
+        const marker = this.repo.get(id);
+        if (!marker) {
+            return;
+        }
+
+        this.renderer.refresh(marker);
     }
 
     public hide(id: MarkerId) {
