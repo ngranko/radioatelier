@@ -1,8 +1,8 @@
-import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import type {LatLngLiteral, MapBounds, MapProvider} from '$lib/interfaces/map';
 import type {MarkerIcon} from '$lib/interfaces/marker';
-import {MarkerManager} from './markerManager';
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import type {Marker} from './marker';
+import {MarkerManager} from './markerManager';
 import type {MarkerRenderer} from './renderer/markerRenderer';
 
 let frames: FrameRequestCallback[] = [];
