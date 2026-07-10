@@ -185,7 +185,7 @@ export class MarkerManager {
         const visibleIds = this.viewportIndex.selectVisible(
             candidates,
             center,
-            this.options.maxVisibleMarkers,
+            this.isDeck ? candidates.length : this.options.maxVisibleMarkers,
         );
 
         this.visibilityEngine.updateVisibility(visibleIds, () => this.scheduler.complete());
