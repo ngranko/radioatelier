@@ -31,6 +31,7 @@ function makeRepo(ids: string[], initiallyVisible: string[] = []) {
         ids: () => [...markers.keys()],
         get: (id: string) => markers.get(id),
         isVisible: (id: string) => visible.has(id),
+        getVisibleIds: () => [...visible],
         markVisible: (id: string) => void visible.add(id),
         markHidden: (id: string) => void visible.delete(id),
     } as unknown as MarkerRepository;
