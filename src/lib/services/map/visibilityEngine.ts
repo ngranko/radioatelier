@@ -12,7 +12,6 @@ export interface VisibilityEngineOptions {
 
 export class VisibilityEngine {
     private suppressed = false;
-    private cancelActiveUpdate?: () => void;
 
     public constructor(
         private repo: MarkerRepository,
@@ -29,73 +28,50 @@ export class VisibilityEngine {
     }
 
     public updateVisibility(visibleIds: Set<string>, onComplete?: () => void) {
-        this.cancelActiveUpdate?.();
-
-        const markerIds = this.collectChanges(visibleIds);
+        const allMarkerIds = this.repo.ids();
         let currentIndex = 0;
-        let completed = false;
-
-        const complete = () => {
-            if (completed) {
-                return;
-            }
-            completed = true;
-            this.cancelActiveUpdate = undefined;
-            onComplete?.();
-        };
-        this.cancelActiveUpdate = complete;
 
         const processChunk = () => {
-            if (completed) {
-                return;
-            }
             if (this.suppressed) {
-                complete();
+                if (onComplete) {
+                    onComplete();
+                }
                 return;
             }
 
-            const endIndex = Math.min(currentIndex + this.options.chunkSize, markerIds.length);
+            const endIndex = Math.min(currentIndex + this.options.chunkSize, allMarkerIds.length);
 
             for (let i = currentIndex; i < endIndex; i++) {
                 if (this.suppressed) {
-                    complete();
+                    if (onComplete) {
+                        onComplete();
+                    }
                     return;
                 }
 
-                const id = markerIds[i];
+                const id = allMarkerIds[i];
                 const shouldBeVisible = visibleIds.has(id);
+                const isVisible = this.repo.isVisible(id);
 
-                if (shouldBeVisible) {
+                if (shouldBeVisible && !isVisible) {
                     this.show(id);
-                } else {
+                } else if (shouldBeVisible) {
+                    this.refresh(id);
+                } else if (!shouldBeVisible && isVisible) {
                     this.hide(id);
                 }
             }
 
             currentIndex = endIndex;
 
-            if (currentIndex < markerIds.length) {
+            if (currentIndex < allMarkerIds.length) {
                 requestAnimationFrame(processChunk);
-            } else {
-                complete();
+            } else if (onComplete) {
+                onComplete();
             }
         };
 
-        if (markerIds.length === 0) {
-            complete();
-        } else {
-            requestAnimationFrame(processChunk);
-        }
-    }
-
-    public cancelUpdate() {
-        this.cancelActiveUpdate?.();
-    }
-
-    private collectChanges(visibleIds: Set<string>): MarkerId[] {
-        const leaving = this.repo.getVisibleIds().filter(id => !visibleIds.has(id));
-        const entering = [...visibleIds].filter(id => !this.repo.isVisible(id));
-        return [...leaving, ...entering];
+        requestAnimationFrame(processChunk);
     }
 
     public show(id: MarkerId) {

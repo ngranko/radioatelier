@@ -126,7 +126,6 @@
         removeDragTimeout();
         clearTimeout(clickTimeout);
         clickTimeout = undefined;
-        mapState.markerManager?.cancelViewportUpdate();
     }
 
     function handleIdle() {

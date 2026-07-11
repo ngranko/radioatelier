@@ -31,7 +31,6 @@ function makeRepo(ids: string[], initiallyVisible: string[] = []) {
         ids: () => [...markers.keys()],
         get: (id: string) => markers.get(id),
         isVisible: (id: string) => visible.has(id),
-        getVisibleIds: () => [...visible],
         markVisible: (id: string) => void visible.add(id),
         markHidden: (id: string) => void visible.delete(id),
     } as unknown as MarkerRepository;
@@ -130,32 +129,16 @@ describe('VisibilityEngine', () => {
         expect(onShown).toHaveBeenCalledWith('a', markers.get('a'));
     });
 
-    it('does no renderer work for unchanged visibility', () => {
-        const {repo} = makeRepo(['a', 'b'], ['a']);
-        const {renderer, shown, hidden} = makeRenderer();
+    it('refreshes markers that remain visible without notifying onShown', () => {
+        const {repo, markers} = makeRepo(['a', 'b'], ['a']);
+        const {renderer, refreshed} = makeRenderer();
         const onShown = vi.fn();
         const engine = new VisibilityEngine(repo, {chunkSize: 10, onShown}, renderer);
 
         engine.updateVisibility(new Set(['a']));
         flushAllFrames();
 
-        expect(shown).toHaveLength(0);
-        expect(hidden).toHaveLength(0);
+        expect(refreshed).toEqual([markers.get('a')]);
         expect(onShown).not.toHaveBeenCalled();
-    });
-
-    it('cancels the remaining chunks of an active update', () => {
-        const {repo} = makeRepo(['a', 'b', 'c', 'd']);
-        const {renderer, shown} = makeRenderer();
-        const engine = new VisibilityEngine(repo, {chunkSize: 2}, renderer);
-        const onComplete = vi.fn();
-
-        engine.updateVisibility(new Set(['a', 'b', 'c', 'd']), onComplete);
-        flushFrame();
-        engine.cancelUpdate();
-        flushAllFrames();
-
-        expect(shown).toHaveLength(2);
-        expect(onComplete).toHaveBeenCalledTimes(1);
     });
 });
