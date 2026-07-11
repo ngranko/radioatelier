@@ -114,6 +114,11 @@ export class MarkerManager {
         this.scheduler.schedule();
     }
 
+    public cancelViewportUpdate() {
+        this.scheduler.cancelPending();
+        this.visibilityEngine.cancelUpdate();
+    }
+
     public disableMarkers() {
         this.scheduler.disable();
         this.visibilityEngine.setSuppressed(true);

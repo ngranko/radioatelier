@@ -3,6 +3,7 @@ export class UpdateScheduler {
     private shouldUpdate = false;
     private pendingViewportUpdate = false;
     private suppressUpdates = false;
+    private pendingTimer?: ReturnType<typeof setTimeout>;
 
     public constructor(private triggerFn: () => void) {
         //
@@ -13,10 +14,20 @@ export class UpdateScheduler {
             return;
         }
         this.pendingViewportUpdate = true;
-        setTimeout(() => {
+        this.pendingTimer = setTimeout(() => {
+            this.pendingTimer = undefined;
             this.pendingViewportUpdate = false;
             this.trigger();
         }, 0);
+    }
+
+    public cancelPending() {
+        if (this.pendingTimer !== undefined) {
+            clearTimeout(this.pendingTimer);
+            this.pendingTimer = undefined;
+        }
+        this.pendingViewportUpdate = false;
+        this.shouldUpdate = false;
     }
 
     private trigger() {

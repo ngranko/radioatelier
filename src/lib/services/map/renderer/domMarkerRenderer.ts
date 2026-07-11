@@ -50,11 +50,6 @@ export class DomMarkerRenderer implements MarkerRenderer {
         }, 200);
     }
 
-    public refresh(marker: Marker): void {
-        this.applyState(marker);
-        marker.show();
-    }
-
     public hide(marker: Marker): void {
         const element = marker.getHandle()?.getElement();
         if (element) {
