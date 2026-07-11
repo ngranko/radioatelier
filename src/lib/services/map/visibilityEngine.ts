@@ -110,6 +110,15 @@ export class VisibilityEngine {
         this.options.onShown?.(id, marker);
     }
 
+    private refresh(id: MarkerId) {
+        const marker = this.repo.get(id);
+        if (!marker) {
+            return;
+        }
+
+        this.renderer.refresh(marker);
+    }
+
     public hide(id: MarkerId) {
         this.repo.markHidden(id);
 

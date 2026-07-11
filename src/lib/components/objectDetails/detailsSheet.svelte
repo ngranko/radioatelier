@@ -1,11 +1,12 @@
 <script lang="ts">
     import type {Snippet} from 'svelte';
-    import {
-        objectDetailsOverlay,
-        setOverlayPosition,
-        type ObjectDetailsOverlayPosition,
-    } from '$lib/state/objectDetailsOverlay.svelte';
+    import {objectDetailsOverlay, setOverlayPosition} from '$lib/state/objectDetailsOverlay.svelte';
     import {cn} from '$lib/utils.ts';
+    import {
+        clampSheetHeight,
+        getSettledPosition,
+        type DragSample,
+    } from '$lib/components/objectDetails/sheetSnap';
 
     interface HeaderState {
         isDragging: boolean;
@@ -25,20 +26,8 @@
     let asideElement: HTMLElement | undefined = $state();
     let isDragging = $state(false);
     let dragStart: {y: number; height: number} | null = null;
-
-    const MINIMIZED_HEIGHT = 56;
-    const SHEET_MARGIN = 16;
-
-    function heightForPosition(position: ObjectDetailsOverlayPosition) {
-        switch (position) {
-            case 'minimized':
-                return MINIMIZED_HEIGHT;
-            case 'peek':
-                return Math.round(window.innerHeight * 0.42);
-            default:
-                return window.innerHeight - SHEET_MARGIN;
-        }
-    }
+    let previousDragSample: DragSample | null = null;
+    let currentDragSample: DragSample | null = null;
 
     function handleDragStart(evt: PointerEvent) {
         if (!asideElement || (evt.target as HTMLElement).closest('button')) {
@@ -46,6 +35,8 @@
         }
 
         dragStart = {y: evt.clientY, height: asideElement.offsetHeight};
+        previousDragSample = null;
+        currentDragSample = {height: dragStart.height, time: performance.now()};
         isDragging = true;
         (evt.currentTarget as HTMLElement).setPointerCapture(evt.pointerId);
     }
@@ -55,10 +46,12 @@
             return;
         }
 
-        const height = Math.min(
-            Math.max(dragStart.height + (dragStart.y - evt.clientY), MINIMIZED_HEIGHT),
-            window.innerHeight - SHEET_MARGIN,
+        const height = clampSheetHeight(
+            dragStart.height + (dragStart.y - evt.clientY),
+            window.innerHeight,
         );
+        previousDragSample = currentDragSample;
+        currentDragSample = {height, time: performance.now()};
         asideElement.style.height = `${height}px`;
     }
 
@@ -68,16 +61,17 @@
         }
 
         const height = asideElement.offsetHeight;
-        const positions: ObjectDetailsOverlayPosition[] = ['minimized', 'peek', 'full'];
-        const nearest = positions.reduce((best, position) =>
-            Math.abs(heightForPosition(position) - height) <
-            Math.abs(heightForPosition(best) - height)
-                ? position
-                : best,
+        const nearest = getSettledPosition(
+            height,
+            window.innerHeight,
+            previousDragSample,
+            currentDragSample,
         );
 
         asideElement.style.height = '';
         dragStart = null;
+        previousDragSample = null;
+        currentDragSample = null;
         isDragging = false;
         setOverlayPosition(nearest);
     }

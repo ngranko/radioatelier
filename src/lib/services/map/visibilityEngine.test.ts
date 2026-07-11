@@ -41,16 +41,18 @@ function makeRepo(ids: string[], initiallyVisible: string[] = []) {
 function makeRenderer() {
     const shown: Marker[] = [];
     const hidden: Marker[] = [];
+    const refreshed: Marker[] = [];
     const renderer: MarkerRenderer = {
         ensureCreated: () => {},
         syncAll: () => {},
         show: marker => void shown.push(marker),
+        refresh: marker => void refreshed.push(marker),
         hide: marker => void hidden.push(marker),
         remove: () => {},
         applyState: () => {},
         destroy: () => {},
     };
-    return {renderer, shown, hidden};
+    return {renderer, shown, hidden, refreshed};
 }
 
 describe('VisibilityEngine', () => {

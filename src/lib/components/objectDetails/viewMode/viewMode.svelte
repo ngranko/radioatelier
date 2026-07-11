@@ -20,6 +20,8 @@
         const char = str.charAt(0);
         return char >= '0' && char <= '9';
     }
+
+    const description = $derived(initialValues.description?.replace(/\\r\\n|\\n|\\r/g, '\n'));
 </script>
 
 <Actions
@@ -71,9 +73,9 @@
             country={initialValues.country}
         />
     {/if}
-    {#if initialValues.description}
+    {#if description}
         <p class="text-foreground/80 text-sm leading-relaxed whitespace-pre-line">
-            {initialValues.description}
+            {description}
         </p>
     {/if}
     {#if initialValues.installedPeriod || initialValues.removalPeriod}
