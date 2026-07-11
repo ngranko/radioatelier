@@ -41,10 +41,6 @@ export class HybridMarkerRenderer implements MarkerRenderer {
         this.rendererFor(marker).show(marker);
     }
 
-    public refresh(marker: Marker): void {
-        this.rendererFor(marker).refresh(marker);
-    }
-
     public hide(marker: Marker): void {
         this.rendererFor(marker).hide(marker);
     }
