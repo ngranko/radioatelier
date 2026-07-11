@@ -40,9 +40,7 @@ export class GoogleMarkerHandle implements MarkerHandle {
     }
 
     show(): void {
-        if (!this.marker.map) {
-            this.marker.map = this.map;
-        }
+        this.marker.map = this.map;
     }
 
     hide(): void {

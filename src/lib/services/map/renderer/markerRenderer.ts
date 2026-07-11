@@ -7,6 +7,8 @@ export interface MarkerRenderer {
 
     show(marker: Marker): void;
 
+    refresh(marker: Marker): void;
+
     hide(marker: Marker): void;
 
     remove(marker: Marker, onRemoved?: () => void): void;
