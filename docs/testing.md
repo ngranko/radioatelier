@@ -27,6 +27,7 @@ Tests live next to the code they cover. Both `*.test.ts` and `*.spec.ts` suffixe
 | ---- | -------- |
 | `src/index.test.ts` | Frontend utilities (EXIF, image resizer) |
 | `src/lib/state/objectDetailsOverlay.svelte.test.ts` | Overlay state transitions |
+| `src/lib/components/objectDetails/sheetSnap.test.ts` | Sheet drag snap and flick inertia |
 | `src/lib/services/map/visibilityEngine.test.ts` | Marker viewport visibility rules |
 | `src/convex/notion.test.ts` | Notion sync reconcile and webhook decisions |
 | `src/convex/notionSync/snapshot.test.ts` | Snapshot builders for sync field hashing |

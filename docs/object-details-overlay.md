@@ -17,7 +17,7 @@ State helpers: `showObjectDetailsOverlay`, `showPointPreviewOverlay`, `showPoint
 
 Mode transitions: `enterEditMode`, `returnToViewMode`, `returnToPointPreview`.
 
-Position helpers: `setOverlayPosition`, `setOverlayMinimized` (Street View still uses the boolean helper to collapse the sheet).
+Position helpers: `setOverlayPosition` (used by the sheet, chevron, and Street View open/close).
 
 ## State model
 
@@ -33,7 +33,7 @@ Overlay state is a single `$state` object exposed through read-only getters on `
 | `peek` | ~42% viewport | Drag snap |
 | `full` | Viewport minus 16 px margin | Default on open; chevron from minimized/peek |
 
-`isMinimized` is derived (`position === 'minimized'`). `setOverlayMinimized(true)` still sets `position` to `minimized`; Street View and the panorama close button use this path.
+`isMinimized` is derived (`position === 'minimized'`). Street View calls `setOverlayPosition('minimized')` on open and `setOverlayPosition('full')` when the panorama closes.
 
 Notable behaviors:
 
@@ -121,6 +121,18 @@ When a user opens `/object/[id]` for an object they **do not own** and that obje
 
 `detailsSheet.svelte` exposes pointer handlers to the header via a snippet. Dragging the header resizes the sheet live; on release, height snaps to the nearest of `minimized`, `peek`, or `full`. Button clicks inside the header do not start a drag (`closest('button')` guard).
 
+Snap math lives in `sheetSnap.ts` (unit-tested in `sheetSnap.test.ts`):
+
+| Constant | Value | Role |
+| -------- | ----- | ---- |
+| `MINIMIZED_HEIGHT` | 56 px | Minimized header height |
+| `PEEK_HEIGHT_RATIO` | 0.42 | Peek height as a fraction of viewport |
+| `SHEET_MARGIN` | 16 px | Top margin for full height |
+| `INERTIA_PROJECTION_MS` | 220 ms | Velocity projection window on release |
+| `MAX_INERTIA_DELTA` | 220 px | Cap on projected flick distance |
+
+On pointer release, `getSettledPosition` projects release height from the last two drag samples (height + timestamp). A fast flick can settle one snap position past where the finger stopped — e.g. a downward flick from near-full can land on `peek` instead of `full`. Slow drags snap to the nearest position without inertia. During drag, CSS height transitions are disabled (`transition-none`); settled position restores Tailwind height classes via `setOverlayPosition`.
+
 ### Header chrome
 
 - **Drag handle** — centered pill at the top of the header.
@@ -131,6 +143,10 @@ When a user opens `/object/[id]` for an object they **do not own** and that obje
 ### View mode cover image
 
 In `viewMode.svelte`, the cover uses `ImageUpload` in read-only mode (`disabled`). When a cover URL exists, the image is a `cursor-zoom-in` button that opens `ImageViewer` for the full-resolution `url` (hover scales the preview slightly). Upload/remove controls are hidden while disabled.
+
+### View mode description text
+
+Descriptions may arrive with literal escape sequences (`\n`, `\r\n`, `\r`) from CSV import or Notion sync rather than real line breaks. `viewMode.svelte` normalizes these to newline characters before render and uses `whitespace-pre-line` so multi-line descriptions display correctly in read-only view.
 
 ## Related docs
 
