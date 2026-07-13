@@ -51,6 +51,8 @@ The minimap uses the same `mapId` as the main map (`config.googleMapsId`).
 
 `mapState.streetViewVisible` tracks whether the Street View overlay is shown. Closing Street View calls `mapState.provider.closeStreetView()`.
 
+When the panorama hides (`streetView.svelte` listens to `visible_changed`), the details overlay restores to `setOverlayPosition('full')` so the object panel is usable again. Opening Street View still collapses the sheet to `minimized` via `getStreetView` in `streetView.svelte.ts`.
+
 ## Related docs
 
 - [map-architecture.md](./map-architecture.md) — `GoogleMapsProvider` and map state
