@@ -31,7 +31,7 @@ searchResultsList.svelte → SearchPageSource callback
 
 `searchPreview.svelte` calls `api.search.preview` whenever `searchState.query`, `lat`, and `lng` are set. It hides while an object details overlay is open (`objectDetailsOverlay.detailsId`).
 
-Selecting a preview item calls `focusDetailsTarget` (same helper as the details overlay — zooms in when below `FOCUS_MIN_ZOOM`, then shifts center west for the overlay panel). Then:
+Selecting a preview item calls `focusDetailsTarget` (same helper as the details overlay — zooms in when below `FOCUS_MIN_ZOOM`, then applies the viewport-aware overlay offsets from `detailsFocusOffsets`). Then:
 
 - **Existing list marker** — triggers the marker's `onClick` (opens object details).
 - **Known object id, no marker yet** — `showLoadingDetailsOverlay` + navigate to `/object/[id]`.

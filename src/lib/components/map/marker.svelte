@@ -69,11 +69,13 @@
     });
 
     $effect(() => {
-        if (objectDetailsOverlay.detailsId === activeTargetId && marker) {
-            setActiveMarker(marker);
-            activateMarker(marker);
-            focusDetailsTarget(Number(lat), Number(lng));
+        if (objectDetailsOverlay.detailsId !== activeTargetId || !marker) {
+            return;
         }
+
+        setActiveMarker(marker);
+        activateMarker(marker);
+        focusDetailsTarget(Number(lat), Number(lng));
     });
 
     onMount(() => {
