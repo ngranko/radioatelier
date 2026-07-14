@@ -5,6 +5,7 @@
     import {page} from '$app/state';
     import {normalizeRef} from '$lib/utils';
     import {SvglAppleLogo, SvglGitHubLogo, SvglGoogleLogo} from '@selemondev/svgl-svelte';
+    import posthog from 'posthog-js';
     import LoadingDots from '$lib/components/loadingDots.svelte';
     import Button from '$lib/components/ui/button/button.svelte';
 
@@ -40,6 +41,8 @@
         }
 
         oauthLoading = strategy;
+
+        posthog.capture('user_signed_in_via_sso', {provider: strategy});
 
         try {
             await ctx.clerk.client.signIn.authenticateWithRedirect({

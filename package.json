@@ -72,6 +72,8 @@
         "convex": "^1.31.7",
         "convex-svelte": "^0.0.12",
         "eruda": "^3.4.1",
+        "posthog-js": "^1.400.1",
+        "posthog-node": "^5.42.0",
         "svelte-clerk": "^0.20.4",
         "svelte-easy-crop": "^5.0.0",
         "svelte-portal": "^2.2.1",

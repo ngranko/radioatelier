@@ -2,6 +2,7 @@ import {api} from '$convex/_generated/api.js';
 import type {LooseObject, PointPreviewDetails} from '$lib/interfaces/object.ts';
 import {schema, toFormDefaults} from '$lib/schema/objectSchema.ts';
 import {getConvexClient} from '$lib/server/convexClient';
+import {getPostHogClient} from '$lib/server/posthog';
 import {normalizeLatitude, normalizeLongitude} from '$lib/utils/coordinates.ts';
 import {type Actions, error, fail, redirect} from '@sveltejs/kit';
 import {superValidate} from 'sveltekit-superforms';
@@ -87,6 +88,20 @@ export const actions: Actions = {
                     isVisited: d.isVisited,
                 },
             });
+
+            const distinctId = locals.auth().userId ?? 'anonymous';
+            const posthog = getPostHogClient();
+            posthog.capture({
+                distinctId,
+                event: 'object_created',
+                properties: {
+                    object_id: id,
+                    is_public: d.isPublic,
+                    is_visited: d.isVisited,
+                },
+            });
+            await posthog.flush();
+
             return {form, id};
         } catch (err) {
             console.error('Failed to create object:', err);

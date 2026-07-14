@@ -1,4 +1,5 @@
 <script lang="ts">
+    import posthog from 'posthog-js';
     import {onMount} from 'svelte';
     import {
         returnToViewMode,
@@ -13,6 +14,7 @@
     let {data} = $props();
 
     const objectId = $derived(page.params.id);
+    let lastTrackedObjectId = $state<string | undefined>(undefined);
 
     const overlayObjectQuery = useQuery(
         api.objects.getDetails,
@@ -25,6 +27,10 @@
     $effect(() => {
         if (overlayObjectQuery.data) {
             showObjectDetailsOverlay(objectId!, overlayObjectQuery.data as ObjectType);
+            if (objectId !== lastTrackedObjectId) {
+                posthog.capture('object_viewed', {object_id: objectId});
+                lastTrackedObjectId = objectId;
+            }
         }
     });
 

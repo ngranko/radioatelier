@@ -7,6 +7,7 @@
     import {fade} from 'svelte/transition';
     import {cubicInOut} from 'svelte/easing';
     import {onMount} from 'svelte';
+    import posthog from 'posthog-js';
     import {registerEscapeCloseHandler} from '$lib/utils/escapeClose';
     import SearchIcon from '@lucide/svelte/icons/search';
 
@@ -26,11 +27,15 @@
         val = (evt.target as HTMLInputElement).value;
         clearTimeout(timeout);
         timeout = window.setTimeout(() => {
-            searchState.query = (evt.target as HTMLInputElement).value;
+            const query = (evt.target as HTMLInputElement).value;
+            searchState.query = query;
             const center = mapState.provider?.getCenter();
             if (center) {
                 searchState.lat = center.lat.toString();
                 searchState.lng = center.lng.toString();
+            }
+            if (query) {
+                posthog.capture('search_performed', {query_length: query.length});
             }
             timeout = undefined;
         }, 400);

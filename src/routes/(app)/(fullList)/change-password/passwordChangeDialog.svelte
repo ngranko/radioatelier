@@ -10,6 +10,7 @@
     import {schema} from './schema.ts';
     import {DialogClose} from '$lib/components/ui/dialog/index.ts';
     import {useClerkContext} from 'svelte-clerk';
+    import posthog from 'posthog-js';
     import {Checkbox} from '$lib/components/ui/checkbox';
     import KeyRoundIcon from '@lucide/svelte/icons/key-round';
     import ShieldCheckIcon from '@lucide/svelte/icons/shield-check';
@@ -87,6 +88,9 @@
                 if (validation.data.signOutOtherSessions) {
                     await signOutOtherSessions();
                 }
+                posthog.capture('password_changed', {
+                    signed_out_other_sessions: validation.data.signOutOtherSessions,
+                });
                 toast.success('Пароль успешно изменен');
                 setIsOpen(false);
             } catch (err: unknown) {

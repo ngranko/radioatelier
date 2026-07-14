@@ -1,6 +1,8 @@
 <script lang="ts">
     import {useConvexClient} from 'convex-svelte';
+    import {browser} from '$app/environment';
     import {useClerkContext} from 'svelte-clerk';
+    import posthog from 'posthog-js';
     import type {Snippet} from 'svelte';
 
     interface Props {
@@ -24,6 +26,9 @@
         }
 
         if (nextAuthUserId) {
+            if (browser) {
+                posthog.identify(nextAuthUserId);
+            }
             convexClient.setAuth(async ({forceRefreshToken}) => {
                 try {
                     if (!clerkCtx.session) {
@@ -42,6 +47,9 @@
             });
             appliedAuthUserId = nextAuthUserId;
         } else {
+            if (browser) {
+                posthog.reset();
+            }
             convexClient.client.clearAuth();
             appliedAuthUserId = null;
         }

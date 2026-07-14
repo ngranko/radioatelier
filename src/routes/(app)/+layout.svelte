@@ -28,6 +28,7 @@
     import {useQuery} from 'convex-svelte';
     import {api} from '$convex/_generated/api';
     import {setCategories} from '$lib/state/categories.svelte';
+    import posthog from 'posthog-js';
     import {buildPointUrl} from '$lib/utils/pointRoute.ts';
 
     // this is needed to avoid deck.gl error
@@ -48,6 +49,7 @@
         }
 
         setCreateDraftPosition({lat: location.lat, lng: location.lng});
+        posthog.capture('map_point_placed', {latitude: location.lat, longitude: location.lng});
 
         showLoadingDetailsOverlay(new Date().getTime().toString());
         goto(buildPointUrl({latitude: location.lat, longitude: location.lng}));
