@@ -24,7 +24,6 @@ export function focusDetailsTarget(lat: number, lng: number) {
     }
 
     const {latOffset, lngOffset} = detailsFocusOffsets({
-        lat,
         zoom,
         viewportWidth: document.body.clientWidth,
         viewportHeight: window.innerHeight,

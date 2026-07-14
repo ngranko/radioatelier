@@ -15,7 +15,6 @@ describe('usesSidePanelOffset', () => {
 
 describe('detailsFocusOffsets', () => {
     const mobile = {
-        lat: 55.75,
         zoom: 15,
         viewportWidth: 390,
         viewportHeight: 800,
@@ -24,7 +23,6 @@ describe('detailsFocusOffsets', () => {
     it('applies a westward lng offset on desktop regardless of sheet position', () => {
         for (const overlayPosition of ['minimized', 'peek', 'full'] as const) {
             const offset = detailsFocusOffsets({
-                lat: 55.75,
                 zoom: 15,
                 viewportWidth: 1200,
                 viewportHeight: 800,
@@ -49,10 +47,9 @@ describe('detailsFocusOffsets', () => {
         const offset = detailsFocusOffsets({...mobile, overlayPosition: 'peek'});
         const peekHeight = Math.round(800 * 0.42);
         const degreesPerPixel = 360 / (256 * 2 ** 15);
-        const expectedLatOffset = -peekHeight * degreesPerPixel * Math.cos((55.75 * Math.PI) / 180);
 
         expect(offset.lngOffset).toBe(0);
-        expect(offset.latOffset).toBeCloseTo(expectedLatOffset);
+        expect(offset.latOffset).toBeCloseTo(-peekHeight * degreesPerPixel);
         expect(offset.latOffset).toBeLessThan(0);
     });
 });
