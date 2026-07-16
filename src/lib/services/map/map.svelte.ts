@@ -1,14 +1,18 @@
 import type {MapPlaceable} from '$lib/interfaces/object';
 import {mapState} from '$lib/state/map.svelte';
+import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
+import {DETAILS_OVERLAY_WIDTH, detailsFocusOffsets} from './detailsFocusOffset';
 
-const DETAILS_OVERLAY_WIDTH = 424;
 const FOCUS_ZOOM = 15;
 // Below this zoom the view is too far out to tell which marker got selected,
 // so only then is a forced zoom-in worth the disruption.
 const FOCUS_MIN_ZOOM = 13;
-const MIN_UNCOVERED_MAP_WIDTH = 400;
 
 export function focusDetailsTarget(lat: number, lng: number) {
+    // Read before the ready guard so callers tracking this helper (e.g. marker
+    // effects) re-run when the sheet snaps between minimized / peek / full.
+    const overlayPosition = objectDetailsOverlay.position;
+
     if (!mapState.isReady) {
         return;
     }
@@ -18,19 +22,16 @@ export function focusDetailsTarget(lat: number, lng: number) {
         zoom = FOCUS_ZOOM;
         mapState.provider!.setZoom(zoom);
     }
-    mapState.provider!.setCenter(lat, lng + overlayLngOffset(zoom));
-}
 
-function overlayLngOffset(zoom: number): number {
-    // Shift the center west of the marker so it lands in the middle of the map
-    // area not covered by the details overlay. When too little width remains
-    // (mobile bottom-sheet layouts), plain centering keeps the marker visible.
-    if (document.body.clientWidth - DETAILS_OVERLAY_WIDTH < MIN_UNCOVERED_MAP_WIDTH) {
-        return 0;
-    }
+    const {latOffset, lngOffset} = detailsFocusOffsets({
+        lat,
+        zoom,
+        viewportWidth: document.body.clientWidth,
+        viewportHeight: window.innerHeight,
+        overlayPosition,
+    });
 
-    const degreesPerPixel = 360 / (256 * 2 ** zoom);
-    return -(DETAILS_OVERLAY_WIDTH / 2) * degreesPerPixel;
+    mapState.provider!.setCenter(lat + latOffset, lng + lngOffset);
 }
 
 export function fitMarkerList(objects: MapPlaceable[], currentCenter?: MapPlaceable) {

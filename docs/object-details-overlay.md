@@ -133,6 +133,8 @@ Snap math lives in `sheetSnap.ts` (unit-tested in `sheetSnap.test.ts`):
 
 On pointer release, `getSettledPosition` projects release height from the last two drag samples (height + timestamp). A fast flick can settle one snap position past where the finger stopped — e.g. a downward flick from near-full can land on `peek` instead of `full`. Slow drags snap to the nearest position without inertia. During drag, CSS height transitions are disabled (`transition-none`); settled position restores Tailwind height classes via `setOverlayPosition`.
 
+Settling on a new position also recenters the active map marker via `focusDetailsTarget`. On narrow viewports, `peek` applies a vertical offset equal to the peek sheet height; `full` and `minimized` center with no offset. Wide viewports keep the existing westward side-panel offset regardless of sheet position — see [map-architecture.md](./map-architecture.md).
+
 ### Header chrome
 
 - **Drag handle** — centered pill at the top of the header.

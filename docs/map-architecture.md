@@ -101,14 +101,17 @@ List markers are lazy: they are created in the renderer only when entering the v
 
 ## Focus and overlay offset
 
-When the details overlay opens for a marker, the map recenters so the pin sits in the visible area beside the panel:
+When the details overlay opens for a marker (and when the bottom sheet snaps between positions), the map recenters so the pin stays in the visible map area:
 
-- `focusDetailsTarget(lat, lng)` (`src/lib/services/map/map.svelte.ts`) zooms in if below `FOCUS_MIN_ZOOM` (13), then shifts the center west by half the overlay width (`DETAILS_OVERLAY_WIDTH = 424px`).
-- On narrow viewports where less than 400 px of map remains beside the overlay, the offset is skipped and the marker is centered normally.
-- `marker.svelte` calls `focusDetailsTarget` when `objectDetailsOverlay.detailsId` matches the marker.
+- `focusDetailsTarget(lat, lng)` (`src/lib/services/map/map.svelte.ts`) zooms in if below `FOCUS_MIN_ZOOM` (13), then applies offsets from `detailsFocusOffsets` (`src/lib/services/map/detailsFocusOffset.ts`).
+- **Wide viewports** (at least 400 px left beside a 424 px panel): shift the center west by half `DETAILS_OVERLAY_WIDTH` (424 px). Sheet position does not change this.
+- **Narrow viewports** (mobile bottom-sheet layout):
+  - `peek` — shift the center south by the peek overlay height so the pin sits above the sheet
+  - `full` / `minimized` — center on the marker with no offset
+- `marker.svelte` calls `focusDetailsTarget` when `objectDetailsOverlay.detailsId` matches the marker, and re-runs when `position` changes so flicking to peek recenters with the vertical offset.
 - `map.svelte` registers `onMarkerShown: focusDetailsMarker` on `MarkerManager` so share/deep-link pages focus the correct marker once it enters the viewport.
 
-Search result selection (`searchPreviewItem.svelte`, `searchResultsItem.svelte`) uses the same `focusDetailsTarget` helper as overlay focus — conditional zoom to `FOCUS_ZOOM` (15) when below `FOCUS_MIN_ZOOM` (13), plus the westward overlay offset when enough map width remains beside the panel.
+Search result selection (`searchPreviewItem.svelte`, `searchResultsItem.svelte`) uses the same `focusDetailsTarget` helper as overlay focus — conditional zoom to `FOCUS_ZOOM` (15) when below `FOCUS_MIN_ZOOM` (13), plus the viewport-aware overlay offsets above.
 
 ## Map controls
 
