@@ -18,7 +18,10 @@ export interface DetailsFocusOffset {
 
 export function detailsFocusOffsets(input: DetailsFocusOffsetInput): DetailsFocusOffset {
     if (usesSidePanelOffset(input.viewportWidth)) {
-        return {latOffset: 0, lngOffset: sidePanelLngOffset(input.zoom)};
+        return {
+            latOffset: 0,
+            lngOffset: degreesOffsetForPixels(input.zoom, DETAILS_OVERLAY_WIDTH / 2),
+        };
     }
 
     if (input.overlayPosition !== 'peek') {
@@ -27,7 +30,7 @@ export function detailsFocusOffsets(input: DetailsFocusOffsetInput): DetailsFocu
 
     const overlayHeight = heightForPosition('peek', input.viewportHeight);
     return {
-        latOffset: latOffsetForPixels(input.zoom, overlayHeight),
+        latOffset: degreesOffsetForPixels(input.zoom, overlayHeight),
         lngOffset: 0,
     };
 }
@@ -36,16 +39,6 @@ export function usesSidePanelOffset(viewportWidth: number) {
     return viewportWidth - DETAILS_OVERLAY_WIDTH >= MIN_UNCOVERED_MAP_WIDTH;
 }
 
-function sidePanelLngOffset(zoom: number) {
-    return -(DETAILS_OVERLAY_WIDTH / 2) * degreesPerPixel(zoom);
-}
-
-function latOffsetForPixels(zoom: number, pixels: number) {
-    // Shift the center south so the marker sits above the geometric center by
-    // `pixels`, clearing the bottom sheet.
-    return -pixels * degreesPerPixel(zoom);
-}
-
-function degreesPerPixel(zoom: number) {
-    return 360 / (256 * 2 ** zoom);
+function degreesOffsetForPixels(zoom: number, pixels: number) {
+    return -pixels * (360 / (256 * 2 ** zoom));
 }
