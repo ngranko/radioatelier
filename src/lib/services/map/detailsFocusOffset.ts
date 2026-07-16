@@ -5,6 +5,7 @@ export const DETAILS_OVERLAY_WIDTH = 424;
 const MIN_UNCOVERED_MAP_WIDTH = 400;
 
 export interface DetailsFocusOffsetInput {
+    lat: number;
     zoom: number;
     viewportWidth: number;
     viewportHeight: number;
@@ -20,7 +21,7 @@ export function detailsFocusOffsets(input: DetailsFocusOffsetInput): DetailsFocu
     if (usesSidePanelOffset(input.viewportWidth)) {
         return {
             latOffset: 0,
-            lngOffset: degreesOffsetForPixels(input.zoom, DETAILS_OVERLAY_WIDTH / 2),
+            lngOffset: lngOffsetForPixels(input.zoom, DETAILS_OVERLAY_WIDTH / 2),
         };
     }
 
@@ -30,7 +31,7 @@ export function detailsFocusOffsets(input: DetailsFocusOffsetInput): DetailsFocu
 
     const overlayHeight = heightForPosition('peek', input.viewportHeight);
     return {
-        latOffset: degreesOffsetForPixels(input.zoom, overlayHeight),
+        latOffset: latOffsetForPixels(input.lat, input.zoom, overlayHeight),
         lngOffset: 0,
     };
 }
@@ -39,6 +40,14 @@ export function usesSidePanelOffset(viewportWidth: number) {
     return viewportWidth - DETAILS_OVERLAY_WIDTH >= MIN_UNCOVERED_MAP_WIDTH;
 }
 
-function degreesOffsetForPixels(zoom: number, pixels: number) {
-    return -pixels * (360 / (256 * 2 ** zoom));
+function lngOffsetForPixels(zoom: number, pixels: number) {
+    return -pixels * degreesPerPixel(zoom);
+}
+
+function latOffsetForPixels(lat: number, zoom: number, pixels: number) {
+    return -pixels * degreesPerPixel(zoom) * Math.cos((lat * Math.PI) / 180);
+}
+
+function degreesPerPixel(zoom: number) {
+    return 360 / (256 * 2 ** zoom);
 }
