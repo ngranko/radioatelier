@@ -1,5 +1,11 @@
 import adapter from '@sveltejs/adapter-node';
 import {vitePreprocess} from '@sveltejs/vite-plugin-svelte';
+import {readFileSync} from 'node:fs';
+import {fileURLToPath} from 'node:url';
+
+const packageJson = JSON.parse(
+    readFileSync(fileURLToPath(new URL('./package.json', import.meta.url)), 'utf-8'),
+);
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
@@ -19,6 +25,9 @@ const config = {
         // Required for PostHog session replay to work correctly with SSR
         paths: {
             relative: false,
+        },
+        version: {
+            name: packageJson.version,
         },
     },
 };

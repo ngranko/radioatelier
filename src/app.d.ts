@@ -5,6 +5,7 @@ declare module '$env/static/public' {
     export const PUBLIC_GOOGLE_MAPS_MAP_ID: string;
     export const PUBLIC_POSTHOG_PROJECT_TOKEN: string;
     export const PUBLIC_POSTHOG_HOST: string;
+    export const PUBLIC_GIT_COMMIT_SHA: string;
 }
 
 // See https://kit.svelte.dev/docs/types#app

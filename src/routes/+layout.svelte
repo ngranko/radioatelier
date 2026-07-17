@@ -13,13 +13,11 @@
     import InfoIcon from '@lucide/svelte/icons/info';
     import TriangleAlertIcon from '@lucide/svelte/icons/triangle-alert';
     import LoaderCircleIcon from '@lucide/svelte/icons/loader-circle';
-    import posthog from 'posthog-js';
 
     setupConvex(PUBLIC_CONVEX_URL);
 
     onMount(() => {
         initTheme();
-        posthog.logger.info('Radio Atelier web app mounted');
     });
 
     interface Props {
