@@ -10,6 +10,7 @@
     import {goto} from '$app/navigation';
     import {zod4, zod4Client} from 'sveltekit-superforms/adapters';
     import {useClerkContext} from 'svelte-clerk';
+    import posthog from 'posthog-js';
     import type {EmailCodeFactor} from '@clerk/types';
     import {Input} from '$lib/components/ui/input';
     import PasswordInput from '$lib/components/input/passwordInput.svelte';
@@ -68,6 +69,7 @@
 
                 if (signInAttempt.status === 'complete') {
                     await ctx.clerk.setActive({session: signInAttempt.createdSessionId});
+                    posthog.capture('user_signed_in', {method: 'email_password'});
                     await handlePostSignInRedirect();
                 } else if (signInAttempt.status === 'needs_second_factor') {
                     const emailCodeFactor = signInAttempt.supportedSecondFactors?.find(

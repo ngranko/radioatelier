@@ -16,6 +16,10 @@ const config = {
             $convex: 'src/convex',
             '$convex/*': 'src/convex/*',
         },
+        // Required for PostHog session replay to work correctly with SSR
+        paths: {
+            relative: false,
+        },
     },
 };
 

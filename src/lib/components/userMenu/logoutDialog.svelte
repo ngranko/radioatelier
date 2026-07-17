@@ -12,6 +12,7 @@
     import {closeDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
     import {clearSharedMarker} from '$lib/state/sharedMarker.svelte.ts';
     import {useClerkContext} from 'svelte-clerk';
+    import posthog from 'posthog-js';
     import {toast} from 'svelte-sonner';
     import LoaderCircleIcon from '@lucide/svelte/icons/loader-circle';
 
@@ -41,6 +42,8 @@
             localStorage.removeItem('lastCenter');
             localStorage.removeItem('lastPosition');
 
+            posthog.capture('user_signed_out');
+            posthog.reset();
             await ctx.clerk.signOut({redirectUrl: '/login'});
         } catch (err) {
             console.error('Failed to logout', err);

@@ -2,6 +2,7 @@ import {api} from '$convex/_generated/api';
 import type {Id} from '$convex/_generated/dataModel';
 import {schema} from '$lib/schema/objectSchema.ts';
 import {getConvexClient} from '$lib/server/convexClient';
+import {getPostHogClient} from '$lib/server/posthog';
 import {type Actions, error, fail, redirect} from '@sveltejs/kit';
 import {superValidate} from 'sveltekit-superforms';
 import {zod4} from 'sveltekit-superforms/adapters';
@@ -71,6 +72,21 @@ export const actions: Actions = {
                     source: d.source,
                 },
             });
+
+            const distinctId = locals.auth().userId ?? 'anonymous';
+            const posthog = getPostHogClient();
+            posthog.capture({
+                distinctId,
+                event: 'object_updated',
+                properties: {
+                    object_id: id,
+                    is_public: d.isPublic,
+                    is_visited: d.isVisited,
+                    is_removed: d.isRemoved,
+                },
+            });
+            await posthog.flush();
+
             return {form, id};
         } catch (err) {
             console.error('Failed to update object:', err);
@@ -88,6 +104,16 @@ export const actions: Actions = {
         const id = params.id as Id<'objects'>;
         try {
             await client.mutation(api.objects.remove, {id});
+
+            const distinctId = locals.auth().userId ?? 'anonymous';
+            const posthog = getPostHogClient();
+            posthog.capture({
+                distinctId,
+                event: 'object_deleted',
+                properties: {object_id: id},
+            });
+            await posthog.flush();
+
             return {form, id};
         } catch (err) {
             console.error('Failed to delete object:', err);
