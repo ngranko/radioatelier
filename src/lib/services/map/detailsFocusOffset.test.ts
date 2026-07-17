@@ -45,13 +45,13 @@ describe('detailsFocusOffsets', () => {
         }
     });
 
-    it('offsets mobile peek by the peek overlay height', () => {
+    it('offsets mobile peek by half the peek overlay height', () => {
         const offset = detailsFocusOffsets({...mobile, overlayPosition: 'peek'});
         const peekHeight = Math.round(800 * 0.42);
         const degreesPerPixel = 360 / (256 * 2 ** 15);
 
         expect(offset.lngOffset).toBe(0);
-        expect(offset.latOffset).toBeCloseTo(-peekHeight * degreesPerPixel);
+        expect(offset.latOffset).toBeCloseTo(-(peekHeight / 2) * degreesPerPixel);
         expect(offset.latOffset).toBeLessThan(0);
     });
 });

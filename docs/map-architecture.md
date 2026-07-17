@@ -106,7 +106,7 @@ When the details overlay opens for a marker (and when the bottom sheet snaps bet
 - `focusDetailsTarget(lat, lng)` (`src/lib/services/map/map.svelte.ts`) zooms in if below `FOCUS_MIN_ZOOM` (13), then applies offsets from `detailsFocusOffsets` (`src/lib/services/map/detailsFocusOffset.ts`).
 - **Wide viewports** (at least 400 px left beside a 424 px panel): shift the center west by half `DETAILS_OVERLAY_WIDTH` (424 px). Sheet position does not change this.
 - **Narrow viewports** (mobile bottom-sheet layout):
-  - `peek` — shift the center south by the peek overlay height so the pin sits above the sheet
+  - `peek` — shift the center south by half the peek overlay height so the pin sits in the uncovered map above the sheet
   - `full` / `minimized` — center on the marker with no offset
 - `marker.svelte` calls `focusDetailsTarget` when `objectDetailsOverlay.detailsId` matches the marker, and re-runs when `position` changes so flicking to peek recenters with the vertical offset.
 - `map.svelte` registers `onMarkerShown: focusDetailsMarker` on `MarkerManager` so share/deep-link pages focus the correct marker once it enters the viewport.

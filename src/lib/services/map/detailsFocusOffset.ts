@@ -31,7 +31,7 @@ export function detailsFocusOffsets(input: DetailsFocusOffsetInput): DetailsFocu
 
     const overlayHeight = heightForPosition('peek', input.viewportHeight);
     return {
-        latOffset: latOffsetForPixels(input.lat, input.zoom, overlayHeight),
+        latOffset: latOffsetForPixels(input.lat, input.zoom, overlayHeight / 2),
         lngOffset: 0,
     };
 }
