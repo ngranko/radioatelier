@@ -14,7 +14,9 @@ CMD ["bun", "run", "dev", "--", "--host"]
 FROM node:22-alpine AS build
 WORKDIR /app
 ARG PUBLIC_CONVEX_URL
+ARG GIT_COMMIT_SHA
 ENV PUBLIC_CONVEX_URL=$PUBLIC_CONVEX_URL
+ENV PUBLIC_GIT_COMMIT_SHA=$GIT_COMMIT_SHA
 COPY --from=base /app .
 RUN npm run build && npm prune --production
 
