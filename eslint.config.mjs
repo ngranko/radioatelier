@@ -14,17 +14,8 @@ export default [
     eslintPluginPrettierRecommended,
     eslintConfigPrettier,
     {
-        ignores: [
-            '.svelte-kit',
-            'build',
-            'node_modules',
-            'convex/_generated',
-            '**/*.js',
-            '**/*.jsx',
-        ],
-    },
-    {
         files: ['**/*.svelte'],
+        ignores: ['.svelte-kit', 'build', 'node_modules'],
         languageOptions: {
             globals: {
                 ...globals.browser,
@@ -49,6 +40,7 @@ export default [
     },
     {
         files: ['**/*.ts'],
+        ignores: ['.svelte-kit', 'build', 'node_modules', 'convex/_generated'],
         languageOptions: {
             globals: {
                 ...globals.browser,
