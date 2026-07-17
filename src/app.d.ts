@@ -5,12 +5,14 @@ declare module '$env/static/public' {
     export const PUBLIC_GOOGLE_MAPS_MAP_ID: string;
     export const PUBLIC_POSTHOG_PROJECT_TOKEN: string;
     export const PUBLIC_POSTHOG_HOST: string;
-    export const PUBLIC_GIT_COMMIT_SHA: string;
 }
 
 // See https://kit.svelte.dev/docs/types#app
 // for information about these interfaces
 declare global {
+    /** `package.json` version + short commit SHA, baked in at Vite build time. */
+    const __APP_SERVICE_VERSION__: string;
+
     namespace App {
         // interface Error {}
         // interface Locals {}
