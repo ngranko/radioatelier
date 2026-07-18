@@ -18,10 +18,12 @@ interface DeckPointInfo {
 
 export class DeckOverlayRenderer implements MarkerRenderer {
     private overlay: GoogleMapsOverlay;
+    private map: google.maps.Map;
     private allMarkers = new Set<Marker>();
     private scheduled = false;
 
     public constructor(map: google.maps.Map) {
+        this.map = map;
         this.overlay = new GoogleMapsOverlay({layers: []});
         this.overlay.setMap(map);
     }
@@ -59,8 +61,16 @@ export class DeckOverlayRenderer implements MarkerRenderer {
 
     public destroy(): void {
         this.allMarkers.clear();
-        this.overlay.setProps({layers: []});
-        this.overlay.setMap(null as unknown as google.maps.Map);
+        // setMap(null) alone only detaches the overlay; finalize() also destroys the
+        // Deck instance and unregisters the map event listeners it added.
+        this.overlay.finalize();
+        // deck.gl 9.3 vector maps park the deck canvas in a positioning container div
+        // that onRemove leaves behind; the next overlay's querySelector then finds the
+        // stale duplicate-ID container and renders into dead DOM. Purge them so a
+        // recreated overlay starts clean.
+        for (const el of this.map.getDiv().querySelectorAll('#deck-gl-google-maps-container')) {
+            el.remove();
+        }
     }
 
     private scheduleRender() {
