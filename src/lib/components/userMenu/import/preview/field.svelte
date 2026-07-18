@@ -8,7 +8,7 @@
     import XMarkIcon from '@lucide/svelte/icons/x';
 
     interface Props {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // oxlint-disable-next-line typescript/no-explicit-any
         form: SuperForm<any>;
         field: Field;
     }

@@ -32,7 +32,7 @@
     import {buildPointUrl} from '$lib/utils/pointRoute.ts';
 
     // this is needed to avoid deck.gl error
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    // oxlint-disable-next-line no-unused-expressions
     webgl2Adapter;
 
     let {children, data}: LayoutProps = $props();
