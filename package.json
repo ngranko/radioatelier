@@ -67,7 +67,7 @@
         "eruda": "^3.4.3",
         "posthog-js": "^1.404.1",
         "posthog-node": "^5.45.2",
-        "svelte-clerk": "^0.20.6",
+        "svelte-clerk": "^1.1.11",
         "svelte-easy-crop": "^5.0.1",
         "svelte-portal": "^2.2.1",
         "svix": "^1.98.0",
