@@ -14,28 +14,40 @@ import {MERCATOR_WORLD_RESTRICTION} from '$lib/services/map/mapRestriction';
 import {GoogleMapBounds} from '$lib/services/map/providers/google/bounds';
 import {GoogleMarkerHandle} from '$lib/services/map/providers/google/markerHandle';
 import {themeState} from '$lib/state/theme.svelte';
-import {Loader} from '@googlemaps/js-api-loader';
+import {importLibrary, setOptions} from '@googlemaps/js-api-loader';
 
 const MAP_MAX_ZOOM = 21;
 
+let loaderConfigured = false;
+
+// setOptions may only usefully run once per page; guard so multiple provider
+// instances don't re-issue it. Kept out of module scope because it must not
+// run during SSR.
+function configureLoader(): void {
+    if (loaderConfigured) {
+        return;
+    }
+    setOptions({
+        key: config.googleMapsApiKey,
+        v: 'weekly',
+        libraries: ['places'],
+    });
+    loaderConfigured = true;
+}
+
 export class GoogleMapsProvider implements MapProvider {
-    readonly loader: Loader;
     private map?: google.maps.Map;
     private minZoom = 2;
     private resizeObserver?: ResizeObserver;
 
     constructor() {
-        this.loader = new Loader({
-            apiKey: config.googleMapsApiKey,
-            version: 'weekly',
-            libraries: ['places'],
-        });
+        configureLoader();
     }
 
     async initialize(container: HTMLElement, center: Location): Promise<void> {
         const [{Map}, {ColorScheme}] = await Promise.all([
-            this.loader.importLibrary('maps'),
-            this.loader.importLibrary('core'),
+            importLibrary('maps'),
+            importLibrary('core'),
         ]);
 
         this.minZoom = computeMinZoomForContainer(container);
@@ -194,7 +206,7 @@ export class GoogleMapsProvider implements MapProvider {
     }
 
     async preloadMarkerLibrary(): Promise<void> {
-        await this.loader.importLibrary('marker');
+        await importLibrary('marker');
     }
 
     closeStreetView(): void {
