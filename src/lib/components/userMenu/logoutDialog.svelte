@@ -8,13 +8,13 @@
         Cancel,
         Action,
     } from '$lib/components/ui/alert-dialog';
-    import {clearSearchPointList} from '$lib/state/searchPointList.svelte.ts';
     import {closeDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
+    import {clearSearchPointList} from '$lib/state/searchPointList.svelte.ts';
     import {clearSharedMarker} from '$lib/state/sharedMarker.svelte.ts';
-    import {useClerkContext} from 'svelte-clerk';
-    import posthog from 'posthog-js';
-    import {toast} from 'svelte-sonner';
     import LoaderCircleIcon from '@lucide/svelte/icons/loader-circle';
+    import posthog from 'posthog-js';
+    import {useClerkContext} from 'svelte-clerk';
+    import {toast} from 'svelte-sonner';
 
     interface Props {
         isOpen: boolean;

@@ -1,24 +1,24 @@
 <script lang="ts">
-    import {onMount, onDestroy} from 'svelte';
-    import {activateMarker, setActiveMarker} from '$lib/state/activeMarker.svelte.ts';
-    import {searchPointList} from '$lib/state/searchPointList.svelte.ts';
-    import {mapState} from '$lib/state/map.svelte';
-    import {Marker as MarkerObject} from '$lib/services/map/marker';
+    import {goto} from '$app/navigation';
+    import {page} from '$app/state';
+    import {api} from '$convex/_generated/api';
+    import type {Id} from '$convex/_generated/dataModel';
     import type {MarkerIcon, MarkerSource} from '$lib/interfaces/marker';
-    import {toast} from 'svelte-sonner';
+    import {focusDetailsTarget} from '$lib/services/map/map.svelte.ts';
+    import {Marker as MarkerObject} from '$lib/services/map/marker';
+    import {activateMarker, setActiveMarker} from '$lib/state/activeMarker.svelte.ts';
+    import {mapState} from '$lib/state/map.svelte';
     import {
         objectDetailsOverlay,
         closeDetailsOverlay,
         showLoadingDetailsOverlay,
         showObjectDetailsOverlay,
     } from '$lib/state/objectDetailsOverlay.svelte';
-    import {focusDetailsTarget} from '$lib/services/map/map.svelte.ts';
-    import {goto} from '$app/navigation';
-    import {page} from '$app/state';
-    import {useConvexClient} from 'convex-svelte';
-    import {api} from '$convex/_generated/api';
-    import type {Id} from '$convex/_generated/dataModel';
+    import {searchPointList} from '$lib/state/searchPointList.svelte.ts';
     import {buildPointUrl} from '$lib/utils/pointRoute.ts';
+    import {useConvexClient} from 'convex-svelte';
+    import {onMount, onDestroy} from 'svelte';
+    import {toast} from 'svelte-sonner';
 
     interface Props {
         id?: Id<'objects'> | null;

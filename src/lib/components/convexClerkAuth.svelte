@@ -1,9 +1,9 @@
 <script lang="ts">
-    import {useConvexClient} from 'convex-svelte';
     import {browser} from '$app/environment';
-    import {useClerkContext} from 'svelte-clerk';
+    import {useConvexClient} from 'convex-svelte';
     import posthog from 'posthog-js';
     import type {Snippet} from 'svelte';
+    import {useClerkContext} from 'svelte-clerk';
 
     interface Props {
         children?: Snippet;

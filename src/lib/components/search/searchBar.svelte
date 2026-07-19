@@ -1,15 +1,15 @@
 <script lang="ts">
     import ClearButton from '$lib/components/search/clearButton.svelte';
-    import {clearSearch, searchState} from '$lib/state/search.svelte';
-    import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
-    import {mapState} from '$lib/state/map.svelte';
     import {Input} from '$lib/components/ui/input';
-    import {fade} from 'svelte/transition';
-    import {cubicInOut} from 'svelte/easing';
-    import {onMount} from 'svelte';
-    import posthog from 'posthog-js';
+    import {mapState} from '$lib/state/map.svelte';
+    import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
+    import {clearSearch, searchState} from '$lib/state/search.svelte';
     import {registerEscapeCloseHandler} from '$lib/utils/escapeClose';
     import SearchIcon from '@lucide/svelte/icons/search';
+    import posthog from 'posthog-js';
+    import {onMount} from 'svelte';
+    import {cubicInOut} from 'svelte/easing';
+    import {fade} from 'svelte/transition';
 
     let {disabled = false}: {disabled?: boolean} = $props();
 

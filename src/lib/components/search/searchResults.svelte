@@ -1,20 +1,21 @@
 <script lang="ts">
-    import {cubicInOut} from 'svelte/easing';
-    import {fly} from 'svelte/transition';
-    import {portal} from 'svelte-portal';
+    import {api} from '$convex/_generated/api';
     import {
         Root as TabsRoot,
         List,
         Trigger,
         Content as TabsContent,
     } from '$lib/components/ui/tabs/index.js';
-    import SearchResultsList from './searchResultsList.svelte';
-    import {searchState} from '$lib/state/search.svelte';
-    import MinimizeButton from './minimizeButton.svelte';
-    import {cn} from '$lib/utils.ts';
     import type {SearchPageSource} from '$lib/interfaces/object';
+    import {searchState} from '$lib/state/search.svelte';
+    import {cn} from '$lib/utils.ts';
     import {useConvexClient} from 'convex-svelte';
-    import {api} from '$convex/_generated/api';
+    import {portal} from 'svelte-portal';
+    import {cubicInOut} from 'svelte/easing';
+    import {fly} from 'svelte/transition';
+
+    import MinimizeButton from './minimizeButton.svelte';
+    import SearchResultsList from './searchResultsList.svelte';
 
     const client = useConvexClient();
 

@@ -1,5 +1,6 @@
 import type {ImportMappingsForJob} from '$lib/interfaces/import';
 import {describe, expect, it} from 'vitest';
+
 import {normalizeRows} from './normalize';
 
 const mappings: ImportMappingsForJob = {

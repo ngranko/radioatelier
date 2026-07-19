@@ -1,5 +1,4 @@
 <script lang="ts">
-    import {onDestroy} from 'svelte';
     import type {LooseObject, PointPreviewDetails, SearchItem} from '$lib/interfaces/object.ts';
     import {setCreateDraftPosition} from '$lib/state/createDraft.svelte.js';
     import {
@@ -8,6 +7,7 @@
         showPointPreviewOverlay,
     } from '$lib/state/objectDetailsOverlay.svelte.js';
     import {searchPointList} from '$lib/state/searchPointList.svelte.ts';
+    import {onDestroy} from 'svelte';
 
     let {data} = $props();
 

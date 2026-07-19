@@ -1,30 +1,30 @@
 <script lang="ts">
     import {page} from '$app/state';
-    import {cubicInOut} from 'svelte/easing';
-    import {onDestroy} from 'svelte';
-    import {fly} from 'svelte/transition';
+    import {api} from '$convex/_generated/api.js';
     import type {Id} from '$convex/_generated/dataModel';
-    import {useQuery} from 'convex-svelte';
-    import {useClerkContext} from 'svelte-clerk';
-    import ObjectDetails from '$lib/components/objectDetails/objectDetails.svelte';
     import FirstRunHint from '$lib/components/map/firstRunHint.svelte';
     import Marker from '$lib/components/map/marker.svelte';
+    import ObjectDetails from '$lib/components/objectDetails/objectDetails.svelte';
+    import type {MarkerListItem} from '$lib/interfaces/marker.ts';
     import type {Object as ObjectType} from '$lib/interfaces/object.ts';
-    import {api} from '$convex/_generated/api.js';
+    import {markerIconMap, type MarkerIconKey} from '$lib/services/map/markerStyling.js';
+    import {categoriesState} from '$lib/state/categories.svelte.js';
+    import {createDraftState} from '$lib/state/createDraft.svelte.ts';
+    import {mapState} from '$lib/state/map.svelte.ts';
     import {
         objectDetailsOverlay,
         closeDetailsOverlay,
     } from '$lib/state/objectDetailsOverlay.svelte.js';
-    import {createDraftState} from '$lib/state/createDraft.svelte.ts';
-    import {mapState} from '$lib/state/map.svelte.ts';
     import {
         clearSharedMarker,
         setSharedMarkerObject,
         sharedMarker,
     } from '$lib/state/sharedMarker.svelte.ts';
-    import {categoriesState} from '$lib/state/categories.svelte.js';
-    import {markerIconMap, type MarkerIconKey} from '$lib/services/map/markerStyling.js';
-    import type {MarkerListItem} from '$lib/interfaces/marker.ts';
+    import {useQuery} from 'convex-svelte';
+    import {onDestroy} from 'svelte';
+    import {useClerkContext} from 'svelte-clerk';
+    import {cubicInOut} from 'svelte/easing';
+    import {fly} from 'svelte/transition';
 
     type RenderedMarkerPoint = MarkerListItem & {isVisited: boolean};
 
@@ -86,10 +86,12 @@
         () => new Set((visitedObjectIds.data ?? []) as Id<'objects'>[]),
     );
     const markerPoints = $derived.by(() => {
-        const catalogMarkers = rawMarkerPoints.map((item): RenderedMarkerPoint => ({
-            ...item,
-            isVisited: visitedObjectIdSet.has(item.id),
-        }));
+        const catalogMarkers = rawMarkerPoints.map(
+            (item): RenderedMarkerPoint => ({
+                ...item,
+                isVisited: visitedObjectIdSet.has(item.id),
+            }),
+        );
 
         const activeMarker = getActiveListMarker();
         if (activeMarker && !catalogMarkers.some(item => item.id === activeMarker.id)) {

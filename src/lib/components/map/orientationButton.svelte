@@ -1,8 +1,8 @@
 <script lang="ts">
-    import {onMount} from 'svelte';
-    import {toast} from 'svelte-sonner';
     import {cn} from '$lib/utils.ts';
     import CompassIcon from '@lucide/svelte/icons/compass';
+    import {onMount} from 'svelte';
+    import {toast} from 'svelte-sonner';
 
     interface DeviceOrientationEventMaybeExtended extends DeviceOrientationEvent {
         requestPermission?(): Promise<'granted' | 'denied'>;

@@ -1,11 +1,12 @@
 <script lang="ts">
-    import {page} from '$app/state';
     import {goto} from '$app/navigation';
-    import {useClerkContext} from 'svelte-clerk';
-    import {normalizeRef} from '$lib/utils';
-    import Logo from '../logo.svelte';
+    import {page} from '$app/state';
     import {Button} from '$lib/components/ui/button';
+    import {normalizeRef} from '$lib/utils';
     import LockIcon from '@lucide/svelte/icons/lock';
+    import {useClerkContext} from 'svelte-clerk';
+
+    import Logo from '../logo.svelte';
 
     const ctx = useClerkContext();
     let taskContainer: HTMLDivElement | null = $state(null);

@@ -1,9 +1,9 @@
 <script lang="ts">
-    import {onMount} from 'svelte';
-    import {fly} from 'svelte/transition';
-    import {cubicInOut} from 'svelte/easing';
     import MapPinPlusIcon from '@lucide/svelte/icons/map-pin-plus';
     import XIcon from '@lucide/svelte/icons/x';
+    import {onMount} from 'svelte';
+    import {cubicInOut} from 'svelte/easing';
+    import {fly} from 'svelte/transition';
 
     const STORAGE_KEY = 'firstRunHintDismissed';
 

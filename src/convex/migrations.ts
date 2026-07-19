@@ -1,4 +1,5 @@
 import {Migrations} from '@convex-dev/migrations';
+
 import {randomMarkerColor, randomMarkerIconKey} from '../lib/services/map/markerStyling.data.js';
 import {components} from './_generated/api.js';
 import type {DataModel, Doc} from './_generated/dataModel.js';

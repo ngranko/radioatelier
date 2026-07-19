@@ -1,4 +1,6 @@
 <script lang="ts">
+    import {goto} from '$app/navigation';
+    import ThemeSwitcher from '$lib/components/themeSwitcher.svelte';
     import {Root as AvatarRoot, Fallback} from '$lib/components/ui/avatar';
     import {Button} from '$lib/components/ui/button';
     import {
@@ -10,11 +12,9 @@
         Item as DropdownMenuItem,
     } from '$lib/components/ui/dropdown-menu';
     import LogoutDialog from '$lib/components/userMenu/logoutDialog.svelte';
-    import ThemeSwitcher from '$lib/components/themeSwitcher.svelte';
-    import {goto} from '$app/navigation';
+    import FileInputIcon from '@lucide/svelte/icons/file-input';
     import KeyRoundIcon from '@lucide/svelte/icons/key-round';
     import LogOutIcon from '@lucide/svelte/icons/log-out';
-    import FileInputIcon from '@lucide/svelte/icons/file-input';
     import PaletteIcon from '@lucide/svelte/icons/palette';
     import UserRoundIcon from '@lucide/svelte/icons/user-round';
 

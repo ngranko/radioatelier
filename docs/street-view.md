@@ -28,12 +28,12 @@ Components: `streetView.svelte` (panorama host), `streetViewOverlay.svelte` (clo
 
 `resolveStreetViewLocation` deduplicates and caches lookups:
 
-| Mechanism | Behavior |
-| --------- | -------- |
-| Coordinate key | Rounded to 4 decimal places |
-| Success cache | Stored in `lookupCache` for the session |
-| Failure cache | 5 minutes (60 seconds after a 429) |
-| Pending dedup | Concurrent requests for the same key share one promise |
+| Mechanism           | Behavior                                                           |
+| ------------------- | ------------------------------------------------------------------ |
+| Coordinate key      | Rounded to 4 decimal places                                        |
+| Success cache       | Stored in `lookupCache` for the session                            |
+| Failure cache       | 5 minutes (60 seconds after a 429)                                 |
+| Pending dedup       | Concurrent requests for the same key share one promise             |
 | Rate-limit cooldown | 60 seconds after `429` / `over_query_limit` / `resource_exhausted` |
 
 ## Minimap behavior

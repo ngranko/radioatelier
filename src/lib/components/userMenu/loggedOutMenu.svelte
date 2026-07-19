@@ -1,4 +1,7 @@
 <script lang="ts">
+    import {goto} from '$app/navigation';
+    import {page} from '$app/state';
+    import ThemeSwitcher from '$lib/components/themeSwitcher.svelte';
     import {Root as AvatarRoot, Fallback} from '$lib/components/ui/avatar';
     import {Button} from '$lib/components/ui/button';
     import {
@@ -9,9 +12,6 @@
         Separator as DropdownMenuSeparator,
         Item as DropdownMenuItem,
     } from '$lib/components/ui/dropdown-menu';
-    import ThemeSwitcher from '$lib/components/themeSwitcher.svelte';
-    import {goto} from '$app/navigation';
-    import {page} from '$app/state';
     import LogInIcon from '@lucide/svelte/icons/log-in';
     import UserRoundXIcon from '@lucide/svelte/icons/user-round-x';
 

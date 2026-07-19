@@ -2,11 +2,11 @@
     import {api} from '$convex/_generated/api';
     import type {Doc, Id} from '$convex/_generated/dataModel';
     import {DialogClose, DialogFooter} from '$lib/components/ui/dialog';
-    import type {ImportJobSnapshot} from '$lib/interfaces/import';
     import {Progress} from '$lib/components/ui/progress';
+    import type {ImportJobSnapshot} from '$lib/interfaces/import';
     import {applyImportJobSnapshot, importState} from '$lib/state/import.svelte.ts';
-    import {useQuery} from 'convex-svelte';
     import LoaderCircleIcon from '@lucide/svelte/icons/loader-circle';
+    import {useQuery} from 'convex-svelte';
 
     function toImportJobSnapshot(job: Doc<'importJobs'> | null): ImportJobSnapshot | null {
         if (!job) {

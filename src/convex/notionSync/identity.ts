@@ -1,4 +1,5 @@
 import {v} from 'convex/values';
+
 import type {Doc} from '../_generated/dataModel';
 import {internalQuery} from '../_generated/server';
 import {getNotionSyncFallbackUserExternalId} from '../notion/config';

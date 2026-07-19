@@ -1,9 +1,9 @@
 <script lang="ts">
     import MarkerIcon from '$lib/components/map/markerIcon.svelte';
-    import {onMount, onDestroy} from 'svelte';
-    import {mapState} from '$lib/state/map.svelte';
     import type {MarkerHandle} from '$lib/interfaces/map';
+    import {mapState} from '$lib/state/map.svelte';
     import DotIcon from '@lucide/svelte/icons/dot';
+    import {onMount, onDestroy} from 'svelte';
     import {mount, unmount} from 'svelte';
 
     interface Props {

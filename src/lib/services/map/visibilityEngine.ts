@@ -1,4 +1,5 @@
 import type {MarkerId} from '$lib/interfaces/marker';
+
 import type {Marker} from './marker';
 import type {MarkerRepository} from './markerRepository';
 import type {MarkerRenderer} from './renderer/markerRenderer';

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import {Popover, PopoverContent} from '$lib/components/ui/popover';
+    import ComboboxTrigger from '$lib/components/input/combobox/comboboxTrigger.svelte';
     import {
         Command,
         CommandInput,
@@ -7,11 +7,11 @@
         CommandItem,
         CommandEmpty,
     } from '$lib/components/ui/command';
-    import {tick} from 'svelte';
+    import {Popover, PopoverContent} from '$lib/components/ui/popover';
+    import type {Option} from '$lib/interfaces/option';
     import CheckIcon from '@lucide/svelte/icons/check';
     import PlusIcon from '@lucide/svelte/icons/plus';
-    import ComboboxTrigger from '$lib/components/input/combobox/comboboxTrigger.svelte';
-    import type {Option} from '$lib/interfaces/option';
+    import {tick} from 'svelte';
     type ComboboxValue = string | string[] | null | undefined;
 
     interface Props {

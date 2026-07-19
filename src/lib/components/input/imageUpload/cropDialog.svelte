@@ -9,14 +9,14 @@
         DialogTrigger,
     } from '$lib/components/ui/dialog';
     import {DialogClose} from '$lib/components/ui/dialog/index.js';
+    import LoaderCircleIcon from '@lucide/svelte/icons/loader-circle';
+    import MinusIcon from '@lucide/svelte/icons/minus';
+    import MoveIcon from '@lucide/svelte/icons/move';
+    import PlusIcon from '@lucide/svelte/icons/plus';
+    import XMarkIcon from '@lucide/svelte/icons/x';
     import {useConvexClient} from 'convex-svelte';
     import Cropper from 'svelte-easy-crop';
     import {toast} from 'svelte-sonner';
-    import XMarkIcon from '@lucide/svelte/icons/x';
-    import PlusIcon from '@lucide/svelte/icons/plus';
-    import MinusIcon from '@lucide/svelte/icons/minus';
-    import LoaderCircleIcon from '@lucide/svelte/icons/loader-circle';
-    import MoveIcon from '@lucide/svelte/icons/move';
 
     type CropArea = {
         x: number;

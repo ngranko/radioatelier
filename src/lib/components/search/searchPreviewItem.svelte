@@ -1,11 +1,11 @@
 <script lang="ts">
-    import SearchItemCard from '$lib/components/search/searchItemCard.svelte';
-    import {focusDetailsTarget} from '$lib/services/map/map.svelte';
-    import type {SearchItem} from '$lib/interfaces/object';
-    import {mapState} from '$lib/state/map.svelte.ts';
-    import {upsertSearchPoint} from '$lib/state/searchPointList.svelte.ts';
-    import {showLoadingDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
     import {goto} from '$app/navigation';
+    import SearchItemCard from '$lib/components/search/searchItemCard.svelte';
+    import type {SearchItem} from '$lib/interfaces/object';
+    import {focusDetailsTarget} from '$lib/services/map/map.svelte';
+    import {mapState} from '$lib/state/map.svelte.ts';
+    import {showLoadingDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
+    import {upsertSearchPoint} from '$lib/state/searchPointList.svelte.ts';
     import {buildPointUrl} from '$lib/utils/pointRoute.ts';
 
     interface Props {

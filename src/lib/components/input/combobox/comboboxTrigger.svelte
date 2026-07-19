@@ -1,11 +1,11 @@
 <script lang="ts">
-    import {PopoverTrigger} from '$lib/components/ui/popover';
+    import ClearButton from '$lib/components/input/combobox/clearButton.svelte';
+    import ComboboxValue from '$lib/components/input/combobox/comboboxValue.svelte';
     import {Button} from '$lib/components/ui/button';
+    import {PopoverTrigger} from '$lib/components/ui/popover';
+    import type {Option} from '$lib/interfaces/option';
     import {cn} from '$lib/utils.js';
     import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
-    import ComboboxValue from '$lib/components/input/combobox/comboboxValue.svelte';
-    import ClearButton from '$lib/components/input/combobox/clearButton.svelte';
-    import type {Option} from '$lib/interfaces/option';
 
     interface Props {
         onClear(e: MouseEvent): void;

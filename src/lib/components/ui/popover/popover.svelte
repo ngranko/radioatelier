@@ -1,7 +1,7 @@
 <script lang="ts">
+    import type {WithoutChild} from '$lib/utils.js';
     import {Popover as PopoverPrimitive} from 'bits-ui';
     import type {Snippet} from 'svelte';
-    import type {WithoutChild} from '$lib/utils.js';
 
     let {
         open = $bindable(false),

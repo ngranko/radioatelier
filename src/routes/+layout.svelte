@@ -1,18 +1,18 @@
 <script lang="ts">
     import '../styles/app.css';
-    import {Toaster} from '$lib/components/ui/sonner';
-    import type {Snippet} from 'svelte';
     import {PUBLIC_CONVEX_URL} from '$env/static/public';
-    import {setupConvex} from 'convex-svelte';
-    import {ClerkProvider} from 'svelte-clerk';
     import ConvexClerkAuth from '$lib/components/convexClerkAuth.svelte';
+    import {Toaster} from '$lib/components/ui/sonner';
     import {initTheme, themeState} from '$lib/state/theme.svelte';
-    import {onMount} from 'svelte';
     import CheckCircleIcon from '@lucide/svelte/icons/check-circle';
     import CircleXMarkIcon from '@lucide/svelte/icons/circle-x';
     import InfoIcon from '@lucide/svelte/icons/info';
-    import TriangleAlertIcon from '@lucide/svelte/icons/triangle-alert';
     import LoaderCircleIcon from '@lucide/svelte/icons/loader-circle';
+    import TriangleAlertIcon from '@lucide/svelte/icons/triangle-alert';
+    import {setupConvex} from 'convex-svelte';
+    import type {Snippet} from 'svelte';
+    import {onMount} from 'svelte';
+    import {ClerkProvider} from 'svelte-clerk';
 
     setupConvex(PUBLIC_CONVEX_URL);
 

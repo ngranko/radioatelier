@@ -1,4 +1,5 @@
 import {describe, expect, it} from 'vitest';
+
 import {getSettledPosition, heightForPosition} from './sheetSnap';
 
 describe('object details sheet snapping', () => {

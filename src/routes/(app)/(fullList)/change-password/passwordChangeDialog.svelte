@@ -1,21 +1,22 @@
 <script lang="ts">
-    import {defaults, superForm} from 'sveltekit-superforms';
-    import {toast} from 'svelte-sonner';
-    import {Root as DialogRoot, Content, Title, Footer} from '$lib/components/ui/dialog';
-    import {Button} from '$lib/components/ui/button';
-    import {FormLabel, FormField, FormControl, FormFieldErrors} from '$lib/components/ui/form';
-    import PasswordInput from '$lib/components/input/passwordInput.svelte';
-    import {zod4, zod4Client} from 'sveltekit-superforms/adapters';
     import {goto} from '$app/navigation';
-    import {schema} from './schema.ts';
-    import {DialogClose} from '$lib/components/ui/dialog/index.ts';
-    import {useClerkContext} from 'svelte-clerk';
-    import posthog from 'posthog-js';
+    import PasswordInput from '$lib/components/input/passwordInput.svelte';
+    import {Button} from '$lib/components/ui/button';
     import {Checkbox} from '$lib/components/ui/checkbox';
+    import {Root as DialogRoot, Content, Title, Footer} from '$lib/components/ui/dialog';
+    import {DialogClose} from '$lib/components/ui/dialog/index.ts';
+    import {FormLabel, FormField, FormControl, FormFieldErrors} from '$lib/components/ui/form';
     import KeyRoundIcon from '@lucide/svelte/icons/key-round';
+    import LoaderCircleIcon from '@lucide/svelte/icons/loader-circle';
     import ShieldCheckIcon from '@lucide/svelte/icons/shield-check';
     import TriangleAlertIcon from '@lucide/svelte/icons/triangle-alert';
-    import LoaderCircleIcon from '@lucide/svelte/icons/loader-circle';
+    import posthog from 'posthog-js';
+    import {useClerkContext} from 'svelte-clerk';
+    import {toast} from 'svelte-sonner';
+    import {defaults, superForm} from 'sveltekit-superforms';
+    import {zod4, zod4Client} from 'sveltekit-superforms/adapters';
+
+    import {schema} from './schema.ts';
 
     const DIALOG_ANIMATION_DURATION = 200;
 

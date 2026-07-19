@@ -1,5 +1,6 @@
 import {makeFunctionReference, paginationOptsValidator} from 'convex/server';
 import {ConvexError, v} from 'convex/values';
+
 import {action, internalAction} from './_generated/server';
 import {typesenseObjectSchema} from './sharedValidators';
 import {createTypesenseSyncClient} from './typesense/client';

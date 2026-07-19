@@ -1,16 +1,17 @@
 <script lang="ts">
-    import {searchState} from '$lib/state/search.svelte';
+    import {api} from '$convex/_generated/api';
     import type {SearchPreviewResponsePayload} from '$lib/interfaces/object';
     import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
+    import {searchState} from '$lib/state/search.svelte';
+    import CircleAlertIcon from '@lucide/svelte/icons/circle-alert';
+    import ZoomOutIcon from '@lucide/svelte/icons/zoom-out';
     import {useConvexClient} from 'convex-svelte';
-    import SearchPreviewItem from './searchPreviewItem.svelte';
-    import LoadMoreButton from './loadMoreButton.svelte';
-    import SearchItemSkeleton from './searchItemSkeleton.svelte';
     import {cubicInOut} from 'svelte/easing';
     import {fade} from 'svelte/transition';
-    import {api} from '$convex/_generated/api';
-    import ZoomOutIcon from '@lucide/svelte/icons/zoom-out';
-    import CircleAlertIcon from '@lucide/svelte/icons/circle-alert';
+
+    import LoadMoreButton from './loadMoreButton.svelte';
+    import SearchItemSkeleton from './searchItemSkeleton.svelte';
+    import SearchPreviewItem from './searchPreviewItem.svelte';
 
     const client = useConvexClient();
 

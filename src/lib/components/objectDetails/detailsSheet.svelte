@@ -1,12 +1,12 @@
 <script lang="ts">
-    import type {Snippet} from 'svelte';
-    import {objectDetailsOverlay, setOverlayPosition} from '$lib/state/objectDetailsOverlay.svelte';
-    import {cn} from '$lib/utils.ts';
     import {
         clampSheetHeight,
         getSettledPosition,
         type DragSample,
     } from '$lib/components/objectDetails/sheetSnap';
+    import {objectDetailsOverlay, setOverlayPosition} from '$lib/state/objectDetailsOverlay.svelte';
+    import {cn} from '$lib/utils.ts';
+    import type {Snippet} from 'svelte';
 
     interface HeaderState {
         isDragging: boolean;

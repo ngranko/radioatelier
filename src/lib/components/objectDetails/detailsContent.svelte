@@ -1,17 +1,17 @@
 <script lang="ts">
-    import {fade} from 'svelte/transition';
+    import ObjectEdit from '$lib/components/objectDetails/objectEdit.svelte';
+    import PointCreate from '$lib/components/objectDetails/pointCreate.svelte';
+    import PointPreview from '$lib/components/objectDetails/pointPreview.svelte';
+    import ViewMode from '$lib/components/objectDetails/viewMode/viewMode.svelte';
+    import ViewModeSkeleton from '$lib/components/objectDetails/viewMode/viewModeSkeleton.svelte';
     import type {
         LooseObject,
         Object as ObjectType,
         PointPreviewDetails,
     } from '$lib/interfaces/object';
     import type {Permissions} from '$lib/interfaces/permissions';
-    import ObjectEdit from '$lib/components/objectDetails/objectEdit.svelte';
-    import PointCreate from '$lib/components/objectDetails/pointCreate.svelte';
-    import PointPreview from '$lib/components/objectDetails/pointPreview.svelte';
-    import ViewMode from '$lib/components/objectDetails/viewMode/viewMode.svelte';
-    import ViewModeSkeleton from '$lib/components/objectDetails/viewMode/viewModeSkeleton.svelte';
     import type {ObjectDetailsOverlayMode} from '$lib/state/objectDetailsOverlay.svelte';
+    import {fade} from 'svelte/transition';
 
     interface Props {
         initialValues: Partial<LooseObject>;
