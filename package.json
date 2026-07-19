@@ -63,7 +63,7 @@
         "@tailwindcss/vite": "^4.3.3",
         "clsx": "^2.1.1",
         "convex": "^1.42.3",
-        "convex-svelte": "^0.0.12",
+        "convex-svelte": "^0.14.0",
         "eruda": "^3.4.3",
         "posthog-js": "^1.404.1",
         "posthog-node": "^5.45.2",
