@@ -1,6 +1,5 @@
 import {
     DEFAULT_MAX_EDGE,
-    DEFAULT_ORIENTATION,
     EXIF_ORIENTATION,
     type ResizeImageOptions,
     type ResizePlan,
@@ -16,7 +15,7 @@ type BuildResizePlanInput = {
 export function buildResizePlan({
     sourceWidth,
     sourceHeight,
-    orientation = DEFAULT_ORIENTATION,
+    orientation,
     maxEdge = DEFAULT_MAX_EDGE,
 }: BuildResizePlanInput): ResizePlan {
     const rotated = isRotatedOrientation(orientation);

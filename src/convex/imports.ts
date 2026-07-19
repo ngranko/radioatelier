@@ -349,7 +349,7 @@ export const importBatch = mutation({
 
         await ctx.db.patch(jobId, jobPatch);
         if (importedObjectIds.length > 0) {
-            ctx.scheduler.runAfter(
+            await ctx.scheduler.runAfter(
                 0,
                 internal.notionSync.outbound.enqueueOutboundObjectSyncBatchLenient,
                 {

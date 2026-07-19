@@ -76,7 +76,7 @@ async function fetchGooglePlacesResource(
     url: string,
     fieldMask: string,
     init?: Omit<RequestInit, 'headers'> & {headers?: Record<string, string>},
-): Promise<unknown | null> {
+): Promise<unknown> {
     const apiKey = process.env.GOOGLE_API_KEY?.trim();
     if (!apiKey) {
         throw new Error('Missing GOOGLE_API_KEY environment variable');
