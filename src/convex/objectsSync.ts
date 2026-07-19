@@ -78,7 +78,7 @@ async function createSyncedObject(ctx: MutationCtx, input: CreateSyncedObjectInp
 
     await upsertPrivateTags(ctx, objectId, input.ownerId, []);
     await updateIsVisited(ctx, objectId, input.ownerId, input.fields.isVisited);
-    scheduleCreateSearch(ctx, input, classification.categoryName, objectId);
+    await scheduleCreateSearch(ctx, input, classification.categoryName, objectId);
     await recordInboundSync(ctx, objectId, input.notionPageId, input.lastInboundEditedTime);
     return objectId;
 }
@@ -96,7 +96,7 @@ async function patchSyncedObject(ctx: MutationCtx, input: PatchSyncedObjectInput
             input.patch.isVisited,
         );
     }
-    scheduleUpdateSearch(ctx, input, target, classification.categoryName);
+    await scheduleUpdateSearch(ctx, input, target, classification.categoryName);
     const nextFields = await buildPatchedFields(ctx, target, input, classification);
     await recordInboundSync(ctx, input.objectId, input.notionPageId, input.lastInboundEditedTime);
     return nextFields;
@@ -109,7 +109,7 @@ async function deleteSyncedObject(ctx: MutationCtx, objectId: Id<'objects'>) {
     }
     await deleteSyncStateForObject(ctx, objectId);
     await deleteObjectAggregate(ctx, object);
-    ctx.scheduler.runAfter(0, internal.typesense.removeFromTypesense, {objectId});
+    await ctx.scheduler.runAfter(0, internal.typesense.removeFromTypesense, {objectId});
     return null;
 }
 
