@@ -1,5 +1,6 @@
 import {paginationOptsValidator} from 'convex/server';
 import {v} from 'convex/values';
+
 import {internal} from './_generated/api';
 import type {Doc} from './_generated/dataModel';
 import {internalQuery, mutation, query} from './_generated/server';
@@ -189,9 +190,13 @@ export const create = mutation({
             }),
         });
         if (user.notionSyncEnabled) {
-            await ctx.scheduler.runAfter(0, internal.notionSync.outbound.enqueueOutboundObjectSync, {
-                objectId,
-            });
+            await ctx.scheduler.runAfter(
+                0,
+                internal.notionSync.outbound.enqueueOutboundObjectSync,
+                {
+                    objectId,
+                },
+            );
         }
 
         return objectId;
@@ -254,9 +259,13 @@ export const update = mutation({
                 }),
             });
             if (user.notionSyncEnabled) {
-                await ctx.scheduler.runAfter(0, internal.notionSync.outbound.enqueueOutboundObjectSync, {
-                    objectId: id,
-                });
+                await ctx.scheduler.runAfter(
+                    0,
+                    internal.notionSync.outbound.enqueueOutboundObjectSync,
+                    {
+                        objectId: id,
+                    },
+                );
             }
         }
 

@@ -1,11 +1,11 @@
 <script lang="ts">
     import StreetViewOverlay from '$lib/components/map/streetViewOverlay.svelte';
-    import {cn} from '$lib/utils';
-    import {onDestroy, onMount} from 'svelte';
-    import {mapState} from '$lib/state/map.svelte';
     import {GoogleMapsProvider} from '$lib/services/map/providers/google/provider';
+    import {mapState} from '$lib/state/map.svelte';
     import {setOverlayPosition} from '$lib/state/objectDetailsOverlay.svelte';
+    import {cn} from '$lib/utils';
     import {registerEscapeCloseHandler} from '$lib/utils/escapeClose';
+    import {onDestroy, onMount} from 'svelte';
 
     let streetViewContainer: HTMLDivElement | undefined = $state();
     let panorama: google.maps.StreetViewPanorama | null = $state(null);

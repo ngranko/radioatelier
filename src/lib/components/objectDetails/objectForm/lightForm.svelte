@@ -1,13 +1,12 @@
 <script lang="ts">
-    import {onMount} from 'svelte';
-    import type {LooseObject} from '$lib/interfaces/object';
-    import {superForm, defaults} from 'sveltekit-superforms';
-    import {zod4Client} from 'sveltekit-superforms/adapters';
-    import PrivateTagsSelect from '$lib/components/objectDetails/objectForm/privateTagsSelect.svelte';
-    import {toast} from 'svelte-sonner';
-    import {Button} from '$lib/components/ui/button';
+    import {page} from '$app/state';
+    import CategoryBadge from '$lib/components/categoryBadge.svelte';
+    import ImageUpload from '$lib/components/input/imageUpload/index.svelte';
+    import BackButton from '$lib/components/objectDetails/objectForm/backButton.svelte';
     import FlagToggle from '$lib/components/objectDetails/objectForm/flagToggle.svelte';
-    import UserCheckIcon from '@lucide/svelte/icons/user-check';
+    import PrivateTagsSelect from '$lib/components/objectDetails/objectForm/privateTagsSelect.svelte';
+    import Flags from '$lib/components/objectDetails/viewMode/flags.svelte';
+    import {Button} from '$lib/components/ui/button';
     import {
         FormControl,
         FormDescription,
@@ -15,16 +14,17 @@
         FormFieldErrors,
         FormLabel,
     } from '$lib/components/ui/form';
-    import {returnToViewMode} from '$lib/state/objectDetailsOverlay.svelte';
-    import ImageUpload from '$lib/components/input/imageUpload/index.svelte';
-    import CategoryBadge from '$lib/components/categoryBadge.svelte';
-    import Flags from '$lib/components/objectDetails/viewMode/flags.svelte';
-    import {Separator} from '$lib/components/ui/separator';
     import {Input} from '$lib/components/ui/input';
-    import {getErrorArray} from '$lib/utils/formErrors';
-    import {page} from '$app/state';
+    import {Separator} from '$lib/components/ui/separator';
+    import type {LooseObject} from '$lib/interfaces/object';
     import {schema, toFormDefaults} from '$lib/schema/objectSchema.ts';
-    import BackButton from '$lib/components/objectDetails/objectForm/backButton.svelte';
+    import {returnToViewMode} from '$lib/state/objectDetailsOverlay.svelte';
+    import {getErrorArray} from '$lib/utils/formErrors';
+    import UserCheckIcon from '@lucide/svelte/icons/user-check';
+    import {onMount} from 'svelte';
+    import {toast} from 'svelte-sonner';
+    import {superForm, defaults} from 'sveltekit-superforms';
+    import {zod4Client} from 'sveltekit-superforms/adapters';
 
     interface Props {
         initialValues: Partial<LooseObject>;

@@ -1,8 +1,8 @@
 <script lang="ts">
+    import {api} from '$convex/_generated/api';
     import Combobox from '$lib/components/input/combobox.svelte';
     import {Skeleton} from '$lib/components/ui/skeleton';
     import {useConvexClient, useQuery} from 'convex-svelte';
-    import {api} from '$convex/_generated/api';
 
     interface Props {
         name?: string;

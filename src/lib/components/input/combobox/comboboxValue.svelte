@@ -1,7 +1,7 @@
 <script lang="ts">
-    import XIcon from '@lucide/svelte/icons/x';
     import {Badge} from '$lib/components/ui/badge';
     import type {Option} from '$lib/interfaces/option';
+    import XIcon from '@lucide/svelte/icons/x';
 
     interface Props {
         onChange(option: Option): void;

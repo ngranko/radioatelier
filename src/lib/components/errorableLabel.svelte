@@ -1,7 +1,7 @@
 <script lang="ts">
     import {Label} from '$lib/components/ui/label';
-    import {Label as LabelPrimitive} from 'bits-ui';
     import {cn} from '$lib/utils.ts';
+    import {Label as LabelPrimitive} from 'bits-ui';
 
     interface Props extends LabelPrimitive.RootProps {
         error: string[] | null | undefined;

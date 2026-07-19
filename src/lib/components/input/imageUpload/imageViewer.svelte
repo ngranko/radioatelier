@@ -1,8 +1,8 @@
 <script lang="ts">
-    import {fade} from 'svelte/transition';
-    import {cubicInOut} from 'svelte/easing';
-    import {onMount} from 'svelte';
     import {registerEscapeCloseHandler} from '$lib/utils/escapeClose';
+    import {onMount} from 'svelte';
+    import {cubicInOut} from 'svelte/easing';
+    import {fade} from 'svelte/transition';
 
     interface Props {
         isOpen: boolean;

@@ -1,6 +1,6 @@
 <script lang="ts">
-    import {fade, scale} from 'svelte/transition';
     import LoaderCircleIcon from '@lucide/svelte/icons/loader-circle';
+    import {fade, scale} from 'svelte/transition';
 </script>
 
 <div

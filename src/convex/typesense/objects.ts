@@ -1,4 +1,5 @@
 import Typesense from 'typesense';
+
 import type {Id} from '../_generated/dataModel';
 import {getTypesenseCollectionName} from './client';
 

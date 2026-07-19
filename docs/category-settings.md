@@ -6,9 +6,9 @@ Users customize how categories appear on the map and in object forms. Settings l
 
 Two tables drive category appearance:
 
-| Table | Scope | Fields |
-| ----- | ----- | ------ |
-| `categories` | Global defaults | `name`, `markerColor`, `markerIcon` |
+| Table                      | Scope              | Fields                                  |
+| -------------------------- | ------------------ | --------------------------------------- |
+| `categories`               | Global defaults    | `name`, `markerColor`, `markerIcon`     |
 | `userCategoryMarkerStyles` | Per-user overrides | `markerColor`, `markerIcon`, `isHidden` |
 
 `api.categories.list` merges them: user overrides win when present; `isHidden` defaults to `false`.
@@ -17,11 +17,11 @@ New categories created via `api.categories.create` get a random color and icon f
 
 ## Convex API
 
-| Function | File | Purpose |
-| -------- | ---- | ------- |
-| `categories.list` | `src/convex/categories.ts` | Merged category list for the signed-in user |
-| `categories.updateStyles` | `src/convex/categories.ts` | Upsert per-user style rows |
-| `categories.create` | `src/convex/categories.ts` | Add a global category (admin flow) |
+| Function                  | File                       | Purpose                                     |
+| ------------------------- | -------------------------- | ------------------------------------------- |
+| `categories.list`         | `src/convex/categories.ts` | Merged category list for the signed-in user |
+| `categories.updateStyles` | `src/convex/categories.ts` | Upsert per-user style rows                  |
+| `categories.create`       | `src/convex/categories.ts` | Add a global category (admin flow)          |
 
 `updateStyles` validates `markerColor` and `markerIcon` against the allowed palettes. Invalid values throw `ConvexError('Invalid category style')`.
 

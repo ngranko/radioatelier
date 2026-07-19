@@ -1,6 +1,6 @@
 <script lang="ts">
-    import PasswordInput from '$lib/components/input/passwordInput.svelte';
     import ErrorableLabel from '$lib/components/errorableLabel.svelte';
+    import PasswordInput from '$lib/components/input/passwordInput.svelte';
 
     interface Props {
         id?: string | undefined;

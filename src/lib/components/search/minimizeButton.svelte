@@ -1,8 +1,8 @@
 <script lang="ts">
     import {Button} from '$lib/components/ui/button';
     import {searchState} from '$lib/state/search.svelte';
-    import ChevronUpIcon from '@lucide/svelte/icons/chevron-up';
     import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
+    import ChevronUpIcon from '@lucide/svelte/icons/chevron-up';
 
     function handleMinimizeClick() {
         searchState.isResultsMinimized = !searchState.isResultsMinimized;

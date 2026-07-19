@@ -16,22 +16,22 @@ Marker components in +layout.svelte (data from api.markers.list)
 
 Key entry points:
 
-| Layer | File | Role |
-| ----- | ---- | ---- |
-| Provider contract | `src/lib/interfaces/map.ts` | `MapProvider`, `MarkerHandle`, `MapBounds` |
-| Google provider | `src/lib/services/map/providers/google/provider.ts` | Map init, events, marker handles, Street View |
-| Map shell | `src/lib/components/map/map.svelte` | Bootstraps provider + `MarkerManager` |
-| Global state | `src/lib/state/map.svelte.ts` | `mapState.provider`, `deckEnabled`, `streetViewVisible` |
-| Marker pipeline | `src/lib/services/map/markerManager.ts` | Add/update/remove markers, renderer mode |
-| Data feed | `src/routes/(app)/(fullList)/+layout.svelte` | Renders `<Marker>` per merged marker list row |
+| Layer             | File                                                | Role                                                    |
+| ----------------- | --------------------------------------------------- | ------------------------------------------------------- |
+| Provider contract | `src/lib/interfaces/map.ts`                         | `MapProvider`, `MarkerHandle`, `MapBounds`              |
+| Google provider   | `src/lib/services/map/providers/google/provider.ts` | Map init, events, marker handles, Street View           |
+| Map shell         | `src/lib/components/map/map.svelte`                 | Bootstraps provider + `MarkerManager`                   |
+| Global state      | `src/lib/state/map.svelte.ts`                       | `mapState.provider`, `deckEnabled`, `streetViewVisible` |
+| Marker pipeline   | `src/lib/services/map/markerManager.ts`             | Add/update/remove markers, renderer mode                |
+| Data feed         | `src/routes/(app)/(fullList)/+layout.svelte`        | Renders `<Marker>` per merged marker list row           |
 
 ## Marker list data feed
 
 The map marker catalog is loaded client-side from two Convex queries in `(fullList)/+layout.svelte`:
 
-| Query | Returns | Why split |
-| ----- | ------- | --------- |
-| `api.markers.list` | Owner private markers + all public markers | Stable catalog payload for map rendering |
+| Query                        | Returns                                      | Why split                                                                             |
+| ---------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `api.markers.list`           | Owner private markers + all public markers   | Stable catalog payload for map rendering                                              |
 | `api.markers.listVisitedIds` | Flat list of visited object ids for the user | Visited toggles change often; isolating them avoids invalidating the full marker list |
 
 `markers.list` reads the compact `markers` table (not full `objects` rows):
@@ -70,13 +70,13 @@ At low zoom, list markers (`source: 'list'`) batch-render on a Deck.gl overlay f
 
 `MarkerSource` (`src/lib/interfaces/marker.ts`) controls rendering and viewport behavior:
 
-| Source | Renderer | Viewport-managed | Typical use |
-| ------ | -------- | ---------------- | ----------- |
-| `list` | Deck (at low zoom) | Yes | Archive objects on the map |
-| `map` | Same as list | Yes | Legacy / map-origin markers |
-| `search` | DOM | Yes | Google Places search result |
-| `share` | DOM | No | Deep-linked object not in marker list |
-| `draft` | DOM | Yes | Point being created |
+| Source   | Renderer           | Viewport-managed | Typical use                           |
+| -------- | ------------------ | ---------------- | ------------------------------------- |
+| `list`   | Deck (at low zoom) | Yes              | Archive objects on the map            |
+| `map`    | Same as list       | Yes              | Legacy / map-origin markers           |
+| `search` | DOM                | Yes              | Google Places search result           |
+| `share`  | DOM                | No               | Deep-linked object not in marker list |
+| `draft`  | DOM                | Yes              | Point being created                   |
 
 Service markers (`search`, `share`, `draft`) call `usesDomRenderer()` and render as DOM overlays inside `HybridMarkerRenderer` so they stay interactive above the Deck layer.
 
@@ -106,8 +106,8 @@ When the details overlay opens for a marker (and when the bottom sheet snaps bet
 - `focusDetailsTarget(lat, lng)` (`src/lib/services/map/map.svelte.ts`) zooms in if below `FOCUS_MIN_ZOOM` (13), then applies offsets from `detailsFocusOffsets` (`src/lib/services/map/detailsFocusOffset.ts`).
 - **Wide viewports** (at least 400 px left beside a 424 px panel): shift the center west by half `DETAILS_OVERLAY_WIDTH` (424 px). Sheet position does not change this.
 - **Narrow viewports** (mobile bottom-sheet layout):
-  - `peek` — shift the center south by half the peek overlay height so the pin sits in the uncovered map above the sheet
-  - `full` / `minimized` — center on the marker with no offset
+    - `peek` — shift the center south by half the peek overlay height so the pin sits in the uncovered map above the sheet
+    - `full` / `minimized` — center on the marker with no offset
 - `marker.svelte` calls `focusDetailsTarget` when `objectDetailsOverlay.detailsId` matches the marker, and re-runs when `position` changes so flicking to peek recenters with the vertical offset.
 - `map.svelte` registers `onMarkerShown: focusDetailsMarker` on `MarkerManager` so share/deep-link pages focus the correct marker once it enters the viewport.
 
@@ -117,9 +117,9 @@ Search result selection (`searchPreviewItem.svelte`, `searchResultsItem.svelte`)
 
 Floating controls in `src/routes/(app)/+layout.svelte` (bottom-right stack):
 
-| Control | File | Behavior |
-| ------- | ---- | -------- |
-| Last position | `positionButton.svelte` | Reads `localStorage` key `lastPosition` (updated by geolocation polling in `geolocation.ts`). If unset or `{lat:0,lng:0}`, shows `toast.info` instead of panning. Otherwise zooms to 15 and centers. Distinct from `lastCenter`, which stores the map viewport on idle. |
+| Control             | File                       | Behavior                                                                                                                                                                                                                                                                                                   |
+| ------------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Last position       | `positionButton.svelte`    | Reads `localStorage` key `lastPosition` (updated by geolocation polling in `geolocation.ts`). If unset or `{lat:0,lng:0}`, shows `toast.info` instead of panning. Otherwise zooms to 15 and centers. Distinct from `lastCenter`, which stores the map viewport on idle.                                    |
 | Compass orientation | `orientationButton.svelte` | Shown only when `DeviceOrientationEvent` exists and either iOS permission API is present or `navigator.maxTouchPoints > 0`. Requests permission on first enable; denied/explicit tap failures show `toast.error`. Silent auto-enable on mount may fail on iOS (no user gesture) without surfacing a toast. |
 
 Controls use `--map-control*` CSS tokens from `src/styles/app.css` (`bg-map-control`, `text-map-control-active-foreground`, etc.) so they stay readable over the map in light and dark themes.

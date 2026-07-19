@@ -1,22 +1,22 @@
 <script lang="ts">
+    import {Button} from '$lib/components/ui/button';
+    import {DialogClose, DialogFooter} from '$lib/components/ui/dialog/index.js';
+    import Field from '$lib/components/userMenu/import/preview/field.svelte';
+    import FileInfo from '$lib/components/userMenu/import/preview/fileInfo.svelte';
+    import MissingFieldsNotification from '$lib/components/userMenu/import/preview/missingFieldsNotification.svelte';
+    import {fieldList} from '$lib/components/userMenu/import/preview/preview.ts';
+    import RowPreview from '$lib/components/userMenu/import/preview/rowPreview.svelte';
     import {
         type ImportMappingsForJob,
         ImportStepError,
         ImportStepProgress,
     } from '$lib/interfaces/import';
-    import {DialogClose, DialogFooter} from '$lib/components/ui/dialog/index.js';
-    import FileInfo from '$lib/components/userMenu/import/preview/fileInfo.svelte';
-    import RowPreview from '$lib/components/userMenu/import/preview/rowPreview.svelte';
-    import {Button} from '$lib/components/ui/button';
+    import {normalizeRows} from '$lib/services/import/normalize';
+    import {importState, initializeImportProvider} from '$lib/state/import.svelte.ts';
+    import {useConvexClient} from 'convex-svelte';
     import {defaults, superForm} from 'sveltekit-superforms';
     import {zod4, zod4Client} from 'sveltekit-superforms/adapters';
     import {z} from 'zod';
-    import Field from '$lib/components/userMenu/import/preview/field.svelte';
-    import MissingFieldsNotification from '$lib/components/userMenu/import/preview/missingFieldsNotification.svelte';
-    import {fieldList} from '$lib/components/userMenu/import/preview/preview.ts';
-    import {importState, initializeImportProvider} from '$lib/state/import.svelte.ts';
-    import {normalizeRows} from '$lib/services/import/normalize';
-    import {useConvexClient} from 'convex-svelte';
 
     const client = useConvexClient();
 

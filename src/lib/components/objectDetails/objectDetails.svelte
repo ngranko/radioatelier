@@ -1,25 +1,25 @@
 <script lang="ts">
-    import {onMount} from 'svelte';
-    import type {LooseObject, PointPreviewDetails} from '$lib/interfaces/object';
-    import {clearActiveMarker, deactivateMarker} from '$lib/state/activeMarker.svelte.ts';
+    import {goto} from '$app/navigation';
     import Background from '$lib/components/objectDetails/background.svelte';
     import CloseConfirmDialog from '$lib/components/objectDetails/closeConfirmDialog.svelte';
     import DetailsContent from '$lib/components/objectDetails/detailsContent.svelte';
     import DetailsHeader from '$lib/components/objectDetails/detailsHeader.svelte';
     import DetailsSheet from '$lib/components/objectDetails/detailsSheet.svelte';
+    import type {LooseObject, PointPreviewDetails} from '$lib/interfaces/object';
+    import type {Permissions} from '$lib/interfaces/permissions';
+    import {clearActiveMarker, deactivateMarker} from '$lib/state/activeMarker.svelte.ts';
+    import {setCreateDraftPosition} from '$lib/state/createDraft.svelte';
     import {mapState} from '$lib/state/map.svelte';
     import {
         objectDetailsOverlay,
         closeDetailsOverlay,
         setOverlayPosition,
     } from '$lib/state/objectDetailsOverlay.svelte';
-    import type {Permissions} from '$lib/interfaces/permissions';
-    import {goto} from '$app/navigation';
-    import {useClerkContext} from 'svelte-clerk';
-    import {getActiveSearchUrl} from '$lib/state/search.svelte';
-    import {setCreateDraftPosition} from '$lib/state/createDraft.svelte';
     import type {ObjectDetailsOverlayMode} from '$lib/state/objectDetailsOverlay.svelte';
+    import {getActiveSearchUrl} from '$lib/state/search.svelte';
     import {registerEscapeCloseHandler} from '$lib/utils/escapeClose';
+    import {onMount} from 'svelte';
+    import {useClerkContext} from 'svelte-clerk';
 
     interface Props {
         initialValues?: Partial<LooseObject>;

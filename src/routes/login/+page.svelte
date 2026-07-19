@@ -1,6 +1,6 @@
 <script lang="ts">
-    import Logo from './logo.svelte';
     import LoginForm from './loginForm.svelte';
+    import Logo from './logo.svelte';
     import SecondFactorForm from './secondFactorForm.svelte';
     import SsoButtons from './ssoButtons.svelte';
 

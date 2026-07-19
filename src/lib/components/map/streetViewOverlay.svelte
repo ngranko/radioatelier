@@ -1,9 +1,9 @@
 <script lang="ts">
-    import {onDestroy} from 'svelte';
-    import {cn} from '$lib/utils';
-    import Button from '$lib/components/ui/button/button.svelte';
     import StreetViewMinimap from '$lib/components/map/streetViewMinimap.svelte';
+    import Button from '$lib/components/ui/button/button.svelte';
+    import {cn} from '$lib/utils';
     import XMarkIcon from '@lucide/svelte/icons/x';
+    import {onDestroy} from 'svelte';
 
     interface Props {
         panorama: google.maps.StreetViewPanorama | null;

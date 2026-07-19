@@ -1,15 +1,15 @@
 <script lang="ts">
-    import posthog from 'posthog-js';
-    import {onMount} from 'svelte';
+    import {page} from '$app/state';
+    import {api} from '$convex/_generated/api.js';
+    import type {Id} from '$convex/_generated/dataModel.js';
+    import type {Object as ObjectType} from '$lib/interfaces/object.ts';
     import {
         returnToViewMode,
         showObjectDetailsOverlay,
     } from '$lib/state/objectDetailsOverlay.svelte.js';
     import {useQuery} from 'convex-svelte';
-    import {page} from '$app/state';
-    import {api} from '$convex/_generated/api.js';
-    import type {Id} from '$convex/_generated/dataModel.js';
-    import type {Object as ObjectType} from '$lib/interfaces/object.ts';
+    import posthog from 'posthog-js';
+    import {onMount} from 'svelte';
 
     let {data} = $props();
 

@@ -1,4 +1,5 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
+
 import type {Marker} from './marker';
 import type {MarkerRepository} from './markerRepository';
 import type {MarkerRenderer} from './renderer/markerRenderer';

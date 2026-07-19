@@ -1,7 +1,7 @@
 <script lang="ts">
     import SearchItemCard from '$lib/components/search/searchItemCard.svelte';
-    import {focusDetailsTarget} from '$lib/services/map/map.svelte';
     import type {SearchItem} from '$lib/interfaces/object';
+    import {focusDetailsTarget} from '$lib/services/map/map.svelte';
     import {mapState} from '$lib/state/map.svelte.ts';
 
     interface Props {

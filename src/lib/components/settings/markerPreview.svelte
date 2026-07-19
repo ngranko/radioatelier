@@ -1,7 +1,7 @@
 <script lang="ts">
     import MarkerIcon from '$lib/components/map/markerIcon.svelte';
-    import {markerIconMap, type MarkerIconKey} from '$lib/services/map/markerStyling';
     import type {MarkerIcon as MarkerIconType} from '$lib/interfaces/marker';
+    import {markerIconMap, type MarkerIconKey} from '$lib/services/map/markerStyling';
 
     interface Props {
         color: string;

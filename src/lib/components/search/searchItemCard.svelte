@@ -1,8 +1,8 @@
 <script lang="ts">
-    import type {SearchItem} from '$lib/interfaces/object';
     import CategoryBadge from '$lib/components/categoryBadge.svelte';
-    import {SvglGoogleLogo} from '@selemondev/svgl-svelte';
     import {Button} from '$lib/components/ui/button';
+    import type {SearchItem} from '$lib/interfaces/object';
+    import {SvglGoogleLogo} from '@selemondev/svgl-svelte';
 
     let {object, onClick}: {object: SearchItem; onClick: () => void} = $props();
 

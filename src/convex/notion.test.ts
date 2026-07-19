@@ -1,4 +1,5 @@
 import {describe, expect, it} from 'vitest';
+
 import type {Doc, Id} from './_generated/dataModel';
 import {buildNotionPropertiesPayload, readNotionPageFields} from './notion/fields';
 import type {NotionDataSource, NotionPage, NotionPageFields} from './notion/types';

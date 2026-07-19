@@ -1,7 +1,7 @@
 <script lang="ts">
     import type {Id} from '$convex/_generated/dataModel';
-    import {categoriesState} from '$lib/state/categories.svelte';
     import {markerIconMap} from '$lib/services/map/markerStyling';
+    import {categoriesState} from '$lib/state/categories.svelte';
     import {cn} from '$lib/utils.ts';
 
     interface Props {

@@ -6,12 +6,12 @@ The object details panel is a bottom overlay used to view, edit, and create arch
 
 `ObjectDetailsOverlayMode` (`src/lib/state/objectDetailsOverlay.svelte.ts`):
 
-| Mode | UI component | Purpose |
-| ---- | ------------ | ------- |
-| `objectView` | `viewMode.svelte` | Read an existing object |
-| `objectEdit` | `objectEdit.svelte` | Edit an existing object |
+| Mode           | UI component          | Purpose                                                   |
+| -------------- | --------------------- | --------------------------------------------------------- |
+| `objectView`   | `viewMode.svelte`     | Read an existing object                                   |
+| `objectEdit`   | `objectEdit.svelte`   | Edit an existing object                                   |
 | `pointPreview` | `pointPreview.svelte` | Preview a map coordinate or Places result before creating |
-| `pointCreate` | `pointCreate.svelte` | Create form for a new point |
+| `pointCreate`  | `pointCreate.svelte`  | Create form for a new point                               |
 
 State helpers: `showObjectDetailsOverlay`, `showPointPreviewOverlay`, `showPointCreateOverlay`, `showLoadingDetailsOverlay`, `closeDetailsOverlay`.
 
@@ -27,11 +27,11 @@ Overlay state is a single `$state` object exposed through read-only getters on `
 
 `ObjectDetailsOverlayPosition` adds a third height between minimized and full:
 
-| Position | Height | How to reach |
-| -------- | ------ | ------------ |
-| `minimized` | 56 px header only | Chevron button, drag snap, or Street View open |
-| `peek` | ~42% viewport | Drag snap |
-| `full` | Viewport minus 16 px margin | Default on open; chevron from minimized/peek |
+| Position    | Height                      | How to reach                                   |
+| ----------- | --------------------------- | ---------------------------------------------- |
+| `minimized` | 56 px header only           | Chevron button, drag snap, or Street View open |
+| `peek`      | ~42% viewport               | Drag snap                                      |
+| `full`      | Viewport minus 16 px margin | Default on open; chevron from minimized/peek   |
 
 `isMinimized` is derived (`position === 'minimized'`). Street View calls `setOverlayPosition('minimized')` on open and `setOverlayPosition('full')` when the panorama closes.
 
@@ -93,11 +93,11 @@ Closing the overlay (close button, backdrop, or Esc) runs through `requestClose`
 
 ## Object routes
 
-| Route | Overlay behavior |
-| ----- | ---------------- |
-| `/object/[id]` | SSR loads `activeObject`; overlay opens in `objectView` |
-| `/point?lat=&lng=` | SSR loads `activePoint` with `draft` + `preview` |
-| `/point?lat=&lng=&placeId=` | Preview enriched from Google Place details |
+| Route                       | Overlay behavior                                        |
+| --------------------------- | ------------------------------------------------------- |
+| `/object/[id]`              | SSR loads `activeObject`; overlay opens in `objectView` |
+| `/point?lat=&lng=`          | SSR loads `activePoint` with `draft` + `preview`        |
+| `/point?lat=&lng=&placeId=` | Preview enriched from Google Place details              |
 
 `objects.create` runs from the `save` action in `point/+page.server.ts`.
 
@@ -109,13 +109,13 @@ When a user opens `/object/[id]` for an object they **do not own** and that obje
 
 `objectDetails.svelte` is a thin orchestrator; chrome and content live in dedicated modules:
 
-| Component | Role |
-| --------- | ---- |
-| `background.svelte` | Backdrop click → `requestClose` |
-| `closeConfirmDialog.svelte` | Unsaved-changes alert (edit/create taint check) |
-| `detailsSheet.svelte` | Bottom sheet shell, drag-to-resize, position snap |
-| `detailsHeader.svelte` | Drag handle, `internalId` badge, minimized title row, chevron/close |
-| `detailsContent.svelte` | Mode router → view/edit/preview/create children |
+| Component                   | Role                                                                |
+| --------------------------- | ------------------------------------------------------------------- |
+| `background.svelte`         | Backdrop click → `requestClose`                                     |
+| `closeConfirmDialog.svelte` | Unsaved-changes alert (edit/create taint check)                     |
+| `detailsSheet.svelte`       | Bottom sheet shell, drag-to-resize, position snap                   |
+| `detailsHeader.svelte`      | Drag handle, `internalId` badge, minimized title row, chevron/close |
+| `detailsContent.svelte`     | Mode router → view/edit/preview/create children                     |
 
 ### Sheet drag gestures
 
@@ -123,13 +123,13 @@ When a user opens `/object/[id]` for an object they **do not own** and that obje
 
 Snap math lives in `sheetSnap.ts` (unit-tested in `sheetSnap.test.ts`):
 
-| Constant | Value | Role |
-| -------- | ----- | ---- |
-| `MINIMIZED_HEIGHT` | 56 px | Minimized header height |
-| `PEEK_HEIGHT_RATIO` | 0.42 | Peek height as a fraction of viewport |
-| `SHEET_MARGIN` | 16 px | Top margin for full height |
+| Constant                | Value  | Role                                  |
+| ----------------------- | ------ | ------------------------------------- |
+| `MINIMIZED_HEIGHT`      | 56 px  | Minimized header height               |
+| `PEEK_HEIGHT_RATIO`     | 0.42   | Peek height as a fraction of viewport |
+| `SHEET_MARGIN`          | 16 px  | Top margin for full height            |
 | `INERTIA_PROJECTION_MS` | 220 ms | Velocity projection window on release |
-| `MAX_INERTIA_DELTA` | 220 px | Cap on projected flick distance |
+| `MAX_INERTIA_DELTA`     | 220 px | Cap on projected flick distance       |
 
 On pointer release, `getSettledPosition` projects release height from the last two drag samples (height + timestamp). A fast flick can settle one snap position past where the finger stopped — e.g. a downward flick from near-full can land on `peek` instead of `full`. Slow drags snap to the nearest position without inertia. During drag, CSS height transitions are disabled (`transition-none`); settled position restores Tailwind height classes via `setOverlayPosition`.
 
@@ -156,4 +156,3 @@ Descriptions may arrive with literal escape sequences (`\n`, `\r\n`, `\r`) from 
 - [map-architecture.md](./map-architecture.md) — map click constraints, marker focus offset, first-run hint
 - [search.md](./search.md) — search → point preview flow
 - [category-settings.md](./category-settings.md) — `CategoryBadge` reads merged category styles
-

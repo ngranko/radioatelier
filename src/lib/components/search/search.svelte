@@ -1,14 +1,14 @@
 <script lang="ts">
+    import {replaceState} from '$app/navigation';
+    import {page} from '$app/state';
+    import SearchAreaButton from '$lib/components/search/searchAreaButton.svelte';
     import SearchBar from '$lib/components/search/searchBar.svelte';
     import SearchPreview from '$lib/components/search/searchPreview.svelte';
     import SearchResults from '$lib/components/search/searchResults.svelte';
+    import {mapState} from '$lib/state/map.svelte';
+    import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
     import {searchState, applyUrlToSearchState, buildSearchUrl} from '$lib/state/search.svelte';
     import {onDestroy, onMount} from 'svelte';
-    import SearchAreaButton from '$lib/components/search/searchAreaButton.svelte';
-    import {mapState} from '$lib/state/map.svelte';
-    import {page} from '$app/state';
-    import {replaceState} from '$app/navigation';
-    import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
 
     let centerLat = $state('');
     let centerLng = $state('');

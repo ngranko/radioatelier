@@ -1,4 +1,5 @@
 import {afterEach, describe, expect, it, vi} from 'vitest';
+
 import type {Doc, Id} from '../_generated/dataModel';
 import type {QueryCtx} from '../_generated/server';
 import * as visitedChunks from '../utils/visitedChunks';
@@ -312,7 +313,12 @@ function makeObject(
 
 function id<
     TableName extends
-        'objects' | 'users' | 'mapPoints' | 'categories' | 'tags' | 'userVisitedChunks',
+        | 'objects'
+        | 'users'
+        | 'mapPoints'
+        | 'categories'
+        | 'tags'
+        | 'userVisitedChunks',
 >(_table: TableName, value: string) {
     return value as Id<TableName>;
 }

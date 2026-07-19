@@ -1,13 +1,13 @@
 <script lang="ts">
-    import {toast} from 'svelte-sonner';
-    import {Label} from '$lib/components/ui/label';
     import {Button} from '$lib/components/ui/button';
     import {Checkbox} from '$lib/components/ui/checkbox';
+    import {Label} from '$lib/components/ui/label';
     import {Root as SelectRoot, Trigger, Content, Item} from '$lib/components/ui/select';
-    import {importState, resetImportState} from '$lib/state/import.svelte.ts';
     import {parseCsv} from '$lib/services/import/csv';
-    import TrashIcon from '@lucide/svelte/icons/trash-2';
+    import {importState, resetImportState} from '$lib/state/import.svelte.ts';
     import FileSpreadsheetIcon from '@lucide/svelte/icons/file-spreadsheet';
+    import TrashIcon from '@lucide/svelte/icons/trash-2';
+    import {toast} from 'svelte-sonner';
 
     function getSeparator() {
         return importState.separator;

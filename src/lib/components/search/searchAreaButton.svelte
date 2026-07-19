@@ -1,9 +1,9 @@
 <script lang="ts">
-    import {fade} from 'svelte/transition';
-    import {cubicInOut} from 'svelte/easing';
-    import {searchState} from '$lib/state/search.svelte';
     import {Button} from '$lib/components/ui/button';
+    import {searchState} from '$lib/state/search.svelte';
     import RefreshCwIcon from '@lucide/svelte/icons/refresh-cw';
+    import {cubicInOut} from 'svelte/easing';
+    import {fade} from 'svelte/transition';
 
     interface Props {
         lat: string;

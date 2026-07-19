@@ -1,6 +1,7 @@
 import type {MapPlaceable} from '$lib/interfaces/object';
 import {mapState} from '$lib/state/map.svelte';
 import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
+
 import {DETAILS_OVERLAY_WIDTH, detailsFocusOffsets} from './detailsFocusOffset';
 
 const FOCUS_ZOOM = 15;

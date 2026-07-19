@@ -1,46 +1,46 @@
 <script lang="ts">
-    import {onMount} from 'svelte';
-    import type {LooseObject} from '$lib/interfaces/object';
-    import DeleteButton from '$lib/components/objectDetails/objectForm/deleteButton.svelte';
+    import {goto} from '$app/navigation';
+    import {page} from '$app/state';
+    import {api} from '$convex/_generated/api';
+    import type {Id} from '$convex/_generated/dataModel';
+    import ImageUpload from '$lib/components/input/imageUpload/index.svelte';
+    import AddressLoadingIndicator from '$lib/components/objectDetails/objectForm/addressLoadingIndicator.svelte';
     import BackButton from '$lib/components/objectDetails/objectForm/backButton.svelte';
-    import {removeSearchPoint} from '$lib/state/searchPointList.svelte.ts';
-    import {superForm, defaults} from 'sveltekit-superforms';
-    import {zod4Client} from 'sveltekit-superforms/adapters';
     import CategorySelect from '$lib/components/objectDetails/objectForm/categorySelect.svelte';
+    import DeleteButton from '$lib/components/objectDetails/objectForm/deleteButton.svelte';
+    import FlagToggle from '$lib/components/objectDetails/objectForm/flagToggle.svelte';
     import PrivateTagsSelect from '$lib/components/objectDetails/objectForm/privateTagsSelect.svelte';
     import TagsSelect from '$lib/components/objectDetails/objectForm/tagsSelect.svelte';
-    import {toast} from 'svelte-sonner';
-    import ImageUpload from '$lib/components/input/imageUpload/index.svelte';
     import {Button} from '$lib/components/ui/button';
-    import {Input} from '$lib/components/ui/input';
-    import {Separator} from '$lib/components/ui/separator';
-    import {Textarea} from '$lib/components/ui/textarea';
-    import FlagToggle from '$lib/components/objectDetails/objectForm/flagToggle.svelte';
-    import UserCheckIcon from '@lucide/svelte/icons/user-check';
-    import GhostIcon from '@lucide/svelte/icons/ghost';
-    import LockOpenIcon from '@lucide/svelte/icons/lock-open';
-    import {
-        objectDetailsOverlay,
-        returnToPointPreview,
-        returnToViewMode,
-        showLoadingDetailsOverlay,
-    } from '$lib/state/objectDetailsOverlay.svelte';
-    import {getErrorArray} from '$lib/utils/formErrors.ts';
     import {
         FormField,
         FormControl,
         FormLabel,
         FormFieldErrors,
     } from '$lib/components/ui/form/index.js';
-    import {goto} from '$app/navigation';
-    import {page} from '$app/state';
+    import {Input} from '$lib/components/ui/input';
+    import {Separator} from '$lib/components/ui/separator';
+    import {Textarea} from '$lib/components/ui/textarea';
+    import type {LooseObject} from '$lib/interfaces/object';
     import {schema, toFormDefaults} from '$lib/schema/objectSchema.ts';
-    import AddressLoadingIndicator from '$lib/components/objectDetails/objectForm/addressLoadingIndicator.svelte';
-    import type {Id} from '$convex/_generated/dataModel';
-    import {useConvexClient} from 'convex-svelte';
-    import {api} from '$convex/_generated/api';
-    import {resizeImage} from '$lib/utils/imageResizer';
+    import {
+        objectDetailsOverlay,
+        returnToPointPreview,
+        returnToViewMode,
+        showLoadingDetailsOverlay,
+    } from '$lib/state/objectDetailsOverlay.svelte';
     import {getActiveSearchUrl} from '$lib/state/search.svelte';
+    import {removeSearchPoint} from '$lib/state/searchPointList.svelte.ts';
+    import {getErrorArray} from '$lib/utils/formErrors.ts';
+    import {resizeImage} from '$lib/utils/imageResizer';
+    import GhostIcon from '@lucide/svelte/icons/ghost';
+    import LockOpenIcon from '@lucide/svelte/icons/lock-open';
+    import UserCheckIcon from '@lucide/svelte/icons/user-check';
+    import {useConvexClient} from 'convex-svelte';
+    import {onMount} from 'svelte';
+    import {toast} from 'svelte-sonner';
+    import {superForm, defaults} from 'sveltekit-superforms';
+    import {zod4Client} from 'sveltekit-superforms/adapters';
 
     interface Props {
         initialValues: Partial<LooseObject>;

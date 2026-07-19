@@ -1,21 +1,22 @@
 <script lang="ts">
-    import {Label} from '$lib/components/ui/label';
-    import {getErrorArray} from '$lib/utils/formErrors';
-    import {defaults, superForm} from 'sveltekit-superforms';
-    import LoadingDots from '$lib/components/loadingDots.svelte';
-    import {loginSchema} from './schema';
-    import {toast} from 'svelte-sonner';
-    import {normalizeRef} from '$lib/utils';
-    import {page} from '$app/state';
     import {goto} from '$app/navigation';
-    import {zod4, zod4Client} from 'sveltekit-superforms/adapters';
-    import {useClerkContext} from 'svelte-clerk';
-    import posthog from 'posthog-js';
-    import type {EmailCodeFactor} from '@clerk/types';
-    import {Input} from '$lib/components/ui/input';
+    import {page} from '$app/state';
     import PasswordInput from '$lib/components/input/passwordInput.svelte';
+    import LoadingDots from '$lib/components/loadingDots.svelte';
     import {Button} from '$lib/components/ui/button';
+    import {Input} from '$lib/components/ui/input';
+    import {Label} from '$lib/components/ui/label';
+    import {normalizeRef} from '$lib/utils';
+    import {getErrorArray} from '$lib/utils/formErrors';
+    import type {EmailCodeFactor} from '@clerk/types';
     import CircleAlertIcon from '@lucide/svelte/icons/circle-alert';
+    import posthog from 'posthog-js';
+    import {useClerkContext} from 'svelte-clerk';
+    import {toast} from 'svelte-sonner';
+    import {defaults, superForm} from 'sveltekit-superforms';
+    import {zod4, zod4Client} from 'sveltekit-superforms/adapters';
+
+    import {loginSchema} from './schema';
 
     interface Props {
         onNeedsSecondFactor: () => void;

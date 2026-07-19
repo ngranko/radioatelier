@@ -1,7 +1,7 @@
 <script lang="ts">
     import {mapState} from '$lib/state/map.svelte';
-    import {toast} from 'svelte-sonner';
     import NavigationIcon from '@lucide/svelte/icons/navigation';
+    import {toast} from 'svelte-sonner';
 
     function goToLastPosition() {
         let position = {lat: 0, lng: 0};
