@@ -57,7 +57,7 @@
         "@deck.gl/core": "~9.1.14",
         "@deck.gl/google-maps": "~9.1.14",
         "@deck.gl/layers": "~9.1.14",
-        "@googlemaps/js-api-loader": "^1.16.10",
+        "@googlemaps/js-api-loader": "^2.1.1",
         "@lucide/svelte": "^1.25.0",
         "@selemondev/svgl-svelte": "^2.17.0",
         "@tailwindcss/vite": "^4.3.3",

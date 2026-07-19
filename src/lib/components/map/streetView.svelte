@@ -5,6 +5,7 @@
     import {setOverlayPosition} from '$lib/state/objectDetailsOverlay.svelte';
     import {cn} from '$lib/utils';
     import {registerEscapeCloseHandler} from '$lib/utils/escapeClose';
+    import {importLibrary} from '@googlemaps/js-api-loader';
     import {onDestroy, onMount} from 'svelte';
 
     let streetViewContainer: HTMLDivElement | undefined = $state();
@@ -32,7 +33,7 @@
             return;
         }
 
-        const {StreetViewPanorama} = await provider.loader.importLibrary('streetView');
+        const {StreetViewPanorama} = await importLibrary('streetView');
 
         const googleMap = provider.getGoogleMap();
         if (!googleMap) {
