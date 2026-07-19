@@ -1,13 +1,13 @@
 <script lang="ts">
     import LoggedInMenu from '$lib/components/userMenu/loggedInMenu.svelte';
     import LoggedOutMenu from '$lib/components/userMenu/loggedOutMenu.svelte';
-    import {SignedIn, SignedOut} from 'svelte-clerk';
+    import {Show} from 'svelte-clerk';
 </script>
 
 <!-- TODO: add a case for clerk loading -->
-<SignedIn>
+<Show when="signed-in">
     <LoggedInMenu />
-</SignedIn>
-<SignedOut>
+</Show>
+<Show when="signed-out">
     <LoggedOutMenu />
-</SignedOut>
+</Show>
