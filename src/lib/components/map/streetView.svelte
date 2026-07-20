@@ -32,7 +32,7 @@
             return;
         }
 
-        const {StreetViewPanorama} = await provider.loader.importLibrary('streetView');
+        const {StreetViewPanorama} = await provider.importLibrary('streetView');
 
         const googleMap = provider.getGoogleMap();
         if (!googleMap) {

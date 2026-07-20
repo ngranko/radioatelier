@@ -72,7 +72,7 @@
             return;
         }
 
-        const {Map} = await provider.loader.importLibrary('maps');
+        const {Map} = await provider.importLibrary('maps');
         const center = position ?? provider.getCenter() ?? undefined;
 
         miniMap = new Map(miniMapContainer, {
