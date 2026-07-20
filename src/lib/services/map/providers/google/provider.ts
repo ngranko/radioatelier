@@ -12,6 +12,7 @@ import type {
 import {computeMinZoomForContainer} from '$lib/services/map/mapMinZoom';
 import {MERCATOR_WORLD_RESTRICTION} from '$lib/services/map/mapRestriction';
 import {GoogleMapBounds} from '$lib/services/map/providers/google/bounds';
+import {DeckOverlayHost} from '$lib/services/map/providers/google/deckOverlayHost';
 import {GoogleMarkerHandle} from '$lib/services/map/providers/google/markerHandle';
 import {themeState} from '$lib/state/theme.svelte';
 import {importLibrary as loadGoogleMapsLibrary, setOptions} from '@googlemaps/js-api-loader';
@@ -39,6 +40,7 @@ function configureLoader(): void {
 
 export class GoogleMapsProvider implements MapProvider {
     private map?: google.maps.Map;
+    private deckOverlay?: DeckOverlayHost;
     private minZoom = 2;
     private resizeObserver?: ResizeObserver;
 
@@ -221,6 +223,8 @@ export class GoogleMapsProvider implements MapProvider {
     }
 
     destroy(): void {
+        this.deckOverlay?.destroy();
+        this.deckOverlay = undefined;
         this.resizeObserver?.disconnect();
         this.resizeObserver = undefined;
         if (this.map) {
@@ -231,5 +235,13 @@ export class GoogleMapsProvider implements MapProvider {
 
     getGoogleMap(): google.maps.Map | undefined {
         return this.map;
+    }
+
+    getDeckOverlay(): DeckOverlayHost {
+        if (!this.map) {
+            throw new Error('Map not initialized');
+        }
+        this.deckOverlay ??= new DeckOverlayHost(this.map);
+        return this.deckOverlay;
     }
 }
