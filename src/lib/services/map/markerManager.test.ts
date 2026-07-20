@@ -6,7 +6,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {MarkerManager} from './markerManager';
 
 const markerOptions: MarkerOptions = {
-    icon: (() => {}) as MarkerIcon,
+    icon: (() => {}) as unknown as MarkerIcon,
     color: '#000000',
     source: 'list',
 };
