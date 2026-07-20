@@ -31,7 +31,6 @@ import {
     Zap,
 } from '@lucide/svelte';
 import type {Component} from 'svelte';
-
 import {MARKER_COLORS, type MarkerIconKey} from './markerStyling.data';
 
 interface MarkerIcon {

@@ -1,5 +1,4 @@
 import {describe, expect, it} from 'vitest';
-
 import {detailsFocusOffsets, usesSidePanelOffset} from './detailsFocusOffset';
 
 describe('usesSidePanelOffset', () => {

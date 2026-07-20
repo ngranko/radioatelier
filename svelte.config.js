@@ -1,6 +1,5 @@
 import {readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
-
 import adapter from '@sveltejs/adapter-node';
 import {vitePreprocess} from '@sveltejs/vite-plugin-svelte';
 

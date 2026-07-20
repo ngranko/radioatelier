@@ -7,7 +7,6 @@
     import CircleAlertIcon from '@lucide/svelte/icons/circle-alert';
     import LoaderCircleIcon from '@lucide/svelte/icons/loader-circle';
     import ZoomOutIcon from '@lucide/svelte/icons/zoom-out';
-
     import SearchItemSkeleton from './searchItemSkeleton.svelte';
     import SearchResultsItem from './searchResultsItem.svelte';
 

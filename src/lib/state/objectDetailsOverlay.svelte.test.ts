@@ -1,6 +1,5 @@
 import type {PointPreviewDetails} from '$lib/interfaces/object';
 import {beforeEach, describe, expect, it} from 'vitest';
-
 import {
     closeDetailsOverlay,
     enterEditMode,

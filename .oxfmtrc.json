@@ -15,7 +15,9 @@
     "htmlWhitespaceSensitivity": "ignore",
     "endOfLine": "lf",
     "sortPackageJson": true,
-    "sortImports": {},
+    "sortImports": {
+        "newlinesBetween": false
+    },
     "sortTailwindcss": {},
     "svelte": {},
     "ignorePatterns": [

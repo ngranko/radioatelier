@@ -1,6 +1,5 @@
 import {paginationOptsValidator} from 'convex/server';
 import {v} from 'convex/values';
-
 import type {Doc, Id} from '../_generated/dataModel';
 import {internalQuery, type MutationCtx, type QueryCtx} from '../_generated/server';
 import {getNotionSyncAppUrl} from '../notion/config';

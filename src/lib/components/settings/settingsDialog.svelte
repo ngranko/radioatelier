@@ -15,7 +15,6 @@
     import {useConvexClient} from 'convex-svelte';
     import {onDestroy} from 'svelte';
     import {toast} from 'svelte-sonner';
-
     import CategoryStyleEditor from './categoryStyleEditor.svelte';
 
     const DIALOG_ANIMATION_DURATION = 200;

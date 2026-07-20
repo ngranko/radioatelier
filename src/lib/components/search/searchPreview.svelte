@@ -8,7 +8,6 @@
     import {useConvexClient} from 'convex-svelte';
     import {cubicInOut} from 'svelte/easing';
     import {fade} from 'svelte/transition';
-
     import LoadMoreButton from './loadMoreButton.svelte';
     import SearchItemSkeleton from './searchItemSkeleton.svelte';
     import SearchPreviewItem from './searchPreviewItem.svelte';

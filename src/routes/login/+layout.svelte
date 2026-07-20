@@ -1,7 +1,6 @@
 <script lang="ts">
     import ThemeSwitcher from '$lib/components/themeSwitcher.svelte';
     import {onMount} from 'svelte';
-
     import type {LayoutProps} from './$types';
     import Background from './background.svelte';
 

@@ -29,7 +29,6 @@
     import {useQuery} from 'convex-svelte';
     import posthog from 'posthog-js';
     import {useClerkContext} from 'svelte-clerk';
-
     import type {LayoutProps} from './$types';
 
     // this is needed to avoid deck.gl error

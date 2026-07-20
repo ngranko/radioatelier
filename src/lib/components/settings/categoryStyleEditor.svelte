@@ -2,7 +2,6 @@
     import {Checkbox} from '$lib/components/ui/checkbox';
     import type {Category} from '$lib/interfaces/category';
     import ListXIcon from '@lucide/svelte/icons/list-x';
-
     import ColorPicker from './colorPicker.svelte';
     import IconPicker from './iconPicker.svelte';
     import MarkerPreview from './markerPreview.svelte';

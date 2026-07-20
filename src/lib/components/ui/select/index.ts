@@ -1,5 +1,4 @@
 import {Select as SelectPrimitive} from 'bits-ui';
-
 import Content from './select-content.svelte';
 import GroupHeading from './select-group-heading.svelte';
 import Group from './select-group.svelte';

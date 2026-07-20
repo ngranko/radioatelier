@@ -1,5 +1,4 @@
 import type {MarkerId, MarkerSource} from '$lib/interfaces/marker';
-
 import {Marker} from './marker';
 
 export class MarkerRepository {

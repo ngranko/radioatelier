@@ -5,7 +5,6 @@
     import type {LooseObject} from '$lib/interfaces/object.ts';
     import type {Permissions} from '$lib/interfaces/permissions';
     import ExternalLinkIcon from '@lucide/svelte/icons/external-link';
-
     import Actions from './actions.svelte';
     import Address from './address.svelte';
     import Tags from './tags.svelte';

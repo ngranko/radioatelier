@@ -13,7 +13,6 @@
     import {portal} from 'svelte-portal';
     import {cubicInOut} from 'svelte/easing';
     import {fly} from 'svelte/transition';
-
     import MinimizeButton from './minimizeButton.svelte';
     import SearchResultsList from './searchResultsList.svelte';
 

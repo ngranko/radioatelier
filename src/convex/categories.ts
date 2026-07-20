@@ -1,5 +1,4 @@
 import {ConvexError, v} from 'convex/values';
-
 import {
     MARKER_COLORS,
     MARKER_ICON_KEYS,

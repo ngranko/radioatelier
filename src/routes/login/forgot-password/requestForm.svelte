@@ -13,7 +13,6 @@
     import {toast} from 'svelte-sonner';
     import {defaults, superForm} from 'sveltekit-superforms';
     import {zod4, zod4Client} from 'sveltekit-superforms/adapters';
-
     import {resetPasswordRequestSchema} from '../schema';
 
     interface Props {
