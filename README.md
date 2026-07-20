@@ -62,6 +62,7 @@ An archive of urban artifacts — old signs, plaques, mosaics, and other details
 | Doc                                                                    | Topics                                                   |
 | ---------------------------------------------------------------------- | -------------------------------------------------------- |
 | [docs/environment.md](docs/environment.md)                             | `.env.local` vs Convex env vars, setup checklist         |
+| [docs/analytics.md](docs/analytics.md)                                 | PostHog events, ingest proxy, identity, error tracking   |
 | [docs/notion-sync.md](docs/notion-sync.md)                             | Notion webhook setup, sync invariants, audit action      |
 | [docs/map-architecture.md](docs/map-architecture.md)                   | Map provider, marker pipeline, DOM vs Deck.gl            |
 | [docs/category-settings.md](docs/category-settings.md)                 | Per-user category marker styles                          |
