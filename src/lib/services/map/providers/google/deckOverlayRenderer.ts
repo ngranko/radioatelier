@@ -1,7 +1,7 @@
 import {cssColorToRgb} from '$lib/services/colorConverter';
 import type {Marker} from '$lib/services/map/marker';
+import type {DeckOverlayHost} from '$lib/services/map/providers/google/deckOverlayHost';
 import type {MarkerRenderer} from '$lib/services/map/renderer/markerRenderer';
-import {GoogleMapsOverlay} from '@deck.gl/google-maps';
 import {ScatterplotLayer} from '@deck.gl/layers';
 
 const DOT_RADIUS_PX = 6;
@@ -17,13 +17,13 @@ interface DeckPointInfo {
 }
 
 export class DeckOverlayRenderer implements MarkerRenderer {
-    private overlay: GoogleMapsOverlay;
     private allMarkers = new Set<Marker>();
     private scheduled = false;
+    private renderTimeout?: ReturnType<typeof setTimeout>;
+    private renderFrame?: number;
 
-    public constructor(map: google.maps.Map) {
-        this.overlay = new GoogleMapsOverlay({layers: []});
-        this.overlay.setMap(map);
+    public constructor(private overlay: DeckOverlayHost) {
+        this.overlay.attach();
     }
 
     public ensureCreated(marker: Marker): void {
@@ -59,8 +59,14 @@ export class DeckOverlayRenderer implements MarkerRenderer {
 
     public destroy(): void {
         this.allMarkers.clear();
-        this.overlay.setProps({layers: []});
-        this.overlay.setMap(null as unknown as google.maps.Map);
+        if (this.renderTimeout !== undefined) {
+            clearTimeout(this.renderTimeout);
+        }
+        if (this.renderFrame !== undefined) {
+            cancelAnimationFrame(this.renderFrame);
+        }
+        this.scheduled = false;
+        this.overlay.detach();
     }
 
     private scheduleRender() {
@@ -68,8 +74,10 @@ export class DeckOverlayRenderer implements MarkerRenderer {
             return;
         }
         this.scheduled = true;
-        setTimeout(() => {
-            requestAnimationFrame(() => {
+        this.renderTimeout = setTimeout(() => {
+            this.renderTimeout = undefined;
+            this.renderFrame = requestAnimationFrame(() => {
+                this.renderFrame = undefined;
                 this.scheduled = false;
                 this.render();
             });
@@ -101,9 +109,7 @@ export class DeckOverlayRenderer implements MarkerRenderer {
             };
         });
 
-        this.overlay.setProps({
-            layers: [this.createHaloLayer(data), this.createMarkerLayer(data)],
-        });
+        this.overlay.setLayers([this.createHaloLayer(data), this.createMarkerLayer(data)]);
     }
 
     private createHaloLayer(data: DeckPointInfo[]): ScatterplotLayer {

@@ -18,11 +18,12 @@
     },
     "dependencies": {
         "@convex-dev/migrations": "^0.3.5",
-        "@deck.gl/core": "~9.1.14",
-        "@deck.gl/google-maps": "~9.1.14",
-        "@deck.gl/layers": "~9.1.14",
+        "@deck.gl/core": "^9.3.7",
+        "@deck.gl/google-maps": "^9.3.7",
+        "@deck.gl/layers": "^9.3.7",
         "@googlemaps/js-api-loader": "^2.1.1",
         "@lucide/svelte": "^1.25.0",
+        "@luma.gl/webgl": "^9.3.6",
         "@selemondev/svgl-svelte": "^2.17.0",
         "@tailwindcss/vite": "^4.3.3",
         "clsx": "^2.1.1",
@@ -70,9 +71,6 @@
         "vite": "^8.1.5",
         "vite-plugin-cjs-interop": "^4.0.3",
         "vitest": "^4.1.10"
-    },
-    "overrides": {
-        "wgsl_reflect": "1.2.3"
     },
     "engines": {
         "node": ">=26.0.0",

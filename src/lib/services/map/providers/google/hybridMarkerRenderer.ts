@@ -11,14 +11,10 @@ export class HybridMarkerRenderer implements MarkerRenderer {
 
     public constructor(provider: MapProvider) {
         this.dom = new DomMarkerRenderer(provider);
-        if (!('getGoogleMap' in provider) || typeof provider.getGoogleMap !== 'function') {
+        if (!('getDeckOverlay' in provider) || typeof provider.getDeckOverlay !== 'function') {
             throw new Error('HybridMarkerRenderer requires a GoogleMapsProvider');
         }
-        const googleMap = (provider as GoogleMapsProvider).getGoogleMap();
-        if (!googleMap) {
-            throw new Error('GoogleMapsProvider map not initialized');
-        }
-        this.deck = new DeckOverlayRenderer(googleMap);
+        this.deck = new DeckOverlayRenderer((provider as GoogleMapsProvider).getDeckOverlay());
     }
 
     public ensureCreated(marker: Marker): void {
