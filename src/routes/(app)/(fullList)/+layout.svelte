@@ -37,11 +37,17 @@
     // No initialData here: the first-run hint below must distinguish "no
     // markers yet" from "marker list not loaded yet", and with initialData the
     // query reports data=[] with isLoading=false before the server responds.
-    const objects = useQuery(api.markers.list, () => (ctx.auth.userId ? {} : 'skip'));
+    // Preserve loaded markers when an auth refresh briefly skips the query so
+    // their components are not torn down and recreated on app resume.
+    const objects = useQuery(
+        api.markers.list,
+        () => (ctx.auth.userId ? {} : 'skip'),
+        () => ({keepPreviousData: true}),
+    );
     const visitedObjectIds = useQuery(
         api.markers.listVisitedIds,
         () => (ctx.auth.userId ? {} : 'skip'),
-        () => ({initialData: []}),
+        () => ({initialData: [], keepPreviousData: true}),
     );
 
     const overlayValues = $derived(

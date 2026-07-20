@@ -148,19 +148,16 @@ export class MarkerManager {
         this.scheduleViewportUpdate();
     }
 
-    public removeMarker(id: MarkerId) {
-        const marker = this.repo.get(id);
-        if (!marker) {
-            return;
-        }
-
-        this.renderer.remove(marker, () => {
+    public removeMarker(id: MarkerId, marker: Marker) {
+        if (this.repo.get(id) === marker) {
             this.repo.remove(id);
             const restored = this.repo.maybeRestoreReplaced(id);
             if (restored) {
                 this.scheduleViewportUpdate();
             }
-        });
+        }
+
+        this.renderer.remove(marker);
     }
 
     public updateMarkerState(id: MarkerId, update: MarkerStateUpdate) {
