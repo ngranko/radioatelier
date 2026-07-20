@@ -1,8 +1,8 @@
 <script lang="ts">
-    import {onMount} from 'svelte';
-    import Background from './background.svelte';
-    import type {LayoutProps} from './$types';
     import ThemeSwitcher from '$lib/components/themeSwitcher.svelte';
+    import {onMount} from 'svelte';
+    import type {LayoutProps} from './$types';
+    import Background from './background.svelte';
 
     let {children}: LayoutProps = $props();
 

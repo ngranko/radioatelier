@@ -1,10 +1,10 @@
 <script lang="ts">
+    import {Checkbox} from '$lib/components/ui/checkbox';
     import type {Category} from '$lib/interfaces/category';
-    import MarkerPreview from './markerPreview.svelte';
+    import ListXIcon from '@lucide/svelte/icons/list-x';
     import ColorPicker from './colorPicker.svelte';
     import IconPicker from './iconPicker.svelte';
-    import {Checkbox} from '$lib/components/ui/checkbox';
-    import ListXIcon from '@lucide/svelte/icons/list-x';
+    import MarkerPreview from './markerPreview.svelte';
 
     type CategoryStyle = Pick<Category, 'markerColor' | 'markerIcon' | 'isHidden'>;
 

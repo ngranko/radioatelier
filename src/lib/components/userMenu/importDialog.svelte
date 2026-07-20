@@ -1,14 +1,17 @@
 <script lang="ts">
+    import {goto} from '$app/navigation';
     import {
         Root as DialogRoot,
         Content,
         DialogHeader,
         DialogTitle,
     } from '$lib/components/ui/dialog';
-    import UploadFile from '$lib/components/userMenu/import/uploadFile.svelte';
+    import CloseConfirmation from '$lib/components/userMenu/import/closeConfirmation.svelte';
+    import Error from '$lib/components/userMenu/import/error.svelte';
     import PreviewImport from '$lib/components/userMenu/import/preview.svelte';
     import Progress from '$lib/components/userMenu/import/progress.svelte';
-    import CloseConfirmation from '$lib/components/userMenu/import/closeConfirmation.svelte';
+    import Success from '$lib/components/userMenu/import/success.svelte';
+    import UploadFile from '$lib/components/userMenu/import/uploadFile.svelte';
     import {
         ImportStepSuccess,
         ImportStepError,
@@ -16,10 +19,7 @@
         ImportStepProgress,
         ImportStepUpload,
     } from '$lib/interfaces/import.ts';
-    import Success from '$lib/components/userMenu/import/success.svelte';
-    import Error from '$lib/components/userMenu/import/error.svelte';
     import {importState, resetImportState} from '$lib/state/import.svelte.ts';
-    import {goto} from '$app/navigation';
 
     interface Props {
         isOpen: boolean;

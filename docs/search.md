@@ -6,12 +6,12 @@ Search combines archive full-text lookup (Typesense) with Google Places. The UI 
 
 All search actions live in `src/convex/search.ts` and require an authenticated user.
 
-| Action | Purpose | Pagination |
-| ------ | ------- | ---------- |
-| `search.preview` | Mixed local + Google results for the dropdown | Returns up to 5 local + 2 Google items; `hasMore` when either source has additional pages |
-| `search.local` | Typesense object search | Offset-based (`offset` arg, page size 20) |
-| `search.google` | Google Places text search | Token-based (`pageToken` arg, page size 20) |
-| `search.googlePlaceDetails` | Place details for a selected Google result | Single fetch |
+| Action                      | Purpose                                       | Pagination                                                                                |
+| --------------------------- | --------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `search.preview`            | Mixed local + Google results for the dropdown | Returns up to 5 local + 2 Google items; `hasMore` when either source has additional pages |
+| `search.local`              | Typesense object search                       | Offset-based (`offset` arg, page size 20)                                                 |
+| `search.google`             | Google Places text search                     | Token-based (`pageToken` arg, page size 20)                                               |
+| `search.googlePlaceDetails` | Place details for a selected Google result    | Single fetch                                                                              |
 
 Coordinate queries (`"55.75, 37.61"`) bypass Typesense and Google; `preview` returns a synthetic local item at those coordinates.
 

@@ -1,13 +1,13 @@
 <script lang="ts">
-    import type {LooseObject} from '$lib/interfaces/object.ts';
-    import Flags from '$lib/components/objectDetails/viewMode/flags.svelte';
-    import Tags from './tags.svelte';
-    import Address from './address.svelte';
-    import Actions from './actions.svelte';
-    import ImageUpload from '$lib/components/input/imageUpload/index.svelte';
     import CategoryBadge from '$lib/components/categoryBadge.svelte';
+    import ImageUpload from '$lib/components/input/imageUpload/index.svelte';
+    import Flags from '$lib/components/objectDetails/viewMode/flags.svelte';
+    import type {LooseObject} from '$lib/interfaces/object.ts';
     import type {Permissions} from '$lib/interfaces/permissions';
     import ExternalLinkIcon from '@lucide/svelte/icons/external-link';
+    import Actions from './actions.svelte';
+    import Address from './address.svelte';
+    import Tags from './tags.svelte';
 
     interface Props {
         initialValues: Partial<LooseObject>;

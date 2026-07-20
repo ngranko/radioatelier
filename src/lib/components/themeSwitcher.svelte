@@ -1,8 +1,8 @@
 <script lang="ts">
     import {themeState, setTheme, type ThemePreference} from '$lib/state/theme.svelte';
-    import SunMoonIcon from '@lucide/svelte/icons/sun-moon';
-    import SunIcon from '@lucide/svelte/icons/sun';
     import MoonIcon from '@lucide/svelte/icons/moon';
+    import SunIcon from '@lucide/svelte/icons/sun';
+    import SunMoonIcon from '@lucide/svelte/icons/sun-moon';
     import type {Component} from 'svelte';
 
     const options: {value: ThemePreference; label: string; icon: Component<{class?: string}>}[] = [

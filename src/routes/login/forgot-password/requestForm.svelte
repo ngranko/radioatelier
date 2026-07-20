@@ -1,19 +1,19 @@
 <script lang="ts">
     import {page} from '$app/state';
+    import LoadingDots from '$lib/components/loadingDots.svelte';
+    import {Button} from '$lib/components/ui/button';
+    import {Input} from '$lib/components/ui/input';
+    import {Label} from '$lib/components/ui/label';
+    import {getErrorArray} from '$lib/utils/formErrors';
+    import type {ResetPasswordEmailCodeFactor} from '@clerk/types';
+    import ArrowLeftIcon from '@lucide/svelte/icons/arrow-left';
+    import CircleAlertIcon from '@lucide/svelte/icons/circle-alert';
+    import KeyRoundIcon from '@lucide/svelte/icons/key-round';
     import {useClerkContext} from 'svelte-clerk';
+    import {toast} from 'svelte-sonner';
     import {defaults, superForm} from 'sveltekit-superforms';
     import {zod4, zod4Client} from 'sveltekit-superforms/adapters';
-    import {toast} from 'svelte-sonner';
-    import {getErrorArray} from '$lib/utils/formErrors';
-    import {Label} from '$lib/components/ui/label';
     import {resetPasswordRequestSchema} from '../schema';
-    import type {ResetPasswordEmailCodeFactor} from '@clerk/types';
-    import {Input} from '$lib/components/ui/input';
-    import {Button} from '$lib/components/ui/button';
-    import LoadingDots from '$lib/components/loadingDots.svelte';
-    import KeyRoundIcon from '@lucide/svelte/icons/key-round';
-    import CircleAlertIcon from '@lucide/svelte/icons/circle-alert';
-    import ArrowLeftIcon from '@lucide/svelte/icons/arrow-left';
 
     interface Props {
         requestedEmail: string;

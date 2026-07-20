@@ -1,7 +1,7 @@
 <script lang="ts">
     import Badge from '$lib/components/ui/badge/badge.svelte';
-    import type {Tag} from '$lib/interfaces/tag.js';
     import type {PrivateTag} from '$lib/interfaces/privateTag.ts';
+    import type {Tag} from '$lib/interfaces/tag.js';
     import LockIcon from '@lucide/svelte/icons/lock';
     import TagIcon from '@lucide/svelte/icons/tag';
 

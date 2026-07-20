@@ -1,6 +1,6 @@
 <script lang="ts">
-    import {onMount} from 'svelte';
     import {dispatchEscapeClose} from '$lib/utils/escapeClose';
+    import {onMount} from 'svelte';
 
     onMount(() => {
         function onKeydown(event: KeyboardEvent) {

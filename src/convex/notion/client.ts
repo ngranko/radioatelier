@@ -82,7 +82,10 @@ export async function archivePage(pageId: string) {
     });
 }
 
-async function notionRequest<T>(path: string, init: RequestInit) {
+async function notionRequest<T>(
+    path: string,
+    init: Omit<RequestInit, 'headers'> & {headers?: Record<string, string>},
+) {
     for (let attempt = 0; attempt <= MAX_RETRY_ATTEMPTS; attempt++) {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);

@@ -1,6 +1,6 @@
 <script lang="ts">
-    import type {Component} from 'svelte';
     import {cn} from '$lib/utils.ts';
+    import type {Component} from 'svelte';
 
     interface Props {
         checked: boolean;

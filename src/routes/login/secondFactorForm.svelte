@@ -1,20 +1,20 @@
 <script lang="ts">
-    import {Label} from '$lib/components/ui/label';
-    import {getErrorArray} from '$lib/utils/formErrors';
-    import {defaults, superForm} from 'sveltekit-superforms';
-    import LoadingDots from '$lib/components/loadingDots.svelte';
-    import {secondFactorSchema} from './schema';
-    import {normalizeRef} from '$lib/utils';
-    import {page} from '$app/state';
-    import {toast} from 'svelte-sonner';
-    import {zod4, zod4Client} from 'sveltekit-superforms/adapters';
-    import {useClerkContext} from 'svelte-clerk';
     import {goto} from '$app/navigation';
-    import {Input} from '$lib/components/ui/input';
+    import {page} from '$app/state';
+    import LoadingDots from '$lib/components/loadingDots.svelte';
     import {Button} from '$lib/components/ui/button';
-    import CircleAlertIcon from '@lucide/svelte/icons/circle-alert';
+    import {Input} from '$lib/components/ui/input';
+    import {Label} from '$lib/components/ui/label';
+    import {normalizeRef} from '$lib/utils';
+    import {getErrorArray} from '$lib/utils/formErrors';
     import ArrowLeftIcon from '@lucide/svelte/icons/arrow-left';
+    import CircleAlertIcon from '@lucide/svelte/icons/circle-alert';
     import MailOpenIcon from '@lucide/svelte/icons/mail-open';
+    import {useClerkContext} from 'svelte-clerk';
+    import {toast} from 'svelte-sonner';
+    import {defaults, superForm} from 'sveltekit-superforms';
+    import {zod4, zod4Client} from 'sveltekit-superforms/adapters';
+    import {secondFactorSchema} from './schema';
 
     interface Props {
         onBack: () => void;

@@ -1,16 +1,16 @@
 <script lang="ts">
-    import {onDestroy, tick} from 'svelte';
-    import config from '$lib/config';
-    import {cn} from '$lib/utils';
     import Button from '$lib/components/ui/button/button.svelte';
+    import config from '$lib/config';
     import {GoogleMapsProvider} from '$lib/services/map/providers/google/provider';
     import {
         applyStreetViewLocation,
         resolveStreetViewLocation,
     } from '$lib/services/map/streetView.svelte';
     import {mapState} from '$lib/state/map.svelte';
+    import {cn} from '$lib/utils';
     import Maximize2Icon from '@lucide/svelte/icons/maximize-2';
     import Minimize2Icon from '@lucide/svelte/icons/minimize-2';
+    import {onDestroy, tick} from 'svelte';
 
     interface Props {
         panorama: google.maps.StreetViewPanorama | null;

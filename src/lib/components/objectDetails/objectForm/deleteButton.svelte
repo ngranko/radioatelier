@@ -1,5 +1,4 @@
 <script lang="ts">
-    import {buttonVariants} from '$lib/components/ui/button';
     import {
         Root as AlertDialogRoot,
         Trigger,
@@ -11,6 +10,7 @@
         Cancel,
         Action,
     } from '$lib/components/ui/alert-dialog';
+    import {buttonVariants} from '$lib/components/ui/button';
     import {cn} from '$lib/utils.ts';
 
     interface Props {

@@ -22,18 +22,18 @@ Progress and completion are driven by `api.imports.getJob` (`progress.svelte` su
 
 Users map CSV columns to fields in the preview step. Three mappings are required:
 
-| Field | Required | Notes |
-| ----- | -------- | ----- |
-| `coordinates` | Yes | `"lat,lng"` — comma-separated, optional space after comma |
-| `name` | Yes | Trimmed; max 256 chars (longer values truncated) |
-| `category` | Yes | Trimmed; max 128 chars |
-| `isVisited`, `isPublic`, `isRemoved` | No | True when value is `1`, `true`, `yes`, `y`, or `да` (case-insensitive) |
-| `tags`, `privateTags` | No | Split on `;` or `,`; each tag lowercased, max 128 chars |
-| `address`, `city`, `country` | No | Location text fields with per-field length limits |
-| `installedPeriod`, `removalPeriod` | No | Max 64 chars |
-| `description` | No | Max 8000 chars |
-| `source` | No | Must be a valid `http://` or `https://` URL; invalid values skipped with a warning |
-| `image` | No | HTTP(S) URL or base64 data URL (`jpeg`, `png`, `webp` only) |
+| Field                                | Required | Notes                                                                              |
+| ------------------------------------ | -------- | ---------------------------------------------------------------------------------- |
+| `coordinates`                        | Yes      | `"lat,lng"` — comma-separated, optional space after comma                          |
+| `name`                               | Yes      | Trimmed; max 256 chars (longer values truncated)                                   |
+| `category`                           | Yes      | Trimmed; max 128 chars                                                             |
+| `isVisited`, `isPublic`, `isRemoved` | No       | True when value is `1`, `true`, `yes`, `y`, or `да` (case-insensitive)             |
+| `tags`, `privateTags`                | No       | Split on `;` or `,`; each tag lowercased, max 128 chars                            |
+| `address`, `city`, `country`         | No       | Location text fields with per-field length limits                                  |
+| `installedPeriod`, `removalPeriod`   | No       | Max 64 chars                                                                       |
+| `description`                        | No       | Max 8000 chars                                                                     |
+| `source`                             | No       | Must be a valid `http://` or `https://` URL; invalid values skipped with a warning |
+| `image`                              | No       | HTTP(S) URL or base64 data URL (`jpeg`, `png`, `webp` only)                        |
 
 Field-level validation hints shown in the UI are defined in `src/lib/components/userMenu/import/preview/preview.ts`.
 
@@ -66,14 +66,14 @@ See [notion-sync.md](./notion-sync.md) for sync setup and invariants.
 
 ## Convex API
 
-| Function | Type | Purpose |
-| -------- | ---- | ------- |
-| `imports.startJob` | mutation | Create a `running` job with `totalRows` and column mappings |
-| `imports.importBatch` | mutation | Process one batch; update progress, feedback, and optional Notion enqueue |
-| `imports.getJob` | query | Poll job status (owner-only) |
-| `imports.cancelJob` | mutation | Mark a running job as `cancelled` |
-| `imports.finalizeJob` | mutation | Force terminal status on client-side failure |
-| `imports.cleanupOldJobs` | internal mutation | Delete jobs older than seven days |
+| Function                 | Type              | Purpose                                                                   |
+| ------------------------ | ----------------- | ------------------------------------------------------------------------- |
+| `imports.startJob`       | mutation          | Create a `running` job with `totalRows` and column mappings               |
+| `imports.importBatch`    | mutation          | Process one batch; update progress, feedback, and optional Notion enqueue |
+| `imports.getJob`         | query             | Poll job status (owner-only)                                              |
+| `imports.cancelJob`      | mutation          | Mark a running job as `cancelled`                                         |
+| `imports.finalizeJob`    | mutation          | Force terminal status on client-side failure                              |
+| `imports.cleanupOldJobs` | internal mutation | Delete jobs older than seven days                                         |
 
 ## CSV parsing constraints
 

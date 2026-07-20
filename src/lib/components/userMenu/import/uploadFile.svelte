@@ -1,9 +1,9 @@
 <script lang="ts">
-    import {toast} from 'svelte-sonner';
     import {ImportStepPreview} from '$lib/interfaces/import.ts';
-    import {importState} from '$lib/state/import.svelte.ts';
     import {parseCsv, readCsvFile} from '$lib/services/import/csv';
+    import {importState} from '$lib/state/import.svelte.ts';
     import FileSpreadsheetIcon from '@lucide/svelte/icons/file-spreadsheet';
+    import {toast} from 'svelte-sonner';
 
     let isDragging = $state(false);
 

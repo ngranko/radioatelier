@@ -1,9 +1,9 @@
 <script lang="ts">
     import type {Id} from '$convex/_generated/dataModel';
-    import type {Object} from '$lib/interfaces/object';
-    import type {Permissions} from '$lib/interfaces/permissions';
     import Form from '$lib/components/objectDetails/objectForm/form.svelte';
     import LightForm from '$lib/components/objectDetails/objectForm/lightForm.svelte';
+    import type {Object} from '$lib/interfaces/object';
+    import type {Permissions} from '$lib/interfaces/permissions';
 
     interface Props {
         initialValues: Object;

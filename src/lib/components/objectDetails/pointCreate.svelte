@@ -1,6 +1,6 @@
 <script lang="ts">
-    import type {LooseObject} from '$lib/interfaces/object.ts';
     import Form from '$lib/components/objectDetails/objectForm/form.svelte';
+    import type {LooseObject} from '$lib/interfaces/object.ts';
 
     interface Props {
         initialValues: Partial<LooseObject>;

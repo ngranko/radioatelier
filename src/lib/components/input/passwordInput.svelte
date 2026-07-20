@@ -1,8 +1,8 @@
 <script lang="ts">
     import {Input} from '$lib/components/ui/input';
-    import type {HTMLInputAttributes} from 'svelte/elements';
     import EyeIcon from '@lucide/svelte/icons/eye';
     import EyeOffIcon from '@lucide/svelte/icons/eye-off';
+    import type {HTMLInputAttributes} from 'svelte/elements';
 
     type Props = Omit<HTMLInputAttributes, 'type' | 'files'>;
 

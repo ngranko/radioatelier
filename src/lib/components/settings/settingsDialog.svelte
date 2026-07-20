@@ -1,21 +1,21 @@
 <script lang="ts">
+    import {goto} from '$app/navigation';
+    import {api} from '$convex/_generated/api';
+    import type {Id} from '$convex/_generated/dataModel';
+    import {Button} from '$lib/components/ui/button';
     import {Root as DialogRoot, Content, Title, Footer} from '$lib/components/ui/dialog';
     import {DialogClose} from '$lib/components/ui/dialog/index.js';
-    import {Button} from '$lib/components/ui/button';
-    import {goto} from '$app/navigation';
-    import {useConvexClient} from 'convex-svelte';
-    import {api} from '$convex/_generated/api';
-    import {toast} from 'svelte-sonner';
-    import type {Id} from '$convex/_generated/dataModel';
-    import CategoryStyleEditor from './categoryStyleEditor.svelte';
     import {Input} from '$lib/components/ui/input';
+    import type {Category} from '$lib/interfaces/category';
+    import {MARKER_ICON_KEYS, markerColorMap} from '$lib/services/map/markerStyling';
+    import {categoriesState} from '$lib/state/categories.svelte';
+    import LoaderCircleIcon from '@lucide/svelte/icons/loader-circle';
     import PaletteIcon from '@lucide/svelte/icons/palette';
     import SearchIcon from '@lucide/svelte/icons/search';
-    import LoaderCircleIcon from '@lucide/svelte/icons/loader-circle';
-    import type {Category} from '$lib/interfaces/category';
-    import {categoriesState} from '$lib/state/categories.svelte';
+    import {useConvexClient} from 'convex-svelte';
     import {onDestroy} from 'svelte';
-    import {MARKER_ICON_KEYS, markerColorMap} from '$lib/services/map/markerStyling';
+    import {toast} from 'svelte-sonner';
+    import CategoryStyleEditor from './categoryStyleEditor.svelte';
 
     const DIALOG_ANIMATION_DURATION = 200;
 

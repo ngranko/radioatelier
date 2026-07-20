@@ -1,8 +1,8 @@
 <script lang="ts">
     import Tooltip from '$lib/components/tooltip.svelte';
-    import LockOpenIcon from '@lucide/svelte/icons/lock-open';
-    import LockIcon from '@lucide/svelte/icons/lock';
     import GhostIcon from '@lucide/svelte/icons/ghost';
+    import LockIcon from '@lucide/svelte/icons/lock';
+    import LockOpenIcon from '@lucide/svelte/icons/lock-open';
     import UserCheckIcon from '@lucide/svelte/icons/user-check';
 
     interface Props {

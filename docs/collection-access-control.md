@@ -72,7 +72,7 @@ Suggested collection membership chunk shape:
 collectionMarkerChunks: {
     collectionId: Id<'collections'>;
     chunkNumber: number;
-    objectIds: Id<'objects'>[];
+    objectIds: Id < 'objects' > [];
 }
 ```
 
@@ -136,4 +136,3 @@ Current and future modes:
 6. Keep `isPublic` as a compatibility input only while the public model exists.
 7. Remove public semantics once collection/direct access covers the required behavior.
 8. Revisit payload chunks or viewport queries only after measuring production IO under the new model.
-

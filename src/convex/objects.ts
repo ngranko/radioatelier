@@ -113,7 +113,7 @@ export const resolveShareId = query({
         id: v.string(),
     },
     handler: async (ctx, {id}) => {
-        const canonicalId = await ctx.db.normalizeId('objects', id);
+        const canonicalId = ctx.db.normalizeId('objects', id);
         if (canonicalId) {
             return {
                 canonicalId,
@@ -172,7 +172,7 @@ export const create = mutation({
             throw new Error('Category not found');
         }
 
-        ctx.scheduler.runAfter(0, internal.typesense.createInTypesense, {
+        await ctx.scheduler.runAfter(0, internal.typesense.createInTypesense, {
             object: buildObjectSearchRecord({
                 id: objectId,
                 name: data.name,
@@ -189,9 +189,13 @@ export const create = mutation({
             }),
         });
         if (user.notionSyncEnabled) {
-            ctx.scheduler.runAfter(0, internal.notionSync.outbound.enqueueOutboundObjectSync, {
-                objectId,
-            });
+            await ctx.scheduler.runAfter(
+                0,
+                internal.notionSync.outbound.enqueueOutboundObjectSync,
+                {
+                    objectId,
+                },
+            );
         }
 
         return objectId;
@@ -237,7 +241,7 @@ export const update = mutation({
 
             // Non-owners only touch per-user state (private tags, visited), so
             // the search record and outbound sync stay untouched for them.
-            ctx.scheduler.runAfter(0, internal.typesense.updateInTypesense, {
+            await ctx.scheduler.runAfter(0, internal.typesense.updateInTypesense, {
                 object: buildObjectSearchRecord({
                     id,
                     name: data.name,
@@ -254,9 +258,13 @@ export const update = mutation({
                 }),
             });
             if (user.notionSyncEnabled) {
-                ctx.scheduler.runAfter(0, internal.notionSync.outbound.enqueueOutboundObjectSync, {
-                    objectId: id,
-                });
+                await ctx.scheduler.runAfter(
+                    0,
+                    internal.notionSync.outbound.enqueueOutboundObjectSync,
+                    {
+                        objectId: id,
+                    },
+                );
             }
         }
 
@@ -282,11 +290,11 @@ export const remove = mutation({
         const notionSyncRecord = await deleteSyncStateForObject(ctx, id);
         await deleteObjectAggregate(ctx, object);
 
-        ctx.scheduler.runAfter(0, internal.typesense.removeFromTypesense, {
+        await ctx.scheduler.runAfter(0, internal.typesense.removeFromTypesense, {
             objectId: id,
         });
         if (user.notionSyncEnabled && notionSyncRecord) {
-            ctx.scheduler.runAfter(0, internal.notionSync.outbound.archiveDeletedObjectPage, {
+            await ctx.scheduler.runAfter(0, internal.notionSync.outbound.archiveDeletedObjectPage, {
                 objectId: id,
                 notionPageId: notionSyncRecord.notionPageId,
             });
@@ -314,7 +322,7 @@ export const reposition = mutation({
             longitude: data.longitude,
         });
 
-        ctx.scheduler.runAfter(0, internal.typesense.updateInTypesense, {
+        await ctx.scheduler.runAfter(0, internal.typesense.updateInTypesense, {
             object: buildObjectSearchRecord({
                 id,
                 name: target.object.name,

@@ -1,10 +1,10 @@
 <script lang="ts">
-    import {Root as PopoverRoot, Content, Trigger} from '$lib/components/ui/popover';
-    import {Button} from '$lib/components/ui/button';
-    import {MARKER_ICON_KEYS} from '$lib/services/map/markerStyling.data';
-    import {markerIconMap, type MarkerIconKey} from '$lib/services/map/markerStyling';
     import MarkerIcon from '$lib/components/map/markerIcon.svelte';
+    import {Button} from '$lib/components/ui/button';
+    import {Root as PopoverRoot, Content, Trigger} from '$lib/components/ui/popover';
     import type {MarkerIcon as MarkerIconType} from '$lib/interfaces/marker';
+    import {markerIconMap, type MarkerIconKey} from '$lib/services/map/markerStyling';
+    import {MARKER_ICON_KEYS} from '$lib/services/map/markerStyling.data';
 
     interface Props {
         value: MarkerIconKey;

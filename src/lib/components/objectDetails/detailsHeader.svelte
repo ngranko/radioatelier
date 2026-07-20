@@ -1,14 +1,14 @@
 <script lang="ts">
-    import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
-    import ChevronUpIcon from '@lucide/svelte/icons/chevron-up';
-    import {toast} from 'svelte-sonner';
     import CategoryBadge from '$lib/components/categoryBadge.svelte';
     import CloseButton from '$lib/components/objectDetails/closeButton.svelte';
     import {badgeVariants} from '$lib/components/ui/badge';
     import {Button} from '$lib/components/ui/button';
     import type {LooseObject} from '$lib/interfaces/object';
-    import {cn} from '$lib/utils.ts';
     import type {ObjectDetailsOverlayPosition} from '$lib/state/objectDetailsOverlay.svelte';
+    import {cn} from '$lib/utils.ts';
+    import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
+    import ChevronUpIcon from '@lucide/svelte/icons/chevron-up';
+    import {toast} from 'svelte-sonner';
 
     interface Props {
         initialValues: Partial<LooseObject>;

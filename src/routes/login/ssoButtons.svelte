@@ -1,13 +1,13 @@
 <script lang="ts">
-    import type {OAuthStrategy} from '@clerk/types';
-    import {useClerkContext} from 'svelte-clerk';
-    import {toast} from 'svelte-sonner';
     import {page} from '$app/state';
-    import {normalizeRef} from '$lib/utils';
-    import {SvglAppleLogo, SvglGitHubLogo, SvglGoogleLogo} from '@selemondev/svgl-svelte';
-    import posthog from 'posthog-js';
     import LoadingDots from '$lib/components/loadingDots.svelte';
     import Button from '$lib/components/ui/button/button.svelte';
+    import {normalizeRef} from '$lib/utils';
+    import type {OAuthStrategy} from '@clerk/types';
+    import {SvglAppleLogo, SvglGitHubLogo, SvglGoogleLogo} from '@selemondev/svgl-svelte';
+    import posthog from 'posthog-js';
+    import {useClerkContext} from 'svelte-clerk';
+    import {toast} from 'svelte-sonner';
 
     type ClerkWithEnvironment = typeof ctx.clerk & {
         __unstable__environment?: {

@@ -1,21 +1,21 @@
 <script lang="ts">
-    import {page} from '$app/state';
     import {goto} from '$app/navigation';
-    import {useClerkContext} from 'svelte-clerk';
-    import {defaults, superForm} from 'sveltekit-superforms';
-    import {zod4, zod4Client} from 'sveltekit-superforms/adapters';
-    import {toast} from 'svelte-sonner';
+    import {page} from '$app/state';
+    import PasswordInput from '$lib/components/input/passwordInput.svelte';
+    import LoadingDots from '$lib/components/loadingDots.svelte';
+    import {Button} from '$lib/components/ui/button';
+    import {Input} from '$lib/components/ui/input';
+    import {Label} from '$lib/components/ui/label';
     import {normalizeRef} from '$lib/utils';
     import {getErrorArray} from '$lib/utils/formErrors';
-    import {Label} from '$lib/components/ui/label';
-    import {resetPasswordConfirmSchema} from '../schema';
-    import {Input} from '$lib/components/ui/input';
-    import PasswordInput from '$lib/components/input/passwordInput.svelte';
-    import {Button} from '$lib/components/ui/button';
-    import LoadingDots from '$lib/components/loadingDots.svelte';
-    import CircleAlertIcon from '@lucide/svelte/icons/circle-alert';
     import ArrowLeftIcon from '@lucide/svelte/icons/arrow-left';
+    import CircleAlertIcon from '@lucide/svelte/icons/circle-alert';
     import MailCheckIcon from '@lucide/svelte/icons/mail-check';
+    import {useClerkContext} from 'svelte-clerk';
+    import {toast} from 'svelte-sonner';
+    import {defaults, superForm} from 'sveltekit-superforms';
+    import {zod4, zod4Client} from 'sveltekit-superforms/adapters';
+    import {resetPasswordConfirmSchema} from '../schema';
 
     interface Props {
         requestedEmail: string;

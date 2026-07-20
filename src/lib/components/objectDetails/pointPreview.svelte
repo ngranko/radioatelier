@@ -1,7 +1,6 @@
 <script lang="ts">
-    import {toast} from 'svelte-sonner';
-    import {Button} from '$lib/components/ui/button';
     import Address from '$lib/components/objectDetails/viewMode/address.svelte';
+    import {Button} from '$lib/components/ui/button';
     import type {PointPreviewDetails} from '$lib/interfaces/object.ts';
     import {getStreetView} from '$lib/services/map/streetView.svelte';
     import {
@@ -9,8 +8,9 @@
         showPointCreateOverlay,
     } from '$lib/state/objectDetailsOverlay.svelte.js';
     import BinocularsIcon from '@lucide/svelte/icons/binoculars';
-    import RouteIcon from '@lucide/svelte/icons/route';
     import PlusIcon from '@lucide/svelte/icons/plus';
+    import RouteIcon from '@lucide/svelte/icons/route';
+    import {toast} from 'svelte-sonner';
 
     interface Props {
         details: PointPreviewDetails;

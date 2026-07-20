@@ -1,38 +1,38 @@
 <script lang="ts">
-    import OrientationButton from '$lib/components/map/orientationButton.svelte';
-    import PositionButton from '$lib/components/map/positionButton.svelte';
-    import {webgl2Adapter} from '@luma.gl/webgl';
-    import type {LayoutProps} from './$types';
-    import Map from '$lib/components/map/map.svelte';
-    import type {Location} from '$lib/interfaces/location.ts';
-    import {createDraftState, setCreateDraftPosition} from '$lib/state/createDraft.svelte.ts';
-    import {searchPointList} from '$lib/state/searchPointList.svelte.ts';
-    import {mapState} from '$lib/state/map.svelte.ts';
-    import LocationMarker from '$lib/components/map/locationMarker.svelte';
-    import Marker from '$lib/components/map/marker.svelte';
-    import UserMenu from '$lib/components/userMenu/userMenu.svelte';
-    import Search from '$lib/components/search/search.svelte';
-    import EscapeCloseHandler from '$lib/components/escapeCloseHandler.svelte';
-    import {sharedMarker} from '$lib/state/sharedMarker.svelte.ts';
     import {goto} from '$app/navigation';
     import {navigating, page} from '$app/state';
-    import {useClerkContext} from 'svelte-clerk';
+    import {api} from '$convex/_generated/api';
+    import EscapeCloseHandler from '$lib/components/escapeCloseHandler.svelte';
+    import LocationMarker from '$lib/components/map/locationMarker.svelte';
+    import Map from '$lib/components/map/map.svelte';
+    import Marker from '$lib/components/map/marker.svelte';
+    import OrientationButton from '$lib/components/map/orientationButton.svelte';
+    import PositionButton from '$lib/components/map/positionButton.svelte';
+    import Search from '$lib/components/search/search.svelte';
+    import UserMenu from '$lib/components/userMenu/userMenu.svelte';
+    import type {Location} from '$lib/interfaces/location.ts';
+    import {setCategories} from '$lib/state/categories.svelte';
+    import {createDraftState, setCreateDraftPosition} from '$lib/state/createDraft.svelte.ts';
+    import {mapState} from '$lib/state/map.svelte.ts';
     import {
         setOverlayAddressLoading,
         showLoadingDetailsOverlay,
     } from '$lib/state/objectDetailsOverlay.svelte';
+    import {searchPointList} from '$lib/state/searchPointList.svelte.ts';
+    import {sharedMarker} from '$lib/state/sharedMarker.svelte.ts';
+    import {buildPointUrl} from '$lib/utils/pointRoute.ts';
     import SearchIcon from '@lucide/svelte/icons/search';
-    import StarIcon from '@lucide/svelte/icons/star';
     import SproutIcon from '@lucide/svelte/icons/sprout';
+    import StarIcon from '@lucide/svelte/icons/star';
+    import {webgl2Adapter} from '@luma.gl/webgl';
     import {SvglGoogleLogo} from '@selemondev/svgl-svelte';
     import {useQuery} from 'convex-svelte';
-    import {api} from '$convex/_generated/api';
-    import {setCategories} from '$lib/state/categories.svelte';
     import posthog from 'posthog-js';
-    import {buildPointUrl} from '$lib/utils/pointRoute.ts';
+    import {useClerkContext} from 'svelte-clerk';
+    import type {LayoutProps} from './$types';
 
     // this is needed to avoid deck.gl error
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    // oxlint-disable-next-line no-unused-expressions
     webgl2Adapter;
 
     let {children, data}: LayoutProps = $props();

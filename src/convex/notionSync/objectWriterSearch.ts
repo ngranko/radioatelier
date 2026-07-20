@@ -5,13 +5,13 @@ import {buildObjectSearchRecord} from '../helpers/objectAggregate';
 import type {ObjectTarget} from '../helpers/objectWriter';
 import type {CreateSyncedObjectInput, PatchSyncedObjectInput} from './objectWriterTypes';
 
-export function scheduleCreateSearch(
+export async function scheduleCreateSearch(
     ctx: MutationCtx,
     input: CreateSyncedObjectInput,
     categoryName: string,
     objectId: Id<'objects'>,
 ) {
-    ctx.scheduler.runAfter(0, internal.typesense.createInTypesense, {
+    await ctx.scheduler.runAfter(0, internal.typesense.createInTypesense, {
         object: buildObjectSearchRecord({
             id: objectId,
             name: input.fields.name ?? 'Untitled',
@@ -29,13 +29,13 @@ export function scheduleCreateSearch(
     });
 }
 
-export function scheduleUpdateSearch(
+export async function scheduleUpdateSearch(
     ctx: MutationCtx,
     input: PatchSyncedObjectInput,
     target: ObjectTarget,
     categoryName: string,
 ) {
-    ctx.scheduler.runAfter(0, internal.typesense.updateInTypesense, {
+    await ctx.scheduler.runAfter(0, internal.typesense.updateInTypesense, {
         object: buildObjectSearchRecord({
             id: input.objectId,
             name: input.patch.name ?? target.object.name,

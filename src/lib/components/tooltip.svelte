@@ -1,8 +1,8 @@
 <script lang="ts">
-    import {fade} from 'svelte/transition';
-    import {cubicInOut} from 'svelte/easing';
     import {Button} from '$lib/components/ui/button';
     import {cn} from '$lib/utils.ts';
+    import {cubicInOut} from 'svelte/easing';
+    import {fade} from 'svelte/transition';
 
     interface Props {
         button?: import('svelte').Snippet;

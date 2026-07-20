@@ -11,9 +11,9 @@ export interface MarkerOptions {
     source: MarkerSource;
     isVisited?: boolean;
     isRemoved?: boolean;
-    onClick?(): void;
-    onDragStart?(): void;
-    onDragEnd?(): void;
+    onClick?: () => void;
+    onDragStart?: () => void;
+    onDragEnd?: () => void;
 }
 
 export type MarkerSource = 'map' | 'list' | 'search' | 'share' | 'draft';
