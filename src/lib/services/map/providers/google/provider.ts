@@ -14,7 +14,9 @@ import {MERCATOR_WORLD_RESTRICTION} from '$lib/services/map/mapRestriction';
 import {GoogleMapBounds} from '$lib/services/map/providers/google/bounds';
 import {GoogleMarkerHandle} from '$lib/services/map/providers/google/markerHandle';
 import {themeState} from '$lib/state/theme.svelte';
-import {importLibrary, setOptions} from '@googlemaps/js-api-loader';
+import {importLibrary as loadGoogleMapsLibrary, setOptions} from '@googlemaps/js-api-loader';
+
+type GoogleMapsLibraryName = Parameters<typeof loadGoogleMapsLibrary>[0];
 
 const MAP_MAX_ZOOM = 21;
 
@@ -44,10 +46,15 @@ export class GoogleMapsProvider implements MapProvider {
         configureLoader();
     }
 
+    importLibrary<T extends GoogleMapsLibraryName>(library: T) {
+        configureLoader();
+        return loadGoogleMapsLibrary(library);
+    }
+
     async initialize(container: HTMLElement, center: Location): Promise<void> {
         const [{Map}, {ColorScheme}] = await Promise.all([
-            importLibrary('maps'),
-            importLibrary('core'),
+            this.importLibrary('maps'),
+            this.importLibrary('core'),
         ]);
 
         this.minZoom = computeMinZoomForContainer(container);
@@ -206,7 +213,7 @@ export class GoogleMapsProvider implements MapProvider {
     }
 
     async preloadMarkerLibrary(): Promise<void> {
-        await importLibrary('marker');
+        await this.importLibrary('marker');
     }
 
     closeStreetView(): void {

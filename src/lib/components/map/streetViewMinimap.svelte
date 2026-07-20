@@ -8,7 +8,6 @@
     } from '$lib/services/map/streetView.svelte';
     import {mapState} from '$lib/state/map.svelte';
     import {cn} from '$lib/utils';
-    import {importLibrary} from '@googlemaps/js-api-loader';
     import Maximize2Icon from '@lucide/svelte/icons/maximize-2';
     import Minimize2Icon from '@lucide/svelte/icons/minimize-2';
     import {onDestroy, tick} from 'svelte';
@@ -73,7 +72,7 @@
             return;
         }
 
-        const {Map} = await importLibrary('maps');
+        const {Map} = await provider.importLibrary('maps');
         const center = position ?? provider.getCenter() ?? undefined;
 
         miniMap = new Map(miniMapContainer, {
