@@ -5,7 +5,7 @@
     import {Input} from '$lib/components/ui/input';
     import {Label} from '$lib/components/ui/label';
     import {getErrorArray} from '$lib/utils/formErrors';
-    import type {ResetPasswordEmailCodeFactor} from '@clerk/types';
+    import type {ResetPasswordEmailCodeFactor} from '@clerk/shared/types';
     import ArrowLeftIcon from '@lucide/svelte/icons/arrow-left';
     import CircleAlertIcon from '@lucide/svelte/icons/circle-alert';
     import KeyRoundIcon from '@lucide/svelte/icons/key-round';

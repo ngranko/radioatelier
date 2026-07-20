@@ -8,7 +8,7 @@
     import {Label} from '$lib/components/ui/label';
     import {normalizeRef} from '$lib/utils';
     import {getErrorArray} from '$lib/utils/formErrors';
-    import type {EmailCodeFactor} from '@clerk/types';
+    import type {EmailCodeFactor} from '@clerk/shared/types';
     import CircleAlertIcon from '@lucide/svelte/icons/circle-alert';
     import posthog from 'posthog-js';
     import {useClerkContext} from 'svelte-clerk';

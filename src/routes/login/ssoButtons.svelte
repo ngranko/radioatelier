@@ -3,7 +3,7 @@
     import LoadingDots from '$lib/components/loadingDots.svelte';
     import Button from '$lib/components/ui/button/button.svelte';
     import {normalizeRef} from '$lib/utils';
-    import type {OAuthStrategy} from '@clerk/types';
+    import type {OAuthStrategy} from '@clerk/shared/types';
     import {SvglAppleLogo, SvglGitHubLogo, SvglGoogleLogo} from '@selemondev/svgl-svelte';
     import posthog from 'posthog-js';
     import {useClerkContext} from 'svelte-clerk';
