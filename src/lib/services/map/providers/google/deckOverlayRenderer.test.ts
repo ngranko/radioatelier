@@ -1,5 +1,4 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
-
 import type {DeckOverlayHost} from './deckOverlayHost';
 
 vi.mock('@deck.gl/layers', () => ({
