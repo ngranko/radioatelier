@@ -312,12 +312,7 @@ function makeObject(
 
 function id<
     TableName extends
-        | 'objects'
-        | 'users'
-        | 'mapPoints'
-        | 'categories'
-        | 'tags'
-        | 'userVisitedChunks',
+        'objects' | 'users' | 'mapPoints' | 'categories' | 'tags' | 'userVisitedChunks',
 >(_table: TableName, value: string) {
     return value as Id<TableName>;
 }

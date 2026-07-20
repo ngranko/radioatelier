@@ -8,14 +8,20 @@ import svelteParser from 'svelte-eslint-parser';
 import tseslint from 'typescript-eslint';
 
 export default [
+    // A config entry with only `ignores` applies globally; ignores inside the
+    // file-scoped entries below don't shield the base configs from these paths.
+    {ignores: ['.svelte-kit/', 'build/', 'src/convex/_generated/']},
     js.configs.recommended,
+    {
+        files: ['**/*.js', '**/*.mjs'],
+        languageOptions: {globals: {...globals.node}},
+    },
     ...tseslint.configs.recommended,
     ...eslintPluginSvelte.configs['flat/recommended'],
     eslintPluginPrettierRecommended,
     eslintConfigPrettier,
     {
         files: ['**/*.svelte'],
-        ignores: ['.svelte-kit', 'build', 'node_modules'],
         languageOptions: {
             globals: {
                 ...globals.browser,
@@ -40,7 +46,6 @@ export default [
     },
     {
         files: ['**/*.ts'],
-        ignores: ['.svelte-kit', 'build', 'node_modules', 'convex/_generated'],
         languageOptions: {
             globals: {
                 ...globals.browser,

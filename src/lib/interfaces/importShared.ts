@@ -29,8 +29,10 @@ export interface ImportMappings {
     isVisited: number | null;
 }
 
-export interface ImportMappingsForJob
-    extends Omit<ImportMappings, 'coordinates' | 'name' | 'category'> {
+export interface ImportMappingsForJob extends Omit<
+    ImportMappings,
+    'coordinates' | 'name' | 'category'
+> {
     coordinates: number;
     name: number;
     category: number;
