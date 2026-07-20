@@ -155,5 +155,6 @@ Descriptions may arrive with literal escape sequences (`\n`, `\r\n`, `\r`) from 
 - [street-view.md](./street-view.md) — opening panorama from object/point actions
 - [map-architecture.md](./map-architecture.md) — map click constraints, marker focus offset, first-run hint
 - [search.md](./search.md) — search → point preview flow
+- [analytics.md](./analytics.md) — PostHog setup and event catalog
 - [category-settings.md](./category-settings.md) — `CategoryBadge` reads merged category styles
 

@@ -145,3 +145,4 @@ Archive marker color and icon come from the object's category, merged with per-u
 - [street-view.md](./street-view.md) — panorama overlay and minimap (requires `GoogleMapsProvider`)
 - [object-details-overlay.md](./object-details-overlay.md) — map click → `/point` create flow
 - [search.md](./search.md) — search result markers and map focus
+- [analytics.md](./analytics.md) — PostHog setup and event catalog

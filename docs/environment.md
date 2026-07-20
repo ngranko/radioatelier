@@ -38,8 +38,13 @@ See `.env.local.example`.
 | `TYPESENSE_BACKFILL_KEY` | Backfill script; **must match** the Convex variable of the same name |
 | `PUBLIC_GOOGLE_MAPS_API_KEY` | Map UI, Street View, browser geolocation (`$lib/config`) |
 | `PUBLIC_GOOGLE_MAPS_MAP_ID` | Google Maps map style / vector map id |
+| `PUBLIC_POSTHOG_PROJECT_TOKEN` | PostHog client + server SDK (`hooks.client.ts`, `lib/server/posthog.ts`) |
+| `PUBLIC_POSTHOG_HOST` | PostHog API host for `posthog-node`; client `ui_host` |
+| `GIT_COMMIT_SHA` | Optional locally; set in CI/CD — first 7 chars become `__APP_SERVICE_VERSION__` for PostHog logs |
 
 **Google keys:** the `PUBLIC_GOOGLE_*` pair is for the browser (Maps JavaScript API, referrer-restricted). `GOOGLE_API_KEY` on Convex is a separate server key for Geocoding and Places — see below.
+
+**PostHog:** both `PUBLIC_POSTHOG_*` variables are required for analytics. The browser sends events through the `/ingest` reverse proxy (same origin); see [analytics.md](./analytics.md).
 
 ## Convex deployment (backend)
 
@@ -91,8 +96,9 @@ Further Notion setup: [notion-sync.md](./notion-sync.md).
 **Local (`.env.local`):**
 
 1. Copy `.env.local.example` → `.env.local`.
-2. Fill Convex/Clerk public URLs, Clerk secret, and `PUBLIC_GOOGLE_MAPS_*` for the frontend.
+2. Fill Convex/Clerk public URLs, Clerk secret, `PUBLIC_GOOGLE_MAPS_*`, and `PUBLIC_POSTHOG_*` for the frontend.
 3. Add Typesense admin URL/key if you run setup/backfill scripts.
+4. Optionally set `GIT_COMMIT_SHA` when testing production-like PostHog service versions locally.
 
 **Convex (dev deployment):**
 

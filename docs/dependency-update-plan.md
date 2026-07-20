@@ -2,6 +2,17 @@
 
 Snapshot from `bun outdated`, 2026-07-18. Each phase is one commit, verified (`check`, `test`, `lint`, smoke in the running dev server) before moving on.
 
+## Progress
+
+| Phase | Status | Notes |
+| ----- | ------ | ----- |
+| 1 — in-range sweep | **Done** (#84) | convex 1.42, kit 2.70, svelte 5.56, tailwind 4.3, ts 5.9, ~40 more; deck.gl pinned `~9.1.14`; `wgsl_reflect` overridden to 1.2.3 for SSR |
+| 2 — remove adapter-auto | **Done** (#84) | adapter-node only |
+| 3 — eslint → oxlint | Pending | |
+| 4 — prettier → oxfmt | Pending | |
+| 5 — majors | Pending | |
+| 6 — Node 26 | Pending | |
+
 ## Outdated dependencies
 
 ### In-range (semver-compatible, picked up by `bun update`)
