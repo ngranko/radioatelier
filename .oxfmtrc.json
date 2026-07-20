@@ -14,7 +14,7 @@
     "proseWrap": "preserve",
     "htmlWhitespaceSensitivity": "ignore",
     "endOfLine": "lf",
-    "sortPackageJson": false,
+    "sortPackageJson": true,
     "sortImports": {},
     "sortTailwindcss": {},
     "svelte": {},
