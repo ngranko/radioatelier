@@ -19,19 +19,17 @@ function makeProvider(): MapProvider {
 }
 
 function makeRenderer() {
-    let finishRemoval: (() => void) | undefined;
+    const removed: Marker[] = [];
     const renderer: MarkerRenderer = {
         ensureCreated: () => {},
         syncAll: () => {},
         show: () => {},
         hide: () => {},
-        remove: (_marker, onRemoved) => {
-            finishRemoval = onRemoved;
-        },
+        remove: marker => void removed.push(marker),
         applyState: () => {},
         destroy: () => {},
     };
-    return {renderer, finishRemoval: () => finishRemoval?.()};
+    return {renderer, removed};
 }
 
 describe('MarkerManager', () => {
@@ -43,14 +41,16 @@ describe('MarkerManager', () => {
         vi.useRealTimers();
     });
 
-    it('allows a marker to be re-added while its old removal animation is pending', () => {
-        const {renderer, finishRemoval} = makeRenderer();
+    it('removes the marker instance before allowing the id to be re-added', () => {
+        const {renderer, removed} = makeRenderer();
         const manager = new MarkerManager(makeProvider(), () => renderer);
         const first = manager.addMarker('marker', {lat: 1, lng: 2}, markerOptions);
 
         manager.removeMarker('marker', first as Marker);
+        expect(manager.getMarker('marker')).toBeUndefined();
+        expect(removed).toEqual([first]);
+
         const replacement = manager.addMarker('marker', {lat: 1, lng: 2}, markerOptions);
-        finishRemoval();
 
         expect(replacement).not.toBe(first);
         expect(manager.getMarker('marker')).toBe(replacement);

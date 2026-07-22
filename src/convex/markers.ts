@@ -1,10 +1,14 @@
+import {v} from 'convex/values';
 import {query} from './_generated/server';
 import {getCurrentUserOrThrow} from './users';
 
 export const list = query({
-    args: {},
-    handler: async ctx => {
+    args: {authUserId: v.string()},
+    handler: async (ctx, {authUserId}) => {
         const user = await getCurrentUserOrThrow(ctx);
+        if (user.externalId !== authUserId) {
+            throw new Error('Marker query user does not match the authenticated user');
+        }
 
         const userMarkers = await ctx.db
             .query('markers')
@@ -31,9 +35,13 @@ export const list = query({
 });
 
 export const listVisitedIds = query({
-    args: {},
-    handler: async ctx => {
+    args: {authUserId: v.string()},
+    handler: async (ctx, {authUserId}) => {
         const user = await getCurrentUserOrThrow(ctx);
+        if (user.externalId !== authUserId) {
+            throw new Error('Marker query user does not match the authenticated user');
+        }
+
         const visitedData = await ctx.db
             .query('userVisitedChunks')
             .withIndex('byUserIdAndChunkId', q => q.eq('userId', user._id))
