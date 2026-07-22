@@ -33,15 +33,22 @@
     let disableOverlayIntro = $state(page.data.isServerRequest);
 
     const ctx = useClerkContext();
+    const authUserId = $derived(ctx.auth.userId ?? ctx.user?.id ?? null);
 
     // No initialData here: the first-run hint below must distinguish "no
     // markers yet" from "marker list not loaded yet", and with initialData the
     // query reports data=[] with isLoading=false before the server responds.
-    const objects = useQuery(api.markers.list, () => (ctx.auth.userId ? {} : 'skip'));
+    // The user ID scopes retained results so an account change cannot render
+    // the previous user's marker data.
+    const objects = useQuery(
+        api.markers.list,
+        () => (authUserId ? {authUserId} : 'skip'),
+        () => ({keepPreviousData: true}),
+    );
     const visitedObjectIds = useQuery(
         api.markers.listVisitedIds,
-        () => (ctx.auth.userId ? {} : 'skip'),
-        () => ({initialData: []}),
+        () => (authUserId ? {authUserId} : 'skip'),
+        () => ({keepPreviousData: true}),
     );
 
     const overlayValues = $derived(
@@ -81,11 +88,25 @@
     const renderedObject = $derived(
         createDraftState.position ? null : ((overlayObjectQuery.data ?? null) as ObjectType | null),
     );
-    const rawMarkerPoints = $derived((objects.data ?? []) as MarkerListItem[]);
+    const canRenderMarkerData = $derived(
+        (!ctx.isLoaded && !authUserId) || Boolean(authUserId && !objects.isStale),
+    );
+    const canRenderVisitedData = $derived(
+        visitedObjectIds.data !== undefined &&
+            ((!ctx.isLoaded && !authUserId) || Boolean(authUserId && !visitedObjectIds.isStale)),
+    );
+    const rawMarkerPoints = $derived(
+        (canRenderMarkerData ? (objects.data ?? []) : []) as MarkerListItem[],
+    );
     const visitedObjectIdSet = $derived.by(
-        () => new Set((visitedObjectIds.data ?? []) as Id<'objects'>[]),
+        () =>
+            new Set((canRenderVisitedData ? (visitedObjectIds.data ?? []) : []) as Id<'objects'>[]),
     );
     const markerPoints = $derived.by(() => {
+        if (!canRenderVisitedData) {
+            return [];
+        }
+
         const catalogMarkers = rawMarkerPoints.map(
             (item): RenderedMarkerPoint => ({
                 ...item,
@@ -108,6 +129,7 @@
     const showFirstRunHint = $derived(
         mapState.isReady &&
             Boolean(ctx.auth.userId) &&
+            canRenderMarkerData &&
             objects.data !== undefined &&
             !rawMarkerPoints.some(point => point.isOwner) &&
             !showOverlay,

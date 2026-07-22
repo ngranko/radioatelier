@@ -116,8 +116,8 @@
     }
 
     onDestroy(() => {
-        if (mapState.markerManager) {
-            mapState.markerManager.removeMarker(markerId!);
+        if (mapState.markerManager && marker) {
+            mapState.markerManager.removeMarker(markerId!, marker);
         }
 
         if (objectDetailsOverlay.detailsId === activeTargetId) {
