@@ -76,19 +76,6 @@
         const ref = `${page.url.pathname}${page.url.search}`;
         goto(`/login/reset-password?ref=${encodeURIComponent(ref)}`);
     });
-
-    // uncomment if mobile dev tools are required
-    // $effect(() => {
-    //     if (currentUser.auth && currentUser.profile?.role === 'admin') {
-    //         import('eruda').then(eruda =>
-    //             eruda.default.init({container: consoleElement, tool: ['console', 'elements']}),
-    //         );
-    //     } else {
-    //         if (consoleElement) {
-    //             consoleElement.innerHTML = '';
-    //         }
-    //     }
-    // });
 </script>
 
 <div bind:this={consoleElement}></div>
