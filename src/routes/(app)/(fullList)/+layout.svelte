@@ -99,9 +99,7 @@
     );
     const visitedObjectIdSet = $derived.by(
         () =>
-            new Set(
-                (canRenderVisitedData ? (visitedObjectIds.data ?? []) : []) as Id<'objects'>[],
-            ),
+            new Set((canRenderVisitedData ? (visitedObjectIds.data ?? []) : []) as Id<'objects'>[]),
     );
     const markerPoints = $derived.by(() => {
         const catalogMarkers = rawMarkerPoints.map(
