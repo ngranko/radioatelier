@@ -167,27 +167,6 @@ export const create = mutation({
             await updateIsVisited(ctx, objectId, user._id, true);
         }
 
-        const category = await ctx.db.get('categories', data.categoryId);
-        if (!category) {
-            throw new Error('Category not found');
-        }
-
-        await ctx.scheduler.runAfter(0, internal.typesense.createInTypesense, {
-            object: buildObjectSearchRecord({
-                id: objectId,
-                name: data.name,
-                mapPoint: {
-                    latitude: data.latitude,
-                    longitude: data.longitude,
-                    address: data.address ?? null,
-                    city: data.city ?? null,
-                    country: data.country ?? null,
-                },
-                categoryName: category.name,
-                createdBy: user._id,
-                isPublic: data.isPublic,
-            }),
-        });
         if (user.notionSyncEnabled) {
             await ctx.scheduler.runAfter(
                 0,
@@ -234,29 +213,8 @@ export const update = mutation({
                 country: data.country ?? '',
             });
 
-            const category = await ctx.db.get('categories', data.categoryId);
-            if (!category) {
-                throw new Error('Category not found');
-            }
-
             // Non-owners only touch per-user state (private tags, visited), so
-            // the search record and outbound sync stay untouched for them.
-            await ctx.scheduler.runAfter(0, internal.typesense.updateInTypesense, {
-                object: buildObjectSearchRecord({
-                    id,
-                    name: data.name,
-                    mapPoint: {
-                        latitude: target.mapPoint.latitude,
-                        longitude: target.mapPoint.longitude,
-                        address: data.address ?? null,
-                        city: data.city ?? null,
-                        country: data.country ?? null,
-                    },
-                    categoryName: category.name,
-                    createdBy: target.object.createdById,
-                    isPublic: data.isPublic,
-                }),
-            });
+            // outbound sync stays untouched for them.
             if (user.notionSyncEnabled) {
                 await ctx.scheduler.runAfter(
                     0,
@@ -320,21 +278,6 @@ export const reposition = mutation({
         await patchObjectRecords(ctx, target, {
             latitude: data.latitude,
             longitude: data.longitude,
-        });
-
-        await ctx.scheduler.runAfter(0, internal.typesense.updateInTypesense, {
-            object: buildObjectSearchRecord({
-                id,
-                name: target.object.name,
-                mapPoint: {
-                    ...target.mapPoint,
-                    latitude: data.latitude,
-                    longitude: data.longitude,
-                },
-                categoryName: target.category.name,
-                createdBy: target.object.createdById,
-                isPublic: target.object.isPublic,
-            }),
         });
     },
 });
