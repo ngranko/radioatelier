@@ -48,7 +48,7 @@
     const visitedObjectIds = useQuery(
         api.markers.listVisitedIds,
         () => (authUserId ? {authUserId} : 'skip'),
-        () => ({initialData: [], keepPreviousData: true}),
+        () => ({keepPreviousData: true}),
     );
 
     const overlayValues = $derived(
@@ -92,7 +92,8 @@
         (!ctx.isLoaded && !authUserId) || Boolean(authUserId && !objects.isStale),
     );
     const canRenderVisitedData = $derived(
-        (!ctx.isLoaded && !authUserId) || Boolean(authUserId && !visitedObjectIds.isStale),
+        visitedObjectIds.data !== undefined &&
+            ((!ctx.isLoaded && !authUserId) || Boolean(authUserId && !visitedObjectIds.isStale)),
     );
     const rawMarkerPoints = $derived(
         (canRenderMarkerData ? (objects.data ?? []) : []) as MarkerListItem[],
@@ -102,6 +103,10 @@
             new Set((canRenderVisitedData ? (visitedObjectIds.data ?? []) : []) as Id<'objects'>[]),
     );
     const markerPoints = $derived.by(() => {
+        if (!canRenderVisitedData) {
+            return [];
+        }
+
         const catalogMarkers = rawMarkerPoints.map(
             (item): RenderedMarkerPoint => ({
                 ...item,
