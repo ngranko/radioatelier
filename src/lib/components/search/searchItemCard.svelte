@@ -7,7 +7,7 @@
     let {object, onClick}: {object: SearchItem; onClick: () => void} = $props();
 
     function composeAddress(object: SearchItem) {
-        let result = object.address;
+        let result = object.address ?? '';
 
         if (object.address && (object.city || object.country)) {
             result += ', ';

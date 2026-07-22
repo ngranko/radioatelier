@@ -71,9 +71,9 @@ export const actions: Actions = {
                 data: {
                     latitude: d.latitude,
                     longitude: d.longitude,
-                    address: d.address ?? '',
-                    city: d.city ?? '',
-                    country: d.country ?? '',
+                    address: d.address,
+                    city: d.city,
+                    country: d.country,
                     name: d.name,
                     description: d.description ?? null,
                     installedPeriod: d.installedPeriod ?? null,
@@ -120,13 +120,17 @@ function composePointPreview({
     latitude: number;
     longitude: number;
     placeId: string | null;
-    addressResult: {address?: string; city?: string; country?: string} | null;
+    addressResult: {
+        address?: string | null;
+        city?: string | null;
+        country?: string | null;
+    } | null;
     placeResult: {
         name: string;
         categoryName: string;
-        address: string;
-        city: string;
-        country: string;
+        address: string | null;
+        city: string | null;
+        country: string | null;
     } | null;
 }): PointPreviewDetails {
     return {
@@ -134,9 +138,9 @@ function composePointPreview({
         longitude,
         name: placeResult?.name ?? '',
         categoryName: placeResult?.categoryName ?? '',
-        address: placeResult?.address || addressResult?.address || '',
-        city: placeResult?.city || addressResult?.city || '',
-        country: placeResult?.country || addressResult?.country || '',
+        address: placeResult?.address || addressResult?.address || null,
+        city: placeResult?.city || addressResult?.city || null,
+        country: placeResult?.country || addressResult?.country || null,
         type: placeId ? 'google' : 'map',
         googlePlaceId: placeId,
     };
