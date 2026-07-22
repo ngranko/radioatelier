@@ -4,7 +4,7 @@ An archive of urban artifacts — old signs, plaques, mosaics, and other details
 
 ## Prerequisites
 
-- Node.js >= 22.9.0
+- Node.js >= 26.0
 - Bun >= 1.3.8 as a package manager
 - A running Convex project
 - Clerk application
