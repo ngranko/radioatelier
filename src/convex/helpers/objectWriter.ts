@@ -1,24 +1,18 @@
+import {internal} from '../_generated/api';
 import type {Doc, Id} from '../_generated/dataModel';
 import type {MutationCtx} from '../_generated/server';
-import {
-    type MapPointCoreData,
-    type ObjectCoreData,
-    mapPointCoreFields,
-    objectCoreFields,
-} from '../sharedValidators';
+import {buildObjectSearchRecord} from './objectAggregate';
 import {getNextInternalId} from './objectHelpers';
+import {
+    filterChangedPatch,
+    hasKeys,
+    type ObjectRecordData,
+    type ObjectRecordPatch,
+    type ObjectRecordReplace,
+    splitObjectRecordPatch,
+} from './objectRecordPatch';
 
-type ObjectFields = ObjectCoreData;
-
-// The table allows null address parts, but the writer always stores concrete
-// strings ('' when unknown) — callers normalize before reaching this module.
-type MapPointFields = {[K in keyof MapPointCoreData]: NonNullable<MapPointCoreData[K]>};
-
-export type ObjectRecordData = ObjectFields & MapPointFields;
-// Replace deliberately omits coordinates: the form edits fields in place,
-// while repositioning is a separate gesture that goes through `patch`.
-export type ObjectRecordReplace = ObjectFields & Omit<MapPointFields, 'latitude' | 'longitude'>;
-export type ObjectRecordPatch = Partial<ObjectRecordData>;
+export type {ObjectRecordData, ObjectRecordPatch, ObjectRecordReplace} from './objectRecordPatch';
 
 export type ObjectTarget = {
     object: Doc<'objects'>;
@@ -32,6 +26,7 @@ export async function createObjectRecords(
     ownerId: Id<'users'>,
     data: ObjectRecordData,
 ) {
+    const category = await requireCategory(ctx, data.categoryId);
     const {latitude, longitude, address, city, country, ...object} = data;
     const mapPointId = await ctx.db.insert('mapPoints', {
         latitude,
@@ -56,6 +51,16 @@ export async function createObjectRecords(
         isRemoved: object.isRemoved,
         isPublic: object.isPublic,
     });
+    await ctx.scheduler.runAfter(0, internal.typesense.createInTypesense, {
+        object: buildObjectSearchRecord({
+            id: objectId,
+            name: data.name,
+            mapPoint: {latitude, longitude, address, city, country},
+            categoryName: category.name,
+            createdBy: ownerId,
+            isPublic: data.isPublic,
+        }),
+    });
     return {objectId, mapPointId};
 }
 
@@ -76,6 +81,9 @@ export async function patchObjectRecords(
     const objectPatch = filterChangedPatch(target.object, patches.objectPatch);
     const mapPointPatch = filterChangedPatch(target.mapPoint, patches.mapPointPatch);
     const markerPatch = filterChangedPatch(target.marker, patches.markerPatch);
+    if (!hasKeys(objectPatch) && !hasKeys(mapPointPatch) && !hasKeys(markerPatch)) {
+        return;
+    }
     if (hasKeys(objectPatch)) {
         await ctx.db.patch('objects', target.object._id, objectPatch);
     }
@@ -85,69 +93,46 @@ export async function patchObjectRecords(
     if (hasKeys(markerPatch)) {
         await ctx.db.patch('markers', target.marker._id, markerPatch);
     }
+    await scheduleSearchUpdate(ctx, target, objectPatch, mapPointPatch);
 }
 
-const objectPatchKeys = Object.keys(objectCoreFields) as (keyof ObjectFields)[];
-const mapPointPatchKeys = Object.keys(mapPointCoreFields) as (keyof MapPointFields)[];
-const markerPatchKeys = [
-    'latitude',
-    'longitude',
-    'categoryId',
-    'tagIds',
-    'isRemoved',
-    'isPublic',
-] as const;
-
-// A field is written only when present (`undefined` means "leave as is",
-// `null` is a real value). Callers encode their keep-vs-clear policy by
-// shaping the patch, not by merging with current values.
-export function splitObjectRecordPatch(patch: ObjectRecordPatch) {
-    return {
-        objectPatch: pickPresent(patch, objectPatchKeys),
-        mapPointPatch: pickPresent(patch, mapPointPatchKeys),
-        markerPatch: pickPresent(patch, markerPatchKeys),
-    };
-}
-
-export function filterChangedPatch<T extends object>(record: object, patch: T): T {
-    const result: Partial<Record<keyof T, unknown>> = {};
-    const source = record as Record<keyof T, unknown>;
-    for (const key of Object.keys(patch) as (keyof T)[]) {
-        if (!arePatchValuesEqual(source[key], patch[key])) {
-            result[key] = patch[key];
-        }
-    }
-    return result as T;
-}
-
-function pickPresent<K extends keyof ObjectRecordPatch>(
-    patch: ObjectRecordPatch,
-    keys: readonly K[],
+// The search record mirrors post-write state, so it merges the applied
+// patches over the loaded target instead of trusting caller-held copies —
+// callers each hold different (sometimes stale) slices of the Object.
+async function scheduleSearchUpdate(
+    ctx: MutationCtx,
+    target: ObjectTarget,
+    objectPatch: ObjectRecordPatch,
+    mapPointPatch: ObjectRecordPatch,
 ) {
-    const result: Partial<Pick<ObjectRecordPatch, K>> = {};
-    for (const key of keys) {
-        if (patch[key] !== undefined) {
-            result[key] = patch[key];
-        }
+    const category =
+        objectPatch.categoryId && objectPatch.categoryId !== target.category._id
+            ? await requireCategory(ctx, objectPatch.categoryId)
+            : target.category;
+    await ctx.scheduler.runAfter(0, internal.typesense.updateInTypesense, {
+        object: buildObjectSearchRecord({
+            id: target.object._id,
+            name: objectPatch.name ?? target.object.name,
+            mapPoint: {
+                latitude: mapPointPatch.latitude ?? target.mapPoint.latitude,
+                longitude: mapPointPatch.longitude ?? target.mapPoint.longitude,
+                address: mapPointPatch.address ?? target.mapPoint.address,
+                city: mapPointPatch.city ?? target.mapPoint.city,
+                country: mapPointPatch.country ?? target.mapPoint.country,
+            },
+            categoryName: category.name,
+            createdBy: target.object.createdById,
+            isPublic: objectPatch.isPublic ?? target.object.isPublic,
+        }),
+    });
+}
+
+async function requireCategory(ctx: MutationCtx, categoryId: Id<'categories'>) {
+    const category = await ctx.db.get('categories', categoryId);
+    if (!category) {
+        throw new Error('Category not found');
     }
-    return result;
-}
-
-function hasKeys(patch: object) {
-    return Object.keys(patch).length > 0;
-}
-
-function arePatchValuesEqual(current: unknown, next: unknown) {
-    if (Array.isArray(current) && Array.isArray(next)) {
-        return haveSameItems(current, next);
-    }
-    return current === next;
-}
-
-function haveSameItems(left: unknown[], right: unknown[]) {
-    const leftItems = new Set(left);
-    const rightItems = new Set(right);
-    return leftItems.size === rightItems.size && [...leftItems].every(item => rightItems.has(item));
+    return category;
 }
 
 export async function loadObjectTarget(
