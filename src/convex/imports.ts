@@ -4,6 +4,7 @@ import {internal} from './_generated/api';
 import type {Id} from './_generated/dataModel';
 import {internalMutation, mutation, query} from './_generated/server';
 import {ensureCategory, ensurePrivateTags, ensureTags} from './helpers/importHelpers';
+import {buildObjectSearchRecord} from './helpers/objectAggregate';
 import {updateIsVisited} from './helpers/objectHelpers';
 import {createObjectRecords, upsertPrivateTags} from './helpers/objectWriter';
 import {getCurrentUserOrThrow} from './users';
@@ -284,6 +285,14 @@ export const importBatch = mutation({
                     });
                 }
 
+                const mapPoint = {
+                    latitude: coordinates.latitude,
+                    longitude: coordinates.longitude,
+                    address: trimToLimit(toNullableString(row.address) ?? '', LIMITS.address),
+                    city: trimToLimit(toNullableString(row.city) ?? '', LIMITS.city),
+                    country: trimToLimit(toNullableString(row.country) ?? '', LIMITS.country),
+                };
+
                 const {objectId} = await createObjectRecords(ctx, user._id, {
                     name: objectName,
                     description: toLimitedNullable(row.description, LIMITS.description),
@@ -295,15 +304,21 @@ export const importBatch = mutation({
                     categoryId,
                     isPublic: row.isPublic,
                     tagIds,
-                    latitude: coordinates.latitude,
-                    longitude: coordinates.longitude,
-                    address: trimToLimit(toNullableString(row.address) ?? '', LIMITS.address),
-                    city: trimToLimit(toNullableString(row.city) ?? '', LIMITS.city),
-                    country: trimToLimit(toNullableString(row.country) ?? '', LIMITS.country),
+                    ...mapPoint,
                 });
 
                 await upsertPrivateTags(ctx, objectId, user._id, privateTagIds);
                 await updateIsVisited(ctx, objectId, user._id, row.isVisited);
+                await ctx.scheduler.runAfter(0, internal.typesense.createInTypesense, {
+                    object: buildObjectSearchRecord({
+                        id: objectId,
+                        name: objectName,
+                        mapPoint,
+                        categoryName,
+                        createdBy: user._id,
+                        isPublic: row.isPublic,
+                    }),
+                });
                 if (user.notionSyncEnabled) {
                     importedObjectIds.push(objectId);
                 }
