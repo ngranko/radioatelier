@@ -4,9 +4,11 @@
     import {api} from '$convex/_generated/api';
     import type {Id} from '$convex/_generated/dataModel';
     import type {MarkerIcon, MarkerSource} from '$lib/interfaces/marker';
-    import {focusDetailsTarget} from '$lib/services/map/map.svelte.ts';
     import {Marker as MarkerObject} from '$lib/services/map/marker';
-    import {activateMarker, setActiveMarker} from '$lib/state/activeMarker.svelte.ts';
+    import {
+        registerFocusableMarker,
+        unregisterFocusableMarker,
+    } from '$lib/services/map/markerFocus';
     import {mapState} from '$lib/state/map.svelte';
     import {
         objectDetailsOverlay,
@@ -68,16 +70,6 @@
         mapState.markerManager.updateMarkerState(markerId, {isVisited, isRemoved});
     });
 
-    $effect(() => {
-        if (objectDetailsOverlay.detailsId !== activeTargetId || !marker) {
-            return;
-        }
-
-        setActiveMarker(marker);
-        activateMarker(marker);
-        focusDetailsTarget(Number(lat), Number(lng));
-    });
-
     onMount(() => {
         createMarker();
     });
@@ -103,6 +95,10 @@
             onClick: handleMarkerClick,
             onDragEnd: handleDragEnd,
         });
+
+        if (marker && activeTargetId) {
+            registerFocusableMarker(activeTargetId, marker);
+        }
     }
 
     async function handleDragEnd() {
@@ -116,6 +112,9 @@
     }
 
     onDestroy(() => {
+        if (marker && activeTargetId) {
+            unregisterFocusableMarker(activeTargetId, marker);
+        }
         if (mapState.markerManager && marker) {
             mapState.markerManager.removeMarker(markerId!, marker);
         }

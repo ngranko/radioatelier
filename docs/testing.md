@@ -30,6 +30,7 @@ Tests live next to the code they cover. Both `*.test.ts` and `*.spec.ts` suffixe
 | `src/lib/components/objectDetails/sheetSnap.test.ts` | Sheet drag snap and flick inertia                      |
 | `src/lib/services/map/detailsFocusOffset.test.ts`    | Map focus offsets for side-panel vs mobile peek sheet  |
 | `src/lib/services/map/visibilityEngine.test.ts`      | Marker viewport visibility rules                       |
+| `src/lib/services/map/markerFocus.test.ts`           | Marker focus highlight, registry, and recentering      |
 | `src/convex/notion.test.ts`                          | Notion sync reconcile and webhook decisions            |
 | `src/convex/notionSync/snapshot.test.ts`             | Snapshot assembly and sync-extras batching             |
 | `src/convex/helpers/objectReader.test.ts`            | Object aggregate loading and read deduping             |
