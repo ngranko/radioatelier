@@ -11,7 +11,6 @@ import {
     upsertPrivateTags,
 } from './helpers/objectWriter';
 import {
-    buildPatchedFields,
     buildSyncCreateData,
     buildSyncRecordPatch,
     resolveCreateClassification,
@@ -23,7 +22,7 @@ import {
     deleteSyncStateForObject,
     upsertSyncStateInMutation,
 } from './notionSync/state';
-import {appPatchValidator, notionFieldsValidator, nullableString} from './notionSync/types';
+import {appApplyPatchValidator, notionFieldsValidator, nullableString} from './notionSync/types';
 
 export const createObjectFromSync = internalMutation({
     args: {
@@ -53,7 +52,7 @@ export const patchObjectFromSync = internalMutation({
     args: {
         objectId: v.id('objects'),
         notionPageId: v.string(),
-        patch: v.object(appPatchValidator),
+        patch: v.object(appApplyPatchValidator),
         lastInboundEditedTime: nullableString,
     },
     handler: async (ctx, {objectId, notionPageId, patch, lastInboundEditedTime}) => {
@@ -94,9 +93,8 @@ async function patchSyncedObject(ctx: MutationCtx, input: PatchSyncedObjectInput
             input.patch.isVisited,
         );
     }
-    const nextFields = await buildPatchedFields(ctx, target, input, classification);
     await recordInboundSync(ctx, input.objectId, input.notionPageId, input.lastInboundEditedTime);
-    return nextFields;
+    return input.objectId;
 }
 
 async function deleteSyncedObject(ctx: MutationCtx, objectId: Id<'objects'>) {

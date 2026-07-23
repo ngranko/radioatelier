@@ -22,6 +22,13 @@ export type AppSyncPatch = Partial<
     categoryName?: string | null;
 };
 
+// The inbound-applicable projection of an AppSyncPatch: null values (Notion
+// has no value) are dropped, because inbound sync keeps app fields rather
+// than clearing them. Only the inbound decision produces this shape.
+export type AppSyncApplyPatch = {
+    [K in keyof AppSyncPatch]?: NonNullable<AppSyncPatch[K]>;
+};
+
 export const nullableString = v.union(v.string(), v.null());
 
 export const notionFieldsValidator = {
@@ -40,16 +47,16 @@ export const notionFieldsValidator = {
     source: nullableString,
 };
 
-export const appPatchValidator = {
+export const appApplyPatchValidator = {
     name: v.optional(v.string()),
-    categoryName: v.optional(nullableString),
-    address: v.optional(nullableString),
-    city: v.optional(nullableString),
-    country: v.optional(nullableString),
-    installedPeriod: v.optional(nullableString),
+    categoryName: v.optional(v.string()),
+    address: v.optional(v.string()),
+    city: v.optional(v.string()),
+    country: v.optional(v.string()),
+    installedPeriod: v.optional(v.string()),
     isRemoved: v.optional(v.boolean()),
-    removalPeriod: v.optional(nullableString),
+    removalPeriod: v.optional(v.string()),
     tagNames: v.optional(v.array(v.string())),
     isVisited: v.optional(v.boolean()),
-    source: v.optional(nullableString),
+    source: v.optional(v.string()),
 };

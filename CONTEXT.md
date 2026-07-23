@@ -19,5 +19,6 @@ Domain vocabulary for Radioatelier. Use these terms consistently in code, commen
 - **Sync identity** — maps a Notion workspace user id (from the page’s `created_by` / `last_edited_by`) to a sync-enabled Convex user, falling back to the configured sync user when needed.
 - **Outbound sync** — app → Notion. Triggered when a sync-enabled user creates/updates/deletes an Object.
 - **Inbound sync** — Notion → app. Triggered by Notion webhook events.
+- **Inbound apply patch** (`AppSyncApplyPatch` in code) — the null-free projection of a Notion→app diff that inbound sync actually applies. `null` in the sync vocabulary means "Notion has no value", and inbound keeps app fields rather than clearing them, so the inbound decision drops null-valued differences when building this patch — the single owner of keep-vs-clear. Raw diffs (nulls included) remain visible to the Sync audit.
 - **Sync audit** — `reportDiscrepancies` action. Read-only pass over app Objects and Notion pages that reports link, field, and sync-state mismatches without writing either side.
 - **Sync-flavoured mutations** — `createObjectFromSync`, `patchObjectFromSync`, `deleteObjectFromSync` in `src/convex/objects.ts`. The Object writers used by inbound sync, distinct from the auth-checking form-driven `create`, `update`, `remove`.
