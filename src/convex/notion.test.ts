@@ -128,6 +128,18 @@ describe('notion inbound sync decisions', () => {
         });
     });
 
+    it('skips removed pages that have no linked Object', () => {
+        expect(
+            decideInboundSync({
+                eventType: 'page.deleted',
+                pageState: 'removed',
+                existingSync: null,
+                notionFields: null,
+                existingSnapshot: null,
+            }),
+        ).toEqual({kind: 'skip'});
+    });
+
     it('records an echo when Notion sends back the last outbound state', () => {
         const lastOutboundHash = computeSyncHash(appFields);
 
@@ -166,6 +178,21 @@ describe('notion inbound sync decisions', () => {
             objectId: objectId('object-1'),
             patch: {city: 'Berlin'},
         });
+    });
+
+    it('skips linked updates when the Object snapshot is unavailable', () => {
+        expect(
+            decideInboundSync({
+                eventType: 'page.properties_updated',
+                pageState: 'active',
+                existingSync: {
+                    objectId: objectId('object-1'),
+                    lastOutboundHash: 'older-hash',
+                },
+                notionFields: {...appFields, city: 'Berlin'},
+                existingSnapshot: null,
+            }),
+        ).toEqual({kind: 'skip'});
     });
 
     it('keeps app values for fields Notion has emptied', () => {
