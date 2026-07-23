@@ -6,7 +6,6 @@ import type {
     PatchSyncedObjectInput,
     SyncClassification,
 } from './objectWriterTypes';
-import {normalizeCategoryName, normalizeNames, readTagNames} from './snapshot';
 import type {AppSyncApplyPatch} from './types';
 
 export async function resolveCreateClassification(
@@ -16,9 +15,7 @@ export async function resolveCreateClassification(
     const categoryName = normalizeCategoryName(input.fields.categoryName) ?? 'unknown';
     const tagNames = normalizeNames(input.fields.tagNames);
     return {
-        categoryName,
         categoryId: await ensureCategory(ctx, categoryName),
-        tagNames,
         tagIds: await ensureTags(ctx, tagNames),
     };
 }
@@ -29,17 +26,13 @@ export async function resolvePatchClassification(
     input: PatchSyncedObjectInput,
 ): Promise<SyncClassification> {
     const categoryName = normalizeCategoryName(input.patch.categoryName) ?? target.category.name;
-    const tagNames = input.patch.tagNames
-        ? normalizeNames(input.patch.tagNames)
-        : await readTagNames(ctx, target.object.tagIds);
+    const tagNames = input.patch.tagNames ? normalizeNames(input.patch.tagNames) : null;
     return {
-        categoryName,
         categoryId:
             categoryName === target.category.name
                 ? target.category._id
                 : await ensureCategory(ctx, categoryName),
-        tagNames,
-        tagIds: input.patch.tagNames ? await ensureTags(ctx, tagNames) : target.object.tagIds,
+        tagIds: tagNames ? await ensureTags(ctx, tagNames) : target.object.tagIds,
     };
 }
 
@@ -86,4 +79,13 @@ export function buildSyncRecordPatch(
         city: patch.city,
         country: patch.country,
     };
+}
+
+function normalizeCategoryName(value: string | null | undefined) {
+    const normalized = value?.trim().toLowerCase();
+    return normalized || null;
+}
+
+function normalizeNames(values: string[]) {
+    return [...new Set(values.map(item => item.trim().toLowerCase()).filter(Boolean))];
 }

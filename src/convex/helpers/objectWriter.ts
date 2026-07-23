@@ -3,6 +3,7 @@ import type {Doc, Id} from '../_generated/dataModel';
 import type {MutationCtx} from '../_generated/server';
 import {buildObjectSearchRecord} from './objectAggregate';
 import {getNextInternalId} from './objectHelpers';
+import {loadObjectAggregate, type ObjectAggregate} from './objectReader';
 import {
     filterChangedPatch,
     hasKeys,
@@ -14,10 +15,7 @@ import {
 
 export type {ObjectRecordData, ObjectRecordPatch, ObjectRecordReplace} from './objectRecordPatch';
 
-export type ObjectTarget = {
-    object: Doc<'objects'>;
-    mapPoint: Doc<'mapPoints'>;
-    category: Doc<'categories'>;
+export type ObjectTarget = ObjectAggregate & {
     marker: Doc<'markers'>;
 };
 
@@ -139,18 +137,17 @@ export async function loadObjectTarget(
     if (!object) {
         throw new Error('Object not found');
     }
-    const [mapPoint, category, marker] = await Promise.all([
-        ctx.db.get('mapPoints', object.mapPointId),
-        ctx.db.get('categories', object.categoryId),
+    const [aggregate, marker] = await Promise.all([
+        loadObjectAggregate(ctx, object),
         ctx.db
             .query('markers')
             .withIndex('byObjectId', q => q.eq('objectId', objectId))
             .unique(),
     ]);
-    if (!mapPoint || !category || !marker) {
+    if (!aggregate || !marker) {
         throw new Error('Object relations not found');
     }
-    return {object, mapPoint, category, marker};
+    return {...aggregate, marker};
 }
 
 export async function upsertPrivateTags(

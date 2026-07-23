@@ -75,6 +75,7 @@ function createTarget(): ObjectTarget {
             country: 'Russia',
         },
         category: {_id: categoryId, name: 'mosaics'},
+        tags: [],
         marker: {
             _id: 'marker-1',
             latitude: 55.75,
