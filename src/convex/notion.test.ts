@@ -92,6 +92,12 @@ describe('notion sync matching', () => {
         );
     });
 
+    it('hashes independently of the key insertion order of its input', () => {
+        const reordered = Object.fromEntries(Object.entries(appFields).reverse()) as AppSyncFields;
+
+        expect(computeSyncHash(reordered)).toBe(computeSyncHash(appFields));
+    });
+
     it('reports differing sync fields between app and Notion snapshots', () => {
         expect(
             computeFieldDiscrepancies(appFields, {

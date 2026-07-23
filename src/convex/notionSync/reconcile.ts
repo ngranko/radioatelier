@@ -38,11 +38,17 @@ export function extractObjectIdFromMapLink(value: string | null) {
     }
 }
 
+// Echo suppression compares a hash written from Object Sync Fields (outbound)
+// against one computed from Notion page fields (inbound), so the hash must
+// not depend on either constructor's key order: serialize in syncFieldNames
+// order instead.
 export function computeSyncHash(fields: AppSyncFields | NotionPageFields) {
-    return JSON.stringify({
-        ...fields,
-        tagNames: normalizeList(fields.tagNames),
-    });
+    const canonical: Record<string, unknown> = {};
+    for (const fieldName of syncFieldNames) {
+        canonical[fieldName] =
+            fieldName === 'tagNames' ? normalizeList(fields.tagNames) : fields[fieldName];
+    }
+    return JSON.stringify(canonical);
 }
 
 export function findMatchForAppObject(
