@@ -1,6 +1,5 @@
 <script lang="ts">
     import StreetView from '$lib/components/map/streetView.svelte';
-    import config from '$lib/config';
     import type {Location} from '$lib/interfaces/location';
     import type {MapProvider} from '$lib/interfaces/map';
     import {
@@ -41,7 +40,6 @@
         await provider.initialize(container!, center);
         mapState.provider = provider;
         mapState.markerManager = await initMarkerManager(provider);
-        mapState.deckEnabled = mapState.markerManager.isDeckRenderer;
         mapState.isReady = true;
         mapState.markerManager.scheduleViewportUpdate();
     }
@@ -96,14 +94,13 @@
     });
 
     async function initMarkerManager(provider: MapProvider): Promise<MarkerManager> {
-        const initialMode = shouldUseDeck(provider) ? 'deck' : 'dom';
         const manager = new MarkerManager(
             provider,
             mode =>
                 mode === 'deck'
                     ? new HybridMarkerRenderer(provider)
                     : new DomMarkerRenderer(provider),
-            {renderer: initialMode, onMarkerShown: notifyFocusableMarkerShown},
+            {onMarkerShown: notifyFocusableMarkerShown},
         );
         await manager.initialize();
         return manager;
@@ -124,13 +121,11 @@
     function handleIdle() {
         removeDragTimeout();
         persistMapView();
-        mapState.markerManager?.setRendererMode(shouldUseDeck(mapState.provider!) ? 'deck' : 'dom');
-        mapState.deckEnabled = mapState.markerManager?.isDeckRenderer ?? false;
-        mapState.markerManager?.scheduleViewportUpdate();
+        mapState.markerManager?.syncRendererWithViewport();
     }
 
     function handleClick(latLng: {lat: number; lng: number}) {
-        if (mapState.deckEnabled || isInZoomMode) {
+        if (mapState.markerManager?.isDeckRenderer || isInZoomMode) {
             return;
         }
 
@@ -157,10 +152,6 @@
         );
     }
 
-    function shouldUseDeck(provider: MapProvider): boolean {
-        return provider.getZoom() <= config.deckZoomThreshold;
-    }
-
     onDestroy(() => {
         if (positionInterval) {
             stopPositionPolling(positionInterval);
@@ -173,7 +164,6 @@
         mapState.markerManager?.destroy();
         mapState.provider?.destroy();
         mapState.provider = null;
-        mapState.deckEnabled = false;
         mapState.isReady = false;
     });
 </script>

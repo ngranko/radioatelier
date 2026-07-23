@@ -1,5 +1,5 @@
 import type {LatLngLiteral, MarkerHandle} from '$lib/interfaces/map';
-import type {MarkerIcon, MarkerOptions, MarkerSource} from '$lib/interfaces/marker';
+import type {MarkerOptions} from '$lib/interfaces/marker';
 
 export class Marker {
     private handle?: MarkerHandle;
@@ -13,7 +13,7 @@ export class Marker {
 
     public constructor(
         private position: LatLngLiteral,
-        private options: MarkerOptions,
+        public readonly options: MarkerOptions,
     ) {
         this.isVisited = Boolean(options.isVisited);
         this.isRemoved = Boolean(options.isRemoved);
@@ -32,10 +32,6 @@ export class Marker {
         if (this.handle) {
             this.handle.setPosition(this.position);
         }
-    }
-
-    public getSource(): MarkerSource {
-        return this.options.source;
     }
 
     public isLazy(): boolean {
@@ -62,34 +58,6 @@ export class Marker {
         return this.options.source !== 'share';
     }
 
-    public getColor(): string {
-        return this.options.color;
-    }
-
-    public isDraggable(): boolean {
-        return Boolean(this.options.isDraggable);
-    }
-
-    public getOnClick(): (() => void) | undefined {
-        return this.options.onClick;
-    }
-
-    public getOnDragStart(): (() => void) | undefined {
-        return this.options.onDragStart;
-    }
-
-    public getOnDragEnd(): (() => void) | undefined {
-        return this.options.onDragEnd;
-    }
-
-    public getIcon(): MarkerIcon {
-        return this.options.icon;
-    }
-
-    public getIconClassName(): string | undefined {
-        return this.options.iconClassName;
-    }
-
     public getState() {
         return {isVisited: this.isVisited, isRemoved: this.isRemoved};
     }
@@ -113,10 +81,6 @@ export class Marker {
 
     public setHandle(handle: MarkerHandle) {
         this.handle = handle;
-    }
-
-    public create() {
-        // No-op
     }
 
     public show() {
