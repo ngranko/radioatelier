@@ -22,7 +22,7 @@
         focusDetailsTarget(object.latitude, object.longitude);
         const marker = object.id ? mapState.markerManager.getMarker(object.id) : null;
         if (marker) {
-            marker.getOnClick()?.();
+            marker.options.onClick?.();
         } else if (object.id) {
             showLoadingDetailsOverlay(object.id);
             goto(`/object/${object.id}`);

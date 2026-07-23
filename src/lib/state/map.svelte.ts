@@ -5,7 +5,6 @@ interface MapState {
     provider: MapProvider | null;
     isReady: boolean;
     markerManager?: MarkerManager;
-    deckEnabled: boolean;
     streetViewVisible: boolean;
 }
 
@@ -13,6 +12,5 @@ export const mapState = $state<MapState>({
     provider: null,
     isReady: false,
     markerManager: undefined,
-    deckEnabled: false,
     streetViewVisible: false,
 });

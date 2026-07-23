@@ -15,7 +15,7 @@
         focusDetailsTarget(object.latitude, object.longitude);
         if (id && mapState.markerManager) {
             const marker = mapState.markerManager.getMarker(id);
-            marker?.getOnClick()?.();
+            marker?.options.onClick?.();
         }
     }
 </script>
