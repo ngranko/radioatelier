@@ -1,28 +1,33 @@
 import {afterEach, describe, expect, it, vi} from 'vitest';
 import type {Doc, Id} from '../_generated/dataModel';
 import type {QueryCtx} from '../_generated/server';
+import type {ObjectAggregate} from '../helpers/objectReader';
 import * as visitedChunks from '../utils/visitedChunks';
 import {assembleObjectSnapshot} from './snapshot';
-import {loadSnapshotCache} from './snapshotCache';
+import {loadSyncSnapshotExtras} from './snapshotExtras';
 
 process.env.NOTION_SYNC_APP_URL = 'https://radioatelier.app';
 
-describe('notion snapshot batch loading', () => {
+describe('notion snapshot assembly', () => {
     afterEach(() => {
         vi.restoreAllMocks();
     });
-    it('assembles a snapshot from cache', () => {
-        const object = makeObject('object-1', id('users', 'owner-1'));
-        const cache = makeCache({
-            owners: [makeOwner('owner-1')],
-            mapPoints: [makeMapPoint('map-1')],
-            categories: [makeCategory('category-1', 'installation')],
-            tags: [makeTag('tag-1', 'sound')],
-            syncByObjectId: [[id('objects', 'object-1'), null]],
-            visitedByObjectId: [[id('objects', 'object-1'), true]],
-        });
 
-        expect(assembleObjectSnapshot(object, cache)).toEqual({
+    it('assembles a snapshot from an Object aggregate and sync extras', () => {
+        const aggregate: ObjectAggregate = {
+            object: makeObject('object-1', id('users', 'owner-1')),
+            mapPoint: makeMapPoint('map-1'),
+            category: makeCategory('category-1', 'installation'),
+            tags: [makeTag('tag-1', 'sound')],
+        };
+
+        expect(
+            assembleObjectSnapshot(aggregate, {
+                owner: makeOwner('owner-1'),
+                sync: null,
+                isVisited: true,
+            }),
+        ).toEqual({
             objectId: id('objects', 'object-1'),
             owner: {
                 _id: id('users', 'owner-1'),
@@ -39,53 +44,12 @@ describe('notion snapshot batch loading', () => {
         });
     });
 
-    it('returns null when cached relations are missing', () => {
-        const object = makeObject('object-1', id('users', 'owner-1'));
-        const cache = makeCache({
-            owners: [makeOwner('owner-1')],
-            mapPoints: [],
-            categories: [makeCategory('category-1', 'installation')],
-            tags: [],
-        });
-
-        expect(assembleObjectSnapshot(object, cache)).toBeNull();
-    });
-
-    it('dedupes mapPoint, category, and tag reads across objects', async () => {
-        vi.spyOn(visitedChunks, 'getVisitedChunkId').mockReturnValue('abc');
-        const owner = makeOwner('owner-1');
-        const objects = Array.from({length: 5}, (_, index) =>
-            makeObject(`object-${index + 1}`, owner._id, {
-                mapPointId: id('mapPoints', 'map-1'),
-                categoryId: id('categories', 'category-1'),
-                tagIds: [id('tags', 'tag-1'), id('tags', 'tag-2')],
-            }),
-        );
-        const {ctx, stats} = createMockQueryCtx({
-            owners: [owner],
-            mapPoints: [makeMapPoint('map-1')],
-            categories: [makeCategory('category-1', 'installation')],
-            tags: [makeTag('tag-1', 'sound'), makeTag('tag-2', 'historic')],
-            syncByObjectId: objects.map(object => [object._id, null] as const),
-            visitedChunks: [],
-        });
-
-        await loadSnapshotCache(ctx, objects, new Map([[owner._id, owner]]));
-
-        expect(stats.getCalls).toBe(4);
-        expect(stats.queryCalls).toBe(objects.length + 1);
-    });
-
     it('dedupes visited chunk lookups by user and chunk', async () => {
         vi.spyOn(visitedChunks, 'getVisitedChunkId').mockReturnValue('abc');
         const owner = makeOwner('owner-1');
         const objects = [makeObject('object-1', owner._id), makeObject('object-2', owner._id)];
 
         const {ctx, stats} = createMockQueryCtx({
-            owners: [owner],
-            mapPoints: [makeMapPoint('map-1')],
-            categories: [makeCategory('category-1', 'installation')],
-            tags: [],
             syncByObjectId: objects.map(object => [object._id, null] as const),
             visitedChunks: [
                 {
@@ -96,19 +60,15 @@ describe('notion snapshot batch loading', () => {
             ],
         });
 
-        const cache = await loadSnapshotCache(ctx, objects, new Map([[owner._id, owner]]));
+        const extras = await loadSyncSnapshotExtras(ctx, objects);
 
         expect(stats.queryCalls).toBe(objects.length + 1);
-        expect(cache.visitedByObjectId.get(objects[0]._id)).toBe(true);
-        expect(cache.visitedByObjectId.get(objects[1]._id)).toBe(false);
+        expect(extras.visitedByObjectId.get(objects[0]._id)).toBe(true);
+        expect(extras.visitedByObjectId.get(objects[1]._id)).toBe(false);
     });
 });
 
 type MockDbSeed = {
-    owners: Doc<'users'>[];
-    mapPoints: Doc<'mapPoints'>[];
-    categories: Doc<'categories'>[];
-    tags: Doc<'tags'>[];
     syncByObjectId: ReadonlyArray<readonly [Id<'objects'>, Doc<'objectNotionSync'> | null]>;
     visitedChunks: Array<{
         userId: Id<'users'>;
@@ -119,14 +79,9 @@ type MockDbSeed = {
 
 function createMockQueryCtx(seed: MockDbSeed) {
     const stats = {
-        getCalls: 0,
         queryCalls: 0,
     };
     const db = {
-        get: vi.fn(async (table: string, docId: string) => {
-            stats.getCalls += 1;
-            return lookupDoc(table, docId, seed);
-        }),
         query: vi.fn((table: string) => {
             if (table === 'objectNotionSync') {
                 return createSyncQuery(seed, stats);
@@ -210,40 +165,6 @@ function createIndexBuilder(): IndexBuilder {
     return builder;
 }
 
-function lookupDoc(table: string, docId: string, seed: MockDbSeed) {
-    if (table === 'users') {
-        return seed.owners.find(owner => owner._id === docId) ?? null;
-    }
-    if (table === 'mapPoints') {
-        return seed.mapPoints.find(mapPoint => mapPoint._id === docId) ?? null;
-    }
-    if (table === 'categories') {
-        return seed.categories.find(category => category._id === docId) ?? null;
-    }
-    if (table === 'tags') {
-        return seed.tags.find(tag => tag._id === docId) ?? null;
-    }
-    return null;
-}
-
-function makeCache(input: {
-    owners: Doc<'users'>[];
-    mapPoints: Doc<'mapPoints'>[];
-    categories: Doc<'categories'>[];
-    tags: Doc<'tags'>[];
-    syncByObjectId?: ReadonlyArray<readonly [Id<'objects'>, Doc<'objectNotionSync'> | null]>;
-    visitedByObjectId?: ReadonlyArray<readonly [Id<'objects'>, boolean]>;
-}) {
-    return {
-        owners: new Map(input.owners.map(owner => [owner._id, owner])),
-        mapPoints: new Map(input.mapPoints.map(mapPoint => [mapPoint._id, mapPoint])),
-        categories: new Map(input.categories.map(category => [category._id, category])),
-        tags: new Map(input.tags.map(tag => [tag._id, tag])),
-        syncByObjectId: new Map(input.syncByObjectId ?? []),
-        visitedByObjectId: new Map(input.visitedByObjectId ?? []),
-    };
-}
-
 function makeOwner(ownerId: string): Doc<'users'> {
     return {
         _id: id('users', ownerId),
@@ -286,11 +207,7 @@ function makeTag(tagId: string, name: string): Doc<'tags'> {
     };
 }
 
-function makeObject(
-    objectIdValue: string,
-    ownerId: Id<'users'>,
-    overrides: Partial<Pick<Doc<'objects'>, 'mapPointId' | 'categoryId' | 'tagIds'>> = {},
-): Doc<'objects'> {
+function makeObject(objectIdValue: string, ownerId: Id<'users'>): Doc<'objects'> {
     return {
         _id: id('objects', objectIdValue),
         _creationTime: 0,
@@ -301,10 +218,10 @@ function makeObject(
         removalPeriod: null,
         source: 'https://example.com',
         coverId: null,
-        categoryId: overrides.categoryId ?? id('categories', 'category-1'),
+        categoryId: id('categories', 'category-1'),
         isPublic: false,
-        tagIds: overrides.tagIds ?? [id('tags', 'tag-1')],
-        mapPointId: overrides.mapPointId ?? id('mapPoints', 'map-1'),
+        tagIds: [id('tags', 'tag-1')],
+        mapPointId: id('mapPoints', 'map-1'),
         createdById: ownerId,
         internalId: 'RA-1',
     };

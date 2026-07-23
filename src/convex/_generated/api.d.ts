@@ -13,7 +13,9 @@ import type * as crons from "../crons.js";
 import type * as helpers_geocode from "../helpers/geocode.js";
 import type * as helpers_importHelpers from "../helpers/importHelpers.js";
 import type * as helpers_objectAggregate from "../helpers/objectAggregate.js";
+import type * as helpers_objectDetails from "../helpers/objectDetails.js";
 import type * as helpers_objectHelpers from "../helpers/objectHelpers.js";
+import type * as helpers_objectReader from "../helpers/objectReader.js";
 import type * as helpers_objectRecordPatch from "../helpers/objectRecordPatch.js";
 import type * as helpers_objectWriter from "../helpers/objectWriter.js";
 import type * as http from "../http.js";
@@ -37,7 +39,7 @@ import type * as notionSync_objectWriterTypes from "../notionSync/objectWriterTy
 import type * as notionSync_outbound from "../notionSync/outbound.js";
 import type * as notionSync_reconcile from "../notionSync/reconcile.js";
 import type * as notionSync_snapshot from "../notionSync/snapshot.js";
-import type * as notionSync_snapshotCache from "../notionSync/snapshotCache.js";
+import type * as notionSync_snapshotExtras from "../notionSync/snapshotExtras.js";
 import type * as notionSync_state from "../notionSync/state.js";
 import type * as notionSync_types from "../notionSync/types.js";
 import type * as objects from "../objects.js";
@@ -67,7 +69,9 @@ declare const fullApi: ApiFromModules<{
   "helpers/geocode": typeof helpers_geocode;
   "helpers/importHelpers": typeof helpers_importHelpers;
   "helpers/objectAggregate": typeof helpers_objectAggregate;
+  "helpers/objectDetails": typeof helpers_objectDetails;
   "helpers/objectHelpers": typeof helpers_objectHelpers;
+  "helpers/objectReader": typeof helpers_objectReader;
   "helpers/objectRecordPatch": typeof helpers_objectRecordPatch;
   "helpers/objectWriter": typeof helpers_objectWriter;
   http: typeof http;
@@ -91,7 +95,7 @@ declare const fullApi: ApiFromModules<{
   "notionSync/outbound": typeof notionSync_outbound;
   "notionSync/reconcile": typeof notionSync_reconcile;
   "notionSync/snapshot": typeof notionSync_snapshot;
-  "notionSync/snapshotCache": typeof notionSync_snapshotCache;
+  "notionSync/snapshotExtras": typeof notionSync_snapshotExtras;
   "notionSync/state": typeof notionSync_state;
   "notionSync/types": typeof notionSync_types;
   objects: typeof objects;

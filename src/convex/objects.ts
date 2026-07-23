@@ -1,10 +1,16 @@
 import {paginationOptsValidator} from 'convex/server';
 import {v} from 'convex/values';
 import {internal} from './_generated/api';
-import type {Doc} from './_generated/dataModel';
-import {internalQuery, mutation, query} from './_generated/server';
+import type {Doc, Id} from './_generated/dataModel';
+import {internalQuery, mutation, query, type QueryCtx} from './_generated/server';
 import {buildObjectSearchRecord, deleteObjectAggregate} from './helpers/objectAggregate';
+import {
+    buildObjectDetails,
+    type ObjectCover,
+    type ObjectViewerContext,
+} from './helpers/objectDetails';
 import {getIsVisited, getPrivateTags, updateIsVisited} from './helpers/objectHelpers';
+import {loadObjectAggregate, loadObjectAggregates} from './helpers/objectReader';
 import {
     createObjectRecords,
     loadObjectTarget,
@@ -33,80 +39,54 @@ export const getDetails = query({
         if (!object) {
             throw new Error('Object not found');
         }
-
-        const mapPoint = await ctx.db.get('mapPoints', object.mapPointId);
-        if (!mapPoint) {
-            throw new Error('Map point not found');
+        const aggregate = await loadObjectAggregate(ctx, object);
+        if (!aggregate) {
+            throw new Error('Object relations not found');
         }
 
-        const category = await ctx.db.get('categories', object.categoryId);
-        if (!category) {
-            throw new Error('Category not found');
-        }
-
-        const fetchedTags = await Promise.all(
-            object.tagIds.map(async item => ctx.db.get('tags', item)),
-        );
-        const tags = fetchedTags.filter((tag): tag is Doc<'tags'> => tag !== null);
-
-        let privateTags: Doc<'privateTags'>[] = [];
-        let isVisited = false;
-        if (user) {
-            privateTags = await getPrivateTags(ctx, object._id, user._id);
-            isVisited = await getIsVisited(ctx, object._id, user._id);
-        }
-
-        let cover = null;
-        if (object.coverId) {
-            const image = await ctx.db.get('images', object.coverId);
-            if (image) {
-                cover = {
-                    id: image._id,
-                    url: '',
-                    previewUrl: '',
-                };
-                if (image.originalStorageId) {
-                    cover.url = (await ctx.storage.getUrl(image.originalStorageId)) ?? '';
-                }
-                if (image.previewStorageId) {
-                    cover.previewUrl = (await ctx.storage.getUrl(image.previewStorageId)) ?? '';
-                }
-            }
-        }
-
-        return {
-            id: object._id,
-            latitude: mapPoint.latitude,
-            longitude: mapPoint.longitude,
-            name: object.name,
-            description: object.description,
-            address: mapPoint.address,
-            city: mapPoint.city,
-            country: mapPoint.country,
-            installedPeriod: object.installedPeriod,
-            isRemoved: object.isRemoved,
-            removalPeriod: object.removalPeriod,
-            source: object.source,
-            cover,
-            isPublic: object.isPublic,
-            category: {
-                id: category._id,
-                name: category.name,
-            },
-            tags: tags.map(tag => ({
-                id: tag._id,
-                name: tag.name,
-            })),
-            privateTags: privateTags.map(tag => ({
-                id: tag._id,
-                name: tag.name,
-            })),
-            isVisited,
-            isOwner: object.createdById === user?._id,
-            internalId: user ? object.internalId : null,
-        };
+        return buildObjectDetails(aggregate, await loadViewerContext(ctx, object, user));
     },
 });
+
+async function loadViewerContext(
+    ctx: QueryCtx,
+    object: Doc<'objects'>,
+    user: Doc<'users'> | null,
+): Promise<ObjectViewerContext> {
+    let privateTags: Doc<'privateTags'>[] = [];
+    let isVisited = false;
+    if (user) {
+        [privateTags, isVisited] = await Promise.all([
+            getPrivateTags(ctx, object._id, user._id),
+            getIsVisited(ctx, object._id, user._id),
+        ]);
+    }
+    return {
+        userId: user?._id ?? null,
+        privateTags,
+        isVisited,
+        cover: await loadCover(ctx, object.coverId),
+    };
+}
+
+async function loadCover(ctx: QueryCtx, coverId: Id<'images'> | null): Promise<ObjectCover | null> {
+    if (!coverId) {
+        return null;
+    }
+    const image = await ctx.db.get('images', coverId);
+    if (!image) {
+        return null;
+    }
+    const [url, previewUrl] = await Promise.all([
+        image.originalStorageId ? ctx.storage.getUrl(image.originalStorageId) : null,
+        image.previewStorageId ? ctx.storage.getUrl(image.previewStorageId) : null,
+    ]);
+    return {
+        id: image._id,
+        url: url ?? '',
+        previewUrl: previewUrl ?? '',
+    };
+}
 
 export const resolveShareId = query({
     args: {
@@ -288,33 +268,21 @@ export const listForTypesenseBackfill = internalQuery({
     },
     handler: async (ctx, {paginationOpts}) => {
         const result = await ctx.db.query('objects').order('desc').paginate(paginationOpts);
-        const items = await Promise.all(
-            result.page.map(async object => {
-                const [mapPoint, category] = await Promise.all([
-                    ctx.db.get('mapPoints', object.mapPointId),
-                    ctx.db.get('categories', object.categoryId),
-                ]);
-
-                if (!mapPoint) {
-                    throw new Error(`Map point not found for object ${object._id}`);
-                }
-
-                if (!category) {
-                    throw new Error(`Category not found for object ${object._id}`);
-                }
-
-                return {
-                    ...buildObjectSearchRecord({
-                        id: object._id,
-                        name: object.name,
-                        mapPoint,
-                        categoryName: category.name,
-                        createdBy: object.createdById,
-                        isPublic: object.isPublic,
-                    }),
-                };
-            }),
-        );
+        const aggregates = await loadObjectAggregates(ctx, result.page);
+        const items = result.page.map(object => {
+            const aggregate = aggregates.get(object._id);
+            if (!aggregate) {
+                throw new Error(`Object relations not found for object ${object._id}`);
+            }
+            return buildObjectSearchRecord({
+                id: object._id,
+                name: object.name,
+                mapPoint: aggregate.mapPoint,
+                categoryName: aggregate.category.name,
+                createdBy: object.createdById,
+                isPublic: object.isPublic,
+            });
+        });
 
         return {
             isDone: result.isDone,
