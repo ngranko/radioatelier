@@ -40,12 +40,12 @@ export class DragController {
                 this.skipClick = false;
                 return;
             }
-            marker.getOnClick()?.();
+            marker.options.onClick?.();
         };
     }
 
     private attachDragIfNeeded(marker: Marker): void {
-        if (!marker.isDraggable()) {
+        if (!marker.options.isDraggable) {
             return;
         }
         this.attachPointerDown(marker);
@@ -81,7 +81,7 @@ export class DragController {
         });
         this.skipClick = true;
         this.provider.setDraggable(false);
-        marker.getOnDragStart()?.();
+        marker.options.onDragStart?.();
         element.classList.add('marker-dragging');
     }
 
@@ -108,7 +108,7 @@ export class DragController {
             this.provider.setDraggable(true);
             if (marker.isDragged) {
                 marker.isDragged = false;
-                marker.getOnDragEnd()?.();
+                marker.options.onDragEnd?.();
             }
             marker.getHandle()?.getElement()?.classList.remove('marker-dragging');
 

@@ -88,7 +88,7 @@ export class DeckOverlayRenderer implements MarkerRenderer {
         const data: DeckPointInfo[] = Array.from(this.allMarkers).map(marker => {
             const pos = marker.getPosition();
             const {isVisited, isRemoved} = marker.getState();
-            const {r, g, b} = cssColorToRgb(marker.getColor());
+            const {r, g, b} = cssColorToRgb(marker.options.color);
             const outline = isVisited ? cssColorToRgb('#39ff14') : cssColorToRgb('#ffffff');
             const opacityMult = isRemoved ? 0.5 : 1;
             return {
