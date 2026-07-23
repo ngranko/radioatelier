@@ -1,6 +1,6 @@
 import type {Id} from '../_generated/dataModel';
 import type {NotionPageFields} from '../notion/types';
-import type {AppSyncPatch} from './types';
+import type {AppSyncApplyPatch} from './types';
 
 export type CreateSyncedObjectInput = {
     notionPageId: string;
@@ -14,7 +14,7 @@ export type CreateSyncedObjectInput = {
 export type PatchSyncedObjectInput = {
     objectId: Id<'objects'>;
     notionPageId: string;
-    patch: AppSyncPatch;
+    patch: AppSyncApplyPatch;
     lastInboundEditedTime: string | null;
 };
 

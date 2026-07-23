@@ -166,6 +166,44 @@ describe('notion inbound sync decisions', () => {
         });
     });
 
+    it('keeps the app name when the Notion title was cleared', () => {
+        expect(
+            decideInboundSync({
+                eventType: 'page.properties_updated',
+                pageState: 'active',
+                existingSync: {
+                    objectId: objectId('object-1'),
+                    lastOutboundHash: 'older-hash',
+                },
+                notionFields: {...appFields, name: null, city: 'Berlin'},
+                existingSnapshot: objectSnapshot('object-1', appFields),
+            }),
+        ).toEqual({
+            kind: 'patchObject',
+            objectId: objectId('object-1'),
+            patch: {city: 'Berlin'},
+        });
+    });
+
+    it('keeps app values for fields Notion has emptied', () => {
+        expect(
+            decideInboundSync({
+                eventType: 'page.properties_updated',
+                pageState: 'active',
+                existingSync: {
+                    objectId: objectId('object-1'),
+                    lastOutboundHash: 'older-hash',
+                },
+                notionFields: {...appFields, installedPeriod: null, source: null},
+                existingSnapshot: objectSnapshot('object-1', appFields),
+            }),
+        ).toEqual({
+            kind: 'patchObject',
+            objectId: objectId('object-1'),
+            patch: {},
+        });
+    });
+
     it('unmatched page.created uses create flow when no linked object exists', () => {
         expect(
             decideInboundSync({
