@@ -6,7 +6,7 @@ import type {
     PatchSyncedObjectInput,
     SyncClassification,
 } from './objectWriterTypes';
-import {normalizeCategoryName, normalizeNames, readTagNames} from './snapshot';
+import {normalizeCategoryName, normalizeNames} from './snapshot';
 import type {AppSyncApplyPatch} from './types';
 
 export async function resolveCreateClassification(
@@ -31,7 +31,7 @@ export async function resolvePatchClassification(
     const categoryName = normalizeCategoryName(input.patch.categoryName) ?? target.category.name;
     const tagNames = input.patch.tagNames
         ? normalizeNames(input.patch.tagNames)
-        : await readTagNames(ctx, target.object.tagIds);
+        : target.tags.map(tag => tag.name);
     return {
         categoryName,
         categoryId:

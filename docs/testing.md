@@ -31,7 +31,9 @@ Tests live next to the code they cover. Both `*.test.ts` and `*.spec.ts` suffixe
 | `src/lib/services/map/detailsFocusOffset.test.ts`    | Map focus offsets for side-panel vs mobile peek sheet  |
 | `src/lib/services/map/visibilityEngine.test.ts`      | Marker viewport visibility rules                       |
 | `src/convex/notion.test.ts`                          | Notion sync reconcile and webhook decisions            |
-| `src/convex/notionSync/snapshot.test.ts`             | Snapshot builders for sync field hashing               |
+| `src/convex/notionSync/snapshot.test.ts`             | Snapshot assembly and sync-extras batching             |
+| `src/convex/helpers/objectReader.test.ts`            | Object aggregate loading and read deduping             |
+| `src/convex/helpers/objectDetails.test.ts`           | Client details DTO projection per viewer               |
 | `src/convex/notionSync/outbound.test.ts`             | Outbound Notion page create/update/archive             |
 | `src/convex/notionSync/inbound.test.ts`              | Inbound webhook orchestration (echo, patch, create)    |
 | `src/convex/helpers/objectWriter.test.ts`            | Object writer create/patch and search-index scheduling |

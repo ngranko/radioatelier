@@ -1,9 +1,14 @@
 import {paginationOptsValidator} from 'convex/server';
 import {v} from 'convex/values';
 import type {Doc, Id} from '../_generated/dataModel';
-import {internalQuery, type MutationCtx, type QueryCtx} from '../_generated/server';
+import {internalQuery, type QueryCtx} from '../_generated/server';
+import {
+    loadObjectAggregate,
+    loadObjectAggregates,
+    type ObjectAggregate,
+} from '../helpers/objectReader';
 import {getNotionSyncAppUrl} from '../notion/config';
-import {loadSnapshotCache, type SnapshotCache} from './snapshotCache';
+import {loadSyncSnapshotExtras} from './snapshotExtras';
 import type {AppSyncFields} from './types';
 
 export type ObjectSyncSnapshot = {
@@ -70,36 +75,45 @@ export const listEligibleObjectSnapshotPage = internalQuery({
             .query('objects')
             .withIndex('byCreatedById', q => q.eq('createdById', owner._id))
             .paginate(paginationOpts);
-        const cache = await loadSnapshotCache(ctx, result.page, new Map([[owner._id, owner]]));
+        const [aggregates, extras] = await Promise.all([
+            loadObjectAggregates(ctx, result.page),
+            loadSyncSnapshotExtras(ctx, result.page),
+        ]);
         return {
             ...result,
             page: result.page
-                .map(object => assembleObjectSnapshot(object, cache))
+                .map(object => {
+                    const aggregate = aggregates.get(object._id);
+                    if (!aggregate) {
+                        return null;
+                    }
+                    return assembleObjectSnapshot(aggregate, {
+                        owner,
+                        sync: extras.syncByObjectId.get(object._id) ?? null,
+                        isVisited: extras.visitedByObjectId.get(object._id) ?? false,
+                    });
+                })
                 .filter((snapshot): snapshot is ObjectSyncSnapshot => snapshot !== null),
         };
     },
 });
 
 export function assembleObjectSnapshot(
-    object: Doc<'objects'>,
-    cache: SnapshotCache,
-): ObjectSyncSnapshot | null {
-    const mapPoint = cache.mapPoints.get(object.mapPointId);
-    const category = cache.categories.get(object.categoryId);
-    const owner = cache.owners.get(object.createdById);
-    if (!mapPoint || !category || !owner) {
-        return null;
-    }
-    const tagNames = object.tagIds
-        .map(tagId => cache.tags.get(tagId)?.name ?? null)
-        .filter((item): item is string => Boolean(item));
+    aggregate: ObjectAggregate,
+    extras: {
+        owner: Doc<'users'>;
+        sync: Doc<'objectNotionSync'> | null;
+        isVisited: boolean;
+    },
+): ObjectSyncSnapshot {
+    const {object, mapPoint, category, tags} = aggregate;
     return {
         objectId: object._id,
         owner: {
-            _id: owner._id,
-            notionSyncEnabled: owner.notionSyncEnabled ?? false,
+            _id: extras.owner._id,
+            notionSyncEnabled: extras.owner.notionSyncEnabled ?? false,
         },
-        sync: cache.syncByObjectId.get(object._id) ?? null,
+        sync: extras.sync,
         fields: buildAppFields({
             objectId: object._id,
             internalId: object.internalId,
@@ -111,8 +125,8 @@ export function assembleObjectSnapshot(
             installedPeriod: object.installedPeriod,
             isRemoved: object.isRemoved,
             removalPeriod: object.removalPeriod,
-            tagNames,
-            isVisited: cache.visitedByObjectId.get(object._id) ?? false,
+            tagNames: tags.map(tag => tag.name),
+            isVisited: extras.isVisited,
             source: object.source,
         }),
     };
@@ -122,12 +136,19 @@ async function loadObjectSnapshot(
     ctx: QueryCtx,
     object: Doc<'objects'>,
 ): Promise<ObjectSyncSnapshot | null> {
-    const owner = await ctx.db.get('users', object.createdById);
-    if (!owner) {
+    const [owner, aggregate, extras] = await Promise.all([
+        ctx.db.get('users', object.createdById),
+        loadObjectAggregate(ctx, object),
+        loadSyncSnapshotExtras(ctx, [object]),
+    ]);
+    if (!owner || !aggregate) {
         return null;
     }
-    const cache = await loadSnapshotCache(ctx, [object], new Map([[owner._id, owner]]));
-    return assembleObjectSnapshot(object, cache);
+    return assembleObjectSnapshot(aggregate, {
+        owner,
+        sync: extras.syncByObjectId.get(object._id) ?? null,
+        isVisited: extras.visitedByObjectId.get(object._id) ?? false,
+    });
 }
 
 export function buildAppFields(input: {
@@ -160,14 +181,6 @@ export function buildAppFields(input: {
         isVisited: input.isVisited,
         source: input.source,
     };
-}
-
-export async function readTagNames(
-    ctx: Pick<QueryCtx, 'db'> | Pick<MutationCtx, 'db'>,
-    tagIds: Id<'tags'>[],
-): Promise<string[]> {
-    const tags = await Promise.all(tagIds.map(tagId => ctx.db.get('tags', tagId)));
-    return tags.map(tag => tag?.name ?? null).filter((item): item is string => Boolean(item));
 }
 
 export function normalizeCategoryName(value: string | null | undefined) {
