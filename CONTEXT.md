@@ -6,6 +6,7 @@ Domain vocabulary for Radioatelier. Use these terms consistently in code, commen
 
 - **Object** — an archive entry (a sign, plaque, mosaic). The unit users create, view, and share. Stored in `objects` with related `mapPoints`, `markers`, `objectPrivateTags`, and tag references.
 - **Marker** — the map-rendered representation of an Object. One marker per object. Carries category and tag IDs for styling.
+- **Marker focus** — `src/lib/services/map/markerFocus.ts`. The single owner of which marker is highlighted and centered on the map. Markers register under the id the details overlay would show for them; one effect in `map.svelte` bridges the overlay's `detailsId` into it. No other module touches marker highlight state.
 - **Map point** — the geographic coordinates and address of an Object (`mapPoints`).
 - **Tag** — global, public label on Objects.
 - **Private tag** — per-user label on an Object, scoped to the user who created it.

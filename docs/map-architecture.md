@@ -108,8 +108,8 @@ When the details overlay opens for a marker (and when the bottom sheet snaps bet
 - **Narrow viewports** (mobile bottom-sheet layout):
     - `peek` — shift the center south by half the peek overlay height so the pin sits in the uncovered map above the sheet
     - `full` / `minimized` — center on the marker with no offset
-- `marker.svelte` calls `focusDetailsTarget` when `objectDetailsOverlay.detailsId` matches the marker, and re-runs when `position` changes so flicking to peek recenters with the vertical offset.
-- `map.svelte` registers `onMarkerShown: focusDetailsMarker` on `MarkerManager` so share/deep-link pages focus the correct marker once it enters the viewport.
+- **Marker focus** (`src/lib/services/map/markerFocus.ts`) owns which marker is focused: the highlight (`scale-120` class), the `focusDetailsTarget` recenter, and a registry of focusable markers keyed by the id the overlay would show for them. `marker.svelte` registers/unregisters; a single `$effect` in `map.svelte` bridges `objectDetailsOverlay.detailsId` (plus sheet position and map readiness) into `setFocusedTarget`, so flicking to peek recenters with the vertical offset.
+- `map.svelte` registers `onMarkerShown: notifyFocusableMarkerShown` on `MarkerManager` so share/deep-link pages re-apply focus once the marker's element enters the viewport.
 
 Search result selection (`searchPreviewItem.svelte`, `searchResultsItem.svelte`) uses the same `focusDetailsTarget` helper as overlay focus — conditional zoom to `FOCUS_ZOOM` (15) when below `FOCUS_MIN_ZOOM` (13), plus the viewport-aware overlay offsets above.
 
