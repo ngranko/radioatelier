@@ -26,20 +26,27 @@ export const processWebhookEvent = internalAction({
         eventType: v.string(),
     },
     handler: async (ctx, {pageId, eventType}) => {
-        const existingSync = (await ctx.runQuery(internal.notionSync.state.getSyncRecordByPageId, {
-            notionPageId: pageId,
-        })) as Doc<'objectNotionSync'> | null;
-        const execution = await loadInboundExecution(ctx, {
-            pageId,
-            eventType,
-            existingSync,
-        });
-        if (!execution) {
-            return null;
-        }
-        return await executeInboundDecision(ctx, execution.decision, execution.input, existingSync);
+        return await performInboundSync(ctx, {pageId, eventType});
     },
 });
+
+export async function performInboundSync(
+    ctx: ActionCtx,
+    {pageId, eventType}: {pageId: string; eventType: string},
+) {
+    const existingSync = (await ctx.runQuery(internal.notionSync.state.getSyncRecordByPageId, {
+        notionPageId: pageId,
+    })) as Doc<'objectNotionSync'> | null;
+    const execution = await loadInboundExecution(ctx, {
+        pageId,
+        eventType,
+        existingSync,
+    });
+    if (!execution) {
+        return null;
+    }
+    return await executeInboundDecision(ctx, execution.decision, execution.input, existingSync);
+}
 
 async function loadInboundExecution(
     ctx: ActionCtx,
