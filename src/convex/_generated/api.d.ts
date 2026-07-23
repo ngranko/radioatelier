@@ -35,7 +35,6 @@ import type * as notionSync_identity from "../notionSync/identity.js";
 import type * as notionSync_inbound from "../notionSync/inbound.js";
 import type * as notionSync_inboundDecision from "../notionSync/inboundDecision.js";
 import type * as notionSync_objectWriterAdapter from "../notionSync/objectWriterAdapter.js";
-import type * as notionSync_objectWriterTypes from "../notionSync/objectWriterTypes.js";
 import type * as notionSync_outbound from "../notionSync/outbound.js";
 import type * as notionSync_reconcile from "../notionSync/reconcile.js";
 import type * as notionSync_snapshot from "../notionSync/snapshot.js";
@@ -91,7 +90,6 @@ declare const fullApi: ApiFromModules<{
   "notionSync/inbound": typeof notionSync_inbound;
   "notionSync/inboundDecision": typeof notionSync_inboundDecision;
   "notionSync/objectWriterAdapter": typeof notionSync_objectWriterAdapter;
-  "notionSync/objectWriterTypes": typeof notionSync_objectWriterTypes;
   "notionSync/outbound": typeof notionSync_outbound;
   "notionSync/reconcile": typeof notionSync_reconcile;
   "notionSync/snapshot": typeof notionSync_snapshot;

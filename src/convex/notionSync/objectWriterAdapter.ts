@@ -1,13 +1,33 @@
+import type {Id} from '../_generated/dataModel';
 import type {MutationCtx} from '../_generated/server';
 import {ensureCategory, ensureTags} from '../helpers/importHelpers';
 import type {ObjectRecordData, ObjectRecordPatch, ObjectTarget} from '../helpers/objectWriter';
-import type {
-    CreateSyncedObjectInput,
-    PatchSyncedObjectInput,
-    SyncClassification,
-} from './objectWriterTypes';
+import type {NotionPageFields} from '../notion/types';
 import {normalizeCategoryName, normalizeNames} from './snapshot';
 import type {AppSyncApplyPatch} from './types';
+
+export type CreateSyncedObjectInput = {
+    notionPageId: string;
+    ownerId: Id<'users'>;
+    latitude: number;
+    longitude: number;
+    fields: NotionPageFields;
+    lastInboundEditedTime: string | null;
+};
+
+export type PatchSyncedObjectInput = {
+    objectId: Id<'objects'>;
+    notionPageId: string;
+    patch: AppSyncApplyPatch;
+    lastInboundEditedTime: string | null;
+};
+
+export type SyncClassification = {
+    categoryName: string;
+    categoryId: Id<'categories'>;
+    tagNames: string[];
+    tagIds: Id<'tags'>[];
+};
 
 export async function resolveCreateClassification(
     ctx: MutationCtx,
