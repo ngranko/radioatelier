@@ -148,9 +148,9 @@ function toCoordinateSearchItem(query: string) {
         categoryName: '',
         latitude: coordinates.latitude,
         longitude: coordinates.longitude,
-        address: '',
-        city: '',
-        country: '',
+        address: null,
+        city: null,
+        country: null,
         type: 'local' as const,
         googlePlaceId: null,
     };

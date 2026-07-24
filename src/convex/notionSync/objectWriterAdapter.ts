@@ -61,9 +61,9 @@ export function buildSyncCreateData(
         tagIds: classification.tagIds,
         latitude: input.latitude,
         longitude: input.longitude,
-        address: input.fields.address ?? '',
-        city: input.fields.city ?? '',
-        country: input.fields.country ?? '',
+        address: input.fields.address,
+        city: input.fields.city,
+        country: input.fields.country,
     };
 }
 

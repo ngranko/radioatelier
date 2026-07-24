@@ -20,9 +20,9 @@ export interface LocalSearchItem {
     categoryName: string;
     latitude: number;
     longitude: number;
-    address: string;
-    city: string;
-    country: string;
+    address: string | null;
+    city: string | null;
+    country: string | null;
     type: 'local';
     googlePlaceId: null;
 }
@@ -92,9 +92,9 @@ export async function searchObjectsInTypesense(
             categoryName: document.categoryName,
             latitude: document.location[0],
             longitude: document.location[1],
-            address: document.address ?? '',
-            city: document.city ?? '',
-            country: document.country ?? '',
+            address: document.address ?? null,
+            city: document.city ?? null,
+            country: document.country ?? null,
             type: 'local' as const,
             googlePlaceId: null,
         }));

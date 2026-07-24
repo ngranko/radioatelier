@@ -8,9 +8,9 @@ interface TaxonomlessObject {
     description: string | null;
     latitude: number;
     longitude: number;
-    address: string;
-    city: string;
-    country: string;
+    address: string | null;
+    city: string | null;
+    country: string | null;
     installedPeriod: string | null;
     isRemoved: boolean;
     removalPeriod: string | null;
@@ -50,9 +50,9 @@ export interface SearchItem {
     categoryName: string;
     latitude: number;
     longitude: number;
-    address: string;
-    city: string;
-    country: string;
+    address: string | null;
+    city: string | null;
+    country: string | null;
     type: 'local' | 'google';
     googlePlaceId: string | null;
 }
@@ -77,9 +77,9 @@ export interface PointPreviewDetails {
     longitude: number;
     name: string;
     categoryName: string;
-    address: string;
-    city: string;
-    country: string;
+    address: string | null;
+    city: string | null;
+    country: string | null;
     type: 'map' | 'google';
     googlePlaceId: string | null;
 }
