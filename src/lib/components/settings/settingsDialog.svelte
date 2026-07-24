@@ -9,7 +9,6 @@
     import type {Category} from '$lib/interfaces/category';
     import {MARKER_ICON_KEYS, markerColorMap} from '$lib/services/map/markerStyling';
     import {categoriesState} from '$lib/state/categories.svelte';
-    import LoaderCircleIcon from '@lucide/svelte/icons/loader-circle';
     import PaletteIcon from '@lucide/svelte/icons/palette';
     import SearchIcon from '@lucide/svelte/icons/search';
     import {useConvexClient} from 'convex-svelte';
@@ -237,17 +236,8 @@
 
         <Footer class="border-border/50 shrink-0 gap-3 border-t bg-muted/20 px-6 py-4">
             <DialogClose disabled={isSaving} class="mr-2">Закрыть</DialogClose>
-            <Button
-                variant="default"
-                disabled={isSaving || !hasChanges}
-                class="min-w-28"
-                onclick={handleSave}
-            >
-                {#if isSaving}
-                    <LoaderCircleIcon class="size-4 animate-spin" />
-                {:else}
-                    Сохранить
-                {/if}
+            <Button variant="default" disabled={!hasChanges} loading={isSaving} onclick={handleSave}>
+                Сохранить
             </Button>
         </Footer>
     </Content>
