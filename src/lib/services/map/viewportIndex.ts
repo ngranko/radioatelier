@@ -1,68 +1,69 @@
-import type {LatLngLiteral, MapBounds} from '$lib/interfaces/map';
+import type {BoundsRect, LatLngLiteral, MapBounds} from '$lib/interfaces/map';
 import type {MarkerId} from '$lib/interfaces/marker';
 import type {MarkerRepository} from '$lib/services/map/markerRepository';
 
-export interface ViewportCandidate {
+interface ViewportCandidate {
     id: MarkerId;
     position: LatLngLiteral;
 }
 
-export class ViewportIndex {
-    public collect(bounds: MapBounds, repo: MarkerRepository): ViewportCandidate[] {
-        const allMarkersInViewport: ViewportCandidate[] = [];
+export function selectVisibleMarkerIds(
+    bounds: MapBounds,
+    repo: MarkerRepository,
+    limit: number,
+): Set<MarkerId> {
+    const rect = bounds.toRect();
+    const candidates: ViewportCandidate[] = [];
 
-        for (const id of repo.ids()) {
-            const markerData = repo.get(id);
-            if (markerData && bounds.contains(markerData.getPosition())) {
-                allMarkersInViewport.push({id, position: markerData.getPosition()});
-            }
+    for (const [id, marker] of repo.entries()) {
+        const position = marker.getPosition();
+        if (contains(rect, position)) {
+            candidates.push({id, position});
         }
-
-        return allMarkersInViewport;
     }
 
-    public selectVisible(
-        candidates: ViewportCandidate[],
-        center: LatLngLiteral,
-        limit: number,
-    ): Set<string> {
-        const sorted = this.sortByDistance(candidates, center);
-        return this.pickVisibleIds(sorted, limit);
+    // Ranking only decides which markers to drop, so it is pure waste while the whole
+    // viewport still fits under the limit — the common case at city zoom.
+    if (candidates.length <= limit) {
+        return new Set(candidates.map(candidate => candidate.id));
     }
 
-    private sortByDistance(
-        markers: ViewportCandidate[],
-        center: LatLngLiteral,
-    ): ViewportCandidate[] {
-        return markers.sort((a, b) => {
-            const distanceA = this.calculateDistance(a.position, center);
-            const distanceB = this.calculateDistance(b.position, center);
-            return distanceA - distanceB;
-        });
+    return pickNearest(candidates, bounds.getCenter(), limit);
+}
+
+function contains(rect: BoundsRect, position: LatLngLiteral): boolean {
+    if (position.lat < rect.south || position.lat > rect.north) {
+        return false;
     }
 
-    private pickVisibleIds(
-        sortedMarkers: ViewportCandidate[],
-        maxVisibleMarkers: number,
-    ): Set<string> {
-        const visibleIds = new Set<string>();
-        for (let i = 0; i < Math.min(sortedMarkers.length, maxVisibleMarkers); i++) {
-            visibleIds.add(sortedMarkers[i].id);
-        }
-        return visibleIds;
+    // A viewport straddling the antimeridian reports west > east, which makes the
+    // longitude range wrap around instead of being a plain interval.
+    return rect.west <= rect.east
+        ? position.lng >= rect.west && position.lng <= rect.east
+        : position.lng >= rect.west || position.lng <= rect.east;
+}
+
+// Squared equirectangular distance orders markers the same way a great-circle distance
+// does at viewport scale, and ordering is all this needs. Keys are computed once up
+// front rather than inside the comparator, which would otherwise recompute them on
+// every one of the O(n log n) comparisons.
+function pickNearest(
+    candidates: ViewportCandidate[],
+    center: LatLngLiteral,
+    limit: number,
+): Set<MarkerId> {
+    const longitudeScale = Math.cos((center.lat * Math.PI) / 180);
+    const ranked = candidates.map(({id, position}) => {
+        const latitudeDelta = position.lat - center.lat;
+        const longitudeDelta = (position.lng - center.lng) * longitudeScale;
+        return {id, distance: latitudeDelta * latitudeDelta + longitudeDelta * longitudeDelta};
+    });
+
+    ranked.sort((a, b) => a.distance - b.distance);
+
+    const nearest = new Set<MarkerId>();
+    for (let i = 0; i < limit; i++) {
+        nearest.add(ranked[i].id);
     }
-
-    private calculateDistance(pos1: LatLngLiteral, pos2: LatLngLiteral): number {
-        const lat1 = (pos1.lat * Math.PI) / 180;
-        const lat2 = (pos2.lat * Math.PI) / 180;
-        const deltaLat = ((pos2.lat - pos1.lat) * Math.PI) / 180;
-        const deltaLng = ((pos2.lng - pos1.lng) * Math.PI) / 180;
-
-        const a =
-            Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
-            Math.cos(lat1) * Math.cos(lat2) * Math.sin(deltaLng / 2) * Math.sin(deltaLng / 2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-        return 6371 * c; // Earth's radius in km
-    }
+    return nearest;
 }

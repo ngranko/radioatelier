@@ -4,7 +4,7 @@ import type {MarkerRepository} from './markerRepository';
 import type {MarkerRenderer} from './renderer/markerRenderer';
 
 export interface VisibilityEngineOptions {
-    chunkSize: number;
+    frameBudgetMs: number;
     // Notification only — what happens when a marker becomes visible
     // (e.g. focusing the shared Object's marker) is the caller's policy.
     onShown?: (id: MarkerId, marker: Marker) => void;
@@ -27,49 +27,55 @@ export class VisibilityEngine {
         this.suppressed = value;
     }
 
-    public updateVisibility(visibleIds: Set<string>, onComplete?: () => void) {
-        const allMarkerIds = this.repo.ids();
-        let currentIndex = 0;
+    // Work is derived by diffing against the currently visible set, so a pass costs
+    // what actually changed rather than a walk over the whole catalog.
+    public updateVisibility(visibleIds: ReadonlySet<MarkerId>, onComplete?: () => void) {
+        const leaving = filterIds(this.repo.visibleIds(), id => !visibleIds.has(id));
+        const entering = filterIds(visibleIds, id => !this.repo.isVisible(id));
 
-        const processChunk = () => {
-            if (this.suppressed) {
-                if (onComplete) {
-                    onComplete();
-                }
+        this.applyChanges(leaving, entering, onComplete);
+    }
+
+    private applyChanges(leaving: MarkerId[], entering: MarkerId[], onComplete?: () => void) {
+        const total = leaving.length + entering.length;
+        let cursor = 0;
+
+        const step = () => {
+            cursor = this.runBatch(leaving, entering, cursor);
+
+            if (cursor < total && !this.suppressed) {
+                requestAnimationFrame(step);
                 return;
             }
 
-            const endIndex = Math.min(currentIndex + this.options.chunkSize, allMarkerIds.length);
-
-            for (let i = currentIndex; i < endIndex; i++) {
-                if (this.suppressed) {
-                    if (onComplete) {
-                        onComplete();
-                    }
-                    return;
-                }
-
-                const id = allMarkerIds[i];
-                const shouldBeVisible = visibleIds.has(id);
-                const isVisible = this.repo.isVisible(id);
-
-                if (shouldBeVisible && !isVisible) {
-                    this.show(id);
-                } else if (!shouldBeVisible && isVisible) {
-                    this.hide(id);
-                }
-            }
-
-            currentIndex = endIndex;
-
-            if (currentIndex < allMarkerIds.length) {
-                requestAnimationFrame(processChunk);
-            } else if (onComplete) {
-                onComplete();
-            }
+            onComplete?.();
         };
 
-        requestAnimationFrame(processChunk);
+        step();
+    }
+
+    // Batches are bounded by elapsed time rather than a marker count so that slow
+    // devices yield to the browser often enough to stay responsive, while fast ones
+    // land the entire diff in the first (synchronous) pass with no visible delay.
+    private runBatch(leaving: MarkerId[], entering: MarkerId[], from: number): number {
+        const total = leaving.length + entering.length;
+        const deadline = performance.now() + this.options.frameBudgetMs;
+        let cursor = from;
+
+        while (cursor < total && !this.suppressed) {
+            if (cursor < leaving.length) {
+                this.hide(leaving[cursor]);
+            } else {
+                this.show(entering[cursor - leaving.length]);
+            }
+            cursor++;
+
+            if (performance.now() >= deadline) {
+                break;
+            }
+        }
+
+        return cursor;
     }
 
     public show(id: MarkerId) {
@@ -94,4 +100,14 @@ export class VisibilityEngine {
 
         this.renderer.hide(marker);
     }
+}
+
+function filterIds(ids: Iterable<MarkerId>, predicate: (id: MarkerId) => boolean): MarkerId[] {
+    const matching: MarkerId[] = [];
+    for (const id of ids) {
+        if (predicate(id)) {
+            matching.push(id);
+        }
+    }
+    return matching;
 }

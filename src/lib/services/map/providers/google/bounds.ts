@@ -1,4 +1,4 @@
-import type {LatLngLiteral, MapBounds} from '$lib/interfaces/map';
+import type {BoundsRect, LatLngLiteral, MapBounds} from '$lib/interfaces/map';
 
 export class GoogleMapBounds implements MapBounds {
     constructor(private bounds: google.maps.LatLngBounds) {}
@@ -14,6 +14,10 @@ export class GoogleMapBounds implements MapBounds {
 
     extend(point: LatLngLiteral): void {
         this.bounds.extend(point);
+    }
+
+    toRect(): BoundsRect {
+        return this.bounds.toJSON();
     }
 
     get raw(): google.maps.LatLngBounds {

@@ -12,10 +12,20 @@ export interface BoundsPadding {
     left?: number;
 }
 
+export interface BoundsRect {
+    north: number;
+    south: number;
+    east: number;
+    west: number;
+}
+
 export interface MapBounds {
     getCenter(): LatLngLiteral;
     contains(point: LatLngLiteral): boolean;
     extend(point: LatLngLiteral): void;
+    // Plain numeric edges, so hot loops can test membership without paying for a
+    // vendor API call per point.
+    toRect(): BoundsRect;
 }
 
 export interface MarkerHandleOptions {
