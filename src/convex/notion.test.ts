@@ -59,14 +59,16 @@ describe('notion sync matching', () => {
         });
     });
 
-    it('keeps mapLink out of inbound app patches', () => {
+    it('preserves nulls while excluding non-applicable fields from raw inbound diffs', () => {
         const {appPatch} = computeNotionToAppDiff(appFields, {
             ...appFields,
             mapLink: 'https://radioatelier.app/object/changed',
+            name: null,
             city: 'Berlin',
         });
 
         expect(appPatch).toEqual({
+            name: null,
             city: 'Berlin',
         });
     });

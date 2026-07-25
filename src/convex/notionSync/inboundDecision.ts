@@ -84,17 +84,10 @@ function decideExistingObject(
     };
 }
 
-// A null in the sync vocabulary means "Notion has no value". Inbound sync
-// keeps the app value rather than clearing it, so null-valued differences are
-// dropped here — the single place that encodes keep-vs-clear. The raw diff
-// (nulls included) stays available to the sync audit, which reports such
-// mismatches without applying them.
+// Raw diffs retain nulls for audit; the apply patch drops them so inbound sync
+// keeps existing app values rather than clearing them.
 function buildApplyPatch(patch: AppSyncPatch): AppSyncApplyPatch {
-    const result: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(patch)) {
-        if (value !== null) {
-            result[key] = value;
-        }
-    }
-    return result as AppSyncApplyPatch;
+    return Object.fromEntries(
+        Object.entries(patch).filter(([, value]) => value !== null),
+    ) as AppSyncApplyPatch;
 }
