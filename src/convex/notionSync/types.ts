@@ -54,5 +54,7 @@ export const appApplyPatchValidator = v.object({
     source: v.optional(v.string()),
 });
 
-// Only the inbound decision produces this null-free apply patch.
+// Distinct from AppSyncPatch because a null there means "Notion has no value,
+// keep the app's". The inbound decision resolves that once and drops the nulls,
+// so everything past it can write every field it receives without re-deciding.
 export type AppSyncApplyPatch = Infer<typeof appApplyPatchValidator>;
