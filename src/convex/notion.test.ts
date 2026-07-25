@@ -59,14 +59,16 @@ describe('notion sync matching', () => {
         });
     });
 
-    it('keeps mapLink out of inbound app patches', () => {
+    it('preserves nulls while excluding non-applicable fields from raw inbound diffs', () => {
         const {appPatch} = computeNotionToAppDiff(appFields, {
             ...appFields,
             mapLink: 'https://radioatelier.app/object/changed',
+            name: null,
             city: 'Berlin',
         });
 
         expect(appPatch).toEqual({
+            name: null,
             city: 'Berlin',
         });
     });
@@ -157,6 +159,31 @@ describe('notion inbound sync decisions', () => {
                     lastOutboundHash: 'older-hash',
                 },
                 notionFields: {...appFields, city: 'Berlin'},
+                existingSnapshot: objectSnapshot('object-1', appFields),
+            }),
+        ).toEqual({
+            kind: 'patchObject',
+            objectId: objectId('object-1'),
+            patch: {city: 'Berlin'},
+        });
+    });
+
+    it('keeps app values for fields Notion has emptied', () => {
+        expect(
+            decideInboundSync({
+                eventType: 'page.properties_updated',
+                pageState: 'active',
+                existingSync: {
+                    objectId: objectId('object-1'),
+                    lastOutboundHash: 'older-hash',
+                },
+                notionFields: {
+                    ...appFields,
+                    name: null,
+                    installedPeriod: null,
+                    source: null,
+                    city: 'Berlin',
+                },
                 existingSnapshot: objectSnapshot('object-1', appFields),
             }),
         ).toEqual({
