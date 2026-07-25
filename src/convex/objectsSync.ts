@@ -52,7 +52,7 @@ export const patchObjectFromSync = internalMutation({
     args: {
         objectId: v.id('objects'),
         notionPageId: v.string(),
-        patch: v.object(appApplyPatchValidator),
+        patch: appApplyPatchValidator,
         lastInboundEditedTime: nullableString,
     },
     handler: async (ctx, {objectId, notionPageId, patch, lastInboundEditedTime}) => {

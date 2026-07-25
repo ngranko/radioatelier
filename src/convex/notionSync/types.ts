@@ -1,4 +1,4 @@
-import {v} from 'convex/values';
+import {type Infer, v} from 'convex/values';
 
 export type AppSyncFields = {
     name: string;
@@ -22,13 +22,6 @@ export type AppSyncPatch = Partial<
     categoryName?: string | null;
 };
 
-// The inbound-applicable projection of an AppSyncPatch: null values (Notion
-// has no value) are dropped, because inbound sync keeps app fields rather
-// than clearing them. Only the inbound decision produces this shape.
-export type AppSyncApplyPatch = {
-    [K in keyof AppSyncPatch]?: NonNullable<AppSyncPatch[K]>;
-};
-
 export const nullableString = v.union(v.string(), v.null());
 
 export const notionFieldsValidator = {
@@ -47,7 +40,7 @@ export const notionFieldsValidator = {
     source: nullableString,
 };
 
-export const appApplyPatchValidator = {
+export const appApplyPatchValidator = v.object({
     name: v.optional(v.string()),
     categoryName: v.optional(v.string()),
     address: v.optional(v.string()),
@@ -59,4 +52,7 @@ export const appApplyPatchValidator = {
     tagNames: v.optional(v.array(v.string())),
     isVisited: v.optional(v.boolean()),
     source: v.optional(v.string()),
-};
+});
+
+// Only the inbound decision produces this null-free apply patch.
+export type AppSyncApplyPatch = Infer<typeof appApplyPatchValidator>;
