@@ -6,8 +6,9 @@
 
 The feature is buildable on the current stack. Nothing in SvelteKit, Convex, or the Google Maps
 provider blocks it, and no stack replacement is required. What is missing is not capability but
-three things the project simply does not have yet: a way to group markers, a routing API surface
-(only Geocoding and Places are wired today), and a polyline primitive on the map.
+two things the project simply does not have yet: a routing API surface (only Geocoding and Places
+are wired today) and a polyline primitive on the map. Grouping is not among them — the route runs
+over a [walk set](#the-walk-set) the user assembles, so the feature does not wait on collections.
 
 Visit duration is deliberately **not** modelled as data. A flat 5–10 minutes per stop, corrected
 live against the user's actual progress, replaces it — see [Time on location](#time-on-location).
@@ -29,13 +30,13 @@ The request decomposes into nine capabilities with very different difficulty:
 
 | # | Capability                                     | Difficulty | Blocking gap                                          |
 | - | ---------------------------------------------- | ---------- | ----------------------------------------------------- |
-| 1 | Select several markers / group them            | Low        | No selection state, no `collections` table            |
+| 1 | Assemble the markers to walk                   | Low        | None — a transient client-side walk set                |
 | 2 | Compute an optimal order through them          | Medium     | No routing API enabled; cost model matters            |
 | 3 | Say which legs to walk vs take transport       | High       | No API does multimodal tours; must be composed        |
 | 4 | Schedule against current time + time on location| Low       | None — flat per-stop allowance, no data needed        |
 | 5 | Sunset feasibility and where to cut the walk   | Low        | None — local astronomical calculation                 |
 | 6 | Re-estimate live from the user's position      | Medium     | Refresh must be tiered or it bankrupts the cost model |
-| 7 | Route all markers vs unvisited only            | Low        | None — both flags already reach the client            |
+| 7 | Fill from all markers vs unvisited only        | Low        | None — both flags already reach the client            |
 | 8 | Exclude single stops, before or during a walk  | Low        | None — deletion preserves the fixed order             |
 | 9 | Start somewhere that is not a marker           | Low        | None — the routing call already separates origin      |
 
@@ -60,17 +61,17 @@ The request decomposes into nine capabilities with very different difficulty:
 
 ## Obstacles
 
-### 1. There is no concept of a marker group
+### 1. There is no concept of a marker group — and the route does not need one
 
 `markers` has no grouping column and there is no `collections` table.
 [collection-access-control.md](./collection-access-control.md) already designs `collections` +
 `collectionMarkerChunks`, but that document is scoped to *access control* and pulls in membership,
-grants, and a rewrite of the hot `markers.list` query. Coupling route planning to it would put a
-multi-week access-control refactor in front of a routing feature.
+grants, and a rewrite of the hot `markers.list` query. Waiting for it would put a multi-week
+access-control refactor in front of a routing feature.
 
-**Way around it:** phase 1 uses an ephemeral, client-side selection set (`$state`, persisted to
-`localStorage`), which needs zero schema change. Persisted collections land later and simply become
-another way to fill the same set.
+**Way around it:** the [walk set](#the-walk-set) is transient and client-side (`$state`, persisted
+to `localStorage`), so it needs no schema change and no collections. When collections do land they
+become one more way to fill the set, which is an additive change rather than a dependency.
 
 ### 2. Multi-select interaction fights two existing map behaviours
 
@@ -79,10 +80,16 @@ another way to fill the same set.
   works in the DOM renderer at zoom > 10 unless Deck picking is wired up. In practice a walking
   route is always planned at city zoom, so restricting select mode to zoom > 10 is acceptable — but
   it must be a deliberate, communicated restriction, not a surprise.
-- A single tap currently opens the details overlay. Selection needs an explicit mode toggle (or
+- A single tap currently opens the details overlay. A multi-select mode needs an explicit toggle (or
   long-press) so the two gestures do not collide.
 - `MarkerManager` culls markers outside the viewport, so selected-but-offscreen markers unmount.
-  Selection state must live in a state module, never in the marker component.
+  The walk set must live in a state module, never in the marker component.
+
+**How much of this actually bites depends on the entry point.** Adding a marker from the details
+overlay that already opens on tap needs no new gesture, no mode, and no Deck picking — so the walk
+set can be filled one marker at a time from day one, with none of the above applying. Only a bulk
+select mode runs into these constraints, and with a walk set that mode is a convenience rather than
+the only way in.
 
 ### 3. No routing API is enabled, and the obvious approach is the expensive one
 
@@ -214,41 +221,89 @@ transit results have their own display and attribution rules.
 
 The first option is smaller and stays consistent with the provider abstraction. Recommended.
 
-## Route scope: all markers vs unvisited only
+## The walk set
 
-The route runs over one of two subsets of the source set, chosen by the user:
+**A route always runs over a walk set: a transient, hand-editable collection of markers that exists
+for one walk.** It is not a collection, it is not a filter over the archive, and it is not derived
+from anything — it is a concrete list the user builds, sees, and edits before setting off.
 
-- **All** — every marker in the selection or collection.
+This is the single most useful structural decision in the feature, because it collapses what would
+otherwise be two competing entry paths ("route this collection" and "route these markers I picked")
+into one. There is exactly one thing that gets routed. Everything else is a way to fill it:
+
+- **From a collection** — add all of it, or only the unvisited part.
+- **From another collection** — sets combine, so a walk can span two collections, which routing a
+  collection directly could never express.
+- **By hand** — add a marker from its details overlay, or remove one from the set.
+
+### Why this is better than routing a collection directly
+
+- **The feature stops depending on collections.** Hand-filling works with nothing but the existing
+  marker list, so route planning can ship before collections do; "fill from collection" is then one
+  extra source added later, not a prerequisite. This removes the assumption the rest of this
+  document previously carried.
+- **The 25-waypoint cap becomes tractable.** A 60-point collection cannot be routed, but it can be
+  *drawn from*. The set is where the limit lives and where it is visible — "9 / 25" — so the user
+  trims deliberately instead of hitting an error.
+- **Collections stay untouched.** Filling copies marker IDs; it does not link, subscribe, or
+  reference. Editing the walk set can never edit a collection, which is the same guarantee the
+  scope filter already made.
+- **It largely dissolves obstacle 2.** If markers are added from the details overlay that already
+  opens on tap, there is no need for a multi-select gesture competing with the existing map click,
+  and no need to fight the Deck-mode click suppression. A bulk select mode becomes a nice-to-have
+  for adding many at once rather than the only way in.
+- **Feasibility gets cheap.** A per-collection "fits before dark" badge would mean routing every
+  collection; with a walk set there is one set to evaluate, so the estimate is computed once for the
+  thing the user is actually assembling.
+
+### Lifetime
+
+Transient means "for this walk", not "until the page reloads". The set should survive a reload
+(`localStorage`, like the existing map position keys), because a walk is assembled over minutes and
+often across app restarts. One active set at a time keeps the model simple. Saving a walk set
+permanently is the same gesture as creating a collection from it — the inverse of filling — and
+belongs with collections, not here.
+
+Only archive objects can enter the set. Search returns Google Places results too, and those are not
+markers; they can be used as an origin, never as a stop.
+
+## Filling the set: all markers vs unvisited only
+
+The all/unvisited choice applies **when the set is filled**, not as a live filter over it. Once
+markers are in the set, the set is literal: what you see is what you walk.
+
+- **All** — every marker in the source.
 - **Unvisited only** — markers the user has not marked as visited.
 
-**Removed objects are excluded from both, unconditionally.** An artifact that is gone from the
-street cannot be photographed, so routing to it is never useful. This is not a third toggle; it is a
-filter that always runs.
+Making the toggle a fill option rather than a persistent mode has a pleasant consequence: switching
+it becomes a **set operation, not a rebuild**. Turning "unvisited only" off adds the visited markers
+from the same source; turning it back on removes them again. Hand-added markers survive both,
+because nothing is ever regenerated from scratch. A live filter would have to either discard manual
+edits or maintain a confusing distinction between "filtered out" and "removed by me".
+
+**Removed objects never enter the set, under either option.** An artifact that is gone from the
+street cannot be photographed, so it is not a third toggle — it is a rule that always runs.
 
 This needs no backend work and no schema change. Both flags already reach the client today:
 `markers.list` returns `isRemoved` on every `MarkerListItem`, and `markers.listVisitedIds` returns
 the user's visited object IDs, which `(fullList)/+layout.svelte` already merges into an `isVisited`
-field per rendered marker. The route scope is a pure predicate over a list the app has already
+field per rendered marker. Filling the set is a pure predicate over a list the app has already
 loaded.
 
 Three behaviours are worth pinning down, because the obvious implementation gets them wrong:
 
-- **The filter applies when the route is built, not continuously.** Marking a stop visited during
-  the walk — always a manual action, never inferred from arrival — must not make it vanish from the
-  route you are currently walking — that would break the
-  fixed-order rule from [Live re-estimation](#live-re-estimation) and would delete the stop you are
-  standing at the moment you log it. Switching scope mid-walk is a re-plan, and re-plans are
-  explicit.
-- **Say what was dropped.** A collection of 12 that produces a 9-stop route looks broken unless the
-  panel says why — "3 visited, skipped" or "2 removed, skipped". Silence here reads as a bug.
-- **Handle the empty result.** "Unvisited only" over a fully visited collection yields nothing. That
-  is a legitimate and pleasant outcome (you have seen everything), and it deserves a real empty
-  state rather than a zero-stop route.
+- **Marking something visited mid-walk changes nothing about the current walk.** Visited state is
+  always a manual action, never inferred from arrival, and logging it must not make the stop you are
+  standing at vanish. The set was materialised when it was filled; it does not re-filter itself. See
+  [The route never writes archive state](#the-route-never-writes-archive-state).
+- **Say what was left out.** Filling from a collection of 12 and getting 9 markers looks broken
+  unless the panel says why — "3 visited, skipped" or "2 removed, skipped". Silence reads as a bug.
+- **Handle the empty result.** "Unvisited only" over a fully visited collection adds nothing. That is
+  a legitimate and pleasant outcome — you have seen everything — and deserves a real empty state
+  rather than a zero-stop route.
 
-Filtering never mutates the source. A collection routed with "unvisited only" keeps all its members;
-the scope is a property of the route, not of the collection. The same applies to a saved plan: if an
-object is marked removed or visited between saving and reopening, the plan re-filters on open and
-says what changed rather than silently rewriting itself.
+If an object is marked removed or visited between saving a plan and reopening it, the plan reports
+what changed rather than silently rewriting itself.
 
 ## Excluding individual stops
 
@@ -468,7 +523,7 @@ unless asked, but the user is asked at the point where the answer matters.
 A five-stage pipeline, cheapest stage first, each stage independently useful:
 
 ```
-selection set (client state)
+walk set (transient client state)
     ↓  A. free local ordering — haversine nearest-neighbour + 2-opt
 instant preview, offline fallback, and the source of stage B's destination
     ↓  B. one Convex action → Routes API computeRoutes (WALK, optimizeWaypointOrder)
@@ -493,7 +548,8 @@ Suggested module layout, sized to the repo's 200-line file / 20-line function gu
 
 | Module                                     | Responsibility                                        |
 | ------------------------------------------ | ----------------------------------------------------- |
-| `src/lib/state/routePlan.svelte.ts`        | Selection set + current plan, mirrors `searchPointList` |
+| `src/lib/state/walkSet.svelte.ts`          | The transient set + fill/remove verbs, mirrors `searchPointList` |
+| `src/lib/state/routePlan.svelte.ts`        | The computed plan for the current set                  |
 | `src/lib/services/route/solver.ts`         | Nearest-neighbour + 2-opt over a cost matrix (pure)    |
 | `src/lib/services/route/schedule.ts`       | Forward simulation, arrival/departure, cut-off index   |
 | `src/lib/services/route/sun.ts`            | Sunset / civil twilight from lat, lng, date            |
@@ -538,14 +594,19 @@ optimisation turns out to be worth that.
 
 **Phase 0 — product decisions.** Sunset vs civil twilight. "Optimal" means shortest total time or
 most stops before the deadline. Whether taxi is offered at all (there is no fare API — we can show
-time, not price). Whether selection is ephemeral or persisted from day one. Default minutes per
-stop.
+time, not price). Default minutes per stop. Whether a walk set can be saved as a collection, or
+stays strictly single-use.
 
-**Phase 1 — selection, no backend.** Select mode toggle, tap-to-select on DOM markers, selection
-count chip, route panel skeleton listing selected objects, the all/unvisited scope toggle with its
-skipped-count line, per-stop exclusion before the walk starts, and origin/destination pickers
-reusing the existing search and geolocation. Stage A ordering by haversine so the panel shows a plausible order
-immediately. Ship with zero API cost and validate the interaction.
+**Phase 1 — the walk set, no backend.** The set itself: a persistent tray showing what is in it and
+how close it is to the 25 limit, "add to walk" on the details overlay, removal from the tray,
+per-stop exclusion, and an origin picker reusing the existing search and geolocation. Stage A
+ordering by haversine so the panel shows a plausible order and names an endpoint immediately. Ships
+with zero API cost, no schema change, and no dependency on collections.
+
+**Phase 1b — fill from a collection.** Whenever collections exist: "add to walk" on a collection,
+with the all/unvisited option and its skipped-count line. Purely additive to phase 1, and the only
+part of the feature that ever needed collections at all. A bulk select mode on the map belongs here
+too, as a second convenience source.
 
 **Phase 2 — real walking route.** Enable Routes API, add `src/convex/routing/`, wire Stage B, add
 the polyline handle to `MapProvider`, render ordered badges on selected markers. Set a Google Cloud
@@ -566,10 +627,10 @@ This phase is entirely local — no new API surface — and can ship before phas
 mode icons and per-leg detail (line names, wait time) in the leg list, mandatory walking-beta and
 transit attribution notices.
 
-**Phase 6 — persistence and sharing.** Save a plan as our own record (object IDs + order + settings,
-no Google-derived content), reopen and recompute. This is the natural point to converge with
-`collections` from [collection-access-control.md](./collection-access-control.md). An in-progress
-walk should also survive a reload here — the plan plus which stops are done, kept in `localStorage`.
+**Phase 6 — persistence and sharing.** Save a plan as our own record (marker IDs + order + settings,
+no Google-derived content), reopen and recompute. Saving a walk set *as a collection* belongs here
+too, being the inverse of phase 1b. An in-progress walk should survive a reload — the plan plus
+which stops are done, kept in `localStorage`.
 
 **Phase 7 — optional escalation.** Re-solve rather than truncate at the deadline **at planning time
 only**; Route Optimization API or matrices if the heuristic proves inadequate in real use.
