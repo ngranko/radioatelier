@@ -233,7 +233,8 @@ loaded.
 Three behaviours are worth pinning down, because the obvious implementation gets them wrong:
 
 - **The filter applies when the route is built, not continuously.** Marking a stop visited during
-  the walk must not make it vanish from the route you are currently walking — that would break the
+  the walk — always a manual action, never inferred from arrival — must not make it vanish from the
+  route you are currently walking — that would break the
   fixed-order rule from [Live re-estimation](#live-re-estimation) and would delete the stop you are
   standing at the moment you log it. Switching scope mid-walk is a re-plan, and re-plans are
   explicit.
@@ -272,7 +273,8 @@ What skipping costs, and how it behaves:
   refresh replace it with real geometry. **Skipping is a legitimate tier-3 trigger**, subject to the
   same rate-limit floor as the others.
 - **Skipped is not visited.** A skipped object must stay unvisited, so "unvisited only" offers it
-  again next time. Conflating the two would quietly delete points from the archive's backlog.
+  again next time. Conflating the two would quietly delete points from the archive's backlog. This
+  is one case of a broader rule — see [The route never writes archive state](#the-route-never-writes-archive-state).
 - **The collection is untouched,** exactly as with the scope filter.
 - **The twilight trim is a bulk skip.** "These 3 stops won't fit" applied with one tap is the same
   mechanism over every stop past the cut-off — one concept in the code and one in the user's head,
@@ -284,6 +286,38 @@ What skipping costs, and how it behaves:
   rather than keep scaling against the old one.
 - **Skipping everything ends the walk** and deserves a proper finish state rather than a zero-stop
   route.
+
+## The route never writes archive state
+
+**Walking to a point does not mark it visited.** Nothing in the routing feature ever writes
+`visited` or `removed` — not arrival, not proximity, not finishing the walk. Those stay manual
+actions, exactly as they are today.
+
+The reason is that arriving somewhere is a fact about the user's position, not about the archive.
+Standing at the coordinates can end in several different outcomes:
+
+- the object is there and got photographed — **visited**;
+- the object is gone — **removed**, which is the opposite of visited and would be destroyed by an
+  auto-mark;
+- it exists but could not be reached or shot — a locked courtyard, scaffolding, a parked lorry —
+  which is neither;
+- the user simply walked past without stopping.
+
+Only the person standing there can tell these apart, and inferring "visited" from GPS proximity
+would silently write the wrong one in at least three of the four cases. Position accuracy makes it
+worse: the urban drift described in obstacle 5 means proximity is not even reliable evidence that
+the user was at the point at all.
+
+The useful inversion is that the route is an excellent place to *offer* those actions without
+performing any of them. Arrival is the best moment in the whole app to log that something is gone —
+the user is standing in front of the empty wall — so a stop row that surfaces **visited**, **gone**,
+and **skip** at the right moment likely improves archive data quality rather than threatening it.
+Offering is free; deciding stays with the user.
+
+One consequence for the live loop: if the user marks a point removed or visited mid-walk, the route
+in progress does not re-filter around it, for the same reason the scope toggle does not — see
+[Route scope](#route-scope-all-markers-vs-unvisited-only). The write lands on the object; the walk
+carries on unchanged and the next route picks the change up.
 
 ## Time on location
 
@@ -341,7 +375,7 @@ trigger a burst.
 worse than one that is honestly late: the user has already decided where they are going next, may
 be able to see it, and a plan that keeps rewriting itself cannot be trusted or memorised.
 Re-ordering is therefore an explicit action only ("re-plan the rest"), and it re-enters the pipeline
-for the remaining stops alone — stops already visited never come back.
+for the remaining stops alone — stops already behind you never come back into the sequence.
 
 The one place this needs care is discoverability. Falling behind is exactly when re-ordering might
 help, and the user cannot ask for something they do not know exists. So **offer** it at the moment
