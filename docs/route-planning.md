@@ -231,10 +231,12 @@ This is the single most useful structural decision in the feature, because it co
 otherwise be two competing entry paths ("route this collection" and "route these markers I picked")
 into one. There is exactly one thing that gets routed. Everything else is a way to fill it:
 
-- **From a collection** — add all of it, or only the unvisited part.
+- **From a collection** — add all of it, or only the unvisited part; removed objects sit out of
+  bulk fills.
 - **From another collection** — sets combine, so a walk can span two collections, which routing a
   collection directly could never express.
-- **By hand** — add a marker from its details overlay, or remove one from the set.
+- **By hand** — add a marker from its details overlay, or remove one from the set. This is the only
+  way a removed object joins a walk, and it is deliberately allowed.
 
 ### Why this is better than routing a collection directly
 
@@ -304,14 +306,44 @@ markers are in the set, the set is literal: what you see is what you walk.
 - **All** — every marker in the source.
 - **Unvisited only** — markers the user has not marked as visited.
 
+Both skip removed objects, which can still be added individually — see below.
+
 Making the toggle a fill option rather than a persistent mode has a pleasant consequence: switching
 it becomes a **set operation, not a rebuild**. Turning "unvisited only" off adds the visited markers
 from the same source; turning it back on removes them again. Hand-added markers survive both,
 because nothing is ever regenerated from scratch. A live filter would have to either discard manual
 edits or maintain a confusing distinction between "filtered out" and "removed by me".
 
-**Removed objects never enter the set, under either option.** An artifact that is gone from the
-street cannot be photographed, so it is not a third toggle — it is a rule that always runs.
+**Removed objects are excluded from bulk fills, but can be added by hand.** Pouring a collection
+into a walk should never quietly pad it with objects that are gone — that is a default nobody would
+want overridden. But *deliberately* adding one is a different act with real reasons behind it:
+
+- checking whether something recorded as gone is actually gone, which is how a removal gets
+  confirmed or reversed;
+- photographing the site anyway — an empty wall where a mosaic was is still archive material;
+- suspecting the removal was a mistake, or simply wanting to look.
+
+So the rule is a bulk default, not a prohibition. **Explicit beats implicit:** filling from a
+collection skips removed objects and says so, while tapping one and adding it works, because at that
+point the user is looking at a marker the app already renders as removed and has decided anyway.
+
+Three consequences:
+
+- **The set must show it.** A removed stop needs to stay visibly marked in the itinerary, or the
+  user arrives at an empty wall having forgotten why it was on the list. `isRemoved` already reaches
+  the marker rendering layer, so the styling exists.
+- **The scope toggle must not sweep it away.** Turning "unvisited only" on and off adds and removes
+  markers *from that source only*; a hand-added removed object is not part of that set operation and
+  survives both directions, like any other manual addition.
+- **A removal discovered later is a question, not an eviction.** If an object in the set is marked
+  removed before the walk begins, the panel should say so and let the user decide, rather than
+  dropping a stop they may have wanted precisely because it is gone. Mid-walk, nothing changes at
+  all — see [Route scope](#filling-the-set-all-markers-vs-unvisited-only) above.
+
+Nothing else needs special-casing: a removed stop takes the same flat time allowance, and the
+arrival actions are the same ones offered anywhere, with the natural outcomes being confirming the
+removal or reversing it. A bulk "add the removed ones" fill — an audit walk over everything recorded
+as gone — is a plausible third option later, but it is not needed to support the case above.
 
 This needs no backend work and no schema change. Both flags already reach the client today:
 `markers.list` returns `isRemoved` on every `MarkerListItem`, and `markers.listVisitedIds` returns
