@@ -35,6 +35,8 @@ The request decomposes into six capabilities with very different difficulty:
 | 4 | Schedule against current time + time on location| Low       | None — flat per-stop allowance, no data needed        |
 | 5 | Sunset feasibility and where to cut the walk   | Low        | None — local astronomical calculation                 |
 | 6 | Re-estimate live from the user's position      | Medium     | Refresh must be tiered or it bankrupts the cost model |
+| 7 | Route all markers vs unvisited only            | Low        | None — both flags already reach the client            |
+| 8 | Exclude single stops, before or during a walk  | Low        | None — deletion preserves the fixed order             |
 
 ## What the current stack already gives us
 
@@ -211,6 +213,78 @@ transit results have their own display and attribution rules.
 
 The first option is smaller and stays consistent with the provider abstraction. Recommended.
 
+## Route scope: all markers vs unvisited only
+
+The route runs over one of two subsets of the source set, chosen by the user:
+
+- **All** — every marker in the selection or collection.
+- **Unvisited only** — markers the user has not marked as visited.
+
+**Removed objects are excluded from both, unconditionally.** An artifact that is gone from the
+street cannot be photographed, so routing to it is never useful. This is not a third toggle; it is a
+filter that always runs.
+
+This needs no backend work and no schema change. Both flags already reach the client today:
+`markers.list` returns `isRemoved` on every `MarkerListItem`, and `markers.listVisitedIds` returns
+the user's visited object IDs, which `(fullList)/+layout.svelte` already merges into an `isVisited`
+field per rendered marker. The route scope is a pure predicate over a list the app has already
+loaded.
+
+Three behaviours are worth pinning down, because the obvious implementation gets them wrong:
+
+- **The filter applies when the route is built, not continuously.** Marking a stop visited during
+  the walk must not make it vanish from the route you are currently walking — that would break the
+  fixed-order rule from [Live re-estimation](#live-re-estimation) and would delete the stop you are
+  standing at the moment you log it. Switching scope mid-walk is a re-plan, and re-plans are
+  explicit.
+- **Say what was dropped.** A collection of 12 that produces a 9-stop route looks broken unless the
+  panel says why — "3 visited, skipped" or "2 removed, skipped". Silence here reads as a bug.
+- **Handle the empty result.** "Unvisited only" over a fully visited collection yields nothing. That
+  is a legitimate and pleasant outcome (you have seen everything), and it deserves a real empty
+  state rather than a zero-stop route.
+
+Filtering never mutates the source. A collection routed with "unvisited only" keeps all its members;
+the scope is a property of the route, not of the collection. The same applies to a saved plan: if an
+object is marked removed or visited between saving and reopening, the plan re-filters on open and
+says what changed rather than silently rewriting itself.
+
+## Excluding individual stops
+
+Scope is the bulk filter; excluding single stops is the manual one. It happens at two moments that
+behave differently:
+
+- **Before starting** — drop a point from the set. The route simply re-solves without it, because
+  nothing is fixed until the walk begins.
+- **During the walk** — skip it. You are standing in front of a locked courtyard, the light is
+  going, or you have simply lost interest.
+
+The second case looks like it should collide with the fixed-order rule, and it does not:
+**removing an element is not permuting the remaining ones.** Every stop still ahead keeps both its
+position and its relative order; the sequence just gets shorter. That is why skipping is safe to
+allow mid-walk while re-ordering is not, and it is the cleanest justification for the rule holding
+in both directions.
+
+What skipping costs, and how it behaves:
+
+- **Two legs collapse into one.** Skipping B between A and C invalidates the leg into B and the leg
+  out of it. Summing them overstates the result — A→B→C is a detour, A→C is not — so the UI shows a
+  straight-line estimate at the measured pace immediately, marks it provisional, and lets a tier-3
+  refresh replace it with real geometry. **Skipping is a legitimate tier-3 trigger**, subject to the
+  same rate-limit floor as the others.
+- **Skipped is not visited.** A skipped object must stay unvisited, so "unvisited only" offers it
+  again next time. Conflating the two would quietly delete points from the archive's backlog.
+- **The collection is untouched,** exactly as with the scope filter.
+- **The twilight trim is a bulk skip.** "These 3 stops won't fit" applied with one tap is the same
+  mechanism over every stop past the cut-off — one concept in the code and one in the user's head,
+  not two.
+- **Undo is free only while the stop is still ahead of you.** Restoring a skipped stop you have
+  already walked past is a re-plan, because its position in the sequence no longer exists.
+- **Skipping the next stop re-anchors the live loop.** The current-leg progress calculation is
+  measuring toward a target that has just been abandoned, so it must reset to the new next stop
+  rather than keep scaling against the old one.
+- **Skipping everything ends the walk** and deserves a proper finish state rather than a zero-stop
+  route.
+
 ## Time on location
 
 No per-object, per-category, or per-user duration data is stored anywhere. A stop is one to five
@@ -241,7 +315,7 @@ Three tiers, only the last of which costs money:
 | ---- | --------------------------------------------- | ------------------------------------------------------------------- | ----- | ---- |
 | 1    | Every position update                         | Rescale the current leg's remaining time from distance covered      | Kept  | Free |
 | 2    | Every position update                         | Apply observed pace + observed dwell to all remaining legs and stops | Kept  | Free |
-| 3    | Off-route beyond threshold                    | Refetch geometry and durations from the current position onward      | Kept  | Paid |
+| 3    | Off-route beyond threshold, or a stop skipped | Refetch geometry and durations from the current position onward      | Kept  | Paid |
 | —    | User asks to re-plan                          | Re-enter the pipeline for the remaining stops                        | **May change** | Paid |
 
 Tier 1 and 2 are the important insight: **after the first plan is computed, we already hold the leg
@@ -354,8 +428,9 @@ time, not price). Whether selection is ephemeral or persisted from day one. Defa
 stop.
 
 **Phase 1 — selection, no backend.** Select mode toggle, tap-to-select on DOM markers, selection
-count chip, route panel skeleton listing selected objects. Stage A ordering by haversine so the
-panel shows a plausible order immediately. Ship with zero API cost and validate the interaction.
+count chip, route panel skeleton listing selected objects, the all/unvisited scope toggle with its
+skipped-count line, and per-stop exclusion before the walk starts. Stage A ordering by haversine so the panel shows a plausible order
+immediately. Ship with zero API cost and validate the interaction.
 
 **Phase 2 — real walking route.** Enable Routes API, add `src/convex/routing/`, wire Stage B, add
 the polyline handle to `MapProvider`, render ordered badges on selected markers. Set a Google Cloud
@@ -363,11 +438,14 @@ daily quota before the first deploy.
 
 **Phase 3 — time and sunset.** Start-time control (default: now, from `lastPosition` as origin),
 the minutes-per-stop setting, `sun.ts`, the scheduling pass, and the cut-off UI: per-stop ETA, the
-twilight line drawn in the leg list, "these 3 stops will not fit" with a one-tap trim.
+twilight line drawn in the leg list, "these 3 stops will not fit" with a one-tap trim — which is the
+bulk case of the same exclusion mechanism phase 1 already built.
 
 **Phase 4 — live tracking.** Switch position acquisition to `watchPosition` with high accuracy and
 an accuracy gate, add `progress.ts` and `liveTracker.ts`, wire tiers 1–2, add cut-off hysteresis,
-and handle the backgrounding gap. Tier 3 and the explicit "re-plan the rest" action land here too.
+and handle the backgrounding gap. Mid-walk skipping lands here as well, since it needs the
+re-anchoring and the provisional-estimate behaviour. Tier 3 and the explicit "re-plan the rest"
+action land here too.
 This phase is entirely local — no new API surface — and can ship before phase 5.
 
 **Phase 5 — transport legs.** Walking threshold setting, Stage D per-leg transit/drive lookups,
