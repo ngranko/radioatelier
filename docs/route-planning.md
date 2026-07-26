@@ -1,6 +1,7 @@
 # Route planning over selected markers
 
 > **Status:** feasibility study for future work. Nothing described here is implemented today.
+> UI directions for the same feature are mocked in [route-planning-ui.html](./route-planning-ui.html) — open it in a browser.
 
 ## Verdict
 

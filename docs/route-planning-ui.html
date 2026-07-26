@@ -1,0 +1,1483 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Route planning — plan and UI directions</title>
+</head>
+<body>
+<style>
+    /* ---- tokens: app palette (src/styles/app.css) verbatim in oklch, plus page-level dusk semantics ---- */
+    :root {
+        --paper: oklch(0.995 0.003 210);
+        --ground: oklch(0.97 0.008 215);
+        --card: oklch(1 0 0);
+        --ink: oklch(0.145 0.03 230);
+        --ink-soft: oklch(0.44 0.04 230);
+        --ink-faint: oklch(0.6 0.03 225);
+        --line: oklch(0.9 0.015 220);
+        --line-soft: oklch(0.94 0.01 220);
+        --teal: oklch(0.52 0.17 198);
+        --on-accent: oklch(0.99 0 0);
+        --teal-soft: oklch(0.95 0.026 205);
+        --violet: oklch(0.55 0.16 292);
+        --violet-soft: oklch(0.95 0.03 292);
+        --amber: oklch(0.72 0.15 62);
+        --indigo: oklch(0.42 0.09 268);
+        --red: oklch(0.6 0.26 25);
+        --map-ground: oklch(0.955 0.008 215);
+        --map-block: oklch(0.915 0.011 218);
+        --map-street: oklch(0.995 0.003 210);
+        --map-park: oklch(0.93 0.045 150);
+        --map-water: oklch(0.9 0.045 230);
+        --shadow: 0 1px 2px oklch(0.145 0.03 230 / 6%), 0 8px 24px oklch(0.145 0.03 230 / 7%);
+        --shadow-sm: 0 1px 2px oklch(0.145 0.03 230 / 8%);
+        --radius: 0.625rem;
+
+        --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --paper: oklch(0.15 0.02 225);
+            --ground: oklch(0.185 0.022 225);
+            --card: oklch(0.21 0.025 225);
+            --ink: oklch(0.97 0.005 210);
+            --ink-soft: oklch(0.76 0.025 220);
+            --ink-faint: oklch(0.6 0.025 222);
+            --line: oklch(1 0 0 / 13%);
+            --line-soft: oklch(1 0 0 / 8%);
+            --teal: oklch(0.75 0.15 195);
+        --on-accent: oklch(0.16 0.03 200);
+            --teal-soft: oklch(0.34 0.05 225);
+            --violet: oklch(0.72 0.14 292);
+            --violet-soft: oklch(0.32 0.06 292);
+            --amber: oklch(0.78 0.14 62);
+            --indigo: oklch(0.58 0.11 268);
+            --red: oklch(0.68 0.24 30);
+            --map-ground: oklch(0.215 0.018 228);
+            --map-block: oklch(0.325 0.024 228);
+            --map-street: oklch(0.17 0.016 228);
+            --map-park: oklch(0.335 0.05 155);
+            --map-water: oklch(0.34 0.06 235);
+            --shadow: 0 1px 2px oklch(0 0 0 / 40%), 0 10px 28px oklch(0 0 0 / 34%);
+            --shadow-sm: 0 1px 2px oklch(0 0 0 / 40%);
+        }
+    }
+
+    :root[data-theme="light"] {
+        --paper: oklch(0.995 0.003 210);
+        --ground: oklch(0.97 0.008 215);
+        --card: oklch(1 0 0);
+        --ink: oklch(0.145 0.03 230);
+        --ink-soft: oklch(0.44 0.04 230);
+        --ink-faint: oklch(0.6 0.03 225);
+        --line: oklch(0.9 0.015 220);
+        --line-soft: oklch(0.94 0.01 220);
+        --teal: oklch(0.52 0.17 198);
+        --on-accent: oklch(0.99 0 0);
+        --teal-soft: oklch(0.95 0.026 205);
+        --violet: oklch(0.55 0.16 292);
+        --violet-soft: oklch(0.95 0.03 292);
+        --amber: oklch(0.72 0.15 62);
+        --indigo: oklch(0.42 0.09 268);
+        --red: oklch(0.6 0.26 25);
+        --map-ground: oklch(0.955 0.008 215);
+        --map-block: oklch(0.915 0.011 218);
+        --map-street: oklch(0.995 0.003 210);
+        --map-park: oklch(0.93 0.045 150);
+        --map-water: oklch(0.9 0.045 230);
+        --shadow: 0 1px 2px oklch(0.145 0.03 230 / 6%), 0 8px 24px oklch(0.145 0.03 230 / 7%);
+        --shadow-sm: 0 1px 2px oklch(0.145 0.03 230 / 8%);
+    }
+
+    :root[data-theme="dark"] {
+        --paper: oklch(0.15 0.02 225);
+        --ground: oklch(0.185 0.022 225);
+        --card: oklch(0.21 0.025 225);
+        --ink: oklch(0.97 0.005 210);
+        --ink-soft: oklch(0.76 0.025 220);
+        --ink-faint: oklch(0.6 0.025 222);
+        --line: oklch(1 0 0 / 13%);
+        --line-soft: oklch(1 0 0 / 8%);
+        --teal: oklch(0.75 0.15 195);
+        --on-accent: oklch(0.16 0.03 200);
+        --teal-soft: oklch(0.34 0.05 225);
+        --violet: oklch(0.72 0.14 292);
+        --violet-soft: oklch(0.32 0.06 292);
+        --amber: oklch(0.78 0.14 62);
+        --indigo: oklch(0.58 0.11 268);
+        --red: oklch(0.68 0.24 30);
+        --map-ground: oklch(0.215 0.018 228);
+        --map-block: oklch(0.325 0.024 228);
+        --map-street: oklch(0.17 0.016 228);
+        --map-park: oklch(0.335 0.05 155);
+        --map-water: oklch(0.34 0.06 235);
+        --shadow: 0 1px 2px oklch(0 0 0 / 40%), 0 10px 28px oklch(0 0 0 / 34%);
+        --shadow-sm: 0 1px 2px oklch(0 0 0 / 40%);
+    }
+
+    /* ---- base ---- */
+    body {
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        font-family: var(--sans);
+        font-size: 16px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    h1, h2, h3, h4 { text-wrap: balance; margin: 0; line-height: 1.15; letter-spacing: -0.02em; }
+    p { margin: 0; }
+    a { color: var(--teal); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+    a:focus-visible, summary:focus-visible { outline: 2px solid var(--teal); outline-offset: 3px; border-radius: 3px; }
+
+    .eyebrow {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin: 0;
+    }
+
+    .num { font-variant-numeric: tabular-nums; }
+
+    /* ---- page frame ---- */
+    .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 40;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 10px max(20px, 4vw);
+        background: color-mix(in oklab, var(--paper) 88%, transparent);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--line-soft);
+        flex-wrap: wrap;
+    }
+    .topbar .mark {
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-soft);
+    }
+    .jump { display: flex; gap: 4px; flex-wrap: wrap; }
+    .jump a {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        text-decoration: none;
+        color: var(--ink-soft);
+        padding: 4px 8px;
+        border-radius: 999px;
+        border: 1px solid transparent;
+    }
+    .jump a:hover { color: var(--teal); border-color: var(--line); background: var(--ground); }
+
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 0 max(20px, 4vw); }
+    .measure { max-width: 68ch; }
+
+    section { padding: 56px 0 8px; }
+    section + section { border-top: 1px solid var(--line-soft); }
+
+    .stack { display: flex; flex-direction: column; gap: 20px; }
+    .stack-sm { display: flex; flex-direction: column; gap: 10px; }
+    .stack-lg { display: flex; flex-direction: column; gap: 40px; }
+
+    /* ---- masthead ---- */
+    .masthead { padding: 52px 0 44px; }
+    .masthead h1 { font-size: clamp(30px, 5vw, 46px); font-weight: 680; }
+    .standfirst { font-size: clamp(17px, 2.2vw, 20px); color: var(--ink-soft); max-width: 60ch; line-height: 1.5; }
+    .duskline {
+        height: 3px;
+        border-radius: 2px;
+        background: linear-gradient(90deg, var(--amber), var(--indigo) 62%, transparent);
+        max-width: 320px;
+    }
+    .metastrip {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .tag {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.05em;
+        color: var(--ink-soft);
+        border: 1px solid var(--line);
+        background: var(--card);
+        padding: 5px 10px;
+        border-radius: 999px;
+    }
+    .tag strong { color: var(--ink); font-weight: 600; }
+
+    h2 { font-size: clamp(22px, 3vw, 28px); font-weight: 660; }
+    h3 { font-size: 18px; font-weight: 640; }
+    .lede { color: var(--ink-soft); }
+
+    /* ---- pipeline ---- */
+    .pipeline { display: grid; gap: 1px; background: var(--line-soft); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+    .stage { background: var(--card); padding: 14px 16px; display: grid; grid-template-columns: 26px 1fr auto; gap: 14px; align-items: baseline; }
+    .stage-key {
+        font-family: var(--mono);
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--teal);
+    }
+    .stage-body strong { font-weight: 620; }
+    .stage-body p { color: var(--ink-soft); font-size: 14px; line-height: 1.5; }
+    .price {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.04em;
+        padding: 3px 8px;
+        border-radius: 999px;
+        white-space: nowrap;
+        align-self: center;
+    }
+    .price.free { background: var(--teal-soft); color: var(--teal); }
+    .price.paid { background: var(--violet-soft); color: var(--violet); }
+
+    /* ---- rule cards ---- */
+    .rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; }
+    .rule { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+    .rule h3 { font-size: 15px; }
+    .rule p { font-size: 14px; color: var(--ink-soft); line-height: 1.5; }
+
+    /* ---- tables ---- */
+    .tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); }
+    table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 560px; }
+    th, td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+    thead th {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        font-weight: 500;
+        white-space: nowrap;
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    td strong { font-weight: 620; }
+    .cost { font-family: var(--mono); font-size: 12px; }
+
+    ul.plain { margin: 0; padding-left: 18px; color: var(--ink-soft); font-size: 15px; line-height: 1.6; }
+    ul.plain li { margin-bottom: 6px; }
+    ul.plain li::marker { color: var(--ink-faint); }
+    ul.plain strong { color: var(--ink); font-weight: 620; }
+
+    /* ================= MOCK CHROME ================= */
+    .variant { display: grid; gap: 28px; align-items: start; }
+    @media (min-width: 940px) {
+        .variant { grid-template-columns: minmax(0, 1fr) 340px; gap: 40px; }
+        .variant.wide { grid-template-columns: minmax(0, 1fr) 300px; }
+    }
+
+    .variant-head { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
+    .variant-name { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+    .variant-name h3 { font-size: 21px; }
+    .axis {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--teal);
+        background: var(--teal-soft);
+        padding: 3px 9px;
+        border-radius: 999px;
+    }
+    .premise { color: var(--ink-soft); max-width: 62ch; }
+
+    .notes { display: flex; flex-direction: column; gap: 14px; }
+    .note-block { display: flex; flex-direction: column; gap: 5px; }
+    .note-block .eyebrow { color: var(--ink-faint); }
+    .note-block p { font-size: 14px; line-height: 1.55; color: var(--ink-soft); }
+    .note-block.good .eyebrow { color: var(--teal); }
+    .note-block.bad .eyebrow { color: var(--amber); }
+    .buildcost {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: var(--ink-soft);
+        border-top: 1px solid var(--line-soft);
+        padding-top: 12px;
+    }
+    .dots { display: inline-flex; gap: 3px; }
+    .dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--line); display: block; }
+    .dots i.on { background: var(--teal); }
+
+    /* phone + desktop frames */
+    .showcase {
+        background: var(--ground);
+        border: 1px solid var(--line-soft);
+        border-radius: 14px;
+        padding: 22px;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        gap: 18px;
+        flex-wrap: wrap;
+    }
+    .phone {
+        width: 100%;
+        max-width: 316px;
+        aspect-ratio: 316 / 690;
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 26px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+    }
+    .phone-pair { display: flex; gap: 20px; flex-wrap: wrap; }
+    .desktop {
+        width: 100%;
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+    }
+    .chrome-bar {
+        height: 28px;
+        border-bottom: 1px solid var(--line-soft);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0 12px;
+        background: var(--ground);
+    }
+    .chrome-bar i { width: 8px; height: 8px; border-radius: 50%; background: var(--line); display: block; }
+    .frame-label {
+        font-family: var(--mono);
+        font-size: 10px;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin-bottom: 8px;
+    }
+
+    .statusbar {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 16px 4px;
+        font-family: var(--mono);
+        font-size: 10px;
+        color: var(--ink-faint);
+        letter-spacing: 0.04em;
+    }
+
+    /* map */
+    .map { position: relative; background: var(--map-ground); overflow: hidden; }
+    .map svg { display: block; width: 100%; height: 100%; }
+    .map-fill { flex: 1; min-height: 0; }
+
+    /* sheet */
+    .sheet {
+        background: var(--card);
+        border-top: 1px solid var(--line);
+        border-radius: 16px 16px 0 0;
+        box-shadow: 0 -6px 20px oklch(0.145 0.03 230 / 8%);
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        z-index: 2;
+    }
+    .grab { width: 34px; height: 4px; border-radius: 2px; background: var(--line); margin: 8px auto 6px; }
+
+    .sheet-head { padding: 2px 14px 10px; display: flex; flex-direction: column; gap: 9px; border-bottom: 1px solid var(--line-soft); }
+    .sheet-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .sheet-title h4 { font-size: 15px; font-weight: 640; margin: 0; }
+    .summary { display: flex; gap: 10px; font-family: var(--mono); font-size: 11px; color: var(--ink-soft); flex-wrap: wrap; }
+    .summary b { color: var(--ink); font-weight: 600; }
+
+    /* segmented scope control */
+    .segmented {
+        display: inline-flex;
+        background: var(--ground);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 2px;
+        gap: 2px;
+    }
+    .segmented span {
+        font-size: 11.5px;
+        padding: 4px 11px;
+        border-radius: 999px;
+        color: var(--ink-soft);
+        white-space: nowrap;
+    }
+    .segmented span.on { background: var(--teal); color: var(--on-accent); font-weight: 600; }
+
+    .skipped { font-size: 11px; color: var(--ink-faint); font-family: var(--mono); }
+
+    /* itinerary list */
+    .itin { padding: 6px 0 0; overflow: hidden; display: flex; flex-direction: column; }
+    .stop { display: grid; grid-template-columns: 28px 1fr auto; gap: 9px; align-items: center; padding: 6px 13px; }
+    .badge {
+        width: 22px; height: 22px; border-radius: 50%;
+        background: var(--teal); color: var(--on-accent);
+        display: grid; place-items: center;
+        font-family: var(--mono); font-size: 11px; font-weight: 700;
+        justify-self: center;
+    }
+    .badge.origin {
+        background: var(--card);
+        border: 2px solid var(--teal);
+        color: var(--teal);
+        font-size: 9px;
+    }
+    .badge.finish {
+        background: var(--card);
+        border: 2px dashed var(--ink-faint);
+        color: var(--ink-faint);
+        font-size: 9px;
+    }
+    .badge.ghost { background: var(--line); color: var(--ink-faint); }
+    .badge.done { background: var(--ink-faint); }
+    .badge.gone { background: var(--card); border: 2px solid var(--red); color: var(--red); }
+    .gone-tag {
+        font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.04em;
+        padding: 1px 6px; border-radius: 999px;
+        background: color-mix(in oklab, var(--red) 16%, transparent);
+        color: color-mix(in oklab, var(--red) 72%, var(--ink));
+    }
+    .stop-name { font-size: 13px; line-height: 1.3; }
+    .stop-sub { font-size: 11px; color: var(--ink-faint); }
+    .stop-time { font-family: var(--mono); font-size: 12px; color: var(--ink-soft); }
+    .stop.dim .stop-name, .stop.dim .stop-time { color: var(--ink-faint); }
+
+    .swipe-row { display: flex; align-items: stretch; }
+    .swipe-row .stop { flex: 1; min-width: 0; }
+    .skip-action {
+        display: grid; place-items: center;
+        padding: 0 11px; margin: 3px 6px 3px 0;
+        border-radius: 8px;
+        background: color-mix(in oklab, var(--amber) 22%, transparent);
+        color: color-mix(in oklab, var(--amber) 68%, var(--ink));
+        font-size: 11.5px; font-weight: 620;
+        white-space: nowrap;
+    }
+    .leg { display: grid; grid-template-columns: 28px 1fr; gap: 9px; padding: 0 13px; align-items: center; }
+    .leg-rail { justify-self: center; width: 2px; height: 17px; background: var(--teal); border-radius: 1px; opacity: 0.55; }
+    .leg-rail.transit { background: var(--violet); opacity: 1; }
+    .leg-rail.dim { background: var(--line); }
+    .leg-text { font-size: 11px; color: var(--ink-soft); display: flex; align-items: center; gap: 6px; }
+    .leg-text .mode {
+        font-family: var(--mono); font-size: 10px; letter-spacing: 0.05em;
+        padding: 1px 6px; border-radius: 999px;
+        background: var(--teal-soft); color: var(--teal);
+    }
+    .leg-text .mode.transit { background: var(--violet-soft); color: var(--violet); }
+
+    .twilight-row {
+        display: flex; align-items: center; gap: 8px;
+        margin: 8px 14px 6px;
+        padding: 6px 10px;
+        border-radius: 8px;
+        background: linear-gradient(90deg, color-mix(in oklab, var(--amber) 26%, transparent), color-mix(in oklab, var(--indigo) 26%, transparent));
+        font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.03em;
+        color: var(--ink);
+    }
+    .twilight-row b { font-weight: 700; }
+
+    .sheet-foot { padding: 10px 14px 14px; border-top: 1px solid var(--line-soft); display: flex; gap: 8px; align-items: center; }
+    .btn {
+        flex: 1; text-align: center;
+        background: var(--teal); color: var(--on-accent);
+        font-size: 13px; font-weight: 620;
+        padding: 9px 12px; border-radius: 8px;
+    }
+    .btn.ghost { flex: 0 0 auto; background: var(--ground); color: var(--ink-soft); border: 1px solid var(--line); font-weight: 500; }
+
+    /* floating map controls */
+    .mapctl {
+        position: absolute; right: 10px; bottom: 12px;
+        display: flex; flex-direction: column; gap: 6px;
+    }
+    .mapctl i {
+        width: 30px; height: 30px; border-radius: 8px;
+        background: var(--card); border: 1px solid var(--line);
+        box-shadow: var(--shadow-sm);
+        display: grid; place-items: center;
+        color: var(--teal); font-size: 13px; font-style: normal;
+    }
+
+    /* HUD pieces */
+    .hud-top {
+        position: absolute; left: 10px; right: 10px; top: 10px;
+        background: var(--card); border: 1px solid var(--line);
+        border-radius: 999px; box-shadow: var(--shadow);
+        padding: 8px 14px;
+        display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    }
+    .hud-next { font-size: 12.5px; font-weight: 600; }
+    .hud-eta { font-family: var(--mono); font-size: 12px; color: var(--teal); white-space: nowrap; }
+    .hud-toast {
+        position: absolute; left: 10px; right: 10px; top: 58px;
+        background: color-mix(in oklab, var(--card) 94%, var(--teal));
+        border: 1px solid var(--line);
+        border-radius: 10px; box-shadow: var(--shadow-sm);
+        padding: 7px 12px;
+        font-size: 11.5px; color: var(--ink-soft);
+    }
+    .arrive {
+        position: absolute; left: 10px; right: 10px; bottom: 62px;
+        background: var(--card); border: 1px solid var(--line);
+        border-radius: 12px; box-shadow: var(--shadow);
+        padding: 9px 12px;
+        display: flex; flex-direction: column; gap: 7px;
+    }
+    .arrive-title { font-size: 12px; font-weight: 620; }
+    .arrive-actions { display: flex; gap: 6px; }
+    .arrive-actions span {
+        font-size: 11px; padding: 4px 9px; border-radius: 999px;
+        border: 1px solid var(--line); background: var(--ground); color: var(--ink-soft);
+        white-space: nowrap;
+    }
+    .hud-bottom {
+        position: absolute; left: 10px; right: 10px; bottom: 10px;
+        background: var(--card); border: 1px solid var(--line);
+        border-radius: 12px; box-shadow: var(--shadow);
+        padding: 9px 13px;
+        display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    }
+    .hud-stat { font-family: var(--mono); font-size: 11.5px; color: var(--ink-soft); }
+    .hud-stat b { color: var(--ink); }
+    .chev { color: var(--ink-faint); font-size: 12px; }
+
+    /* time budget bar */
+    .budget { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 8px; }
+    .budget-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+    .budget-head strong { font-size: 14px; font-weight: 640; }
+    .budget-head span { font-family: var(--mono); font-size: 11px; color: var(--ink-soft); }
+    .bar {
+        position: relative;
+        height: 34px;
+        border-radius: 8px;
+        background: var(--ground);
+        border: 1px solid var(--line);
+        overflow: hidden;
+        display: flex;
+    }
+    .bar .seg { height: 100%; }
+    .bar .seg.walk { background: color-mix(in oklab, var(--teal) 26%, transparent); }
+    .bar .seg.stopseg { background: var(--teal); }
+    .bar .seg.transit { background: var(--violet); }
+    .bar .seg.past { background: repeating-linear-gradient(135deg, color-mix(in oklab, var(--indigo) 34%, transparent) 0 5px, transparent 5px 10px); }
+    .bar .wall {
+        position: absolute; top: -1px; bottom: -1px; width: 3px;
+        background: var(--indigo);
+        box-shadow: 0 0 0 1px color-mix(in oklab, var(--card) 70%, transparent);
+    }
+    .bar .sunmark { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--amber); opacity: 0.95; }
+    .bar .nowmark { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--ink); }
+    .ticks { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 10px; color: var(--ink-faint); }
+    .legend { display: flex; gap: 12px; flex-wrap: wrap; font-family: var(--mono); font-size: 10px; color: var(--ink-faint); }
+    .legend span { display: inline-flex; align-items: center; gap: 5px; }
+    .legend i { width: 9px; height: 9px; border-radius: 2px; display: block; }
+
+    /* planner (desktop) */
+    .planner { display: grid; grid-template-columns: 290px 1fr; height: 582px; }
+    .planner-side { border-right: 1px solid var(--line-soft); display: flex; flex-direction: column; min-height: 0; overflow: hidden; background: var(--card); }
+    .planner-head { padding: 10px 12px; border-bottom: 1px solid var(--line-soft); display: flex; flex-direction: column; gap: 9px; }
+    .collection-name { font-size: 13.5px; font-weight: 640; display: flex; align-items: center; gap: 7px; }
+    .swatch { width: 9px; height: 9px; border-radius: 2px; background: var(--teal); display: block; }
+    .field-row { display: flex; gap: 8px; }
+    .field {
+        flex: 1;
+        border: 1px solid var(--line); border-radius: 7px;
+        padding: 3px 9px;
+        display: flex; flex-direction: column; gap: 1px;
+        background: var(--ground);
+    }
+    .field label { font-family: var(--mono); font-size: 9px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-faint); }
+    .field b { font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .planner-list { flex: 1; min-height: 0; overflow: hidden; padding: 2px 0; }
+    .planner-foot { border-top: 1px solid var(--line-soft); padding: 8px 12px; display: flex; flex-direction: column; gap: 6px; }
+    .drag { color: var(--ink-faint); font-size: 12px; letter-spacing: -1px; }
+
+    /* collection cards */
+    .cardlist { padding: 10px; display: flex; flex-direction: column; gap: 9px; overflow: hidden; }
+    .ccard {
+        border: 1px solid var(--line); border-radius: 12px;
+        background: var(--card); box-shadow: var(--shadow-sm);
+        overflow: hidden;
+    }
+    .ccard-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 7px; }
+    .ccard-top { display: flex; align-items: center; gap: 8px; }
+    .ccard h5 { margin: 0; font-size: 13px; font-weight: 640; flex: 1; }
+    .ccard-counts { font-family: var(--mono); font-size: 10.5px; color: var(--ink-faint); }
+    .feas {
+        display: flex; align-items: center; gap: 7px;
+        font-family: var(--mono); font-size: 10.5px;
+        padding: 5px 8px; border-radius: 7px;
+        background: var(--teal-soft); color: var(--teal);
+    }
+    .feas.tight { background: color-mix(in oklab, var(--amber) 20%, transparent); color: color-mix(in oklab, var(--amber) 72%, var(--ink)); }
+    .walkbtn {
+        font-size: 11px; font-weight: 620;
+        padding: 5px 9px; border-radius: 7px;
+        background: var(--teal); color: var(--on-accent);
+        white-space: nowrap;
+    }
+    .ccard.open { border-color: var(--teal); }
+    .ccard-expand { border-top: 1px solid var(--line-soft); padding: 9px 12px; display: flex; flex-direction: column; gap: 8px; background: var(--ground); }
+
+    /* recommendation */
+    .reco {
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--card);
+        padding: 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+    .reco-lead { font-size: 17px; line-height: 1.5; }
+    .reco-lead b { font-weight: 660; }
+
+    footer {
+        margin-top: 56px;
+        padding: 26px 0 44px;
+        border-top: 1px solid var(--line-soft);
+        font-size: 13px;
+        color: var(--ink-faint);
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+    }
+    @media (max-width: 660px) {
+        .jump { display: none; }
+        .showcase { padding: 14px; }
+    }
+    html { scroll-behavior: smooth; }
+</style>
+
+<!-- shared city map, drawn once, reused by every mock so the design is the only variable -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <symbol id="city" viewBox="0 0 400 400">
+        <rect width="400" height="400" fill="var(--map-ground)"/>
+        <g fill="var(--map-block)">
+            <rect x="14" y="16" width="62" height="46" rx="2"/>
+            <rect x="88" y="16" width="78" height="46" rx="2"/>
+            <rect x="178" y="16" width="54" height="46" rx="2"/>
+            <rect x="244" y="16" width="70" height="46" rx="2"/>
+            <rect x="326" y="16" width="60" height="46" rx="2"/>
+            <rect x="14" y="76" width="62" height="58" rx="2"/>
+            <rect x="88" y="76" width="78" height="58" rx="2"/>
+            <rect x="244" y="76" width="70" height="58" rx="2"/>
+            <rect x="326" y="76" width="60" height="58" rx="2"/>
+            <rect x="14" y="148" width="62" height="52" rx="2"/>
+            <rect x="88" y="148" width="78" height="52" rx="2"/>
+            <rect x="178" y="148" width="54" height="52" rx="2"/>
+            <rect x="244" y="148" width="70" height="52" rx="2"/>
+            <rect x="326" y="148" width="60" height="52" rx="2"/>
+            <rect x="14" y="214" width="62" height="56" rx="2"/>
+            <rect x="88" y="214" width="78" height="56" rx="2"/>
+            <rect x="178" y="214" width="54" height="56" rx="2"/>
+            <rect x="326" y="214" width="60" height="56" rx="2"/>
+            <rect x="14" y="284" width="62" height="50" rx="2"/>
+            <rect x="88" y="284" width="78" height="50" rx="2"/>
+            <rect x="178" y="284" width="54" height="50" rx="2"/>
+            <rect x="244" y="284" width="70" height="50" rx="2"/>
+            <rect x="326" y="284" width="60" height="50" rx="2"/>
+            <rect x="14" y="348" width="62" height="52" rx="2"/>
+            <rect x="88" y="348" width="78" height="52" rx="2"/>
+            <rect x="244" y="348" width="70" height="52" rx="2"/>
+            <rect x="326" y="348" width="60" height="52" rx="2"/>
+        </g>
+        <rect x="178" y="76" width="54" height="58" rx="3" fill="var(--map-park)"/>
+        <rect x="178" y="348" width="54" height="52" rx="3" fill="var(--map-park)"/>
+        <rect x="244" y="214" width="70" height="56" rx="3" fill="var(--map-water)"/>
+        <g stroke="var(--map-street)" stroke-width="7" fill="none" opacity="0.9">
+            <path d="M0 69h400M0 141h400M0 207h400M0 277h400M0 341h400"/>
+            <path d="M81 0v400M171 0v400M237 0v400M319 0v400"/>
+        </g>
+        <path d="M-10 268L410 44" stroke="var(--map-street)" stroke-width="9" fill="none" opacity="0.7"/>
+    </symbol>
+</svg>
+
+<header class="topbar">
+    <span class="mark">Radioatelier · Route planning</span>
+    <nav class="jump">
+        <a href="#plan">Plan</a>
+        <a href="#collections">Collections</a>
+        <a href="#phases">Phases</a>
+        <a href="#directions">5 directions</a>
+        <a href="#compare">Compare</a>
+        <a href="#reco">Recommendation</a>
+    </nav>
+</header>
+
+<main class="wrap">
+    <div class="masthead stack">
+        <p class="eyebrow">Design brief · the walk set model</p>
+        <h1>Walk the archive before the light goes</h1>
+        <div class="duskline"></div>
+        <p class="standfirst">
+            Assemble a handful of markers into a walk, set off from home or wherever you are, get an
+            ordered route through them, know which legs are worth a tram, and see exactly where the
+            daylight runs out. Five ways the interface could work,
+            drawn against the same route so the design is the only thing that changes.
+        </p>
+        <div class="metastrip">
+            <span class="tag"><strong>Source</strong> docs/route-planning.md</span>
+            <span class="tag"><strong>Depends on</strong> nothing new</span>
+            <span class="tag"><strong>Route cost</strong> $0.03–0.08</span>
+            <span class="tag"><strong>Schema change</strong> none</span>
+        </div>
+    </div>
+
+    <section id="plan" class="stack">
+        <div class="stack-sm measure">
+            <p class="eyebrow">The plan</p>
+            <h2>Five stages, and only two of them cost anything</h2>
+            <p class="lede">
+                The route is built cheapest-stage-first. Each stage stands on its own, so the feature can
+                ship in pieces rather than all at once.
+            </p>
+        </div>
+
+        <div class="pipeline">
+            <div class="stage">
+                <span class="stage-key">A</span>
+                <div class="stage-body">
+                    <strong>Order it locally</strong>
+                    <p>Nearest-neighbour plus 2-opt over straight-line distance. Instant and offline — and it names the stop the route ends on, which stage B needs before it can run.</p>
+                </div>
+                <span class="price free">free</span>
+            </div>
+            <div class="stage">
+                <span class="stage-key">B</span>
+                <div class="stage-body">
+                    <strong>Ask Google once</strong>
+                    <p>One <span class="cost">computeRoutes</span> call. Origin and destination stay fixed, the markers ride as intermediates, and waypoint optimisation orders only those — which is what makes the result meaningful.</p>
+                </div>
+                <span class="price paid">1 request</span>
+            </div>
+            <div class="stage">
+                <span class="stage-key">C</span>
+                <div class="stage-body">
+                    <strong>Lay it against the clock</strong>
+                    <p>Start time, a flat allowance per stop, arrival and departure for each — then the sunset and twilight lines. Pure local arithmetic.</p>
+                </div>
+                <span class="price free">free</span>
+            </div>
+            <div class="stage">
+                <span class="stage-key">D</span>
+                <div class="stage-body">
+                    <strong>Flag the legs worth riding</strong>
+                    <p>Only legs over the walking threshold get a transit or taxi lookup, priced at that leg's estimated departure time.</p>
+                </div>
+                <span class="price paid">1–4 requests</span>
+            </div>
+            <div class="stage">
+                <span class="stage-key">E</span>
+                <div class="stage-body">
+                    <strong>Keep it honest while walking</strong>
+                    <p>Position in, stage C re-run with measured pace and dwell. Every tick, for nothing, because the durations are already in hand.</p>
+                </div>
+                <span class="price free">free</span>
+            </div>
+        </div>
+
+        <div class="rules">
+            <div class="rule">
+                <h3>The order never changes by itself</h3>
+                <p>Once the walk starts, the sequence is fixed. Times, the cut-off, and the path from where you actually are all keep updating — the order only moves when you ask for it.</p>
+            </div>
+            <div class="rule">
+                <h3>Two ways to leave a point out</h3>
+                <p>A scope toggle for the bulk case — all points or only unvisited — and a per-stop skip for the rest. Removed points sit out of bulk fills but can be added by hand, since checking whether something is really gone is a reason to walk there. The route reads this state and never writes it.</p>
+            </div>
+            <div class="rule">
+                <h3>The walk starts where you are</h3>
+                <p>Home, a metro exit, or your current position — the origin is a waypoint, not a stop, and it doesn't eat the 25-marker budget. The clock starts when you leave, not at the first pin.</p>
+            </div>
+            <div class="rule">
+                <h3>Matrices are the expensive trap</h3>
+                <p>A travel-time matrix is billed per element, so a 15-stop plan runs about $2.25. One optimised route request does the same job for $0.015.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="collections" class="stack">
+        <div class="stack-sm measure">
+            <p class="eyebrow">The unit of work</p>
+            <h2>You route a walk set, never a collection</h2>
+            <p class="lede">
+                A walk set is a transient, hand-editable list of markers that exists for one walk. It
+                isn't a collection and isn't a filter over the archive — it's a concrete list you build,
+                see, and edit before setting off. Collections become one way to fill it, alongside adding
+                markers by hand.
+            </p>
+        </div>
+        <ul class="plain measure">
+            <li><strong>One thing gets routed.</strong> "Route this collection" and "route these markers I picked" stop competing — there is a single set, and everything else is a way to fill it. Two collections can feed one walk, which routing a collection directly could never express.</li>
+            <li><strong>The feature stops waiting on collections.</strong> Hand-filling needs nothing but the existing marker list, so route planning can ship first. "Add a collection to the walk" is then one extra source, not a prerequisite.</li>
+            <li><strong>The 25-marker cap becomes tractable.</strong> A 60-point collection can't be routed, but it can be drawn from. The tray shows 9 / 25, so you trim deliberately instead of hitting a wall.</li>
+            <li><strong>Adding gets simpler than selecting.</strong> If markers join from the details overlay that already opens on tap, there's no multi-select gesture fighting the existing map click and no Deck-mode picking to solve. A bulk select mode becomes a convenience, not the only way in.</li>
+            <li><strong>Feasibility gets cheap.</strong> A "fits before dark" badge on every collection would mean routing every collection. One set means one estimate, for the thing you're actually assembling.</li>
+            <li><strong>Collections stay untouched.</strong> Filling copies marker ids — it doesn't link or subscribe. Editing the walk can never edit a collection.</li>
+            <li><strong>Removed points can still be walked to — just not by accident.</strong> Bulk fills skip them, because nobody means to pad a walk with things that are gone. Adding one by hand works, because confirming a removal, reversing a wrong one, or photographing the empty wall are all reasons to go. The itinerary marks it so you remember why it's there.</li>
+            <li><strong>And a good walk can become a collection.</strong> The same list of ids travelling back the other way, so it's a create-collection call with a name field once collections exist. Worth being precise in the wording, though: that saves <em>which places</em>, not the route — keeping the sequence is the separate "save this plan" action.</li>
+        </ul>
+    </section>
+
+    <section id="phases" class="stack">
+        <div class="stack-sm measure">
+            <p class="eyebrow">Sequence</p>
+            <h2>Shipping order</h2>
+            <p class="lede">Each phase is independently useful. The first three deliver most of the value; transport legs carry the real risk.</p>
+        </div>
+        <div class="tablewrap">
+            <table>
+                <thead>
+                    <tr><th>Phase</th><th>What lands</th><th>New API</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><strong>1 · Set and scope</strong></td><td>Route entry on collections, all/unvisited toggle, skipped counts, local ordering so the list looks right immediately</td><td class="cost">none</td></tr>
+                    <tr><td><strong>2 · Real route</strong></td><td>Routes API enabled, one optimised request, polyline on the map, numbered pins</td><td class="cost">Routes</td></tr>
+                    <tr><td><strong>3 · Clock and dusk</strong></td><td>Start time, per-stop allowance, sunset and civil twilight, the cut-off and its trim action</td><td class="cost">none</td></tr>
+                    <tr><td><strong>4 · Live tracking</strong></td><td>Continuous position, measured pace and dwell, off-route refresh, hysteresis on the cut-off</td><td class="cost">none</td></tr>
+                    <tr><td><strong>5 · Transport legs</strong></td><td>Walking threshold, per-leg transit and taxi lookups, mode detail in the list</td><td class="cost">Routes</td></tr>
+                    <tr><td><strong>6 · Saved plans</strong></td><td>Reopen a plan, resume a walk in progress, re-filter and report what changed</td><td class="cost">none</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section id="directions" class="stack-lg">
+        <div class="stack-sm measure">
+            <p class="eyebrow">Five directions</p>
+            <h2>Where should the plan live?</h2>
+            <p class="lede">
+                Each of these answers that question differently: in a sheet, on a time axis, behind a
+                minimal heads-up display, in a dedicated screen, or inside the collection itself. Same
+                nine points, same October afternoon, same 18:44 twilight — so what you're comparing is
+                the interface and nothing else.
+            </p>
+        </div>
+
+        <!-- ============ 1. ITINERARY SHEET ============ -->
+        <div>
+            <div class="variant-head">
+                <div class="variant-name">
+                    <h3>Itinerary sheet</h3>
+                    <span class="axis">reuses the details overlay</span>
+                </div>
+                <p class="premise">
+                    The route is a list of stops with times between them, in the same bottom sheet the
+                    object details already use — peek, full, minimised, with the map offsetting to keep
+                    the active pin visible.
+                </p>
+            </div>
+            <div class="variant">
+                <div>
+                    <p class="frame-label">Phone · sheet at full, and the same plan at peek</p>
+                    <div class="showcase">
+                    <div class="phone" style="aspect-ratio:316/806">
+                        <div class="statusbar"><span>9:41</span><span>Радиоателье</span></div>
+                        <div class="map" style="height: 148px">
+                            <svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice">
+                                <use href="#city"/>
+                                <path d="M52 232H81v-24h15v-12" fill="none" stroke="var(--teal)" stroke-width="4" stroke-linecap="round"/>
+                                <path d="M96 196v20h32v22" fill="none" stroke="var(--teal)" stroke-width="4" stroke-linecap="round"/>
+                                <path d="M128 238v-31h48v-1" fill="none" stroke="var(--teal)" stroke-width="4" stroke-linecap="round"/>
+                                <path d="M176 206v-65h38v-6" fill="none" stroke="var(--teal)" stroke-width="4" stroke-linecap="round"/>
+                                <path d="M214 135v6h23v37h21" fill="none" stroke="var(--teal)" stroke-width="4" stroke-linecap="round"/>
+                                <path d="M258 178v-37h38v-13" fill="none" stroke="var(--violet)" stroke-width="4" stroke-dasharray="1 8" stroke-linecap="round"/>
+                                <path d="M296 128v13h38v25" fill="none" stroke="var(--ink-faint)" stroke-width="3.5" stroke-linecap="round" opacity="0.5"/>
+                                <path d="M334 166V96h26" fill="none" stroke="var(--ink-faint)" stroke-width="3.5" stroke-linecap="round" opacity="0.5"/>
+                                <g font-family="ui-monospace, monospace" font-size="11" font-weight="700" text-anchor="middle">
+                                    <circle cx="52" cy="232" r="11" fill="var(--teal)"/><text x="52" y="236" fill="var(--map-street)">1</text>
+                                    <circle cx="96" cy="196" r="11" fill="var(--teal)"/><text x="96" y="200" fill="var(--map-street)">2</text>
+                                    <circle cx="128" cy="238" r="11" fill="var(--teal)"/><text x="128" y="242" fill="var(--map-street)">3</text>
+                                    <circle cx="176" cy="206" r="11" fill="var(--teal)"/><text x="176" y="210" fill="var(--map-street)">4</text>
+                                    <circle cx="214" cy="135" r="11" fill="var(--teal)"/><text x="214" y="139" fill="var(--map-street)">5</text>
+                                    <circle cx="258" cy="178" r="11" fill="var(--teal)"/><text x="258" y="182" fill="var(--map-street)">6</text>
+                                    <circle cx="296" cy="128" r="11" fill="var(--teal)"/><text x="296" y="132" fill="var(--map-street)">7</text>
+                                    <circle cx="334" cy="166" r="10" fill="var(--ink-faint)" opacity="0.55"/><text x="334" y="170" fill="var(--map-street)">8</text>
+                                    <circle cx="360" cy="96" r="10" fill="var(--ink-faint)" opacity="0.55"/><text x="360" y="100" fill="var(--map-street)">9</text>
+                                </g>
+                            </svg>
+                        </div>
+                        <div class="sheet" style="flex:1; min-height:0">
+                            <div class="grab"></div>
+                            <div class="sheet-head">
+                                <div class="sheet-title">
+                                    <h4>Маршрут</h4>
+                                    <div class="segmented"><span>Все</span><span class="on">Непосещённые</span></div>
+                                </div>
+                                <div class="summary"><span><b>9</b> точек</span><span><b>6,4 км</b></span><span>от <b>дома</b></span></div>
+                                <div class="summary"><span>последний кадр до <b>18:44</b></span></div>
+                                <p class="skipped">при добавлении пропущены: 3 посещённые, 1 снятая</p>
+                            </div>
+                            <div class="itin">
+                                <div class="stop">
+                                    <span class="badge origin">◆</span>
+                                    <div><div class="stop-name">Дом</div><div class="stop-sub">ул. Лесная, 4 · выход</div></div>
+                                    <span class="stop-time">15:22</span>
+                                </div>
+                                <div class="leg"><span class="leg-rail"></span><span class="leg-text"><span class="mode">пешком</span> 18 мин · 1,4 км</span></div>
+                                <div class="stop">
+                                    <span class="badge">1</span>
+                                    <div><div class="stop-name">Мозаика «Космос»</div><div class="stop-sub">ул. Гагарина, 14</div></div>
+                                    <span class="stop-time">15:40</span>
+                                </div>
+                                <div class="leg"><span class="leg-rail"></span><span class="leg-text"><span class="mode">пешком</span> 12 мин · 950 м</span></div>
+                                <div class="stop">
+                                    <span class="badge">2</span>
+                                    <div><div class="stop-name">Вывеска гастронома</div><div class="stop-sub">пр. Мира, 3</div></div>
+                                    <span class="stop-time">15:59</span>
+                                </div>
+                                <div class="leg"><span class="leg-rail"></span><span class="leg-text"><span class="mode">пешком</span> 8 мин · 620 м</span></div>
+                                <div class="swipe-row">
+                                    <div class="stop">
+                                        <span class="badge">3</span>
+                                        <div><div class="stop-name">Люк 1953 года</div><div class="stop-sub">Садовая, у дома 7</div></div>
+                                    </div>
+                                    <span class="skip-action">Пропустить</span>
+                                </div>
+                                <div class="leg"><span class="leg-rail transit"></span><span class="leg-text"><span class="mode transit">трамвай 7</span> 9 мин · ждать 4</span></div>
+                                <div class="stop">
+                                    <span class="badge gone">4</span>
+                                    <div><div class="stop-name">Витраж в подъезде <span class="gone-tag">снята</span></div><div class="stop-sub">Заводская, 21 · проверить</div></div>
+                                    <span class="stop-time">16:34</span>
+                                </div>
+                                <div class="twilight-row">
+                                    <b>18:44</b> сумерки — дальше без света
+                                </div>
+                                <div class="stop dim">
+                                    <span class="badge ghost">8</span>
+                                    <div><div class="stop-name">Табличка «Осторожно, дети»</div><div class="stop-sub">не успеваем на 20 мин</div></div>
+                                    <span class="stop-time">19:04</span>
+                                </div>
+                            </div>
+                            <div class="sheet-foot">
+                                <span class="btn">Начать маршрут</span>
+                                <span class="btn ghost">Обрезать</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="phone" style="max-width:262px; aspect-ratio:262/660">
+                        <div class="statusbar"><span>16:22</span><span>Радиоателье</span></div>
+                        <div class="map map-fill">
+                            <svg viewBox="96 4 214 396" preserveAspectRatio="xMidYMid slice">
+                                <use href="#city"/>
+                                <path d="M128 238v-31h48v-1M176 206v-65h38v-6" fill="none" stroke="var(--teal)" stroke-width="5" stroke-linecap="round"/>
+                                <path d="M214 135v6h23v37h21" fill="none" stroke="var(--teal)" stroke-width="5" stroke-linecap="round" opacity="0.5"/>
+                                <circle cx="150" cy="207" r="15" fill="var(--teal)" opacity="0.16"/>
+                                <circle cx="150" cy="207" r="6" fill="var(--teal)" stroke="var(--map-street)" stroke-width="2.5"/>
+                                <g font-family="ui-monospace, monospace" font-size="11" font-weight="700" text-anchor="middle">
+                                    <circle cx="176" cy="206" r="9" fill="var(--teal)"/><text x="176" y="209.5" font-size="9" fill="var(--map-street)">4</text>
+                                    <circle cx="214" cy="135" r="8" fill="var(--teal)" opacity="0.6"/><text x="214" y="138" font-size="9" fill="var(--map-street)">5</text>
+                                </g>
+                            </svg>
+                        </div>
+                        <div class="sheet">
+                            <div class="grab"></div>
+                            <div class="sheet-head" style="border-bottom:none; padding-bottom:12px">
+                                <div class="sheet-title">
+                                    <h4 style="font-size:13.5px">Витраж в подъезде</h4>
+                                    <span class="stop-time">6 мин</span>
+                                </div>
+                                <div class="summary"><span><b>7 из 9</b> до 18:44</span><span>осталось <b>2 ч 06</b></span></div>
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+                <div class="notes">
+                    <div class="note-block good">
+                        <p class="eyebrow">Works when</p>
+                        <p>You want the whole plan legible at once — order, times, modes, and the dusk line in a single scan. It inherits the sheet behaviour the app already ships: peek/full/minimised and the map offset that keeps the active pin clear of the panel.</p>
+                    </div>
+                    <div class="note-block bad">
+                        <p class="eyebrow">Falls down</p>
+                        <p>The sheet eats the map. Nine stops plus legs is a long scroll on a phone, and while walking you mostly need one number, not forty. Feasibility is buried at the bottom of the list rather than being the headline.</p>
+                    </div>
+                    <div class="note-block">
+                        <p class="eyebrow">Notable</p>
+                        <p>The twilight divider sits <em>inside</em> the list, so the stops that don't fit stay visible and dimmed instead of disappearing — the cut is legible as a decision, not a deletion. Swiping a row reveals <em>Пропустить</em>; <em>Обрезать</em> is that same action applied to everything past the divider at once.</p>
+                    </div>
+                    <span class="buildcost">Build <span class="dots"><i class="on"></i><i></i><i></i></span> lowest — reuses an existing pattern</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ 2. LIGHT BUDGET ============ -->
+        <div>
+            <div class="variant-head">
+                <div class="variant-name">
+                    <h3>Light budget</h3>
+                    <span class="axis">feasibility as the headline</span>
+                </div>
+                <p class="premise">
+                    The afternoon drawn as a bar. Stops and legs are blocks along a time axis, twilight is a
+                    wall, and everything past it is hatched out. The question "will I make it" is answered
+                    before you read a single stop name.
+                </p>
+            </div>
+            <div class="variant">
+                <div>
+                    <p class="frame-label">Phone · map with time strip</p>
+                    <div class="showcase">
+                    <div class="phone" style="aspect-ratio:316/548">
+                        <div class="statusbar"><span>9:41</span><span>Радиоателье</span></div>
+                        <div class="map" style="height:262px">
+                            <svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice">
+                                <use href="#city"/>
+                                <path d="M52 232H81v-24h15v-12M96 196v20h32v22M128 238v-31h48v-1M176 206v-65h38v-6M214 135v6h23v37h21" fill="none" stroke="var(--teal)" stroke-width="4.5" stroke-linecap="round"/>
+                                <path d="M258 178v-37h38v-13" fill="none" stroke="var(--violet)" stroke-width="4.5" stroke-dasharray="1 8" stroke-linecap="round"/>
+                                <path d="M296 128v13h38v25M334 166V96h26" fill="none" stroke="var(--indigo)" stroke-width="4" stroke-linecap="round" opacity="0.45"/>
+                                <g font-family="ui-monospace, monospace" font-size="11" font-weight="700" text-anchor="middle">
+                                    <circle cx="52" cy="232" r="11" fill="var(--teal)"/><text x="52" y="236" fill="var(--map-street)">1</text>
+                                    <circle cx="96" cy="196" r="11" fill="var(--teal)"/><text x="96" y="200" fill="var(--map-street)">2</text>
+                                    <circle cx="128" cy="238" r="11" fill="var(--teal)"/><text x="128" y="242" fill="var(--map-street)">3</text>
+                                    <circle cx="176" cy="206" r="11" fill="var(--teal)"/><text x="176" y="210" fill="var(--map-street)">4</text>
+                                    <circle cx="214" cy="135" r="11" fill="var(--teal)"/><text x="214" y="139" fill="var(--map-street)">5</text>
+                                    <circle cx="258" cy="178" r="11" fill="var(--teal)"/><text x="258" y="182" fill="var(--map-street)">6</text>
+                                    <circle cx="296" cy="128" r="11" fill="var(--teal)"/><text x="296" y="132" fill="var(--map-street)">7</text>
+                                    <circle cx="334" cy="166" r="10" fill="var(--indigo)" opacity="0.5"/><text x="334" y="170" fill="var(--map-street)">8</text>
+                                    <circle cx="360" cy="96" r="10" fill="var(--indigo)" opacity="0.5"/><text x="360" y="100" fill="var(--map-street)">9</text>
+                                </g>
+                            </svg>
+                            <div class="mapctl"><i>◎</i><i>⌖</i></div>
+                        </div>
+                        <div class="sheet">
+                            <div class="budget">
+                                <div class="budget-head">
+                                    <strong>7 из 9 до сумерек</strong>
+                                    <span>18:44</span>
+                                </div>
+                                <div class="bar">
+                                    <span class="seg walk" style="width:9%"></span>
+                                    <span class="seg stopseg" style="width:5%"></span>
+                                    <span class="seg walk" style="width:8%"></span>
+                                    <span class="seg stopseg" style="width:6%"></span>
+                                    <span class="seg walk" style="width:8%"></span>
+                                    <span class="seg stopseg" style="width:5%"></span>
+                                    <span class="seg transit" style="width:9%"></span>
+                                    <span class="seg stopseg" style="width:6%"></span>
+                                    <span class="seg walk" style="width:8%"></span>
+                                    <span class="seg stopseg" style="width:6%"></span>
+                                    <span class="seg walk" style="width:7%"></span>
+                                    <span class="seg stopseg" style="width:6%"></span>
+                                    <span class="seg past" style="width:17%"></span>
+                                    <span class="sunmark" style="left:71%"></span>
+                                    <span class="wall" style="left:83%"></span>
+                                    <span class="nowmark" style="left:0"></span>
+                                </div>
+                                <div class="ticks"><span>15:22</span><span>16:20</span><span>17:20</span><span>18:12</span><span>19:00</span></div>
+                                <div class="legend">
+                                    <span><i style="background:var(--card); box-shadow:inset 0 0 0 2px var(--teal)"></i>дом</span>
+                                    <span><i style="background:var(--teal)"></i>точка</span>
+                                    <span><i style="background:color-mix(in oklab, var(--teal) 45%, transparent)"></i>пешком</span>
+                                    <span><i style="background:var(--violet)"></i>транспорт</span>
+                                    <span><i style="background:var(--amber)"></i>закат</span>
+                                    <span><i style="background:var(--indigo)"></i>сумерки</span>
+                                </div>
+                            </div>
+                            <div class="sheet-foot">
+                                <span class="btn">Начать</span>
+                                <span class="btn ghost">Список</span>
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+                <div class="notes">
+                    <div class="note-block good">
+                        <p class="eyebrow">Works when</p>
+                        <p>Deciding whether a plan is worth starting. The shape of the afternoon is visible instantly: where the long legs are, which stop is the tram, how much bar is left past the wall. It makes the trade-off — drop two stops or start earlier — a direct manipulation rather than a calculation.</p>
+                    </div>
+                    <div class="note-block bad">
+                        <p class="eyebrow">Falls down</p>
+                        <p>It shows time but not identity. Which two stops are the ones you'd lose? The bar can't say without a list underneath, so this rarely survives alone — it wants to be a header for something else.</p>
+                    </div>
+                    <div class="note-block">
+                        <p class="eyebrow">Notable</p>
+                        <p>Sunset and civil twilight are separate marks, which makes the half-hour of usable light after sundown a visible resource rather than a hidden assumption.</p>
+                    </div>
+                    <span class="buildcost">Build <span class="dots"><i class="on"></i><i class="on"></i><i></i></span> medium — a new component, but pure data you already have</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ 3. WALKING HUD ============ -->
+        <div>
+            <div class="variant-head">
+                <div class="variant-name">
+                    <h3>Walking HUD</h3>
+                    <span class="axis">optimised for in-motion</span>
+                </div>
+                <p class="premise">
+                    Almost no chrome. One line for what's next, one line for whether the day still works,
+                    and the map doing everything else. Built for glancing at while moving, not for planning.
+                </p>
+            </div>
+            <div class="variant">
+                <div>
+                    <p class="frame-label">Phone · walk in progress</p>
+                    <div class="showcase">
+                    <div class="phone">
+                        <div class="statusbar"><span>16:22</span><span>Радиоателье</span></div>
+                        <div class="map map-fill" style="position:relative">
+                            <svg viewBox="88 0 200 400" preserveAspectRatio="xMidYMid slice">
+                                <use href="#city"/>
+                                <path d="M52 232H81v-24h15v-12M96 196v20h32v22" fill="none" stroke="var(--ink-faint)" stroke-width="4" stroke-linecap="round" opacity="0.4"/>
+                                <path d="M128 238v-31h48v-1M176 206v-65h38v-6" fill="none" stroke="var(--teal)" stroke-width="5" stroke-linecap="round"/>
+                                <path d="M214 135v6h23v37h21" fill="none" stroke="var(--teal)" stroke-width="5" stroke-linecap="round" opacity="0.55"/>
+                                <circle cx="150" cy="207" r="17" fill="var(--teal)" opacity="0.16"/>
+                                <circle cx="150" cy="207" r="6.5" fill="var(--teal)" stroke="var(--map-street)" stroke-width="2.5"/>
+                                <g font-family="ui-monospace, monospace" font-size="11" font-weight="700" text-anchor="middle">
+                                    <circle cx="128" cy="238" r="8" fill="var(--ink-faint)" opacity="0.5"/><text x="128" y="241" font-size="9" fill="var(--map-street)">3</text>
+                                    <circle cx="176" cy="206" r="9" fill="var(--teal)"/><text x="176" y="209.5" font-size="9" fill="var(--map-street)">4</text>
+                                    <circle cx="214" cy="135" r="8" fill="var(--teal)" opacity="0.6"/><text x="214" y="138" font-size="9" fill="var(--map-street)">5</text>
+                                </g>
+                            </svg>
+                            <div class="hud-top">
+                                <span class="hud-next">Далее: Панно у ДК</span>
+                                <span class="hud-eta num">14 мин · 1,1 км</span>
+                            </div>
+                            <div class="hud-toast">Идёте на 8% медленнее — время пересчитано</div>
+                            <div class="mapctl" style="bottom:172px"><i>◎</i><i>⌖</i></div>
+                            <div class="arrive">
+                                <span class="arrive-title">Вы на месте · Витраж в подъезде</span>
+                                <div class="arrive-actions">
+                                    <span>Посещена</span>
+                                    <span>Снята</span>
+                                    <span>Пропустить</span>
+                                </div>
+                            </div>
+                            <div class="hud-bottom">
+                                <span class="hud-stat num"><b>7 из 9</b> до 18:44</span>
+                                <span class="hud-stat num">осталось 2 ч 06</span>
+                                <span class="chev">⌃</span>
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+                <div class="notes">
+                    <div class="note-block good">
+                        <p class="eyebrow">Works when</p>
+                        <p>You're actually out walking with the phone in one hand. Everything not needed in the next six minutes is gone, the map stays legible at arm's length, and the live loop has somewhere quiet to report — the pace correction reads as reassurance rather than noise.</p>
+                    </div>
+                    <div class="note-block bad">
+                        <p class="eyebrow">Falls down</p>
+                        <p>Useless for building a route. There's nowhere to see the whole plan, compare stops, or understand <em>which</em> two you're about to lose. It's a mode, not a screen — and shipping it alone would mean shipping half a feature.</p>
+                    </div>
+                    <div class="note-block">
+                        <p class="eyebrow">Notable</p>
+                        <p>Arriving offers three actions and takes none of them. Walking to a point never marks it visited — the object may be gone, or unreachable, and only the person standing there knows which. Being on the spot is the best moment in the app to log that something has disappeared.</p>
+                    </div>
+                    <span class="buildcost">Build <span class="dots"><i class="on"></i><i></i><i></i></span> low — but only after the sheet exists</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ 4. ROUTE PLANNER ============ -->
+        <div>
+            <div class="variant-head">
+                <div class="variant-name">
+                    <h3>Route planner</h3>
+                    <span class="axis">editing is first-class</span>
+                </div>
+                <p class="premise">
+                    A dedicated screen for building the walk before you leave: reorder by hand, set the
+                    start time and the per-stop allowance, switch scope, and watch the totals move.
+                </p>
+            </div>
+            <div class="variant wide">
+                <div>
+                    <p class="frame-label">Wide viewport · planning screen</p>
+                    <div class="showcase">
+                    <div class="desktop">
+                        <div class="chrome-bar"><i></i><i></i><i></i></div>
+                        <div class="planner">
+                            <div class="planner-side">
+                                <div class="planner-head">
+                                    <span class="collection-name"><i class="swatch"></i>Мозаики Ленинского района</span>
+                                    <div class="segmented"><span>Все 24</span><span class="on">Непосещённые 9</span></div>
+                                    <div class="field-row">
+                                        <span class="field"><label>Откуда</label><b>Дом</b></span>
+                                        <span class="field"><label>Выход</label><b>15:22</b></span>
+                                        <span class="field"><label>Точка</label><b>7 мин</b></span>
+                                    </div>
+                                    <p class="skipped">14 посещённых, 1 снятая — пропущены</p>
+                                </div>
+                                <div class="planner-list">
+                                    <div class="stop"><span class="badge origin">◆</span><div><div class="stop-name">Дом · ул. Лесная, 4</div><div class="stop-sub">15:22 · выход</div></div></div>
+                                    <div class="leg"><span class="leg-rail"></span><span class="leg-text"><span class="mode">пешком</span> 18 мин</span></div>
+                                    <div class="stop"><span class="badge">1</span><div><div class="stop-name">Мозаика «Космос»</div><div class="stop-sub">15:40 · ул. Гагарина, 14</div></div><span class="drag">⣿</span></div>
+                                    <div class="leg"><span class="leg-rail"></span><span class="leg-text"><span class="mode">пешком</span> 12 мин</span></div>
+                                    <div class="stop"><span class="badge">2</span><div><div class="stop-name">Вывеска гастронома</div><div class="stop-sub">15:59 · пр. Мира, 3</div></div><span class="drag">⣿</span></div>
+                                    <div class="leg"><span class="leg-rail transit"></span><span class="leg-text"><span class="mode transit">трамвай 7</span> 9 мин</span></div>
+                                    <div class="stop"><span class="badge">3</span><div><div class="stop-name">Люк 1953 года</div><div class="stop-sub">16:20 · Садовая, 7</div></div><span class="drag">⣿</span></div>
+                                    <div class="twilight-row"><b>18:44</b> — дальше без света</div>
+                                    <div class="stop dim"><span class="badge ghost">8</span><div><div class="stop-name">Табличка «Осторожно, дети»</div><div class="stop-sub">19:04 · не помещается</div></div><span class="drag">⣿</span></div>
+                                </div>
+                                <div class="planner-foot">
+                                    <div class="summary"><span><b>6,4 км</b></span><span>последний кадр до <b>18:44</b></span></div>
+                                    <div style="display:flex; gap:8px">
+                                        <span class="btn">Сохранить</span>
+                                        <span class="btn ghost">Пересобрать</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="map">
+                                <svg viewBox="36 8 328 380" preserveAspectRatio="xMidYMid slice">
+                                    <use href="#city"/>
+                                    <path d="M100 320V277H81v-45h-29" fill="none" stroke="var(--teal)" stroke-width="4.5" stroke-linecap="round"/>
+                                    <path d="M52 232H81v-24h15v-12M96 196v20h32v22M128 238v-31h48v-1M176 206v-65h38v-6M214 135v6h23v37h21" fill="none" stroke="var(--teal)" stroke-width="4.5" stroke-linecap="round"/>
+                                    <path d="M258 178v-37h38v-13" fill="none" stroke="var(--violet)" stroke-width="4.5" stroke-dasharray="1 8" stroke-linecap="round"/>
+                                    <path d="M296 128v13h38v25M334 166V96h26" fill="none" stroke="var(--indigo)" stroke-width="4" stroke-linecap="round" opacity="0.45"/>
+                                    <g transform="translate(100 320) rotate(45)"><rect x="-7.5" y="-7.5" width="15" height="15" rx="2.5" fill="var(--map-street)" stroke="var(--teal)" stroke-width="3"/></g>
+                                    <g font-family="ui-monospace, monospace" font-size="10" font-weight="700" text-anchor="middle">
+                                        <circle cx="52" cy="232" r="9" fill="var(--teal)"/><text x="52" y="236" fill="var(--map-street)">1</text>
+                                        <circle cx="96" cy="196" r="9" fill="var(--teal)"/><text x="96" y="200" fill="var(--map-street)">2</text>
+                                        <circle cx="128" cy="238" r="9" fill="var(--teal)"/><text x="128" y="242" fill="var(--map-street)">3</text>
+                                        <circle cx="176" cy="206" r="9" fill="var(--teal)"/><text x="176" y="210" fill="var(--map-street)">4</text>
+                                        <circle cx="214" cy="135" r="9" fill="var(--teal)"/><text x="214" y="139" fill="var(--map-street)">5</text>
+                                        <circle cx="258" cy="178" r="9" fill="var(--teal)"/><text x="258" y="182" fill="var(--map-street)">6</text>
+                                        <circle cx="296" cy="128" r="9" fill="var(--teal)"/><text x="296" y="132" fill="var(--map-street)">7</text>
+                                        <circle cx="334" cy="166" r="8.5" fill="var(--indigo)" opacity="0.5"/><text x="334" y="170" fill="var(--map-street)">8</text>
+                                        <circle cx="360" cy="96" r="8.5" fill="var(--indigo)" opacity="0.5"/><text x="360" y="100" fill="var(--map-street)">9</text>
+                                    </g>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+                <div class="notes">
+                    <div class="note-block good">
+                        <p class="eyebrow">Works when</p>
+                        <p>Planning at a desk the night before. Every input that shapes the route is visible and adjustable at once, drag-to-reorder gives the fixed-order rule an honest escape hatch, and the totals update as you fiddle.</p>
+                    </div>
+                    <div class="note-block bad">
+                        <p class="eyebrow">Falls down</p>
+                        <p>It's a second home for the map, which the app doesn't otherwise have — new route, new layout, new state to keep in sync with the main map. And nobody plans this way on a phone in the street.</p>
+                    </div>
+                    <div class="note-block">
+                        <p class="eyebrow">Notable</p>
+                        <p>Manual reorder is the cheapest possible answer to "the cut dropped the wrong stops": no re-solve, no extra request, just drag the one you care about earlier.</p>
+                    </div>
+                    <span class="buildcost">Build <span class="dots"><i class="on"></i><i class="on"></i><i class="on"></i></span> highest — a new screen and a second map host</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ 5. COLLECTION CARD ============ -->
+        <div>
+            <div class="variant-head">
+                <div class="variant-name">
+                    <h3>Fill from collections</h3>
+                    <span class="axis">collections as a source</span>
+                </div>
+                <p class="premise">
+                    No route mode at all. Collections keep their counts, and each one can pour its points
+                    into the walk you're assembling — all of them, or only the unvisited ones. A tray along
+                    the bottom holds what you have gathered so far.
+                </p>
+            </div>
+            <div class="variant">
+                <div>
+                    <p class="frame-label">Phone · collections list</p>
+                    <div class="showcase">
+                    <div class="phone" style="aspect-ratio:316/592">
+                        <div class="statusbar"><span>9:41</span><span>Радиоателье</span></div>
+                        <div class="sheet" style="flex:1; min-height:0; border-radius:0; box-shadow:none; border-top:none">
+                            <div class="sheet-head" style="padding-top:12px">
+                                <div class="sheet-title"><h4>Коллекции</h4><span class="skipped">закат 18:12</span></div>
+                            </div>
+                            <div class="cardlist">
+                                <div class="ccard open">
+                                    <div class="ccard-body">
+                                        <div class="ccard-top">
+                                            <i class="swatch"></i>
+                                            <h5>Мозаики Ленинского района</h5>
+                                            <span class="walkbtn">В прогулку</span>
+                                        </div>
+                                        <span class="ccard-counts">24 точки · 9 непосещённых · 1 снятая</span>
+                                        <span class="feas">9 непосещённых добавлено в прогулку</span>
+                                    </div>
+                                    <div class="ccard-expand">
+                                        <div class="segmented"><span>Все 24</span><span class="on">Непосещённые 9</span></div>
+                                        <div class="summary"><span>добавить <b>9</b></span><span>снятые пропускаются</span></div>
+                                    </div>
+                                </div>
+                                <div class="ccard">
+                                    <div class="ccard-body">
+                                        <div class="ccard-top">
+                                            <i class="swatch" style="background:var(--violet)"></i>
+                                            <h5>Довоенные вывески</h5>
+                                            <span class="walkbtn">В прогулку</span>
+                                        </div>
+                                        <span class="ccard-counts">31 точка · 22 непосещённых</span>
+                                        <span class="feas tight">22 непосещённых — в прогулку влезет 16</span>
+                                    </div>
+                                </div>
+                                <div class="ccard">
+                                    <div class="ccard-body">
+                                        <div class="ccard-top">
+                                            <i class="swatch" style="background:var(--amber)"></i>
+                                            <h5>Люки и решётки</h5>
+                                            <span class="walkbtn">В прогулку</span>
+                                        </div>
+                                        <span class="ccard-counts">12 точек · всё посещено</span>
+                                        <span class="ccard-counts">добавлять нечего — пройдено полностью</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="sheet-foot" style="margin-top:auto">
+                                <span class="hud-stat num" style="flex:1">в прогулке <b>9</b> / 25</span>
+                                <span class="btn" style="flex:0 0 auto">Открыть</span>
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+                <div class="notes">
+                    <div class="note-block good">
+                        <p class="eyebrow">Works when</p>
+                        <p>Gathering a walk out of what you already keep. The all/unvisited choice sits exactly where the counts already are, two collections can feed the same walk, and the tray keeps the running total against the 25-marker limit permanently in view.</p>
+                    </div>
+                    <div class="note-block bad">
+                        <p class="eyebrow">Falls down</p>
+                        <p>It only answers where markers come <em>from</em>. The set still needs a screen of its own to order, time, and trim — this is a source, not the feature. And a collection bigger than the limit needs the user to choose what to leave out, which a card cannot do for them.</p>
+                    </div>
+                    <div class="note-block">
+                        <p class="eyebrow">Notable</p>
+                        <p>Filling copies markers rather than linking them, so this never has to answer "what happens to my walk if the collection changes". The fully-visited card is the empty state done right — it reports an accomplishment instead of offering a route.</p>
+                    </div>
+                    <span class="buildcost">Build <span class="dots"><i class="on"></i><i></i><i></i></span> low — list rows plus a tray, once collections exist</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="compare" class="stack">
+        <div class="stack-sm measure">
+            <p class="eyebrow">Side by side</p>
+            <h2>What each one is actually for</h2>
+        </div>
+        <div class="tablewrap">
+            <table>
+                <thead>
+                    <tr><th>Direction</th><th>Where it lives</th><th>Best at</th><th>Reuses</th><th>Build</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Itinerary sheet</strong></td>
+                        <td>Existing overlay</td>
+                        <td>Reading the whole plan</td>
+                        <td>Details sheet, map offsets</td>
+                        <td class="cost">low</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Light budget</strong></td>
+                        <td>Strip under the map</td>
+                        <td>Deciding whether to go</td>
+                        <td>Nothing — new component</td>
+                        <td class="cost">medium</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Walking HUD</strong></td>
+                        <td>Over the map</td>
+                        <td>Being out in the street</td>
+                        <td>Map control tokens</td>
+                        <td class="cost">low</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Route planner</strong></td>
+                        <td>Its own screen</td>
+                        <td>Building and editing</td>
+                        <td>Nothing — second map host</td>
+                        <td class="cost">high</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Fill from collections</strong></td>
+                        <td>Collections list</td>
+                        <td>Gathering what to walk</td>
+                        <td>Collection list rows</td>
+                        <td class="cost">medium</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section id="reco" class="stack">
+        <div class="stack-sm measure">
+            <p class="eyebrow">Recommendation</p>
+            <h2>It isn't a choice of five</h2>
+        </div>
+        <div class="reco">
+            <p class="reco-lead">
+                Three of these are answering different questions, and the app needs all three answers.
+                <b>Collection card</b> to choose what to walk, <b>itinerary sheet</b> to read the plan,
+                <b>walking HUD</b> as that sheet minimised once you set off. The other two are best
+                harvested rather than shipped.
+            </p>
+            <ul class="plain">
+                <li><strong>Take the sheet as the surface.</strong> The app already runs a bottom sheet on narrow viewports and a 424px side panel on wide ones, with map offsets to match. Route planning gets a proven responsive answer for free, and a second map host never has to exist.</li>
+                <li><strong>Take the light budget as a component, not a screen.</strong> Its time bar belongs in the sheet header, where it turns feasibility into the first thing you read while the list underneath supplies the identities the bar can't show.</li>
+                <li><strong>Treat the HUD as the sheet's minimised state.</strong> Not a separate design — the same plan, collapsed to the next stop and the day's verdict, which is exactly what the existing minimised/peek/full progression is for.</li>
+                <li><strong>Take drag-to-reorder from the planner, leave the screen.</strong> Manual reorder is the honest escape hatch for a fixed-order route, and it works just as well inside the sheet at full height.</li>
+                <li><strong>Put skip on the row, not in a menu.</strong> Dropping a stop is the most common edit a walk needs, and it is safe to allow mid-walk — removing a point doesn't reorder the ones left, so the fixed-order rule survives it. The twilight trim is the same action in bulk.</li>
+                <li><strong>Don't plan the way home.</strong> Daylight constrains the last photograph, not the walk back — so the route ends at the last marker and the deadline protects the light, nothing else. The API still insists on a destination, so the free local pass names it: the route ends where that ordering ends.</li>
+                <li><strong>Make the walk set the only thing you route.</strong> Collections, the map, and search all become sources that pour into one transient set — which means the feature ships without waiting for collections, and two collections can feed a single walk.</li>
+                <li><strong>Give the set a permanent tray.</strong> It's what you're building, it needs a running count against the 25-marker limit, and it's the entry point to every other surface here.</li>
+            </ul>
+            <p class="lede" style="font-size:14px">
+                Watch the per-card estimates in the collection list — a truthful "fits before dark" badge on
+                every collection implies routing every collection. Start with a straight-line estimate and a
+                hedged label, and only pay for precision on the collection the user actually opens.
+            </p>
+        </div>
+    </section>
+
+    <section class="stack">
+        <div class="stack-sm measure">
+            <p class="eyebrow">Still open</p>
+            <h2>Decide before building</h2>
+        </div>
+        <ul class="plain measure">
+            <li><strong>Sunset or civil twilight as the deadline?</strong> The mocks schedule against twilight at 18:44 and mark sunset at 18:12 — about half an hour of usable light that's worth several stops.</li>
+            <li><strong>What happens past 25 points?</strong> One request caps there. Split the collection, cap the route, or route only what's near the start — a 60-point collection needs an answer.</li>
+            <li><strong>Is transit worth building in these cities,</strong> or is walk-versus-taxi the only distinction that matters in practice? The leg from home is where to look first — it's usually the longest hop in the route.</li>
+            <li><strong>How much does the derived endpoint cost?</strong> The local pass fixes the last stop before Google optimises anything, so its two candidate rules — end of the nearest-neighbour pass, or farthest point from the start — are worth comparing on real clusters.</li>
+            <li><strong>Does the collection list show feasibility for every collection,</strong> or only the one you open? The first is better UX and a real cost question.</li>
+        </ul>
+    </section>
+
+    <footer>
+        <span>Radioatelier archive · route planning design brief</span>
+        <span>Mocks are static. Full write-up in docs/route-planning.md</span>
+    </footer>
+</main>
+</body>
+</html>
