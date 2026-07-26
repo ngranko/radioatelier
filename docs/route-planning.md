@@ -260,12 +260,41 @@ into one. There is exactly one thing that gets routed. Everything else is a way 
 
 Transient means "for this walk", not "until the page reloads". The set should survive a reload
 (`localStorage`, like the existing map position keys), because a walk is assembled over minutes and
-often across app restarts. One active set at a time keeps the model simple. Saving a walk set
-permanently is the same gesture as creating a collection from it — the inverse of filling — and
-belongs with collections, not here.
+often across app restarts. One active set at a time keeps the model simple.
 
 Only archive objects can enter the set. Search returns Google Places results too, and those are not
 markers; they can be used as an origin, never as a stop.
+
+### Saving a set as a collection
+
+**Decided: a walk set can be saved as a collection.** It is the exact inverse of filling — the same
+list of marker IDs travelling the other way — so once collections exist the whole feature is a
+create-collection call with pre-filled membership, a name field, and a button in the tray. Nothing
+new is needed on either side.
+
+The cost is genuinely near zero, but it is **near zero conditional on collections existing**. It is
+the one part of route planning that cannot ship before them, which is fine, because it is also the
+one part nobody needs on day one.
+
+Two things must be explicit or the feature will mislead:
+
+- **Saving copies membership, not the route.** A routed set has an order — the optimised sequence,
+  the origin, the departure time. A collection is a membership set. So "save as collection" answers
+  *"these places were worth grouping"*, and loses the sequence. Naming the action carefully matters
+  more here than the implementation does.
+- **It is a snapshot, not a link.** Later edits to the walk set do not reach the saved collection,
+  and edits to the collection do not reach the walk. This is the same guarantee filling already
+  makes, applied in the other direction.
+
+That leaves two different save actions, which should stay distinct rather than collapsing into one:
+
+| Action                    | Saves                                    | Answers                            |
+| ------------------------- | ---------------------------------------- | ---------------------------------- |
+| Save set as collection    | Marker IDs                               | "These places are worth keeping"   |
+| Save plan (phase 6)       | Marker IDs, order, origin, settings       | "This walk, resumable"             |
+
+A sensible default name — the date, or the collection it was mostly filled from — keeps the action
+one tap rather than a form.
 
 ## Filling the set: all markers vs unvisited only
 
@@ -594,8 +623,7 @@ optimisation turns out to be worth that.
 
 **Phase 0 — product decisions.** Sunset vs civil twilight. "Optimal" means shortest total time or
 most stops before the deadline. Whether taxi is offered at all (there is no fare API — we can show
-time, not price). Default minutes per stop. Whether a walk set can be saved as a collection, or
-stays strictly single-use.
+time, not price). Default minutes per stop.
 
 **Phase 1 — the walk set, no backend.** The set itself: a persistent tray showing what is in it and
 how close it is to the 25 limit, "add to walk" on the details overlay, removal from the tray,
@@ -629,7 +657,8 @@ transit attribution notices.
 
 **Phase 6 — persistence and sharing.** Save a plan as our own record (marker IDs + order + settings,
 no Google-derived content), reopen and recompute. Saving a walk set *as a collection* belongs here
-too, being the inverse of phase 1b. An in-progress walk should survive a reload — the plan plus
+too — the inverse of phase 1b, and equally cheap once collections exist, provided the two save
+actions stay distinct. An in-progress walk should survive a reload — the plan plus
 which stops are done, kept in `localStorage`.
 
 **Phase 7 — optional escalation.** Re-solve rather than truncate at the deadline **at planning time
