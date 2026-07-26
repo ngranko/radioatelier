@@ -178,8 +178,17 @@ product decision that costs nothing technically and changes how many stops fit.
 
 Related: truncating the tail of an optimised route is not the same as *choosing which stops to drop*.
 The correct model is a prize-collecting / orienteering problem — maximise stops visited before the
-deadline, which may pick a different subset entirely, not just a prefix. Truncation is a fine first
-version; if it feels dumb in practice, re-solving over the reduced set is the fix.
+deadline, which may pick a different subset entirely, not just a prefix.
+
+Because the order is fixed once the walk starts (see [Live re-estimation](#live-re-estimation)),
+this splits cleanly by phase. **During the walk** the cut-off is a prefix truncation by definition —
+the tail is whatever the fixed order left for last — and that is the intended behaviour, not a
+limitation to fix. **Before the walk starts** the solver is free to choose a better subset, so the
+orienteering treatment, if it is ever worth building, belongs there and only there.
+
+The cost of the fixed-order rule is that the stops dropped at the deadline are the ones that happen
+to be last, which may not be the ones the user would have sacrificed. That is precisely what the
+offered "re-plan the rest" exists to resolve, at the user's discretion rather than automatically.
 
 ### 7. Google Maps Platform terms restrict storing what we compute
 
@@ -220,13 +229,20 @@ encoding one author's guess for everyone.
 
 ## Live re-estimation
 
+**Decided: the order never changes on its own.** Once a route is computed, the sequence of stops is
+fixed for the rest of the walk unless the user explicitly asks to re-plan. Everything below updates
+*numbers* — arrival times, the cut-off, the polyline from where the user actually is — and nothing
+below touches the sequence. This is a product rule, not an optimisation detail, and it is what makes
+the live loop safe to run continuously.
+
 Three tiers, only the last of which costs money:
 
-| Tier | Trigger                                       | What it does                                                        | Cost |
-| ---- | --------------------------------------------- | ------------------------------------------------------------------- | ---- |
-| 1    | Every position update                         | Rescale the current leg's remaining time from distance covered      | Free |
-| 2    | Every position update                         | Apply observed pace + observed dwell to all remaining legs and stops | Free |
-| 3    | Off-route, large divergence, or manual re-plan | Refetch geometry and durations for the remainder                    | Paid |
+| Tier | Trigger                                       | What it does                                                        | Order | Cost |
+| ---- | --------------------------------------------- | ------------------------------------------------------------------- | ----- | ---- |
+| 1    | Every position update                         | Rescale the current leg's remaining time from distance covered      | Kept  | Free |
+| 2    | Every position update                         | Apply observed pace + observed dwell to all remaining legs and stops | Kept  | Free |
+| 3    | Off-route beyond threshold                    | Refetch geometry and durations from the current position onward      | Kept  | Paid |
+| —    | User asks to re-plan                          | Re-enter the pipeline for the remaining stops                        | **May change** | Paid |
 
 Tier 1 and 2 are the important insight: **after the first plan is computed, we already hold the leg
 durations and the polyline, so keeping the estimate honest is pure local arithmetic.** Remaining
@@ -239,16 +255,25 @@ generic pace, and someone stopping to photograph things moves differently. After
 the ratio of predicted to actual leg time is a better model of *this* user than any API estimate,
 and it improves every remaining number in the plan.
 
-Tier 3 should fire on: sustained distance from the polyline beyond a threshold (the user took a
-different street, or the order no longer matches reality), a manual "re-plan from here", or a stop
-being skipped or reordered. It should be rate-limited by a floor — no more than one refresh every
-few minutes — so a bad GPS patch cannot trigger a burst.
+Tier 3 is worth keeping even under the fixed-order rule, because "the walking path from here is
+wrong" is a different problem from "the sequence is wrong". If the user takes a different street or
+cuts through a courtyard, the stored polyline no longer starts where they are and its remaining
+duration is meaningless — so tier 3 refetches the path and durations **through the same stops in the
+same order**, from the current position. It should fire on sustained distance from the polyline
+beyond a threshold, and be rate-limited by a floor of a few minutes so a bad GPS patch cannot
+trigger a burst.
 
-**Re-estimating is not re-ordering.** Tiers 1–3 all preserve the remaining order. Changing the
-order mid-walk because the user fell behind is a different, more expensive operation and, more
-importantly, a confusing one — a route that silently reshuffles while you are walking it is worse
-than one that is honestly late. Re-ordering should be an explicit user action ("re-plan the rest"),
-which then re-enters the normal pipeline for the remaining stops only.
+**Re-estimating is not re-ordering.** A route that silently reshuffles while you are walking it is
+worse than one that is honestly late: the user has already decided where they are going next, may
+be able to see it, and a plan that keeps rewriting itself cannot be trusted or memorised.
+Re-ordering is therefore an explicit action only ("re-plan the rest"), and it re-enters the pipeline
+for the remaining stops alone — stops already visited never come back.
+
+The one place this needs care is discoverability. Falling behind is exactly when re-ordering might
+help, and the user cannot ask for something they do not know exists. So **offer** it at the moment
+it becomes relevant — when the cut-off first moves, the panel says "3 stops won't fit" alongside a
+"re-plan the rest" affordance — and then leave it alone. That satisfies both halves: nothing changes
+unless asked, but the user is asked at the point where the answer matters.
 
 ## Recommended architecture
 
@@ -354,8 +379,8 @@ no Google-derived content), reopen and recompute. This is the natural point to c
 `collections` from [collection-access-control.md](./collection-access-control.md). An in-progress
 walk should also survive a reload here — the plan plus which stops are done, kept in `localStorage`.
 
-**Phase 7 — optional escalation.** Re-solve rather than truncate at the deadline; Route Optimization
-API or matrices if the heuristic proves inadequate in real use.
+**Phase 7 — optional escalation.** Re-solve rather than truncate at the deadline **at planning time
+only**; Route Optimization API or matrices if the heuristic proves inadequate in real use.
 
 Phases 1–4 are independently shippable and already deliver most of the value; phase 5 is the one
 carrying the real technical risk.
