@@ -325,17 +325,27 @@ is an open path: origin, then the markers, and it stops when the last one is don
 There is one non-obvious consequence. `computeRoutes` **requires** a destination, and
 `optimizeWaypointOrder` reorders only the intermediates while holding both endpoints fixed. So an
 open path still needs someone to decide *which marker ends the route* — the API will not choose it.
-Two ways to do that:
 
-- **Derive it from stage A.** The free local ordering already produces a plausible sequence from the
-  origin; take its last stop as the destination and pass the rest as intermediates. Cheap, uses a
-  stage that already runs, and keeps the endpoint sensible.
-- **Ask for a loop and discard the tail.** Set destination = origin so the optimiser has full
-  freedom, then drop the closing leg from the schedule and the map. The order is then optimal for a
-  loop rather than for a path, which is usually close but not the same thing.
+**Decided: the destination is derived from stage A.** The free local ordering already walks the set
+from the origin; its last stop becomes the destination and everything between goes in as
+intermediates. Asking for a loop and discarding the closing leg is explicitly rejected — it
+optimises for a shape the user is not walking.
 
-The first is the better default; the second is worth measuring against it if the endpoint choice
-turns out to matter more than expected.
+This changes stage A's status in the pipeline. It was a throwaway preview and an offline fallback;
+it is now **a required input to stage B**, because stage B cannot be called without the endpoint
+stage A picks. The two stages are sequential rather than alternatives, and stage A's output quality
+now has a real effect on the final route rather than being discarded the moment the API answers.
+
+Two things follow from that, both cheap:
+
+- **The endpoint heuristic deserves its own attention.** "Last stop of the nearest-neighbour pass"
+  is the obvious rule, but "farthest marker from the origin" is often the better one for a walk that
+  fans outward. Both are pure functions over coordinates, so they are trivial to unit-test and to
+  compare against each other on real archive clusters.
+- **Anything that changes the last stop changes the destination.** Dragging a row to the end in the
+  planner, or skipping what was the final marker, re-derives it. That is the intuitive behaviour —
+  the last row *is* the destination — and it stays consistent with the fixed-order rule, since a
+  shorter sequence simply ends earlier.
 
 Ending somewhere specific — a station, a bar — is a later refinement, not part of this. When it
 lands it is just an explicit destination in place of the derived one.
@@ -460,7 +470,7 @@ A five-stage pipeline, cheapest stage first, each stage independently useful:
 ```
 selection set (client state)
     ↓  A. free local ordering — haversine nearest-neighbour + 2-opt
-instant preview, zero API cost, also the offline/API-failure fallback
+instant preview, offline fallback, and the source of stage B's destination
     ↓  B. one Convex action → Routes API computeRoutes (WALK, optimizeWaypointOrder)
 fixed origin and destination, markers as intermediates; order + durations + polyline
     ↓  C. scheduling pass (pure, client-side)
@@ -577,8 +587,9 @@ carrying the real technical risk.
 3. Is transit coverage good enough in those cities for stage D to be worth building, or is
    walk-vs-taxi the only meaningful distinction? The approach leg from home is the first place to
    check, since it is usually the longest hop in the route.
-4. Which marker should end an open route? `computeRoutes` needs a destination, so compare deriving
-   it from the free stage A ordering against asking for a loop and discarding the closing leg.
+4. How much route quality does the derived endpoint cost? Stage A fixes the destination before
+   Google optimises anything, so compare its two candidate rules — last stop of the
+   nearest-neighbour pass versus farthest marker from the origin — on real archive clusters.
 5. How bad is GPS accuracy on the actual streets involved? This sets the off-route threshold and
    decides whether tier-3 refresh is reliable enough to trigger automatically or should stay manual.
 6. Does the phone keep delivering positions with the screen off and the app backgrounded, on the
