@@ -25,7 +25,7 @@ cost.
 
 ## Scope breakdown
 
-The request decomposes into six capabilities with very different difficulty:
+The request decomposes into nine capabilities with very different difficulty:
 
 | # | Capability                                     | Difficulty | Blocking gap                                          |
 | - | ---------------------------------------------- | ---------- | ----------------------------------------------------- |
@@ -37,6 +37,7 @@ The request decomposes into six capabilities with very different difficulty:
 | 6 | Re-estimate live from the user's position      | Medium     | Refresh must be tiered or it bankrupts the cost model |
 | 7 | Route all markers vs unvisited only            | Low        | None — both flags already reach the client            |
 | 8 | Exclude single stops, before or during a walk  | Low        | None — deletion preserves the fixed order             |
+| 9 | Start somewhere that is not a marker           | Low        | None — the routing call already separates origin      |
 
 ## What the current stack already gives us
 
@@ -287,6 +288,66 @@ What skipping costs, and how it behaves:
 - **Skipping everything ends the walk** and deserves a proper finish state rather than a zero-stop
   route.
 
+## Where the walk starts and ends
+
+The first marker is not the start. A walk usually begins at home, at a metro exit, or wherever the
+user happens to be — a place that is not in the archive, carries no visit time, and is never
+photographed. **The origin is a waypoint, not a stop**, and the design has to keep those separate.
+
+This costs nothing to support, because the routing call is already shaped for it. `computeRoutes`
+takes `origin`, `destination`, and `intermediates` as three distinct things, and
+`optimizeWaypointOrder` reorders only the intermediates while leaving the endpoints fixed. So a
+fixed origin is not a constraint the optimiser has to work around — **it is what makes the optimised
+order meaningful in the first place**. It also does not eat the waypoint budget: the 25-intermediate
+cap applies to the markers, with origin and destination on top.
+
+### Choosing the origin
+
+Four sources, in rough order of expected use, none of which needs a new API:
+
+- **Current position** — the default when starting a walk now, from the existing geolocation.
+- **An address or place** — the app already has Google Places search and geocoding wired into
+  Convex, plus a search UI that focuses the map. Origin picking reuses all of it.
+- **A remembered "home"** — worth having, since planning from home is the case that prompted this.
+  A `localStorage` value is enough to start; a user field only if it needs to follow the account.
+- **A point on the map**, via the same tap interaction that creates objects today.
+
+An existing marker can also be the origin, in which case it is both the start and the first stop —
+the one case where the two coincide.
+
+### Choosing the end
+
+Once the start is explicit, the end stops being obvious, and it changes the numbers:
+
+- **End at the last marker** (open route) — the current implicit behaviour.
+- **Return to the origin** (loop) — the normal shape for a walk from home, and it can add twenty or
+  thirty minutes that the plan currently ignores entirely.
+- **End somewhere else** — a station, a bar, wherever the evening continues.
+
+**The return leg does not belong inside the light budget.** Photographing needs daylight; walking
+home does not. So the deadline applies to the *last photo*, and the trip home simply happens after
+it. That means two different numbers, and conflating them would wrongly cut stops:
+
+- "last photo by **18:44**" — constrained by twilight, drives the cut-off;
+- "home by **19:10**" — includes the return, constrained by nothing.
+
+### What else moves
+
+- **The clock starts at the origin, not at the first marker.** If home is 25 minutes from the
+  cluster, that is 25 minutes of daylight spent before the first photograph. The current scheduling
+  pass starts too late and would overstate how much fits.
+- **"Start time" means departure.** With an origin in the picture, 15:22 is when you leave, not when
+  you arrive at stop 1. The label has to say which, or every estimate is off by the approach leg.
+- **The approach leg is the most likely transport leg in the whole route.** It is typically the
+  longest single hop, so the stage D mode decision matters more here than anywhere else — and for a
+  walk planned in another part of the city it may be the only leg that is not walked.
+- **Stage A gets a proper seed.** Nearest-neighbour needs somewhere to start; without an explicit
+  origin the local ordering has to pick an arbitrary marker. The origin removes that arbitrariness.
+- **Planned departure is a forecast, not a live walk.** Until the user actually sets off, there is no
+  position tracking and no pace measurement. "Start the walk" is the moment the clock re-anchors to
+  now and the live loop begins — and if they leave from somewhere other than the planned origin,
+  that is a re-plan.
+
 ## The route never writes archive state
 
 **Walking to a point does not mark it visited.** Nothing in the routing feature ever writes
@@ -392,9 +453,9 @@ selection set (client state)
     ↓  A. free local ordering — haversine nearest-neighbour + 2-opt
 instant preview, zero API cost, also the offline/API-failure fallback
     ↓  B. one Convex action → Routes API computeRoutes (WALK, optimizeWaypointOrder)
-real walking order + per-leg durations + encoded polyline, ~1 billable request
+fixed origin and destination, markers as intermediates; order + durations + polyline
     ↓  C. scheduling pass (pure, client-side)
-start time + flat per-stop allowance → arrival/departure per stop → sunset/twilight cut-off
+departure from origin + per-stop allowance → arrival/departure per stop → twilight cut-off
     ↓  D. per-leg mode decision, only for legs over the walking threshold
 extra computeRoutes in TRANSIT (with that leg's estimated departureTime) or DRIVE
     ↓  E. live loop while walking — position in, re-run C locally
@@ -463,15 +524,15 @@ stop.
 
 **Phase 1 — selection, no backend.** Select mode toggle, tap-to-select on DOM markers, selection
 count chip, route panel skeleton listing selected objects, the all/unvisited scope toggle with its
-skipped-count line, and per-stop exclusion before the walk starts. Stage A ordering by haversine so the panel shows a plausible order
+skipped-count line, per-stop exclusion before the walk starts, and origin/destination pickers
+reusing the existing search and geolocation. Stage A ordering by haversine so the panel shows a plausible order
 immediately. Ship with zero API cost and validate the interaction.
 
 **Phase 2 — real walking route.** Enable Routes API, add `src/convex/routing/`, wire Stage B, add
 the polyline handle to `MapProvider`, render ordered badges on selected markers. Set a Google Cloud
 daily quota before the first deploy.
 
-**Phase 3 — time and sunset.** Start-time control (default: now, from `lastPosition` as origin),
-the minutes-per-stop setting, `sun.ts`, the scheduling pass, and the cut-off UI: per-stop ETA, the
+**Phase 3 — time and sunset.** Departure-time control, the minutes-per-stop setting, `sun.ts`, the scheduling pass, and the cut-off UI: per-stop ETA, the
 twilight line drawn in the leg list, "these 3 stops will not fit" with a one-tap trim — which is the
 bulk case of the same exclusion mechanism phase 1 already built.
 
@@ -505,10 +566,14 @@ carrying the real technical risk.
    multiplier now answers this automatically per user, so the open part is only whether the *first*
    plan is wrong enough to need a better default before any evidence exists.
 3. Is transit coverage good enough in those cities for stage D to be worth building, or is
-   walk-vs-taxi the only meaningful distinction?
-4. How bad is GPS accuracy on the actual streets involved? This sets the off-route threshold and
+   walk-vs-taxi the only meaningful distinction? The approach leg from home is the first place to
+   check, since it is usually the longest hop in the route.
+4. What should the default destination be — stop at the last marker, or loop back to the origin?
+   Looping is the honest default for a walk from home, but it adds a leg the user may not want
+   planned for them.
+5. How bad is GPS accuracy on the actual streets involved? This sets the off-route threshold and
    decides whether tier-3 refresh is reliable enough to trigger automatically or should stay manual.
-5. Does the phone keep delivering positions with the screen off and the app backgrounded, on the
+6. Does the phone keep delivering positions with the screen off and the app backgrounded, on the
    devices actually used? If not, the live loop must resume gracefully rather than degrade.
 
 ## References
