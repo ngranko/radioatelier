@@ -315,21 +315,30 @@ Four sources, in rough order of expected use, none of which needs a new API:
 An existing marker can also be the origin, in which case it is both the start and the first stop —
 the one case where the two coincide.
 
-### Choosing the end
+### Where it ends
 
-Once the start is explicit, the end stops being obvious, and it changes the numbers:
+**Decided: the walk ends at the last marker, and the way home is not planned.** Getting home is not
+constrained by daylight — photographing is — so routing it would add a leg to the plan that nobody
+needs timed, and would pull minutes into a budget that only exists to protect the light. The route
+is an open path: origin, then the markers, and it stops when the last one is done.
 
-- **End at the last marker** (open route) — the current implicit behaviour.
-- **Return to the origin** (loop) — the normal shape for a walk from home, and it can add twenty or
-  thirty minutes that the plan currently ignores entirely.
-- **End somewhere else** — a station, a bar, wherever the evening continues.
+There is one non-obvious consequence. `computeRoutes` **requires** a destination, and
+`optimizeWaypointOrder` reorders only the intermediates while holding both endpoints fixed. So an
+open path still needs someone to decide *which marker ends the route* — the API will not choose it.
+Two ways to do that:
 
-**The return leg does not belong inside the light budget.** Photographing needs daylight; walking
-home does not. So the deadline applies to the *last photo*, and the trip home simply happens after
-it. That means two different numbers, and conflating them would wrongly cut stops:
+- **Derive it from stage A.** The free local ordering already produces a plausible sequence from the
+  origin; take its last stop as the destination and pass the rest as intermediates. Cheap, uses a
+  stage that already runs, and keeps the endpoint sensible.
+- **Ask for a loop and discard the tail.** Set destination = origin so the optimiser has full
+  freedom, then drop the closing leg from the schedule and the map. The order is then optimal for a
+  loop rather than for a path, which is usually close but not the same thing.
 
-- "last photo by **18:44**" — constrained by twilight, drives the cut-off;
-- "home by **19:10**" — includes the return, constrained by nothing.
+The first is the better default; the second is worth measuring against it if the endpoint choice
+turns out to matter more than expected.
+
+Ending somewhere specific — a station, a bar — is a later refinement, not part of this. When it
+lands it is just an explicit destination in place of the derived one.
 
 ### What else moves
 
@@ -568,9 +577,8 @@ carrying the real technical risk.
 3. Is transit coverage good enough in those cities for stage D to be worth building, or is
    walk-vs-taxi the only meaningful distinction? The approach leg from home is the first place to
    check, since it is usually the longest hop in the route.
-4. What should the default destination be — stop at the last marker, or loop back to the origin?
-   Looping is the honest default for a walk from home, but it adds a leg the user may not want
-   planned for them.
+4. Which marker should end an open route? `computeRoutes` needs a destination, so compare deriving
+   it from the free stage A ordering against asking for a loop and discarding the closing leg.
 5. How bad is GPS accuracy on the actual streets involved? This sets the off-route threshold and
    decides whether tier-3 refresh is reliable enough to trigger automatically or should stay manual.
 6. Does the phone keep delivering positions with the screen off and the app backgrounded, on the
