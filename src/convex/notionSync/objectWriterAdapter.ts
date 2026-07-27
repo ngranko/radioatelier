@@ -1,12 +1,30 @@
+import type {Id} from '../_generated/dataModel';
 import type {MutationCtx} from '../_generated/server';
 import {ensureCategory, ensureTags} from '../helpers/importHelpers';
 import type {ObjectRecordData, ObjectRecordPatch, ObjectTarget} from '../helpers/objectWriter';
-import type {
-    CreateSyncedObjectInput,
-    PatchSyncedObjectInput,
-    SyncClassification,
-} from './objectWriterTypes';
+import type {NotionPageFields} from '../notion/types';
 import type {AppSyncApplyPatch} from './types';
+
+export type CreateSyncedObjectInput = {
+    notionPageId: string;
+    ownerId: Id<'users'>;
+    latitude: number;
+    longitude: number;
+    fields: NotionPageFields;
+    lastInboundEditedTime: string | null;
+};
+
+export type PatchSyncedObjectInput = {
+    objectId: Id<'objects'>;
+    notionPageId: string;
+    patch: AppSyncApplyPatch;
+    lastInboundEditedTime: string | null;
+};
+
+export type SyncClassification = {
+    categoryId: Id<'categories'>;
+    tagIds: Id<'tags'>[];
+};
 
 export async function resolveCreateClassification(
     ctx: MutationCtx,
@@ -29,7 +47,7 @@ export async function resolvePatchClassification(
     const tagNames = input.patch.tagNames ? normalizeNames(input.patch.tagNames) : null;
     return {
         categoryId:
-            categoryName === target.category.name
+            normalizeCategoryName(categoryName) === normalizeCategoryName(target.category.name)
                 ? target.category._id
                 : await ensureCategory(ctx, categoryName),
         tagIds: tagNames ? await ensureTags(ctx, tagNames) : target.object.tagIds,

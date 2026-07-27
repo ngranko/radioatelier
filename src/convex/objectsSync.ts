@@ -16,7 +16,10 @@ import {
     resolveCreateClassification,
     resolvePatchClassification,
 } from './notionSync/objectWriterAdapter';
-import type {CreateSyncedObjectInput, PatchSyncedObjectInput} from './notionSync/objectWriterTypes';
+import type {
+    CreateSyncedObjectInput,
+    PatchSyncedObjectInput,
+} from './notionSync/objectWriterAdapter';
 import {
     buildSyncStateArgs,
     deleteSyncStateForObject,
