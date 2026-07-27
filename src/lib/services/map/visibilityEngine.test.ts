@@ -124,6 +124,6 @@ describe('VisibilityEngine', () => {
         flushAllFrames();
 
         expect(onShown).toHaveBeenCalledTimes(1);
-        expect(onShown).toHaveBeenCalledWith('a', markers.get('a'));
+        expect(onShown).toHaveBeenCalledWith(markers.get('a'));
     });
 });

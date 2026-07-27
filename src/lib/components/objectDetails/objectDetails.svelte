@@ -7,7 +7,6 @@
     import DetailsSheet from '$lib/components/objectDetails/detailsSheet.svelte';
     import type {LooseObject, PointPreviewDetails} from '$lib/interfaces/object';
     import type {Permissions} from '$lib/interfaces/permissions';
-    import {clearActiveMarker, deactivateMarker} from '$lib/state/activeMarker.svelte.ts';
     import {setCreateDraftPosition} from '$lib/state/createDraft.svelte';
     import {mapState} from '$lib/state/map.svelte';
     import {
@@ -55,8 +54,6 @@
     function handleClose() {
         isCloseConfirmOpen = false;
         setCreateDraftPosition(null);
-        deactivateMarker();
-        clearActiveMarker();
         closeDetailsOverlay();
         if (mapState.isReady) {
             mapState.provider!.closeStreetView();

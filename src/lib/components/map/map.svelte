@@ -3,20 +3,17 @@
     import config from '$lib/config';
     import type {Location} from '$lib/interfaces/location';
     import type {MapProvider} from '$lib/interfaces/map';
-    import type {MarkerId} from '$lib/interfaces/marker';
     import {
         getInitialCenter,
         startPositionPolling,
         stopPositionPolling,
     } from '$lib/services/map/geolocation';
-    import {focusDetailsTarget} from '$lib/services/map/map.svelte.ts';
-    import type {Marker} from '$lib/services/map/marker';
+    import {notifyFocusableMarkerShown, setFocusedTarget} from '$lib/services/map/markerFocus';
     import {MarkerManager} from '$lib/services/map/markerManager';
     import {PointerDragZoomController} from '$lib/services/map/pointerDragZoom';
     import {HybridMarkerRenderer} from '$lib/services/map/providers/google/hybridMarkerRenderer';
     import {GoogleMapsProvider} from '$lib/services/map/providers/google/provider';
     import {DomMarkerRenderer} from '$lib/services/map/renderer/domMarkerRenderer';
-    import {activateMarker, setActiveMarker} from '$lib/state/activeMarker.svelte.ts';
     import {mapState} from '$lib/state/map.svelte';
     import {removeDragTimeout} from '$lib/state/marker.svelte';
     import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
@@ -88,19 +85,12 @@
         }
     });
 
-    // this is needed so that share pages will load with active correct marker
-    // as at the point of page load no markers are displayed, we need this block to
-    // activate required marker on first viewport update
-    function focusDetailsMarker(id: MarkerId, marker: Marker) {
-        if (objectDetailsOverlay.detailsId !== id) {
-            return;
-        }
-
-        setActiveMarker(marker);
-        activateMarker(marker);
-        const pos = marker.getPosition();
-        focusDetailsTarget(pos.lat, pos.lng);
-    }
+    // Without a registered marker, setFocusedTarget cannot reach focusDetailsTarget,
+    // so read position here to keep this effect subscribed to later sheet snaps.
+    $effect(() => {
+        void objectDetailsOverlay.position;
+        setFocusedTarget(objectDetailsOverlay.detailsId || null);
+    });
 
     async function initMarkerManager(provider: MapProvider): Promise<MarkerManager> {
         const initialMode = shouldUseDeck(provider) ? 'deck' : 'dom';
@@ -110,7 +100,7 @@
                 mode === 'deck'
                     ? new HybridMarkerRenderer(provider)
                     : new DomMarkerRenderer(provider),
-            {renderer: initialMode, onMarkerShown: focusDetailsMarker},
+            {renderer: initialMode, onMarkerShown: notifyFocusableMarkerShown},
         );
         await manager.initialize();
         return manager;

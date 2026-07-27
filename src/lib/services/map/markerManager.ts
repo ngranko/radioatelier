@@ -15,7 +15,7 @@ export interface MarkerManagerOptions {
     maxVisibleMarkers: number;
     maxZoom: number;
     renderer?: RendererMode;
-    onMarkerShown?: (id: MarkerId, marker: Marker) => void;
+    onMarkerShown?: (marker: Marker) => void;
 }
 
 export class MarkerManager {
