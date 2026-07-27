@@ -19,8 +19,6 @@ export type PatchSyncedObjectInput = {
 };
 
 export type SyncClassification = {
-    categoryName: string;
     categoryId: Id<'categories'>;
-    tagNames: string[];
     tagIds: Id<'tags'>[];
 };
