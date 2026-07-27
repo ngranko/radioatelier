@@ -65,8 +65,19 @@ Search markers render in `src/routes/(app)/+layout.svelte` with `source="search"
 
 `SearchItem`, `SearchPageSource`, and `SearchResultsPage` are defined in `src/lib/interfaces/object.ts`. A `SearchPageSource` is an async function `(cursor: string) => Promise<SearchResultsPage>`; the list component treats the cursor as opaque (starting with `''`).
 
+## Typesense indexing
+
+Search reads go through `src/convex/search.ts` → Typesense. **Writes** are scheduled by the object writer seam — not by search actions directly:
+
+- `createObjectRecords` enqueues `typesense.createInTypesense` after insert (covers interactive create, CSV import, and inbound Notion create).
+- `patchObjectRecords` enqueues `typesense.updateInTypesense` when name, location, category, or visibility fields change.
+- `objects.delete` and inbound delete enqueue `typesense.removeFromTypesense`.
+
+The scheduled record is built from post-write object + map point + category name via `buildObjectSearchRecord`. See [object-backend.md](./object-backend.md).
+
 ## Related docs
 
 - [object-details-overlay.md](./object-details-overlay.md) — point preview/create after selecting a search result
+- [object-backend.md](./object-backend.md) — writer seam that keeps Typesense in sync
 - [map-architecture.md](./map-architecture.md) — search marker source and map focus helpers
 - [environment.md](./environment.md) — Typesense and Google API keys
