@@ -12,8 +12,7 @@ export interface VisibilityEngineOptions {
 
 export class VisibilityEngine {
     private suppressed = false;
-    private generation = 0;
-    private activeComplete?: () => void;
+    private cancelActiveUpdate?: () => void;
 
     public constructor(
         private repo: MarkerRepository,
@@ -32,10 +31,7 @@ export class VisibilityEngine {
     // Drop any queued requestAnimationFrame batch so it cannot resume against a
     // renderer that was swapped out (or a newer visibility target) after suppress.
     public cancelPending(): void {
-        this.generation++;
-        const complete = this.activeComplete;
-        this.activeComplete = undefined;
-        complete?.();
+        this.cancelActiveUpdate?.();
     }
 
     // Work is derived by diffing against the currently visible set, so a pass costs
@@ -51,7 +47,6 @@ export class VisibilityEngine {
     }
 
     private applyChanges(leaving: MarkerId[], entering: MarkerId[], onComplete?: () => void) {
-        const generation = this.generation;
         const total = leaving.length + entering.length;
         let cursor = 0;
         let completed = false;
@@ -61,15 +56,13 @@ export class VisibilityEngine {
                 return;
             }
             completed = true;
-            if (this.activeComplete === finish) {
-                this.activeComplete = undefined;
-            }
+            this.cancelActiveUpdate = undefined;
             onComplete?.();
         };
-        this.activeComplete = finish;
+        this.cancelActiveUpdate = finish;
 
         const step = () => {
-            if (generation !== this.generation) {
+            if (completed) {
                 return;
             }
 

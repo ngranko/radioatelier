@@ -14,11 +14,11 @@ export function selectVisibleMarkerIds(
 ): Set<MarkerId> {
     const rect = bounds.toRect();
     const candidates: ViewportCandidate[] = [];
-    const alwaysVisible = new Set<MarkerId>();
+    const visible = new Set<MarkerId>();
 
     for (const [id, marker] of repo.entries()) {
         if (!marker.isViewportManaged()) {
-            alwaysVisible.add(id);
+            visible.add(id);
             continue;
         }
 
@@ -28,22 +28,21 @@ export function selectVisibleMarkerIds(
         }
     }
 
-    const selected = selectManagedIds(candidates, bounds.getCenter(), limit);
-    for (const id of alwaysVisible) {
-        selected.add(id);
+    for (const id of selectManagedIds(candidates, bounds.getCenter(), limit)) {
+        visible.add(id);
     }
-    return selected;
+    return visible;
 }
 
 function selectManagedIds(
     candidates: ViewportCandidate[],
     center: LatLngLiteral,
     limit: number,
-): Set<MarkerId> {
+): Iterable<MarkerId> {
     // Ranking only decides which markers to drop, so it is pure waste while the whole
     // viewport still fits under the limit — the common case at city zoom.
     if (candidates.length <= limit) {
-        return new Set(candidates.map(candidate => candidate.id));
+        return candidates.map(candidate => candidate.id);
     }
     return pickNearest(candidates, center, limit);
 }
@@ -68,7 +67,7 @@ function pickNearest(
     candidates: ViewportCandidate[],
     center: LatLngLiteral,
     limit: number,
-): Set<MarkerId> {
+): MarkerId[] {
     const longitudeScale = Math.cos((center.lat * Math.PI) / 180);
     const ranked = candidates.map(({id, position}) => {
         const latitudeDelta = position.lat - center.lat;
@@ -78,9 +77,9 @@ function pickNearest(
 
     ranked.sort((a, b) => a.distance - b.distance);
 
-    const nearest = new Set<MarkerId>();
+    const nearest: MarkerId[] = [];
     for (let i = 0; i < limit; i++) {
-        nearest.add(ranked[i].id);
+        nearest.push(ranked[i].id);
     }
     return nearest;
 }

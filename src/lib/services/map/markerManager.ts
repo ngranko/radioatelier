@@ -143,19 +143,13 @@ export class MarkerManager {
     private disableMarkers() {
         this.scheduler.disable();
         this.visibilityEngine.setSuppressed(true);
-        // Invalidate any queued RAF batch before the renderer is destroyed/replaced so
-        // stale entering/leaving work cannot resume after suppression is lifted.
         this.visibilityEngine.cancelPending();
 
-        // hide() removes the entry from the very set being iterated, which Set iteration
-        // tolerates, so this needs no defensive copy. Share markers stay visible across
-        // the switch — they are not viewport-culled and must not flicker off.
+        // hide() removes the entry from the set being iterated; Set iteration tolerates that.
         for (const id of this.repo.visibleIds()) {
-            const marker = this.repo.get(id);
-            if (!marker?.isViewportManaged()) {
-                continue;
+            if (this.repo.get(id)?.isViewportManaged()) {
+                this.visibilityEngine.hide(id);
             }
-            this.visibilityEngine.hide(id);
         }
     }
 
