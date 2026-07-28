@@ -236,7 +236,7 @@
 
         <Footer class="border-border/50 shrink-0 gap-3 border-t bg-muted/20 px-6 py-4">
             <DialogClose disabled={isSaving} class="mr-2">Закрыть</DialogClose>
-            <Button variant="default" disabled={!hasChanges} loading={isSaving} onclick={handleSave}>
+            <Button disabled={!hasChanges} loading={isSaving} onclick={handleSave}>
                 Сохранить
             </Button>
         </Footer>
