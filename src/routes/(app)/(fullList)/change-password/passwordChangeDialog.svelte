@@ -7,7 +7,6 @@
     import {DialogClose} from '$lib/components/ui/dialog/index.ts';
     import {FormLabel, FormField, FormControl, FormFieldErrors} from '$lib/components/ui/form';
     import KeyRoundIcon from '@lucide/svelte/icons/key-round';
-    import LoaderCircleIcon from '@lucide/svelte/icons/loader-circle';
     import ShieldCheckIcon from '@lucide/svelte/icons/shield-check';
     import TriangleAlertIcon from '@lucide/svelte/icons/triangle-alert';
     import posthog from 'posthog-js';
@@ -266,14 +265,10 @@
                 <Button
                     variant="default"
                     type="submit"
-                    disabled={$submitting || !isPasswordEnabled}
-                    class="min-w-[7rem]"
+                    disabled={!isPasswordEnabled}
+                    loading={$submitting}
                 >
-                    {#if $submitting}
-                        <LoaderCircleIcon class="size-4 animate-spin" />
-                    {:else}
-                        Сменить пароль
-                    {/if}
+                    Сменить пароль
                 </Button>
             </Footer>
         </form>
