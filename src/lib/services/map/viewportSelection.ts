@@ -55,24 +55,37 @@ function contains(rect: BoundsRect, position: LatLngLiteral): boolean {
         : position.lng >= rect.west || position.lng <= rect.east;
 }
 
-// Squared equirectangular distance orders markers the same way a great-circle distance
-// does at viewport scale, and ordering is all this needs. Keys are computed once up
-// front rather than inside the comparator, which would otherwise recompute them on
-// every one of the O(n log n) comparisons.
+// Haversine's final conversion is monotonic, so its intermediate value is an exact
+// great-circle ordering key. Computing it once per marker avoids repeating the
+// trigonometry in every one of the O(n log n) comparisons.
 function pickNearest(
     candidates: ViewportCandidate[],
     center: LatLngLiteral,
     limit: number,
 ): MarkerId[] {
-    const longitudeScale = Math.cos((center.lat * Math.PI) / 180);
-    const ranked = candidates.map(({id, position}) => {
-        const latitudeDelta = position.lat - center.lat;
-        const longitudeDelta = shortestLongitudeDelta(center.lng, position.lng) * longitudeScale;
-        return {id, distance: latitudeDelta * latitudeDelta + longitudeDelta * longitudeDelta};
-    });
+    const ranked = candidates.map(({id, position}) => ({
+        id,
+        distance: greatCircleDistanceKey(center, position),
+    }));
 
     ranked.sort((a, b) => a.distance - b.distance);
     return ranked.slice(0, limit).map(entry => entry.id);
+}
+
+function greatCircleDistanceKey(from: LatLngLiteral, to: LatLngLiteral): number {
+    const fromLatitude = toRadians(from.lat);
+    const toLatitude = toRadians(to.lat);
+    const latitudeDelta = toLatitude - fromLatitude;
+    const longitudeDelta = toRadians(shortestLongitudeDelta(from.lng, to.lng));
+
+    return (
+        Math.sin(latitudeDelta / 2) ** 2 +
+        Math.cos(fromLatitude) * Math.cos(toLatitude) * Math.sin(longitudeDelta / 2) ** 2
+    );
+}
+
+function toRadians(degrees: number): number {
+    return (degrees * Math.PI) / 180;
 }
 
 function shortestLongitudeDelta(from: number, to: number): number {
