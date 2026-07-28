@@ -71,6 +71,7 @@ describe('VisibilityEngine', () => {
             frames.push(callback);
             return frames.length;
         });
+        vi.stubGlobal('cancelAnimationFrame', () => {});
         stubClock();
     });
 

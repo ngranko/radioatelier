@@ -43,12 +43,24 @@ export class VisibilityEngine {
         const leaving = difference(currentVisibleIds, visibleIds);
         const entering = difference(visibleIds, currentVisibleIds);
 
+        if (leaving.length === 0 && entering.length === 0) {
+            onComplete?.();
+            return;
+        }
+
         this.applyChanges(leaving, entering, onComplete);
     }
 
+    // Batches are bounded by elapsed time rather than a marker count so that slow
+    // devices yield to the browser often enough to stay responsive, while fast ones
+    // land the entire diff in the first (synchronous) pass with no visible delay.
     private applyChanges(leaving: MarkerId[], entering: MarkerId[], onComplete?: () => void) {
-        const total = leaving.length + entering.length;
+        // One queue keeps the time-budgeted cursor trivial: hides first, then shows.
+        const hideCount = leaving.length;
+        const queue = leaving.concat(entering);
+
         let cursor = 0;
+        let frameId = 0;
         let completed = false;
 
         const finish = () => {
@@ -56,6 +68,7 @@ export class VisibilityEngine {
                 return;
             }
             completed = true;
+            cancelAnimationFrame(frameId);
             this.cancelActiveUpdate = undefined;
             onComplete?.();
         };
@@ -66,10 +79,22 @@ export class VisibilityEngine {
                 return;
             }
 
-            cursor = this.runBatch(leaving, entering, cursor);
+            const deadline = performance.now() + this.options.frameBudgetMs;
+            while (cursor < queue.length && !this.suppressed) {
+                if (cursor < hideCount) {
+                    this.hide(queue[cursor]);
+                } else {
+                    this.show(queue[cursor]);
+                }
+                cursor++;
 
-            if (cursor < total && !this.suppressed) {
-                requestAnimationFrame(step);
+                if (performance.now() >= deadline) {
+                    break;
+                }
+            }
+
+            if (cursor < queue.length && !this.suppressed) {
+                frameId = requestAnimationFrame(step);
                 return;
             }
 
@@ -77,30 +102,6 @@ export class VisibilityEngine {
         };
 
         step();
-    }
-
-    // Batches are bounded by elapsed time rather than a marker count so that slow
-    // devices yield to the browser often enough to stay responsive, while fast ones
-    // land the entire diff in the first (synchronous) pass with no visible delay.
-    private runBatch(leaving: MarkerId[], entering: MarkerId[], from: number): number {
-        const total = leaving.length + entering.length;
-        const deadline = performance.now() + this.options.frameBudgetMs;
-        let cursor = from;
-
-        while (cursor < total && !this.suppressed) {
-            if (cursor < leaving.length) {
-                this.hide(leaving[cursor]);
-            } else {
-                this.show(entering[cursor - leaving.length]);
-            }
-            cursor++;
-
-            if (performance.now() >= deadline) {
-                break;
-            }
-        }
-
-        return cursor;
     }
 
     public show(id: MarkerId) {
