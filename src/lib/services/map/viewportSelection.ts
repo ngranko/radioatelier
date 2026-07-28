@@ -14,21 +14,38 @@ export function selectVisibleMarkerIds(
 ): Set<MarkerId> {
     const rect = bounds.toRect();
     const candidates: ViewportCandidate[] = [];
+    const alwaysVisible = new Set<MarkerId>();
 
     for (const [id, marker] of repo.entries()) {
+        if (!marker.isViewportManaged()) {
+            alwaysVisible.add(id);
+            continue;
+        }
+
         const position = marker.getPosition();
         if (contains(rect, position)) {
             candidates.push({id, position});
         }
     }
 
+    const selected = selectManagedIds(candidates, bounds.getCenter(), limit);
+    for (const id of alwaysVisible) {
+        selected.add(id);
+    }
+    return selected;
+}
+
+function selectManagedIds(
+    candidates: ViewportCandidate[],
+    center: LatLngLiteral,
+    limit: number,
+): Set<MarkerId> {
     // Ranking only decides which markers to drop, so it is pure waste while the whole
     // viewport still fits under the limit — the common case at city zoom.
     if (candidates.length <= limit) {
         return new Set(candidates.map(candidate => candidate.id));
     }
-
-    return pickNearest(candidates, bounds.getCenter(), limit);
+    return pickNearest(candidates, center, limit);
 }
 
 function contains(rect: BoundsRect, position: LatLngLiteral): boolean {
@@ -70,7 +87,11 @@ function pickNearest(
 
 function shortestLongitudeDelta(from: number, to: number): number {
     let delta = to - from;
-    if (delta > 180) return delta - 360;
-    if (delta < -180) return delta + 360;
+    if (delta > 180) {
+        return delta - 360;
+    }
+    if (delta < -180) {
+        return delta + 360;
+    }
     return delta;
 }

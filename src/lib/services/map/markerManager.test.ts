@@ -127,4 +127,28 @@ describe('MarkerManager', () => {
         expect(manager.isDeckRenderer).toBe(true);
         expect(created.map(item => item.mode)).toEqual(['deck', 'dom', 'deck']);
     });
+
+    it('keeps non-viewport-managed markers visible across a renderer switch', () => {
+        const {provider, getZoom} = makeProvider(15);
+        const {factory, created} = makeRendererFactory();
+        const manager = new MarkerManager(provider, factory, {deckZoomThreshold: 10});
+        const shareOptions: MarkerOptions = {...markerOptions, source: 'share'};
+        manager.addMarker('share-1', {lat: 1, lng: 2}, shareOptions);
+        const list = manager.addMarker('list-1', {lat: 1, lng: 2}, markerOptions);
+
+        // Seed the visible set as a prior viewport pass would have.
+        const engine = (
+            manager as unknown as {visibilityEngine: {show: (id: string) => void}}
+        ).visibilityEngine;
+        engine.show('share-1');
+        engine.show('list-1');
+
+        const firstHide = vi.fn();
+        created[0].renderer.hide = firstHide;
+
+        getZoom.mockReturnValue(8);
+        manager.syncRendererWithViewport();
+
+        expect(firstHide.mock.calls.map(([marker]) => marker)).toEqual([list]);
+    });
 });
