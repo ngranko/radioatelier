@@ -1,3 +1,4 @@
+import config from '$lib/config';
 import type {LatLngLiteral, MapProvider} from '$lib/interfaces/map';
 import type {MarkerId, MarkerOptions, MarkerStateUpdate} from '$lib/interfaces/marker';
 import {Marker} from '$lib/services/map/marker';
@@ -14,8 +15,8 @@ export interface MarkerManagerOptions {
     frameBudgetMs: number;
     maxVisibleMarkers: number;
     maxZoom: number;
-    renderer?: RendererMode;
-    onMarkerShown?: (id: MarkerId, marker: Marker) => void;
+    deckZoomThreshold: number;
+    onMarkerShown?: (marker: Marker) => void;
 }
 
 export class MarkerManager {
@@ -36,11 +37,11 @@ export class MarkerManager {
             frameBudgetMs: 8,
             maxVisibleMarkers: 1000,
             maxZoom: 10,
-            renderer: 'dom',
+            deckZoomThreshold: config.deckZoomThreshold,
             ...options,
         };
 
-        this.isDeck = this.options.renderer === 'deck';
+        this.isDeck = this.shouldUseDeck();
         this.renderer = createRenderer(this.isDeck ? 'deck' : 'dom');
         this.visibilityEngine = new VisibilityEngine(
             this.repo,
@@ -113,7 +114,35 @@ export class MarkerManager {
         this.scheduler.schedule();
     }
 
-    public disableMarkers() {
+    // The zoom→renderer decision and the switch sequence (suppress → destroy →
+    // recreate → syncAll → resume) live behind this seam; callers only report
+    // that the viewport settled.
+    public syncRendererWithViewport(): void {
+        const nextIsDeck = this.shouldUseDeck();
+        if (nextIsDeck !== this.isDeck) {
+            this.isDeck = nextIsDeck;
+            this.switchRenderer();
+        }
+        this.scheduleViewportUpdate();
+    }
+
+    private shouldUseDeck(): boolean {
+        return this.provider.getZoom() <= this.options.deckZoomThreshold;
+    }
+
+    private switchRenderer(): void {
+        this.disableMarkers();
+
+        this.renderer.destroy();
+        this.renderer = this.createRenderer(this.isDeck ? 'deck' : 'dom');
+        this.visibilityEngine.setRenderer(this.renderer);
+
+        this.renderer.syncAll(this.repo.values());
+
+        this.enableMarkers();
+    }
+
+    private disableMarkers() {
         this.scheduler.disable();
         this.visibilityEngine.setSuppressed(true);
 
@@ -124,29 +153,9 @@ export class MarkerManager {
         }
     }
 
-    public enableMarkers() {
+    private enableMarkers() {
         this.scheduler.enable();
         this.visibilityEngine.setSuppressed(false);
-    }
-
-    public setRendererMode(renderer: RendererMode): void {
-        const wasDeck = this.isDeck;
-        this.isDeck = renderer === 'deck';
-
-        if (wasDeck === this.isDeck) {
-            return;
-        }
-
-        this.disableMarkers();
-
-        this.renderer.destroy();
-        this.renderer = this.createRenderer(this.isDeck ? 'deck' : 'dom');
-        this.visibilityEngine.setRenderer(this.renderer);
-
-        this.renderer.syncAll(this.repo.values());
-
-        this.enableMarkers();
-        this.scheduleViewportUpdate();
     }
 
     public removeMarker(id: MarkerId, marker: Marker) {

@@ -151,6 +151,6 @@ describe('VisibilityEngine', () => {
         engine.updateVisibility(new Set(['a', 'b']));
 
         expect(onShown).toHaveBeenCalledTimes(1);
-        expect(onShown).toHaveBeenCalledWith('a', markers.get('a'));
+        expect(onShown).toHaveBeenCalledWith(markers.get('a'));
     });
 });

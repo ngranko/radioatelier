@@ -4,9 +4,8 @@
     import {api} from '$convex/_generated/api';
     import type {Id} from '$convex/_generated/dataModel';
     import type {MarkerIcon, MarkerSource} from '$lib/interfaces/marker';
-    import {focusDetailsTarget} from '$lib/services/map/map.svelte.ts';
     import {Marker as MarkerObject} from '$lib/services/map/marker';
-    import {activateMarker, setActiveMarker} from '$lib/state/activeMarker.svelte.ts';
+    import {registerFocusableMarker} from '$lib/services/map/markerFocus';
     import {mapState} from '$lib/state/map.svelte';
     import {
         objectDetailsOverlay,
@@ -59,7 +58,7 @@
     let marker: MarkerObject | null = $state(null);
 
     const client = useConvexClient();
-    const activeTargetId = $derived(source === 'search' ? (searchPointId ?? id) : id);
+    const activeTargetId = $derived(resolveDetailsTargetId());
 
     $effect(() => {
         if (!marker || !markerId || !mapState.markerManager) {
@@ -69,18 +68,20 @@
     });
 
     $effect(() => {
-        if (objectDetailsOverlay.detailsId !== activeTargetId || !marker) {
+        if (!marker || !activeTargetId) {
             return;
         }
-
-        setActiveMarker(marker);
-        activateMarker(marker);
-        focusDetailsTarget(Number(lat), Number(lng));
+        return registerFocusableMarker(activeTargetId, marker);
     });
 
     onMount(() => {
         createMarker();
     });
+
+    function resolveDetailsTargetId() {
+        const searchPoint = searchPointId ? searchPointList[searchPointId] : null;
+        return searchPoint?.object.id ?? id ?? null;
+    }
 
     function createMarker() {
         if (!mapState.markerManager) {
@@ -146,8 +147,9 @@
 
     function handleMarkerClick() {
         const searchPoint = searchPointId ? searchPointList[searchPointId] : null;
+        const targetId = resolveDetailsTargetId();
 
-        if (source === 'search' && searchPoint?.object.id === null && searchPointId) {
+        if (source === 'search' && !targetId && searchPoint && searchPointId) {
             showLoadingDetailsOverlay(searchPointId);
             goto(
                 buildPointUrl({
@@ -156,21 +158,21 @@
                     placeId: searchPoint.object.googlePlaceId,
                 }),
             );
-        } else {
-            const targetId = searchPoint?.object.id ?? id;
-            if (!targetId) {
-                return;
-            }
-
-            if (page.params.id === targetId) {
-                // this is a case for anonymous users accessing a shared page
-                // the details are not set here because there is a workaround in the objectDetails.svelte
-                showObjectDetailsOverlay(targetId);
-                return;
-            }
-
-            showLoadingDetailsOverlay(targetId);
-            goto(`/object/${targetId}`);
+            return;
         }
+
+        if (!targetId) {
+            return;
+        }
+
+        if (page.params.id === targetId) {
+            // this is a case for anonymous users accessing a shared page
+            // the details are not set here because there is a workaround in the objectDetails.svelte
+            showObjectDetailsOverlay(targetId);
+            return;
+        }
+
+        showLoadingDetailsOverlay(targetId);
+        goto(`/object/${targetId}`);
     }
 </script>

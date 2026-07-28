@@ -66,7 +66,7 @@ export class MarkerRepository {
             return {action: 'inserted', marker};
         }
 
-        if (source === 'search' && existing.getSource() !== 'search') {
+        if (source === 'search' && existing.options.source !== 'search') {
             const marker = createMarker();
             existing.hide();
             this.replacedMarkers.set(id, existing);
@@ -75,7 +75,7 @@ export class MarkerRepository {
             return {action: 'replaced', marker};
         }
 
-        if (source !== 'search' && existing.getSource() === 'search') {
+        if (source !== 'search' && existing.options.source === 'search') {
             return {action: 'ignored', marker: existing};
         }
 

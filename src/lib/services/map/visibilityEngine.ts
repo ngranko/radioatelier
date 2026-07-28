@@ -7,7 +7,7 @@ export interface VisibilityEngineOptions {
     frameBudgetMs: number;
     // Notification only — what happens when a marker becomes visible
     // (e.g. focusing the shared Object's marker) is the caller's policy.
-    onShown?: (id: MarkerId, marker: Marker) => void;
+    onShown?: (marker: Marker) => void;
 }
 
 export class VisibilityEngine {
@@ -87,7 +87,7 @@ export class VisibilityEngine {
         this.renderer.ensureCreated(marker);
         this.renderer.show(marker);
         this.repo.markVisible(id);
-        this.options.onShown?.(id, marker);
+        this.options.onShown?.(marker);
     }
 
     public hide(id: MarkerId) {

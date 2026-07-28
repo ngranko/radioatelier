@@ -16,14 +16,14 @@ Marker components in +layout.svelte (data from api.markers.list)
 
 Key entry points:
 
-| Layer             | File                                                | Role                                                    |
-| ----------------- | --------------------------------------------------- | ------------------------------------------------------- |
-| Provider contract | `src/lib/interfaces/map.ts`                         | `MapProvider`, `MarkerHandle`, `MapBounds`              |
-| Google provider   | `src/lib/services/map/providers/google/provider.ts` | Map init, events, marker handles, Street View           |
-| Map shell         | `src/lib/components/map/map.svelte`                 | Bootstraps provider + `MarkerManager`                   |
-| Global state      | `src/lib/state/map.svelte.ts`                       | `mapState.provider`, `deckEnabled`, `streetViewVisible` |
-| Marker pipeline   | `src/lib/services/map/markerManager.ts`             | Add/update/remove markers, renderer mode                |
-| Data feed         | `src/routes/(app)/(fullList)/+layout.svelte`        | Renders `<Marker>` per merged marker list row           |
+| Layer             | File                                                | Role                                                      |
+| ----------------- | --------------------------------------------------- | --------------------------------------------------------- |
+| Provider contract | `src/lib/interfaces/map.ts`                         | `MapProvider`, `MarkerHandle`, `MapBounds`                |
+| Google provider   | `src/lib/services/map/providers/google/provider.ts` | Map init, events, marker handles, Street View             |
+| Map shell         | `src/lib/components/map/map.svelte`                 | Bootstraps provider + `MarkerManager`                     |
+| Global state      | `src/lib/state/map.svelte.ts`                       | `mapState.provider`, `markerManager`, `streetViewVisible` |
+| Marker pipeline   | `src/lib/services/map/markerManager.ts`             | Add/update/remove markers, renderer mode                  |
+| Data feed         | `src/routes/(app)/(fullList)/+layout.svelte`        | Renders `<Marker>` per merged marker list row             |
 
 ## Marker list data feed
 
@@ -58,11 +58,7 @@ Renderer mode switches on map idle based on zoom:
 - **Zoom ≤ 10** (`config.deckZoomThreshold`): Deck.gl via `HybridMarkerRenderer`
 - **Zoom > 10**: pure DOM via `DomMarkerRenderer`
 
-```148:150:src/lib/components/map/map.svelte
-    function shouldUseDeck(provider: MapProvider): boolean {
-        return provider.getZoom() <= config.deckZoomThreshold;
-    }
-```
+The zoom→renderer decision and the switch sequence (suppress updates → destroy renderer → recreate → `syncAll` → resume) live inside `MarkerManager.syncRendererWithViewport`; `map.svelte` only reports that the viewport settled on idle. The threshold is a `MarkerManager` option defaulting to `config.deckZoomThreshold`.
 
 At low zoom, list markers (`source: 'list'`) batch-render on a Deck.gl overlay for performance. Service markers always use DOM even in deck mode.
 
@@ -102,7 +98,7 @@ A recalculation costs what actually changed, not the size of the catalog:
 
 - **Click** — 300 ms debounce; suppressed while Deck mode is active or during double-tap drag-zoom (`PointerDragZoomController`).
 - **Drag** — cancels pending marker-reposition timeouts (`removeDragTimeout`).
-- **Idle** — persists center/zoom to `localStorage` (`lastCenter`), switches renderer mode, schedules viewport update.
+- **Idle** — persists center/zoom to `localStorage` (`lastCenter`), then `syncRendererWithViewport` picks the renderer for the new zoom and schedules a viewport update.
 - **Min zoom** — computed from container size so the map cannot zoom out far enough to show duplicate tile instances (`computeMinZoomForContainer` in the Google provider).
 
 ## Focus and overlay offset
@@ -114,8 +110,8 @@ When the details overlay opens for a marker (and when the bottom sheet snaps bet
 - **Narrow viewports** (mobile bottom-sheet layout):
     - `peek` — shift the center south by half the peek overlay height so the pin sits in the uncovered map above the sheet
     - `full` / `minimized` — center on the marker with no offset
-- `marker.svelte` calls `focusDetailsTarget` when `objectDetailsOverlay.detailsId` matches the marker, and re-runs when `position` changes so flicking to peek recenters with the vertical offset.
-- `map.svelte` registers `onMarkerShown: focusDetailsMarker` on `MarkerManager` so share/deep-link pages focus the correct marker once it enters the viewport.
+- **Marker focus** (`src/lib/services/map/markerFocus.ts`) owns which marker is focused: the highlight (`scale-120` class), the `focusDetailsTarget` recenter, and a registry of focusable markers keyed by the id the overlay would show for them. `marker.svelte` registers/unregisters; a single `$effect` in `map.svelte` bridges `objectDetailsOverlay.detailsId` (plus sheet position and map readiness) into `setFocusedTarget`, so flicking to peek recenters with the vertical offset.
+- `map.svelte` registers `onMarkerShown: notifyFocusableMarkerShown` on `MarkerManager` so share/deep-link pages re-apply focus once the marker's element enters the viewport.
 
 Search result selection (`searchPreviewItem.svelte`, `searchResultsItem.svelte`) uses the same `focusDetailsTarget` helper as overlay focus — conditional zoom to `FOCUS_ZOOM` (15) when below `FOCUS_MIN_ZOOM` (13), plus the viewport-aware overlay offsets above.
 

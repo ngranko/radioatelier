@@ -14,13 +14,12 @@ export class Factory {
             zIndex: marker.getZIndex(),
         });
         marker.setHandle(handle);
-        marker.create();
     }
 
     private createMarkerContent(marker: Marker): HTMLElement {
         const markerElement = document.createElement('div');
         const isInverted = marker.isServiceMarker();
-        const color = marker.getColor();
+        const color = marker.options.color;
         markerElement.className = `w-6 h-6 translate-y-1/2 flex justify-center items-center rounded-full transition-transform transition-opacity duration-100 ease-in-out text-sm ${isInverted ? '' : 'text-white'}`;
         markerElement.style.backgroundColor = isInverted ? 'white' : color;
         markerElement.style.color = isInverted ? color : '';
@@ -32,8 +31,8 @@ export class Factory {
         mount(MarkerIcon, {
             target: markerElement,
             props: {
-                icon: marker.getIcon(),
-                className: cn(baseIconClassName, marker.getIconClassName()),
+                icon: marker.options.icon,
+                className: cn(baseIconClassName, marker.options.iconClassName),
             },
         });
         return markerElement;
