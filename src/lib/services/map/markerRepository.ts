@@ -23,20 +23,16 @@ export class MarkerRepository {
         this.visibleMarkers.delete(id);
     }
 
-    public isVisible(id: MarkerId): boolean {
-        return this.visibleMarkers.has(id);
-    }
-
-    public getVisibleIds(): MarkerId[] {
-        return Array.from(this.visibleMarkers);
+    public visibleIds(): ReadonlySet<MarkerId> {
+        return this.visibleMarkers;
     }
 
     public values(): IterableIterator<Marker> {
         return this.markerCache.values();
     }
 
-    public ids(): MarkerId[] {
-        return Array.from(this.markerCache.keys());
+    public entries(): IterableIterator<[MarkerId, Marker]> {
+        return this.markerCache.entries();
     }
 
     public maybeRestoreReplaced(id: MarkerId): Marker | null {

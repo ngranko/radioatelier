@@ -5,16 +5,15 @@ import {Marker} from '$lib/services/map/marker';
 import {MarkerRepository} from '$lib/services/map/markerRepository';
 import type {MarkerRenderer} from '$lib/services/map/renderer/markerRenderer';
 import {UpdateScheduler} from '$lib/services/map/updateScheduler';
-import {ViewportIndex} from '$lib/services/map/viewportIndex';
+import {selectVisibleMarkerIds} from '$lib/services/map/viewportSelection';
 import {VisibilityEngine} from '$lib/services/map/visibilityEngine';
 
 export type RendererMode = 'dom' | 'deck';
 export type RendererFactory = (mode: RendererMode) => MarkerRenderer;
 
 export interface MarkerManagerOptions {
-    chunkSize: number;
+    frameBudgetMs: number;
     maxVisibleMarkers: number;
-    maxZoom: number;
     deckZoomThreshold: number;
     onMarkerShown?: (marker: Marker) => void;
 }
@@ -23,7 +22,6 @@ export class MarkerManager {
     private options: MarkerManagerOptions;
     private repo = new MarkerRepository();
 
-    private viewportIndex = new ViewportIndex();
     private scheduler = new UpdateScheduler(() => this.updateMarkersInViewport());
     private renderer!: MarkerRenderer;
     private visibilityEngine!: VisibilityEngine;
@@ -35,9 +33,8 @@ export class MarkerManager {
         options: Partial<MarkerManagerOptions> = {},
     ) {
         this.options = {
-            chunkSize: 50,
+            frameBudgetMs: 8,
             maxVisibleMarkers: 1000,
-            maxZoom: 10,
             deckZoomThreshold: config.deckZoomThreshold,
             ...options,
         };
@@ -46,7 +43,7 @@ export class MarkerManager {
         this.renderer = createRenderer(this.isDeck ? 'deck' : 'dom');
         this.visibilityEngine = new VisibilityEngine(
             this.repo,
-            {chunkSize: this.options.chunkSize, onShown: this.options.onMarkerShown},
+            {frameBudgetMs: this.options.frameBudgetMs, onShown: this.options.onMarkerShown},
             this.renderer,
         );
     }
@@ -146,9 +143,13 @@ export class MarkerManager {
     private disableMarkers() {
         this.scheduler.disable();
         this.visibilityEngine.setSuppressed(true);
+        this.visibilityEngine.cancelPending();
 
-        for (const id of this.repo.getVisibleIds()) {
-            this.visibilityEngine.hide(id);
+        // hide() removes the entry from the set being iterated; Set iteration tolerates that.
+        for (const id of this.repo.visibleIds()) {
+            if (this.repo.get(id)?.isViewportManaged()) {
+                this.visibilityEngine.hide(id);
+            }
         }
     }
 
@@ -186,11 +187,9 @@ export class MarkerManager {
             return;
         }
 
-        const candidates = this.viewportIndex.collect(bounds, this.repo);
-        const center = bounds.getCenter();
-        const visibleIds = this.viewportIndex.selectVisible(
-            candidates,
-            center,
+        const visibleIds = selectVisibleMarkerIds(
+            bounds,
+            this.repo,
             this.options.maxVisibleMarkers,
         );
 
