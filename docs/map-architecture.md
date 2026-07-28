@@ -82,13 +82,13 @@ Service markers (`search`, `share`, `draft`) call `usesDomRenderer()` and render
 
 `MarkerManager` keeps only visible markers rendered:
 
-- `selectVisibleMarkerIds` (`viewportIndex.ts`) — picks the ids inside the current bounds
+- `selectVisibleMarkerIds` (`viewportSelection.ts`) — picks the ids inside the current bounds
 - `VisibilityEngine` — applies the show/hide difference
 - `UpdateScheduler` — debounces viewport recalculations on map idle
 
 List markers are lazy: they are created in the renderer only when entering the viewport. `maxVisibleMarkers` defaults to 1000.
 
-A recalculation costs what actually changed, not the size of the catalog:
+Viewport selection scans the catalog cheaply, while applying its result costs only what changed:
 
 - `selectVisibleMarkerIds` tests each marker against plain numeric bounds edges (`MapBounds.toRect()`) instead of a vendor `contains()` call, and skips distance ranking entirely unless the viewport holds more markers than `maxVisibleMarkers`. When ranking is needed it sorts on squared equirectangular distance keys computed once per marker, since only the ordering matters.
 - `VisibilityEngine` diffs the selected ids against the repository's visible set, so it touches only markers entering or leaving the viewport rather than walking every marker.

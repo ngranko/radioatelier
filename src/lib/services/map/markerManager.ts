@@ -5,7 +5,7 @@ import {Marker} from '$lib/services/map/marker';
 import {MarkerRepository} from '$lib/services/map/markerRepository';
 import type {MarkerRenderer} from '$lib/services/map/renderer/markerRenderer';
 import {UpdateScheduler} from '$lib/services/map/updateScheduler';
-import {selectVisibleMarkerIds} from '$lib/services/map/viewportIndex';
+import {selectVisibleMarkerIds} from '$lib/services/map/viewportSelection';
 import {VisibilityEngine} from '$lib/services/map/visibilityEngine';
 
 export type RendererMode = 'dom' | 'deck';
@@ -14,7 +14,6 @@ export type RendererFactory = (mode: RendererMode) => MarkerRenderer;
 export interface MarkerManagerOptions {
     frameBudgetMs: number;
     maxVisibleMarkers: number;
-    maxZoom: number;
     deckZoomThreshold: number;
     onMarkerShown?: (marker: Marker) => void;
 }
@@ -36,7 +35,6 @@ export class MarkerManager {
         this.options = {
             frameBudgetMs: 8,
             maxVisibleMarkers: 1000,
-            maxZoom: 10,
             deckZoomThreshold: config.deckZoomThreshold,
             ...options,
         };

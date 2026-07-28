@@ -30,8 +30,9 @@ export class VisibilityEngine {
     // Work is derived by diffing against the currently visible set, so a pass costs
     // what actually changed rather than a walk over the whole catalog.
     public updateVisibility(visibleIds: ReadonlySet<MarkerId>, onComplete?: () => void) {
-        const leaving = filterIds(this.repo.visibleIds(), id => !visibleIds.has(id));
-        const entering = filterIds(visibleIds, id => !this.repo.isVisible(id));
+        const currentVisibleIds = this.repo.visibleIds();
+        const leaving = difference(currentVisibleIds, visibleIds);
+        const entering = difference(visibleIds, currentVisibleIds);
 
         this.applyChanges(leaving, entering, onComplete);
     }
@@ -102,12 +103,12 @@ export class VisibilityEngine {
     }
 }
 
-function filterIds(ids: Iterable<MarkerId>, predicate: (id: MarkerId) => boolean): MarkerId[] {
-    const matching: MarkerId[] = [];
+function difference(ids: Iterable<MarkerId>, excluded: ReadonlySet<MarkerId>): MarkerId[] {
+    const remaining: MarkerId[] = [];
     for (const id of ids) {
-        if (predicate(id)) {
-            matching.push(id);
+        if (!excluded.has(id)) {
+            remaining.push(id);
         }
     }
-    return matching;
+    return remaining;
 }

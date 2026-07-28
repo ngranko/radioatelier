@@ -8,10 +8,6 @@ export class GoogleMapBounds implements MapBounds {
         return {lat: center.lat(), lng: center.lng()};
     }
 
-    contains(point: LatLngLiteral): boolean {
-        return this.bounds.contains(point);
-    }
-
     extend(point: LatLngLiteral): void {
         this.bounds.extend(point);
     }

@@ -23,10 +23,6 @@ export class MarkerRepository {
         this.visibleMarkers.delete(id);
     }
 
-    public isVisible(id: MarkerId): boolean {
-        return this.visibleMarkers.has(id);
-    }
-
     public visibleIds(): ReadonlySet<MarkerId> {
         return this.visibleMarkers;
     }

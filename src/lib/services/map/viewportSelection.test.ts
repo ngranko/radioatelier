@@ -2,13 +2,12 @@ import type {BoundsRect, LatLngLiteral, MapBounds} from '$lib/interfaces/map';
 import {describe, expect, it} from 'vitest';
 import type {Marker} from './marker';
 import type {MarkerRepository} from './markerRepository';
-import {selectVisibleMarkerIds} from './viewportIndex';
+import {selectVisibleMarkerIds} from './viewportSelection';
 
 function makeBounds(rect: BoundsRect, center: LatLngLiteral): MapBounds {
     return {
         toRect: () => rect,
         getCenter: () => center,
-        contains: () => false,
         extend: () => {},
     };
 }
@@ -61,5 +60,22 @@ describe('selectVisibleMarkerIds', () => {
         const bounds = makeBounds({north: 10, south: -10, east: 10, west: -10}, {lat: 0, lng: 0});
 
         expect([...selectVisibleMarkerIds(bounds, repo, 2)].sort()).toEqual(['middle', 'near']);
+    });
+
+    it('ranks nearest across the antimeridian when over the limit', () => {
+        const repo = makeRepo({
+            acrossLine: {lat: 0, lng: -179},
+            sameSideFar: {lat: 0, lng: 170},
+            sameSideNear: {lat: 0, lng: 178},
+        });
+        const bounds = makeBounds(
+            {north: 10, south: -10, east: -170, west: 170},
+            {lat: 0, lng: 179},
+        );
+
+        expect([...selectVisibleMarkerIds(bounds, repo, 2)].sort()).toEqual([
+            'acrossLine',
+            'sameSideNear',
+        ]);
     });
 });

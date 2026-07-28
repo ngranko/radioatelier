@@ -55,7 +55,7 @@ function pickNearest(
     const longitudeScale = Math.cos((center.lat * Math.PI) / 180);
     const ranked = candidates.map(({id, position}) => {
         const latitudeDelta = position.lat - center.lat;
-        const longitudeDelta = (position.lng - center.lng) * longitudeScale;
+        const longitudeDelta = shortestLongitudeDelta(center.lng, position.lng) * longitudeScale;
         return {id, distance: latitudeDelta * latitudeDelta + longitudeDelta * longitudeDelta};
     });
 
@@ -66,4 +66,11 @@ function pickNearest(
         nearest.add(ranked[i].id);
     }
     return nearest;
+}
+
+function shortestLongitudeDelta(from: number, to: number): number {
+    let delta = to - from;
+    if (delta > 180) return delta - 360;
+    if (delta < -180) return delta + 360;
+    return delta;
 }
