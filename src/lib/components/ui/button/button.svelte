@@ -60,8 +60,10 @@
     let classes = $derived(
         cn(
             buttonVariants({variant, size}),
-            // a busy button is not an unavailable one, so it keeps its full contrast
-            loading && 'relative disabled:opacity-100 aria-disabled:opacity-100',
+            // busy ≠ unavailable (keep contrast); opacity-0 keeps layout + accessible name
+            // without a wrapper that would break has-[>svg]
+            loading &&
+                'relative disabled:opacity-100 aria-disabled:opacity-100 [&>:not([data-slot=button-loading])]:opacity-0',
             className,
         ),
     );
@@ -69,14 +71,15 @@
 
 {#snippet content()}
     {#if loading}
-        <span class="absolute inset-0 flex items-center justify-center">
+        <span
+            data-slot="button-loading"
+            class="absolute inset-0 flex items-center justify-center"
+            aria-hidden="true"
+        >
             <LoaderCircleIcon class="size-4 animate-spin" />
         </span>
-        <!-- the label keeps its space while hidden, so the spinner cannot resize the button -->
-        <span class="invisible contents">{@render children?.()}</span>
-    {:else}
-        {@render children?.()}
     {/if}
+    {@render children?.()}
 {/snippet}
 
 {#if href}
