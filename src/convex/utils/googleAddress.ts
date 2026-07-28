@@ -5,9 +5,9 @@ export interface GoogleAddressComponent {
 }
 
 export interface ParsedGoogleAddress {
-    address: string;
-    city: string;
-    country: string;
+    address: string | null;
+    city: string | null;
+    country: string | null;
 }
 
 const STREET_NAME_FIRST_COUNTRY_CODES = new Set([
@@ -56,7 +56,7 @@ const STREET_NAME_FIRST_COUNTRY_NAMES = new Set([
 
 export function parseGoogleAddress(
     components: GoogleAddressComponent[],
-    fallbackAddress = '',
+    fallbackAddress: string | null = null,
 ): ParsedGoogleAddress {
     const streetNumber = findAddressComponent(components, 'street_number');
     const streetName = findAddressComponent(components, 'route');
@@ -73,18 +73,26 @@ export function parseGoogleAddress(
 }
 
 function findAddressComponent(components: GoogleAddressComponent[], type: string) {
-    return components.find(component => component.types.includes(type))?.text ?? '';
+    return normalizeComponentText(
+        components.find(component => component.types.includes(type))?.text,
+    );
 }
 
 function findAddressComponentShortText(components: GoogleAddressComponent[], type: string) {
-    return components.find(component => component.types.includes(type))?.shortText ?? '';
+    return normalizeComponentText(
+        components.find(component => component.types.includes(type))?.shortText,
+    );
+}
+
+function normalizeComponentText(value: string | undefined) {
+    return value?.trim() ? value : null;
 }
 
 function composeStreetAddress(
-    streetNumber: string,
-    streetName: string,
-    country: string,
-    countryCode: string,
+    streetNumber: string | null,
+    streetName: string | null,
+    country: string | null,
+    countryCode: string | null,
 ) {
     if (!streetNumber) {
         return streetName;
@@ -101,9 +109,13 @@ function composeStreetAddress(
     return `${streetNumber} ${streetName}`;
 }
 
-function usesStreetNameFirst(country: string, countryCode: string) {
-    if (STREET_NAME_FIRST_COUNTRY_CODES.has(countryCode.toUpperCase())) {
+function usesStreetNameFirst(country: string | null, countryCode: string | null) {
+    if (countryCode && STREET_NAME_FIRST_COUNTRY_CODES.has(countryCode.toUpperCase())) {
         return true;
+    }
+
+    if (!country) {
+        return false;
     }
 
     return STREET_NAME_FIRST_COUNTRY_NAMES.has(normalizeCountryName(country));

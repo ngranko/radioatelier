@@ -2,7 +2,7 @@ import type {Id} from '../_generated/dataModel';
 import type {NotionPageFields} from '../notion/types';
 import {computeNotionToAppDiff, computeSyncHash} from './reconcile';
 import type {ObjectSyncSnapshot} from './snapshot';
-import type {AppSyncPatch} from './types';
+import type {AppSyncApplyPatch, AppSyncPatch} from './types';
 
 type ExistingSyncRecord = {
     objectId: Id<'objects'>;
@@ -22,7 +22,7 @@ export type InboundSyncDecision =
     | {
           kind: 'patchObject';
           objectId: Id<'objects'>;
-          patch: AppSyncPatch;
+          patch: AppSyncApplyPatch;
       }
     | {
           kind: 'createObject';
@@ -78,6 +78,16 @@ function decideExistingObject(
     return {
         kind: 'patchObject',
         objectId: existingSync.objectId,
-        patch: computeNotionToAppDiff(existingSnapshot.fields, notionFields).appPatch,
+        patch: buildApplyPatch(
+            computeNotionToAppDiff(existingSnapshot.fields, notionFields).appPatch,
+        ),
     };
+}
+
+// Raw diffs retain nulls for audit; the apply patch drops them so inbound sync
+// keeps existing app values rather than clearing them.
+function buildApplyPatch(patch: AppSyncPatch): AppSyncApplyPatch {
+    return Object.fromEntries(
+        Object.entries(patch).filter(([, value]) => value !== null),
+    ) as AppSyncApplyPatch;
 }

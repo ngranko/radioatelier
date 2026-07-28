@@ -1,8 +1,8 @@
 <script lang="ts">
     interface Props {
-        address?: string;
-        city?: string;
-        country?: string;
+        address?: string | null;
+        city?: string | null;
+        country?: string | null;
     }
 
     let {address, city, country}: Props = $props();

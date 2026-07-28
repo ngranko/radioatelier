@@ -11,20 +11,21 @@ import {
     upsertPrivateTags,
 } from './helpers/objectWriter';
 import {
-    buildPatchedFields,
     buildSyncCreateData,
     buildSyncRecordPatch,
     resolveCreateClassification,
     resolvePatchClassification,
 } from './notionSync/objectWriterAdapter';
-import {scheduleCreateSearch, scheduleUpdateSearch} from './notionSync/objectWriterSearch';
-import type {CreateSyncedObjectInput, PatchSyncedObjectInput} from './notionSync/objectWriterTypes';
+import type {
+    CreateSyncedObjectInput,
+    PatchSyncedObjectInput,
+} from './notionSync/objectWriterAdapter';
 import {
     buildSyncStateArgs,
     deleteSyncStateForObject,
     upsertSyncStateInMutation,
 } from './notionSync/state';
-import {appPatchValidator, notionFieldsValidator, nullableString} from './notionSync/types';
+import {appApplyPatchValidator, notionFieldsValidator, nullableString} from './notionSync/types';
 
 export const createObjectFromSync = internalMutation({
     args: {
@@ -54,7 +55,7 @@ export const patchObjectFromSync = internalMutation({
     args: {
         objectId: v.id('objects'),
         notionPageId: v.string(),
-        patch: v.object(appPatchValidator),
+        patch: appApplyPatchValidator,
         lastInboundEditedTime: nullableString,
     },
     handler: async (ctx, {objectId, notionPageId, patch, lastInboundEditedTime}) => {
@@ -78,7 +79,6 @@ async function createSyncedObject(ctx: MutationCtx, input: CreateSyncedObjectInp
 
     await upsertPrivateTags(ctx, objectId, input.ownerId, []);
     await updateIsVisited(ctx, objectId, input.ownerId, input.fields.isVisited);
-    await scheduleCreateSearch(ctx, input, classification.categoryName, objectId);
     await recordInboundSync(ctx, objectId, input.notionPageId, input.lastInboundEditedTime);
     return objectId;
 }
@@ -96,10 +96,8 @@ async function patchSyncedObject(ctx: MutationCtx, input: PatchSyncedObjectInput
             input.patch.isVisited,
         );
     }
-    await scheduleUpdateSearch(ctx, input, target, classification.categoryName);
-    const nextFields = await buildPatchedFields(ctx, target, input, classification);
     await recordInboundSync(ctx, input.objectId, input.notionPageId, input.lastInboundEditedTime);
-    return nextFields;
+    return input.objectId;
 }
 
 async function deleteSyncedObject(ctx: MutationCtx, objectId: Id<'objects'>) {

@@ -297,9 +297,9 @@ export const importBatch = mutation({
                     tagIds,
                     latitude: coordinates.latitude,
                     longitude: coordinates.longitude,
-                    address: trimToLimit(toNullableString(row.address) ?? '', LIMITS.address),
-                    city: trimToLimit(toNullableString(row.city) ?? '', LIMITS.city),
-                    country: trimToLimit(toNullableString(row.country) ?? '', LIMITS.country),
+                    address: toLimitedNullable(row.address, LIMITS.address),
+                    city: toLimitedNullable(row.city, LIMITS.city),
+                    country: toLimitedNullable(row.country, LIMITS.country),
                 });
 
                 await upsertPrivateTags(ctx, objectId, user._id, privateTagIds);

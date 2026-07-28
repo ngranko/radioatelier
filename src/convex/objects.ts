@@ -1,10 +1,11 @@
 import {paginationOptsValidator} from 'convex/server';
 import {v} from 'convex/values';
 import {internal} from './_generated/api';
-import type {Doc} from './_generated/dataModel';
 import {internalQuery, mutation, query} from './_generated/server';
 import {buildObjectSearchRecord, deleteObjectAggregate} from './helpers/objectAggregate';
-import {getIsVisited, getPrivateTags, updateIsVisited} from './helpers/objectHelpers';
+import {loadObjectDetails} from './helpers/objectDetails';
+import {updateIsVisited} from './helpers/objectHelpers';
+import {loadObjectAggregate, loadObjectAggregates} from './helpers/objectReader';
 import {
     createObjectRecords,
     loadObjectTarget,
@@ -33,78 +34,12 @@ export const getDetails = query({
         if (!object) {
             throw new Error('Object not found');
         }
-
-        const mapPoint = await ctx.db.get('mapPoints', object.mapPointId);
-        if (!mapPoint) {
-            throw new Error('Map point not found');
+        const aggregate = await loadObjectAggregate(ctx, object);
+        if (!aggregate) {
+            throw new Error('Object relations not found');
         }
 
-        const category = await ctx.db.get('categories', object.categoryId);
-        if (!category) {
-            throw new Error('Category not found');
-        }
-
-        const fetchedTags = await Promise.all(
-            object.tagIds.map(async item => ctx.db.get('tags', item)),
-        );
-        const tags = fetchedTags.filter((tag): tag is Doc<'tags'> => tag !== null);
-
-        let privateTags: Doc<'privateTags'>[] = [];
-        let isVisited = false;
-        if (user) {
-            privateTags = await getPrivateTags(ctx, object._id, user._id);
-            isVisited = await getIsVisited(ctx, object._id, user._id);
-        }
-
-        let cover = null;
-        if (object.coverId) {
-            const image = await ctx.db.get('images', object.coverId);
-            if (image) {
-                cover = {
-                    id: image._id,
-                    url: '',
-                    previewUrl: '',
-                };
-                if (image.originalStorageId) {
-                    cover.url = (await ctx.storage.getUrl(image.originalStorageId)) ?? '';
-                }
-                if (image.previewStorageId) {
-                    cover.previewUrl = (await ctx.storage.getUrl(image.previewStorageId)) ?? '';
-                }
-            }
-        }
-
-        return {
-            id: object._id,
-            latitude: mapPoint.latitude,
-            longitude: mapPoint.longitude,
-            name: object.name,
-            description: object.description,
-            address: mapPoint.address,
-            city: mapPoint.city,
-            country: mapPoint.country,
-            installedPeriod: object.installedPeriod,
-            isRemoved: object.isRemoved,
-            removalPeriod: object.removalPeriod,
-            source: object.source,
-            cover,
-            isPublic: object.isPublic,
-            category: {
-                id: category._id,
-                name: category.name,
-            },
-            tags: tags.map(tag => ({
-                id: tag._id,
-                name: tag.name,
-            })),
-            privateTags: privateTags.map(tag => ({
-                id: tag._id,
-                name: tag.name,
-            })),
-            isVisited,
-            isOwner: object.createdById === user?._id,
-            internalId: user ? object.internalId : null,
-        };
+        return await loadObjectDetails(ctx, aggregate, user);
     },
 });
 
@@ -157,9 +92,9 @@ export const create = mutation({
             isRemoved: data.isRemoved,
             latitude: data.latitude,
             longitude: data.longitude,
-            address: data.address ?? '',
-            city: data.city ?? '',
-            country: data.country ?? '',
+            address: data.address,
+            city: data.city,
+            country: data.country,
         });
 
         await upsertPrivateTags(ctx, objectId, user._id, data.privateTags);
@@ -167,27 +102,6 @@ export const create = mutation({
             await updateIsVisited(ctx, objectId, user._id, true);
         }
 
-        const category = await ctx.db.get('categories', data.categoryId);
-        if (!category) {
-            throw new Error('Category not found');
-        }
-
-        await ctx.scheduler.runAfter(0, internal.typesense.createInTypesense, {
-            object: buildObjectSearchRecord({
-                id: objectId,
-                name: data.name,
-                mapPoint: {
-                    latitude: data.latitude,
-                    longitude: data.longitude,
-                    address: data.address ?? null,
-                    city: data.city ?? null,
-                    country: data.country ?? null,
-                },
-                categoryName: category.name,
-                createdBy: user._id,
-                isPublic: data.isPublic,
-            }),
-        });
         if (user.notionSyncEnabled) {
             await ctx.scheduler.runAfter(
                 0,
@@ -229,34 +143,13 @@ export const update = mutation({
                 installedPeriod: data.installedPeriod,
                 removalPeriod: data.removalPeriod,
                 source: data.source,
-                address: data.address ?? '',
-                city: data.city ?? '',
-                country: data.country ?? '',
+                address: data.address,
+                city: data.city,
+                country: data.country,
             });
-
-            const category = await ctx.db.get('categories', data.categoryId);
-            if (!category) {
-                throw new Error('Category not found');
-            }
 
             // Non-owners only touch per-user state (private tags, visited), so
-            // the search record and outbound sync stay untouched for them.
-            await ctx.scheduler.runAfter(0, internal.typesense.updateInTypesense, {
-                object: buildObjectSearchRecord({
-                    id,
-                    name: data.name,
-                    mapPoint: {
-                        latitude: target.mapPoint.latitude,
-                        longitude: target.mapPoint.longitude,
-                        address: data.address ?? null,
-                        city: data.city ?? null,
-                        country: data.country ?? null,
-                    },
-                    categoryName: category.name,
-                    createdBy: target.object.createdById,
-                    isPublic: data.isPublic,
-                }),
-            });
+            // outbound sync stays untouched for them.
             if (user.notionSyncEnabled) {
                 await ctx.scheduler.runAfter(
                     0,
@@ -321,21 +214,6 @@ export const reposition = mutation({
             latitude: data.latitude,
             longitude: data.longitude,
         });
-
-        await ctx.scheduler.runAfter(0, internal.typesense.updateInTypesense, {
-            object: buildObjectSearchRecord({
-                id,
-                name: target.object.name,
-                mapPoint: {
-                    ...target.mapPoint,
-                    latitude: data.latitude,
-                    longitude: data.longitude,
-                },
-                categoryName: target.category.name,
-                createdBy: target.object.createdById,
-                isPublic: target.object.isPublic,
-            }),
-        });
     },
 });
 
@@ -345,33 +223,21 @@ export const listForTypesenseBackfill = internalQuery({
     },
     handler: async (ctx, {paginationOpts}) => {
         const result = await ctx.db.query('objects').order('desc').paginate(paginationOpts);
-        const items = await Promise.all(
-            result.page.map(async object => {
-                const [mapPoint, category] = await Promise.all([
-                    ctx.db.get('mapPoints', object.mapPointId),
-                    ctx.db.get('categories', object.categoryId),
-                ]);
-
-                if (!mapPoint) {
-                    throw new Error(`Map point not found for object ${object._id}`);
-                }
-
-                if (!category) {
-                    throw new Error(`Category not found for object ${object._id}`);
-                }
-
-                return {
-                    ...buildObjectSearchRecord({
-                        id: object._id,
-                        name: object.name,
-                        mapPoint,
-                        categoryName: category.name,
-                        createdBy: object.createdById,
-                        isPublic: object.isPublic,
-                    }),
-                };
-            }),
-        );
+        const aggregates = await loadObjectAggregates(ctx, result.page);
+        const items = result.page.map(object => {
+            const aggregate = aggregates.get(object._id);
+            if (!aggregate) {
+                throw new Error(`Object relations not found for object ${object._id}`);
+            }
+            return buildObjectSearchRecord({
+                id: object._id,
+                name: object.name,
+                mapPoint: aggregate.mapPoint,
+                categoryName: aggregate.category.name,
+                createdBy: object.createdById,
+                isPublic: object.isPublic,
+            });
+        });
 
         return {
             isDone: result.isDone,

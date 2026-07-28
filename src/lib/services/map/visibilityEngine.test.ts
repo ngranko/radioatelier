@@ -20,6 +20,18 @@ function flushAllFrames() {
     }
 }
 
+// Pins the clock so every batch fits its budget; tests that need the engine to yield
+// install a clock that advances past the budget instead.
+function stubClock(advanceMsPerCall = 0) {
+    let now = 0;
+    vi.stubGlobal('performance', {
+        now: () => {
+            now += advanceMsPerCall;
+            return now;
+        },
+    });
+}
+
 function makeMarker(): Marker {
     return {getPosition: () => ({lat: 0, lng: 0})} as unknown as Marker;
 }
@@ -28,9 +40,9 @@ function makeRepo(ids: string[], initiallyVisible: string[] = []) {
     const markers = new Map(ids.map(id => [id, makeMarker()]));
     const visible = new Set(initiallyVisible);
     const repo = {
-        ids: () => [...markers.keys()],
+        entries: () => markers.entries(),
         get: (id: string) => markers.get(id),
-        isVisible: (id: string) => visible.has(id),
+        visibleIds: () => visible,
         markVisible: (id: string) => void visible.add(id),
         markHidden: (id: string) => void visible.delete(id),
     } as unknown as MarkerRepository;
@@ -59,6 +71,8 @@ describe('VisibilityEngine', () => {
             frames.push(callback);
             return frames.length;
         });
+        vi.stubGlobal('cancelAnimationFrame', () => {});
+        stubClock();
     });
 
     afterEach(() => {
@@ -68,11 +82,10 @@ describe('VisibilityEngine', () => {
     it('shows entering markers and hides leaving ones', () => {
         const {repo, visible} = makeRepo(['a', 'b', 'c'], ['c']);
         const {renderer, shown, hidden} = makeRenderer();
-        const engine = new VisibilityEngine(repo, {chunkSize: 10}, renderer);
+        const engine = new VisibilityEngine(repo, {frameBudgetMs: 8}, renderer);
         const onComplete = vi.fn();
 
         engine.updateVisibility(new Set(['a', 'b']), onComplete);
-        flushAllFrames();
 
         expect(shown).toHaveLength(2);
         expect(hidden).toHaveLength(1);
@@ -80,37 +93,73 @@ describe('VisibilityEngine', () => {
         expect(onComplete).toHaveBeenCalledTimes(1);
     });
 
-    it('processes markers in chunks across animation frames', () => {
-        const {repo} = makeRepo(['a', 'b', 'c', 'd', 'e']);
-        const {renderer, shown} = makeRenderer();
-        const engine = new VisibilityEngine(repo, {chunkSize: 2}, renderer);
+    it('touches only markers whose visibility changed', () => {
+        const ids = Array.from({length: 5000}, (_, index) => `marker-${index}`);
+        const {repo} = makeRepo(ids, ['marker-0', 'marker-1']);
+        const {renderer, shown, hidden} = makeRenderer();
+        const engine = new VisibilityEngine(repo, {frameBudgetMs: 8}, renderer);
+        const onComplete = vi.fn();
 
-        engine.updateVisibility(new Set(['a', 'b', 'c', 'd', 'e']));
-        expect(shown).toHaveLength(0);
+        engine.updateVisibility(new Set(['marker-1', 'marker-2']), onComplete);
+
+        expect(shown).toHaveLength(1);
+        expect(hidden).toHaveLength(1);
+        expect(frames).toHaveLength(0);
+        expect(onComplete).toHaveBeenCalledTimes(1);
+    });
+
+    it('spreads work across frames once the time budget is spent', () => {
+        stubClock(10);
+        const {repo} = makeRepo(['a', 'b', 'c']);
+        const {renderer, shown} = makeRenderer();
+        const engine = new VisibilityEngine(repo, {frameBudgetMs: 5}, renderer);
+        const onComplete = vi.fn();
+
+        engine.updateVisibility(new Set(['a', 'b', 'c']), onComplete);
+        expect(shown).toHaveLength(1);
+        expect(onComplete).not.toHaveBeenCalled();
 
         flushFrame();
         expect(shown).toHaveLength(2);
 
-        flushFrame();
-        expect(shown).toHaveLength(4);
-
-        flushFrame();
-        expect(shown).toHaveLength(5);
-        expect(frames).toHaveLength(0);
+        flushAllFrames();
+        expect(shown).toHaveLength(3);
+        expect(onComplete).toHaveBeenCalledTimes(1);
     });
 
     it('stops mid-pass when suppressed but still completes', () => {
+        stubClock(10);
         const {repo} = makeRepo(['a', 'b', 'c', 'd']);
         const {renderer, shown} = makeRenderer();
-        const engine = new VisibilityEngine(repo, {chunkSize: 2}, renderer);
+        const engine = new VisibilityEngine(repo, {frameBudgetMs: 5}, renderer);
         const onComplete = vi.fn();
 
         engine.updateVisibility(new Set(['a', 'b', 'c', 'd']), onComplete);
-        flushFrame();
         engine.setSuppressed(true);
         flushAllFrames();
 
-        expect(shown).toHaveLength(2);
+        expect(shown).toHaveLength(1);
+        expect(onComplete).toHaveBeenCalledTimes(1);
+    });
+
+    it('cancels a queued batch so it cannot resume after suppression lifts', () => {
+        stubClock(10);
+        const {repo} = makeRepo(['a', 'b', 'c', 'd']);
+        const {renderer, shown} = makeRenderer();
+        const engine = new VisibilityEngine(repo, {frameBudgetMs: 5}, renderer);
+        const onComplete = vi.fn();
+
+        engine.updateVisibility(new Set(['a', 'b', 'c', 'd']), onComplete);
+        expect(shown).toHaveLength(1);
+
+        engine.setSuppressed(true);
+        engine.cancelPending();
+        expect(onComplete).toHaveBeenCalledTimes(1);
+
+        engine.setSuppressed(false);
+        flushAllFrames();
+
+        expect(shown).toHaveLength(1);
         expect(onComplete).toHaveBeenCalledTimes(1);
     });
 
@@ -118,12 +167,11 @@ describe('VisibilityEngine', () => {
         const {repo, markers} = makeRepo(['a', 'b'], ['b']);
         const {renderer} = makeRenderer();
         const onShown = vi.fn();
-        const engine = new VisibilityEngine(repo, {chunkSize: 10, onShown}, renderer);
+        const engine = new VisibilityEngine(repo, {frameBudgetMs: 8, onShown}, renderer);
 
         engine.updateVisibility(new Set(['a', 'b']));
-        flushAllFrames();
 
         expect(onShown).toHaveBeenCalledTimes(1);
-        expect(onShown).toHaveBeenCalledWith('a', markers.get('a'));
+        expect(onShown).toHaveBeenCalledWith(markers.get('a'));
     });
 });

@@ -33,9 +33,9 @@ export interface GoogleSearchItem {
     categoryName: string;
     latitude: number;
     longitude: number;
-    address: string;
-    city: string;
-    country: string;
+    address: string | null;
+    city: string | null;
+    country: string | null;
     type: 'google';
     googlePlaceId: string | null;
 }
@@ -169,7 +169,7 @@ function toGoogleSearchItem(place: GooglePlace): GoogleSearchItem | null {
             shortText: component.shortText,
             types: component.types ?? [],
         })),
-        place.formattedAddress ?? '',
+        place.formattedAddress ?? null,
     );
 
     return {
