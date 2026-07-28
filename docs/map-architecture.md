@@ -90,7 +90,7 @@ List markers are lazy: they are created in the renderer only when entering the v
 
 Viewport selection scans the catalog cheaply, while applying its result costs only what changed:
 
-- `selectVisibleMarkerIds` tests each marker against plain numeric bounds edges (`MapBounds.toRect()`) instead of a vendor `contains()` call, and skips distance ranking entirely unless the viewport holds more markers than `maxVisibleMarkers`. When ranking is needed it sorts on squared equirectangular distance keys computed once per marker, since only the ordering matters.
+- `selectVisibleMarkerIds` tests each marker against plain numeric bounds edges (`MapBounds.toRect()`) instead of a vendor `contains()` call, and skips distance ranking entirely unless the viewport holds more markers than `maxVisibleMarkers`. When ranking is needed it sorts on Haversine ordering keys computed once per marker, omitting the final distance conversion because only the ordering matters.
 - `VisibilityEngine` diffs the selected ids against the repository's visible set, so it touches only markers entering or leaving the viewport rather than walking every marker.
 - The resulting diff is applied under a time budget (`frameBudgetMs`, default 8 ms) rather than a fixed chunk count: small diffs finish synchronously in the same tick, large ones yield to the browser between `requestAnimationFrame` batches so slow devices stay interactive.
 

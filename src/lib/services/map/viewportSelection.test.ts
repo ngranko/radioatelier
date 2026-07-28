@@ -85,6 +85,19 @@ describe('selectVisibleMarkerIds', () => {
         ]);
     });
 
+    it('uses great-circle ordering in wide high-latitude viewports', () => {
+        const repo = makeRepo({
+            farther: {lat: 70, lng: -54},
+            nearer: {lat: 89, lng: -60},
+        });
+        const bounds = makeBounds(
+            {north: 90, south: 60, east: 0, west: -90},
+            {lat: 80, lng: 0},
+        );
+
+        expect([...selectVisibleMarkerIds(bounds, repo, 1)]).toEqual(['nearer']);
+    });
+
     it('always keeps non-viewport-managed markers, even outside bounds or over the limit', () => {
         const repo = makeRepo(
             {
