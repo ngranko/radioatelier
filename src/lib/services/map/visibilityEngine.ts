@@ -12,6 +12,7 @@ export interface VisibilityEngineOptions {
 
 export class VisibilityEngine {
     private suppressed = false;
+    private cancelActiveUpdate?: () => void;
 
     public constructor(
         private repo: MarkerRepository,
@@ -27,9 +28,17 @@ export class VisibilityEngine {
         this.suppressed = value;
     }
 
+    // Drop any queued requestAnimationFrame batch so it cannot resume against a
+    // renderer that was swapped out (or a newer visibility target) after suppress.
+    public cancelPending(): void {
+        this.cancelActiveUpdate?.();
+    }
+
     // Work is derived by diffing against the currently visible set, so a pass costs
     // what actually changed rather than a walk over the whole catalog.
     public updateVisibility(visibleIds: ReadonlySet<MarkerId>, onComplete?: () => void) {
+        this.cancelPending();
+
         const currentVisibleIds = this.repo.visibleIds();
         const leaving = difference(currentVisibleIds, visibleIds);
         const entering = difference(visibleIds, currentVisibleIds);
@@ -40,8 +49,23 @@ export class VisibilityEngine {
     private applyChanges(leaving: MarkerId[], entering: MarkerId[], onComplete?: () => void) {
         const total = leaving.length + entering.length;
         let cursor = 0;
+        let completed = false;
+
+        const finish = () => {
+            if (completed) {
+                return;
+            }
+            completed = true;
+            this.cancelActiveUpdate = undefined;
+            onComplete?.();
+        };
+        this.cancelActiveUpdate = finish;
 
         const step = () => {
+            if (completed) {
+                return;
+            }
+
             cursor = this.runBatch(leaving, entering, cursor);
 
             if (cursor < total && !this.suppressed) {
@@ -49,7 +73,7 @@ export class VisibilityEngine {
                 return;
             }
 
-            onComplete?.();
+            finish();
         };
 
         step();

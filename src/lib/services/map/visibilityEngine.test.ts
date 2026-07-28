@@ -141,6 +141,27 @@ describe('VisibilityEngine', () => {
         expect(onComplete).toHaveBeenCalledTimes(1);
     });
 
+    it('cancels a queued batch so it cannot resume after suppression lifts', () => {
+        stubClock(10);
+        const {repo} = makeRepo(['a', 'b', 'c', 'd']);
+        const {renderer, shown} = makeRenderer();
+        const engine = new VisibilityEngine(repo, {frameBudgetMs: 5}, renderer);
+        const onComplete = vi.fn();
+
+        engine.updateVisibility(new Set(['a', 'b', 'c', 'd']), onComplete);
+        expect(shown).toHaveLength(1);
+
+        engine.setSuppressed(true);
+        engine.cancelPending();
+        expect(onComplete).toHaveBeenCalledTimes(1);
+
+        engine.setSuppressed(false);
+        flushAllFrames();
+
+        expect(shown).toHaveLength(1);
+        expect(onComplete).toHaveBeenCalledTimes(1);
+    });
+
     it('notifies onShown only for markers that became visible', () => {
         const {repo, markers} = makeRepo(['a', 'b'], ['b']);
         const {renderer} = makeRenderer();

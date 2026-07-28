@@ -12,11 +12,17 @@ function makeBounds(rect: BoundsRect, center: LatLngLiteral): MapBounds {
     };
 }
 
-function makeRepo(positions: Record<string, LatLngLiteral>): MarkerRepository {
+function makeRepo(
+    positions: Record<string, LatLngLiteral>,
+    unmanagedIds: ReadonlySet<string> = new Set(),
+): MarkerRepository {
     const markers = new Map<string, Marker>(
         Object.entries(positions).map(([id, position]) => [
             id,
-            {getPosition: () => position} as unknown as Marker,
+            {
+                getPosition: () => position,
+                isViewportManaged: () => !unmanagedIds.has(id),
+            } as unknown as Marker,
         ]),
     );
     return {entries: () => markers.entries()} as unknown as MarkerRepository;
@@ -76,6 +82,25 @@ describe('selectVisibleMarkerIds', () => {
         expect([...selectVisibleMarkerIds(bounds, repo, 2)].sort()).toEqual([
             'acrossLine',
             'sameSideNear',
+        ]);
+    });
+
+    it('always keeps non-viewport-managed markers, even outside bounds or over the limit', () => {
+        const repo = makeRepo(
+            {
+                far: {lat: 9, lng: 0},
+                near: {lat: 1, lng: 0},
+                middle: {lat: 5, lng: 0},
+                shareOutside: {lat: 40, lng: 40},
+            },
+            new Set(['shareOutside']),
+        );
+        const bounds = makeBounds({north: 10, south: -10, east: 10, west: -10}, {lat: 0, lng: 0});
+
+        expect([...selectVisibleMarkerIds(bounds, repo, 2)].sort()).toEqual([
+            'middle',
+            'near',
+            'shareOutside',
         ]);
     });
 });

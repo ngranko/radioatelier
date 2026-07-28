@@ -143,11 +143,13 @@ export class MarkerManager {
     private disableMarkers() {
         this.scheduler.disable();
         this.visibilityEngine.setSuppressed(true);
+        this.visibilityEngine.cancelPending();
 
-        // hide() removes the entry from the very set being iterated, which Set iteration
-        // tolerates, so this needs no defensive copy.
+        // hide() removes the entry from the set being iterated; Set iteration tolerates that.
         for (const id of this.repo.visibleIds()) {
-            this.visibilityEngine.hide(id);
+            if (this.repo.get(id)?.isViewportManaged()) {
+                this.visibilityEngine.hide(id);
+            }
         }
     }
 
