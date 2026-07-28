@@ -59,14 +59,16 @@ describe('notion sync matching', () => {
         });
     });
 
-    it('keeps mapLink out of inbound app patches', () => {
+    it('preserves nulls while excluding non-applicable fields from raw inbound diffs', () => {
         const {appPatch} = computeNotionToAppDiff(appFields, {
             ...appFields,
             mapLink: 'https://radioatelier.app/object/changed',
+            name: null,
             city: 'Berlin',
         });
 
         expect(appPatch).toEqual({
+            name: null,
             city: 'Berlin',
         });
     });
@@ -90,6 +92,12 @@ describe('notion sync matching', () => {
                 tagNames: ['historic', 'sound'],
             }),
         );
+    });
+
+    it('hashes independently of the key insertion order of its input', () => {
+        const reordered = Object.fromEntries(Object.entries(appFields).reverse()) as AppSyncFields;
+
+        expect(computeSyncHash(reordered)).toBe(computeSyncHash(appFields));
     });
 
     it('reports differing sync fields between app and Notion snapshots', () => {
@@ -126,6 +134,18 @@ describe('notion inbound sync decisions', () => {
         });
     });
 
+    it('skips removed pages that have no linked Object', () => {
+        expect(
+            decideInboundSync({
+                eventType: 'page.deleted',
+                pageState: 'removed',
+                existingSync: null,
+                notionFields: null,
+                existingSnapshot: null,
+            }),
+        ).toEqual({kind: 'skip'});
+    });
+
     it('records an echo when Notion sends back the last outbound state', () => {
         const lastOutboundHash = computeSyncHash(appFields);
 
@@ -157,6 +177,46 @@ describe('notion inbound sync decisions', () => {
                     lastOutboundHash: 'older-hash',
                 },
                 notionFields: {...appFields, city: 'Berlin'},
+                existingSnapshot: objectSnapshot('object-1', appFields),
+            }),
+        ).toEqual({
+            kind: 'patchObject',
+            objectId: objectId('object-1'),
+            patch: {city: 'Berlin'},
+        });
+    });
+
+    it('skips linked updates when the Object snapshot is unavailable', () => {
+        expect(
+            decideInboundSync({
+                eventType: 'page.properties_updated',
+                pageState: 'active',
+                existingSync: {
+                    objectId: objectId('object-1'),
+                    lastOutboundHash: 'older-hash',
+                },
+                notionFields: {...appFields, city: 'Berlin'},
+                existingSnapshot: null,
+            }),
+        ).toEqual({kind: 'skip'});
+    });
+
+    it('keeps app values for fields Notion has emptied', () => {
+        expect(
+            decideInboundSync({
+                eventType: 'page.properties_updated',
+                pageState: 'active',
+                existingSync: {
+                    objectId: objectId('object-1'),
+                    lastOutboundHash: 'older-hash',
+                },
+                notionFields: {
+                    ...appFields,
+                    name: null,
+                    installedPeriod: null,
+                    source: null,
+                    city: 'Berlin',
+                },
                 existingSnapshot: objectSnapshot('object-1', appFields),
             }),
         ).toEqual({

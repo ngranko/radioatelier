@@ -2,11 +2,10 @@ import type {Doc, Id} from '../_generated/dataModel';
 import type {QueryCtx} from '../_generated/server';
 import {getVisitedChunkId} from '../utils/visitedChunks';
 
-export type SnapshotCache = {
-    owners: Map<Id<'users'>, Doc<'users'>>;
-    mapPoints: Map<Id<'mapPoints'>, Doc<'mapPoints'>>;
-    categories: Map<Id<'categories'>, Doc<'categories'>>;
-    tags: Map<Id<'tags'>, Doc<'tags'>>;
+// The sync-specific companions of an Object aggregate: the Sync state record
+// and the owner's visited flag. Generic relations (map point, category, tags)
+// come from the Object reader.
+export type SyncSnapshotExtras = {
     syncByObjectId: Map<Id<'objects'>, Doc<'objectNotionSync'> | null>;
     visitedByObjectId: Map<Id<'objects'>, boolean>;
 };
@@ -17,84 +16,18 @@ type VisitedPairGroup = {
     objectIds: Id<'objects'>[];
 };
 
-export async function loadSnapshotCache(
+export async function loadSyncSnapshotExtras(
     ctx: QueryCtx,
     objects: Doc<'objects'>[],
-    owners: Map<Id<'users'>, Doc<'users'>>,
-): Promise<SnapshotCache> {
+): Promise<SyncSnapshotExtras> {
     if (objects.length === 0) {
-        return emptySnapshotCache(owners);
+        return {syncByObjectId: new Map(), visitedByObjectId: new Map()};
     }
-
-    const [mapPoints, categories, tags, syncByObjectId, visitedByObjectId] = await Promise.all([
-        loadMapPoints(ctx, objects),
-        loadCategories(ctx, objects),
-        loadTags(ctx, objects),
+    const [syncByObjectId, visitedByObjectId] = await Promise.all([
         loadSyncRecords(ctx, objects),
         loadVisitedFlags(ctx, objects),
     ]);
-
-    return {
-        owners,
-        mapPoints,
-        categories,
-        tags,
-        syncByObjectId,
-        visitedByObjectId,
-    };
-}
-
-function emptySnapshotCache(owners: Map<Id<'users'>, Doc<'users'>>): SnapshotCache {
-    return {
-        owners,
-        mapPoints: new Map(),
-        categories: new Map(),
-        tags: new Map(),
-        syncByObjectId: new Map(),
-        visitedByObjectId: new Map(),
-    };
-}
-
-async function loadMapPoints(ctx: QueryCtx, objects: Doc<'objects'>[]) {
-    const mapPoints = new Map<Id<'mapPoints'>, Doc<'mapPoints'>>();
-    const mapPointIds = [...new Set(objects.map(object => object.mapPointId))];
-    await Promise.all(
-        mapPointIds.map(async mapPointId => {
-            const mapPoint = await ctx.db.get('mapPoints', mapPointId);
-            if (mapPoint) {
-                mapPoints.set(mapPointId, mapPoint);
-            }
-        }),
-    );
-    return mapPoints;
-}
-
-async function loadCategories(ctx: QueryCtx, objects: Doc<'objects'>[]) {
-    const categories = new Map<Id<'categories'>, Doc<'categories'>>();
-    const categoryIds = [...new Set(objects.map(object => object.categoryId))];
-    await Promise.all(
-        categoryIds.map(async categoryId => {
-            const category = await ctx.db.get('categories', categoryId);
-            if (category) {
-                categories.set(categoryId, category);
-            }
-        }),
-    );
-    return categories;
-}
-
-async function loadTags(ctx: QueryCtx, objects: Doc<'objects'>[]) {
-    const tags = new Map<Id<'tags'>, Doc<'tags'>>();
-    const tagIds = [...new Set(objects.flatMap(object => object.tagIds))];
-    await Promise.all(
-        tagIds.map(async tagId => {
-            const tag = await ctx.db.get('tags', tagId);
-            if (tag) {
-                tags.set(tagId, tag);
-            }
-        }),
-    );
-    return tags;
+    return {syncByObjectId, visitedByObjectId};
 }
 
 async function loadSyncRecords(ctx: QueryCtx, objects: Doc<'objects'>[]) {

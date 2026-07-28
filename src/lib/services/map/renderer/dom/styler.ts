@@ -15,7 +15,7 @@ export class Styler {
             return;
         }
 
-        this.applyVisited(element, isVisited, marker.getColor());
+        this.applyVisited(element, isVisited, marker.options.color);
         this.applyRemoved(element, isRemoved);
     }
 

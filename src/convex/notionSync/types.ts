@@ -1,4 +1,4 @@
-import {v} from 'convex/values';
+import {type Infer, v} from 'convex/values';
 
 export type AppSyncFields = {
     name: string;
@@ -40,16 +40,21 @@ export const notionFieldsValidator = {
     source: nullableString,
 };
 
-export const appPatchValidator = {
+export const appApplyPatchValidator = v.object({
     name: v.optional(v.string()),
-    categoryName: v.optional(nullableString),
-    address: v.optional(nullableString),
-    city: v.optional(nullableString),
-    country: v.optional(nullableString),
-    installedPeriod: v.optional(nullableString),
+    categoryName: v.optional(v.string()),
+    address: v.optional(v.string()),
+    city: v.optional(v.string()),
+    country: v.optional(v.string()),
+    installedPeriod: v.optional(v.string()),
     isRemoved: v.optional(v.boolean()),
-    removalPeriod: v.optional(nullableString),
+    removalPeriod: v.optional(v.string()),
     tagNames: v.optional(v.array(v.string())),
     isVisited: v.optional(v.boolean()),
-    source: v.optional(nullableString),
-};
+    source: v.optional(v.string()),
+});
+
+// Distinct from AppSyncPatch because a null there means "Notion has no value,
+// keep the app's". The inbound decision resolves that once and drops the nulls,
+// so everything past it can write every field it receives without re-deciding.
+export type AppSyncApplyPatch = Infer<typeof appApplyPatchValidator>;
