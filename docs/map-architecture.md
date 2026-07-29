@@ -100,9 +100,7 @@ DOM markers pop in when they enter the viewport; `PopAnimator` (`renderer/dom/po
 
 The Maps API renders marker content on its own draw pass, so `animate-popin` can land several frames before the element is rendered — and a CSS animation does not start until then. Teardown therefore hangs off the animation's own `animationend`/`animationcancel` instead of a timer: a wall-clock timer strips the class before the animation plays whenever that draw is late, which is exactly what happens when a pan brings hundreds of markers in at once.
 
-Markers entering in the same wave are staggered 12 ms apart (capped at 180 ms) so a big diff reads as a ripple rather than one flash; `backwards` fill on `--animate-popin` holds a delayed marker at `scale: 0` until its turn. `hide()` and `remove()` cancel a pending pop-in so a marker leaving mid-animation cannot keep it.
-
-Deck markers have no entrance animation — they are one batched layer — and hiding is never animated (see the comment on `Marker.hide`).
+`hide()` and `remove()` cancel a pending pop-in so a marker leaving mid-animation cannot keep it. Deck markers have no entrance animation — they are one batched layer — and hiding is never animated (see the comment on `Marker.hide`).
 
 ## Map interactions
 

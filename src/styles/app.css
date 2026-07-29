@@ -132,9 +132,7 @@
 
     --font-branding: sofia-pro, sans-serif;
 
-    /* `backwards` holds the marker at scale 0 through its stagger delay; without it a
-       delayed marker renders full size first and then pops. */
-    --animate-popin: popIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) 1 backwards;
+    --animate-popin: popIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) 1;
     --animate-popout: popIn 0.15s cubic-bezier(0.4, 0, 0.7, 0.2) 1 reverse;
 }
 
