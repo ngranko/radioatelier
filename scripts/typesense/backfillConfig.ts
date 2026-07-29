@@ -7,6 +7,8 @@ export type CliConfig = {
     typesenseAdminKey: string;
     collectionName: string;
     batchSize: number;
+    dryRun: boolean;
+    maxDeletes: number | null;
 };
 
 export type TypesenseClient = InstanceType<typeof Typesense.Client>;
@@ -53,10 +55,30 @@ export function parseArgs(argv: string[]): CliConfig {
     let typesenseAdminKey = process.env.TYPESENSE_ADMIN_KEY?.trim() || '';
     let collectionName = DEFAULT_COLLECTION_NAME;
     let batchSize = DEFAULT_BATCH_SIZE;
+    let dryRun = false;
+    let maxDeletes: number | null = null;
 
     for (let i = 0; i < args.length; i++) {
         const arg = args[i];
         const paired = readPairedArg(args, i);
+
+        if (arg === '--dry-run') {
+            dryRun = true;
+            continue;
+        }
+
+        if (arg.startsWith('--max-deletes=')) {
+            maxDeletes = parseNonNegativeInteger(
+                arg.slice('--max-deletes='.length),
+                'max-deletes',
+            );
+            continue;
+        }
+        if (arg === '--max-deletes') {
+            maxDeletes = parseNonNegativeInteger(paired.value, 'max-deletes');
+            i = paired.nextIndex;
+            continue;
+        }
 
         if (arg.startsWith('--convex-url=')) {
             convexUrl = arg.slice('--convex-url='.length).trim();
@@ -128,6 +150,8 @@ export function parseArgs(argv: string[]): CliConfig {
         typesenseAdminKey,
         collectionName,
         batchSize,
+        dryRun,
+        maxDeletes,
     });
 }
 
@@ -147,9 +171,25 @@ function readPairedArg(args: string[], index: number) {
 }
 
 function parseBatchSize(value: string): number {
-    const parsed = Number.parseInt(value.trim(), 10);
-    if (!Number.isInteger(parsed) || parsed <= 0) {
+    const parsed = parseWholeNumber(value, 'batch size');
+    if (parsed <= 0) {
         throw new Error(`Invalid batch size: ${value}`);
+    }
+    return parsed;
+}
+
+function parseNonNegativeInteger(value: string, label: string): number {
+    return parseWholeNumber(value, label);
+}
+
+function parseWholeNumber(value: string, label: string): number {
+    const trimmed = value.trim();
+    if (!/^\d+$/.test(trimmed)) {
+        throw new Error(`Invalid ${label}: ${value}`);
+    }
+    const parsed = Number.parseInt(trimmed, 10);
+    if (!Number.isInteger(parsed) || parsed < 0) {
+        throw new Error(`Invalid ${label}: ${value}`);
     }
     return parsed;
 }

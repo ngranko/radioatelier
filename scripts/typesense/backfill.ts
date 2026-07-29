@@ -1,6 +1,6 @@
 /**
  * Usage:
- * bun scripts/typesense/backfill.ts --convex-url <convex-url> --backfill-key <backfill-key> --typesense-url <typesense-url> --typesense-admin-key <typesense-admin-key> [--collection <name>] [--batch-size <size>]
+ * bun scripts/typesense/backfill.ts --convex-url <convex-url> --backfill-key <backfill-key> --typesense-url <typesense-url> --typesense-admin-key <typesense-admin-key> [--collection <name>] [--batch-size <size>] [--dry-run] [--max-deletes <n>]
  *
  * Environment variables:
  * PUBLIC_CONVEX_URL
@@ -30,17 +30,30 @@ async function main(): Promise<void> {
     }
 
     console.log('Exporting existing Typesense documents...');
-    const existing = await exportExistingDocuments(typesenseClient, config);
+    const {documents: existing, unreadableIds} = await exportExistingDocuments(
+        typesenseClient,
+        config,
+    );
     console.log(`Found ${existing.size} documents in Typesense.`);
 
     console.log('Fetching Convex objects...');
     const desired = await fetchAllConvexDocuments(new ConvexHttpClient(config.convexUrl), config);
     console.log(`Found ${desired.length} objects in Convex.`);
 
-    const plan = planSync(desired, existing);
+    const plan = planSync(desired, existing, unreadableIds);
     console.log(
         `Plan: create=${plan.toCreate.length}, update=${plan.toUpdate.length}, unchanged=${plan.unchanged}, delete=${plan.toDelete.length}`,
     );
+
+    if (config.dryRun) {
+        console.log('Dry run enabled; skipping apply.');
+        return;
+    }
+    if (config.maxDeletes !== null && plan.toDelete.length > config.maxDeletes) {
+        throw new Error(
+            `Refusing to delete ${plan.toDelete.length} documents (max-deletes=${config.maxDeletes}).`,
+        );
+    }
 
     const stats = await applySyncPlan(typesenseClient, config, plan);
 

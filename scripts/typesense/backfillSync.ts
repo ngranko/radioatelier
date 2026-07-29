@@ -1,4 +1,5 @@
 import type {ConvexHttpClient} from 'convex/browser';
+import {api} from '../../src/convex/_generated/api.js';
 import type {
     BackfillDocument,
     CliConfig,
@@ -24,19 +25,27 @@ type SyncPlan = {
 export async function exportExistingDocuments(
     client: TypesenseClient,
     config: CliConfig,
-): Promise<Map<string, SyncDocument>> {
+): Promise<{documents: Map<string, SyncDocument>; unreadableIds: string[]}> {
     const jsonl = await client.collections(config.collectionName).documents().export();
     const documents = new Map<string, SyncDocument>();
+    const unreadableIds: string[] = [];
 
     for (const line of jsonl.split('\n')) {
         if (!line.trim()) {
             continue;
         }
-        const document = normalizeRawDocument(JSON.parse(line) as Record<string, unknown>);
-        documents.set(document.id, document);
+        const raw = JSON.parse(line) as Record<string, unknown>;
+        try {
+            const document = normalizeRawDocument(raw);
+            documents.set(document.id, document);
+        } catch {
+            if (typeof raw.id === 'string' && raw.id.trim()) {
+                unreadableIds.push(raw.id);
+            }
+        }
     }
 
-    return documents;
+    return {documents, unreadableIds};
 }
 
 export async function fetchAllConvexDocuments(
@@ -52,23 +61,35 @@ export async function fetchAllConvexDocuments(
         if (page.isDone) {
             break;
         }
+        if (!page.continueCursor || page.continueCursor === cursor) {
+            throw new Error('Backfill pagination made no progress');
+        }
         cursor = page.continueCursor;
     }
 
     return documents;
 }
 
-export function planSync(desired: SyncDocument[], existing: Map<string, SyncDocument>): SyncPlan {
+export function planSync(
+    desired: SyncDocument[],
+    existing: Map<string, SyncDocument>,
+    unreadableIds: string[] = [],
+): SyncPlan {
     const toCreate: SyncDocument[] = [];
     const toUpdate: SyncDocument[] = [];
     let unchanged = 0;
     const seen = new Set<string>();
+    const unreadable = new Set(unreadableIds);
 
     for (const document of desired) {
         seen.add(document.id);
         const current = existing.get(document.id);
         if (!current) {
-            toCreate.push(document);
+            if (unreadable.has(document.id)) {
+                toUpdate.push(document);
+            } else {
+                toCreate.push(document);
+            }
             continue;
         }
         if (documentsEqual(current, document)) {
@@ -78,11 +99,12 @@ export function planSync(desired: SyncDocument[], existing: Map<string, SyncDocu
         toUpdate.push(document);
     }
 
+    const existingIds = new Set([...existing.keys(), ...unreadable]);
     return {
         toCreate,
         toUpdate,
         unchanged,
-        toDelete: [...existing.keys()].filter(id => !seen.has(id)),
+        toDelete: [...existingIds].filter(id => !seen.has(id)),
     };
 }
 
@@ -105,16 +127,13 @@ async function fetchBackfillPage(
     config: CliConfig,
     cursor: string | null,
 ): Promise<PaginationResult<BackfillDocument>> {
-    return await client.action(
-        'typesense:getBackfillPage' as never,
-        {
-            backfillKey: config.backfillKey,
-            paginationOpts: {
-                cursor,
-                numItems: config.batchSize,
-            },
-        } as never,
-    );
+    return await client.action(api.typesense.getBackfillPage, {
+        backfillKey: config.backfillKey,
+        paginationOpts: {
+            cursor,
+            numItems: config.batchSize,
+        },
+    });
 }
 
 async function importDocuments(
@@ -164,13 +183,22 @@ async function deleteDocuments(
             .collections(config.collectionName)
             .documents()
             .delete({
-                filter_by: `id:=[${batch.join(',')}]`,
+                filter_by: `id:=[${batch.map(quoteFilterValue).join(',')}]`,
                 batch_size: config.batchSize,
             });
+        if (result.num_deleted !== batch.length) {
+            throw new Error(
+                `Typesense deleted ${result.num_deleted} of ${batch.length} documents`,
+            );
+        }
         deleted += result.num_deleted;
     }
 
     return deleted;
+}
+
+function quoteFilterValue(value: string): string {
+    return `\`${value.replaceAll('`', '\\`')}\``;
 }
 
 function chunk<T>(items: T[], size: number): T[][] {
