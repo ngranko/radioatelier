@@ -2,12 +2,12 @@
     import '../styles/app.css';
     import {PUBLIC_CONVEX_URL} from '$env/static/public';
     import ConvexClerkAuth from '$lib/components/convexClerkAuth.svelte';
+    import Spinner from '$lib/components/spinner.svelte';
     import {Toaster} from '$lib/components/ui/sonner';
     import {initTheme, themeState} from '$lib/state/theme.svelte';
     import CheckCircleIcon from '@lucide/svelte/icons/check-circle';
     import CircleXMarkIcon from '@lucide/svelte/icons/circle-x';
     import InfoIcon from '@lucide/svelte/icons/info';
-    import LoaderCircleIcon from '@lucide/svelte/icons/loader-circle';
     import TriangleAlertIcon from '@lucide/svelte/icons/triangle-alert';
     import {setupConvex} from 'convex-svelte';
     import type {Snippet} from 'svelte';
@@ -45,7 +45,7 @@
             }}
         >
             {#snippet loadingIcon()}
-                <LoaderCircleIcon class="size-5 animate-spin" />
+                <Spinner class="size-5" />
             {/snippet}
             {#snippet successIcon()}
                 <CheckCircleIcon class="size-5" />

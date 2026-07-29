@@ -1,4 +1,5 @@
 <script lang="ts">
+    import Spinner from '$lib/components/spinner.svelte';
     import {
         Root as AlertDialogRoot,
         Content,
@@ -11,7 +12,6 @@
     import {closeDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
     import {clearSearchPointList} from '$lib/state/searchPointList.svelte.ts';
     import {clearSharedMarker} from '$lib/state/sharedMarker.svelte.ts';
-    import LoaderCircleIcon from '@lucide/svelte/icons/loader-circle';
     import posthog from 'posthog-js';
     import {useClerkContext} from 'svelte-clerk';
     import {toast} from 'svelte-sonner';
@@ -71,7 +71,7 @@
             <Cancel disabled={isLoggingOut}>Отмена</Cancel>
             <Action onclick={handleClick} disabled={isLoggingOut}>
                 {#if isLoggingOut}
-                    <LoaderCircleIcon class="animate-spin" />
+                    <Spinner />
                 {:else}
                     Выйти
                 {/if}

@@ -1,11 +1,11 @@
 <script lang="ts">
     import {api} from '$convex/_generated/api';
     import type {Doc, Id} from '$convex/_generated/dataModel';
+    import Spinner from '$lib/components/spinner.svelte';
     import {DialogClose, DialogFooter} from '$lib/components/ui/dialog';
     import {Progress} from '$lib/components/ui/progress';
     import type {ImportJobSnapshot} from '$lib/interfaces/import';
     import {applyImportJobSnapshot, importState} from '$lib/state/import.svelte.ts';
-    import LoaderCircleIcon from '@lucide/svelte/icons/loader-circle';
     import {useQuery} from 'convex-svelte';
 
     function toImportJobSnapshot(job: Doc<'importJobs'> | null): ImportJobSnapshot | null {
@@ -40,7 +40,7 @@
     <div class="w-full max-w-md space-y-6">
         <div class="flex flex-col items-center gap-4">
             <div class="bg-primary/10 flex h-16 w-16 items-center justify-center rounded-full">
-                <LoaderCircleIcon class="text-primary size-6 animate-spin stroke-2" />
+                <Spinner class="text-primary size-6 stroke-2" />
             </div>
             <div class="space-y-2 text-center">
                 <p class="text-lg font-medium">Импортирую данные...</p>
