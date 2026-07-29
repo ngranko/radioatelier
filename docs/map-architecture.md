@@ -94,6 +94,14 @@ Viewport selection scans the catalog cheaply, while applying its result costs on
 - `VisibilityEngine` diffs the selected ids against the repository's visible set, so it touches only markers entering or leaving the viewport rather than walking every marker.
 - The resulting diff is applied under a time budget (`frameBudgetMs`, default 8 ms) rather than a fixed chunk count: small diffs finish synchronously in the same tick, large ones yield to the browser between `requestAnimationFrame` batches so slow devices stay interactive.
 
+## Marker entrance animation
+
+DOM markers pop in when they enter the viewport; `PopAnimator` (`renderer/dom/popAnimation.ts`) owns it.
+
+The Maps API renders marker content on its own draw pass, so `animate-popin` can land several frames before the element is rendered — and a CSS animation does not start until then. Teardown therefore hangs off the animation's own `animationend`/`animationcancel` instead of a timer: a wall-clock timer strips the class before the animation plays whenever that draw is late, which is exactly what happens when a pan brings hundreds of markers in at once.
+
+`hide()` and `remove()` cancel a pending pop-in so a marker leaving mid-animation cannot keep it. Deck markers have no entrance animation — they are one batched layer — and hiding is never animated (see the comment on `Marker.hide`).
+
 ## Map interactions
 
 - **Click** — 300 ms debounce; suppressed while Deck mode is active or during double-tap drag-zoom (`PointerDragZoomController`).
