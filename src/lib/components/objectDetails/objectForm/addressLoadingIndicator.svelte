@@ -14,8 +14,9 @@
         className,
     )}
 >
+    <!-- see spinner.svelte: transform-box has to be pinned or the 14px icon orbits its centre -->
     <svg
-        class="h-3.5 w-3.5 animate-spin"
+        class="h-3.5 w-3.5 origin-center animate-spin [transform-box:border-box]"
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
         viewBox="0 0 24 24"

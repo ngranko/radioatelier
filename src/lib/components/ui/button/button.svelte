@@ -41,7 +41,7 @@
 </script>
 
 <script lang="ts">
-    import LoaderCircleIcon from '@lucide/svelte/icons/loader-circle';
+    import Spinner from '$lib/components/spinner.svelte';
 
     let {
         class: className,
@@ -74,11 +74,7 @@
             class="absolute inset-0 flex items-center justify-center"
             aria-hidden="true"
         >
-            <!-- WebKit resolves transform-origin against the 24-unit viewBox of an outer
-                 <svg>, which makes a 16px icon orbit its centre instead of spinning on it -->
-            <LoaderCircleIcon
-                class="size-4 origin-center animate-spin [transform-box:border-box]"
-            />
+            <Spinner class="size-4" />
         </span>
         <!-- the label keeps the button's width and accessible name; opacity-0 needs a box of
              its own because a bare text child cannot be targeted by a selector -->
