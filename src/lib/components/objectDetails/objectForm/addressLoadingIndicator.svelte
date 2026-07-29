@@ -15,5 +15,5 @@
         className,
     )}
 >
-    <Spinner class="size-3.5" />
+    <Spinner class="size-3.5 stroke-[2.5]" />
 </div>
