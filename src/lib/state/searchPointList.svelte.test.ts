@@ -57,6 +57,15 @@ describe('searchPointList', () => {
         expect(Object.keys(searchPointList)).toEqual(['place-1']);
     });
 
+    it('leaves a result list pin alone when the next point is selected', () => {
+        replaceSearchPointList([{object: makeItem()}]);
+
+        selectSearchPoint({object: makeItem()});
+        selectSearchPoint({object: makeItem({googlePlaceId: 'place-2', latitude: 56})});
+
+        expect(Object.keys(searchPointList)).toEqual(['place-1', 'place-2']);
+    });
+
     it('removes a pin by position no matter how the point was opened', () => {
         replaceSearchPointList([
             {object: makeItem()},

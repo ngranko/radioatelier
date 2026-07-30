@@ -33,12 +33,16 @@ export function removeSearchPoint(id: string) {
 
 export function selectSearchPoint(point: SearchPointListItem): string {
     const key = getSearchPointKey(point);
-    if (selectedPointKey !== key) {
-        clearSelectedSearchPoint();
-        selectedPointKey = key;
+    if (selectedPointKey === key) {
+        return key;
     }
 
+    clearSelectedSearchPoint();
+    // a pin the result list already holds outlives the preview that opened it,
+    // so the selection must not take ownership of it
+    selectedPointKey = key in searchPointList ? null : key;
     searchPointList[key] = point;
+
     return key;
 }
 
