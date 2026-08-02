@@ -1,5 +1,5 @@
 <script lang="ts">
-    import LoaderCircleIcon from '@lucide/svelte/icons/loader-circle';
+    import Spinner from '$lib/components/spinner.svelte';
     import {fade, scale} from 'svelte/transition';
 </script>
 
@@ -13,7 +13,7 @@
         in:scale={{duration: 200, start: 0.92}}
         out:scale={{duration: 160, start: 1}}
     >
-        <LoaderCircleIcon class="animate-spin" />
+        <Spinner />
         <span>Загрузка...</span>
     </div>
 </div>

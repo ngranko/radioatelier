@@ -94,6 +94,17 @@ Viewport selection scans the catalog cheaply, while applying its result costs on
 - `VisibilityEngine` diffs the selected ids against the repository's visible set, so it touches only markers entering or leaving the viewport rather than walking every marker.
 - The resulting diff is applied under a time budget (`frameBudgetMs`, default 8 ms) rather than a fixed chunk count: small diffs finish synchronously in the same tick, large ones yield to the browser between `requestAnimationFrame` batches so slow devices stay interactive.
 
+## Marker entrance animation
+
+DOM markers pop in when they enter the viewport; `PopAnimator` (`renderer/dom/popAnimation.ts`) owns it.
+
+Both ends of the animation are driven by the marker itself rather than by wall-clock timers, because the Maps API decides when marker content is rendered and when it is actually revealed, and those are not the same moment:
+
+- **Start** — `popIn` holds the element at `scale: 0` and waits, one `requestAnimationFrame` at a time, for `checkVisibility()` before adding `animate-popin`. A CSS animation starts as soon as its element is _rendered_ and then advances on wall-clock time, so an animation begun at that point spends its growth phase where nobody can see it: `popIn` reaches full size ~110 ms into its 250 ms and the rest is overshoot settle, so a marker revealed 100 ms late shows only the bounce. The hold is what keeps a pre-animation draw from painting the marker full size instead. After `MAX_WAIT_FRAMES` it plays regardless, so a marker the map never reveals cannot stay stuck at zero scale.
+- **End** — teardown hangs off the animation's own `animationend` / `animationcancel`, so the class stays until playback finishes. Previously a wall-clock timer stripped the class before the animation had played whenever the draw was late — which is what happens when a pan brings hundreds of markers in at once.
+
+`hide()` and `remove()` cancel a pending pop-in so a marker leaving mid-animation cannot keep it. Deck markers have no entrance animation — they are one batched layer — and hiding is never animated (see the comment on `Marker.hide`).
+
 ## Map interactions
 
 - **Click** — 300 ms debounce; suppressed while Deck mode is active or during double-tap drag-zoom (`PointerDragZoomController`).

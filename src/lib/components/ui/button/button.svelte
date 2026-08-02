@@ -41,7 +41,7 @@
 </script>
 
 <script lang="ts">
-    import LoaderCircleIcon from '@lucide/svelte/icons/loader-circle';
+    import Spinner from '$lib/components/spinner.svelte';
 
     let {
         class: className,
@@ -60,10 +60,8 @@
     let classes = $derived(
         cn(
             buttonVariants({variant, size}),
-            // busy ≠ unavailable (keep contrast); opacity-0 keeps layout + accessible name
-            // without a wrapper that would break has-[>svg]
-            loading &&
-                'relative disabled:opacity-100 aria-disabled:opacity-100 [&>:not([data-slot=button-loading])]:opacity-0',
+            // busy ≠ unavailable, so keep full contrast while the spinner is up
+            loading && 'relative disabled:opacity-100 aria-disabled:opacity-100',
             className,
         ),
     );
@@ -76,10 +74,14 @@
             class="absolute inset-0 flex items-center justify-center"
             aria-hidden="true"
         >
-            <LoaderCircleIcon class="size-4 animate-spin" />
+            <Spinner class="size-4" />
         </span>
+        <!-- the label keeps the button's width and accessible name; opacity-0 needs a box of
+             its own because a bare text child cannot be targeted by a selector -->
+        <span class="inline-flex items-center gap-2 opacity-0">{@render children?.()}</span>
+    {:else}
+        {@render children?.()}
     {/if}
-    {@render children?.()}
 {/snippet}
 
 {#if href}
