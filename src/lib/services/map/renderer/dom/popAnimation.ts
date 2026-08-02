@@ -65,11 +65,13 @@ export class PopAnimator {
 function whenVisible(element: HTMLElement, onVisible: () => void): () => void {
     let frames = 0;
     let frameId = requestAnimationFrame(function poll() {
-        const visible = element.checkVisibility({
-            visibilityProperty: true,
-            opacityProperty: true,
-            contentVisibilityAuto: true,
-        });
+        const visible =
+            typeof element.checkVisibility !== 'function' ||
+            element.checkVisibility({
+                visibilityProperty: true,
+                opacityProperty: true,
+                contentVisibilityAuto: true,
+            });
 
         if (visible || ++frames > MAX_WAIT_FRAMES) {
             onVisible();
