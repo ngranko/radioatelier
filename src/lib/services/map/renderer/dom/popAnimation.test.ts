@@ -72,6 +72,19 @@ describe('PopAnimator', () => {
         expect(classes.has('animate-popin')).toBe(true);
     });
 
+    it('plays on the next frame when checkVisibility is unavailable', () => {
+        const frames = stubFrames();
+        const {element, classes, style} = makeElement();
+        Reflect.deleteProperty(element, 'checkVisibility');
+
+        new PopAnimator().popIn(element);
+        expect(style.scale).toBe('0');
+        expect(classes.has('animate-popin')).toBe(false);
+
+        frames.advance();
+        expect(classes.has('animate-popin')).toBe(true);
+    });
+
     it.each(['animationend', 'animationcancel'])('cleans up on %s', eventName => {
         const frames = stubFrames();
         const {element, classes, style} = makeElement();
