@@ -1,42 +1,44 @@
 import {afterEach, describe, expect, it, vi} from 'vitest';
-import {MAX_WAIT_FRAMES, PopAnimator} from './popAnimation';
+import {PopAnimator} from './popAnimation';
+import {REVEAL_TIMEOUT_MS} from './revealWatcher';
 
-function makeElement(visible = true) {
+function makeElement() {
     const element = new EventTarget();
     const classes = new Set<string>();
-    const style: Record<string, string> = {scale: ''};
-    const state = {visible};
+    const style: Record<string, string> = {visibility: ''};
     Object.assign(element, {
         classList: {
             add: (className: string) => void classes.add(className),
             remove: (className: string) => void classes.delete(className),
         },
         style,
-        checkVisibility: () => state.visible,
     });
-    return {element: element as unknown as HTMLElement, classes, style, state};
+    return {element: element as unknown as HTMLElement, classes, style};
 }
 
-function stubFrames() {
-    let nextId = 1;
-    const pending = new Map<number, FrameRequestCallback>();
-    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
-        const id = nextId++;
-        pending.set(id, callback);
-        return id;
-    });
-    vi.stubGlobal('cancelAnimationFrame', (id: number) => void pending.delete(id));
+function stubObserver() {
+    const callbacks: IntersectionObserverCallback[] = [];
+    const observed = new Set<Element>();
+
+    class Stub {
+        public constructor(callback: IntersectionObserverCallback) {
+            callbacks.push(callback);
+        }
+        public observe(element: Element) {
+            observed.add(element);
+        }
+        public unobserve(element: Element) {
+            observed.delete(element);
+        }
+    }
+    vi.stubGlobal('IntersectionObserver', Stub);
 
     return {
-        advance(count = 1) {
-            for (let i = 0; i < count; i++) {
-                const next = pending.entries().next();
-                if (next.done) {
-                    return;
-                }
-                const [id, callback] = next.value;
-                pending.delete(id);
-                callback(0);
+        observed,
+        reveal(element: Element) {
+            const entries = [{target: element, isIntersecting: true}];
+            for (const callback of callbacks) {
+                callback(entries as unknown as IntersectionObserverEntry[], {} as never);
             }
         },
     };
@@ -44,88 +46,100 @@ function stubFrames() {
 
 afterEach(() => {
     vi.unstubAllGlobals();
+    vi.useRealTimers();
 });
 
 describe('PopAnimator', () => {
-    it('holds the marker at zero scale until the map reveals it', () => {
-        const frames = stubFrames();
-        const {element, classes, style, state} = makeElement(false);
+    it('holds the marker hidden until the map puts it on screen', () => {
+        const observer = stubObserver();
+        const {element, classes, style} = makeElement();
 
         new PopAnimator().popIn(element);
-        expect(style.scale).toBe('0');
-
-        frames.advance(3);
+        expect(style.visibility).toBe('hidden');
         expect(classes.has('animate-popin')).toBe(false);
 
-        state.visible = true;
-        frames.advance();
+        observer.reveal(element);
+        expect(style.visibility).toBe('');
         expect(classes.has('animate-popin')).toBe(true);
+    });
+
+    it('stops observing a marker it has already revealed', () => {
+        const observer = stubObserver();
+        const {element} = makeElement();
+
+        new PopAnimator().popIn(element);
+        expect(observer.observed.has(element)).toBe(true);
+
+        observer.reveal(element);
+        expect(observer.observed.has(element)).toBe(false);
     });
 
     it('plays anyway once the wait runs out', () => {
-        const frames = stubFrames();
-        const {element, classes} = makeElement(false);
+        vi.useFakeTimers();
+        stubObserver();
+        const {element, classes} = makeElement();
 
         new PopAnimator().popIn(element);
-        frames.advance(MAX_WAIT_FRAMES);
+        vi.advanceTimersByTime(REVEAL_TIMEOUT_MS - 1);
         expect(classes.has('animate-popin')).toBe(false);
 
-        frames.advance();
+        vi.advanceTimersByTime(1);
         expect(classes.has('animate-popin')).toBe(true);
     });
 
-    it('plays on the next frame when checkVisibility is unavailable', () => {
-        const frames = stubFrames();
+    it('falls back to the timeout when IntersectionObserver is unavailable', () => {
+        vi.useFakeTimers();
+        vi.stubGlobal('IntersectionObserver', undefined);
         const {element, classes, style} = makeElement();
-        Reflect.deleteProperty(element, 'checkVisibility');
 
         new PopAnimator().popIn(element);
-        expect(style.scale).toBe('0');
-        expect(classes.has('animate-popin')).toBe(false);
+        expect(style.visibility).toBe('hidden');
 
-        frames.advance();
+        vi.advanceTimersByTime(REVEAL_TIMEOUT_MS);
         expect(classes.has('animate-popin')).toBe(true);
     });
 
     it.each(['animationend', 'animationcancel'])('cleans up on %s', eventName => {
-        const frames = stubFrames();
+        const observer = stubObserver();
         const {element, classes, style} = makeElement();
 
         new PopAnimator().popIn(element);
-        frames.advance();
+        observer.reveal(element);
         expect(classes.has('animate-popin')).toBe(true);
 
         element.dispatchEvent(new Event(eventName));
         expect(classes.has('animate-popin')).toBe(false);
-        expect(style.scale).toBe('');
+        expect(style.visibility).toBe('');
     });
 
     it('cancels a pending animation and allows another one', () => {
-        const frames = stubFrames();
+        const observer = stubObserver();
         const {element, classes, style} = makeElement();
         const animator = new PopAnimator();
 
         animator.popIn(element);
-        frames.advance();
+        observer.reveal(element);
         animator.cancel(element);
         expect(classes.has('animate-popin')).toBe(false);
-        expect(style.scale).toBe('');
+        expect(style.visibility).toBe('');
 
         animator.popIn(element);
-        frames.advance();
+        observer.reveal(element);
         expect(classes.has('animate-popin')).toBe(true);
     });
 
     it('drops the hold when cancelled before the marker is revealed', () => {
-        const frames = stubFrames();
-        const {element, classes, style} = makeElement(false);
+        vi.useFakeTimers();
+        const observer = stubObserver();
+        const {element, classes, style} = makeElement();
         const animator = new PopAnimator();
 
         animator.popIn(element);
         animator.cancel(element);
-        expect(style.scale).toBe('');
+        expect(style.visibility).toBe('');
+        expect(observer.observed.has(element)).toBe(false);
 
-        frames.advance(5);
+        vi.advanceTimersByTime(REVEAL_TIMEOUT_MS);
         expect(classes.has('animate-popin')).toBe(false);
     });
 });
