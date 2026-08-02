@@ -30,7 +30,7 @@
         showLoadingDetailsOverlay,
     } from '$lib/state/objectDetailsOverlay.svelte';
     import {getActiveSearchUrl} from '$lib/state/search.svelte';
-    import {removeSearchPoint} from '$lib/state/searchPointList.svelte.ts';
+    import {removeSearchPoint, removeSearchPointsAt} from '$lib/state/searchPointList.svelte.ts';
     import {getErrorArray} from '$lib/utils/formErrors.ts';
     import {resizeImage} from '$lib/utils/imageResizer';
     import GhostIcon from '@lucide/svelte/icons/ghost';
@@ -219,11 +219,23 @@
     function handleSaveSuccess(id: Id<'objects'>) {
         if (objectDetailsOverlay.detailsId !== id) {
             // this was object creation case
+            dropSavedPointPin();
             showLoadingDetailsOverlay(id);
             goto(`/object/${id}`);
         } else {
             returnToViewMode();
         }
+    }
+
+    // The saved place gets a marker of its own from the object list, so the
+    // search pin it was created from would only stack a second one on the spot.
+    function dropSavedPointPin() {
+        const point = objectDetailsOverlay.pointDetails;
+        if (!point) {
+            return;
+        }
+
+        removeSearchPointsAt({lat: point.latitude, lng: point.longitude});
     }
 
     function handleDeleteSuccess(id: string) {
