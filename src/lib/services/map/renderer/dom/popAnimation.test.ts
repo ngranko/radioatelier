@@ -1,5 +1,5 @@
 import {afterEach, describe, expect, it, vi} from 'vitest';
-import {PopAnimator} from './popAnimation';
+import {MAX_WAIT_FRAMES, PopAnimator} from './popAnimation';
 
 function makeElement(visible = true) {
     const element = new EventTarget();
@@ -67,8 +67,10 @@ describe('PopAnimator', () => {
         const {element, classes} = makeElement(false);
 
         new PopAnimator().popIn(element);
-        frames.advance(40);
+        frames.advance(MAX_WAIT_FRAMES);
+        expect(classes.has('animate-popin')).toBe(false);
 
+        frames.advance();
         expect(classes.has('animate-popin')).toBe(true);
     });
 

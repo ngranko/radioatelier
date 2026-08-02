@@ -1,5 +1,5 @@
 const POP_IN_CLASS = 'animate-popin';
-const MAX_WAIT_FRAMES = 30;
+export const MAX_WAIT_FRAMES = 30;
 
 export class PopAnimator {
     private running = new WeakMap<HTMLElement, () => void>();
