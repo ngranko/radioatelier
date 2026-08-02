@@ -98,7 +98,10 @@ Viewport selection scans the catalog cheaply, while applying its result costs on
 
 DOM markers pop in when they enter the viewport; `PopAnimator` (`renderer/dom/popAnimation.ts`) owns it.
 
-The Maps API renders marker content on its own draw pass, so `animate-popin` can land several frames before the element is rendered — and a CSS animation does not start until then. Teardown therefore hangs off the animation's own `animationend`/`animationcancel` instead of a timer: a wall-clock timer strips the class before the animation plays whenever that draw is late, which is exactly what happens when a pan brings hundreds of markers in at once.
+Both ends of the animation are driven by the marker itself rather than by wall-clock timers, because the Maps API decides when marker content is rendered and when it is actually revealed, and those are not the same moment:
+
+- **Start** — `popIn` holds the element at `scale: 0` and waits, one `requestAnimationFrame` at a time, for `checkVisibility()` before adding `animate-popin`. A CSS animation starts as soon as its element is _rendered_ and then advances on wall-clock time, so an animation begun at that point spends its growth phase where nobody can see it: `popIn` reaches full size ~110 ms into its 250 ms and the rest is overshoot settle, so a marker revealed 100 ms late shows only the bounce. The hold is what keeps a pre-animation draw from painting the marker full size instead. After `MAX_WAIT_FRAMES` it plays regardless, so a marker the map never reveals cannot stay stuck at zero scale.
+- **End** — teardown hangs off the animation's own `animationend` / `animationcancel`, so the class stays until playback finishes. Previously a wall-clock timer stripped the class before the animation had played whenever the draw was late — which is what happens when a pan brings hundreds of markers in at once.
 
 `hide()` and `remove()` cancel a pending pop-in so a marker leaving mid-animation cannot keep it. Deck markers have no entrance animation — they are one batched layer — and hiding is never animated (see the comment on `Marker.hide`).
 
