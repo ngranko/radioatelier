@@ -9,7 +9,6 @@
         DialogTrigger,
     } from '$lib/components/ui/dialog';
     import {DialogClose} from '$lib/components/ui/dialog/index.js';
-    import LoaderCircleIcon from '@lucide/svelte/icons/loader-circle';
     import MinusIcon from '@lucide/svelte/icons/minus';
     import MoveIcon from '@lucide/svelte/icons/move';
     import PlusIcon from '@lucide/svelte/icons/plus';
@@ -243,12 +242,7 @@
                         Отмена
                     </Button>
                 </DialogClose>
-                <Button size="sm" onclick={handleClick} disabled={isSubmitting} class="min-w-24">
-                    {#if isSubmitting}
-                        <LoaderCircleIcon class="animate-spin" />
-                    {/if}
-                    Применить
-                </Button>
+                <Button size="sm" onclick={handleClick} loading={isSubmitting}>Применить</Button>
             </div>
         </div>
     </Content>

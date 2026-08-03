@@ -23,20 +23,16 @@ export class MarkerRepository {
         this.visibleMarkers.delete(id);
     }
 
-    public isVisible(id: MarkerId): boolean {
-        return this.visibleMarkers.has(id);
-    }
-
-    public getVisibleIds(): MarkerId[] {
-        return Array.from(this.visibleMarkers);
+    public visibleIds(): ReadonlySet<MarkerId> {
+        return this.visibleMarkers;
     }
 
     public values(): IterableIterator<Marker> {
         return this.markerCache.values();
     }
 
-    public ids(): MarkerId[] {
-        return Array.from(this.markerCache.keys());
+    public entries(): IterableIterator<[MarkerId, Marker]> {
+        return this.markerCache.entries();
     }
 
     public maybeRestoreReplaced(id: MarkerId): Marker | null {
@@ -66,7 +62,7 @@ export class MarkerRepository {
             return {action: 'inserted', marker};
         }
 
-        if (source === 'search' && existing.getSource() !== 'search') {
+        if (source === 'search' && existing.options.source !== 'search') {
             const marker = createMarker();
             existing.hide();
             this.replacedMarkers.set(id, existing);
@@ -75,7 +71,7 @@ export class MarkerRepository {
             return {action: 'replaced', marker};
         }
 
-        if (source !== 'search' && existing.getSource() === 'search') {
+        if (source !== 'search' && existing.options.source === 'search') {
             return {action: 'ignored', marker: existing};
         }
 

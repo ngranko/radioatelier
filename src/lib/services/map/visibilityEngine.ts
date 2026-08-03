@@ -4,14 +4,15 @@ import type {MarkerRepository} from './markerRepository';
 import type {MarkerRenderer} from './renderer/markerRenderer';
 
 export interface VisibilityEngineOptions {
-    chunkSize: number;
+    frameBudgetMs: number;
     // Notification only — what happens when a marker becomes visible
     // (e.g. focusing the shared Object's marker) is the caller's policy.
-    onShown?: (id: MarkerId, marker: Marker) => void;
+    onShown?: (marker: Marker) => void;
 }
 
 export class VisibilityEngine {
     private suppressed = false;
+    private cancelActiveUpdate?: () => void;
 
     public constructor(
         private repo: MarkerRepository,
@@ -27,49 +28,80 @@ export class VisibilityEngine {
         this.suppressed = value;
     }
 
-    public updateVisibility(visibleIds: Set<string>, onComplete?: () => void) {
-        const allMarkerIds = this.repo.ids();
-        let currentIndex = 0;
+    // Drop any queued requestAnimationFrame batch so it cannot resume against a
+    // renderer that was swapped out (or a newer visibility target) after suppress.
+    public cancelPending(): void {
+        this.cancelActiveUpdate?.();
+    }
 
-        const processChunk = () => {
-            if (this.suppressed) {
-                if (onComplete) {
-                    onComplete();
-                }
+    // Work is derived by diffing against the currently visible set, so a pass costs
+    // what actually changed rather than a walk over the whole catalog.
+    public updateVisibility(visibleIds: ReadonlySet<MarkerId>, onComplete?: () => void) {
+        this.cancelPending();
+
+        const currentVisibleIds = this.repo.visibleIds();
+        const leaving = difference(currentVisibleIds, visibleIds);
+        const entering = difference(visibleIds, currentVisibleIds);
+
+        if (leaving.length === 0 && entering.length === 0) {
+            onComplete?.();
+            return;
+        }
+
+        this.applyChanges(leaving, entering, onComplete);
+    }
+
+    // Batches are bounded by elapsed time rather than a marker count so that slow
+    // devices yield to the browser often enough to stay responsive, while fast ones
+    // land the entire diff in the first (synchronous) pass with no visible delay.
+    private applyChanges(leaving: MarkerId[], entering: MarkerId[], onComplete?: () => void) {
+        // One queue keeps the time-budgeted cursor trivial: hides first, then shows.
+        const hideCount = leaving.length;
+        const queue = leaving.concat(entering);
+
+        let cursor = 0;
+        let frameId = 0;
+        let completed = false;
+
+        const finish = () => {
+            if (completed) {
+                return;
+            }
+            completed = true;
+            cancelAnimationFrame(frameId);
+            this.cancelActiveUpdate = undefined;
+            onComplete?.();
+        };
+        this.cancelActiveUpdate = finish;
+
+        const step = () => {
+            if (completed) {
                 return;
             }
 
-            const endIndex = Math.min(currentIndex + this.options.chunkSize, allMarkerIds.length);
-
-            for (let i = currentIndex; i < endIndex; i++) {
-                if (this.suppressed) {
-                    if (onComplete) {
-                        onComplete();
-                    }
-                    return;
+            const deadline = performance.now() + this.options.frameBudgetMs;
+            while (cursor < queue.length && !this.suppressed) {
+                if (cursor < hideCount) {
+                    this.hide(queue[cursor]);
+                } else {
+                    this.show(queue[cursor]);
                 }
+                cursor++;
 
-                const id = allMarkerIds[i];
-                const shouldBeVisible = visibleIds.has(id);
-                const isVisible = this.repo.isVisible(id);
-
-                if (shouldBeVisible && !isVisible) {
-                    this.show(id);
-                } else if (!shouldBeVisible && isVisible) {
-                    this.hide(id);
+                if (performance.now() >= deadline) {
+                    break;
                 }
             }
 
-            currentIndex = endIndex;
-
-            if (currentIndex < allMarkerIds.length) {
-                requestAnimationFrame(processChunk);
-            } else if (onComplete) {
-                onComplete();
+            if (cursor < queue.length && !this.suppressed) {
+                frameId = requestAnimationFrame(step);
+                return;
             }
+
+            finish();
         };
 
-        requestAnimationFrame(processChunk);
+        step();
     }
 
     public show(id: MarkerId) {
@@ -81,7 +113,7 @@ export class VisibilityEngine {
         this.renderer.ensureCreated(marker);
         this.renderer.show(marker);
         this.repo.markVisible(id);
-        this.options.onShown?.(id, marker);
+        this.options.onShown?.(marker);
     }
 
     public hide(id: MarkerId) {
@@ -94,4 +126,14 @@ export class VisibilityEngine {
 
         this.renderer.hide(marker);
     }
+}
+
+function difference(ids: Iterable<MarkerId>, excluded: ReadonlySet<MarkerId>): MarkerId[] {
+    const remaining: MarkerId[] = [];
+    for (const id of ids) {
+        if (!excluded.has(id)) {
+            remaining.push(id);
+        }
+    }
+    return remaining;
 }

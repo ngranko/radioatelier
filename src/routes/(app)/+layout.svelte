@@ -18,7 +18,7 @@
         setOverlayAddressLoading,
         showLoadingDetailsOverlay,
     } from '$lib/state/objectDetailsOverlay.svelte';
-    import {searchPointList} from '$lib/state/searchPointList.svelte.ts';
+    import {hasSearchPointAt, searchPointList} from '$lib/state/searchPointList.svelte.ts';
     import {sharedMarker} from '$lib/state/sharedMarker.svelte.ts';
     import {buildPointUrl} from '$lib/utils/pointRoute.ts';
     import SearchIcon from '@lucide/svelte/icons/search';
@@ -42,6 +42,13 @@
     const clerkCtx = useClerkContext();
 
     const categories = useQuery(api.categories.list, {}, () => ({initialData: data.categories}));
+
+    // A point picked from search is already pinned by its own search marker, so
+    // the draft marker would only stack a second pin on the same spot.
+    const draftMarkerPosition = $derived.by(() => {
+        const position = createDraftState.position;
+        return position && !hasSearchPointAt(position) ? position : null;
+    });
 
     function handleMapClick(location: Location) {
         if (!clerkCtx.auth.userId) {
@@ -131,11 +138,11 @@
         {/key}
     {/if}
 
-    {#if createDraftState.position}
-        {#key `${createDraftState.position.lat},${createDraftState.position.lng}`}
+    {#if draftMarkerPosition}
+        {#key `${draftMarkerPosition.lat},${draftMarkerPosition.lng}`}
             <Marker
-                lat={createDraftState.position.lat}
-                lng={createDraftState.position.lng}
+                lat={draftMarkerPosition.lat}
+                lng={draftMarkerPosition.lng}
                 icon={SproutIcon}
                 iconClassName="fill-current"
                 color="#16a34a"

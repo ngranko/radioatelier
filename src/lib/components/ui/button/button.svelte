@@ -36,10 +36,13 @@
         WithElementRef<HTMLAnchorAttributes> & {
             variant?: ButtonVariant;
             size?: ButtonSize;
+            loading?: boolean;
         };
 </script>
 
 <script lang="ts">
+    import Spinner from '$lib/components/spinner.svelte';
+
     let {
         class: className,
         variant = 'default',
@@ -48,33 +51,63 @@
         href = undefined,
         type = 'button',
         disabled,
+        loading = false,
         children,
         ...restProps
     }: ButtonProps = $props();
+
+    let isDisabled = $derived(disabled || loading);
+    let classes = $derived(
+        cn(
+            buttonVariants({variant, size}),
+            // busy ≠ unavailable, so keep full contrast while the spinner is up
+            loading && 'relative disabled:opacity-100 aria-disabled:opacity-100',
+            className,
+        ),
+    );
 </script>
+
+{#snippet content()}
+    {#if loading}
+        <span
+            data-slot="button-loading"
+            class="absolute inset-0 flex items-center justify-center"
+            aria-hidden="true"
+        >
+            <Spinner class="size-4" />
+        </span>
+        <!-- the label keeps the button's width and accessible name; opacity-0 needs a box of
+             its own because a bare text child cannot be targeted by a selector -->
+        <span class="inline-flex items-center gap-2 opacity-0">{@render children?.()}</span>
+    {:else}
+        {@render children?.()}
+    {/if}
+{/snippet}
 
 {#if href}
     <a
         bind:this={ref}
         data-slot="button"
-        class={cn(buttonVariants({variant, size}), className)}
-        href={disabled ? undefined : href}
-        aria-disabled={disabled}
-        role={disabled ? 'link' : undefined}
-        tabindex={disabled ? -1 : undefined}
+        class={classes}
+        href={isDisabled ? undefined : href}
+        aria-disabled={isDisabled}
+        aria-busy={loading}
+        role={isDisabled ? 'link' : undefined}
+        tabindex={isDisabled ? -1 : undefined}
         {...restProps}
     >
-        {@render children?.()}
+        {@render content()}
     </a>
 {:else}
     <button
         bind:this={ref}
         data-slot="button"
-        class={cn(buttonVariants({variant, size}), className)}
+        class={classes}
         {type}
-        {disabled}
+        disabled={isDisabled}
+        aria-busy={loading}
         {...restProps}
     >
-        {@render children?.()}
+        {@render content()}
     </button>
 {/if}

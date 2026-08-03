@@ -1,11 +1,11 @@
 <script lang="ts">
+    import Spinner from '$lib/components/spinner.svelte';
     import {Button} from '$lib/components/ui/button';
     import type {SearchItem, SearchPageSource, SearchResultsPage} from '$lib/interfaces/object';
     import {fitMarkerList} from '$lib/services/map/map.svelte';
     import {searchState} from '$lib/state/search.svelte';
     import {replaceSearchPointList, searchPointList} from '$lib/state/searchPointList.svelte.ts';
     import CircleAlertIcon from '@lucide/svelte/icons/circle-alert';
-    import LoaderCircleIcon from '@lucide/svelte/icons/loader-circle';
     import ZoomOutIcon from '@lucide/svelte/icons/zoom-out';
     import SearchItemSkeleton from './searchItemSkeleton.svelte';
     import SearchResultsItem from './searchResultsItem.svelte';
@@ -158,7 +158,7 @@
                     disabled={isLoadingMore}
                 >
                     {#if isLoadingMore}
-                        <LoaderCircleIcon class="animate-spin" />
+                        <Spinner />
                         Загрузка...
                     {:else}
                         Загрузить ещё

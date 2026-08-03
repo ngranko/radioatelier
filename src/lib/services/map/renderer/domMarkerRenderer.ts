@@ -2,6 +2,7 @@ import type {MapProvider} from '$lib/interfaces/map';
 import type {Marker} from '$lib/services/map/marker';
 import {DragController} from '$lib/services/map/renderer/dom/dragController';
 import {Factory} from '$lib/services/map/renderer/dom/factory';
+import {PopAnimator} from '$lib/services/map/renderer/dom/popAnimation';
 import {Styler} from '$lib/services/map/renderer/dom/styler';
 import type {MarkerRenderer} from '$lib/services/map/renderer/markerRenderer';
 
@@ -9,8 +10,8 @@ export class DomMarkerRenderer implements MarkerRenderer {
     private factory: Factory;
     private dragController: DragController;
     private styler = new Styler();
+    private popAnimator = new PopAnimator();
     private pendingRemoval = new WeakSet<Marker>();
-    private pendingShow = new WeakSet<Marker>();
 
     public constructor(provider: MapProvider) {
         this.factory = new Factory(provider);
@@ -37,24 +38,13 @@ export class DomMarkerRenderer implements MarkerRenderer {
 
         this.applyState(marker);
         marker.show();
-
-        if (this.pendingShow.has(marker)) {
-            return;
-        }
-        this.pendingShow.add(marker);
-
-        element.classList.add('animate-popin');
-        setTimeout(() => {
-            this.pendingShow.delete(marker);
-            element.classList.remove('animate-popin');
-        }, 200);
+        this.popAnimator.popIn(element);
     }
 
     public hide(marker: Marker): void {
         const element = marker.getHandle()?.getElement();
         if (element) {
-            this.pendingShow.delete(marker);
-            element.classList.remove('animate-popin');
+            this.popAnimator.cancel(element);
         }
         marker.hide();
     }
@@ -71,6 +61,7 @@ export class DomMarkerRenderer implements MarkerRenderer {
         }
         this.pendingRemoval.add(marker);
 
+        this.popAnimator.cancel(element);
         element.classList.add('animate-popout');
         setTimeout(() => {
             this.pendingRemoval.delete(marker);
