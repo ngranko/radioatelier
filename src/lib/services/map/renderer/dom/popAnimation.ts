@@ -1,20 +1,24 @@
+import {RevealWatcher} from '$lib/services/map/renderer/dom/revealWatcher';
+
 const POP_IN_CLASS = 'animate-popin';
-export const MAX_WAIT_FRAMES = 30;
 
 export class PopAnimator {
     private running = new WeakMap<HTMLElement, () => void>();
+    private reveals = new RevealWatcher();
 
     public popIn(element: HTMLElement): void {
         if (this.running.has(element)) {
             return;
         }
 
-        // Held from the moment the marker is handed to the map: whatever the map does
-        // before the animation may start, it must not paint the marker at full size.
-        element.style.scale = '0';
+        // Held from the moment the marker is handed to the map: whatever the map does before
+        // the animation may start, it must not paint the marker. Hiding rather than scaling
+        // to zero leaves the element's box intact, which is what the reveal watcher measures,
+        // and skips the marker's own transform transition that a scale write would trigger.
+        element.style.visibility = 'hidden';
         this.running.set(
             element,
-            whenVisible(element, () => this.play(element)),
+            this.reveals.watch(element, () => this.play(element)),
         );
     }
 
@@ -47,39 +51,14 @@ export class PopAnimator {
         this.running.set(element, stopListening);
         element.addEventListener('animationend', done);
         element.addEventListener('animationcancel', done);
+        // Revealing and starting the growth in the same style change is what keeps the map
+        // from ever painting a frame of the marker at full size.
+        element.style.visibility = '';
         element.classList.add(POP_IN_CLASS);
     }
 
     private clear(element: HTMLElement): void {
         element.classList.remove(POP_IN_CLASS);
-        element.style.scale = '';
+        element.style.visibility = '';
     }
-}
-
-// A CSS animation starts as soon as its element is rendered and then advances on
-// wall-clock time, while the map reveals marker content on its own draw pass and can
-// stall a frame behind a long task. Starting on a frame where the marker is actually
-// visible is what keeps its growth from playing where nobody can see it — leaving only
-// the overshoot on screen. Giving up after MAX_WAIT_FRAMES rather than waiting forever
-// keeps a marker the map never reveals from staying stuck at zero scale.
-function whenVisible(element: HTMLElement, onVisible: () => void): () => void {
-    let frames = 0;
-    let frameId = requestAnimationFrame(function poll() {
-        const visible =
-            typeof element.checkVisibility !== 'function' ||
-            element.checkVisibility({
-                visibilityProperty: true,
-                opacityProperty: true,
-                contentVisibilityAuto: true,
-            });
-
-        if (visible || ++frames > MAX_WAIT_FRAMES) {
-            onVisible();
-            return;
-        }
-
-        frameId = requestAnimationFrame(poll);
-    });
-
-    return () => cancelAnimationFrame(frameId);
 }
