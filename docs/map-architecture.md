@@ -39,7 +39,11 @@ The map marker catalog is loaded client-side from two Convex queries in `(fullLi
 - Owner markers: index `byCreatedByIdAndIsPublic` with `isPublic: false`
 - Public markers: index `byIsPublic` with `isPublic: true`
 
-The layout merges visited state in a `$derived` block: each list item gets `isVisited` from a `Set` built from `listVisitedIds`. Marker list data is **not** SSR-prefetched (no server load for markers); authenticated clients subscribe via `useQuery` with `initialData: []`.
+The layout merges visited state in a `$derived` block: each list item gets `isVisited` from a `Set` built from `listVisitedIds`. Marker list data is **not** SSR-prefetched (no server load for markers).
+
+Both queries pass the Clerk `authUserId` and use `keepPreviousData: true` so markers stay visible while Convex reconnects after the browser resumes a background tab. The server rejects a mismatched `authUserId` so retained client data cannot leak across account switches.
+
+Neither query uses `initialData: []` — with empty initial data, `isLoading` becomes false before the first server response, which breaks the first-run hint (it must distinguish "no markers yet" from "list not loaded yet"). See **First-run onboarding** below.
 
 When the user opens `/object/[id]` for an object that is not already in the catalog (e.g. a newly shared private object they can view), `getActiveListMarker()` injects a synthetic list entry so the pin still renders. Share-only deep links use the separate share marker path in `(app)/+layout.svelte` instead — see **Share markers** below.
 

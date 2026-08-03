@@ -30,7 +30,13 @@ Tests live next to the code they cover. Both `*.test.ts` and `*.spec.ts` suffixe
 | `src/lib/state/searchPointList.svelte.test.ts`       | Search point pins and the single previewed selection   |
 | `src/lib/components/objectDetails/sheetSnap.test.ts` | Sheet drag snap and flick inertia                      |
 | `src/lib/services/map/detailsFocusOffset.test.ts`    | Map focus offsets for side-panel vs mobile peek sheet  |
+| `src/lib/services/map/markerManager.test.ts`         | Marker add/remove lifecycle and id reuse               |
 | `src/lib/services/map/visibilityEngine.test.ts`      | Marker viewport visibility rules                       |
+| `src/lib/services/map/viewportSelection.test.ts`     | Viewport bounds selection and max-marker ranking       |
+| `src/lib/services/map/renderer/dom/popAnimation.test.ts` | DOM marker pop-in and RevealWatcher gating         |
+| `src/lib/services/map/providers/google/deckOverlayHost.test.ts` | Deck overlay host lifecycle                 |
+| `src/lib/services/map/providers/google/deckOverlayRenderer.test.ts` | Deck marker batch rendering               |
+| `src/lib/services/import/normalize.test.ts`          | CSV row normalization before import batches            |
 | `src/lib/services/map/markerFocus.test.ts`           | Marker focus highlight, registry, and recentering      |
 | `src/convex/notion.test.ts`                          | Notion sync decisions and sync-state rules             |
 | `src/convex/notionSync/snapshot.test.ts`             | Snapshot assembly and sync-extras batching             |
@@ -56,3 +62,4 @@ Vitest 4 uses the same `vi` API as Vitest 3. Global test APIs are available with
 ## Related docs
 
 - [notion-sync.md](./notion-sync.md) — manual verification checklist for sync features
+- [object-backend.md](./object-backend.md) — reader/writer modules under test in `src/convex/helpers/`
