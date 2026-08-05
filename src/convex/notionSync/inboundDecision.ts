@@ -2,7 +2,7 @@ import type {Id} from '../_generated/dataModel';
 import type {NotionPageFields} from '../notion/types';
 import {computeNotionToAppDiff, computeSyncHash} from './reconcile';
 import type {ObjectSyncSnapshot} from './snapshot';
-import type {AppSyncApplyPatch, AppSyncPatch} from './types';
+import type {AppSyncApplyPatch} from './types';
 
 type ExistingSyncRecord = {
     objectId: Id<'objects'>;
@@ -10,6 +10,8 @@ type ExistingSyncRecord = {
 };
 
 type InboundPageState = 'active' | 'removed';
+
+type RequiredSyncField = 'name' | 'categoryName';
 
 export type InboundSyncDecision =
     | {kind: 'skip'}
@@ -27,6 +29,11 @@ export type InboundSyncDecision =
     | {
           kind: 'createObject';
           fields: NotionPageFields;
+      }
+    | {
+          kind: 'rejectInbound';
+          objectId?: Id<'objects'>;
+          fields: RequiredSyncField[];
       };
 
 export function decideInboundSync(input: {
@@ -44,6 +51,15 @@ export function decideInboundSync(input: {
 
     if (!input.notionFields) {
         return {kind: 'skip'};
+    }
+
+    const missing = missingRequiredFields(input.notionFields);
+    if (missing.length > 0) {
+        return {
+            kind: 'rejectInbound',
+            ...(input.existingSync ? {objectId: input.existingSync.objectId} : {}),
+            fields: missing,
+        };
     }
 
     if (input.existingSync) {
@@ -78,16 +94,28 @@ function decideExistingObject(
     return {
         kind: 'patchObject',
         objectId: existingSync.objectId,
-        patch: buildApplyPatch(
-            computeNotionToAppDiff(existingSnapshot.fields, notionFields).appPatch,
-        ),
+        // Required name/category are already non-empty on notionFields; nullable
+        // empties stay as null so the writer clears them.
+        patch: computeNotionToAppDiff(existingSnapshot.fields, notionFields)
+            .appPatch as AppSyncApplyPatch,
     };
 }
 
-// Raw diffs retain nulls for audit; the apply patch drops them so inbound sync
-// keeps existing app values rather than clearing them.
-function buildApplyPatch(patch: AppSyncPatch): AppSyncApplyPatch {
-    return Object.fromEntries(
-        Object.entries(patch).filter(([, value]) => value !== null),
-    ) as AppSyncApplyPatch;
+function missingRequiredFields(fields: NotionPageFields): RequiredSyncField[] {
+    const missing: RequiredSyncField[] = [];
+    if (!hasRequiredText(fields.name)) {
+        missing.push('name');
+    }
+    if (!hasRequiredText(fields.categoryName)) {
+        missing.push('categoryName');
+    }
+    return missing;
+}
+
+function hasRequiredText(value: string | null | undefined): value is string {
+    return typeof value === 'string' && value.trim() !== '';
+}
+
+export function requiredFieldsErrorMessage(fields: RequiredSyncField[]) {
+    return `Inbound Notion sync refused empty required field(s): ${fields.join(', ')}`;
 }

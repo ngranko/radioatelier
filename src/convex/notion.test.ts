@@ -201,7 +201,35 @@ describe('notion inbound sync decisions', () => {
         ).toEqual({kind: 'skip'});
     });
 
-    it('keeps app values for fields Notion has emptied', () => {
+    it('clears nullable app fields when Notion empties them', () => {
+        expect(
+            decideInboundSync({
+                eventType: 'page.properties_updated',
+                pageState: 'active',
+                existingSync: {
+                    objectId: objectId('object-1'),
+                    lastOutboundHash: 'older-hash',
+                },
+                notionFields: {
+                    ...appFields,
+                    installedPeriod: null,
+                    source: null,
+                    city: 'Berlin',
+                },
+                existingSnapshot: objectSnapshot('object-1', appFields),
+            }),
+        ).toEqual({
+            kind: 'patchObject',
+            objectId: objectId('object-1'),
+            patch: {
+                installedPeriod: null,
+                source: null,
+                city: 'Berlin',
+            },
+        });
+    });
+
+    it('refuses inbound patches that empty required name or category', () => {
         expect(
             decideInboundSync({
                 eventType: 'page.properties_updated',
@@ -213,16 +241,34 @@ describe('notion inbound sync decisions', () => {
                 notionFields: {
                     ...appFields,
                     name: null,
-                    installedPeriod: null,
-                    source: null,
+                    categoryName: null,
                     city: 'Berlin',
                 },
                 existingSnapshot: objectSnapshot('object-1', appFields),
             }),
         ).toEqual({
-            kind: 'patchObject',
+            kind: 'rejectInbound',
             objectId: objectId('object-1'),
-            patch: {city: 'Berlin'},
+            fields: ['name', 'categoryName'],
+        });
+    });
+
+    it('refuses creating an Object when Notion omits required fields', () => {
+        expect(
+            decideInboundSync({
+                eventType: 'page.created',
+                pageState: 'active',
+                existingSync: null,
+                notionFields: {
+                    ...appFields,
+                    name: null,
+                    categoryName: null,
+                },
+                existingSnapshot: null,
+            }),
+        ).toEqual({
+            kind: 'rejectInbound',
+            fields: ['name', 'categoryName'],
         });
     });
 

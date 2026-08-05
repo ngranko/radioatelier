@@ -7,7 +7,11 @@ import {retrievePage} from '../notion/client';
 import {belongsToConfiguredDataSource} from '../notion/config';
 import {readNotionPageFields} from '../notion/fields';
 import {getNotionPageOwnerId} from './identity';
-import {decideInboundSync, type InboundSyncDecision} from './inboundDecision';
+import {
+    decideInboundSync,
+    requiredFieldsErrorMessage,
+    type InboundSyncDecision,
+} from './inboundDecision';
 import type {ObjectSyncSnapshot} from './snapshot';
 import {buildSyncStateArgs, needsSyncStateWrite} from './state';
 
@@ -168,6 +172,16 @@ async function executeInboundDecision(
                 lastInboundEditedTime: input.lastInboundEditedTime,
             });
             return null;
+        case 'rejectInbound': {
+            const message = requiredFieldsErrorMessage(decision.fields);
+            if (decision.objectId) {
+                await ctx.runMutation(internal.notionSync.state.patchSyncState, {
+                    objectId: decision.objectId,
+                    message,
+                });
+            }
+            throw new Error(`${message} (page ${input.pageId})`);
+        }
         case 'createObject': {
             const owner = (await ctx.runQuery(internal.notionSync.identity.resolveObjectOwner, {
                 notionUserId: input.notionOwnerId,

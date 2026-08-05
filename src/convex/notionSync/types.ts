@@ -43,18 +43,18 @@ export const notionFieldsValidator = {
 export const appApplyPatchValidator = v.object({
     name: v.optional(v.string()),
     categoryName: v.optional(v.string()),
-    address: v.optional(v.string()),
-    city: v.optional(v.string()),
-    country: v.optional(v.string()),
-    installedPeriod: v.optional(v.string()),
+    address: v.optional(nullableString),
+    city: v.optional(nullableString),
+    country: v.optional(nullableString),
+    installedPeriod: v.optional(nullableString),
     isRemoved: v.optional(v.boolean()),
-    removalPeriod: v.optional(v.string()),
+    removalPeriod: v.optional(nullableString),
     tagNames: v.optional(v.array(v.string())),
     isVisited: v.optional(v.boolean()),
-    source: v.optional(v.string()),
+    source: v.optional(nullableString),
 });
 
-// Distinct from AppSyncPatch because a null there means "Notion has no value,
-// keep the app's". The inbound decision resolves that once and drops the nulls,
-// so everything past it can write every field it receives without re-deciding.
+// Distinct from AppSyncPatch: the inbound decision turns Notion empties into
+// writable values (null clears nullable fields; empty name/category are
+// rejected upstream), so everything past it can write every field it receives.
 export type AppSyncApplyPatch = Infer<typeof appApplyPatchValidator>;

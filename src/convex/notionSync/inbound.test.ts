@@ -149,8 +149,8 @@ describe('performInboundSync', () => {
     it('patches the linked Object with the inbound apply patch', async () => {
         vi.mocked(readNotionPageFields).mockReturnValue({
             ...notionFields,
-            name: null,
             city: 'Berlin',
+            installedPeriod: null,
         });
         const {ctx, runMutation} = makeCtx(makeSyncRecord(), makeSnapshot());
 
@@ -161,8 +161,28 @@ describe('performInboundSync', () => {
         expect(runMutation.mock.calls[0][1]).toEqual({
             objectId: 'object-1',
             notionPageId: 'page-1',
-            patch: {city: 'Berlin'},
+            patch: {city: 'Berlin', installedPeriod: null},
             lastInboundEditedTime: editedTime,
+        });
+    });
+
+    it('records a sync error and throws when Notion clears a required field', async () => {
+        vi.mocked(readNotionPageFields).mockReturnValue({
+            ...notionFields,
+            name: null,
+            city: 'Berlin',
+        });
+        const {ctx, runMutation} = makeCtx(makeSyncRecord(), makeSnapshot());
+
+        await expect(
+            performInboundSync(ctx, {pageId: 'page-1', eventType: 'page.properties_updated'}),
+        ).rejects.toThrow(/refused empty required field\(s\): name/);
+
+        expect(runMutation).toHaveBeenCalledTimes(1);
+        expectMutationRef(runMutation, internal.notionSync.state.patchSyncState);
+        expect(runMutation.mock.calls[0][1]).toMatchObject({
+            objectId: 'object-1',
+            message: expect.stringContaining('name'),
         });
     });
 
