@@ -50,7 +50,7 @@ An archive of urban artifacts — old signs, plaques, mosaics, and other details
 ## Features
 
 - **Interactive map** — Provider abstraction over Google Maps; Deck.gl at low zoom, DOM markers at high zoom; Street View with minimap ([docs/map-architecture.md](docs/map-architecture.md), [docs/street-view.md](docs/street-view.md))
-- **Object archive** — Create and manage archive entries with location, metadata, categories, tags, and images; point preview/create overlay ([docs/object-details-overlay.md](docs/object-details-overlay.md))
+- **Object archive** — Create and manage archive entries with location, metadata, categories, tags, and images; point preview/create overlay ([docs/object-details-overlay.md](docs/object-details-overlay.md), [docs/object-backend.md](docs/object-backend.md))
 - **Category settings** — Per-user marker color, icon, and form-picker visibility ([docs/category-settings.md](docs/category-settings.md))
 - **Search** — Unified local (Typesense) and Google Places search with preview dropdown and tabbed results ([docs/search.md](docs/search.md))
 - **Notion sync** — Bidirectional sync between app objects and a Notion database ([docs/notion-sync.md](docs/notion-sync.md))
@@ -63,6 +63,7 @@ An archive of urban artifacts — old signs, plaques, mosaics, and other details
 | ---------------------------------------------------------------------- | -------------------------------------------------------- |
 | [docs/environment.md](docs/environment.md)                             | `.env.local` vs Convex env vars, setup checklist         |
 | [docs/analytics.md](docs/analytics.md)                                 | PostHog events, ingest proxy, identity, error tracking   |
+| [docs/object-backend.md](docs/object-backend.md)                       | Object reader/writer seam, details projection, Typesense writes |
 | [docs/notion-sync.md](docs/notion-sync.md)                             | Notion webhook setup, sync invariants, audit action      |
 | [docs/map-architecture.md](docs/map-architecture.md)                   | Map provider, marker pipeline, DOM vs Deck.gl            |
 | [docs/category-settings.md](docs/category-settings.md)                 | Per-user category marker styles                          |
