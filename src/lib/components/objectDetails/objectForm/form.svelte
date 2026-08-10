@@ -4,6 +4,10 @@
     import {api} from '$convex/_generated/api';
     import type {Id} from '$convex/_generated/dataModel';
     import ImageUpload from '$lib/components/input/imageUpload/index.svelte';
+    import {
+        ADDRESS_FIELDS,
+        decideAddressAutofill,
+    } from '$lib/components/objectDetails/objectForm/addressAutofill';
     import AddressLoadingIndicator from '$lib/components/objectDetails/objectForm/addressLoadingIndicator.svelte';
     import BackButton from '$lib/components/objectDetails/objectForm/backButton.svelte';
     import CategorySelect from '$lib/components/objectDetails/objectForm/categorySelect.svelte';
@@ -147,32 +151,35 @@
 
     onMount(() => registerCloseConfirmationCheck?.(() => isTainted()) ?? undefined);
 
-    const addressFields = ['address', 'city', 'country'] as const;
-    const lastAutoFilledAddress = $state<Record<(typeof addressFields)[number], string>>({
+    const lastAutoFilledAddress = $state<Record<(typeof ADDRESS_FIELDS)[number], string>>({
+        address: '',
+        city: '',
+        country: '',
+    });
+    const lastSeenIncomingAddress = $state<Record<(typeof ADDRESS_FIELDS)[number], string>>({
         address: '',
         city: '',
         country: '',
     });
 
     $effect(() => {
-        for (const field of addressFields) {
-            const incomingValue = initialValues[field];
-            if (typeof incomingValue !== 'string' || !incomingValue) {
+        for (const field of ADDRESS_FIELDS) {
+            const decision = decideAddressAutofill(
+                initialValues[field],
+                $formData[field],
+                lastSeenIncomingAddress[field],
+                lastAutoFilledAddress[field],
+            );
+
+            if (decision.kind === 'ignore') {
                 continue;
             }
 
-            const currentValue = $formData[field];
-            const shouldApply =
-                typeof currentValue !== 'string' ||
-                !currentValue ||
-                currentValue === lastAutoFilledAddress[field];
-
-            if (!shouldApply || currentValue === incomingValue) {
-                continue;
+            lastSeenIncomingAddress[field] = decision.incomingValue;
+            if (decision.kind === 'apply') {
+                $formData[field] = decision.incomingValue;
+                lastAutoFilledAddress[field] = decision.incomingValue;
             }
-
-            $formData[field] = incomingValue;
-            lastAutoFilledAddress[field] = incomingValue;
         }
     });
 
