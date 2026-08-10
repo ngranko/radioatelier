@@ -98,6 +98,7 @@ describe('PopAnimator', () => {
 
     it('stops observing a marker it has already revealed', () => {
         const observer = stubObserver();
+        stubFrames();
         const {element} = makeElement();
 
         new PopAnimator().popIn(element);
