@@ -37,8 +37,8 @@ export class DomMarkerRenderer implements MarkerRenderer {
         }
 
         this.applyState(marker);
-        marker.show();
         this.popAnimator.popIn(element);
+        marker.show();
     }
 
     public hide(marker: Marker): void {
