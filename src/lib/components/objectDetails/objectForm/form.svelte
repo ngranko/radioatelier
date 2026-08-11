@@ -4,10 +4,6 @@
     import {api} from '$convex/_generated/api';
     import type {Id} from '$convex/_generated/dataModel';
     import ImageUpload from '$lib/components/input/imageUpload/index.svelte';
-    import {
-        ADDRESS_FIELDS,
-        decideAddressAutofill,
-    } from '$lib/components/objectDetails/objectForm/addressAutofill';
     import AddressLoadingIndicator from '$lib/components/objectDetails/objectForm/addressLoadingIndicator.svelte';
     import BackButton from '$lib/components/objectDetails/objectForm/backButton.svelte';
     import CategorySelect from '$lib/components/objectDetails/objectForm/categorySelect.svelte';
@@ -151,36 +147,43 @@
 
     onMount(() => registerCloseConfirmationCheck?.(() => isTainted()) ?? undefined);
 
-    const lastAutoFilledAddress = $state<Record<(typeof ADDRESS_FIELDS)[number], string>>({
-        address: '',
-        city: '',
-        country: '',
-    });
-    const lastSeenIncomingAddress = $state<Record<(typeof ADDRESS_FIELDS)[number], string>>({
-        address: '',
-        city: '',
-        country: '',
-    });
+    const addressFields = ['address', 'city', 'country'] as const;
+    // Lookup is a one-shot for new points only; edit forms already have their values.
+    let addressLookupApplied = $state(false);
 
     $effect(() => {
-        for (const field of ADDRESS_FIELDS) {
-            const decision = decideAddressAutofill(
-                initialValues[field],
-                $formData[field],
-                lastSeenIncomingAddress[field],
-                lastAutoFilledAddress[field],
-            );
+        if ($formData.id || addressLookupApplied) {
+            return;
+        }
 
-            if (decision.kind === 'ignore') {
-                continue;
+        const userEnteredAddress = addressFields.some(field => {
+            const value = $formData[field];
+            return typeof value === 'string' && value.length > 0;
+        });
+        const hasLookupResult = addressFields.some(field => {
+            const value = initialValues[field];
+            return typeof value === 'string' && value.length > 0;
+        });
+
+        if (!hasLookupResult) {
+            // page.data.form may already hold the looked-up address, or the user
+            // started typing while lookup is still in flight — either way, stop waiting.
+            if (userEnteredAddress) {
+                addressLookupApplied = true;
             }
+            return;
+        }
 
-            lastSeenIncomingAddress[field] = decision.incomingValue;
-            if (decision.kind === 'apply') {
-                $formData[field] = decision.incomingValue;
-                lastAutoFilledAddress[field] = decision.incomingValue;
+        if (!userEnteredAddress) {
+            for (const field of addressFields) {
+                const value = initialValues[field];
+                if (typeof value === 'string' && value) {
+                    $formData[field] = value;
+                }
             }
         }
+
+        addressLookupApplied = true;
     });
 
     function handleBack() {
