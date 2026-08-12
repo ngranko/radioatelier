@@ -61,7 +61,7 @@ export class MarkerManager {
         }
     }
 
-    public addMarker(id: MarkerId, position: LatLngLiteral, options: MarkerOptions): Marker | null {
+    public addMarker(id: MarkerId, position: LatLngLiteral, options: MarkerOptions): Marker {
         const upsert = this.repo.upsertWithPolicy(
             id,
             () => new Marker(position, options),
@@ -72,36 +72,20 @@ export class MarkerManager {
             return upsert.marker;
         }
 
-        if (this.isDeck) {
-            this.renderer.ensureCreated(upsert.marker);
-        }
-
-        if (upsert.marker.isLazy()) {
-            this.scheduleViewportUpdate();
-            return upsert.marker;
-        }
-
-        return this.createMarker(id);
-    }
-
-    private createMarker(id: MarkerId): Marker {
-        const marker = this.repo.get(id);
-        if (!marker) {
-            throw new Error('Marker not found');
-        }
-
-        this.renderer.ensureCreated(marker);
-        this.scheduleViewportUpdateFor(marker);
-
-        return marker;
-    }
-
-    private scheduleViewportUpdateFor(marker: Marker) {
+        const marker = upsert.marker;
         if (!marker.isViewportManaged()) {
-            return;
+            this.visibilityEngine.show(id);
+            return marker;
+        }
+
+        // Deck scatterplots ignore show/hide, so every list pin must join the
+        // layer on insert. DOM list pins wait for the visibility pass instead.
+        if (this.isDeck || !marker.isLazy()) {
+            this.renderer.ensureCreated(marker);
         }
 
         this.scheduleViewportUpdate();
+        return marker;
     }
 
     public getMarker(id: MarkerId): Marker | undefined {

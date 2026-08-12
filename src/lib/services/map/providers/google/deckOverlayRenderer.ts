@@ -1,5 +1,6 @@
 import {cssColorToRgb} from '$lib/services/colorConverter';
 import type {Marker} from '$lib/services/map/marker';
+import {MARKER_VISITED_COLOR} from '$lib/services/map/markerAppearance';
 import type {DeckOverlayHost} from '$lib/services/map/providers/google/deckOverlayHost';
 import type {MarkerRenderer} from '$lib/services/map/renderer/markerRenderer';
 import {ScatterplotLayer} from '@deck.gl/layers';
@@ -89,7 +90,9 @@ export class DeckOverlayRenderer implements MarkerRenderer {
             const pos = marker.getPosition();
             const {isVisited, isRemoved} = marker.getState();
             const {r, g, b} = cssColorToRgb(marker.options.color);
-            const outline = isVisited ? cssColorToRgb('#39ff14') : cssColorToRgb('#ffffff');
+            const outline = isVisited
+                ? cssColorToRgb(MARKER_VISITED_COLOR)
+                : cssColorToRgb('#ffffff');
             const opacityMult = isRemoved ? 0.5 : 1;
             return {
                 position: [pos.lng, pos.lat],

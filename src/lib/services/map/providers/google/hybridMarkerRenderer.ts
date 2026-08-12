@@ -24,7 +24,7 @@ export class HybridMarkerRenderer implements MarkerRenderer {
     public syncAll(iterable: Iterable<Marker>): void {
         const deckMarkers: Marker[] = [];
         for (const marker of iterable) {
-            if (marker.usesDomRenderer()) {
+            if (marker.isServiceMarker()) {
                 this.dom.ensureCreated(marker);
             } else {
                 deckMarkers.push(marker);
@@ -42,7 +42,10 @@ export class HybridMarkerRenderer implements MarkerRenderer {
     }
 
     public remove(marker: Marker, onRemoved?: () => void): void {
-        this.rendererFor(marker).remove(marker, onRemoved);
+        // List pins keep a hidden DOM handle across deck switches; dropping
+        // only the scatterplot entry would leak that AdvancedMarkerElement.
+        this.deck.remove(marker);
+        this.dom.remove(marker, onRemoved);
     }
 
     public applyState(marker: Marker): void {
@@ -63,6 +66,6 @@ export class HybridMarkerRenderer implements MarkerRenderer {
     }
 
     private rendererFor(marker: Marker): MarkerRenderer {
-        return marker.usesDomRenderer() ? this.dom : this.deck;
+        return marker.isServiceMarker() ? this.dom : this.deck;
     }
 }
