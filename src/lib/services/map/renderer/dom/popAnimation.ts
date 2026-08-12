@@ -95,6 +95,7 @@ export class PopAnimator {
         element.addEventListener('animationend', done);
         element.addEventListener('animationcancel', done);
         element.classList.add(POP_IN_CLASS);
+        element.style.scale = '';
     }
 
     private clear(element: HTMLElement): void {

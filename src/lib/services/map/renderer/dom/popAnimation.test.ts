@@ -94,6 +94,7 @@ describe('PopAnimator', () => {
 
         frames.advance();
         expect(classes.has('animate-popin')).toBe(true);
+        expect(style.scale).toBe('');
     });
 
     it('stops observing a marker it has already revealed', () => {
