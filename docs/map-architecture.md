@@ -59,12 +59,12 @@ Future collection-based access control is planned in [collection-access-control.
 
 Renderer mode switches on map idle based on zoom:
 
-- **Zoom ≤ 10** (`config.deckZoomThreshold`): Deck.gl via `HybridMarkerRenderer`
-- **Zoom > 10**: pure DOM via `DomMarkerRenderer`
+- **Zoom ≤ 10** (`config.deckZoomThreshold`): list pins as a Deck.gl scatterplot; service pins stay DOM
+- **Zoom > 10**: every pin on DOM
 
-The zoom→renderer decision and the switch sequence (suppress updates → destroy renderer → recreate → `syncAll` → resume) live inside `MarkerManager.syncRendererWithViewport`; `map.svelte` only reports that the viewport settled on idle. The threshold is a `MarkerManager` option defaulting to `config.deckZoomThreshold`.
+One `HybridMarkerRenderer` lives for the life of the map. `MarkerManager.syncRendererWithViewport` toggles its mode (`setMode` → `syncAll` for deck) instead of destroying and recreating renderers. `map.svelte` only reports that the viewport settled on idle. The threshold is a `MarkerManager` option defaulting to `config.deckZoomThreshold`. The Deck overlay is attached lazily on the first zoom-out and detached when zooming back in, so a city-zoom session never constructs it.
 
-At low zoom, list markers (`source: 'list'`) batch-render on a Deck.gl overlay for performance. Service markers always use DOM even in deck mode.
+At low zoom, list markers (`source: 'list'`) batch-render on the Deck.gl overlay for performance. Service markers always use DOM even in deck mode. DOM handles for list pins are cached across mode switches (hidden, not destroyed) so zooming back in can reuse them.
 
 ## Marker sources
 
@@ -73,12 +73,11 @@ At low zoom, list markers (`source: 'list'`) batch-render on a Deck.gl overlay f
 | Source   | Renderer           | Viewport-managed | Typical use                           |
 | -------- | ------------------ | ---------------- | ------------------------------------- |
 | `list`   | Deck (at low zoom) | Yes              | Archive objects on the map            |
-| `map`    | Same as list       | Yes              | Legacy / map-origin markers           |
 | `search` | DOM                | Yes              | Google Places search result           |
 | `share`  | DOM                | No               | Deep-linked object not in marker list |
 | `draft`  | DOM                | Yes              | Point being created                   |
 
-Service markers (`search`, `share`, `draft`) call `usesDomRenderer()` and render as DOM overlays inside `HybridMarkerRenderer` so they stay interactive above the Deck layer.
+Those four sources are the only values `MarkerSource` accepts. Their lazy / service / viewport / z-index flags live in one table on `Marker` (`SOURCE_POLICY`). Service markers (`search`, `share`, `draft`) stay on the DOM renderer inside `HybridMarkerRenderer` so they remain interactive above the Deck layer. Share pins are shown as soon as they are added; they are not culled by the viewport.
 
 **Share markers** render in `src/routes/(app)/+layout.svelte` when a deep-linked object is not in the user's marker list. They use a distinct star icon and `source="share"`. The marker id is prefixed with `share-` so it does not collide with list markers for the same object id.
 
@@ -113,7 +112,7 @@ Both ends of the animation are driven by the marker itself rather than by wall-c
 
 - **Click** — 300 ms debounce; suppressed while Deck mode is active or during double-tap drag-zoom (`PointerDragZoomController`).
 - **Drag** — cancels pending marker-reposition timeouts (`removeDragTimeout`).
-- **Idle** — persists center/zoom to `localStorage` (`lastCenter`), then `syncRendererWithViewport` picks the renderer for the new zoom and schedules a viewport update.
+- **Idle** — persists center/zoom to `localStorage` (`lastCenter`), then `syncRendererWithViewport` toggles deck mode if zoom crossed the threshold and schedules a viewport update.
 - **Min zoom** — computed from container size so the map cannot zoom out far enough to show duplicate tile instances (`computeMinZoomForContainer` in the Google provider).
 
 ## Focus and overlay offset
@@ -155,7 +154,7 @@ Dismissal persists in `localStorage` under `firstRunHintDismissed`. The componen
 
 ## Marker styling on the map
 
-Archive marker color and icon come from the object's category, merged with per-user overrides from `api.categories.list`. See [category-settings.md](./category-settings.md).
+Archive marker color and icon come from the object's category, merged with per-user overrides from `api.categories.list`. See [category-settings.md](./category-settings.md). Visited outline color and DOM box-shadow strings are shared via `markerAppearance.ts` so the Deck scatterplot and DOM pins stay in sync.
 
 ## Related docs
 

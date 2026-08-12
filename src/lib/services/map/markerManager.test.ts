@@ -22,16 +22,19 @@ function makeProvider(zoom = 15) {
 
 function makeRenderer() {
     const removed: Marker[] = [];
+    const ensureCreated = vi.fn();
+    const show = vi.fn();
     const renderer: MarkerRenderer = {
-        ensureCreated: () => {},
+        setMode: vi.fn(),
+        ensureCreated,
         syncAll: vi.fn(),
-        show: () => {},
-        hide: () => {},
+        show,
+        hide: vi.fn(),
         remove: marker => void removed.push(marker),
-        applyState: () => {},
+        applyState: vi.fn(),
         destroy: vi.fn(),
     };
-    return {renderer, removed};
+    return {renderer, removed, ensureCreated, show};
 }
 
 function makeRendererFactory() {
@@ -84,7 +87,7 @@ describe('MarkerManager', () => {
         expect(created[1].mode).toBe('dom');
     });
 
-    it('switches renderers when the zoom crosses the threshold', () => {
+    it('switches deck mode on the same renderer when the zoom crosses the threshold', () => {
         const {provider, getZoom} = makeProvider(15);
         const {factory, created} = makeRendererFactory();
         const manager = new MarkerManager(provider, factory, {deckZoomThreshold: 10});
@@ -94,10 +97,10 @@ describe('MarkerManager', () => {
         manager.syncRendererWithViewport();
 
         expect(manager.isDeckRenderer).toBe(true);
-        expect(created).toHaveLength(2);
-        expect(created[1].mode).toBe('deck');
-        expect(created[0].renderer.destroy).toHaveBeenCalled();
-        const syncedMarkers = [...vi.mocked(created[1].renderer.syncAll).mock.calls[0][0]];
+        expect(created).toHaveLength(1);
+        expect(vi.mocked(created[0].renderer.setMode)).toHaveBeenCalledWith('deck');
+        expect(vi.mocked(created[0].renderer.destroy)).not.toHaveBeenCalled();
+        const syncedMarkers = [...vi.mocked(created[0].renderer.syncAll).mock.calls[0][0]];
         expect(syncedMarkers).toEqual([marker]);
     });
 
@@ -125,7 +128,11 @@ describe('MarkerManager', () => {
         manager.syncRendererWithViewport();
 
         expect(manager.isDeckRenderer).toBe(true);
-        expect(created.map(item => item.mode)).toEqual(['deck', 'dom', 'deck']);
+        expect(created).toHaveLength(1);
+        expect(vi.mocked(created[0].renderer.setMode).mock.calls.map(([mode]) => mode)).toEqual([
+            'dom',
+            'deck',
+        ]);
     });
 
     it('keeps non-viewport-managed markers visible across a renderer switch', () => {
@@ -137,9 +144,8 @@ describe('MarkerManager', () => {
         const list = manager.addMarker('list-1', {lat: 1, lng: 2}, markerOptions);
 
         // Seed the visible set as a prior viewport pass would have.
-        const engine = (
-            manager as unknown as {visibilityEngine: {show: (id: string) => void}}
-        ).visibilityEngine;
+        const engine = (manager as unknown as {visibilityEngine: {show: (id: string) => void}})
+            .visibilityEngine;
         engine.show('share-1');
         engine.show('list-1');
 
@@ -150,5 +156,59 @@ describe('MarkerManager', () => {
         manager.syncRendererWithViewport();
 
         expect(firstHide.mock.calls.map(([marker]) => marker)).toEqual([list]);
+    });
+
+    it('defers DOM creation for list markers until a viewport pass', () => {
+        const {renderer, ensureCreated, show} = makeRenderer();
+        const manager = new MarkerManager(makeProvider(15).provider, () => renderer, {
+            deckZoomThreshold: 10,
+        });
+
+        manager.addMarker('list-1', {lat: 1, lng: 2}, markerOptions);
+
+        expect(ensureCreated).not.toHaveBeenCalled();
+        expect(show).not.toHaveBeenCalled();
+    });
+
+    it('adds list markers to the deck layer immediately', () => {
+        const {renderer, ensureCreated, show} = makeRenderer();
+        const manager = new MarkerManager(makeProvider(8).provider, () => renderer, {
+            deckZoomThreshold: 10,
+        });
+
+        const marker = manager.addMarker('list-1', {lat: 1, lng: 2}, markerOptions);
+
+        expect(ensureCreated).toHaveBeenCalledOnce();
+        expect(ensureCreated).toHaveBeenCalledWith(marker);
+        expect(show).not.toHaveBeenCalled();
+    });
+
+    it('creates search markers once and waits for the viewport to show them', () => {
+        const {renderer, ensureCreated, show} = makeRenderer();
+        const manager = new MarkerManager(makeProvider(8).provider, () => renderer, {
+            deckZoomThreshold: 10,
+        });
+        const searchOptions: MarkerOptions = {...markerOptions, source: 'search'};
+
+        const marker = manager.addMarker('search-1', {lat: 1, lng: 2}, searchOptions);
+
+        expect(ensureCreated).toHaveBeenCalledOnce();
+        expect(ensureCreated).toHaveBeenCalledWith(marker);
+        expect(show).not.toHaveBeenCalled();
+    });
+
+    it('shows share markers as soon as they are added', () => {
+        const {renderer, ensureCreated, show} = makeRenderer();
+        const manager = new MarkerManager(makeProvider(15).provider, () => renderer, {
+            deckZoomThreshold: 10,
+        });
+        const shareOptions: MarkerOptions = {...markerOptions, source: 'share'};
+
+        const marker = manager.addMarker('share-1', {lat: 1, lng: 2}, shareOptions);
+
+        expect(ensureCreated).toHaveBeenCalledOnce();
+        expect(ensureCreated).toHaveBeenCalledWith(marker);
+        expect(show).toHaveBeenCalledOnce();
+        expect(show).toHaveBeenCalledWith(marker);
     });
 });

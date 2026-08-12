@@ -1,7 +1,7 @@
 import MarkerIcon from '$lib/components/map/markerIcon.svelte';
 import type {MapProvider} from '$lib/interfaces/map';
-import {markerHaloColor} from '$lib/services/colorConverter';
 import type {Marker} from '$lib/services/map/marker';
+import {markerBoxShadow} from '$lib/services/map/markerAppearance';
 import {cn} from '$lib/utils';
 import {mount} from 'svelte';
 
@@ -23,9 +23,7 @@ export class Factory {
         markerElement.className = `w-6 h-6 translate-y-1/2 flex justify-center items-center rounded-full transition-transform transition-opacity duration-100 ease-in-out text-sm ${isInverted ? '' : 'text-white'}`;
         markerElement.style.backgroundColor = isInverted ? 'white' : color;
         markerElement.style.color = isInverted ? color : '';
-        markerElement.style.boxShadow = isInverted
-            ? `0 0 0 3px ${color}, 0 0 0 5px rgba(255,255,255,0.25), 0 2px 4px rgba(0,0,0,0.2)`
-            : `0 0 0 3px white, 0 0 0 5px ${markerHaloColor(color)}, 0 2px 4px rgba(0,0,0,0.2)`;
+        markerElement.style.boxShadow = markerBoxShadow(color, {inverted: isInverted});
         markerElement.style.setProperty('--marker-color', isInverted ? 'white' : color);
         const baseIconClassName = 'block size-3.5';
         mount(MarkerIcon, {

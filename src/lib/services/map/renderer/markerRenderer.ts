@@ -1,6 +1,10 @@
 import type {Marker} from '$lib/services/map/marker';
 
+export type RendererMode = 'dom' | 'deck';
+
 export interface MarkerRenderer {
+    setMode(mode: RendererMode): void;
+
     ensureCreated(marker: Marker): void;
 
     syncAll(iterable: Iterable<Marker>): void;

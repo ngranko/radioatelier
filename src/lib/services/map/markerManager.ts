@@ -3,12 +3,13 @@ import type {LatLngLiteral, MapProvider} from '$lib/interfaces/map';
 import type {MarkerId, MarkerOptions, MarkerStateUpdate} from '$lib/interfaces/marker';
 import {Marker} from '$lib/services/map/marker';
 import {MarkerRepository} from '$lib/services/map/markerRepository';
-import type {MarkerRenderer} from '$lib/services/map/renderer/markerRenderer';
+import type {MarkerRenderer, RendererMode} from '$lib/services/map/renderer/markerRenderer';
 import {UpdateScheduler} from '$lib/services/map/updateScheduler';
 import {selectVisibleMarkerIds} from '$lib/services/map/viewportSelection';
 import {VisibilityEngine} from '$lib/services/map/visibilityEngine';
 
-export type RendererMode = 'dom' | 'deck';
+export type {RendererMode};
+
 export type RendererFactory = (mode: RendererMode) => MarkerRenderer;
 
 export interface MarkerManagerOptions {
@@ -61,7 +62,7 @@ export class MarkerManager {
         }
     }
 
-    public addMarker(id: MarkerId, position: LatLngLiteral, options: MarkerOptions): Marker | null {
+    public addMarker(id: MarkerId, position: LatLngLiteral, options: MarkerOptions): Marker {
         const upsert = this.repo.upsertWithPolicy(
             id,
             () => new Marker(position, options),
@@ -72,36 +73,20 @@ export class MarkerManager {
             return upsert.marker;
         }
 
-        if (this.isDeck) {
-            this.renderer.ensureCreated(upsert.marker);
-        }
-
-        if (upsert.marker.isLazy()) {
-            this.scheduleViewportUpdate();
-            return upsert.marker;
-        }
-
-        return this.createMarker(id);
-    }
-
-    private createMarker(id: MarkerId): Marker {
-        const marker = this.repo.get(id);
-        if (!marker) {
-            throw new Error('Marker not found');
-        }
-
-        this.renderer.ensureCreated(marker);
-        this.scheduleViewportUpdateFor(marker);
-
-        return marker;
-    }
-
-    private scheduleViewportUpdateFor(marker: Marker) {
+        const marker = upsert.marker;
         if (!marker.isViewportManaged()) {
-            return;
+            this.visibilityEngine.show(id);
+            return marker;
+        }
+
+        // Deck scatterplots ignore show/hide, so every list pin must join the
+        // layer on insert. DOM list pins wait for the visibility pass instead.
+        if (this.isDeck || !marker.isLazy()) {
+            this.renderer.ensureCreated(marker);
         }
 
         this.scheduleViewportUpdate();
+        return marker;
     }
 
     public getMarker(id: MarkerId): Marker | undefined {
@@ -112,9 +97,9 @@ export class MarkerManager {
         this.scheduler.schedule();
     }
 
-    // The zoom→renderer decision and the switch sequence (suppress → destroy →
-    // recreate → syncAll → resume) live behind this seam; callers only report
-    // that the viewport settled.
+    // The zoom→mode decision and the switch sequence (suppress → setMode →
+    // syncAll → resume) live behind this seam; callers only report that the
+    // viewport settled.
     public syncRendererWithViewport(): void {
         const nextIsDeck = this.shouldUseDeck();
         if (nextIsDeck !== this.isDeck) {
@@ -130,13 +115,8 @@ export class MarkerManager {
 
     private switchRenderer(): void {
         this.disableMarkers();
-
-        this.renderer.destroy();
-        this.renderer = this.createRenderer(this.isDeck ? 'deck' : 'dom');
-        this.visibilityEngine.setRenderer(this.renderer);
-
+        this.renderer.setMode(this.isDeck ? 'deck' : 'dom');
         this.renderer.syncAll(this.repo.values());
-
         this.enableMarkers();
     }
 

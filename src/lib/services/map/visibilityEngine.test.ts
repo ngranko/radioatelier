@@ -53,6 +53,7 @@ function makeRenderer() {
     const shown: Marker[] = [];
     const hidden: Marker[] = [];
     const renderer: MarkerRenderer = {
+        setMode: () => {},
         ensureCreated: () => {},
         syncAll: () => {},
         show: marker => void shown.push(marker),

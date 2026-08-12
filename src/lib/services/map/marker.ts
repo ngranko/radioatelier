@@ -1,5 +1,15 @@
 import type {LatLngLiteral, MarkerHandle} from '$lib/interfaces/map';
-import type {MarkerOptions} from '$lib/interfaces/marker';
+import type {MarkerOptions, MarkerSource} from '$lib/interfaces/marker';
+
+const SOURCE_POLICY = {
+    list: {lazy: true, service: false, viewportManaged: true, zIndex: 0},
+    search: {lazy: false, service: true, viewportManaged: true, zIndex: 1},
+    share: {lazy: false, service: true, viewportManaged: false, zIndex: 1},
+    draft: {lazy: false, service: true, viewportManaged: true, zIndex: 1},
+} as const satisfies Record<
+    MarkerSource,
+    {lazy: boolean; service: boolean; viewportManaged: boolean; zIndex: number}
+>;
 
 export class Marker {
     private handle?: MarkerHandle;
@@ -35,27 +45,19 @@ export class Marker {
     }
 
     public isLazy(): boolean {
-        return this.options.source === 'list';
+        return SOURCE_POLICY[this.options.source].lazy;
     }
 
     public isServiceMarker(): boolean {
-        return (
-            this.options.source === 'share' ||
-            this.options.source === 'search' ||
-            this.options.source === 'draft'
-        );
-    }
-
-    public usesDomRenderer(): boolean {
-        return this.isServiceMarker();
+        return SOURCE_POLICY[this.options.source].service;
     }
 
     public getZIndex(): number {
-        return this.isServiceMarker() ? 1 : 0;
+        return SOURCE_POLICY[this.options.source].zIndex;
     }
 
     public isViewportManaged(): boolean {
-        return this.options.source !== 'share';
+        return SOURCE_POLICY[this.options.source].viewportManaged;
     }
 
     public getState() {
@@ -87,14 +89,8 @@ export class Marker {
         this.handle?.show();
     }
 
-    // this function hides a marker without an animation because we do it when a marker either moves
-    // out of viewport bounds (in which case we don't see it, so no need for an animation), or if we
-    // hide all markers while moving to deck overlay, in which case an animation causes weird jitter,
-    // so for now it is simpler to just hide without animation.
-    // There is an edge-case where a marker can be out of viewport only partially, in which case the lack
-    // of animation will be visible, but I'm willing to live with that for now
-    // TODO: Consider implementing true lazy loading (DOM destruction/recreation) if memory usage becomes an issue.
-    // Current approach: DOM caching for better performance and smooth UX
+    // Hide is never animated: out-of-viewport pins are already off-screen, and
+    // animating a bulk hide during the DOM→deck switch jitters the overlay.
     public hide() {
         this.handle?.hide();
     }

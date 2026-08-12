@@ -3,18 +3,35 @@ import type {Marker} from '$lib/services/map/marker';
 import {DeckOverlayRenderer} from '$lib/services/map/providers/google/deckOverlayRenderer';
 import type {GoogleMapsProvider} from '$lib/services/map/providers/google/provider';
 import {DomMarkerRenderer} from '$lib/services/map/renderer/domMarkerRenderer';
-import type {MarkerRenderer} from '$lib/services/map/renderer/markerRenderer';
+import type {MarkerRenderer, RendererMode} from '$lib/services/map/renderer/markerRenderer';
 
 export class HybridMarkerRenderer implements MarkerRenderer {
     private dom: DomMarkerRenderer;
-    private deck: DeckOverlayRenderer;
+    private deck?: DeckOverlayRenderer;
+    private useDeck = false;
 
-    public constructor(provider: MapProvider) {
+    public constructor(
+        private provider: MapProvider,
+        mode: RendererMode = 'dom',
+    ) {
         this.dom = new DomMarkerRenderer(provider);
-        if (!('getDeckOverlay' in provider) || typeof provider.getDeckOverlay !== 'function') {
-            throw new Error('HybridMarkerRenderer requires a GoogleMapsProvider');
+        this.setMode(mode);
+    }
+
+    public setMode(mode: RendererMode): void {
+        const useDeck = mode === 'deck';
+        if (useDeck === this.useDeck) {
+            return;
         }
-        this.deck = new DeckOverlayRenderer((provider as GoogleMapsProvider).getDeckOverlay());
+
+        this.useDeck = useDeck;
+        if (useDeck) {
+            this.deck = new DeckOverlayRenderer(this.requireOverlay());
+            return;
+        }
+
+        this.deck?.destroy();
+        this.deck = undefined;
     }
 
     public ensureCreated(marker: Marker): void {
@@ -22,9 +39,13 @@ export class HybridMarkerRenderer implements MarkerRenderer {
     }
 
     public syncAll(iterable: Iterable<Marker>): void {
+        if (!this.deck) {
+            return;
+        }
+
         const deckMarkers: Marker[] = [];
         for (const marker of iterable) {
-            if (marker.usesDomRenderer()) {
+            if (marker.isServiceMarker()) {
                 this.dom.ensureCreated(marker);
             } else {
                 deckMarkers.push(marker);
@@ -42,7 +63,10 @@ export class HybridMarkerRenderer implements MarkerRenderer {
     }
 
     public remove(marker: Marker, onRemoved?: () => void): void {
-        this.rendererFor(marker).remove(marker, onRemoved);
+        // List pins keep a hidden DOM handle across deck switches; dropping
+        // only the scatterplot entry would leak that AdvancedMarkerElement.
+        this.deck?.remove(marker);
+        this.dom.remove(marker, onRemoved);
     }
 
     public applyState(marker: Marker): void {
@@ -56,13 +80,26 @@ export class HybridMarkerRenderer implements MarkerRenderer {
             console.error('error destroying DomMarkerRenderer:', e);
         }
         try {
-            this.deck.destroy();
+            this.deck?.destroy();
         } catch (e) {
             console.error('error destroying DeckOverlayRenderer:', e);
         }
     }
 
     private rendererFor(marker: Marker): MarkerRenderer {
-        return marker.usesDomRenderer() ? this.dom : this.deck;
+        if (this.deck && !marker.isServiceMarker()) {
+            return this.deck;
+        }
+        return this.dom;
+    }
+
+    private requireOverlay() {
+        if (
+            !('getDeckOverlay' in this.provider) ||
+            typeof this.provider.getDeckOverlay !== 'function'
+        ) {
+            throw new Error('HybridMarkerRenderer requires a GoogleMapsProvider');
+        }
+        return (this.provider as GoogleMapsProvider).getDeckOverlay();
     }
 }

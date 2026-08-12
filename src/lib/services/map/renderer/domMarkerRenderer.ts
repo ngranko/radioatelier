@@ -4,7 +4,7 @@ import {DragController} from '$lib/services/map/renderer/dom/dragController';
 import {Factory} from '$lib/services/map/renderer/dom/factory';
 import {PopAnimator} from '$lib/services/map/renderer/dom/popAnimation';
 import {Styler} from '$lib/services/map/renderer/dom/styler';
-import type {MarkerRenderer} from '$lib/services/map/renderer/markerRenderer';
+import type {MarkerRenderer, RendererMode} from '$lib/services/map/renderer/markerRenderer';
 
 export class DomMarkerRenderer implements MarkerRenderer {
     private factory: Factory;
@@ -17,6 +17,8 @@ export class DomMarkerRenderer implements MarkerRenderer {
         this.factory = new Factory(provider);
         this.dragController = new DragController(provider);
     }
+
+    public setMode(_mode: RendererMode): void {}
 
     public ensureCreated(marker: Marker): void {
         if (!marker.isCreated()) {
@@ -62,13 +64,20 @@ export class DomMarkerRenderer implements MarkerRenderer {
         this.pendingRemoval.add(marker);
 
         this.popAnimator.cancel(element);
+        if (!element.isConnected) {
+            this.finishRemove(marker, element, onRemoved);
+            return;
+        }
+
         element.classList.add('animate-popout');
-        setTimeout(() => {
-            this.pendingRemoval.delete(marker);
-            element.classList.remove('animate-popout');
-            this.dragController.detach(marker);
-            marker.remove(() => onRemoved?.());
-        }, 200);
+        setTimeout(() => this.finishRemove(marker, element, onRemoved), 200);
+    }
+
+    private finishRemove(marker: Marker, element: HTMLElement, onRemoved?: () => void): void {
+        this.pendingRemoval.delete(marker);
+        element.classList.remove('animate-popout');
+        this.dragController.detach(marker);
+        marker.remove(() => onRemoved?.());
     }
 
     public applyState(marker: Marker): void {
