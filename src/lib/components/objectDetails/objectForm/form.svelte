@@ -148,32 +148,42 @@
     onMount(() => registerCloseConfirmationCheck?.(() => isTainted()) ?? undefined);
 
     const addressFields = ['address', 'city', 'country'] as const;
-    const lastAutoFilledAddress = $state<Record<(typeof addressFields)[number], string>>({
-        address: '',
-        city: '',
-        country: '',
-    });
+    // Lookup is a one-shot for new points only; edit forms already have their values.
+    let addressLookupApplied = $state(false);
 
     $effect(() => {
-        for (const field of addressFields) {
-            const incomingValue = initialValues[field];
-            if (typeof incomingValue !== 'string' || !incomingValue) {
-                continue;
-            }
-
-            const currentValue = $formData[field];
-            const shouldApply =
-                typeof currentValue !== 'string' ||
-                !currentValue ||
-                currentValue === lastAutoFilledAddress[field];
-
-            if (!shouldApply || currentValue === incomingValue) {
-                continue;
-            }
-
-            $formData[field] = incomingValue;
-            lastAutoFilledAddress[field] = incomingValue;
+        if ($formData.id || addressLookupApplied) {
+            return;
         }
+
+        const userEnteredAddress = addressFields.some(field => {
+            const value = $formData[field];
+            return typeof value === 'string' && value.length > 0;
+        });
+        const hasLookupResult = addressFields.some(field => {
+            const value = initialValues[field];
+            return typeof value === 'string' && value.length > 0;
+        });
+
+        if (!hasLookupResult) {
+            // page.data.form may already hold the looked-up address, or the user
+            // started typing while lookup is still in flight — either way, stop waiting.
+            if (userEnteredAddress) {
+                addressLookupApplied = true;
+            }
+            return;
+        }
+
+        if (!userEnteredAddress) {
+            for (const field of addressFields) {
+                const value = initialValues[field];
+                if (typeof value === 'string' && value) {
+                    $formData[field] = value;
+                }
+            }
+        }
+
+        addressLookupApplied = true;
     });
 
     function handleBack() {
