@@ -2,7 +2,7 @@ import {cssColorToRgb} from '$lib/services/colorConverter';
 import type {Marker} from '$lib/services/map/marker';
 import {MARKER_VISITED_COLOR} from '$lib/services/map/markerAppearance';
 import type {DeckOverlayHost} from '$lib/services/map/providers/google/deckOverlayHost';
-import type {MarkerRenderer} from '$lib/services/map/renderer/markerRenderer';
+import type {MarkerRenderer, RendererMode} from '$lib/services/map/renderer/markerRenderer';
 import {ScatterplotLayer} from '@deck.gl/layers';
 
 const DOT_RADIUS_PX = 6;
@@ -26,6 +26,8 @@ export class DeckOverlayRenderer implements MarkerRenderer {
     public constructor(private overlay: DeckOverlayHost) {
         this.overlay.attach();
     }
+
+    public setMode(_mode: RendererMode): void {}
 
     public ensureCreated(marker: Marker): void {
         this.allMarkers.add(marker);

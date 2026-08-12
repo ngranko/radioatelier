@@ -19,7 +19,7 @@ function makeOverlay() {
     };
 }
 
-function makeHandle() {
+function makeHandle(isConnected = false) {
     const classList = {add: vi.fn(), remove: vi.fn()};
     const remove = vi.fn();
     const handle = {
@@ -28,7 +28,7 @@ function makeHandle() {
         show: vi.fn(),
         hide: vi.fn(),
         remove,
-        getElement: () => ({classList}) as unknown as HTMLElement,
+        getElement: () => ({classList, isConnected}) as unknown as HTMLElement,
         addClickListener: () => () => {},
     } as unknown as MarkerHandle;
     return {handle, remove, classList};
@@ -49,7 +49,23 @@ describe('HybridMarkerRenderer', () => {
         vi.useRealTimers();
     });
 
-    it('tears down a cached DOM handle when removing a list marker', () => {
+    it('attaches the deck overlay only while in deck mode', () => {
+        const overlay = makeOverlay();
+        const renderer = new HybridMarkerRenderer({getDeckOverlay: () => overlay} as never, 'dom');
+
+        expect(overlay.attach).not.toHaveBeenCalled();
+
+        renderer.setMode('deck');
+        expect(overlay.attach).toHaveBeenCalledOnce();
+
+        renderer.setMode('deck');
+        expect(overlay.attach).toHaveBeenCalledOnce();
+
+        renderer.setMode('dom');
+        expect(overlay.detach).toHaveBeenCalledOnce();
+    });
+
+    it('removes a cached DOM handle immediately when it is off the map', () => {
         const overlay = makeOverlay();
         const renderer = new HybridMarkerRenderer({
             getDeckOverlay: () => overlay,
@@ -60,12 +76,8 @@ describe('HybridMarkerRenderer', () => {
         const onRemoved = vi.fn();
 
         renderer.remove(marker, onRemoved);
-        expect(onRemoved).not.toHaveBeenCalled();
-        expect(remove).not.toHaveBeenCalled();
 
-        vi.advanceTimersByTime(200);
-
-        expect(classList.add).toHaveBeenCalledWith('animate-popout');
+        expect(classList.add).not.toHaveBeenCalled();
         expect(remove).toHaveBeenCalledOnce();
         expect(onRemoved).toHaveBeenCalledOnce();
     });

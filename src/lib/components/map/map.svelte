@@ -12,7 +12,6 @@
     import {PointerDragZoomController} from '$lib/services/map/pointerDragZoom';
     import {HybridMarkerRenderer} from '$lib/services/map/providers/google/hybridMarkerRenderer';
     import {GoogleMapsProvider} from '$lib/services/map/providers/google/provider';
-    import {DomMarkerRenderer} from '$lib/services/map/renderer/domMarkerRenderer';
     import {mapState} from '$lib/state/map.svelte';
     import {removeDragTimeout} from '$lib/state/marker.svelte';
     import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
@@ -93,10 +92,7 @@
     async function initMarkerManager(provider: MapProvider): Promise<MarkerManager> {
         const manager = new MarkerManager(
             provider,
-            mode =>
-                mode === 'deck'
-                    ? new HybridMarkerRenderer(provider)
-                    : new DomMarkerRenderer(provider),
+            mode => new HybridMarkerRenderer(provider, mode),
             {onMarkerShown: notifyFocusableMarkerShown},
         );
         await manager.initialize();

@@ -38,7 +38,7 @@ Tests live next to the code they cover. Both `*.test.ts` and `*.spec.ts` suffixe
 | `src/lib/services/map/renderer/dom/popAnimation.test.ts`             | Pop-in animation start/end and cancellation                |
 | `src/lib/services/map/providers/google/deckOverlayHost.test.ts`      | Deck overlay host lifecycle                                |
 | `src/lib/services/map/providers/google/deckOverlayRenderer.test.ts`  | Deck marker batch rendering                                |
-| `src/lib/services/map/providers/google/hybridMarkerRenderer.test.ts` | Hybrid remove cleans cached DOM handles                    |
+| `src/lib/services/map/providers/google/hybridMarkerRenderer.test.ts` | Hybrid deck mode attach/detach and cached DOM remove |
 | `src/lib/services/import/normalize.test.ts`                          | CSV row normalization before import batches                |
 | `src/lib/services/map/markerFocus.test.ts`                           | Marker focus highlight, registry, and recentering          |
 | `src/convex/notion.test.ts`                                          | Notion sync decisions and sync-state rules                 |

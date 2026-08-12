@@ -25,6 +25,7 @@ function makeRenderer() {
     const ensureCreated = vi.fn();
     const show = vi.fn();
     const renderer: MarkerRenderer = {
+        setMode: vi.fn(),
         ensureCreated,
         syncAll: vi.fn(),
         show,
@@ -86,7 +87,7 @@ describe('MarkerManager', () => {
         expect(created[1].mode).toBe('dom');
     });
 
-    it('switches renderers when the zoom crosses the threshold', () => {
+    it('switches deck mode on the same renderer when the zoom crosses the threshold', () => {
         const {provider, getZoom} = makeProvider(15);
         const {factory, created} = makeRendererFactory();
         const manager = new MarkerManager(provider, factory, {deckZoomThreshold: 10});
@@ -96,10 +97,10 @@ describe('MarkerManager', () => {
         manager.syncRendererWithViewport();
 
         expect(manager.isDeckRenderer).toBe(true);
-        expect(created).toHaveLength(2);
-        expect(created[1].mode).toBe('deck');
-        expect(created[0].renderer.destroy).toHaveBeenCalled();
-        const syncedMarkers = [...vi.mocked(created[1].renderer.syncAll).mock.calls[0][0]];
+        expect(created).toHaveLength(1);
+        expect(vi.mocked(created[0].renderer.setMode)).toHaveBeenCalledWith('deck');
+        expect(vi.mocked(created[0].renderer.destroy)).not.toHaveBeenCalled();
+        const syncedMarkers = [...vi.mocked(created[0].renderer.syncAll).mock.calls[0][0]];
         expect(syncedMarkers).toEqual([marker]);
     });
 
@@ -127,7 +128,11 @@ describe('MarkerManager', () => {
         manager.syncRendererWithViewport();
 
         expect(manager.isDeckRenderer).toBe(true);
-        expect(created.map(item => item.mode)).toEqual(['deck', 'dom', 'deck']);
+        expect(created).toHaveLength(1);
+        expect(vi.mocked(created[0].renderer.setMode).mock.calls.map(([mode]) => mode)).toEqual([
+            'dom',
+            'deck',
+        ]);
     });
 
     it('keeps non-viewport-managed markers visible across a renderer switch', () => {

@@ -20,16 +20,12 @@ export class VisibilityEngine {
         private renderer: MarkerRenderer,
     ) {}
 
-    public setRenderer(renderer: MarkerRenderer) {
-        this.renderer = renderer;
-    }
-
     public setSuppressed(value: boolean) {
         this.suppressed = value;
     }
 
-    // Drop any queued requestAnimationFrame batch so it cannot resume against a
-    // renderer that was swapped out (or a newer visibility target) after suppress.
+    // Drop any queued requestAnimationFrame batch so it cannot resume after
+    // a mode switch or against a newer visibility target.
     public cancelPending(): void {
         this.cancelActiveUpdate?.();
     }

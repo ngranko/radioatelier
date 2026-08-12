@@ -3,12 +3,13 @@ import type {LatLngLiteral, MapProvider} from '$lib/interfaces/map';
 import type {MarkerId, MarkerOptions, MarkerStateUpdate} from '$lib/interfaces/marker';
 import {Marker} from '$lib/services/map/marker';
 import {MarkerRepository} from '$lib/services/map/markerRepository';
-import type {MarkerRenderer} from '$lib/services/map/renderer/markerRenderer';
+import type {MarkerRenderer, RendererMode} from '$lib/services/map/renderer/markerRenderer';
 import {UpdateScheduler} from '$lib/services/map/updateScheduler';
 import {selectVisibleMarkerIds} from '$lib/services/map/viewportSelection';
 import {VisibilityEngine} from '$lib/services/map/visibilityEngine';
 
-export type RendererMode = 'dom' | 'deck';
+export type {RendererMode};
+
 export type RendererFactory = (mode: RendererMode) => MarkerRenderer;
 
 export interface MarkerManagerOptions {
@@ -96,9 +97,9 @@ export class MarkerManager {
         this.scheduler.schedule();
     }
 
-    // The zoom→renderer decision and the switch sequence (suppress → destroy →
-    // recreate → syncAll → resume) live behind this seam; callers only report
-    // that the viewport settled.
+    // The zoom→mode decision and the switch sequence (suppress → setMode →
+    // syncAll → resume) live behind this seam; callers only report that the
+    // viewport settled.
     public syncRendererWithViewport(): void {
         const nextIsDeck = this.shouldUseDeck();
         if (nextIsDeck !== this.isDeck) {
@@ -114,13 +115,8 @@ export class MarkerManager {
 
     private switchRenderer(): void {
         this.disableMarkers();
-
-        this.renderer.destroy();
-        this.renderer = this.createRenderer(this.isDeck ? 'deck' : 'dom');
-        this.visibilityEngine.setRenderer(this.renderer);
-
+        this.renderer.setMode(this.isDeck ? 'deck' : 'dom');
         this.renderer.syncAll(this.repo.values());
-
         this.enableMarkers();
     }
 
