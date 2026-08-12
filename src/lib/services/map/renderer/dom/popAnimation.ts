@@ -1,24 +1,26 @@
 import {RevealWatcher} from '$lib/services/map/renderer/dom/revealWatcher';
 
 const POP_IN_CLASS = 'animate-popin';
+export const MAX_STARTS_PER_FRAME = 32;
 
 export class PopAnimator {
     private running = new WeakMap<HTMLElement, () => void>();
     private reveals = new RevealWatcher();
+    private waiting = new Set<HTMLElement>();
+    private ready = new Set<HTMLElement>();
+    private frameId?: number;
 
     public popIn(element: HTMLElement): void {
         if (this.running.has(element)) {
             return;
         }
 
-        // Held from the moment the marker is handed to the map: whatever the map does before
-        // the animation may start, it must not paint the marker. Hiding rather than scaling
-        // to zero leaves the element's box intact, which is what the reveal watcher measures,
-        // and skips the marker's own transform transition that a scale write would trigger.
         element.style.visibility = 'hidden';
+        element.style.transitionProperty = 'none';
+        element.style.scale = '0';
         this.running.set(
             element,
-            this.reveals.watch(element, () => this.play(element)),
+            this.reveals.watch(element, () => this.queue(element)),
         );
     }
 
@@ -31,6 +33,47 @@ export class PopAnimator {
         this.running.delete(element);
         stop();
         this.clear(element);
+    }
+
+    private queue(element: HTMLElement): void {
+        element.style.visibility = '';
+        this.waiting.add(element);
+        this.running.set(element, () => this.dropQueued(element));
+        this.scheduleFrame();
+    }
+
+    private scheduleFrame(): void {
+        if (this.frameId === undefined) {
+            this.frameId = requestAnimationFrame(() => this.flushFrame());
+        }
+    }
+
+    private flushFrame(): void {
+        this.frameId = undefined;
+        let starts = 0;
+        // A painted zero-scale frame prevents a delayed first animation frame from
+        // looking like a partial pop. Limiting starts also bounds layer promotion work.
+        for (const element of this.ready) {
+            this.ready.delete(element);
+            this.play(element);
+            if (++starts === MAX_STARTS_PER_FRAME) {
+                break;
+            }
+        }
+
+        for (const element of this.waiting) {
+            this.ready.add(element);
+        }
+        this.waiting.clear();
+
+        if (this.ready.size > 0) {
+            this.scheduleFrame();
+        }
+    }
+
+    private dropQueued(element: HTMLElement): void {
+        this.waiting.delete(element);
+        this.ready.delete(element);
     }
 
     private play(element: HTMLElement): void {
@@ -51,14 +94,13 @@ export class PopAnimator {
         this.running.set(element, stopListening);
         element.addEventListener('animationend', done);
         element.addEventListener('animationcancel', done);
-        // Revealing and starting the growth in the same style change is what keeps the map
-        // from ever painting a frame of the marker at full size.
-        element.style.visibility = '';
         element.classList.add(POP_IN_CLASS);
     }
 
     private clear(element: HTMLElement): void {
         element.classList.remove(POP_IN_CLASS);
         element.style.visibility = '';
+        element.style.transitionProperty = '';
+        element.style.scale = '';
     }
 }
