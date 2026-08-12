@@ -11,7 +11,7 @@ preview.svelte (column mapping + row preview)
     ↓ normalizeRows + ImportProvider.start
 importProvider.ts (25-row batches, image upload)
     ↓ api.imports.importBatch
-Convex imports.ts (validate, createObjectRecords, feedback)
+Convex imports.ts (validate, createObjectRecords + Typesense enqueue, feedback)
     ↓ optional Notion batch
 notionSync/outbound.enqueueOutboundObjectSyncBatchLenient
 ```
@@ -48,6 +48,7 @@ Server-side processing (`src/convex/imports.ts`):
 - **Coordinates** — Invalid latitude/longitude produce a per-line error; the row is skipped.
 - **Source URLs** — Invalid URLs are dropped with a warning; the object is still created.
 - **Images** — Resolved client-side per batch (`imageResolver.ts`): fetch or decode, resize, upload to Convex storage, then pass `imageId` to `importBatch`. Failures log a warning and import continues without a cover image.
+- **Search indexing** — Each row calls `createObjectRecords`, which schedules a Typesense create. Import must use the writer path so new objects appear in local search immediately.
 - **Feedback** — Per-line warnings and errors are stored on the job (capped at 300 entries).
 
 ## Batch processing and idempotency
@@ -84,5 +85,6 @@ See [notion-sync.md](./notion-sync.md) for sync setup and invariants.
 ## Related docs
 
 - [notion-sync.md](./notion-sync.md) — outbound sync after import batches
+- [object-backend.md](./object-backend.md) — `createObjectRecords` and Typesense scheduling
 - [map-architecture.md](./map-architecture.md) — imported objects appear on the map via `markers.list`
 - [category-settings.md](./category-settings.md) — per-user styling for imported categories

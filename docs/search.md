@@ -61,12 +61,46 @@ When a results tab is active, `searchResultsList.svelte`:
 
 Search markers render in `src/routes/(app)/+layout.svelte` with `source="search"` — a magnifying glass for local hits and the Google logo for Places results.
 
+### Preview pins vs result-list pins
+
+`searchPointList.svelte.ts` tracks temporary preview pins for Google/coordinate hits that do not yet have an object id. Only one preview pin is active at a time:
+
+- **`selectSearchPoint`** — adds a preview pin for a new place/coordinate hit. If the key already exists in the list (e.g. the full results tab already rendered it), selection does not take ownership — the existing pin outlives the preview.
+- **`clearSelectedSearchPoint`** — removes the current preview pin when selecting an existing object from the preview dropdown (that object has its own list marker).
+
+Preview selection (`searchPreviewItem.svelte`) clears any preview pin before opening an existing object id; place-only hits call `selectSearchPoint` then navigate to `/point`.
+
 ## Shared types
 
 `SearchItem`, `SearchPageSource`, and `SearchResultsPage` are defined in `src/lib/interfaces/object.ts`. A `SearchPageSource` is an async function `(cursor: string) => Promise<SearchResultsPage>`; the list component treats the cursor as opaque (starting with `''`).
 
+## Typesense indexing
+
+Search reads go through `src/convex/search.ts` → Typesense. **Writes** are scheduled by the object writer seam — not by search actions directly:
+
+- `createObjectRecords` enqueues `typesense.createInTypesense` after insert (covers interactive create, CSV import, and inbound Notion create).
+- `patchObjectRecords` enqueues `typesense.updateInTypesense` when name, location, category, or visibility fields change.
+- `objects.delete` and inbound delete enqueue `typesense.removeFromTypesense`.
+
+The scheduled record is built from post-write object + map point + category name via `buildObjectSearchRecord`. See [object-backend.md](./object-backend.md).
+
+### Backfill reconcile
+
+When the index drifts from Convex (e.g. after a bulk migration or missed schedules), run the reconcile backfill:
+
+```bash
+bun scripts/typesense/backfill.ts \
+  --convex-url "$PUBLIC_CONVEX_URL" \
+  --backfill-key "$TYPESENSE_BACKFILL_KEY" \
+  --typesense-url "$TYPESENSE_URL" \
+  --typesense-admin-key "$TYPESENSE_ADMIN_KEY"
+```
+
+The script exports existing Typesense documents, fetches all objects from Convex via `typesense:getBackfillPage`, then plans **create**, **update**, **unchanged**, and **delete** operations. Unreadable Typesense rows are treated as deletes. Use `--dry-run` to inspect the plan without applying; use `--max-deletes <n>` to abort when too many stale documents would be removed. Run `bun scripts/typesense/setup.ts` first if the collection does not exist. Env var details are in [environment.md](./environment.md).
+
 ## Related docs
 
 - [object-details-overlay.md](./object-details-overlay.md) — point preview/create after selecting a search result
+- [object-backend.md](./object-backend.md) — writer seam that keeps Typesense in sync
 - [map-architecture.md](./map-architecture.md) — search marker source and map focus helpers
 - [environment.md](./environment.md) — Typesense and Google API keys
