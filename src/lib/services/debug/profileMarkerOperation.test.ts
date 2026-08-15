@@ -68,16 +68,17 @@ describe('profileMarkerOperation', () => {
     });
 
     it('does not treat run() failures as pipeline timeouts', async () => {
-        await expect(
-            profileMarkerOperation({
-                operation: 'add',
-                markerCount: 1,
-                renderer: 'dom',
-                run: () => {
-                    throw new Error('Timed out waiting for marker pipeline');
-                },
-            }),
-        ).rejects.toThrow('Timed out waiting for marker pipeline');
+        const runError = new Error('Timed out waiting for marker pipeline');
+        const operation = profileMarkerOperation({
+            operation: 'add',
+            markerCount: 1,
+            renderer: 'dom',
+            run: () => {
+                throw runError;
+            },
+        });
+
+        await expect(operation).rejects.toBe(runError);
         expect(waitUntilIdle).not.toHaveBeenCalled();
     });
 });
