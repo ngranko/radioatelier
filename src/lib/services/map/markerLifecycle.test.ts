@@ -39,4 +39,14 @@ describe('MarkerLifecycle', () => {
             'Timed out waiting for marker pipeline',
         );
     });
+
+    it('restarts the quiet period if work starts and finishes during it', async () => {
+        const pending = lifecycle.waitUntilIdle({quietMs: 40, timeoutMs: 1000});
+        await new Promise(resolve => setTimeout(resolve, 10));
+        lifecycle.begin();
+        lifecycle.end();
+        const afterWork = performance.now();
+        await pending;
+        expect(performance.now() - afterWork).toBeGreaterThanOrEqual(35);
+    });
 });

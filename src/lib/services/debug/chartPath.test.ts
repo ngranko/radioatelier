@@ -11,6 +11,11 @@ describe('chartPath', () => {
         expect(downsample([0, 1, 2, 3, 4], 3)).toEqual([0, 2, 4]);
     });
 
+    it('returns a single point when the limit is one', () => {
+        expect(downsample([0, 1], 1)).toEqual([0]);
+        expect(downsample([0, 1], 0)).toEqual([]);
+    });
+
     it('returns a polyline when at least two values exist', () => {
         const samples: LoadSample[] = [
             {t: 0, frameMs: 8},

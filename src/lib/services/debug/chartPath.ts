@@ -3,6 +3,12 @@ import type {LoadSample} from './loadSampler';
 const MAX_CHART_POINTS = 80;
 
 export function downsample<T>(items: T[], maxPoints = MAX_CHART_POINTS): T[] {
+    if (maxPoints <= 0) {
+        return [];
+    }
+    if (maxPoints === 1) {
+        return items.slice(0, 1);
+    }
     if (items.length <= maxPoints) {
         return items;
     }

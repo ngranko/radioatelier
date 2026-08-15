@@ -27,13 +27,27 @@ export async function profileMarkerOperation(options: {
     try {
         options.run();
         await tick();
+    } catch (error) {
+        sampler.stop();
+        throw error;
+    }
+
+    return await settleOrTimeout(options, sampler, startedAt);
+}
+
+async function settleOrTimeout(
+    options: Pick<ProfileResult, 'operation' | 'markerCount' | 'renderer'>,
+    sampler: LoadSampler,
+    startedAt: number,
+): Promise<ProfileResult> {
+    try {
         return await finishProfile(options, sampler, startedAt, false);
     } catch (error) {
-        if (!isTimeout(error)) {
-            sampler.stop();
-            throw error;
+        if (isTimeout(error)) {
+            return finishProfile(options, sampler, startedAt, true);
         }
-        return finishProfile(options, sampler, startedAt, true);
+        sampler.stop();
+        throw error;
     }
 }
 

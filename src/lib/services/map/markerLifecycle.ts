@@ -3,10 +3,12 @@ const DEFAULT_QUIET_MS = 48;
 
 export class MarkerLifecycle {
     private pending = 0;
+    private workGeneration = 0;
     private waiters: Array<() => void> = [];
 
     public begin(): void {
         this.pending++;
+        this.workGeneration++;
     }
 
     public end(): void {
@@ -23,6 +25,10 @@ export class MarkerLifecycle {
 
     public get isIdle(): boolean {
         return this.pending === 0;
+    }
+
+    public get generation(): number {
+        return this.workGeneration;
     }
 
     public onNextIdle(callback: () => void): void {
@@ -60,8 +66,9 @@ async function waitUntilIdle(
             await waitForIdleSignal(lifecycle, deadline);
             continue;
         }
+        const generation = lifecycle.generation;
         await sleep(quietMs);
-        if (lifecycle.isIdle) {
+        if (lifecycle.isIdle && lifecycle.generation === generation) {
             return;
         }
     }

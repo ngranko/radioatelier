@@ -81,8 +81,11 @@ export class DeckOverlayRenderer implements MarkerRenderer {
             this.renderFrame = requestAnimationFrame(() => {
                 this.renderFrame = undefined;
                 this.scheduled = false;
-                this.render();
-                markerLifecycle.end();
+                try {
+                    this.render();
+                } finally {
+                    markerLifecycle.end();
+                }
             });
         }, 16); // ~60fps
     }

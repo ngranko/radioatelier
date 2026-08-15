@@ -50,13 +50,26 @@ export class LoadSampler {
             return;
         }
 
-        this.pressureObserver = new Observer(records => {
-            const last = records.at(-1);
-            if (last) {
-                this.cpuPressure = CPU_PRESSURE[last.state] ?? 0;
-            }
+        const observer = new Observer(records => this.onPressure(records));
+        this.pressureObserver = observer;
+        void Promise.resolve(observer.observe('cpu')).catch(() => {
+            this.dropPressureObserver(observer);
         });
-        void this.pressureObserver.observe('cpu');
+    }
+
+    private onPressure(records: PressureRecordLike[]): void {
+        const last = records.at(-1);
+        if (last) {
+            this.cpuPressure = CPU_PRESSURE[last.state] ?? 0;
+        }
+    }
+
+    private dropPressureObserver(observer: PressureObserverLike): void {
+        if (this.pressureObserver !== observer) {
+            return;
+        }
+        observer.disconnect();
+        this.pressureObserver = undefined;
     }
 }
 
