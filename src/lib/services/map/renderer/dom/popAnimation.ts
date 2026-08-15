@@ -1,7 +1,10 @@
 import {RevealWatcher} from '$lib/services/map/renderer/dom/revealWatcher';
+import {markerLifecycle} from '$lib/services/map/markerLifecycle';
 
 const POP_IN_CLASS = 'animate-popin';
+const POP_OUT_CLASS = 'animate-popout';
 export const MAX_STARTS_PER_FRAME = 32;
+export const POP_OUT_FALLBACK_MS = 250;
 
 export class PopAnimator {
     private running = new WeakMap<HTMLElement, () => void>();
@@ -15,6 +18,7 @@ export class PopAnimator {
             return;
         }
 
+        markerLifecycle.begin();
         element.style.visibility = 'hidden';
         element.style.transitionProperty = 'none';
         element.style.scale = '0';
@@ -24,15 +28,21 @@ export class PopAnimator {
         );
     }
 
+    public popOut(element: HTMLElement, onDone: () => void): void {
+        this.cancel(element);
+        markerLifecycle.begin();
+        this.running.set(
+            element,
+            watchAnimationEnd(element, () => this.finish(element, onDone), POP_OUT_FALLBACK_MS),
+        );
+        element.classList.add(POP_OUT_CLASS);
+    }
+
     public cancel(element: HTMLElement): void {
-        const stop = this.running.get(element);
-        if (!stop) {
+        if (!this.running.has(element)) {
             return;
         }
-
-        this.running.delete(element);
-        stop();
-        this.clear(element);
+        this.finish(element);
     }
 
     private queue(element: HTMLElement): void {
@@ -77,31 +87,52 @@ export class PopAnimator {
     }
 
     private play(element: HTMLElement): void {
-        const done = (event: AnimationEvent) => {
-            if (event.target !== element) {
-                return;
-            }
-
-            this.running.delete(element);
-            stopListening();
-            this.clear(element);
-        };
-        const stopListening = () => {
-            element.removeEventListener('animationend', done);
-            element.removeEventListener('animationcancel', done);
-        };
-
-        this.running.set(element, stopListening);
-        element.addEventListener('animationend', done);
-        element.addEventListener('animationcancel', done);
+        const stop = watchAnimationEnd(element, () => this.finish(element));
+        this.running.set(element, stop);
         element.classList.add(POP_IN_CLASS);
         element.style.scale = '';
     }
 
+    private finish(element: HTMLElement, onDone?: () => void): void {
+        const stop = this.running.get(element);
+        if (!stop) {
+            return;
+        }
+
+        this.running.delete(element);
+        stop();
+        this.clear(element);
+        markerLifecycle.end();
+        onDone?.();
+    }
+
     private clear(element: HTMLElement): void {
         element.classList.remove(POP_IN_CLASS);
+        element.classList.remove(POP_OUT_CLASS);
         element.style.visibility = '';
         element.style.transitionProperty = '';
         element.style.scale = '';
     }
+}
+
+function watchAnimationEnd(
+    element: HTMLElement,
+    onDone: () => void,
+    fallbackMs?: number,
+): () => void {
+    const done = (event: AnimationEvent) => {
+        if (event.target === element) {
+            onDone();
+        }
+    };
+    const fallback = fallbackMs === undefined ? undefined : setTimeout(onDone, fallbackMs);
+    element.addEventListener('animationend', done);
+    element.addEventListener('animationcancel', done);
+    return () => {
+        if (fallback !== undefined) {
+            clearTimeout(fallback);
+        }
+        element.removeEventListener('animationend', done);
+        element.removeEventListener('animationcancel', done);
+    };
 }

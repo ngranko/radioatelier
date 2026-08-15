@@ -61,14 +61,11 @@ export class DomMarkerRenderer implements MarkerRenderer {
         }
         this.pendingRemoval.add(marker);
 
-        this.popAnimator.cancel(element);
-        element.classList.add('animate-popout');
-        setTimeout(() => {
+        this.popAnimator.popOut(element, () => {
             this.pendingRemoval.delete(marker);
-            element.classList.remove('animate-popout');
             this.dragController.detach(marker);
             marker.remove(() => onRemoved?.());
-        }, 200);
+        });
     }
 
     public applyState(marker: Marker): void {

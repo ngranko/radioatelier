@@ -31,6 +31,7 @@
         color: string;
         isDraggable?: boolean;
         source: MarkerSource;
+        instanceId?: string | null;
     }
 
     let {
@@ -45,10 +46,15 @@
         color,
         isDraggable = false,
         source,
+        instanceId = null,
     }: Props = $props();
 
     const fallbackMarkerId = `map-${Date.now()}-${Math.random()}`;
     const markerId = $derived.by(() => {
+        if (instanceId) {
+            return instanceId;
+        }
+
         if (source === 'share' && id) {
             return `share-${id}`;
         }
