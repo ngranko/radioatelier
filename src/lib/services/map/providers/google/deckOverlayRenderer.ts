@@ -1,5 +1,6 @@
 import {cssColorToRgb} from '$lib/services/colorConverter';
 import type {Marker} from '$lib/services/map/marker';
+import {markerLifecycle} from '$lib/services/map/markerLifecycle';
 import type {DeckOverlayHost} from '$lib/services/map/providers/google/deckOverlayHost';
 import type {MarkerRenderer} from '$lib/services/map/renderer/markerRenderer';
 import {ScatterplotLayer} from '@deck.gl/layers';
@@ -65,7 +66,7 @@ export class DeckOverlayRenderer implements MarkerRenderer {
         if (this.renderFrame !== undefined) {
             cancelAnimationFrame(this.renderFrame);
         }
-        this.scheduled = false;
+        this.cancelScheduled();
         this.overlay.detach();
     }
 
@@ -74,14 +75,24 @@ export class DeckOverlayRenderer implements MarkerRenderer {
             return;
         }
         this.scheduled = true;
+        markerLifecycle.begin();
         this.renderTimeout = setTimeout(() => {
             this.renderTimeout = undefined;
             this.renderFrame = requestAnimationFrame(() => {
                 this.renderFrame = undefined;
                 this.scheduled = false;
                 this.render();
+                markerLifecycle.end();
             });
         }, 16); // ~60fps
+    }
+
+    private cancelScheduled() {
+        if (!this.scheduled) {
+            return;
+        }
+        this.scheduled = false;
+        markerLifecycle.end();
     }
 
     private render() {

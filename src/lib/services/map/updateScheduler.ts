@@ -1,3 +1,5 @@
+import {markerLifecycle} from '$lib/services/map/markerLifecycle';
+
 export class UpdateScheduler {
     private updateInProgress = false;
     private shouldUpdate = false;
@@ -13,6 +15,7 @@ export class UpdateScheduler {
             return;
         }
         this.pendingViewportUpdate = true;
+        markerLifecycle.begin();
         setTimeout(() => {
             this.pendingViewportUpdate = false;
             this.trigger();
@@ -21,10 +24,12 @@ export class UpdateScheduler {
 
     private trigger() {
         if (this.suppressUpdates) {
+            markerLifecycle.end();
             return;
         }
         if (this.updateInProgress) {
             this.shouldUpdate = true;
+            markerLifecycle.end();
             return;
         }
 
@@ -35,12 +40,13 @@ export class UpdateScheduler {
         } catch (e) {
             console.error('error updating viewport');
             console.error(e);
-            this.updateInProgress = false;
+            this.abortInFlight();
         }
     }
 
     public complete() {
         this.updateInProgress = false;
+        markerLifecycle.end();
         if (this.shouldUpdate && !this.suppressUpdates) {
             this.schedule();
         }
@@ -59,5 +65,13 @@ export class UpdateScheduler {
 
     public get isSuppressed() {
         return this.suppressUpdates;
+    }
+
+    private abortInFlight() {
+        if (!this.updateInProgress) {
+            return;
+        }
+        this.updateInProgress = false;
+        markerLifecycle.end();
     }
 }

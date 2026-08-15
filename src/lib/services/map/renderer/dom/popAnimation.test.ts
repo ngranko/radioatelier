@@ -1,5 +1,6 @@
 import {afterEach, describe, expect, it, vi} from 'vitest';
-import {MAX_STARTS_PER_FRAME, PopAnimator} from './popAnimation';
+import {markerLifecycle} from '$lib/services/map/markerLifecycle';
+import {MAX_STARTS_PER_FRAME, POP_OUT_FALLBACK_MS, PopAnimator} from './popAnimation';
 import {REVEAL_TIMEOUT_MS} from './revealWatcher';
 
 function makeElement() {
@@ -72,6 +73,7 @@ function stubFrames() {
 afterEach(() => {
     vi.unstubAllGlobals();
     vi.useRealTimers();
+    markerLifecycle.reset();
 });
 
 describe('PopAnimator', () => {
@@ -232,5 +234,47 @@ describe('PopAnimator', () => {
 
         expect(classes.has('animate-popin')).toBe(false);
         expect(style.scale).toBe('');
+    });
+
+    it('keeps the pipeline busy until pop-in finishes', () => {
+        const observer = stubObserver();
+        const frames = stubFrames();
+        const {element} = makeElement();
+
+        new PopAnimator().popIn(element);
+        expect(markerLifecycle.isIdle).toBe(false);
+
+        observer.reveal(element);
+        frames.advance();
+        frames.advance();
+        element.dispatchEvent(new Event('animationend'));
+        expect(markerLifecycle.isIdle).toBe(true);
+    });
+
+    it('plays pop-out until animationend', () => {
+        const {element, classes} = makeElement();
+        const onDone = vi.fn();
+
+        new PopAnimator().popOut(element, onDone);
+        expect(classes.has('animate-popout')).toBe(true);
+        expect(markerLifecycle.isIdle).toBe(false);
+
+        element.dispatchEvent(new Event('animationend'));
+        expect(classes.has('animate-popout')).toBe(false);
+        expect(onDone).toHaveBeenCalledOnce();
+        expect(markerLifecycle.isIdle).toBe(true);
+    });
+
+    it('finishes pop-out via the fallback timer', () => {
+        vi.useFakeTimers();
+        const {element, classes} = makeElement();
+        const onDone = vi.fn();
+
+        new PopAnimator().popOut(element, onDone);
+        vi.advanceTimersByTime(POP_OUT_FALLBACK_MS);
+
+        expect(classes.has('animate-popout')).toBe(false);
+        expect(onDone).toHaveBeenCalledOnce();
+        expect(markerLifecycle.isIdle).toBe(true);
     });
 });
