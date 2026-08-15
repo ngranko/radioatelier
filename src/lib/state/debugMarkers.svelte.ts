@@ -1,6 +1,6 @@
-import type {MarkerIconKey} from '$lib/services/map/markerStyling.data';
-import type {ProfileOperation, ProfileResult} from '$lib/services/debug/profileMarkerOperation';
 import {DEBUG_MARKER_DEFAULT} from '$lib/services/debug/markerCount';
+import type {ProfileOperation, ProfileResult} from '$lib/services/debug/profileMarkerOperation';
+import type {MarkerIconKey} from '$lib/services/map/markerStyling.data';
 
 export interface DebugMarkerItem {
     id: string;

@@ -21,7 +21,10 @@ describe('chartPath', () => {
     });
 
     it('returns null when a metric is missing', () => {
-        const samples: LoadSample[] = [{t: 0, frameMs: 8}, {t: 16, frameMs: 8}];
+        const samples: LoadSample[] = [
+            {t: 0, frameMs: 8},
+            {t: 16, frameMs: 8},
+        ];
         expect(polylineFor(samples, sample => sample.heapUsedMb, 100, 40)).toBeNull();
     });
 });

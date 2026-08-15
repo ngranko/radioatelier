@@ -83,7 +83,9 @@ function readMemory(): {used: number; total: number} | undefined {
 }
 
 function performanceMemory(): MemoryInfoLike | undefined {
-    return 'memory' in performance ? (performance as Performance & {memory: MemoryInfoLike}).memory : undefined;
+    return 'memory' in performance
+        ? (performance as Performance & {memory: MemoryInfoLike}).memory
+        : undefined;
 }
 
 function getPressureObserver(): PressureObserverConstructor | undefined {
@@ -103,7 +105,7 @@ interface PressureRecordLike {
 }
 
 interface PressureObserverLike {
-    observe(source: string): void;
+    observe(source: string): void | Promise<void>;
     disconnect(): void;
 }
 

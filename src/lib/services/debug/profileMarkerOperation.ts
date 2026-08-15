@@ -1,5 +1,5 @@
-import {tick} from 'svelte';
 import {markerLifecycle} from '$lib/services/map/markerLifecycle';
+import {tick} from 'svelte';
 import {LoadSampler, type LoadSample} from './loadSampler';
 
 export type ProfileOperation = 'add' | 'remove';

@@ -42,7 +42,7 @@
 </script>
 
 <div
-    class="bg-background/95 absolute bottom-4 left-4 z-4 flex w-[min(100%-2rem,20rem)] max-h-[min(70vh,36rem)] flex-col overflow-hidden rounded-2xl shadow-lg ring-1 ring-black/[0.08] backdrop-blur-sm dark:ring-white/[0.12]"
+    class="bg-background/95 absolute bottom-4 left-4 z-4 flex max-h-[min(70vh,36rem)] w-[min(100%-2rem,20rem)] flex-col overflow-hidden rounded-2xl shadow-lg ring-1 ring-black/[0.08] backdrop-blur-sm dark:ring-white/[0.12]"
 >
     <div class="flex shrink-0 items-start gap-3 px-4 pt-4 pb-3">
         <div

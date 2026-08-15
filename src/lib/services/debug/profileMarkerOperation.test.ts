@@ -1,13 +1,17 @@
 import {afterEach, describe, expect, it, vi} from 'vitest';
 import type {LoadSample} from './loadSampler';
 
+const {waitUntilIdle} = vi.hoisted(() => ({
+    waitUntilIdle: vi.fn(),
+}));
+
 vi.mock('svelte', () => ({
     tick: async () => {},
 }));
 
 vi.mock('$lib/services/map/markerLifecycle', () => ({
     markerLifecycle: {
-        waitUntilIdle: vi.fn(),
+        waitUntilIdle,
     },
 }));
 
@@ -23,16 +27,15 @@ vi.mock('./loadSampler', () => {
     };
 });
 
-import {markerLifecycle} from '$lib/services/map/markerLifecycle';
 import {profileMarkerOperation} from './profileMarkerOperation';
 
 describe('profileMarkerOperation', () => {
     afterEach(() => {
-        vi.mocked(markerLifecycle.waitUntilIdle).mockReset();
+        waitUntilIdle.mockReset();
     });
 
     it('measures from run() until the pipeline is idle', async () => {
-        vi.mocked(markerLifecycle.waitUntilIdle).mockResolvedValue();
+        waitUntilIdle.mockResolvedValue(undefined);
         const run = vi.fn();
 
         const result = await profileMarkerOperation({
@@ -50,9 +53,7 @@ describe('profileMarkerOperation', () => {
     });
 
     it('records a timeout without throwing', async () => {
-        vi.mocked(markerLifecycle.waitUntilIdle).mockRejectedValue(
-            new Error('Timed out waiting for marker pipeline'),
-        );
+        waitUntilIdle.mockRejectedValue(new Error('Timed out waiting for marker pipeline'));
 
         const result = await profileMarkerOperation({
             operation: 'remove',

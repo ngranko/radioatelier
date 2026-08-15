@@ -2,8 +2,8 @@ import {debugMarkerStyle} from '$lib/services/debug/debugMarkerStyle';
 import {generateViewportPositions, rectAround} from '$lib/services/debug/generatePositions';
 import {clampMarkerCount} from '$lib/services/debug/markerCount';
 import {profileMarkerOperation} from '$lib/services/debug/profileMarkerOperation';
-import {mapState} from '$lib/state/map.svelte';
 import {debugMarkerState, type DebugMarkerItem} from '$lib/state/debugMarkers.svelte';
+import {mapState} from '$lib/state/map.svelte';
 
 export async function addDebugMarkers(): Promise<void> {
     if (!canStartAdd()) {

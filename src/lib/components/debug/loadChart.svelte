@@ -1,6 +1,6 @@
 <script lang="ts">
-    import type {LoadSample} from '$lib/services/debug/loadSampler';
     import {downsample, polylineFor} from '$lib/services/debug/chartPath';
+    import type {LoadSample} from '$lib/services/debug/loadSampler';
 
     interface Props {
         label: string;
@@ -35,7 +35,7 @@
                 stroke-width="1.5"
                 stroke-linejoin="round"
                 stroke-linecap="round"
-                points={points}
+                {points}
             />
         </svg>
     {:else}
