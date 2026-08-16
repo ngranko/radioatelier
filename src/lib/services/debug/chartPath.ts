@@ -36,7 +36,7 @@ export function buildChart(
     read: (sample: LoadSample) => number | undefined,
     options: {yMin?: number; yMax?: number; reference?: number} = {},
 ): ChartModel | null {
-    const points = collectPoints(downsample(samples), read);
+    const points = collectPoints(samples, read);
     if (points.length < 2) {
         return null;
     }
@@ -48,7 +48,7 @@ export function buildChart(
         ...stats,
         yMin,
         yMax,
-        polyline: toPolyline(points, yMin, yMax),
+        polyline: toPolyline(downsample(points), yMin, yMax),
         refY: referenceY(options.reference, yMin, yMax),
     };
 }

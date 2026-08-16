@@ -98,7 +98,7 @@
                 {#if reference}
                     <li>Пунктир — {reference.label}</li>
                 {/if}
-                {#each legend as item}
+                {#each legend as item (item)}
                     <li>{item}</li>
                 {/each}
             </ul>

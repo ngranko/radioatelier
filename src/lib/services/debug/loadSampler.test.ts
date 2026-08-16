@@ -25,11 +25,14 @@ describe('LoadSampler', () => {
         const frames = stubFrames();
         const sampler = new LoadSampler();
         sampler.start();
-        frames.advance(100);
-        frames.advance(116);
-        frames.advance(132);
+        const origin = performance.now();
+        frames.advance(origin + 100);
+        frames.advance(origin + 116);
+        frames.advance(origin + 132);
 
         const samples = sampler.stop();
         expect(samples.map(sample => sample.frameMs)).toEqual([16, 16]);
+        expect(samples[0]?.t).toBeGreaterThanOrEqual(116);
+        expect(samples[1]?.t).toBeGreaterThan(samples[0]?.t ?? 0);
     });
 });

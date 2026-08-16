@@ -53,4 +53,22 @@ describe('chartPath', () => {
         ];
         expect(buildChart(samples, sample => sample.heapUsedMb)).toBeNull();
     });
+
+    it('computes stats from every valid point and only downsamples the line', () => {
+        const samples: LoadSample[] = Array.from({length: 200}, (_, index) => ({
+            t: index,
+            frameMs: 8,
+            heapUsedMb: index === 1 ? 80 : 10,
+        }));
+        const chart = buildChart(samples, sample => sample.heapUsedMb);
+
+        expect(chart).toEqual(
+            expect.objectContaining({
+                min: 10,
+                max: 80,
+                durationMs: 199,
+            }),
+        );
+        expect(chart?.polyline.split(' ')).toHaveLength(80);
+    });
 });
