@@ -1,10 +1,12 @@
 import type {Id} from '$convex/_generated/dataModel';
+import type {MarkerIconKey} from '$lib/services/map/markerStyling.data';
 import type {Component} from 'svelte';
 
 export type MarkerIcon = Component<{class?: string; width?: number; height?: number}>;
 
 export interface MarkerOptions {
     icon: MarkerIcon;
+    iconKey?: MarkerIconKey;
     iconClassName?: string;
     color: string;
     isDraggable?: boolean;

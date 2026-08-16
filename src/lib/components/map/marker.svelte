@@ -4,6 +4,7 @@
     import {api} from '$convex/_generated/api';
     import type {Id} from '$convex/_generated/dataModel';
     import type {MarkerIcon, MarkerSource} from '$lib/interfaces/marker';
+    import type {MarkerIconKey} from '$lib/services/map/markerStyling.data';
     import {Marker as MarkerObject} from '$lib/services/map/marker';
     import {registerFocusableMarker} from '$lib/services/map/markerFocus';
     import {mapState} from '$lib/state/map.svelte';
@@ -27,6 +28,7 @@
         isRemoved?: boolean;
         isVisited?: boolean;
         icon: MarkerIcon;
+        iconKey?: MarkerIconKey;
         iconClassName?: string;
         color: string;
         isDraggable?: boolean;
@@ -42,6 +44,7 @@
         isRemoved = false,
         isVisited = false,
         icon,
+        iconKey,
         iconClassName = '',
         color,
         isDraggable = false,
@@ -101,6 +104,7 @@
 
         marker = mapState.markerManager.addMarker(markerId, position, {
             icon,
+            iconKey,
             iconClassName,
             color,
             isDraggable,

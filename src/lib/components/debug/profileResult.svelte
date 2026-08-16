@@ -16,7 +16,13 @@
     let {result}: Props = $props();
 
     const operationLabel = $derived(result.operation === 'add' ? 'Добавление' : 'Удаление');
-    const rendererLabel = $derived(result.renderer === 'deck' ? 'Deck.gl' : 'DOM');
+    const rendererLabel = $derived(
+        result.renderer === 'clustered'
+            ? 'Deck.gl clusters'
+            : result.renderer === 'deck'
+              ? 'Deck.gl'
+              : 'DOM',
+    );
     const frameBudgetMs = 1000 / 60;
 </script>
 

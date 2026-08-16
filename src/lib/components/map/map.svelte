@@ -7,9 +7,11 @@
         startPositionPolling,
         stopPositionPolling,
     } from '$lib/services/map/geolocation';
+    import {resolveClusteredRendererFlag} from '$lib/services/map/clusteredRendererFlag';
     import {notifyFocusableMarkerShown, setFocusedTarget} from '$lib/services/map/markerFocus';
     import {MarkerManager} from '$lib/services/map/markerManager';
     import {PointerDragZoomController} from '$lib/services/map/pointerDragZoom';
+    import {ClusteredHybridRenderer} from '$lib/services/map/providers/google/clusteredHybridRenderer';
     import {HybridMarkerRenderer} from '$lib/services/map/providers/google/hybridMarkerRenderer';
     import {GoogleMapsProvider} from '$lib/services/map/providers/google/provider';
     import {DomMarkerRenderer} from '$lib/services/map/renderer/domMarkerRenderer';
@@ -28,6 +30,7 @@
     let clickTimeout: ReturnType<typeof setTimeout> | undefined;
     let positionInterval: number | undefined;
     let isInZoomMode = false;
+    let lastRendererInteraction = 0;
 
     let unsubIdle: (() => void) | undefined;
     let unsubClick: (() => void) | undefined;
@@ -36,10 +39,14 @@
 
     async function setupProviderAndMarkers() {
         const provider = new GoogleMapsProvider();
+        const clusteredRendererEnabled = resolveClusteredRendererFlag();
         const center = await getInitialCenter();
         await provider.initialize(container!, center);
         mapState.provider = provider;
-        mapState.markerManager = await initMarkerManager(provider);
+        mapState.markerManager = await initMarkerManager(
+            provider,
+            await clusteredRendererEnabled,
+        );
         mapState.isReady = true;
         mapState.markerManager.scheduleViewportUpdate();
     }
@@ -90,14 +97,22 @@
         setFocusedTarget(objectDetailsOverlay.detailsId || null);
     });
 
-    async function initMarkerManager(provider: MapProvider): Promise<MarkerManager> {
+    async function initMarkerManager(
+        provider: MapProvider,
+        clusteredRendererEnabled: boolean,
+    ): Promise<MarkerManager> {
         const manager = new MarkerManager(
             provider,
             mode =>
-                mode === 'deck'
+                clusteredRendererEnabled
+                    ? new ClusteredHybridRenderer(provider, markRendererInteraction)
+                    : mode === 'deck'
                     ? new HybridMarkerRenderer(provider)
                     : new DomMarkerRenderer(provider),
-            {onMarkerShown: notifyFocusableMarkerShown},
+            {
+                onMarkerShown: notifyFocusableMarkerShown,
+                rendererStrategy: clusteredRendererEnabled ? 'clustered' : 'legacy',
+            },
         );
         await manager.initialize();
         return manager;
@@ -122,7 +137,11 @@
     }
 
     function handleClick(latLng: {lat: number; lng: number}) {
-        if (mapState.markerManager?.isDeckRenderer || isInZoomMode) {
+        const manager = mapState.markerManager;
+        const legacyDeckMode = manager?.isDeckRenderer && !manager.isClusteredRenderer;
+        const handledByRenderer =
+            manager?.isClusteredRenderer && performance.now() - lastRendererInteraction < 500;
+        if (legacyDeckMode || handledByRenderer || isInZoomMode) {
             return;
         }
 
@@ -132,6 +151,10 @@
             }
             clickTimeout = undefined;
         }, 300);
+    }
+
+    function markRendererInteraction() {
+        lastRendererInteraction = performance.now();
     }
 
     function persistMapView() {
