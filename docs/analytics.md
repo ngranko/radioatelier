@@ -55,6 +55,12 @@ Set in `.env.local` (see `.env.local.example`):
 
 `svelte.config.js` sets `kit.paths.relative: false` so asset URLs stay absolute — required for PostHog session replay with SSR.
 
+### Feature flags
+
+The map evaluates `map-gpu-clustered-renderer` while Google Maps initializes. Boolean `true` and the multivariate value `clustered` select the clustered GPU renderer; missing, disabled, errored, or timed-out evaluations retain the legacy renderer. Evaluation uses `getFeatureFlag`, so PostHog records the standard `$feature_flag_called` exposure event.
+
+The renderer is selected once per map instance rather than changing after display. This prevents a live flag refresh from destroying and recreating marker layers during interaction.
+
 ## User identification
 
 `convexClerkAuth.svelte` ties PostHog identity to Clerk:

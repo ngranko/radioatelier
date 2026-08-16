@@ -75,6 +75,9 @@ export class MarkerClusterIndex {
             ];
         }
 
+        if (!('marker' in feature.properties)) {
+            return [];
+        }
         return [{kind: 'marker', marker: feature.properties.marker, position}];
     }
 }

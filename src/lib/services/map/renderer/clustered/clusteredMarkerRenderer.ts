@@ -35,8 +35,11 @@ export class ClusteredMarkerRenderer implements MarkerRenderer {
     }
 
     public syncAll(iterable: Iterable<Marker>): void {
-        this.markers = new Set(iterable);
-        this.indexDirty = true;
+        const nextMarkers = new Set(iterable);
+        if (!sameMembers(this.markers, nextMarkers)) {
+            this.markers = nextMarkers;
+            this.indexDirty = true;
+        }
         this.scheduleRender();
     }
 
@@ -54,12 +57,14 @@ export class ClusteredMarkerRenderer implements MarkerRenderer {
         onRemoved?.();
     }
 
-    public applyState(): void {
+    public applyState(_marker: Marker): void {
         this.scheduleRender();
     }
 
     public setExcludedMarker(marker: Marker | undefined): void {
-        if (marker === this.excludedMarker) return;
+        if (marker === this.excludedMarker) {
+            return;
+        }
         this.excludedMarker = marker;
         this.indexDirty = true;
         this.scheduleRender();
@@ -67,14 +72,20 @@ export class ClusteredMarkerRenderer implements MarkerRenderer {
 
     public destroy(): void {
         this.markers.clear();
-        if (this.renderTimeout !== undefined) clearTimeout(this.renderTimeout);
-        if (this.renderFrame !== undefined) cancelAnimationFrame(this.renderFrame);
+        if (this.renderTimeout !== undefined) {
+            clearTimeout(this.renderTimeout);
+        }
+        if (this.renderFrame !== undefined) {
+            cancelAnimationFrame(this.renderFrame);
+        }
         this.cancelScheduled();
         this.overlay.detach();
     }
 
     private scheduleRender(): void {
-        if (this.scheduled) return;
+        if (this.scheduled) {
+            return;
+        }
         this.scheduled = true;
         markerLifecycle.begin();
         this.renderTimeout = setTimeout(() => {
@@ -107,7 +118,9 @@ export class ClusteredMarkerRenderer implements MarkerRenderer {
 
     private *clusteredMarkers(): Iterable<Marker> {
         for (const marker of this.markers) {
-            if (marker !== this.excludedMarker) yield marker;
+            if (marker !== this.excludedMarker) {
+                yield marker;
+            }
         }
     }
 
@@ -128,8 +141,22 @@ export class ClusteredMarkerRenderer implements MarkerRenderer {
     }
 
     private cancelScheduled(): void {
-        if (!this.scheduled) return;
+        if (!this.scheduled) {
+            return;
+        }
         this.scheduled = false;
         markerLifecycle.end();
     }
+}
+
+function sameMembers(current: ReadonlySet<Marker>, next: ReadonlySet<Marker>): boolean {
+    if (current.size !== next.size) {
+        return false;
+    }
+    for (const marker of current) {
+        if (!next.has(marker)) {
+            return false;
+        }
+    }
+    return true;
 }

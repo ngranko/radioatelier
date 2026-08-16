@@ -49,7 +49,6 @@ export class ClusteredHybridRenderer implements MarkerRenderer {
     public remove(marker: Marker, onRemoved?: () => void): void {
         if (marker === this.promoted) {
             this.promoted = undefined;
-            this.clustered.setExcludedMarker(undefined);
             this.dom.remove(marker, () => this.clustered.remove(marker, onRemoved));
             return;
         }
@@ -82,7 +81,9 @@ export class ClusteredHybridRenderer implements MarkerRenderer {
 
         this.promoted = marker && !marker.usesDomRenderer() ? marker : undefined;
         this.clustered.setExcludedMarker(this.promoted);
-        if (!this.promoted) return;
+        if (!this.promoted) {
+            return;
+        }
 
         this.dom.ensureCreated(this.promoted);
         this.dom.show(this.promoted);

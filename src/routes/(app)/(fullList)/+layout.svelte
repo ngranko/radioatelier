@@ -2,10 +2,10 @@
     import {page} from '$app/state';
     import {api} from '$convex/_generated/api.js';
     import type {Id} from '$convex/_generated/dataModel';
+    import DebugMarkers from '$lib/components/debug/debugMarkers.svelte';
     import FirstRunHint from '$lib/components/map/firstRunHint.svelte';
     import Marker from '$lib/components/map/marker.svelte';
     import ObjectDetails from '$lib/components/objectDetails/objectDetails.svelte';
-    import DebugMarkers from '$lib/components/debug/debugMarkers.svelte';
     import type {MarkerListItem} from '$lib/interfaces/marker.ts';
     import type {Object as ObjectType} from '$lib/interfaces/object.ts';
     import {markerIconMap, type MarkerIconKey} from '$lib/services/map/markerStyling.js';

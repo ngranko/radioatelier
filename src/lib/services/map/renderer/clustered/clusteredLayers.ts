@@ -20,10 +20,7 @@ interface LayerHandlers {
     onClusterClick(cluster: ClusterPoint): void;
 }
 
-export function buildClusteredLayers(
-    points: ClusteredPoint[],
-    handlers: LayerHandlers,
-): Layer[] {
+export function buildClusteredLayers(points: ClusteredPoint[], handlers: LayerHandlers): Layer[] {
     const markers = points.filter((point): point is MarkerPoint => point.kind === 'marker');
     const clusters = points.filter((point): point is ClusterPoint => point.kind === 'cluster');
 
@@ -65,7 +62,9 @@ function markerDiskLayer(data: MarkerPoint[], handlers: LayerHandlers) {
         stroked: true,
         pickable: true,
         onClick: (info, event) => {
-            if (!info.object) return false;
+            if (!info.object) {
+                return false;
+            }
             event.stopPropagation();
             handlers.onMarkerClick(info.object.marker);
             return true;
@@ -104,7 +103,9 @@ function clusterDiskLayer(data: ClusterPoint[], handlers: LayerHandlers) {
         stroked: true,
         pickable: true,
         onClick: (info, event) => {
-            if (!info.object) return false;
+            if (!info.object) {
+                return false;
+            }
             event.stopPropagation();
             handlers.onClusterClick(info.object);
             return true;

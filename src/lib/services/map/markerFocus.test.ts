@@ -1,7 +1,12 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {focusDetailsTarget} from './map.svelte.ts';
 import type {Marker} from './marker';
-import {notifyFocusableMarkerShown, registerFocusableMarker, setFocusedTarget} from './markerFocus';
+import {
+    notifyFocusableMarkerShown,
+    onFocusedMarkerChange,
+    registerFocusableMarker,
+    setFocusedTarget,
+} from './markerFocus';
 
 vi.mock('./map.svelte.ts', () => ({
     focusDetailsTarget: vi.fn(),
@@ -80,6 +85,19 @@ describe('marker focus', () => {
 
         expect(classList.add).toHaveBeenCalledWith('scale-120');
         expect(focusDetailsTarget).toHaveBeenCalledWith(48.85, 2.35);
+    });
+
+    it('notifies renderers when the focused marker changes', () => {
+        const {marker} = makeMarker();
+        const listener = vi.fn();
+        const unsubscribe = onFocusedMarkerChange(listener);
+        registerFocusableMarker('object-1', marker);
+
+        setFocusedTarget('object-1');
+        setFocusedTarget(null);
+        unsubscribe();
+
+        expect(listener.mock.calls.map(([value]) => value)).toEqual([undefined, marker, undefined]);
     });
 
     it('removes the highlight from the previous target when focus moves', () => {

@@ -59,7 +59,9 @@ async function runProfiled(
 }
 
 function resolveRenderer() {
-    if (mapState.markerManager?.isClusteredRenderer) return 'clustered' as const;
+    if (mapState.markerManager?.isClusteredRenderer) {
+        return 'clustered' as const;
+    }
     return mapState.markerManager?.isDeckRenderer ? ('deck' as const) : ('dom' as const);
 }
 

@@ -24,7 +24,9 @@ export function resolveClusteredRendererFlag(
         const timeout = setTimeout(() => finish(false), timeoutMs);
 
         const finish = (enabled: boolean) => {
-            if (settled) return;
+            if (settled) {
+                return;
+            }
             settled = true;
             clearTimeout(timeout);
             unsubscribe?.();
@@ -34,7 +36,9 @@ export function resolveClusteredRendererFlag(
         unsubscribe = client.onFeatureFlags(() => {
             finish(isClusteredVariant(client.getFeatureFlag(CLUSTERED_RENDERER_FLAG)));
         });
-        if (settled) unsubscribe();
+        if (settled) {
+            unsubscribe();
+        }
     });
 }
 

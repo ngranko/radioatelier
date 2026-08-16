@@ -2,12 +2,12 @@
     import StreetView from '$lib/components/map/streetView.svelte';
     import type {Location} from '$lib/interfaces/location';
     import type {MapProvider} from '$lib/interfaces/map';
+    import {resolveClusteredRendererFlag} from '$lib/services/map/clusteredRendererFlag';
     import {
         getInitialCenter,
         startPositionPolling,
         stopPositionPolling,
     } from '$lib/services/map/geolocation';
-    import {resolveClusteredRendererFlag} from '$lib/services/map/clusteredRendererFlag';
     import {notifyFocusableMarkerShown, setFocusedTarget} from '$lib/services/map/markerFocus';
     import {MarkerManager} from '$lib/services/map/markerManager';
     import {PointerDragZoomController} from '$lib/services/map/pointerDragZoom';
@@ -30,7 +30,7 @@
     let clickTimeout: ReturnType<typeof setTimeout> | undefined;
     let positionInterval: number | undefined;
     let isInZoomMode = false;
-    let lastRendererInteraction = 0;
+    let lastRendererInteraction: number | undefined;
 
     let unsubIdle: (() => void) | undefined;
     let unsubClick: (() => void) | undefined;
@@ -43,10 +43,7 @@
         const center = await getInitialCenter();
         await provider.initialize(container!, center);
         mapState.provider = provider;
-        mapState.markerManager = await initMarkerManager(
-            provider,
-            await clusteredRendererEnabled,
-        );
+        mapState.markerManager = await initMarkerManager(provider, await clusteredRendererEnabled);
         mapState.isReady = true;
         mapState.markerManager.scheduleViewportUpdate();
     }
@@ -107,8 +104,8 @@
                 clusteredRendererEnabled
                     ? new ClusteredHybridRenderer(provider, markRendererInteraction)
                     : mode === 'deck'
-                    ? new HybridMarkerRenderer(provider)
-                    : new DomMarkerRenderer(provider),
+                      ? new HybridMarkerRenderer(provider)
+                      : new DomMarkerRenderer(provider),
             {
                 onMarkerShown: notifyFocusableMarkerShown,
                 rendererStrategy: clusteredRendererEnabled ? 'clustered' : 'legacy',
@@ -140,7 +137,9 @@
         const manager = mapState.markerManager;
         const legacyDeckMode = manager?.isDeckRenderer && !manager.isClusteredRenderer;
         const handledByRenderer =
-            manager?.isClusteredRenderer && performance.now() - lastRendererInteraction < 500;
+            manager?.isClusteredRenderer &&
+            lastRendererInteraction !== undefined &&
+            performance.now() - lastRendererInteraction < 500;
         if (legacyDeckMode || handledByRenderer || isInZoomMode) {
             return;
         }

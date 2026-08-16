@@ -114,6 +114,24 @@ describe('MarkerManager', () => {
         expect(created[0].renderer.destroy).not.toHaveBeenCalled();
     });
 
+    it('keeps one GPU renderer at every zoom for the clustered strategy', () => {
+        const {provider, getZoom} = makeProvider(15);
+        const {factory, created} = makeRendererFactory();
+        const manager = new MarkerManager(provider, factory, {
+            rendererStrategy: 'clustered',
+        });
+        const marker = manager.addMarker('marker', {lat: 1, lng: 2}, markerOptions);
+
+        getZoom.mockReturnValue(8);
+        manager.syncRendererWithViewport();
+
+        expect(manager.isClusteredRenderer).toBe(true);
+        expect(manager.isDeckRenderer).toBe(true);
+        expect(created).toHaveLength(1);
+        expect(created[0].mode).toBe('deck');
+        expect([...vi.mocked(created[0].renderer.syncAll).mock.calls[0][0]]).toEqual([marker]);
+    });
+
     it('switches back when the zoom returns across the threshold', () => {
         const {provider, getZoom} = makeProvider(8);
         const {factory, created} = makeRendererFactory();
@@ -137,9 +155,8 @@ describe('MarkerManager', () => {
         const list = manager.addMarker('list-1', {lat: 1, lng: 2}, markerOptions);
 
         // Seed the visible set as a prior viewport pass would have.
-        const engine = (
-            manager as unknown as {visibilityEngine: {show: (id: string) => void}}
-        ).visibilityEngine;
+        const engine = (manager as unknown as {visibilityEngine: {show: (id: string) => void}})
+            .visibilityEngine;
         engine.show('share-1');
         engine.show('list-1');
 

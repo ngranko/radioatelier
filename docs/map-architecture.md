@@ -9,7 +9,7 @@ MapProvider (GoogleMapsProvider)
     ↓
 MarkerManager (viewport culling, scheduling)
     ↓
-MarkerRenderer (DomMarkerRenderer | HybridMarkerRenderer)
+MarkerRenderer (DomMarkerRenderer | HybridMarkerRenderer | ClusteredHybridRenderer)
     ↓
 Marker components in +layout.svelte (data from api.markers.list)
 ```
@@ -57,7 +57,7 @@ Future collection-based access control is planned in [collection-access-control.
 
 ## DOM vs Deck.gl rendering
 
-Renderer mode switches on map idle based on zoom:
+The default renderer switches on map idle based on zoom:
 
 - **Zoom ≤ 10** (`config.deckZoomThreshold`): Deck.gl via `HybridMarkerRenderer`
 - **Zoom > 10**: pure DOM via `DomMarkerRenderer`
@@ -65,6 +65,10 @@ Renderer mode switches on map idle based on zoom:
 The zoom→renderer decision and the switch sequence (suppress updates → destroy renderer → recreate → `syncAll` → resume) live inside `MarkerManager.syncRendererWithViewport`; `map.svelte` only reports that the viewport settled on idle. The threshold is a `MarkerManager` option defaulting to `config.deckZoomThreshold`.
 
 At low zoom, list markers (`source: 'list'`) batch-render on a Deck.gl overlay for performance. Service markers always use DOM even in deck mode.
+
+The PostHog flag `map-gpu-clustered-renderer` enables the alternative `ClusteredHybridRenderer` for the lifetime of the map. It keeps list markers in one Deck.gl overlay at every zoom, uses Supercluster to combine dense points, and renders category icons from masked Lucide SVGs. Cluster clicks zoom to their expansion level; individual clicks use the same marker callback as the DOM renderer.
+
+Focused list markers are temporarily removed from the GPU layer and promoted to `DomMarkerRenderer`. This preserves the existing focus styling and long-press repositioning while keeping the rest of the catalog batched. Search, share, and draft markers remain DOM-rendered. Flag resolution runs while Google Maps initializes and falls back to the default renderer if PostHog does not respond within 1.5 seconds.
 
 ## Marker sources
 
@@ -84,7 +88,7 @@ Service markers (`search`, `share`, `draft`) call `usesDomRenderer()` and render
 
 ## Viewport culling
 
-`MarkerManager` keeps only visible markers rendered:
+The default renderer keeps only visible markers rendered:
 
 - `selectVisibleMarkerIds` (`viewportSelection.ts`) — picks the ids inside the current bounds
 - `VisibilityEngine` — applies the show/hide difference
@@ -97,6 +101,8 @@ Viewport selection scans the catalog cheaply, while applying its result costs on
 - `selectVisibleMarkerIds` tests each marker against plain numeric bounds edges (`MapBounds.toRect()`) instead of a vendor `contains()` call, and skips distance ranking entirely unless the viewport holds more markers than `maxVisibleMarkers`. When ranking is needed it sorts on Haversine ordering keys computed once per marker, omitting the final distance conversion because only the ordering matters.
 - `VisibilityEngine` diffs the selected ids against the repository's visible set, so it touches only markers entering or leaving the viewport rather than walking every marker.
 - The resulting diff is applied under a time budget (`frameBudgetMs`, default 8 ms) rather than a fixed chunk count: small diffs finish synchronously in the same tick, large ones yield to the browser between `requestAnimationFrame` batches so slow devices stay interactive.
+
+The clustered renderer indexes all list markers and asks Supercluster for the current zoom's world-level cluster set. With the expected 2,000–2,500 marker catalog this avoids viewport churn during pan: Google Maps moves the existing GPU overlay, and the cluster set is refreshed after zoom settles. It does not run DOM entrance animations for list markers.
 
 ## Marker entrance animation
 
@@ -111,7 +117,7 @@ Both ends of the animation are driven by the marker itself rather than by wall-c
 
 ## Map interactions
 
-- **Click** — 300 ms debounce; suppressed while Deck mode is active or during double-tap drag-zoom (`PointerDragZoomController`).
+- **Click** — 300 ms debounce; suppressed while legacy Deck mode is active or during double-tap drag-zoom (`PointerDragZoomController`). Clustered markers consume their own picked clicks while empty-map clicks keep the point-creation flow.
 - **Drag** — cancels pending marker-reposition timeouts (`removeDragTimeout`).
 - **Idle** — persists center/zoom to `localStorage` (`lastCenter`), then `syncRendererWithViewport` picks the renderer for the new zoom and schedules a viewport update.
 - **Min zoom** — computed from container size so the map cannot zoom out far enough to show duplicate tile instances (`computeMinZoomForContainer` in the Google provider).
