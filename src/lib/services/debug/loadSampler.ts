@@ -27,7 +27,7 @@ export class LoadSampler {
         this.lastFrameAt = this.startedAt;
         this.cpuPressure = undefined;
         this.observeCpuPressure();
-        this.rafId = requestAnimationFrame(now => this.onFrame(now));
+        this.rafId = requestAnimationFrame(now => this.beginLoop(now));
     }
 
     public stop(): LoadSample[] {
@@ -35,6 +35,11 @@ export class LoadSampler {
         this.pressureObserver?.disconnect();
         this.pressureObserver = undefined;
         return this.samples;
+    }
+
+    private beginLoop(now: number): void {
+        this.lastFrameAt = now;
+        this.rafId = requestAnimationFrame(next => this.onFrame(next));
     }
 
     private onFrame(now: number): void {
