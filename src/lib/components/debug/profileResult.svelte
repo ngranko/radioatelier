@@ -1,5 +1,12 @@
 <script lang="ts">
     import LoadChart from '$lib/components/debug/loadChart.svelte';
+    import {
+        formatAxisNumber,
+        formatCpu,
+        formatFps,
+        formatMb,
+        formatMs,
+    } from '$lib/services/debug/chartFormat';
     import type {ProfileResult} from '$lib/services/debug/profileMarkerOperation';
 
     interface Props {
@@ -10,6 +17,7 @@
 
     const operationLabel = $derived(result.operation === 'add' ? 'Добавление' : 'Удаление');
     const rendererLabel = $derived(result.renderer === 'deck' ? 'Deck.gl' : 'DOM');
+    const frameBudgetMs = 1000 / 60;
 </script>
 
 <div class="space-y-3">
@@ -30,6 +38,10 @@
         samples={result.samples}
         read={sample => sample.frameMs}
         emptyHint="Нет данных о кадрах"
+        formatValue={formatMs}
+        formatDetail={formatFps}
+        reference={{value: frameBudgetMs, label: '16.7 мс ≈ 60 FPS'}}
+        legend={['Выше пунктира — просадки основного потока']}
     />
     <LoadChart
         label="Память JS"
@@ -37,6 +49,7 @@
         samples={result.samples}
         read={sample => sample.heapUsedMb}
         emptyHint="Недоступно в этом браузере"
+        formatValue={formatMb}
     />
     <LoadChart
         label="Нагрузка CPU"
@@ -44,6 +57,10 @@
         samples={result.samples}
         read={sample => sample.cpuPressure}
         emptyHint="Недоступно в этом браузере"
+        formatValue={formatCpu}
+        formatAxis={formatAxisNumber}
+        yMax={3}
+        legend={['0 штатная · 1 заметная · 2 высокая · 3 критическая']}
     />
     <p class="text-muted-foreground/80 text-[11px] leading-snug">
         Браузер не отдаёт системные CPU/RAM. Графики показывают нагрузку вкладки: время кадра, кучу
