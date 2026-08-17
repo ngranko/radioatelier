@@ -31,7 +31,10 @@ describe('LoadSampler', () => {
         frames.advance(origin + 132);
 
         const samples = sampler.stop();
-        expect(samples.map(sample => sample.frameMs)).toEqual([16, 16]);
+        expect(samples).toHaveLength(2);
+        for (const sample of samples) {
+            expect(sample.frameMs).toBeCloseTo(16, 8);
+        }
         expect(samples[0]?.t).toBeGreaterThanOrEqual(116);
         expect(samples[1]?.t).toBeGreaterThan(samples[0]?.t ?? 0);
     });

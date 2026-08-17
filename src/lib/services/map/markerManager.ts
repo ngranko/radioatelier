@@ -9,12 +9,14 @@ import {selectVisibleMarkerIds} from '$lib/services/map/viewportSelection';
 import {VisibilityEngine} from '$lib/services/map/visibilityEngine';
 
 export type RendererMode = 'dom' | 'deck';
+export type RendererStrategy = 'legacy' | 'clustered';
 export type RendererFactory = (mode: RendererMode) => MarkerRenderer;
 
 export interface MarkerManagerOptions {
     frameBudgetMs: number;
     maxVisibleMarkers: number;
     deckZoomThreshold: number;
+    rendererStrategy: RendererStrategy;
     onMarkerShown?: (marker: Marker) => void;
 }
 
@@ -36,6 +38,7 @@ export class MarkerManager {
             frameBudgetMs: 8,
             maxVisibleMarkers: 1000,
             deckZoomThreshold: config.deckZoomThreshold,
+            rendererStrategy: 'legacy',
             ...options,
         };
 
@@ -50,6 +53,10 @@ export class MarkerManager {
 
     public get isDeckRenderer(): boolean {
         return this.isDeck;
+    }
+
+    public get isClusteredRenderer(): boolean {
+        return this.options.rendererStrategy === 'clustered';
     }
 
     public async initialize() {
@@ -116,6 +123,11 @@ export class MarkerManager {
     // recreate → syncAll → resume) live behind this seam; callers only report
     // that the viewport settled.
     public syncRendererWithViewport(): void {
+        if (this.isClusteredRenderer) {
+            this.renderer.syncAll(this.repo.values());
+            this.scheduleViewportUpdate();
+            return;
+        }
         const nextIsDeck = this.shouldUseDeck();
         if (nextIsDeck !== this.isDeck) {
             this.isDeck = nextIsDeck;
@@ -125,7 +137,10 @@ export class MarkerManager {
     }
 
     private shouldUseDeck(): boolean {
-        return this.provider.getZoom() <= this.options.deckZoomThreshold;
+        return (
+            this.options.rendererStrategy === 'clustered' ||
+            this.provider.getZoom() <= this.options.deckZoomThreshold
+        );
     }
 
     private switchRenderer(): void {

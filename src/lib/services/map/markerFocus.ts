@@ -5,17 +5,23 @@ import type {Marker} from './marker';
 // DOM, so focused identity must outlive any one rendered element.
 
 const registry = new Map<string, Marker>();
+const listeners = new Set<(marker: Marker | undefined) => void>();
 let focusedId: string | null = null;
+let focusedMarker: Marker | undefined;
 
 export function registerFocusableMarker(targetId: string, marker: Marker) {
     registry.set(targetId, marker);
     if (targetId === focusedId) {
+        setFocusedMarker(marker);
         focusMarker(marker);
     }
 
     return () => {
         if (registry.get(targetId) === marker) {
             registry.delete(targetId);
+            if (focusedMarker === marker) {
+                setFocusedMarker(undefined);
+            }
         }
     };
 }
@@ -27,9 +33,16 @@ export function setFocusedTarget(targetId: string | null) {
     focusedId = targetId;
 
     const marker = targetId ? registry.get(targetId) : undefined;
+    setFocusedMarker(marker);
     if (marker) {
         focusMarker(marker);
     }
+}
+
+export function onFocusedMarkerChange(listener: (marker: Marker | undefined) => void) {
+    listeners.add(listener);
+    listener(focusedMarker);
+    return () => listeners.delete(listener);
 }
 
 // The visibility engine creates marker elements lazily, so the highlight is
@@ -65,4 +78,14 @@ function applyHighlight(marker: Marker) {
 
 function removeHighlight(marker: Marker | undefined) {
     marker?.getHandle()?.getElement()?.classList.remove('scale-120', 'duration-100');
+}
+
+function setFocusedMarker(marker: Marker | undefined) {
+    if (focusedMarker === marker) {
+        return;
+    }
+    focusedMarker = marker;
+    for (const listener of listeners) {
+        listener(marker);
+    }
 }
