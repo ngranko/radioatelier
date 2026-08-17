@@ -7,7 +7,13 @@
         formatMb,
         formatMs,
     } from '$lib/services/debug/chartFormat';
-    import type {ProfileResult} from '$lib/services/debug/profileMarkerOperation';
+    import type {ProfileRenderer, ProfileResult} from '$lib/services/debug/profileMarkerOperation';
+
+    const RENDERER_LABELS: Record<ProfileRenderer, string> = {
+        clustered: 'Deck.gl clusters',
+        deck: 'Deck.gl',
+        dom: 'DOM',
+    };
 
     interface Props {
         result: ProfileResult;
@@ -16,13 +22,7 @@
     let {result}: Props = $props();
 
     const operationLabel = $derived(result.operation === 'add' ? 'Добавление' : 'Удаление');
-    const rendererLabel = $derived(
-        result.renderer === 'clustered'
-            ? 'Deck.gl clusters'
-            : result.renderer === 'deck'
-              ? 'Deck.gl'
-              : 'DOM',
-    );
+    const rendererLabel = $derived(RENDERER_LABELS[result.renderer]);
     const frameBudgetMs = 1000 / 60;
 </script>
 

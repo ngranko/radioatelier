@@ -17,6 +17,7 @@
         "no-unused-vars": ["error", {"argsIgnorePattern": "^_"}],
         // parity with the retired typescript-eslint recommended config
         "no-array-constructor": "error",
+        "no-nested-ternary": "error",
         "no-unused-expressions": "error",
         "typescript/ban-ts-comment": "error",
         "typescript/no-duplicate-enum-values": "error",

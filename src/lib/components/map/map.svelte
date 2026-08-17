@@ -3,6 +3,7 @@
     import type {Location} from '$lib/interfaces/location';
     import type {MapProvider} from '$lib/interfaces/map';
     import {resolveClusteredRendererFlag} from '$lib/services/map/clusteredRendererFlag';
+    import {createMarkerRenderer} from '$lib/services/map/createMarkerRenderer';
     import {
         getInitialCenter,
         startPositionPolling,
@@ -11,10 +12,7 @@
     import {notifyFocusableMarkerShown, setFocusedTarget} from '$lib/services/map/markerFocus';
     import {MarkerManager} from '$lib/services/map/markerManager';
     import {PointerDragZoomController} from '$lib/services/map/pointerDragZoom';
-    import {ClusteredHybridRenderer} from '$lib/services/map/providers/google/clusteredHybridRenderer';
-    import {HybridMarkerRenderer} from '$lib/services/map/providers/google/hybridMarkerRenderer';
     import {GoogleMapsProvider} from '$lib/services/map/providers/google/provider';
-    import {DomMarkerRenderer} from '$lib/services/map/renderer/domMarkerRenderer';
     import {mapState} from '$lib/state/map.svelte';
     import {removeDragTimeout} from '$lib/state/marker.svelte';
     import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
@@ -100,12 +98,7 @@
     ): Promise<MarkerManager> {
         const manager = new MarkerManager(
             provider,
-            mode =>
-                clusteredRendererEnabled
-                    ? new ClusteredHybridRenderer(provider, markRendererInteraction)
-                    : mode === 'deck'
-                      ? new HybridMarkerRenderer(provider)
-                      : new DomMarkerRenderer(provider),
+            createMarkerRenderer(provider, clusteredRendererEnabled, markRendererInteraction),
             {
                 onMarkerShown: notifyFocusableMarkerShown,
                 rendererStrategy: clusteredRendererEnabled ? 'clustered' : 'legacy',

@@ -108,13 +108,7 @@ async function notionRequest<T>(
                 continue;
             }
 
-            const timedOut = isAbortError(error);
-            const message = timedOut
-                ? 'Notion request timed out'
-                : error instanceof Error
-                  ? `Notion request failed: ${error.message}`
-                  : 'Notion request failed';
-            throw new NotionRequestError(message, timedOut ? 408 : 0, true);
+            throw networkFailureError(error);
         } finally {
             clearTimeout(timeoutId);
         }
@@ -138,6 +132,16 @@ async function notionRequest<T>(
     }
 
     throw new NotionRequestError('Notion request failed after retries', 0, true);
+}
+
+function networkFailureError(error: unknown) {
+    if (isAbortError(error)) {
+        return new NotionRequestError('Notion request timed out', 408, true);
+    }
+    if (error instanceof Error) {
+        return new NotionRequestError(`Notion request failed: ${error.message}`, 0, true);
+    }
+    return new NotionRequestError('Notion request failed', 0, true);
 }
 
 function isAbortError(error: unknown) {

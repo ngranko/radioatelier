@@ -48,6 +48,16 @@
         timeout = undefined;
     }
 
+    const iconClass = $derived.by(() => {
+        if (disabled) {
+            return 'text-muted-foreground/50';
+        }
+        if (isFocused) {
+            return 'text-primary';
+        }
+        return 'text-muted-foreground';
+    });
+
     onMount(() =>
         registerEscapeCloseHandler({
             priority: 10,
@@ -60,12 +70,7 @@
 
 <div class="group relative z-1">
     <div
-        class="pointer-events-none absolute top-1/2 left-3.5 z-10 -translate-y-1/2 text-sm transition-colors
-            {disabled
-            ? 'text-muted-foreground/50'
-            : isFocused
-              ? 'text-primary'
-              : 'text-muted-foreground'}"
+        class="pointer-events-none absolute top-1/2 left-3.5 z-10 -translate-y-1/2 text-sm transition-colors {iconClass}"
     >
         <SearchIcon class="size-4" />
     </div>
