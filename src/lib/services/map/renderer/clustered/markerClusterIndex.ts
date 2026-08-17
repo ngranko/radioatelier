@@ -18,6 +18,7 @@ export interface MarkerPoint {
 export interface ClusterPoint {
     kind: 'cluster';
     clusterId: number;
+    indexVersion: number;
     markerCount: number;
     label: string;
     position: [number, number];
@@ -29,6 +30,7 @@ const WORLD_BOUNDS: [number, number, number, number] = [-180, -85.0511, 180, 85.
 
 export class MarkerClusterIndex {
     private index = createIndex();
+    private version = 0;
 
     public load(markers: Iterable<Marker>): void {
         const features: Supercluster.PointFeature<MarkerProperties>[] = [];
@@ -45,6 +47,7 @@ export class MarkerClusterIndex {
         }
 
         this.index = createIndex().load(features);
+        this.version++;
     }
 
     public getPoints(zoom: number): ClusteredPoint[] {
@@ -53,8 +56,15 @@ export class MarkerClusterIndex {
             .flatMap(feature => this.toPoint(feature));
     }
 
-    public getExpansionZoom(clusterId: number): number {
-        return this.index.getClusterExpansionZoom(clusterId);
+    public getExpansionZoom(clusterId: number, indexVersion: number): number | undefined {
+        if (indexVersion !== this.version) {
+            return undefined;
+        }
+        try {
+            return this.index.getClusterExpansionZoom(clusterId);
+        } catch {
+            return undefined;
+        }
     }
 
     private toPoint(
@@ -68,6 +78,7 @@ export class MarkerClusterIndex {
                 {
                     kind: 'cluster',
                     clusterId: feature.properties.cluster_id,
+                    indexVersion: this.version,
                     markerCount: feature.properties.point_count,
                     label: String(feature.properties.point_count_abbreviated),
                     position,

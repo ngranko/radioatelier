@@ -29,6 +29,47 @@ describe('resolveClusteredRendererFlag', () => {
         expect(unsubscribe).toHaveBeenCalledOnce();
     });
 
+    it('falls back when the initial flag read throws', async () => {
+        const client = {
+            getFeatureFlag: vi.fn(() => {
+                throw new Error('flag client unavailable');
+            }),
+            onFeatureFlags: vi.fn(),
+        };
+
+        await expect(resolveClusteredRendererFlag(client)).resolves.toBe(false);
+        expect(client.onFeatureFlags).not.toHaveBeenCalled();
+    });
+
+    it('falls back when feature flag subscription throws', async () => {
+        const client = {
+            getFeatureFlag: vi.fn(() => undefined),
+            onFeatureFlags: vi.fn(() => {
+                throw new Error('subscription unavailable');
+            }),
+        };
+
+        await expect(resolveClusteredRendererFlag(client)).resolves.toBe(false);
+    });
+
+    it('falls back when the subscribed flag read throws', async () => {
+        const getFeatureFlag = vi
+            .fn<() => boolean | undefined>()
+            .mockReturnValueOnce(undefined)
+            .mockImplementationOnce(() => {
+                throw new Error('flag read unavailable');
+            });
+        const client = {
+            getFeatureFlag,
+            onFeatureFlags: vi.fn((callback: () => void) => {
+                callback();
+                return vi.fn();
+            }),
+        };
+
+        await expect(resolveClusteredRendererFlag(client)).resolves.toBe(false);
+    });
+
     it('falls back to the legacy renderer when loading times out', async () => {
         vi.useFakeTimers();
         const client = {

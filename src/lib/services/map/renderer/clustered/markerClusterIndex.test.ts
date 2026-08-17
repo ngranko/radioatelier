@@ -16,7 +16,24 @@ describe('MarkerClusterIndex', () => {
         expect(points).toHaveLength(1);
         expect(points[0]).toMatchObject({kind: 'cluster', markerCount: 3, label: '3'});
         if (points[0].kind === 'cluster') {
-            expect(index.getExpansionZoom(points[0].clusterId)).toBeGreaterThan(8);
+            expect(
+                index.getExpansionZoom(points[0].clusterId, points[0].indexVersion),
+            ).toBeGreaterThan(8);
+        }
+    });
+
+    it('ignores a cluster from an index that has been replaced', () => {
+        const index = new MarkerClusterIndex();
+        index.load([marker(55.75, 37.61), marker(55.7501, 37.6101), marker(55.7502, 37.6102)]);
+        const staleCluster = index.getPoints(8)[0];
+        expect(staleCluster.kind).toBe('cluster');
+
+        index.load([marker(48.85, 2.35)]);
+
+        if (staleCluster.kind === 'cluster') {
+            expect(
+                index.getExpansionZoom(staleCluster.clusterId, staleCluster.indexVersion),
+            ).toBeUndefined();
         }
     });
 

@@ -132,10 +132,14 @@ export class ClusteredMarkerRenderer implements MarkerRenderer {
     private handleClusterClick(cluster: ClusterPoint): void {
         this.onInteraction();
         const [lng, lat] = cluster.position;
-        const zoom = Math.min(
-            this.provider.getMaxZoom(),
-            this.clusterIndex.getExpansionZoom(cluster.clusterId),
+        const expansionZoom = this.clusterIndex.getExpansionZoom(
+            cluster.clusterId,
+            cluster.indexVersion,
         );
+        if (expansionZoom === undefined) {
+            return;
+        }
+        const zoom = Math.min(this.provider.getMaxZoom(), expansionZoom);
         this.provider.setCenter(lat, lng);
         this.provider.setZoom(zoom);
     }

@@ -43,6 +43,9 @@ export class ClusteredHybridRenderer implements MarkerRenderer {
     }
 
     public hide(marker: Marker): void {
+        if (marker === this.promoted) {
+            return;
+        }
         this.rendererFor(marker).hide(marker);
     }
 

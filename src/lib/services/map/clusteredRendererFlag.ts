@@ -13,7 +13,12 @@ export function resolveClusteredRendererFlag(
     client: FeatureFlagClient = posthog,
     timeoutMs = FLAG_TIMEOUT_MS,
 ): Promise<boolean> {
-    const current = client.getFeatureFlag(CLUSTERED_RENDERER_FLAG);
+    let current: boolean | string | undefined;
+    try {
+        current = client.getFeatureFlag(CLUSTERED_RENDERER_FLAG);
+    } catch {
+        return Promise.resolve(false);
+    }
     if (current !== undefined) {
         return Promise.resolve(isClusteredVariant(current));
     }
@@ -33,11 +38,19 @@ export function resolveClusteredRendererFlag(
             resolve(enabled);
         };
 
-        unsubscribe = client.onFeatureFlags(() => {
-            finish(isClusteredVariant(client.getFeatureFlag(CLUSTERED_RENDERER_FLAG)));
-        });
+        try {
+            unsubscribe = client.onFeatureFlags(() => {
+                try {
+                    finish(isClusteredVariant(client.getFeatureFlag(CLUSTERED_RENDERER_FLAG)));
+                } catch {
+                    finish(false);
+                }
+            });
+        } catch {
+            finish(false);
+        }
         if (settled) {
-            unsubscribe();
+            unsubscribe?.();
         }
     });
 }
