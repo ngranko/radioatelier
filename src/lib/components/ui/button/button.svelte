@@ -16,10 +16,12 @@
                 ghost: 'hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50',
                 link: 'text-primary underline-offset-4 hover:underline',
             },
+            // a button with a loading state keeps its icon one level deeper, inside the label
+            // face, so the icon padding has to be matched on both shapes
             size: {
-                default: 'h-9 px-4 py-2 has-[>svg]:px-3',
-                sm: 'h-8 gap-1.5 rounded-md px-3 has-[>svg]:px-2.5',
-                lg: 'h-12 px-4 py-2 has-[>svg]:px-3 active:scale-[0.98] disabled:active:scale-100',
+                default: 'h-9 px-4 py-2 has-[>svg]:px-3 has-[[data-slot=button-label]>svg]:px-3',
+                sm: 'h-8 gap-1.5 rounded-md px-3 has-[>svg]:px-2.5 has-[[data-slot=button-label]>svg]:px-2.5',
+                lg: 'h-12 px-4 py-2 has-[>svg]:px-3 has-[[data-slot=button-label]>svg]:px-3 active:scale-[0.98] disabled:active:scale-100',
                 icon: 'size-9',
             },
         },
@@ -51,34 +53,48 @@
         href = undefined,
         type = 'button',
         disabled,
-        loading = false,
+        loading = undefined,
         children,
         ...restProps
     }: ButtonProps = $props();
 
+    // both faces have to be mounted before the swap for the slide to run, and that wrapper would
+    // break the layout of buttons built around their children — so only opt-in buttons get it
+    let hasLoadingState = $derived(loading !== undefined);
     let isDisabled = $derived(disabled || loading);
     let classes = $derived(
         cn(
             buttonVariants({variant, size}),
             // busy ≠ unavailable, so keep full contrast while the spinner is up
-            loading && 'relative disabled:opacity-100 aria-disabled:opacity-100',
+            loading && 'disabled:opacity-100 aria-disabled:opacity-100',
             className,
         ),
     );
 </script>
 
 {#snippet content()}
-    {#if loading}
+    {#if hasLoadingState}
         <span
-            data-slot="button-loading"
-            class="absolute inset-0 flex items-center justify-center"
-            aria-hidden="true"
+            data-slot="button-faces"
+            data-state={loading ? 'busy' : 'idle'}
+            class="grid overflow-hidden"
         >
-            <Spinner class="size-4" />
+            <!-- the label stays mounted while busy: it holds the button's width and its
+                 accessible name, and it has to be there to slide back in -->
+            <span
+                data-slot="button-label"
+                class="col-start-1 row-start-1 flex items-center justify-center gap-2"
+            >
+                {@render children?.()}
+            </span>
+            <span
+                data-slot="button-spinner"
+                class="col-start-1 row-start-1 flex items-center justify-center"
+                aria-hidden="true"
+            >
+                <Spinner class={cn('size-4', !loading && 'animate-none')} />
+            </span>
         </span>
-        <!-- the label keeps the button's width and accessible name; opacity-0 needs a box of
-             its own because a bare text child cannot be targeted by a selector -->
-        <span class="inline-flex items-center gap-2 opacity-0">{@render children?.()}</span>
     {:else}
         {@render children?.()}
     {/if}
@@ -111,3 +127,53 @@
         {@render content()}
     </button>
 {/if}
+
+<style>
+    [data-slot='button-faces'] {
+        --lift: cubic-bezier(0.55, 0, 0.95, 0.4);
+        --land: cubic-bezier(0.16, 1.1, 0.3, 1);
+        /* the leaving face clears the slot before the arriving one starts moving */
+        --gap: 55ms;
+    }
+
+    /* whichever face is leaving lifts and accelerates away */
+    [data-slot='button-spinner'],
+    [data-state='busy'] > [data-slot='button-label'] {
+        transition:
+            transform 200ms var(--lift),
+            opacity 120ms cubic-bezier(0.4, 0, 1, 1);
+    }
+
+    /* whichever face is arriving drops in and settles once */
+    [data-slot='button-label'],
+    [data-state='busy'] > [data-slot='button-spinner'] {
+        transition:
+            transform 200ms var(--land) var(--gap),
+            opacity 170ms linear var(--gap);
+    }
+
+    [data-slot='button-spinner'] {
+        transform: translateY(115%);
+        opacity: 0;
+    }
+
+    [data-state='busy'] > [data-slot='button-label'] {
+        transform: translateY(-115%);
+        opacity: 0;
+    }
+
+    [data-state='busy'] > [data-slot='button-spinner'] {
+        transform: translateY(0);
+        opacity: 1;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        /* the state still changes, only the travel is dropped; !important because the
+           direction-aware rules above are more specific */
+        [data-slot='button-label'],
+        [data-slot='button-spinner'] {
+            transition-duration: 1ms !important;
+            transition-delay: 0ms !important;
+        }
+    }
+</style>
