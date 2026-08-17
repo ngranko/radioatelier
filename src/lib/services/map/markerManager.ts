@@ -42,6 +42,8 @@ export class MarkerManager {
             ...options,
         };
 
+        console.log('MarkerManager', this.options.rendererStrategy);
+
         this.isDeck = this.shouldUseDeck();
         this.renderer = createRenderer(this.isDeck ? 'deck' : 'dom');
         this.visibilityEngine = new VisibilityEngine(
