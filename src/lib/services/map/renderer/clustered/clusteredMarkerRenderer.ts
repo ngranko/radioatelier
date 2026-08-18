@@ -5,6 +5,7 @@ import type {DeckOverlayHost} from '$lib/services/map/providers/google/deckOverl
 import {buildClusteredLayers} from '$lib/services/map/renderer/clustered/clusteredLayers';
 import {
     type ClusterPoint,
+    type MarkerPoint,
     MarkerClusterIndex,
 } from '$lib/services/map/renderer/clustered/markerClusterIndex';
 import type {MarkerRenderer} from '$lib/services/map/renderer/markerRenderer';
@@ -17,6 +18,7 @@ export class ClusteredMarkerRenderer implements MarkerRenderer {
     private excludedMarker?: Marker;
     private indexDirty = true;
     private scheduled = false;
+    private clusteringEnabled: boolean;
     private renderTimeout?: ReturnType<typeof setTimeout>;
     private renderFrame?: number;
 
@@ -24,8 +26,18 @@ export class ClusteredMarkerRenderer implements MarkerRenderer {
         private provider: MapProvider,
         private overlay: DeckOverlayHost,
         private onInteraction: () => void,
+        clusteringEnabled = true,
     ) {
+        this.clusteringEnabled = clusteringEnabled;
         this.overlay.attach();
+    }
+
+    public setClusteringEnabled(enabled: boolean): void {
+        if (this.clusteringEnabled === enabled) {
+            return;
+        }
+        this.clusteringEnabled = enabled;
+        this.scheduleRender();
     }
 
     public ensureCreated(marker: Marker): void {
@@ -103,17 +115,30 @@ export class ClusteredMarkerRenderer implements MarkerRenderer {
     }
 
     private render(): void {
-        if (this.indexDirty) {
-            this.clusterIndex.load(this.clusteredMarkers());
-            this.indexDirty = false;
-        }
-        const points = this.clusterIndex.getPoints(this.provider.getZoom());
+        const points = this.clusteringEnabled ? this.clusteredPoints() : this.individualPoints();
         this.overlay.setLayers(
             buildClusteredLayers(points, {
                 onMarkerClick: marker => this.handleMarkerClick(marker),
                 onClusterClick: cluster => this.handleClusterClick(cluster),
             }),
         );
+    }
+
+    private clusteredPoints() {
+        if (this.indexDirty) {
+            this.clusterIndex.load(this.clusteredMarkers());
+            this.indexDirty = false;
+        }
+        return this.clusterIndex.getPoints(this.provider.getZoom());
+    }
+
+    private individualPoints(): MarkerPoint[] {
+        const points: MarkerPoint[] = [];
+        for (const marker of this.clusteredMarkers()) {
+            const {lat, lng} = marker.getPosition();
+            points.push({kind: 'marker', marker, position: [lng, lat]});
+        }
+        return points;
     }
 
     private *clusteredMarkers(): Iterable<Marker> {

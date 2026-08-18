@@ -1,5 +1,9 @@
 import type {MapProvider} from '$lib/interfaces/map';
 import type {Marker} from '$lib/services/map/marker';
+import {
+    isMarkerClusteringEnabled,
+    subscribeMarkerClustering,
+} from '$lib/services/map/markerClustering';
 import {onFocusedMarkerChange} from '$lib/services/map/markerFocus';
 import type {GoogleMapsProvider} from '$lib/services/map/providers/google/provider';
 import {ClusteredMarkerRenderer} from '$lib/services/map/renderer/clustered/clusteredMarkerRenderer';
@@ -10,6 +14,7 @@ export class ClusteredHybridRenderer implements MarkerRenderer {
     private dom: DomMarkerRenderer;
     private clustered: ClusteredMarkerRenderer;
     private promoted?: Marker;
+    private unsubscribeClustering: () => void;
     private unsubscribeFocus: () => void;
 
     public constructor(provider: MapProvider, onInteraction: () => void) {
@@ -18,7 +23,15 @@ export class ClusteredHybridRenderer implements MarkerRenderer {
             throw new Error('ClusteredHybridRenderer requires a GoogleMapsProvider');
         }
         const overlay = (provider as GoogleMapsProvider).getDeckOverlay();
-        this.clustered = new ClusteredMarkerRenderer(provider, overlay, onInteraction);
+        this.clustered = new ClusteredMarkerRenderer(
+            provider,
+            overlay,
+            onInteraction,
+            isMarkerClusteringEnabled(),
+        );
+        this.unsubscribeClustering = subscribeMarkerClustering(enabled => {
+            this.clustered.setClusteringEnabled(enabled);
+        });
         this.unsubscribeFocus = onFocusedMarkerChange(marker => this.promote(marker));
     }
 
@@ -68,6 +81,7 @@ export class ClusteredHybridRenderer implements MarkerRenderer {
     }
 
     public destroy(): void {
+        this.unsubscribeClustering();
         this.unsubscribeFocus();
         this.dom.destroy();
         this.clustered.destroy();

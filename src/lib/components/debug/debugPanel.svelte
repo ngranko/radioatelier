@@ -2,6 +2,7 @@
     import {goto} from '$app/navigation';
     import ProfileResult from '$lib/components/debug/profileResult.svelte';
     import {Button} from '$lib/components/ui/button';
+    import {Checkbox} from '$lib/components/ui/checkbox';
     import {Input} from '$lib/components/ui/input';
     import {Label} from '$lib/components/ui/label';
     import {addDebugMarkers, removeDebugMarkers} from '$lib/services/debug/debugMarkerActions';
@@ -10,12 +11,17 @@
         DEBUG_MARKER_MAX,
         DEBUG_MARKER_MIN,
     } from '$lib/services/debug/markerCount';
+    import {
+        isMarkerClusteringEnabled,
+        setMarkerClusteringEnabled,
+    } from '$lib/services/map/markerClustering';
     import {debugMarkerState} from '$lib/state/debugMarkers.svelte';
     import {mapState} from '$lib/state/map.svelte';
     import ActivityIcon from '@lucide/svelte/icons/activity';
     import XIcon from '@lucide/svelte/icons/x';
 
     let countText = $state(String(debugMarkerState.count));
+    let clusteringEnabled = $state(isMarkerClusteringEnabled());
 
     const placedCount = $derived(debugMarkerState.items.length);
     const isRunning = $derived(debugMarkerState.runningOperation !== null);
@@ -38,6 +44,11 @@
 
     function handleClose() {
         goto('/');
+    }
+
+    function handleClusteringChange(checked: boolean | 'indeterminate') {
+        clusteringEnabled = Boolean(checked);
+        setMarkerClusteringEnabled(clusteringEnabled);
     }
 </script>
 
@@ -82,6 +93,17 @@
         </div>
 
         <p class="text-muted-foreground text-xs">На карте: {placedCount}</p>
+
+        {#if mapState.markerManager?.isClusteredRenderer}
+            <label class="flex cursor-pointer items-center justify-between gap-3 select-none">
+                <span class="text-sm">Кластеризация</span>
+                <Checkbox
+                    checked={clusteringEnabled}
+                    onCheckedChange={handleClusteringChange}
+                    disabled={isRunning}
+                />
+            </label>
+        {/if}
 
         <div class="flex gap-2">
             <Button
