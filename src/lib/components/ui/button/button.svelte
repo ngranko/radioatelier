@@ -16,10 +16,12 @@
                 ghost: 'hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50',
                 link: 'text-primary underline-offset-4 hover:underline',
             },
+            // a button with a loading state keeps its icon one level deeper, inside the label
+            // face, so the icon padding has to be matched on both shapes
             size: {
-                default: 'h-9 px-4 py-2 has-[>svg]:px-3',
-                sm: 'h-8 gap-1.5 rounded-md px-3 has-[>svg]:px-2.5',
-                lg: 'h-12 px-4 py-2 has-[>svg]:px-3 active:scale-[0.98] disabled:active:scale-100',
+                default: 'h-9 px-4 py-2 has-[>svg]:px-3 has-[[data-slot=button-label]>svg]:px-3',
+                sm: 'h-8 gap-1.5 rounded-md px-3 has-[>svg]:px-2.5 has-[[data-slot=button-label]>svg]:px-2.5',
+                lg: 'h-12 px-4 py-2 has-[>svg]:px-3 has-[[data-slot=button-label]>svg]:px-3 active:scale-[0.98] disabled:active:scale-100',
                 icon: 'size-9',
             },
         },
@@ -51,34 +53,58 @@
         href = undefined,
         type = 'button',
         disabled,
-        loading = false,
+        loading = undefined,
         children,
         ...restProps
     }: ButtonProps = $props();
 
+    const face = 'col-start-1 row-start-1 flex items-center justify-center gap-2';
+    // the face on its way out lifts and accelerates away; the arriving one drops in and settles,
+    // starting late enough for the slot to be clear by then
+    const leaving =
+        'opacity-0 motion-safe:[transition:translate_200ms_var(--ease-lift),opacity_120ms_ease-in]';
+    const arriving =
+        'opacity-100 motion-safe:[transition:translate_200ms_var(--ease-land)_55ms,opacity_170ms_linear_55ms]';
+
+    // both faces have to be mounted before the swap for the slide to run, and that wrapper would
+    // break the layout of buttons built around their children — so only opt-in buttons get it
+    let hasLoadingState = $derived(loading !== undefined);
     let isDisabled = $derived(disabled || loading);
     let classes = $derived(
         cn(
             buttonVariants({variant, size}),
             // busy ≠ unavailable, so keep full contrast while the spinner is up
-            loading && 'relative disabled:opacity-100 aria-disabled:opacity-100',
+            loading && 'disabled:opacity-100 aria-disabled:opacity-100',
             className,
         ),
     );
 </script>
 
 {#snippet content()}
-    {#if loading}
-        <span
-            data-slot="button-loading"
-            class="absolute inset-0 flex items-center justify-center"
-            aria-hidden="true"
-        >
-            <Spinner class="size-4" />
+    {#if hasLoadingState}
+        <span data-slot="button-faces" class="grid overflow-hidden">
+            <!-- the label stays mounted while busy: it holds the button's width and its
+                 accessible name, and it has to be there to slide back in -->
+            <span
+                data-slot="button-label"
+                class={cn(
+                    face,
+                    loading ? `-translate-y-[115%] ${leaving}` : `translate-y-0 ${arriving}`,
+                )}
+            >
+                {@render children?.()}
+            </span>
+            <span
+                data-slot="button-spinner"
+                class={cn(
+                    face,
+                    loading ? `translate-y-0 ${arriving}` : `translate-y-[115%] ${leaving}`,
+                )}
+                aria-hidden="true"
+            >
+                <Spinner class={cn('size-4', !loading && 'animate-none')} />
+            </span>
         </span>
-        <!-- the label keeps the button's width and accessible name; opacity-0 needs a box of
-             its own because a bare text child cannot be targeted by a selector -->
-        <span class="inline-flex items-center gap-2 opacity-0">{@render children?.()}</span>
     {:else}
         {@render children?.()}
     {/if}
