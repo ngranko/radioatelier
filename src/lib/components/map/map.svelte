@@ -9,6 +9,11 @@
         startPositionPolling,
         stopPositionPolling,
     } from '$lib/services/map/geolocation';
+    import {
+        MAP_CLICK_DEBOUNCE_MS,
+        MapClickTimeout,
+        takePairedRendererClick,
+    } from '$lib/services/map/mapClick';
     import {notifyFocusableMarkerShown, setFocusedTarget} from '$lib/services/map/markerFocus';
     import {MarkerManager} from '$lib/services/map/markerManager';
     import {PointerDragZoomController} from '$lib/services/map/pointerDragZoom';
@@ -25,7 +30,7 @@
     let {onClick}: Props = $props();
 
     let container: HTMLDivElement | undefined = $state();
-    let clickTimeout: ReturnType<typeof setTimeout> | undefined;
+    const mapClickTimeout = new MapClickTimeout();
     let positionInterval: number | undefined;
     let isInZoomMode = false;
     let lastRendererInteraction: number | undefined;
@@ -55,8 +60,7 @@
             getMinZoom: () => mapState.provider!.getMinZoom(),
             getMaxZoom: () => mapState.provider!.getMaxZoom(),
             onStart: () => {
-                clearTimeout(clickTimeout);
-                clickTimeout = undefined;
+                mapClickTimeout.clear();
                 isInZoomMode = true;
                 mapState.provider?.setDraggable(false);
             },
@@ -116,8 +120,7 @@
 
     function handleMapDragStart() {
         removeDragTimeout();
-        clearTimeout(clickTimeout);
-        clickTimeout = undefined;
+        mapClickTimeout.clear();
     }
 
     function handleIdle() {
@@ -131,29 +134,37 @@
             return;
         }
 
-        clickTimeout = setTimeout(() => {
+        mapClickTimeout.replace(() => {
             // GPU picking is forwarded after this Maps click listener, so re-check.
             if (!shouldIgnoreMapClick() && onClick) {
                 onClick(latLng);
             }
-            clickTimeout = undefined;
-        }, 300);
+        }, MAP_CLICK_DEBOUNCE_MS);
     }
 
     function shouldIgnoreMapClick(): boolean {
         const manager = mapState.markerManager;
         const legacyDeckMode = Boolean(manager?.isDeckRenderer && !manager.isClusteredRenderer);
-        const handledByRenderer =
-            Boolean(manager?.isClusteredRenderer) &&
-            lastRendererInteraction !== undefined &&
-            performance.now() - lastRendererInteraction < 500;
-        return legacyDeckMode || handledByRenderer || isInZoomMode;
+        if (legacyDeckMode || isInZoomMode) {
+            return true;
+        }
+        return consumeRendererInteraction();
+    }
+
+    function consumeRendererInteraction(): boolean {
+        if (!mapState.markerManager?.isClusteredRenderer) {
+            return false;
+        }
+        const paired = takePairedRendererClick(lastRendererInteraction, performance.now());
+        lastRendererInteraction = undefined;
+        return paired;
     }
 
     function markRendererInteraction() {
         lastRendererInteraction = performance.now();
-        clearTimeout(clickTimeout);
-        clickTimeout = undefined;
+        if (mapClickTimeout.clear()) {
+            lastRendererInteraction = undefined;
+        }
     }
 
     function persistMapView() {
@@ -180,6 +191,7 @@
         unsubClick?.();
         unsubDragStart?.();
         disposeDoubleTapDragZoom?.();
+        mapClickTimeout.clear();
         mapState.markerManager?.destroy();
         mapState.provider?.destroy();
         mapState.provider = null;
