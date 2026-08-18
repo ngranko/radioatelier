@@ -98,7 +98,7 @@ function clusterDiskLayer(data: ClusterPoint[], handlers: LayerHandlers) {
         stroked: true,
         pickable: true,
         onClick: (info, event) =>
-            handleClusteredPickingClick(info, event, handlers.onClusterClick),
+            handleClusteredPickingClick(info, event, cluster => handlers.onClusterClick(cluster)),
     });
 }
 
