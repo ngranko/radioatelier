@@ -7,6 +7,7 @@ import {
     type MarkerPoint,
 } from '$lib/services/map/renderer/clustered/markerClusterIndex';
 import {MARKER_ICON_DEFINITIONS} from '$lib/services/map/renderer/clustered/markerIcons';
+import {handleClusteredPickingClick} from '$lib/services/map/renderer/clustered/pickingClick';
 import type {Layer} from '@deck.gl/core';
 import {IconLayer, ScatterplotLayer, TextLayer} from '@deck.gl/layers';
 
@@ -61,14 +62,8 @@ function markerDiskLayer(data: MarkerPoint[], handlers: LayerHandlers) {
         filled: true,
         stroked: true,
         pickable: true,
-        onClick: (info, event) => {
-            if (!info.object) {
-                return false;
-            }
-            event.stopPropagation();
-            handlers.onMarkerClick(info.object.marker);
-            return true;
-        },
+        onClick: (info, event) =>
+            handleClusteredPickingClick(info, event, point => handlers.onMarkerClick(point.marker)),
         transitions: {getFillColor: 160, getLineColor: 160},
     });
 }
@@ -102,14 +97,8 @@ function clusterDiskLayer(data: ClusterPoint[], handlers: LayerHandlers) {
         filled: true,
         stroked: true,
         pickable: true,
-        onClick: (info, event) => {
-            if (!info.object) {
-                return false;
-            }
-            event.stopPropagation();
-            handlers.onClusterClick(info.object);
-            return true;
-        },
+        onClick: (info, event) =>
+            handleClusteredPickingClick(info, event, handlers.onClusterClick),
     });
 }
 

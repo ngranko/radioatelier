@@ -127,26 +127,33 @@
     }
 
     function handleClick(latLng: {lat: number; lng: number}) {
-        const manager = mapState.markerManager;
-        const legacyDeckMode = manager?.isDeckRenderer && !manager.isClusteredRenderer;
-        const handledByRenderer =
-            manager?.isClusteredRenderer &&
-            lastRendererInteraction !== undefined &&
-            performance.now() - lastRendererInteraction < 500;
-        if (legacyDeckMode || handledByRenderer || isInZoomMode) {
+        if (shouldIgnoreMapClick()) {
             return;
         }
 
         clickTimeout = setTimeout(() => {
-            if (!isInZoomMode && onClick) {
+            // GPU picking is forwarded after this Maps click listener, so re-check.
+            if (!shouldIgnoreMapClick() && onClick) {
                 onClick(latLng);
             }
             clickTimeout = undefined;
         }, 300);
     }
 
+    function shouldIgnoreMapClick(): boolean {
+        const manager = mapState.markerManager;
+        const legacyDeckMode = Boolean(manager?.isDeckRenderer && !manager.isClusteredRenderer);
+        const handledByRenderer =
+            Boolean(manager?.isClusteredRenderer) &&
+            lastRendererInteraction !== undefined &&
+            performance.now() - lastRendererInteraction < 500;
+        return legacyDeckMode || handledByRenderer || isInZoomMode;
+    }
+
     function markRendererInteraction() {
         lastRendererInteraction = performance.now();
+        clearTimeout(clickTimeout);
+        clickTimeout = undefined;
     }
 
     function persistMapView() {
