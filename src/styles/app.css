@@ -44,6 +44,11 @@
     --map-control-foreground: var(--primary);
     --map-control-muted-foreground: #6b7280;
     --map-control-active-foreground: var(--primary);
+
+    /* a leaving element takes off with a slow foot and accelerates away, an arriving one
+       comes in fast and settles once, without a second bounce */
+    --ease-lift: cubic-bezier(0.55, 0, 0.95, 0.4);
+    --ease-land: cubic-bezier(0.16, 1.1, 0.3, 1);
 }
 
 .dark {

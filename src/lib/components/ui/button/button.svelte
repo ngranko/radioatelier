@@ -58,6 +58,14 @@
         ...restProps
     }: ButtonProps = $props();
 
+    const face = 'col-start-1 row-start-1 flex items-center justify-center gap-2';
+    // the face on its way out lifts and accelerates away; the arriving one drops in and settles,
+    // starting late enough for the slot to be clear by then
+    const leaving =
+        'opacity-0 motion-safe:[transition:translate_200ms_var(--ease-lift),opacity_120ms_ease-in]';
+    const arriving =
+        'opacity-100 motion-safe:[transition:translate_200ms_var(--ease-land)_55ms,opacity_170ms_linear_55ms]';
+
     // both faces have to be mounted before the swap for the slide to run, and that wrapper would
     // break the layout of buttons built around their children — so only opt-in buttons get it
     let hasLoadingState = $derived(loading !== undefined);
@@ -74,22 +82,24 @@
 
 {#snippet content()}
     {#if hasLoadingState}
-        <span
-            data-slot="button-faces"
-            data-state={loading ? 'busy' : 'idle'}
-            class="grid overflow-hidden"
-        >
+        <span data-slot="button-faces" class="grid overflow-hidden">
             <!-- the label stays mounted while busy: it holds the button's width and its
                  accessible name, and it has to be there to slide back in -->
             <span
                 data-slot="button-label"
-                class="col-start-1 row-start-1 flex items-center justify-center gap-2"
+                class={cn(
+                    face,
+                    loading ? `-translate-y-[115%] ${leaving}` : `translate-y-0 ${arriving}`,
+                )}
             >
                 {@render children?.()}
             </span>
             <span
                 data-slot="button-spinner"
-                class="col-start-1 row-start-1 flex items-center justify-center"
+                class={cn(
+                    face,
+                    loading ? `translate-y-0 ${arriving}` : `translate-y-[115%] ${leaving}`,
+                )}
                 aria-hidden="true"
             >
                 <Spinner class={cn('size-4', !loading && 'animate-none')} />
@@ -127,53 +137,3 @@
         {@render content()}
     </button>
 {/if}
-
-<style>
-    [data-slot='button-faces'] {
-        --lift: cubic-bezier(0.55, 0, 0.95, 0.4);
-        --land: cubic-bezier(0.16, 1.1, 0.3, 1);
-        /* the leaving face clears the slot before the arriving one starts moving */
-        --gap: 55ms;
-    }
-
-    /* whichever face is leaving lifts and accelerates away */
-    [data-slot='button-spinner'],
-    [data-state='busy'] > [data-slot='button-label'] {
-        transition:
-            transform 200ms var(--lift),
-            opacity 120ms cubic-bezier(0.4, 0, 1, 1);
-    }
-
-    /* whichever face is arriving drops in and settles once */
-    [data-slot='button-label'],
-    [data-state='busy'] > [data-slot='button-spinner'] {
-        transition:
-            transform 200ms var(--land) var(--gap),
-            opacity 170ms linear var(--gap);
-    }
-
-    [data-slot='button-spinner'] {
-        transform: translateY(115%);
-        opacity: 0;
-    }
-
-    [data-state='busy'] > [data-slot='button-label'] {
-        transform: translateY(-115%);
-        opacity: 0;
-    }
-
-    [data-state='busy'] > [data-slot='button-spinner'] {
-        transform: translateY(0);
-        opacity: 1;
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-        /* the state still changes, only the travel is dropped; !important because the
-           direction-aware rules above are more specific */
-        [data-slot='button-label'],
-        [data-slot='button-spinner'] {
-            transition-duration: 1ms !important;
-            transition-delay: 0ms !important;
-        }
-    }
-</style>
