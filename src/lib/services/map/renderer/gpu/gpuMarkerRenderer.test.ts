@@ -19,6 +19,15 @@ function layerLength(setLayers: {mock: {calls: unknown[][]}}, id: string): numbe
     return layers?.find(layer => layer.id === id)?.props.data.length ?? 0;
 }
 
+function spriteId(setLayers: {mock: {calls: unknown[][]}}, target: Marker): string {
+    const layers = setLayers.mock.calls.at(-1)?.[0] as {
+        id: string;
+        props: {data: {marker: Marker}[]; getIcon: (point: {marker: Marker}) => {id: string}};
+    }[];
+    const layer = layers.find(item => item.id === 'gpu-marker')!;
+    return layer.props.getIcon({marker: target}).id;
+}
+
 function overlayHarness() {
     const frames: FrameRequestCallback[] = [];
     const setLayers = vi.fn<DeckOverlayHost['setLayers']>();
@@ -106,6 +115,24 @@ describe('GpuMarkerRenderer', () => {
 
         expect(layerLength(setLayers, 'gpu-marker-fade')).toBe(0);
         expect(markerLifecycle.isIdle).toBe(true);
+        renderer.destroy();
+    });
+
+    it('redraws a marker whose category style changed', () => {
+        const {frames, setLayers, overlay} = overlayHarness();
+        const recoloured = marker();
+        const renderer = new GpuMarkerRenderer(overlay, vi.fn());
+        renderer.ensureCreated(recoloured);
+        flush(frames);
+        const before = spriteId(setLayers, recoloured);
+
+        recoloured.options.color = '#ff0000';
+        recoloured.options.iconKey = 'rocket';
+        renderer.applyState(recoloured);
+        flush(frames);
+
+        expect(spriteId(setLayers, recoloured)).not.toBe(before);
+        expect(layerLength(setLayers, 'gpu-marker-fade')).toBe(1);
         renderer.destroy();
     });
 

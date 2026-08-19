@@ -22,16 +22,17 @@ function makeProvider(zoom = 15) {
 
 function makeRenderer() {
     const removed: Marker[] = [];
+    const applyState = vi.fn();
     const renderer: MarkerRenderer = {
         ensureCreated: () => {},
         syncAll: vi.fn(),
         show: () => {},
         hide: () => {},
         remove: marker => void removed.push(marker),
-        applyState: () => {},
+        applyState,
         destroy: vi.fn(),
     };
-    return {renderer, removed};
+    return {renderer, removed, applyState};
 }
 
 function makeRendererFactory() {
@@ -144,6 +145,23 @@ describe('MarkerManager', () => {
 
         expect(manager.isDeckRenderer).toBe(true);
         expect(created.map(item => item.mode)).toEqual(['deck', 'dom', 'deck']);
+    });
+
+    it('repaints a marker whose category style changed and skips an unchanged one', () => {
+        const {renderer, applyState} = makeRenderer();
+        const manager = new MarkerManager(makeProvider().provider, () => renderer);
+        const marker = manager.addMarker('marker', {lat: 1, lng: 2}, markerOptions) as Marker;
+        applyState.mockClear();
+
+        manager.updateMarkerStyle('marker', {icon: markerOptions.icon, color: '#ff0000'});
+
+        expect(marker.options.color).toBe('#ff0000');
+        expect(applyState).toHaveBeenCalledWith(marker);
+
+        applyState.mockClear();
+        manager.updateMarkerStyle('marker', {icon: markerOptions.icon, color: '#ff0000'});
+
+        expect(applyState).not.toHaveBeenCalled();
     });
 
     it('keeps non-viewport-managed markers visible across a renderer switch', () => {
