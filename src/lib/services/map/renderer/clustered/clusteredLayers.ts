@@ -16,7 +16,7 @@ import {IconLayer, ScatterplotLayer, TextLayer} from '@deck.gl/layers';
 const WHITE: [number, number, number] = [255, 255, 255];
 const CLUSTER_FILL: [number, number, number, number] = [39, 39, 42, 235];
 const CLUSTER_LINE: [number, number, number, number] = [255, 255, 255, 230];
-const REMOVED_ALPHA = 128;
+const OPAQUE = 255;
 
 interface LayerHandlers {
     onMarkerClick(marker: Marker): void;
@@ -52,14 +52,12 @@ function markerLayer(data: MarkerPoint[], handlers: LayerHandlers) {
         data,
         getPosition: point => point.position,
         getIcon: point => markerSpriteFor(point.marker),
-        getColor: point => [...WHITE, markerAlpha(point.marker)],
         getSize: MARKER_SPRITE_SIZE,
         sizeUnits: 'pixels',
         billboard: true,
         pickable: true,
         onClick: (info, event) =>
             handleClusteredPickingClick(info, event, point => handlers.onMarkerClick(point.marker)),
-        transitions: {getColor: SPRITE_FADE_MS},
     });
 }
 
@@ -70,7 +68,7 @@ function fadingMarkerLayer(data: SpriteFade[]) {
         data,
         getPosition: fade => fade.point.position,
         getIcon: fade => fade.sprite,
-        getColor: fade => [...WHITE, fade.fresh ? markerAlpha(fade.point.marker) : 0],
+        getColor: fade => [...WHITE, fade.fresh ? OPAQUE : 0],
         getSize: MARKER_SPRITE_SIZE,
         sizeUnits: 'pixels',
         billboard: true,
@@ -112,8 +110,4 @@ function clusterCountLayer(data: ClusterPoint[]) {
         fontWeight: 700,
         pickable: false,
     });
-}
-
-function markerAlpha(marker: Marker): number {
-    return marker.getState().isRemoved ? REMOVED_ALPHA : 255;
 }
