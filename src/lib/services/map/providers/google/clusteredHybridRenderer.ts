@@ -15,7 +15,6 @@ export class ClusteredHybridRenderer implements MarkerRenderer {
     private dom: DomMarkerRenderer;
     private clustered: ClusteredMarkerRenderer;
     private promoted?: Marker;
-    private focused?: Marker;
     private dragging?: Marker;
     private dragGesture?: SpriteDragGesture;
     private unsubscribeClustering: () => void;
@@ -39,10 +38,7 @@ export class ClusteredHybridRenderer implements MarkerRenderer {
         this.unsubscribeClustering = subscribeMarkerClustering(enabled => {
             this.clustered.setClusteringEnabled(enabled);
         });
-        this.unsubscribeFocus = onFocusedMarkerChange(marker => {
-            this.focused = marker;
-            this.promote(marker);
-        });
+        this.unsubscribeFocus = onFocusedMarkerChange(marker => this.promote(marker));
         this.attachDragGesture(provider as GoogleMapsProvider);
     }
 
@@ -137,9 +133,7 @@ export class ClusteredHybridRenderer implements MarkerRenderer {
 
     /** A held sprite becomes a DOM marker so the existing drag controller can move it. */
     private startDrag(marker: Marker): void {
-        if (this.promoted !== marker) {
-            this.promote(marker, false);
-        }
+        this.promote(marker, false);
         this.dragging = marker;
         this.dom.beginDrag(marker);
     }
@@ -156,8 +150,8 @@ export class ClusteredHybridRenderer implements MarkerRenderer {
         // The hold started on the map surface, so Maps reports a plain click on release; without
         // claiming it as a renderer interaction the map handler would drop a new object there.
         this.onInteraction();
-        if (this.promoted !== this.focused) {
-            this.promote(this.focused);
-        }
+        // The details overlay blocks map input until closed, so a sprite drag never shares
+        // promotion with a focused marker; handing it back to GPU is always correct.
+        this.promote(undefined);
     }
 }
