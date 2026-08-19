@@ -30,6 +30,7 @@ const SPRITE_POP_OUT = new SpritePopExtension({reverse: true, durationMs: SPRITE
 interface LayerHandlers {
     onMarkerClick(marker: Marker): void;
     onClusterClick(cluster: ClusterPoint): void;
+    requestFrame(): void;
 }
 
 export interface SpriteAnimations {
@@ -50,7 +51,7 @@ export function buildClusteredLayers(
 
     return [
         buildMarkerLayer(markers, latestPop, handlers),
-        buildExitingMarkerLayer(animations.exits),
+        buildExitingMarkerLayer(animations.exits, handlers),
         buildFadingMarkerLayer(animations.fades),
         buildClusterDiskLayer(clusters, handlers),
         buildClusterCountLayer(clusters),
@@ -71,6 +72,7 @@ function buildMarkerLayer(data: MarkerPoint[], latestPop: number, handlers: Laye
         getSize: MARKER_SPRITE_SIZE,
         getPopTime: point => readPopTime(point.marker),
         latestPop,
+        requestFrame: handlers.requestFrame,
         extensions: [SPRITE_POP_IN],
         sizeUnits: 'pixels',
         billboard: true,
@@ -81,7 +83,7 @@ function buildMarkerLayer(data: MarkerPoint[], latestPop: number, handlers: Laye
 }
 
 /** A removed marker shrinks away here, drawn from the copy its tracker kept. */
-function buildExitingMarkerLayer(data: SpriteExit[]) {
+function buildExitingMarkerLayer(data: SpriteExit[], handlers: LayerHandlers) {
     return new IconLayer<SpriteExit, SpritePopProps<SpriteExit>>({
         id: 'clustered-marker-exit',
         data,
@@ -93,6 +95,7 @@ function buildExitingMarkerLayer(data: SpriteExit[]) {
         pickable: false,
         getPopTime: exit => exit.leftAt,
         latestPop: findLatestExitTime(data),
+        requestFrame: handlers.requestFrame,
         extensions: [SPRITE_POP_OUT],
     });
 }

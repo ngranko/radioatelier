@@ -40,6 +40,8 @@ export interface SpritePopProps<DataT = unknown> {
     getPopTime?: Accessor<DataT, number>;
     /** The newest of those, so the layer knows when it can stop animating. */
     latestPop?: number;
+    /** Asks the host for the next frame; deck's own request costs an extra one. */
+    requestFrame?: (() => void) | null;
 }
 
 interface SpritePopOptions {
@@ -60,6 +62,7 @@ export class SpritePopExtension extends LayerExtension<SpritePopOptions> {
     public static defaultProps = {
         getPopTime: {type: 'accessor', value: 0},
         latestPop: {type: 'number', value: 0},
+        requestFrame: {type: 'function', value: null, optional: true, compare: false},
     };
 
     public getShaders(this: Layer, extension: SpritePopExtension) {
@@ -90,6 +93,7 @@ export class SpritePopExtension extends LayerExtension<SpritePopOptions> {
         // Nothing else drives frames while the map sits still, so the layer asks for its own.
         if (now - (this.props.latestPop ?? 0) < duration) {
             this.setNeedsRedraw();
+            this.props.requestFrame?.();
         }
     }
 
