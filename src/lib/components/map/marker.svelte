@@ -76,6 +76,15 @@
         mapState.markerManager.updateMarkerState(markerId, {isVisited, isRemoved});
     });
 
+    // Re-categorising a point, or restyling its category, only changes these props on a marker that
+    // was already created, so the map needs the new look pushed to it.
+    $effect(() => {
+        if (!marker || !markerId || !mapState.markerManager) {
+            return;
+        }
+        mapState.markerManager.updateMarkerStyle(markerId, {icon, iconKey, iconClassName, color});
+    });
+
     $effect(() => {
         if (!marker || !activeTargetId) {
             return;

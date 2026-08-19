@@ -1,6 +1,11 @@
 import config from '$lib/config';
 import type {LatLngLiteral, MapProvider} from '$lib/interfaces/map';
-import type {MarkerId, MarkerOptions, MarkerStateUpdate} from '$lib/interfaces/marker';
+import type {
+    MarkerId,
+    MarkerOptions,
+    MarkerStateUpdate,
+    MarkerStyleUpdate,
+} from '$lib/interfaces/marker';
 import {Marker} from '$lib/services/map/marker';
 import {MarkerRepository} from '$lib/services/map/markerRepository';
 import type {MarkerRenderer} from '$lib/services/map/renderer/markerRenderer';
@@ -194,6 +199,15 @@ export class MarkerManager {
         }
 
         marker.setState(update);
+        this.renderer.applyState(marker);
+    }
+
+    public updateMarkerStyle(id: MarkerId, style: MarkerStyleUpdate) {
+        const marker = this.repo.get(id);
+        if (!marker?.setStyle(style)) {
+            return;
+        }
+
         this.renderer.applyState(marker);
     }
 

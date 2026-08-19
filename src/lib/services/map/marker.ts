@@ -1,5 +1,5 @@
 import type {LatLngLiteral, MarkerHandle} from '$lib/interfaces/map';
-import type {MarkerOptions} from '$lib/interfaces/marker';
+import type {MarkerOptions, MarkerStyleUpdate} from '$lib/interfaces/marker';
 
 export class Marker {
     private handle?: MarkerHandle;
@@ -69,6 +69,22 @@ export class Marker {
         if (update.isRemoved !== undefined) {
             this.isRemoved = update.isRemoved;
         }
+    }
+
+    /** Reports whether anything moved, so an unchanged category re-render costs nothing. */
+    public setStyle(style: MarkerStyleUpdate): boolean {
+        const {icon, iconKey, iconClassName, color} = this.options;
+        if (
+            icon === style.icon &&
+            iconKey === style.iconKey &&
+            iconClassName === style.iconClassName &&
+            color === style.color
+        ) {
+            return false;
+        }
+
+        Object.assign(this.options, style);
+        return true;
     }
 
     public isCreated(): boolean {
