@@ -29,7 +29,7 @@ describe('buildClusteredLayers', () => {
     it('opens a marker from a Google Maps overlay click event', () => {
         const onMarkerClick = vi.fn();
         const point = markerPoint();
-        const layers = buildClusteredLayers([point], {
+        const layers = buildClusteredLayers([point], [], {
             onMarkerClick,
             onClusterClick: vi.fn(),
         });
@@ -44,7 +44,7 @@ describe('buildClusteredLayers', () => {
     it('expands a cluster from a Google Maps overlay click event', () => {
         const onClusterClick = vi.fn();
         const point = clusterPoint();
-        const layers = buildClusteredLayers([point], {
+        const layers = buildClusteredLayers([point], [], {
             onMarkerClick: vi.fn(),
             onClusterClick,
         });

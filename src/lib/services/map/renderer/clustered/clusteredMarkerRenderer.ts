@@ -8,6 +8,11 @@ import {
     type MarkerPoint,
     MarkerClusterIndex,
 } from '$lib/services/map/renderer/clustered/markerClusterIndex';
+import {
+    SPRITE_FADE_MS,
+    type SpriteFade,
+    SpriteFadeTracker,
+} from '$lib/services/map/renderer/clustered/spriteFades';
 import type {MarkerRenderer} from '$lib/services/map/renderer/markerRenderer';
 
 const RENDER_DEBOUNCE_MS = 16;
@@ -15,12 +20,14 @@ const RENDER_DEBOUNCE_MS = 16;
 export class ClusteredMarkerRenderer implements MarkerRenderer {
     private markers = new Set<Marker>();
     private clusterIndex = new MarkerClusterIndex();
+    private fadeTracker = new SpriteFadeTracker();
     private excludedMarker?: Marker;
     private indexDirty = true;
     private scheduled = false;
     private clusteringEnabled: boolean;
     private renderTimeout?: ReturnType<typeof setTimeout>;
     private renderFrame?: number;
+    private fadeTimeout?: ReturnType<typeof setTimeout>;
 
     public constructor(
         private provider: MapProvider,
@@ -90,6 +97,9 @@ export class ClusteredMarkerRenderer implements MarkerRenderer {
         if (this.renderFrame !== undefined) {
             cancelAnimationFrame(this.renderFrame);
         }
+        if (this.fadeTimeout !== undefined) {
+            clearTimeout(this.fadeTimeout);
+        }
         this.cancelScheduled();
         this.overlay.detach();
     }
@@ -116,12 +126,29 @@ export class ClusteredMarkerRenderer implements MarkerRenderer {
 
     private render(): void {
         const points = this.clusteringEnabled ? this.clusteredPoints() : this.individualPoints();
+        const fades = this.fadeTracker.track(points);
         this.overlay.setLayers(
-            buildClusteredLayers(points, {
+            buildClusteredLayers(points, fades, {
                 onMarkerClick: marker => this.handleMarkerClick(marker),
                 onClusterClick: cluster => this.handleClusterClick(cluster),
             }),
         );
+        this.keepFadesRunning(fades);
+    }
+
+    /** A fade needs a second render to ease from and a last one to drop it once it has run out. */
+    private keepFadesRunning(fades: SpriteFade[]): void {
+        if (fades.some(fade => fade.fresh)) {
+            this.scheduleRender();
+            return;
+        }
+        if (fades.length === 0 || this.fadeTimeout !== undefined) {
+            return;
+        }
+        this.fadeTimeout = setTimeout(() => {
+            this.fadeTimeout = undefined;
+            this.scheduleRender();
+        }, SPRITE_FADE_MS);
     }
 
     private clusteredPoints() {

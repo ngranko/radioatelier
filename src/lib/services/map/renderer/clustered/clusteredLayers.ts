@@ -1,12 +1,15 @@
 import type {Marker} from '$lib/services/map/marker';
-import type {MarkerIconKey} from '$lib/services/map/markerStyling.data';
 import {
     type ClusterPoint,
     type ClusteredPoint,
     type MarkerPoint,
 } from '$lib/services/map/renderer/clustered/markerClusterIndex';
-import {MARKER_SPRITE_SIZE, markerSprite} from '$lib/services/map/renderer/clustered/markerSprites';
+import {
+    MARKER_SPRITE_SIZE,
+    markerSpriteFor,
+} from '$lib/services/map/renderer/clustered/markerSprites';
 import {handleClusteredPickingClick} from '$lib/services/map/renderer/clustered/pickingClick';
+import {SPRITE_FADE_MS, type SpriteFade} from '$lib/services/map/renderer/clustered/spriteFades';
 import type {Layer} from '@deck.gl/core';
 import {IconLayer, ScatterplotLayer, TextLayer} from '@deck.gl/layers';
 
@@ -20,7 +23,11 @@ interface LayerHandlers {
     onClusterClick(cluster: ClusterPoint): void;
 }
 
-export function buildClusteredLayers(points: ClusteredPoint[], handlers: LayerHandlers): Layer[] {
+export function buildClusteredLayers(
+    points: ClusteredPoint[],
+    fades: SpriteFade[],
+    handlers: LayerHandlers,
+): Layer[] {
     const markers = points
         .filter((point): point is MarkerPoint => point.kind === 'marker')
         .sort(northToSouth);
@@ -28,6 +35,7 @@ export function buildClusteredLayers(points: ClusteredPoint[], handlers: LayerHa
 
     return [
         markerLayer(markers, handlers),
+        fadingMarkerLayer(fades),
         clusterDiskLayer(clusters, handlers),
         clusterCountLayer(clusters),
     ];
@@ -43,15 +51,31 @@ function markerLayer(data: MarkerPoint[], handlers: LayerHandlers) {
         id: 'clustered-marker',
         data,
         getPosition: point => point.position,
-        getIcon: point => spriteFor(point.marker),
-        getColor: point => [...WHITE, point.marker.getState().isRemoved ? REMOVED_ALPHA : 255],
+        getIcon: point => markerSpriteFor(point.marker),
+        getColor: point => [...WHITE, markerAlpha(point.marker)],
         getSize: MARKER_SPRITE_SIZE,
         sizeUnits: 'pixels',
         billboard: true,
         pickable: true,
         onClick: (info, event) =>
             handleClusteredPickingClick(info, event, point => handlers.onMarkerClick(point.marker)),
-        transitions: {getColor: 160},
+        transitions: {getColor: SPRITE_FADE_MS},
+    });
+}
+
+/** Drawn above the live sprites: the outgoing sprite eases to nothing, revealing the new one under it. */
+function fadingMarkerLayer(data: SpriteFade[]) {
+    return new IconLayer<SpriteFade>({
+        id: 'clustered-marker-fade',
+        data,
+        getPosition: fade => fade.point.position,
+        getIcon: fade => fade.sprite,
+        getColor: fade => [...WHITE, fade.fresh ? markerAlpha(fade.point.marker) : 0],
+        getSize: MARKER_SPRITE_SIZE,
+        sizeUnits: 'pixels',
+        billboard: true,
+        pickable: false,
+        transitions: {getColor: SPRITE_FADE_MS},
     });
 }
 
@@ -90,7 +114,6 @@ function clusterCountLayer(data: ClusterPoint[]) {
     });
 }
 
-function spriteFor(marker: Marker) {
-    const key: MarkerIconKey = marker.options.iconKey ?? 'landmark';
-    return markerSprite(marker.options.color, key, marker.getState().isVisited);
+function markerAlpha(marker: Marker): number {
+    return marker.getState().isRemoved ? REMOVED_ALPHA : 255;
 }
