@@ -5,11 +5,16 @@ import {
     subscribeMarkerClustering,
 } from '$lib/services/map/markerClustering';
 import {onFocusedMarkerChange} from '$lib/services/map/markerFocus';
+import {markerLifecycle} from '$lib/services/map/markerLifecycle';
 import type {GoogleMapsProvider} from '$lib/services/map/providers/google/provider';
 import {ClusteredMarkerRenderer} from '$lib/services/map/renderer/clustered/clusteredMarkerRenderer';
 import {SpriteDragGesture} from '$lib/services/map/renderer/clustered/spriteDragGesture';
 import {DomMarkerRenderer} from '$lib/services/map/renderer/domMarkerRenderer';
 import type {MarkerRenderer} from '$lib/services/map/renderer/markerRenderer';
+
+// Long enough for the focus highlight to scale back down (duration-100) before the sprite returns:
+// two identical markers on screen at once would composite their translucent halos into a dark ring.
+const HIGHLIGHT_EXIT_MS = 140;
 
 export class ClusteredHybridRenderer implements MarkerRenderer {
     private dom: DomMarkerRenderer;
@@ -17,6 +22,7 @@ export class ClusteredHybridRenderer implements MarkerRenderer {
     private promoted?: Marker;
     private dragging?: Marker;
     private dragGesture?: SpriteDragGesture;
+    private retireTimeout?: ReturnType<typeof setTimeout>;
     private unsubscribeClustering: () => void;
     private unsubscribeFocus: () => void;
 
@@ -88,6 +94,7 @@ export class ClusteredHybridRenderer implements MarkerRenderer {
     }
 
     public destroy(): void {
+        clearTimeout(this.retireTimeout);
         this.detachDragGesture();
         this.unsubscribeClustering();
         this.unsubscribeFocus();
@@ -99,24 +106,39 @@ export class ClusteredHybridRenderer implements MarkerRenderer {
         return marker.usesDomRenderer() || marker === this.promoted ? this.dom : this.clustered;
     }
 
-    private promote(marker: Marker | undefined, animatePop = true): void {
-        if (this.promoted && this.promoted !== marker) {
-            this.dom.hide(this.promoted);
-        }
-
+    private promote(marker: Marker | undefined): void {
+        const previous = this.promoted;
         this.promoted = marker && !marker.usesDomRenderer() ? marker : undefined;
-        this.clustered.setExcludedMarker(this.promoted);
-        if (!this.promoted) {
-            return;
+        if (this.promoted) {
+            this.clustered.setExcludedMarker(this.promoted);
+            this.dom.ensureCreated(this.promoted);
+            // Deliberately not the pop animation: the marker is already on screen as a sprite, and
+            // popping in from zero also pins an inline scale that the highlight cannot transition.
+            this.dom.reveal(this.promoted);
         }
+        if (previous && previous !== this.promoted) {
+            this.retire(previous, this.promoted ? 0 : HIGHLIGHT_EXIT_MS);
+        }
+    }
 
-        this.dom.ensureCreated(this.promoted);
-        if (animatePop) {
-            this.dom.show(this.promoted);
-            return;
-        }
-        // Mid-gesture the pop animation would blank the marker it is handing over.
-        this.dom.reveal(this.promoted);
+    /** Hands a marker back to the GPU layer: sprite first, DOM twin only once that render landed. */
+    private retire(marker: Marker, delayMs: number): void {
+        clearTimeout(this.retireTimeout);
+        this.retireTimeout = setTimeout(() => {
+            if (this.promoted === marker) {
+                return;
+            }
+            this.clustered.setExcludedMarker(this.promoted);
+            // Idle means the layers were handed to deck, not yet painted, hence the extra frame:
+            // overlapping for one frame reads better than a frame with no marker at all.
+            markerLifecycle.onNextIdle(() =>
+                requestAnimationFrame(() => {
+                    if (this.promoted !== marker) {
+                        this.dom.hide(marker);
+                    }
+                }),
+            );
+        }, delayMs);
     }
 
     private attachDragGesture(provider: GoogleMapsProvider): void {
@@ -138,7 +160,9 @@ export class ClusteredHybridRenderer implements MarkerRenderer {
 
     /** A held sprite becomes a DOM marker so the existing drag controller can move it. */
     private startDrag(marker: Marker): void {
-        this.promote(marker, false);
+        if (this.promoted !== marker) {
+            this.promote(marker);
+        }
         this.dragging = marker;
         this.dom.beginDrag(marker);
     }

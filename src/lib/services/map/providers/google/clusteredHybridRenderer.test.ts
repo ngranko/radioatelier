@@ -1,8 +1,20 @@
 import type {Marker} from '$lib/services/map/marker';
-import {describe, expect, it, vi} from 'vitest';
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {ClusteredHybridRenderer} from './clusteredHybridRenderer';
 
 describe('ClusteredHybridRenderer', () => {
+    beforeEach(() => {
+        vi.useFakeTimers();
+        vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+            callback(0);
+            return 1;
+        });
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+        vi.unstubAllGlobals();
+    });
     it('does not hide the DOM marker while it is promoted', () => {
         const marker = {usesDomRenderer: () => false} as Marker;
         const domHide = vi.fn();
@@ -50,6 +62,7 @@ describe('ClusteredHybridRenderer', () => {
         expect(dom.beginDrag).toHaveBeenCalledWith(marker);
 
         gestures.endDrag();
+        vi.runAllTimers();
 
         expect(dom.endDrag).toHaveBeenCalledWith(marker);
         expect(dom.hide).toHaveBeenCalledWith(marker);
@@ -68,5 +81,29 @@ describe('ClusteredHybridRenderer', () => {
         (renderer as unknown as {endDrag(): void}).endDrag();
 
         expect(onInteraction).not.toHaveBeenCalled();
+    });
+
+    it('keeps the sprite hidden until the highlight has scaled back down', () => {
+        const marker = {usesDomRenderer: () => false} as Marker;
+        const dom = {ensureCreated: vi.fn(), reveal: vi.fn(), hide: vi.fn()};
+        const clustered = {setExcludedMarker: vi.fn()};
+        const renderer = Object.create(
+            ClusteredHybridRenderer.prototype,
+        ) as ClusteredHybridRenderer;
+        Object.assign(renderer, {dom, clustered});
+        const focus = renderer as unknown as {promote(m: Marker | undefined): void};
+
+        focus.promote(marker);
+        expect(dom.reveal).toHaveBeenCalledWith(marker);
+
+        focus.promote(undefined);
+        // Both markers would be drawn at once, doubling the halo, if the sprite came back now.
+        expect(clustered.setExcludedMarker).toHaveBeenLastCalledWith(marker);
+        expect(dom.hide).not.toHaveBeenCalled();
+
+        vi.runAllTimers();
+
+        expect(clustered.setExcludedMarker).toHaveBeenLastCalledWith(undefined);
+        expect(dom.hide).toHaveBeenCalledWith(marker);
     });
 });
