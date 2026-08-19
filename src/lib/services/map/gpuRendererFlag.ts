@@ -1,7 +1,7 @@
 import posthog from 'posthog-js';
-import { waitForIdentity } from '../posthogIdentity';
+import {waitForIdentity} from '../posthogIdentity';
 
-export const CLUSTERED_RENDERER_FLAG = 'map-gpu-clustered-renderer';
+export const GPU_RENDERER_FLAG = 'map-gpu-clustered-renderer';
 
 const FLAG_TIMEOUT_MS = 1500;
 
@@ -10,7 +10,7 @@ interface FeatureFlagClient {
     isFeatureEnabled(key: string): boolean | undefined;
 }
 
-export async function resolveClusteredRendererFlag(
+export async function resolveGpuRendererFlag(
     client: FeatureFlagClient = posthog,
     timeoutMs = FLAG_TIMEOUT_MS,
 ): Promise<boolean> {
@@ -19,13 +19,13 @@ export async function resolveClusteredRendererFlag(
     await waitForIdentity();
 
     try {
-        current = client.isFeatureEnabled(CLUSTERED_RENDERER_FLAG);
+        current = client.isFeatureEnabled(GPU_RENDERER_FLAG);
     } catch {
         return Promise.resolve(false);
     }
-    
+
     if (current !== undefined) {
-        return Promise.resolve(isClusteredVariant(current));
+        return Promise.resolve(isEnabledVariant(current));
     }
 
     return new Promise(resolve => {
@@ -46,7 +46,7 @@ export async function resolveClusteredRendererFlag(
         try {
             unsubscribe = client.onFeatureFlags(() => {
                 try {
-                    finish(isClusteredVariant(client.isFeatureEnabled(CLUSTERED_RENDERER_FLAG)));
+                    finish(isEnabledVariant(client.isFeatureEnabled(GPU_RENDERER_FLAG)));
                 } catch {
                     finish(false);
                 }
@@ -60,6 +60,7 @@ export async function resolveClusteredRendererFlag(
     });
 }
 
-function isClusteredVariant(value: boolean | string | undefined): boolean {
+// 'clustered' is the variant name configured in PostHog; the renderer itself no longer clusters.
+function isEnabledVariant(value: boolean | string | undefined): boolean {
     return value === true || value === 'clustered';
 }

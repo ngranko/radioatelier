@@ -1,35 +1,25 @@
 import type {Marker} from '$lib/services/map/marker';
-import {
-    type ClusterPoint,
-    type ClusteredPoint,
-    type MarkerPoint,
-} from '$lib/services/map/renderer/clustered/markerClusterIndex';
-import {
-    MARKER_SPRITE_SIZE,
-    markerSpriteFor,
-} from '$lib/services/map/renderer/clustered/markerSprites';
-import {handleClusteredPickingClick} from '$lib/services/map/renderer/clustered/pickingClick';
-import {findLatestExitTime, type SpriteExit} from '$lib/services/map/renderer/clustered/spriteExits';
-import {SPRITE_FADE_MS, type SpriteFade} from '$lib/services/map/renderer/clustered/spriteFades';
+import type {MarkerPoint} from '$lib/services/map/renderer/gpu/markerPoints';
+import {MARKER_SPRITE_SIZE, markerSpriteFor} from '$lib/services/map/renderer/gpu/markerSprites';
+import {handleSpritePickingClick} from '$lib/services/map/renderer/gpu/pickingClick';
+import {findLatestExitTime, type SpriteExit} from '$lib/services/map/renderer/gpu/spriteExits';
+import {SPRITE_FADE_MS, type SpriteFade} from '$lib/services/map/renderer/gpu/spriteFades';
 import {
     SPRITE_POP_OUT_MS,
     SpritePopExtension,
     type SpritePopProps,
-} from '$lib/services/map/renderer/clustered/spritePopExtension';
-import {findLatestSpawn, readSpawnTime} from '$lib/services/map/renderer/clustered/spriteSpawns';
+} from '$lib/services/map/renderer/gpu/spritePopExtension';
+import {findLatestSpawn, readSpawnTime} from '$lib/services/map/renderer/gpu/spriteSpawns';
 import type {Layer} from '@deck.gl/core';
-import {IconLayer, ScatterplotLayer, TextLayer} from '@deck.gl/layers';
+import {IconLayer} from '@deck.gl/layers';
 
 const WHITE: [number, number, number] = [255, 255, 255];
-const CLUSTER_FILL: [number, number, number, number] = [39, 39, 42, 235];
-const CLUSTER_LINE: [number, number, number, number] = [255, 255, 255, 230];
 const OPAQUE = 255;
 const SPRITE_POP_IN = new SpritePopExtension();
 const SPRITE_POP_OUT = new SpritePopExtension({reverse: true, durationMs: SPRITE_POP_OUT_MS});
 
 interface LayerHandlers {
     onMarkerClick(marker: Marker): void;
-    onClusterClick(cluster: ClusterPoint): void;
     requestFrame(): void;
 }
 
@@ -38,23 +28,18 @@ export interface SpriteAnimations {
     exits: SpriteExit[];
 }
 
-export function buildClusteredLayers(
-    points: ClusteredPoint[],
+export function buildMarkerLayers(
+    points: MarkerPoint[],
     animations: SpriteAnimations,
     handlers: LayerHandlers,
 ): Layer[] {
-    const markers = points
-        .filter((point): point is MarkerPoint => point.kind === 'marker')
-        .sort(compareNorthToSouth);
-    const clusters = points.filter((point): point is ClusterPoint => point.kind === 'cluster');
+    const markers = [...points].sort(compareNorthToSouth);
     const latestSpawn = findLatestSpawn(markers);
 
     return [
         buildMarkerLayer(markers, latestSpawn, handlers),
         buildExitingMarkerLayer(animations.exits, handlers),
         buildFadingMarkerLayer(animations.fades),
-        buildClusterDiskLayer(clusters, handlers),
-        buildClusterCountLayer(clusters),
     ];
 }
 
@@ -65,7 +50,7 @@ function compareNorthToSouth(a: MarkerPoint, b: MarkerPoint): number {
 
 function buildMarkerLayer(data: MarkerPoint[], latestSpawn: number, handlers: LayerHandlers) {
     return new IconLayer<MarkerPoint, SpritePopProps<MarkerPoint>>({
-        id: 'clustered-marker',
+        id: 'gpu-marker',
         data,
         getPosition: point => point.position,
         getIcon: point => markerSpriteFor(point.marker),
@@ -78,14 +63,14 @@ function buildMarkerLayer(data: MarkerPoint[], latestSpawn: number, handlers: La
         billboard: true,
         pickable: true,
         onClick: (info, event) =>
-            handleClusteredPickingClick(info, event, point => handlers.onMarkerClick(point.marker)),
+            handleSpritePickingClick(info, event, point => handlers.onMarkerClick(point.marker)),
     });
 }
 
 /** A removed marker shrinks away here, drawn from the copy its tracker kept. */
 function buildExitingMarkerLayer(data: SpriteExit[], handlers: LayerHandlers) {
     return new IconLayer<SpriteExit, SpritePopProps<SpriteExit>>({
-        id: 'clustered-marker-exit',
+        id: 'gpu-marker-exit',
         data,
         getPosition: exit => exit.position,
         getIcon: exit => exit.sprite,
@@ -103,7 +88,7 @@ function buildExitingMarkerLayer(data: SpriteExit[], handlers: LayerHandlers) {
 /** Drawn above the live sprites: the outgoing sprite eases to nothing, revealing the new one under it. */
 function buildFadingMarkerLayer(data: SpriteFade[]) {
     return new IconLayer<SpriteFade>({
-        id: 'clustered-marker-fade',
+        id: 'gpu-marker-fade',
         data,
         getPosition: fade => fade.point.position,
         getIcon: fade => fade.sprite,
@@ -113,40 +98,5 @@ function buildFadingMarkerLayer(data: SpriteFade[]) {
         billboard: true,
         pickable: false,
         transitions: {getColor: SPRITE_FADE_MS},
-    });
-}
-
-function buildClusterDiskLayer(data: ClusterPoint[], handlers: LayerHandlers) {
-    return new ScatterplotLayer<ClusterPoint>({
-        id: 'marker-clusters',
-        data,
-        getPosition: point => point.position,
-        getFillColor: CLUSTER_FILL,
-        getLineColor: CLUSTER_LINE,
-        getRadius: point => 16 + Math.min(10, Math.log2(point.markerCount) * 1.8),
-        radiusUnits: 'pixels',
-        getLineWidth: 2,
-        lineWidthUnits: 'pixels',
-        filled: true,
-        stroked: true,
-        pickable: true,
-        onClick: (info, event) =>
-            handleClusteredPickingClick(info, event, cluster => handlers.onClusterClick(cluster)),
-    });
-}
-
-function buildClusterCountLayer(data: ClusterPoint[]) {
-    return new TextLayer<ClusterPoint>({
-        id: 'marker-cluster-counts',
-        data,
-        getPosition: point => point.position,
-        getText: point => point.label,
-        getColor: WHITE,
-        getSize: 12,
-        sizeUnits: 'pixels',
-        getTextAnchor: 'middle',
-        getAlignmentBaseline: 'center',
-        fontWeight: 700,
-        pickable: false,
     });
 }

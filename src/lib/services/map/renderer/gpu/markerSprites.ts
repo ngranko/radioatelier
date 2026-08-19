@@ -1,7 +1,7 @@
 import {cssColorToRgb} from '$lib/services/colorConverter';
 import type {Marker} from '$lib/services/map/marker';
 import type {MarkerIconKey} from '$lib/services/map/markerStyling.data';
-import {GLYPH_VIEWBOX_SIZE, MARKER_GLYPHS} from '$lib/services/map/renderer/clustered/markerIcons';
+import {GLYPH_VIEWBOX_SIZE, MARKER_GLYPHS} from '$lib/services/map/renderer/gpu/markerIcons';
 
 // Every measure below mirrors the DOM marker in renderer/dom/factory.ts: a 24px disk (w-6 h-6)
 // wearing box-shadow rings, so a promoted DOM marker is indistinguishable from its sprite.

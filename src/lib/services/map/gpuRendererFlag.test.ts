@@ -1,15 +1,15 @@
 import {describe, expect, it, vi} from 'vitest';
-import {CLUSTERED_RENDERER_FLAG, resolveClusteredRendererFlag} from './clusteredRendererFlag';
+import {GPU_RENDERER_FLAG, resolveGpuRendererFlag} from './gpuRendererFlag';
 
-describe('resolveClusteredRendererFlag', () => {
-    it.each([true, 'clustered'])('enables the clustered renderer for %s', async value => {
+describe('resolveGpuRendererFlag', () => {
+    it.each([true, 'clustered'])('enables the GPU renderer for %s', async value => {
         const client = {
             getFeatureFlag: vi.fn(() => value),
             onFeatureFlags: vi.fn(),
         };
 
-        await expect(resolveClusteredRendererFlag(client)).resolves.toBe(true);
-        expect(client.getFeatureFlag).toHaveBeenCalledWith(CLUSTERED_RENDERER_FLAG);
+        await expect(resolveGpuRendererFlag(client)).resolves.toBe(true);
+        expect(client.getFeatureFlag).toHaveBeenCalledWith(GPU_RENDERER_FLAG);
         expect(client.onFeatureFlags).not.toHaveBeenCalled();
     });
 
@@ -25,7 +25,7 @@ describe('resolveClusteredRendererFlag', () => {
             }),
         };
 
-        await expect(resolveClusteredRendererFlag(client)).resolves.toBe(true);
+        await expect(resolveGpuRendererFlag(client)).resolves.toBe(true);
         expect(unsubscribe).toHaveBeenCalledOnce();
     });
 
@@ -37,7 +37,7 @@ describe('resolveClusteredRendererFlag', () => {
             onFeatureFlags: vi.fn(),
         };
 
-        await expect(resolveClusteredRendererFlag(client)).resolves.toBe(false);
+        await expect(resolveGpuRendererFlag(client)).resolves.toBe(false);
         expect(client.onFeatureFlags).not.toHaveBeenCalled();
     });
 
@@ -49,7 +49,7 @@ describe('resolveClusteredRendererFlag', () => {
             }),
         };
 
-        await expect(resolveClusteredRendererFlag(client)).resolves.toBe(false);
+        await expect(resolveGpuRendererFlag(client)).resolves.toBe(false);
     });
 
     it('falls back when the subscribed flag read throws', async () => {
@@ -67,7 +67,7 @@ describe('resolveClusteredRendererFlag', () => {
             }),
         };
 
-        await expect(resolveClusteredRendererFlag(client)).resolves.toBe(false);
+        await expect(resolveGpuRendererFlag(client)).resolves.toBe(false);
     });
 
     it('falls back to the legacy renderer when loading times out', async () => {
@@ -77,7 +77,7 @@ describe('resolveClusteredRendererFlag', () => {
             onFeatureFlags: vi.fn(() => vi.fn()),
         };
 
-        const result = resolveClusteredRendererFlag(client, 10);
+        const result = resolveGpuRendererFlag(client, 10);
         await vi.advanceTimersByTimeAsync(10);
 
         await expect(result).resolves.toBe(false);

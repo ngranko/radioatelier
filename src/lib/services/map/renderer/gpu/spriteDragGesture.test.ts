@@ -41,7 +41,7 @@ function harness(picked: unknown) {
 }
 
 function markerPoint(isDraggable: boolean) {
-    return {kind: 'marker', marker: {options: {isDraggable}} as Marker};
+    return {marker: {options: {isDraggable}} as Marker};
 }
 
 describe('SpriteDragGesture', () => {
@@ -98,15 +98,12 @@ describe('SpriteDragGesture', () => {
         expect(onHold).not.toHaveBeenCalled();
     });
 
-    it('ignores markers that cannot be moved and clusters', () => {
+    it('ignores markers that cannot be moved', () => {
         const notOwned = harness(markerPoint(false));
         notOwned.press();
-        const cluster = harness({kind: 'cluster'});
-        cluster.press();
 
         vi.advanceTimersByTime(300);
 
         expect(notOwned.onHold).not.toHaveBeenCalled();
-        expect(cluster.onHold).not.toHaveBeenCalled();
     });
 });
