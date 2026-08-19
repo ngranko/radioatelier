@@ -2,14 +2,22 @@ import {cssColorToRgb} from '$lib/services/colorConverter';
 import type {MarkerIconKey} from '$lib/services/map/markerStyling.data';
 import {GLYPH_VIEWBOX_SIZE, MARKER_GLYPHS} from '$lib/services/map/renderer/clustered/markerIcons';
 
-export const MARKER_SPRITE_SIZE = 30;
+// Every measure below mirrors the DOM marker in renderer/dom/factory.ts: a 24px disk (w-6 h-6)
+// wearing box-shadow rings, so a promoted DOM marker is indistinguishable from its sprite.
+export const MARKER_SPRITE_SIZE = 40;
 
 const DISK_RADIUS = 12;
-const RING_WIDTH = 3;
+const RING_RADIUS = 15;
+const HALO_RADIUS = 17;
+const VISITED_EDGE_RADIUS = 13;
+const VISITED_EDGE_OPACITY = 0.3;
 const GLYPH_SIZE = 14;
 const HALO_OPACITY = 0.4;
 const VISITED_RING = '#39ff14';
 const PLAIN_RING = '#ffffff';
+const SHADOW_OFFSET = 2;
+const SHADOW_DEVIATION = 2;
+const SHADOW_OPACITY = 0.2;
 // Sprites are rasterised at twice their on-screen size so the atlas stays sharp on retina displays.
 const RASTER_SCALE = 2;
 
@@ -59,11 +67,27 @@ function spriteSvg(color: string, iconKey: MarkerIconKey, isVisited: boolean): s
 
     return [
         `<svg xmlns="http://www.w3.org/2000/svg" width="${MARKER_SPRITE_SIZE * RASTER_SCALE}" height="${MARKER_SPRITE_SIZE * RASTER_SCALE}" viewBox="0 0 ${MARKER_SPRITE_SIZE} ${MARKER_SPRITE_SIZE}">`,
-        `<circle cx="${center}" cy="${center}" r="${center}" fill="${fill}" fill-opacity="${HALO_OPACITY}"/>`,
-        `<circle cx="${center}" cy="${center}" r="${DISK_RADIUS}" fill="${fill}"/>`,
-        `<circle cx="${center}" cy="${center}" r="${DISK_RADIUS - RING_WIDTH / 2}" fill="none" stroke="${isVisited ? VISITED_RING : PLAIN_RING}" stroke-width="${RING_WIDTH}"/>`,
+        shadowSvg(center),
+        circle(center, HALO_RADIUS, fill, HALO_OPACITY),
+        circle(center, RING_RADIUS, isVisited ? VISITED_RING : PLAIN_RING),
+        isVisited ? circle(center, VISITED_EDGE_RADIUS, '#000000', VISITED_EDGE_OPACITY) : '',
+        circle(center, DISK_RADIUS, fill),
         `<g transform="translate(${glyphOffset} ${glyphOffset}) scale(${glyphScale})">${MARKER_GLYPHS[iconKey]}</g>`,
         '</svg>',
+    ].join('');
+}
+
+function circle(center: number, radius: number, fill: string, opacity = 1): string {
+    return `<circle cx="${center}" cy="${center}" r="${radius}" fill="${fill}" fill-opacity="${opacity}"/>`;
+}
+
+// The DOM marker's `0 2px 4px rgba(0,0,0,0.2)` shadow: a CSS blur radius is twice the deviation.
+function shadowSvg(center: number): string {
+    return [
+        `<filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">`,
+        `<feGaussianBlur stdDeviation="${SHADOW_DEVIATION}"/></filter>`,
+        `<circle cx="${center}" cy="${center + SHADOW_OFFSET}" r="${DISK_RADIUS}" fill="#000000"`,
+        ` fill-opacity="${SHADOW_OPACITY}" filter="url(#shadow)"/>`,
     ].join('');
 }
 
