@@ -10,6 +10,11 @@ import {
 } from '$lib/services/map/renderer/clustered/markerSprites';
 import {handleClusteredPickingClick} from '$lib/services/map/renderer/clustered/pickingClick';
 import {SPRITE_FADE_MS, type SpriteFade} from '$lib/services/map/renderer/clustered/spriteFades';
+import {
+    SpritePopExtension,
+    type SpritePopProps,
+} from '$lib/services/map/renderer/clustered/spritePopExtension';
+import {registerSpawns, spawnTimeFor} from '$lib/services/map/renderer/clustered/spriteSpawns';
 import type {Layer} from '@deck.gl/core';
 import {IconLayer, ScatterplotLayer, TextLayer} from '@deck.gl/layers';
 
@@ -17,6 +22,7 @@ const WHITE: [number, number, number] = [255, 255, 255];
 const CLUSTER_FILL: [number, number, number, number] = [39, 39, 42, 235];
 const CLUSTER_LINE: [number, number, number, number] = [255, 255, 255, 230];
 const OPAQUE = 255;
+const SPRITE_POP = new SpritePopExtension();
 
 interface LayerHandlers {
     onMarkerClick(marker: Marker): void;
@@ -32,9 +38,10 @@ export function buildClusteredLayers(
         .filter((point): point is MarkerPoint => point.kind === 'marker')
         .sort(northToSouth);
     const clusters = points.filter((point): point is ClusterPoint => point.kind === 'cluster');
+    const latestSpawn = registerSpawns(markers);
 
     return [
-        markerLayer(markers, handlers),
+        markerLayer(markers, latestSpawn, handlers),
         fadingMarkerLayer(fades),
         clusterDiskLayer(clusters, handlers),
         clusterCountLayer(clusters),
@@ -46,13 +53,16 @@ function northToSouth(a: MarkerPoint, b: MarkerPoint): number {
     return b.position[1] - a.position[1];
 }
 
-function markerLayer(data: MarkerPoint[], handlers: LayerHandlers) {
-    return new IconLayer<MarkerPoint>({
+function markerLayer(data: MarkerPoint[], latestSpawn: number, handlers: LayerHandlers) {
+    return new IconLayer<MarkerPoint, SpritePopProps<MarkerPoint>>({
         id: 'clustered-marker',
         data,
         getPosition: point => point.position,
         getIcon: point => markerSpriteFor(point.marker),
         getSize: MARKER_SPRITE_SIZE,
+        getSpawnTime: point => spawnTimeFor(point.marker),
+        latestSpawn,
+        extensions: [SPRITE_POP],
         sizeUnits: 'pixels',
         billboard: true,
         pickable: true,
