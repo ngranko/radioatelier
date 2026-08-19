@@ -9,13 +9,15 @@ describe('markerSprite', () => {
     it('bakes halo, disk, ring and glyph into a single image', () => {
         const svg = svgOf(markerSprite('#112233', 'zap', false).url);
 
-        expect(svg).toContain('fill="rgb(17,34,51)" fill-opacity="0.4"');
-        expect(svg).toContain('stroke="#ffffff"');
+        expect(svg).toContain('r="17" fill="rgb(17,34,51)" fill-opacity="0.4"');
+        expect(svg).toContain('r="15" fill="#ffffff"');
+        expect(svg).toContain('r="12" fill="rgb(17,34,51)"');
+        expect(svg).toContain('feGaussianBlur');
         expect(svg.match(/<svg/g)).toHaveLength(2);
     });
 
     it('marks visited markers with their own ring so the sprite stays self-contained', () => {
-        expect(svgOf(markerSprite('#112233', 'zap', true).url)).toContain('stroke="#39ff14"');
+        expect(svgOf(markerSprite('#112233', 'zap', true).url)).toContain('r="15" fill="#39ff14"');
     });
 
     it('reuses one atlas entry per style', () => {

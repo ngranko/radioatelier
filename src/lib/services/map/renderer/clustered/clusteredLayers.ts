@@ -62,7 +62,7 @@ function clusterDiskLayer(data: ClusterPoint[], handlers: LayerHandlers) {
         getPosition: point => point.position,
         getFillColor: CLUSTER_FILL,
         getLineColor: CLUSTER_LINE,
-        getRadius: point => 14 + Math.min(10, Math.log2(point.markerCount) * 1.8),
+        getRadius: point => 16 + Math.min(10, Math.log2(point.markerCount) * 1.8),
         radiusUnits: 'pixels',
         getLineWidth: 2,
         lineWidthUnits: 'pixels',
