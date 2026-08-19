@@ -38,14 +38,6 @@ interface IconStyle {
     strokeWidth?: number;
 }
 
-export interface MarkerIconDefinition {
-    id: MarkerIconKey;
-    url: string;
-    width: number;
-    height: number;
-    mask: true;
-}
-
 const ICON_STYLES: Record<MarkerIconKey, IconStyle> = {
     activity: {svg: Activity, strokeWidth: 3},
     anchor: {svg: Anchor, strokeWidth: 3},
@@ -79,24 +71,22 @@ const ICON_STYLES: Record<MarkerIconKey, IconStyle> = {
     zap: {svg: Zap, filled: true, strokeWidth: 1},
 };
 
-export const MARKER_ICON_DEFINITIONS = Object.fromEntries(
-    Object.entries(ICON_STYLES).map(([key, style]) => [
-        key,
-        createDefinition(key as MarkerIconKey, style),
-    ]),
-) as Record<MarkerIconKey, MarkerIconDefinition>;
+export const GLYPH_VIEWBOX_SIZE = 24;
 
-function createDefinition(key: MarkerIconKey, style: IconStyle): MarkerIconDefinition {
-    const svg = style.svg
-        .replace('stroke="currentColor"', 'stroke="white"')
-        .replace('stroke-width="2"', `stroke-width="${style.strokeWidth ?? 2}"`)
-        .replace('fill="none"', style.filled ? 'fill="white"' : 'fill="none"');
+/** White 24x24 SVG markup per icon, embedded into the composed marker sprites. */
+export const MARKER_GLYPHS = Object.fromEntries(
+    Object.entries(ICON_STYLES).map(([key, style]) => [key, whiteGlyph(style)]),
+) as Record<MarkerIconKey, string>;
 
-    return {
-        id: key,
-        url: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`,
-        width: 24,
-        height: 24,
-        mask: true,
-    };
+function whiteGlyph(style: IconStyle): string {
+    return (
+        style.svg
+            .replace('stroke="currentColor"', 'stroke="white"')
+            .replace('stroke-width="2"', `stroke-width="${style.strokeWidth ?? 2}"`)
+            .replace('fill="none"', style.filled ? 'fill="white"' : 'fill="none"')
+            // lucide-static ships pretty-printed markup; every newline costs three bytes once the
+            // sprite is percent-encoded into a data URL.
+            .replace(/\s*\n\s*/g, ' ')
+            .trim()
+    );
 }
