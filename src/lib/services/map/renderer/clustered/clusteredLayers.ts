@@ -9,8 +9,10 @@ import {
     markerSpriteFor,
 } from '$lib/services/map/renderer/clustered/markerSprites';
 import {handleClusteredPickingClick} from '$lib/services/map/renderer/clustered/pickingClick';
+import {latestExit, type SpriteExit} from '$lib/services/map/renderer/clustered/spriteExits';
 import {SPRITE_FADE_MS, type SpriteFade} from '$lib/services/map/renderer/clustered/spriteFades';
 import {
+    SPRITE_POP_OUT_MS,
     SpritePopExtension,
     type SpritePopProps,
 } from '$lib/services/map/renderer/clustered/spritePopExtension';
@@ -22,16 +24,22 @@ const WHITE: [number, number, number] = [255, 255, 255];
 const CLUSTER_FILL: [number, number, number, number] = [39, 39, 42, 235];
 const CLUSTER_LINE: [number, number, number, number] = [255, 255, 255, 230];
 const OPAQUE = 255;
-const SPRITE_POP = new SpritePopExtension();
+const SPRITE_POP_IN = new SpritePopExtension();
+const SPRITE_POP_OUT = new SpritePopExtension({reverse: true, durationMs: SPRITE_POP_OUT_MS});
 
 interface LayerHandlers {
     onMarkerClick(marker: Marker): void;
     onClusterClick(cluster: ClusterPoint): void;
 }
 
+export interface SpriteAnimations {
+    fades: SpriteFade[];
+    exits: SpriteExit[];
+}
+
 export function buildClusteredLayers(
     points: ClusteredPoint[],
-    fades: SpriteFade[],
+    animations: SpriteAnimations,
     handlers: LayerHandlers,
 ): Layer[] {
     const markers = points
@@ -42,7 +50,8 @@ export function buildClusteredLayers(
 
     return [
         markerLayer(markers, latestSpawn, handlers),
-        fadingMarkerLayer(fades),
+        exitingMarkerLayer(animations.exits),
+        fadingMarkerLayer(animations.fades),
         clusterDiskLayer(clusters, handlers),
         clusterCountLayer(clusters),
     ];
@@ -60,14 +69,31 @@ function markerLayer(data: MarkerPoint[], latestSpawn: number, handlers: LayerHa
         getPosition: point => point.position,
         getIcon: point => markerSpriteFor(point.marker),
         getSize: MARKER_SPRITE_SIZE,
-        getSpawnTime: point => stampSpawn(point.marker),
-        latestSpawn,
-        extensions: [SPRITE_POP],
+        getPopTime: point => stampSpawn(point.marker),
+        latestPop: latestSpawn,
+        extensions: [SPRITE_POP_IN],
         sizeUnits: 'pixels',
         billboard: true,
         pickable: true,
         onClick: (info, event) =>
             handleClusteredPickingClick(info, event, point => handlers.onMarkerClick(point.marker)),
+    });
+}
+
+/** A removed marker shrinks away here, drawn from the copy its tracker kept. */
+function exitingMarkerLayer(data: SpriteExit[]) {
+    return new IconLayer<SpriteExit, SpritePopProps<SpriteExit>>({
+        id: 'clustered-marker-exit',
+        data,
+        getPosition: exit => exit.position,
+        getIcon: exit => exit.sprite,
+        getSize: MARKER_SPRITE_SIZE,
+        sizeUnits: 'pixels',
+        billboard: true,
+        pickable: false,
+        getPopTime: exit => exit.leftAt,
+        latestPop: latestExit(data),
+        extensions: [SPRITE_POP_OUT],
     });
 }
 

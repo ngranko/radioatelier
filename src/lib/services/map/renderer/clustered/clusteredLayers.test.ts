@@ -29,10 +29,14 @@ describe('buildClusteredLayers', () => {
     it('opens a marker from a Google Maps overlay click event', () => {
         const onMarkerClick = vi.fn();
         const point = markerPoint();
-        const layers = buildClusteredLayers([point], [], {
-            onMarkerClick,
-            onClusterClick: vi.fn(),
-        });
+        const layers = buildClusteredLayers(
+            [point],
+            {fades: [], exits: []},
+            {
+                onMarkerClick,
+                onClusterClick: vi.fn(),
+            },
+        );
         const disk = layers.find(layer => layer.id === 'clustered-marker');
 
         const handled = disk?.props.onClick?.({object: point}, {srcEvent: {stop: vi.fn()}});
@@ -44,10 +48,14 @@ describe('buildClusteredLayers', () => {
     it('expands a cluster from a Google Maps overlay click event', () => {
         const onClusterClick = vi.fn();
         const point = clusterPoint();
-        const layers = buildClusteredLayers([point], [], {
-            onMarkerClick: vi.fn(),
-            onClusterClick,
-        });
+        const layers = buildClusteredLayers(
+            [point],
+            {fades: [], exits: []},
+            {
+                onMarkerClick: vi.fn(),
+                onClusterClick,
+            },
+        );
         const disk = layers.find(layer => layer.id === 'marker-clusters');
 
         const handled = disk?.props.onClick?.({object: point}, {});

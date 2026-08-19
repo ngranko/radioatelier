@@ -1,8 +1,9 @@
 import {getPopClock} from '$lib/services/map/renderer/clustered/spriteSpawns';
 import {type Accessor, type Layer, LayerExtension} from '@deck.gl/core';
 
-/** Matches --animate-popin, the DOM markers' entrance. */
-export const SPRITE_POP_MS = 250;
+/** Matches --animate-popin and --animate-popout, the DOM markers' entrance and exit. */
+export const SPRITE_POP_IN_MS = 250;
+export const SPRITE_POP_OUT_MS = 150;
 
 // The overshoot of cubic-bezier(0.34, 1.56, 0.64, 1), written as the easeOutBack constant.
 const OVERSHOOT = 1.70158;
@@ -17,43 +18,55 @@ const popUniforms = {
     uniformTypes: {now: 'f32', duration: 'f32'},
 } as const;
 
-const declaration = `
-in float instanceSpawnTimes;
+const GROW = `1.0 + fromEnd * fromEnd * ((${OVERSHOOT} + 1.0) * fromEnd + ${OVERSHOOT})`;
+// The reverse of --animate-popout's curve: slow to let go, then quick.
+const SHRINK = '1.0 - progress * progress * progress';
+
+function declaration(reverse: boolean): string {
+    return `
+in float instancePopTimes;
 
 float spritePop_getScale() {
   float elapsed = spritePop.now - instanceSpawnTimes;
   float progress = clamp(elapsed / spritePop.duration, 0.0, 1.0);
   float fromEnd = progress - 1.0;
-  return 1.0 + fromEnd * fromEnd * ((${OVERSHOOT} + 1.0) * fromEnd + ${OVERSHOOT});
+  return ${reverse ? SHRINK : GROW};
 }
 `;
+}
 
 export interface SpritePopProps<DataT = unknown> {
-    /** Milliseconds on the pop clock timebase, one per marker. */
-    getSpawnTime?: Accessor<DataT, number>;
-    /** The newest stamp in the data, so the layer knows when it can stop animating. */
-    latestSpawn?: number;
+    /** Milliseconds on the popClock() timebase: when each sprite entered or left. */
+    getPopTime?: Accessor<DataT, number>;
+    /** The newest of those, so the layer knows when it can stop animating. */
+    latestPop?: number;
+}
+
+interface SpritePopOptions {
+    /** Shrink to nothing instead of growing from it. */
+    reverse?: boolean;
+    durationMs?: number;
 }
 
 /**
- * Grows a sprite from nothing when it first joins the layer. deck.gl's own transitions cannot do
- * this: a newly added instance is seeded with its final value, so it has nothing to ease from.
- * Scaling the quad in the shader keeps the whole entrance on the GPU, one attribute wide, however
- * many markers arrive at once.
+ * Scales a sprite in the vertex shader over the milliseconds after it arrives or leaves. deck.gl's
+ * own transitions cannot do either end: a newly added instance is seeded with its final value, so
+ * it has nothing to ease from, and a removed one is simply gone. Doing it in the shader keeps the
+ * whole animation on the GPU, one attribute wide, however many markers move at once.
  */
-export class SpritePopExtension extends LayerExtension {
+export class SpritePopExtension extends LayerExtension<SpritePopOptions> {
     public static extensionName = 'SpritePopExtension';
 
     public static defaultProps = {
-        getSpawnTime: {type: 'accessor', value: 0},
-        latestSpawn: {type: 'number', value: 0},
+        getPopTime: {type: 'accessor', value: 0},
+        latestPop: {type: 'number', value: 0},
     };
 
-    public getShaders() {
+    public getShaders(this: Layer, extension: SpritePopExtension) {
         return {
             modules: [popUniforms],
             inject: {
-                'vs:#decl': declaration,
+                'vs:#decl': declaration(extension.options().reverse ?? false),
                 'vs:DECKGL_FILTER_SIZE': 'size *= spritePop_getScale();',
             },
         };
@@ -61,17 +74,31 @@ export class SpritePopExtension extends LayerExtension {
 
     public initializeState(this: Layer<SpritePopProps>): void {
         this.getAttributeManager()?.addInstanced({
-            instanceSpawnTimes: {size: 1, accessor: 'getSpawnTime', defaultValue: 0},
+            instancePopTimes: {size: 1, accessor: 'getPopTime', defaultValue: 0},
         });
     }
 
-    public draw(this: Layer<SpritePopProps>): void {
+    public draw(
+        this: Layer<SpritePopProps>,
+        _params: unknown,
+        extension: SpritePopExtension,
+    ): void {
+        const duration = extension.duration();
         const now = getPopClock();
-        this.setShaderModuleProps({spritePop: {now, duration: SPRITE_POP_MS}});
+        this.setShaderModuleProps({spritePop: {now, duration}});
 
         // Nothing else drives frames while the map sits still, so the layer asks for its own.
-        if (now - (this.props.latestSpawn ?? 0) < SPRITE_POP_MS) {
+        if (now - (this.props.latestPop ?? 0) < duration) {
             this.setNeedsRedraw();
         }
+    }
+
+    public duration(): number {
+        return this.options().durationMs ?? SPRITE_POP_IN_MS;
+    }
+
+    // LayerExtension only assigns opts when it is constructed with some.
+    private options(): SpritePopOptions {
+        return this.opts ?? {};
     }
 }

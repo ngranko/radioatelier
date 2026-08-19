@@ -1,12 +1,13 @@
 import type {Marker} from '$lib/services/map/marker';
 import type {MarkerPoint} from '$lib/services/map/renderer/clustered/markerClusterIndex';
 
-// Page-relative so the numbers stay small: the shader carries them as 32-bit floats, and
+// Relative to first use so the numbers stay small: the shader carries them as 32-bit floats, and
 // performance.now() on a long-lived tab loses sub-millisecond precision at that width.
-const epoch = performance.now();
+let epoch: number | undefined;
 const spawns = new WeakMap<Marker, number>();
 
 export function getPopClock(): number {
+    epoch ??= performance.now();
     return performance.now() - epoch;
 }
 
