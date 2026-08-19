@@ -1,4 +1,5 @@
 import {cssColorToRgb} from '$lib/services/colorConverter';
+import type {Marker} from '$lib/services/map/marker';
 import type {MarkerIconKey} from '$lib/services/map/markerStyling.data';
 import {GLYPH_VIEWBOX_SIZE, MARKER_GLYPHS} from '$lib/services/map/renderer/clustered/markerIcons';
 
@@ -31,17 +32,26 @@ export interface MarkerSprite {
 
 const sprites = new Map<string, MarkerSprite>();
 
+export function markerSpriteFor(marker: Marker, withHalo = true): MarkerSprite {
+    const iconKey = marker.options.iconKey ?? 'landmark';
+    return markerSprite(marker.options.color, iconKey, marker.getState().isVisited, withHalo);
+}
+
 /**
  * Halo, disk, ring and glyph baked into one image. Drawing a marker as a single sprite is what
  * keeps overlapping markers from bleeding: separate layers stack per layer, so every glyph ended
  * up painted over every disk, while one sprite occludes its neighbours whole.
+ *
+ * The halo-less variant exists for crossfades: stacking it over a full sprite swaps the disk
+ * without compositing two translucent halos into a darker ring.
  */
 export function markerSprite(
     color: string,
     iconKey: MarkerIconKey,
     isVisited: boolean,
+    withHalo = true,
 ): MarkerSprite {
-    const id = `${iconKey}:${color}:${isVisited ? 'visited' : 'plain'}`;
+    const id = `${iconKey}:${color}:${isVisited ? 'visited' : 'plain'}:${withHalo ? 'halo' : 'core'}`;
     const cached = sprites.get(id);
     if (cached) {
         return cached;
@@ -50,7 +60,7 @@ export function markerSprite(
     const size = MARKER_SPRITE_SIZE * RASTER_SCALE;
     const sprite: MarkerSprite = {
         id,
-        url: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(spriteSvg(color, iconKey, isVisited))}`,
+        url: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(spriteSvg(color, iconKey, isVisited, withHalo))}`,
         width: size,
         height: size,
         mask: false,
@@ -59,7 +69,12 @@ export function markerSprite(
     return sprite;
 }
 
-function spriteSvg(color: string, iconKey: MarkerIconKey, isVisited: boolean): string {
+function spriteSvg(
+    color: string,
+    iconKey: MarkerIconKey,
+    isVisited: boolean,
+    withHalo: boolean,
+): string {
     const center = MARKER_SPRITE_SIZE / 2;
     const fill = sRgbCss(color);
     const glyphOffset = center - GLYPH_SIZE / 2;
@@ -67,8 +82,8 @@ function spriteSvg(color: string, iconKey: MarkerIconKey, isVisited: boolean): s
 
     return [
         `<svg xmlns="http://www.w3.org/2000/svg" width="${MARKER_SPRITE_SIZE * RASTER_SCALE}" height="${MARKER_SPRITE_SIZE * RASTER_SCALE}" viewBox="0 0 ${MARKER_SPRITE_SIZE} ${MARKER_SPRITE_SIZE}">`,
-        shadowSvg(center),
-        circle(center, HALO_RADIUS, fill, HALO_OPACITY),
+        withHalo ? shadowSvg(center) : '',
+        withHalo ? circle(center, HALO_RADIUS, fill, HALO_OPACITY) : '',
         circle(center, RING_RADIUS, isVisited ? VISITED_RING : PLAIN_RING),
         isVisited ? circle(center, VISITED_EDGE_RADIUS, '#000000', VISITED_EDGE_OPACITY) : '',
         circle(center, DISK_RADIUS, fill),

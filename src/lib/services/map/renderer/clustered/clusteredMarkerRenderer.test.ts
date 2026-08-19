@@ -84,6 +84,7 @@ describe('ClusteredMarkerRenderer', () => {
         const layers = setLayers.mock.calls[0][0];
         expect(layers.map(layer => layer.id)).toEqual([
             'clustered-marker',
+            'clustered-marker-fade',
             'marker-clusters',
             'marker-cluster-counts',
         ]);
@@ -112,6 +113,36 @@ describe('ClusteredMarkerRenderer', () => {
 
         expect(layerLength(setLayers, 'marker-clusters')).toBe(0);
         expect(layerLength(setLayers, 'clustered-marker')).toBe(3);
+        renderer.destroy();
+    });
+
+    it('crossfades a marker whose sprite changed, then drops the outgoing sprite', () => {
+        const {frames, setLayers, overlay} = overlayHarness();
+        const state = {isVisited: false, isRemoved: false};
+        const visitable = {
+            getPosition: () => ({lat: 55.75, lng: 37.61}),
+            getState: () => ({...state}),
+            options: {color: '#000000', iconKey: 'landmark'},
+        } as Marker;
+        const renderer = new ClusteredMarkerRenderer(
+            {getZoom: () => 18} as MapProvider,
+            overlay,
+            vi.fn(),
+        );
+        renderer.ensureCreated(visitable);
+        flush(frames);
+
+        state.isVisited = true;
+        renderer.applyState(visitable);
+        flush(frames);
+        expect(layerLength(setLayers, 'clustered-marker-fade')).toBe(1);
+
+        flush(frames);
+        vi.advanceTimersByTime(160);
+        flush(frames);
+
+        expect(layerLength(setLayers, 'clustered-marker-fade')).toBe(0);
+        expect(markerLifecycle.isIdle).toBe(true);
         renderer.destroy();
     });
 
