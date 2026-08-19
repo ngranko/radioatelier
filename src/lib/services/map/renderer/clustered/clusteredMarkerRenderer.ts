@@ -146,6 +146,7 @@ export class ClusteredMarkerRenderer implements MarkerRenderer {
                 {
                     onMarkerClick: marker => this.handleMarkerClick(marker),
                     onClusterClick: cluster => this.handleClusterClick(cluster),
+                    requestFrame: () => this.overlay.requestRedraw(),
                 },
             ),
         );

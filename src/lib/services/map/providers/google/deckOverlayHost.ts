@@ -27,6 +27,16 @@ export class DeckOverlayHost {
         this.overlay.setProps({layers});
     }
 
+    /**
+     * Asks Maps for another frame. deck's own loop only notices a layer wants one on its next
+     * poll, which then asks Maps, so a self-driven animation lands on every other frame. Asking
+     * the map directly from the frame it just drew keeps that at the map's rate.
+     */
+    public requestRedraw(): void {
+        const drawn = this.overlay as unknown as {_overlay?: {requestRedraw?: () => void}};
+        drawn._overlay?.requestRedraw?.();
+    }
+
     /** Topmost pickable object at a point in map-container pixels, for gestures deck cannot see. */
     public pickAt(x: number, y: number, radius: number): unknown {
         return this.overlay.pickObject({x, y, radius})?.object;

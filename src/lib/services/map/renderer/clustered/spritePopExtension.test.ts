@@ -5,8 +5,10 @@ import {readPopTime} from './spriteSpawns';
 
 function createFakeLayer(latestPop: number) {
     const attributeManager = {addInstanced: vi.fn()};
+    const requestFrame = vi.fn();
     return {
-        props: {latestPop},
+        props: {latestPop, requestFrame},
+        requestFrame,
         getAttributeManager: () => attributeManager,
         setShaderModuleProps: vi.fn(),
         setNeedsRedraw: vi.fn(),
@@ -67,6 +69,17 @@ describe('SpritePopExtension', () => {
 
         expect(animating.setNeedsRedraw).toHaveBeenCalled();
         expect(settled.setNeedsRedraw).not.toHaveBeenCalled();
+    });
+
+    it('asks the host for the frame, since deck would spend one noticing', () => {
+        const animating = fakeLayer(popClock());
+        const settled = fakeLayer(popClock() - SPRITE_POP_IN_MS * 2);
+
+        callOn(new SpritePopExtension(), 'draw', animating);
+        callOn(new SpritePopExtension(), 'draw', settled);
+
+        expect(animating.requestFrame).toHaveBeenCalledOnce();
+        expect(settled.requestFrame).not.toHaveBeenCalled();
     });
 
     it('animates an exit over its own shorter duration', () => {

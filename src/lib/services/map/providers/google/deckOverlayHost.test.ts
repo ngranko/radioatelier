@@ -5,6 +5,7 @@ const overlay = vi.hoisted(() => ({
     finalize: vi.fn(),
     setMap: vi.fn(),
     setProps: vi.fn(),
+    requestRedraw: vi.fn(),
 }));
 
 vi.mock('@deck.gl/google-maps', () => ({
@@ -24,6 +25,9 @@ vi.mock('@deck.gl/google-maps', () => ({
         finalize() {
             overlay.finalize();
         }
+
+        // deck.gl keeps the Maps overlay here, private
+        _overlay = {requestRedraw: overlay.requestRedraw};
     },
 }));
 
@@ -108,5 +112,13 @@ describe('DeckOverlayHost', () => {
         host.detach();
 
         expect(setOptions).toHaveBeenLastCalledWith({draggableCursor: null});
+    });
+
+    it('asks the Maps overlay for a frame, not deck', () => {
+        const host = new DeckOverlayHost({} as google.maps.Map);
+
+        host.requestRedraw();
+
+        expect(overlay.requestRedraw).toHaveBeenCalledOnce();
     });
 });
