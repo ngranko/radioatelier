@@ -27,6 +27,11 @@ export class DeckOverlayHost {
         this.overlay.setProps({layers});
     }
 
+    /** Topmost pickable object at a point in map-container pixels, for gestures deck cannot see. */
+    public pickAt(x: number, y: number, radius: number): unknown {
+        return this.overlay.pickObject({x, y, radius})?.object;
+    }
+
     public detach(): void {
         this.setHoverCursor(null);
         this.overlay.setProps({layers: []});
