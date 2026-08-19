@@ -83,9 +83,7 @@ describe('ClusteredMarkerRenderer', () => {
         expect(setLayers).toHaveBeenCalledOnce();
         const layers = setLayers.mock.calls[0][0];
         expect(layers.map(layer => layer.id)).toEqual([
-            'clustered-marker-halo',
-            'clustered-marker-disk',
-            'clustered-marker-icon',
+            'clustered-marker',
             'marker-clusters',
             'marker-cluster-counts',
         ]);
@@ -107,13 +105,13 @@ describe('ClusteredMarkerRenderer', () => {
         flush(frames);
 
         expect(layerLength(setLayers, 'marker-clusters')).toBe(1);
-        expect(layerLength(setLayers, 'clustered-marker-disk')).toBe(0);
+        expect(layerLength(setLayers, 'clustered-marker')).toBe(0);
 
         renderer.setClusteringEnabled(false);
         flush(frames);
 
         expect(layerLength(setLayers, 'marker-clusters')).toBe(0);
-        expect(layerLength(setLayers, 'clustered-marker-disk')).toBe(3);
+        expect(layerLength(setLayers, 'clustered-marker')).toBe(3);
         renderer.destroy();
     });
 
