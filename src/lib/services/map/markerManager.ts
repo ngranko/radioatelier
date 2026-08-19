@@ -9,7 +9,7 @@ import {selectVisibleMarkerIds} from '$lib/services/map/viewportSelection';
 import {VisibilityEngine} from '$lib/services/map/visibilityEngine';
 
 export type RendererMode = 'dom' | 'deck';
-export type RendererStrategy = 'legacy' | 'clustered';
+export type RendererStrategy = 'legacy' | 'gpu';
 export type RendererFactory = (mode: RendererMode) => MarkerRenderer;
 
 export interface MarkerManagerOptions {
@@ -57,8 +57,8 @@ export class MarkerManager {
         return this.isDeck;
     }
 
-    public get isClusteredRenderer(): boolean {
-        return this.options.rendererStrategy === 'clustered';
+    public get isGpuRenderer(): boolean {
+        return this.options.rendererStrategy === 'gpu';
     }
 
     public async initialize() {
@@ -125,7 +125,7 @@ export class MarkerManager {
     // recreate → syncAll → resume) live behind this seam; callers only report
     // that the viewport settled.
     public syncRendererWithViewport(): void {
-        if (this.isClusteredRenderer) {
+        if (this.isGpuRenderer) {
             this.renderer.syncAll(this.repo.values());
             this.scheduleViewportUpdate();
             return;
@@ -140,7 +140,7 @@ export class MarkerManager {
 
     private shouldUseDeck(): boolean {
         return (
-            this.options.rendererStrategy === 'clustered' ||
+            this.options.rendererStrategy === 'gpu' ||
             this.provider.getZoom() <= this.options.deckZoomThreshold
         );
     }

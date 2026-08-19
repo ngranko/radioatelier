@@ -1,9 +1,8 @@
-import type {MapProvider} from '$lib/interfaces/map';
 import type {Marker} from '$lib/services/map/marker';
 import {markerLifecycle} from '$lib/services/map/markerLifecycle';
 import type {DeckOverlayHost} from '$lib/services/map/providers/google/deckOverlayHost';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
-import {ClusteredMarkerRenderer} from './clusteredMarkerRenderer';
+import {GpuMarkerRenderer} from './gpuMarkerRenderer';
 import { SPRITE_POP_OUT_MS } from './spritePopExtension';
 
 function marker(lat = 55.75, lng = 37.61): Marker {
@@ -12,10 +11,6 @@ function marker(lat = 55.75, lng = 37.61): Marker {
         getState: () => ({isVisited: false, isRemoved: false}),
         options: {color: '#000000', iconKey: 'landmark'},
     } as Marker;
-}
-
-function nearbyMarkers(): Marker[] {
-    return [marker(55.75, 37.61), marker(55.7501, 37.6101), marker(55.7502, 37.6102)];
 }
 
 function layerLength(setLayers: {mock: {calls: unknown[][]}}, id: string): number {
@@ -48,7 +43,7 @@ function flush(frames: FrameRequestCallback[]) {
     frames.at(-1)?.(0);
 }
 
-describe('ClusteredMarkerRenderer', () => {
+describe('GpuMarkerRenderer', () => {
     beforeEach(() => {
         vi.useFakeTimers();
         markerLifecycle.reset();
@@ -72,10 +67,7 @@ describe('ClusteredMarkerRenderer', () => {
             detach: vi.fn(),
             setLayers,
         } as unknown as DeckOverlayHost;
-        const provider = {
-            getZoom: () => 18,
-        } as MapProvider;
-        const renderer = new ClusteredMarkerRenderer(provider, overlay, vi.fn());
+        const renderer = new GpuMarkerRenderer(overlay, vi.fn());
 
         renderer.ensureCreated(marker());
         vi.advanceTimersByTime(16);
@@ -84,37 +76,11 @@ describe('ClusteredMarkerRenderer', () => {
         expect(setLayers).toHaveBeenCalledOnce();
         const layers = setLayers.mock.calls[0][0];
         expect(layers.map(layer => layer.id)).toEqual([
-            'clustered-marker',
-            'clustered-marker-exit',
-            'clustered-marker-fade',
-            'marker-clusters',
-            'marker-cluster-counts',
+            'gpu-marker',
+            'gpu-marker-exit',
+            'gpu-marker-fade',
         ]);
         expect(markerLifecycle.isIdle).toBe(true);
-        renderer.destroy();
-    });
-
-    it('can disable clustering and show every marker', () => {
-        const {frames, setLayers, overlay} = overlayHarness();
-        const renderer = new ClusteredMarkerRenderer(
-            {getZoom: () => 8} as MapProvider,
-            overlay,
-            vi.fn(),
-        );
-
-        for (const item of nearbyMarkers()) {
-            renderer.ensureCreated(item);
-        }
-        flush(frames);
-
-        expect(layerLength(setLayers, 'marker-clusters')).toBe(1);
-        expect(layerLength(setLayers, 'clustered-marker')).toBe(0);
-
-        renderer.setClusteringEnabled(false);
-        flush(frames);
-
-        expect(layerLength(setLayers, 'marker-clusters')).toBe(0);
-        expect(layerLength(setLayers, 'clustered-marker')).toBe(3);
         renderer.destroy();
     });
 
@@ -126,35 +92,27 @@ describe('ClusteredMarkerRenderer', () => {
             getState: () => ({...state}),
             options: {color: '#000000', iconKey: 'landmark'},
         } as Marker;
-        const renderer = new ClusteredMarkerRenderer(
-            {getZoom: () => 18} as MapProvider,
-            overlay,
-            vi.fn(),
-        );
+        const renderer = new GpuMarkerRenderer(overlay, vi.fn());
         renderer.ensureCreated(visitable);
         flush(frames);
 
         state.isVisited = true;
         renderer.applyState(visitable);
         flush(frames);
-        expect(layerLength(setLayers, 'clustered-marker-fade')).toBe(1);
+        expect(layerLength(setLayers, 'gpu-marker-fade')).toBe(1);
 
         flush(frames);
         vi.advanceTimersByTime(160);
         flush(frames);
 
-        expect(layerLength(setLayers, 'clustered-marker-fade')).toBe(0);
+        expect(layerLength(setLayers, 'gpu-marker-fade')).toBe(0);
         expect(markerLifecycle.isIdle).toBe(true);
         renderer.destroy();
     });
 
     it('shrinks a removed marker away before dropping its sprite', () => {
         const {frames, setLayers, overlay} = overlayHarness();
-        const renderer = new ClusteredMarkerRenderer(
-            {getZoom: () => 18} as MapProvider,
-            overlay,
-            vi.fn(),
-        );
+        const renderer = new GpuMarkerRenderer(overlay, vi.fn());
         const doomed = marker();
         renderer.ensureCreated(doomed);
         flush(frames);
@@ -162,24 +120,20 @@ describe('ClusteredMarkerRenderer', () => {
         renderer.remove(doomed);
         flush(frames);
 
-        expect(layerLength(setLayers, 'clustered-marker')).toBe(0);
-        expect(layerLength(setLayers, 'clustered-marker-exit')).toBe(1);
+        expect(layerLength(setLayers, 'gpu-marker')).toBe(0);
+        expect(layerLength(setLayers, 'gpu-marker-exit')).toBe(1);
 
         vi.advanceTimersByTime(SPRITE_POP_OUT_MS);
         flush(frames);
 
-        expect(layerLength(setLayers, 'clustered-marker-exit')).toBe(0);
+        expect(layerLength(setLayers, 'gpu-marker-exit')).toBe(0);
         expect(markerLifecycle.isIdle).toBe(true);
         renderer.destroy();
     });
 
     it('leaves the exit to the DOM twin when the marker was promoted', () => {
         const {frames, setLayers, overlay} = overlayHarness();
-        const renderer = new ClusteredMarkerRenderer(
-            {getZoom: () => 18} as MapProvider,
-            overlay,
-            vi.fn(),
-        );
+        const renderer = new GpuMarkerRenderer(overlay, vi.fn());
         const promoted = marker();
         renderer.ensureCreated(promoted);
         renderer.setExcludedMarker(promoted);
@@ -188,7 +142,7 @@ describe('ClusteredMarkerRenderer', () => {
         renderer.remove(promoted);
         flush(frames);
 
-        expect(layerLength(setLayers, 'clustered-marker-exit')).toBe(0);
+        expect(layerLength(setLayers, 'gpu-marker-exit')).toBe(0);
         renderer.destroy();
     });
 
@@ -200,8 +154,7 @@ describe('ClusteredMarkerRenderer', () => {
             detach,
             setLayers,
         } as unknown as DeckOverlayHost;
-        const provider = {getZoom: () => 18} as MapProvider;
-        const renderer = new ClusteredMarkerRenderer(provider, overlay, vi.fn());
+        const renderer = new GpuMarkerRenderer(overlay, vi.fn());
 
         renderer.ensureCreated(marker());
         renderer.destroy();

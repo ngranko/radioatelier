@@ -1,15 +1,15 @@
-export interface ClusteredPickingInfo<T> {
+export interface SpritePickingInfo<T> {
     object?: T | null;
 }
 
-export interface ClusteredPickingEvent {
+export interface SpritePickingEvent {
     stopPropagation?: () => void;
     srcEvent?: {stop?: () => void};
 }
 
-export function handleClusteredPickingClick<T>(
-    info: ClusteredPickingInfo<T>,
-    event: ClusteredPickingEvent,
+export function handleSpritePickingClick<T>(
+    info: SpritePickingInfo<T>,
+    event: SpritePickingEvent,
     onPick: (object: T) => void,
 ): boolean {
     if (!info.object) {

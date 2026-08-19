@@ -1,11 +1,10 @@
 import type {Marker} from '$lib/services/map/marker';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
-import type {MarkerPoint} from './markerClusterIndex';
+import type {MarkerPoint} from './markerPoints';
 import {SPRITE_FADE_MS, SpriteFadeTracker} from './spriteFades';
 
 function markerPoint(state: {isVisited: boolean}): MarkerPoint {
     return {
-        kind: 'marker',
         position: [37.61, 55.75],
         marker: {
             getState: () => ({isVisited: state.isVisited, isRemoved: false}),

@@ -1,10 +1,7 @@
 import type {Marker} from '$lib/services/map/marker';
-import {
-    markerSpriteFor,
-    type MarkerSprite,
-} from '$lib/services/map/renderer/clustered/markerSprites';
-import {SPRITE_POP_OUT_MS} from '$lib/services/map/renderer/clustered/spritePopExtension';
-import {readPopNow} from '$lib/services/map/renderer/clustered/spritePopTimes';
+import {markerSpriteFor, type MarkerSprite} from '$lib/services/map/renderer/gpu/markerSprites';
+import {SPRITE_POP_OUT_MS} from '$lib/services/map/renderer/gpu/spritePopExtension';
+import {readPopNow} from '$lib/services/map/renderer/gpu/spritePopTimes';
 
 export interface SpriteExit {
     position: [number, number];
