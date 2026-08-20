@@ -88,7 +88,7 @@ export class ClusteredHybridRenderer implements MarkerRenderer {
     }
 
     public destroy(): void {
-        this.dragGesture?.detach();
+        this.detachDragGesture();
         this.unsubscribeClustering();
         this.unsubscribeFocus();
         this.dom.destroy();
@@ -129,6 +129,11 @@ export class ClusteredHybridRenderer implements MarkerRenderer {
             onRelease: () => this.endDrag(),
         });
         this.dragGesture.attach();
+    }
+
+    private detachDragGesture(): void {
+        this.dragGesture?.detach();
+        this.dragGesture = undefined;
     }
 
     /** A held sprite becomes a DOM marker so the existing drag controller can move it. */

@@ -27,8 +27,16 @@ function harness(picked: unknown) {
         gesture,
         onHold,
         onRelease,
-        press: () => listeners.get('pointerdown')?.({clientX: 5, clientY: 7} as PointerEvent),
-        release: () => listeners.get('pointerup')?.({} as PointerEvent),
+        press: (event: Partial<PointerEvent> = {}) =>
+            listeners.get('pointerdown')?.({
+                clientX: 5,
+                clientY: 7,
+                pointerId: 1,
+                isPrimary: true,
+                button: 0,
+                ...event,
+            } as PointerEvent),
+        release: (pointerId = 1) => listeners.get('pointerup')?.({pointerId} as PointerEvent),
     };
 }
 
@@ -60,6 +68,31 @@ describe('SpriteDragGesture', () => {
 
         press();
         release();
+        vi.advanceTimersByTime(300);
+
+        expect(onHold).not.toHaveBeenCalled();
+    });
+
+    it('keeps the hold alive when a second finger lifts', () => {
+        const point = markerPoint(true);
+        const {press, release, onHold, onRelease} = harness(point);
+
+        press();
+        press({pointerId: 2, isPrimary: false});
+        release(2);
+        vi.advanceTimersByTime(300);
+
+        expect(onRelease).not.toHaveBeenCalled();
+        expect(onHold).toHaveBeenCalledWith(point.marker);
+
+        release(1);
+        expect(onRelease).toHaveBeenCalledOnce();
+    });
+
+    it('leaves non-left-button presses to the browser', () => {
+        const {press, onHold} = harness(markerPoint(true));
+
+        press({button: 2});
         vi.advanceTimersByTime(300);
 
         expect(onHold).not.toHaveBeenCalled();

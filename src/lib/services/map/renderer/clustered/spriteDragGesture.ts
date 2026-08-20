@@ -17,6 +17,8 @@ interface GestureHandlers {
  * dragging and its pulse animation.
  */
 export class SpriteDragGesture {
+    private activePointerId?: number;
+
     public constructor(
         private container: HTMLElement,
         private overlay: DeckOverlayHost,
@@ -34,18 +36,31 @@ export class SpriteDragGesture {
         this.container.removeEventListener('pointerdown', this.handlePointerDown);
         window.removeEventListener('pointerup', this.handlePointerUp);
         window.removeEventListener('pointercancel', this.handlePointerUp);
+        this.activePointerId = undefined;
         removeDragTimeout();
     }
 
     private handlePointerDown = (event: PointerEvent): void => {
+        // A second finger landing mid-hold must not restart the gesture on another marker.
+        if (this.activePointerId !== undefined || !event.isPrimary || event.button !== 0) {
+            return;
+        }
+
         const marker = this.draggableAt(event);
         if (!marker) {
             return;
         }
+        this.activePointerId = event.pointerId;
         setDragTimeout(window.setTimeout(() => this.handlers.onHold(marker), HOLD_MS));
     };
 
-    private handlePointerUp = (): void => {
+    private handlePointerUp = (event: PointerEvent): void => {
+        // Only the pointer that began the hold ends it; another one lifting leaves the drag alive.
+        if (event.pointerId !== this.activePointerId) {
+            return;
+        }
+
+        this.activePointerId = undefined;
         removeDragTimeout();
         this.handlers.onRelease();
     };
