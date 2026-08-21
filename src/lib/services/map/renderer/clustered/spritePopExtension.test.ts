@@ -1,9 +1,9 @@
 import type {Layer} from '@deck.gl/core';
 import {describe, expect, it, vi} from 'vitest';
 import {SPRITE_POP_MS, SpritePopExtension} from './spritePopExtension';
-import {popClock} from './spriteSpawns';
+import {getPopClock} from './spriteSpawns';
 
-function fakeLayer(latestSpawn: number) {
+function createFakeLayer(latestSpawn: number) {
     const attributeManager = {addInstanced: vi.fn()};
     return {
         props: {latestSpawn},
@@ -14,7 +14,7 @@ function fakeLayer(latestSpawn: number) {
     };
 }
 
-function callOn(layer: ReturnType<typeof fakeLayer>, method: 'initializeState' | 'draw') {
+function callOn(layer: ReturnType<typeof createFakeLayer>, method: 'initializeState' | 'draw') {
     const extension = new SpritePopExtension();
     (extension[method] as (this: unknown, ...args: unknown[]) => void).call(
         layer as unknown as Layer,
@@ -27,14 +27,14 @@ describe('SpritePopExtension', () => {
     it('scales the quad through the size hook deck.gl exposes', () => {
         const {inject, modules} = new SpritePopExtension().getShaders();
 
-        expect(inject['vs:DECKGL_FILTER_SIZE']).toBe('size *= spritePop_scale();');
+        expect(inject['vs:DECKGL_FILTER_SIZE']).toBe('size *= spritePop_getScale();');
         expect(inject['vs:#decl']).toContain('in float instanceSpawnTimes;');
         expect(inject['vs:#decl']).toContain('clamp(');
         expect(modules[0].uniformTypes).toEqual({now: 'f32', duration: 'f32'});
     });
 
     it('carries the spawn stamp as its own instanced attribute', () => {
-        const layer = fakeLayer(0);
+        const layer = createFakeLayer(0);
 
         callOn(layer, 'initializeState');
 
@@ -44,8 +44,8 @@ describe('SpritePopExtension', () => {
     });
 
     it('asks for another frame only while a marker is still growing', () => {
-        const animating = fakeLayer(popClock());
-        const settled = fakeLayer(popClock() - SPRITE_POP_MS * 2);
+        const animating = createFakeLayer(getPopClock());
+        const settled = createFakeLayer(getPopClock() - SPRITE_POP_MS * 2);
 
         callOn(animating, 'draw');
         callOn(settled, 'draw');

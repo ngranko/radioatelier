@@ -1,4 +1,4 @@
-import {popClock} from '$lib/services/map/renderer/clustered/spriteSpawns';
+import {getPopClock} from '$lib/services/map/renderer/clustered/spriteSpawns';
 import {type Accessor, type Layer, LayerExtension} from '@deck.gl/core';
 
 /** Matches --animate-popin, the DOM markers' entrance. */
@@ -20,7 +20,7 @@ const popUniforms = {
 const declaration = `
 in float instanceSpawnTimes;
 
-float spritePop_scale() {
+float spritePop_getScale() {
   float elapsed = spritePop.now - instanceSpawnTimes;
   float progress = clamp(elapsed / spritePop.duration, 0.0, 1.0);
   float fromEnd = progress - 1.0;
@@ -29,7 +29,7 @@ float spritePop_scale() {
 `;
 
 export interface SpritePopProps<DataT = unknown> {
-    /** Milliseconds on the popClock() timebase, one per marker. */
+    /** Milliseconds on the pop clock timebase, one per marker. */
     getSpawnTime?: Accessor<DataT, number>;
     /** The newest stamp in the data, so the layer knows when it can stop animating. */
     latestSpawn?: number;
@@ -54,7 +54,7 @@ export class SpritePopExtension extends LayerExtension {
             modules: [popUniforms],
             inject: {
                 'vs:#decl': declaration,
-                'vs:DECKGL_FILTER_SIZE': 'size *= spritePop_scale();',
+                'vs:DECKGL_FILTER_SIZE': 'size *= spritePop_getScale();',
             },
         };
     }
@@ -66,7 +66,7 @@ export class SpritePopExtension extends LayerExtension {
     }
 
     public draw(this: Layer<SpritePopProps>): void {
-        const now = popClock();
+        const now = getPopClock();
         this.setShaderModuleProps({spritePop: {now, duration: SPRITE_POP_MS}});
 
         // Nothing else drives frames while the map sits still, so the layer asks for its own.

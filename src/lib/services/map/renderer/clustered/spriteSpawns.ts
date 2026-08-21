@@ -6,7 +6,7 @@ import type {MarkerPoint} from '$lib/services/map/renderer/clustered/markerClust
 const epoch = performance.now();
 const spawns = new WeakMap<Marker, number>();
 
-export function popClock(): number {
+export function getPopClock(): number {
     return performance.now() - epoch;
 }
 
@@ -24,7 +24,7 @@ export function stampSpawn(marker: Marker): number {
         return spawned;
     }
 
-    const now = popClock();
+    const now = getPopClock();
     spawns.set(marker, now);
     return now;
 }
