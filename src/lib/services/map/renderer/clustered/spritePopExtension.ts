@@ -1,4 +1,4 @@
-import {getPopClock} from '$lib/services/map/renderer/clustered/spriteSpawns';
+import {readPopTime} from '$lib/services/map/renderer/clustered/spriteSpawns';
 import {type Accessor, type Layer, LayerExtension} from '@deck.gl/core';
 
 /** Matches --animate-popin and --animate-popout, the DOM markers' entrance and exit. */
@@ -22,7 +22,7 @@ const GROW = `1.0 + fromEnd * fromEnd * ((${OVERSHOOT} + 1.0) * fromEnd + ${OVER
 // The reverse of --animate-popout's curve: slow to let go, then quick.
 const SHRINK = '1.0 - progress * progress * progress';
 
-function popScaleSource(reverse: boolean): string {
+function buildPopScaleSource(reverse: boolean): string {
     return `
 in float instancePopTimes;
 
@@ -36,7 +36,7 @@ float spritePop_getScale() {
 }
 
 export interface SpritePopProps<DataT = unknown> {
-    /** Milliseconds on the popClock() timebase: when each sprite entered or left. */
+    /** Milliseconds on the pop timebase: when each sprite entered or left. */
     getPopTime?: Accessor<DataT, number>;
     /** The newest of those, so the layer knows when it can stop animating. */
     latestPop?: number;
@@ -66,7 +66,7 @@ export class SpritePopExtension extends LayerExtension<SpritePopOptions> {
         return {
             modules: [popUniforms],
             inject: {
-                'vs:#decl': popScaleSource(extension.options().reverse ?? false),
+                'vs:#decl': buildPopScaleSource(extension.readOptions().reverse ?? false),
                 'vs:DECKGL_FILTER_SIZE': 'size *= spritePop_getScale();',
             },
         };
@@ -83,8 +83,8 @@ export class SpritePopExtension extends LayerExtension<SpritePopOptions> {
         _params: unknown,
         extension: SpritePopExtension,
     ): void {
-        const duration = extension.duration();
-        const now = getPopClock();
+        const duration = extension.readOptions().durationMs ?? SPRITE_POP_IN_MS;
+        const now = readPopTime();
         this.setShaderModuleProps({spritePop: {now, duration}});
 
         // Nothing else drives frames while the map sits still, so the layer asks for its own.
@@ -93,12 +93,8 @@ export class SpritePopExtension extends LayerExtension<SpritePopOptions> {
         }
     }
 
-    public duration(): number {
-        return this.options().durationMs ?? SPRITE_POP_IN_MS;
-    }
-
     // LayerExtension only assigns opts when it is constructed with some.
-    private options(): SpritePopOptions {
+    private readOptions(): SpritePopOptions {
         return this.opts ?? {};
     }
 }

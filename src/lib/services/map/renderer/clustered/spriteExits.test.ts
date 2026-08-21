@@ -1,6 +1,6 @@
 import type {Marker} from '$lib/services/map/marker';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
-import {latestExitTime, SpriteExitTracker} from './spriteExits';
+import {findLatestExitTime, SpriteExitTracker} from './spriteExits';
 import {SPRITE_POP_OUT_MS} from './spritePopExtension';
 
 function marker(): Marker {
@@ -20,7 +20,7 @@ describe('SpriteExitTracker', () => {
 
         tracker.keep(marker());
 
-        const [exit] = tracker.active();
+        const [exit] = tracker.listActive();
         expect(exit?.position).toEqual([37.61, 55.75]);
         expect(exit?.sprite.id).toContain('zap');
     });
@@ -31,7 +31,7 @@ describe('SpriteExitTracker', () => {
 
         vi.advanceTimersByTime(SPRITE_POP_OUT_MS);
 
-        expect(tracker.active()).toEqual([]);
+        expect(tracker.listActive()).toEqual([]);
     });
 
     it('reports the newest exit, which is how long the layer keeps animating', () => {
@@ -40,8 +40,8 @@ describe('SpriteExitTracker', () => {
         vi.advanceTimersByTime(SPRITE_POP_OUT_MS / 3);
         tracker.keep(marker());
 
-        const exits = tracker.active();
+        const exits = tracker.listActive();
 
-        expect(latestExitTime(exits)).toBe(exits[1]?.leftAt);
+        expect(findLatestExitTime(exits)).toBe(exits[1]?.leftAt);
     });
 });

@@ -138,7 +138,7 @@ export class ClusteredMarkerRenderer implements MarkerRenderer {
     private render(): void {
         const points = this.clusteringEnabled ? this.clusteredPoints() : this.individualPoints();
         const fades = this.fadeTracker.track(points);
-        const exits = this.exitTracker.active();
+        const exits = this.exitTracker.listActive();
         this.overlay.setLayers(
             buildClusteredLayers(
                 points,

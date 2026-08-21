@@ -4,7 +4,7 @@ import {
     type MarkerSprite,
 } from '$lib/services/map/renderer/clustered/markerSprites';
 import {SPRITE_POP_OUT_MS} from '$lib/services/map/renderer/clustered/spritePopExtension';
-import {popClock} from '$lib/services/map/renderer/clustered/spriteSpawns';
+import {readPopTime} from '$lib/services/map/renderer/clustered/spriteSpawns';
 
 export interface SpriteExit {
     position: [number, number];
@@ -25,13 +25,12 @@ export class SpriteExitTracker {
         this.exits.push({
             position: [lng, lat],
             sprite: markerSpriteFor(marker),
-            leftAt: popClock(),
+            leftAt: readPopTime(),
         });
     }
 
-    /** The exits still on screen, oldest first. */
-    public active(): SpriteExit[] {
-        const now = popClock();
+    public listActive(): SpriteExit[] {
+        const now = readPopTime();
         this.exits = this.exits.filter(exit => now - exit.leftAt < SPRITE_POP_OUT_MS);
         return this.exits;
     }
@@ -41,6 +40,6 @@ export class SpriteExitTracker {
     }
 }
 
-export function latestExitTime(exits: SpriteExit[]): number {
+export function findLatestExitTime(exits: SpriteExit[]): number {
     return exits.length === 0 ? 0 : Math.max(...exits.map(exit => exit.leftAt));
 }

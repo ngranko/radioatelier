@@ -9,14 +9,14 @@ import {
     markerSpriteFor,
 } from '$lib/services/map/renderer/clustered/markerSprites';
 import {handleClusteredPickingClick} from '$lib/services/map/renderer/clustered/pickingClick';
-import {latestExitTime, type SpriteExit} from '$lib/services/map/renderer/clustered/spriteExits';
+import {findLatestExitTime, type SpriteExit} from '$lib/services/map/renderer/clustered/spriteExits';
 import {SPRITE_FADE_MS, type SpriteFade} from '$lib/services/map/renderer/clustered/spriteFades';
 import {
     SPRITE_POP_OUT_MS,
     SpritePopExtension,
     type SpritePopProps,
 } from '$lib/services/map/renderer/clustered/spritePopExtension';
-import {getLatestSpawnTime, stampSpawn} from '$lib/services/map/renderer/clustered/spriteSpawns';
+import {findLatestSpawn, readSpawnTime} from '$lib/services/map/renderer/clustered/spriteSpawns';
 import type {Layer} from '@deck.gl/core';
 import {IconLayer, ScatterplotLayer, TextLayer} from '@deck.gl/layers';
 
@@ -44,32 +44,32 @@ export function buildClusteredLayers(
 ): Layer[] {
     const markers = points
         .filter((point): point is MarkerPoint => point.kind === 'marker')
-        .sort(northToSouth);
+        .sort(compareNorthToSouth);
     const clusters = points.filter((point): point is ClusterPoint => point.kind === 'cluster');
-    const latestSpawn = getLatestSpawnTime(markers);
+    const latestSpawn = findLatestSpawn(markers);
 
     return [
-        markerLayer(markers, latestSpawn, handlers),
-        exitingMarkerLayer(animations.exits),
-        fadingMarkerLayer(animations.fades),
-        clusterDiskLayer(clusters, handlers),
-        clusterCountLayer(clusters),
+        buildMarkerLayer(markers, latestSpawn, handlers),
+        buildExitingMarkerLayer(animations.exits),
+        buildFadingMarkerLayer(animations.fades),
+        buildClusterDiskLayer(clusters, handlers),
+        buildClusterCountLayer(clusters),
     ];
 }
 
 /** Sprites occlude by draw order, so a stable geographic order beats the incoming index order. */
-function northToSouth(a: MarkerPoint, b: MarkerPoint): number {
+function compareNorthToSouth(a: MarkerPoint, b: MarkerPoint): number {
     return b.position[1] - a.position[1];
 }
 
-function markerLayer(data: MarkerPoint[], latestSpawn: number, handlers: LayerHandlers) {
+function buildMarkerLayer(data: MarkerPoint[], latestSpawn: number, handlers: LayerHandlers) {
     return new IconLayer<MarkerPoint, SpritePopProps<MarkerPoint>>({
         id: 'clustered-marker',
         data,
         getPosition: point => point.position,
         getIcon: point => markerSpriteFor(point.marker),
         getSize: MARKER_SPRITE_SIZE,
-        getPopTime: point => stampSpawn(point.marker),
+        getPopTime: point => readSpawnTime(point.marker),
         latestPop: latestSpawn,
         extensions: [SPRITE_POP_IN],
         sizeUnits: 'pixels',
@@ -81,7 +81,7 @@ function markerLayer(data: MarkerPoint[], latestSpawn: number, handlers: LayerHa
 }
 
 /** A removed marker shrinks away here, drawn from the copy its tracker kept. */
-function exitingMarkerLayer(data: SpriteExit[]) {
+function buildExitingMarkerLayer(data: SpriteExit[]) {
     return new IconLayer<SpriteExit, SpritePopProps<SpriteExit>>({
         id: 'clustered-marker-exit',
         data,
@@ -92,13 +92,13 @@ function exitingMarkerLayer(data: SpriteExit[]) {
         billboard: true,
         pickable: false,
         getPopTime: exit => exit.leftAt,
-        latestPop: latestExitTime(data),
+        latestPop: findLatestExitTime(data),
         extensions: [SPRITE_POP_OUT],
     });
 }
 
 /** Drawn above the live sprites: the outgoing sprite eases to nothing, revealing the new one under it. */
-function fadingMarkerLayer(data: SpriteFade[]) {
+function buildFadingMarkerLayer(data: SpriteFade[]) {
     return new IconLayer<SpriteFade>({
         id: 'clustered-marker-fade',
         data,
@@ -113,7 +113,7 @@ function fadingMarkerLayer(data: SpriteFade[]) {
     });
 }
 
-function clusterDiskLayer(data: ClusterPoint[], handlers: LayerHandlers) {
+function buildClusterDiskLayer(data: ClusterPoint[], handlers: LayerHandlers) {
     return new ScatterplotLayer<ClusterPoint>({
         id: 'marker-clusters',
         data,
@@ -132,7 +132,7 @@ function clusterDiskLayer(data: ClusterPoint[], handlers: LayerHandlers) {
     });
 }
 
-function clusterCountLayer(data: ClusterPoint[]) {
+function buildClusterCountLayer(data: ClusterPoint[]) {
     return new TextLayer<ClusterPoint>({
         id: 'marker-cluster-counts',
         data,
