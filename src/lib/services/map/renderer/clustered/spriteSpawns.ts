@@ -14,13 +14,13 @@ export function popClock(): number {
 export function latestSpawnTime(points: MarkerPoint[]): number {
     let newest = 0;
     for (const point of points) {
-        newest = Math.max(newest, spawnTimeFor(point.marker));
+        newest = Math.max(newest, spawnStamp(point.marker));
     }
     return newest;
 }
 
 /** First read stamps the marker; later reads keep that stamp so a cluster cannot re-pop it. */
-export function spawnTimeFor(marker: Marker): number {
+export function spawnStamp(marker: Marker): number {
     const spawned = spawns.get(marker);
     if (spawned !== undefined) {
         return spawned;

@@ -14,7 +14,7 @@ import {
     SpritePopExtension,
     type SpritePopProps,
 } from '$lib/services/map/renderer/clustered/spritePopExtension';
-import {latestSpawnTime, spawnTimeFor} from '$lib/services/map/renderer/clustered/spriteSpawns';
+import {latestSpawnTime, spawnStamp} from '$lib/services/map/renderer/clustered/spriteSpawns';
 import type {Layer} from '@deck.gl/core';
 import {IconLayer, ScatterplotLayer, TextLayer} from '@deck.gl/layers';
 
@@ -60,7 +60,7 @@ function markerLayer(data: MarkerPoint[], latestSpawn: number, handlers: LayerHa
         getPosition: point => point.position,
         getIcon: point => markerSpriteFor(point.marker),
         getSize: MARKER_SPRITE_SIZE,
-        getSpawnTime: point => spawnTimeFor(point.marker),
+        getSpawnTime: point => spawnStamp(point.marker),
         latestSpawn,
         extensions: [SPRITE_POP],
         sizeUnits: 'pixels',
