@@ -70,7 +70,7 @@ export class DragController {
         };
     }
 
-    private startDrag(marker: Marker) {
+    public startDrag(marker: Marker) {
         const element = marker.getHandle()?.getElement();
         if (!element) {
             return;
@@ -102,23 +102,26 @@ export class DragController {
     }
 
     private handlePointerUp(marker: Marker) {
-        return () => {
-            removeDragTimeout();
-            this.removeMapMoveListener(marker);
-            this.provider.setDraggable(true);
-            if (marker.isDragged) {
-                marker.isDragged = false;
-                marker.options.onDragEnd?.();
-            }
-            marker.getHandle()?.getElement()?.classList.remove('marker-dragging');
+        return () => this.endDrag(marker);
+    }
 
-            // gmp-click often does not fire after drag release; skipClick would otherwise stay true.
-            setTimeout(() => {
-                if (this.skipClick) {
-                    this.skipClick = false;
-                }
-            }, 0);
-        };
+    /** Safe to call more than once: a release can reach us from the element and from the map. */
+    public endDrag(marker: Marker): void {
+        removeDragTimeout();
+        this.removeMapMoveListener(marker);
+        this.provider.setDraggable(true);
+        if (marker.isDragged) {
+            marker.isDragged = false;
+            marker.options.onDragEnd?.();
+        }
+        marker.getHandle()?.getElement()?.classList.remove('marker-dragging');
+
+        // gmp-click often does not fire after drag release; skipClick would otherwise stay true.
+        setTimeout(() => {
+            if (this.skipClick) {
+                this.skipClick = false;
+            }
+        }, 0);
     }
 
     private removeMapMoveListener(marker: Marker) {

@@ -68,6 +68,21 @@ export class DomMarkerRenderer implements MarkerRenderer {
         });
     }
 
+    /** Shows a marker without the pop animation, which would blank it mid-gesture. */
+    public reveal(marker: Marker): void {
+        this.applyState(marker);
+        marker.show();
+    }
+
+    /** Starts a drag on a marker that was pressed elsewhere, e.g. handed over from the GPU renderer. */
+    public beginDrag(marker: Marker): void {
+        this.dragController.startDrag(marker);
+    }
+
+    public endDrag(marker: Marker): void {
+        this.dragController.endDrag(marker);
+    }
+
     public applyState(marker: Marker): void {
         this.styler.apply(marker);
     }
