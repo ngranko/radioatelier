@@ -9,7 +9,7 @@ import {
     markerSpriteFor,
 } from '$lib/services/map/renderer/clustered/markerSprites';
 import {handleClusteredPickingClick} from '$lib/services/map/renderer/clustered/pickingClick';
-import {latestExit, type SpriteExit} from '$lib/services/map/renderer/clustered/spriteExits';
+import {latestExitTime, type SpriteExit} from '$lib/services/map/renderer/clustered/spriteExits';
 import {SPRITE_FADE_MS, type SpriteFade} from '$lib/services/map/renderer/clustered/spriteFades';
 import {
     SPRITE_POP_OUT_MS,
@@ -92,7 +92,7 @@ function exitingMarkerLayer(data: SpriteExit[]) {
         billboard: true,
         pickable: false,
         getPopTime: exit => exit.leftAt,
-        latestPop: latestExit(data),
+        latestPop: latestExitTime(data),
         extensions: [SPRITE_POP_OUT],
     });
 }

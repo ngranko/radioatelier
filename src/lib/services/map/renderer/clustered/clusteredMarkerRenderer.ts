@@ -8,7 +8,7 @@ import {
     type MarkerPoint,
     MarkerClusterIndex,
 } from '$lib/services/map/renderer/clustered/markerClusterIndex';
-import {SpriteExitTracker} from '$lib/services/map/renderer/clustered/spriteExits';
+import {type SpriteExit, SpriteExitTracker} from '$lib/services/map/renderer/clustered/spriteExits';
 import {
     SPRITE_FADE_MS,
     type SpriteFade,
@@ -76,7 +76,7 @@ export class ClusteredMarkerRenderer implements MarkerRenderer {
             // The DOM twin owns this one's exit; a sprite copy would animate on top of it.
             this.excludedMarker = undefined;
         } else {
-            this.exitTracker.start(marker);
+            this.exitTracker.keep(marker);
         }
         this.indexDirty = true;
         this.scheduleRender();
@@ -150,12 +150,12 @@ export class ClusteredMarkerRenderer implements MarkerRenderer {
             ),
         );
         this.keepFadesRunning(fades);
-        this.dropExitsWhenDone(exits.length > 0);
+        this.keepExitsRunning(exits);
     }
 
     /** The shader animates the exit; this render only takes the finished sprites back out. */
-    private dropExitsWhenDone(hasExits: boolean): void {
-        if (!hasExits || this.exitTimeout !== undefined) {
+    private keepExitsRunning(exits: SpriteExit[]): void {
+        if (exits.length === 0 || this.exitTimeout !== undefined) {
             return;
         }
         this.exitTimeout = setTimeout(() => {

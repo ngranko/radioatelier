@@ -20,7 +20,7 @@ export interface SpriteExit {
 export class SpriteExitTracker {
     private exits: SpriteExit[] = [];
 
-    public start(marker: Marker): void {
+    public keep(marker: Marker): void {
         const {lat, lng} = marker.getPosition();
         this.exits.push({
             position: [lng, lat],
@@ -41,6 +41,6 @@ export class SpriteExitTracker {
     }
 }
 
-export function latestExit(exits: SpriteExit[]): number {
+export function latestExitTime(exits: SpriteExit[]): number {
     return exits.length === 0 ? 0 : Math.max(...exits.map(exit => exit.leftAt));
 }

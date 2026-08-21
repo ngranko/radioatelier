@@ -22,7 +22,7 @@ const GROW = `1.0 + fromEnd * fromEnd * ((${OVERSHOOT} + 1.0) * fromEnd + ${OVER
 // The reverse of --animate-popout's curve: slow to let go, then quick.
 const SHRINK = '1.0 - progress * progress * progress';
 
-function declaration(reverse: boolean): string {
+function popScaleSource(reverse: boolean): string {
     return `
 in float instancePopTimes;
 
@@ -66,7 +66,7 @@ export class SpritePopExtension extends LayerExtension<SpritePopOptions> {
         return {
             modules: [popUniforms],
             inject: {
-                'vs:#decl': declaration(extension.options().reverse ?? false),
+                'vs:#decl': popScaleSource(extension.options().reverse ?? false),
                 'vs:DECKGL_FILTER_SIZE': 'size *= spritePop_getScale();',
             },
         };
