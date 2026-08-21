@@ -14,6 +14,7 @@ const VISITED_EDGE_RADIUS = 13;
 const VISITED_EDGE_OPACITY = 0.3;
 const GLYPH_SIZE = 14;
 const HALO_OPACITY = 0.4;
+const REMOVED_OPACITY = 0.5;
 const VISITED_RING = '#39ff14';
 const PLAIN_RING = '#ffffff';
 const SHADOW_OFFSET = 2;
@@ -21,6 +22,14 @@ const SHADOW_DEVIATION = 2;
 const SHADOW_OPACITY = 0.2;
 // Sprites are rasterised at twice their on-screen size so the atlas stays sharp on retina displays.
 const RASTER_SCALE = 2;
+
+export interface SpriteStyle {
+    color: string;
+    iconKey: MarkerIconKey;
+    isVisited: boolean;
+    isRemoved: boolean;
+    withHalo: boolean;
+}
 
 export interface MarkerSprite {
     id: string;
@@ -33,8 +42,14 @@ export interface MarkerSprite {
 const sprites = new Map<string, MarkerSprite>();
 
 export function markerSpriteFor(marker: Marker, withHalo = true): MarkerSprite {
-    const iconKey = marker.options.iconKey ?? 'landmark';
-    return markerSprite(marker.options.color, iconKey, marker.getState().isVisited, withHalo);
+    const {isVisited, isRemoved} = marker.getState();
+    return markerSprite({
+        color: marker.options.color,
+        iconKey: marker.options.iconKey ?? 'landmark',
+        isVisited,
+        isRemoved,
+        withHalo,
+    });
 }
 
 /**
@@ -43,15 +58,11 @@ export function markerSpriteFor(marker: Marker, withHalo = true): MarkerSprite {
  * up painted over every disk, while one sprite occludes its neighbours whole.
  *
  * The halo-less variant exists for crossfades: stacking it over a full sprite swaps the disk
- * without compositing two translucent halos into a darker ring.
+ * without compositing two translucent halos into a darker ring. Every state lives in the sprite,
+ * including removal, so the layer needs no per-instance colour and cannot mis-tween on reorder.
  */
-export function markerSprite(
-    color: string,
-    iconKey: MarkerIconKey,
-    isVisited: boolean,
-    withHalo = true,
-): MarkerSprite {
-    const id = `${iconKey}:${color}:${isVisited ? 'visited' : 'plain'}:${withHalo ? 'halo' : 'core'}`;
+export function markerSprite(style: SpriteStyle): MarkerSprite {
+    const id = spriteId(style);
     const cached = sprites.get(id);
     if (cached) {
         return cached;
@@ -60,7 +71,7 @@ export function markerSprite(
     const size = MARKER_SPRITE_SIZE * RASTER_SCALE;
     const sprite: MarkerSprite = {
         id,
-        url: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(spriteSvg(color, iconKey, isVisited, withHalo))}`,
+        url: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(spriteSvg(style))}`,
         width: size,
         height: size,
         mask: false,
@@ -69,12 +80,12 @@ export function markerSprite(
     return sprite;
 }
 
-function spriteSvg(
-    color: string,
-    iconKey: MarkerIconKey,
-    isVisited: boolean,
-    withHalo: boolean,
-): string {
+function spriteId({color, iconKey, isVisited, isRemoved, withHalo}: SpriteStyle): string {
+    const state = [isVisited ? 'visited' : 'plain', isRemoved ? 'removed' : 'present'];
+    return [iconKey, color, ...state, withHalo ? 'halo' : 'core'].join(':');
+}
+
+function spriteSvg({color, iconKey, isVisited, isRemoved, withHalo}: SpriteStyle): string {
     const center = MARKER_SPRITE_SIZE / 2;
     const fill = sRgbCss(color);
     const glyphOffset = center - GLYPH_SIZE / 2;
@@ -82,13 +93,14 @@ function spriteSvg(
 
     return [
         `<svg xmlns="http://www.w3.org/2000/svg" width="${MARKER_SPRITE_SIZE * RASTER_SCALE}" height="${MARKER_SPRITE_SIZE * RASTER_SCALE}" viewBox="0 0 ${MARKER_SPRITE_SIZE} ${MARKER_SPRITE_SIZE}">`,
+        `<g opacity="${isRemoved ? REMOVED_OPACITY : 1}">`,
         withHalo ? shadowSvg(center) : '',
         withHalo ? circle(center, HALO_RADIUS, fill, HALO_OPACITY) : '',
         circle(center, RING_RADIUS, isVisited ? VISITED_RING : PLAIN_RING),
         isVisited ? circle(center, VISITED_EDGE_RADIUS, '#000000', VISITED_EDGE_OPACITY) : '',
         circle(center, DISK_RADIUS, fill),
         `<g transform="translate(${glyphOffset} ${glyphOffset}) scale(${glyphScale})">${MARKER_GLYPHS[iconKey]}</g>`,
-        '</svg>',
+        '</g></svg>',
     ].join('');
 }
 
