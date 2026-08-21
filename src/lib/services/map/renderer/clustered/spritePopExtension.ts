@@ -22,9 +22,9 @@ in float instanceSpawnTimes;
 
 float spritePop_scale() {
   float elapsed = spritePop.now - instanceSpawnTimes;
-  float t = clamp(elapsed / spritePop.duration, 0.0, 1.0);
-  float p = t - 1.0;
-  return 1.0 + p * p * ((${OVERSHOOT} + 1.0) * p + ${OVERSHOOT});
+  float progress = clamp(elapsed / spritePop.duration, 0.0, 1.0);
+  float fromEnd = progress - 1.0;
+  return 1.0 + fromEnd * fromEnd * ((${OVERSHOOT} + 1.0) * fromEnd + ${OVERSHOOT});
 }
 `;
 
