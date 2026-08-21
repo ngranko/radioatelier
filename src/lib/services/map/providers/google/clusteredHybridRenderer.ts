@@ -22,7 +22,8 @@ export class ClusteredHybridRenderer implements MarkerRenderer {
     private promoted?: Marker;
     private dragging?: Marker;
     private dragGesture?: SpriteDragGesture;
-    private retireTimeout?: ReturnType<typeof setTimeout>;
+    private retirements = new Map<Marker, ReturnType<typeof setTimeout>>();
+    private destroyed = false;
     private unsubscribeClustering: () => void;
     private unsubscribeFocus: () => void;
 
@@ -94,7 +95,11 @@ export class ClusteredHybridRenderer implements MarkerRenderer {
     }
 
     public destroy(): void {
-        clearTimeout(this.retireTimeout);
+        this.destroyed = true;
+        for (const timeout of this.retirements.values()) {
+            clearTimeout(timeout);
+        }
+        this.retirements.clear();
         this.detachDragGesture();
         this.unsubscribeClustering();
         this.unsubscribeFocus();
@@ -123,22 +128,28 @@ export class ClusteredHybridRenderer implements MarkerRenderer {
 
     /** Hands a marker back to the GPU layer: sprite first, DOM twin only once that render landed. */
     private retire(marker: Marker, delayMs: number): void {
-        clearTimeout(this.retireTimeout);
-        this.retireTimeout = setTimeout(() => {
+        clearTimeout(this.retirements.get(marker));
+        const timeout = setTimeout(() => {
+            this.retirements.delete(marker);
             if (this.promoted === marker) {
                 return;
             }
-            this.clustered.setExcludedMarker(this.promoted);
+            // Promotion already excluded whatever holds the slot now; a marker still on its way
+            // out owns it until it lands, so only the last one standing hands the sprite back.
+            if (!this.promoted && this.retirements.size === 0) {
+                this.clustered.setExcludedMarker(undefined);
+            }
             // Idle means the layers were handed to deck, not yet painted, hence the extra frame:
             // overlapping for one frame reads better than a frame with no marker at all.
             markerLifecycle.onNextIdle(() =>
                 requestAnimationFrame(() => {
-                    if (this.promoted !== marker) {
+                    if (!this.destroyed && this.promoted !== marker) {
                         this.dom.hide(marker);
                     }
                 }),
             );
         }, delayMs);
+        this.retirements.set(marker, timeout);
     }
 
     private attachDragGesture(provider: GoogleMapsProvider): void {
