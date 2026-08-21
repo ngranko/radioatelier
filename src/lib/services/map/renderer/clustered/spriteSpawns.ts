@@ -10,7 +10,6 @@ export function popClock(): number {
     return performance.now() - epoch;
 }
 
-/** Newest stamp in `points`, so the layer knows how long to keep asking for frames. */
 export function latestSpawnTime(points: MarkerPoint[]): number {
     let newest = 0;
     for (const point of points) {
@@ -19,7 +18,6 @@ export function latestSpawnTime(points: MarkerPoint[]): number {
     return newest;
 }
 
-/** First read stamps the marker; later reads keep that stamp so a cluster cannot re-pop it. */
 export function spawnStamp(marker: Marker): number {
     const spawned = spawns.get(marker);
     if (spawned !== undefined) {
