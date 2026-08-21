@@ -102,7 +102,7 @@ Viewport selection scans the catalog cheaply, while applying its result costs on
 - `VisibilityEngine` diffs the selected ids against the repository's visible set, so it touches only markers entering or leaving the viewport rather than walking every marker.
 - The resulting diff is applied under a time budget (`frameBudgetMs`, default 8 ms) rather than a fixed chunk count: small diffs finish synchronously in the same tick, large ones yield to the browser between `requestAnimationFrame` batches so slow devices stay interactive.
 
-The clustered renderer indexes all list markers and asks Supercluster for the current zoom's world-level cluster set. With the expected 2,000–2,500 marker catalog this avoids viewport churn during pan: Google Maps moves the existing GPU overlay, and the cluster set is refreshed after zoom settles. It does not run DOM entrance animations for list markers.
+The clustered renderer indexes all list markers and asks Supercluster for the current zoom's world-level cluster set. With the expected 2,000–2,500 marker catalog this avoids viewport churn during pan: Google Maps moves the existing GPU overlay, and the cluster set is refreshed after zoom settles. It does not run DOM entrance animations for list markers; its markers grow in on the GPU instead (see below).
 
 ## Marker entrance animation
 
@@ -113,7 +113,11 @@ Both ends of the animation are driven by the marker itself rather than by wall-c
 - **Start** — `popIn` hides the element and waits for `RevealWatcher` (`renderer/dom/revealWatcher.ts`) before queuing `animate-popin`. The Maps API attaches marker content several frames before positioning it, and until then paints it far outside the viewport; a CSS animation started at attach time therefore spends its growth phase where nobody can see it. `checkVisibility()` cannot catch this — it reads style visibility, never geometry — so the gate is an `IntersectionObserver`. Once revealed, the marker is painted once at zero scale before its animation starts. Starts are capped per frame so a large intersection batch cannot promote hundreds of animated layers in one long task. The marker's transform transition is suspended during this sequence so it cannot interpolate the zero-scale hold. After `REVEAL_TIMEOUT_MS` the animation is queued regardless, so a marker the map never positions cannot stay hidden.
 - **End** — teardown hangs off the animation's own `animationend` / `animationcancel`, so the class stays until playback finishes. Previously a wall-clock timer stripped the class before the animation had played whenever the draw was late — which is what happens when a pan brings hundreds of markers in at once.
 
-`hide()` and `remove()` cancel a pending pop-in so a marker leaving mid-animation cannot keep it. Deck markers have no entrance animation — they are one batched layer — and hiding is never animated (see the comment on `Marker.hide`).
+`hide()` and `remove()` cancel a pending pop-in so a marker leaving mid-animation cannot keep it. Hiding is never animated, in either renderer (see the comment on `Marker.hide`).
+
+Sprites in the clustered renderer grow in too, but nothing about the DOM sequence carries over: there is no element to attach an animation to and no reveal to wait for, since a sprite is drawn only once the layer draws it. `SpritePopExtension` (`renderer/clustered/spritePopExtension.ts`) scales the quad in the vertex shader, through deck.gl's `DECKGL_FILTER_SIZE` hook, from an `instanceSpawnTimes` attribute and a `now` uniform it refreshes every draw. deck.gl's own attribute transitions cannot do this: `padBuffer` seeds a newly added instance with its final value, so it has nothing to ease from. That is load-bearing elsewhere, as it is also why growing the data does not make settled markers animate.
+
+`spriteSpawns.ts` stamps each marker the first time the layer draws it and keeps that stamp for good, so a marker pops when it joins the map rather than every time a cluster hands it back. The whole entrance is one float per marker with no per-frame CPU work, so an arriving batch costs the same whether it is 5 markers or 2,500. While anything is still growing the layer asks for its own frames through `setNeedsRedraw()`, because nothing else drives them when the map sits still.
 
 ## Map interactions
 
