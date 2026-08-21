@@ -10,15 +10,15 @@ export function popClock(): number {
     return performance.now() - epoch;
 }
 
-export function latestSpawnTime(points: MarkerPoint[]): number {
+export function getLatestSpawnTime(points: MarkerPoint[]): number {
     let newest = 0;
     for (const point of points) {
-        newest = Math.max(newest, spawnStamp(point.marker));
+        newest = Math.max(newest, stampSpawn(point.marker));
     }
     return newest;
 }
 
-export function spawnStamp(marker: Marker): number {
+export function stampSpawn(marker: Marker): number {
     const spawned = spawns.get(marker);
     if (spawned !== undefined) {
         return spawned;
