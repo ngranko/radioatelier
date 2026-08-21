@@ -14,7 +14,7 @@ import {
     SpritePopExtension,
     type SpritePopProps,
 } from '$lib/services/map/renderer/clustered/spritePopExtension';
-import {registerSpawns, spawnTimeFor} from '$lib/services/map/renderer/clustered/spriteSpawns';
+import {latestSpawnTime, spawnTimeFor} from '$lib/services/map/renderer/clustered/spriteSpawns';
 import type {Layer} from '@deck.gl/core';
 import {IconLayer, ScatterplotLayer, TextLayer} from '@deck.gl/layers';
 
@@ -38,7 +38,7 @@ export function buildClusteredLayers(
         .filter((point): point is MarkerPoint => point.kind === 'marker')
         .sort(northToSouth);
     const clusters = points.filter((point): point is ClusterPoint => point.kind === 'cluster');
-    const latestSpawn = registerSpawns(markers);
+    const latestSpawn = latestSpawnTime(markers);
 
     return [
         markerLayer(markers, latestSpawn, handlers),

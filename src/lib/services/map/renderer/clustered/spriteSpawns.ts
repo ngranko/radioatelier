@@ -10,12 +10,8 @@ export function popClock(): number {
     return performance.now() - epoch;
 }
 
-/**
- * Stamps every marker the layer has not drawn before, and reports the newest stamp so the layer
- * knows how long to keep asking for frames. A marker keeps its first stamp for good: it pops when
- * it joins the map, not every time a cluster happens to hand it back.
- */
-export function registerSpawns(points: MarkerPoint[]): number {
+/** Newest stamp in `points`, so the layer knows how long to keep asking for frames. */
+export function latestSpawnTime(points: MarkerPoint[]): number {
     let newest = 0;
     for (const point of points) {
         newest = Math.max(newest, spawnTimeFor(point.marker));
@@ -23,6 +19,7 @@ export function registerSpawns(points: MarkerPoint[]): number {
     return newest;
 }
 
+/** First read stamps the marker; later reads keep that stamp so a cluster cannot re-pop it. */
 export function spawnTimeFor(marker: Marker): number {
     const spawned = spawns.get(marker);
     if (spawned !== undefined) {

@@ -1,7 +1,7 @@
 import type {Marker} from '$lib/services/map/marker';
 import {describe, expect, it} from 'vitest';
 import type {MarkerPoint} from './markerClusterIndex';
-import {popClock, registerSpawns, spawnTimeFor} from './spriteSpawns';
+import {latestSpawnTime, popClock, spawnTimeFor} from './spriteSpawns';
 
 function markerPoint(): MarkerPoint {
     return {kind: 'marker', position: [37.61, 55.75], marker: {} as Marker};
@@ -12,17 +12,17 @@ describe('spawn stamps', () => {
         const point = markerPoint();
 
         const first = spawnTimeFor(point.marker);
-        registerSpawns([point]);
+        latestSpawnTime([point]);
 
         expect(spawnTimeFor(point.marker)).toBe(first);
     });
 
     it('reports the newest stamp, which is how long the layer keeps animating', () => {
         const older = markerPoint();
-        registerSpawns([older]);
+        latestSpawnTime([older]);
         const newer = markerPoint();
 
-        const newest = registerSpawns([older, newer]);
+        const newest = latestSpawnTime([older, newer]);
 
         expect(newest).toBe(spawnTimeFor(newer.marker));
         expect(newest).toBeGreaterThanOrEqual(spawnTimeFor(older.marker));
