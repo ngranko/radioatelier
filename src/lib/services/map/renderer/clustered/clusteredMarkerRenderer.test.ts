@@ -4,6 +4,7 @@ import {markerLifecycle} from '$lib/services/map/markerLifecycle';
 import type {DeckOverlayHost} from '$lib/services/map/providers/google/deckOverlayHost';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {ClusteredMarkerRenderer} from './clusteredMarkerRenderer';
+import { SPRITE_POP_OUT_MS } from './spritePopExtension';
 
 function marker(lat = 55.75, lng = 37.61): Marker {
     return {
@@ -164,7 +165,7 @@ describe('ClusteredMarkerRenderer', () => {
         expect(layerLength(setLayers, 'clustered-marker')).toBe(0);
         expect(layerLength(setLayers, 'clustered-marker-exit')).toBe(1);
 
-        vi.advanceTimersByTime(150);
+        vi.advanceTimersByTime(SPRITE_POP_OUT_MS);
         flush(frames);
 
         expect(layerLength(setLayers, 'clustered-marker-exit')).toBe(0);

@@ -1,7 +1,7 @@
 import type {Layer} from '@deck.gl/core';
 import {describe, expect, it, vi} from 'vitest';
 import {SPRITE_POP_IN_MS, SPRITE_POP_OUT_MS, SpritePopExtension} from './spritePopExtension';
-import {getPopClock} from './spriteSpawns';
+import {readPopTime} from './spriteSpawns';
 
 function createFakeLayer(latestPop: number) {
     const attributeManager = {addInstanced: vi.fn()};
@@ -35,7 +35,7 @@ describe('SpritePopExtension', () => {
     it('scales the quad through the size hook deck.gl exposes', () => {
         const {inject, modules} = shadersOf(new SpritePopExtension());
 
-        expect(inject['vs:DECKGL_FILTER_SIZE']).toBe('size *= spritePop_scale();');
+        expect(inject['vs:DECKGL_FILTER_SIZE']).toBe('size *= spritePop_getScale();');
         expect(inject['vs:#decl']).toContain('in float instancePopTimes;');
         expect(modules[0].uniformTypes).toEqual({now: 'f32', duration: 'f32'});
     });
@@ -45,7 +45,7 @@ describe('SpritePopExtension', () => {
         const shrinking = shadersOf(new SpritePopExtension({reverse: true})).inject['vs:#decl'];
 
         expect(growing).toContain('1.70158');
-        expect(shrinking).toContain('1.0 - t * t * t');
+        expect(shrinking).toContain('1.0 - progress * progress * progress');
     });
 
     it('carries the pop stamp as its own instanced attribute', () => {
@@ -59,8 +59,8 @@ describe('SpritePopExtension', () => {
     });
 
     it('asks for another frame only while a sprite is still moving', () => {
-        const animating = createFakeLayer(getPopClock());
-        const settled = createFakeLayer(getPopClock() - SPRITE_POP_IN_MS * 2);
+        const animating = createFakeLayer(readPopTime());
+        const settled = createFakeLayer(readPopTime() - SPRITE_POP_IN_MS * 2);
 
         callOn(new SpritePopExtension(), 'draw', animating);
         callOn(new SpritePopExtension(), 'draw', settled);
@@ -70,7 +70,7 @@ describe('SpritePopExtension', () => {
     });
 
     it('animates an exit over its own shorter duration', () => {
-        const layer = createFakeLayer(getPopClock());
+        const layer = createFakeLayer(readPopTime());
 
         callOn(
             new SpritePopExtension({reverse: true, durationMs: SPRITE_POP_OUT_MS}),
