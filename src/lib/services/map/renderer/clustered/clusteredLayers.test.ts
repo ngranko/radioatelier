@@ -35,6 +35,7 @@ describe('buildClusteredLayers', () => {
             {
                 onMarkerClick,
                 onClusterClick: vi.fn(),
+                requestFrame: vi.fn(),
             },
         );
         const disk = layers.find(layer => layer.id === 'clustered-marker');
@@ -54,6 +55,7 @@ describe('buildClusteredLayers', () => {
             {
                 onMarkerClick: vi.fn(),
                 onClusterClick,
+                requestFrame: vi.fn(),
             },
         );
         const disk = layers.find(layer => layer.id === 'marker-clusters');
