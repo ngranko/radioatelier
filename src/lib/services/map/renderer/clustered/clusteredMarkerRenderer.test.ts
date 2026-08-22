@@ -84,6 +84,7 @@ describe('ClusteredMarkerRenderer', () => {
         const layers = setLayers.mock.calls[0][0];
         expect(layers.map(layer => layer.id)).toEqual([
             'clustered-marker',
+            'clustered-marker-exit',
             'clustered-marker-fade',
             'marker-clusters',
             'marker-cluster-counts',
@@ -143,6 +144,50 @@ describe('ClusteredMarkerRenderer', () => {
 
         expect(layerLength(setLayers, 'clustered-marker-fade')).toBe(0);
         expect(markerLifecycle.isIdle).toBe(true);
+        renderer.destroy();
+    });
+
+    it('shrinks a removed marker away before dropping its sprite', () => {
+        const {frames, setLayers, overlay} = overlayHarness();
+        const renderer = new ClusteredMarkerRenderer(
+            {getZoom: () => 18} as MapProvider,
+            overlay,
+            vi.fn(),
+        );
+        const doomed = marker();
+        renderer.ensureCreated(doomed);
+        flush(frames);
+
+        renderer.remove(doomed);
+        flush(frames);
+
+        expect(layerLength(setLayers, 'clustered-marker')).toBe(0);
+        expect(layerLength(setLayers, 'clustered-marker-exit')).toBe(1);
+
+        vi.advanceTimersByTime(150);
+        flush(frames);
+
+        expect(layerLength(setLayers, 'clustered-marker-exit')).toBe(0);
+        expect(markerLifecycle.isIdle).toBe(true);
+        renderer.destroy();
+    });
+
+    it('leaves the exit to the DOM twin when the marker was promoted', () => {
+        const {frames, setLayers, overlay} = overlayHarness();
+        const renderer = new ClusteredMarkerRenderer(
+            {getZoom: () => 18} as MapProvider,
+            overlay,
+            vi.fn(),
+        );
+        const promoted = marker();
+        renderer.ensureCreated(promoted);
+        renderer.setExcludedMarker(promoted);
+        flush(frames);
+
+        renderer.remove(promoted);
+        flush(frames);
+
+        expect(layerLength(setLayers, 'clustered-marker-exit')).toBe(0);
         renderer.destroy();
     });
 

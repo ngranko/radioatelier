@@ -8,11 +8,13 @@ import {
     type MarkerPoint,
     MarkerClusterIndex,
 } from '$lib/services/map/renderer/clustered/markerClusterIndex';
+import {type SpriteExit, SpriteExitTracker} from '$lib/services/map/renderer/clustered/spriteExits';
 import {
     SPRITE_FADE_MS,
     type SpriteFade,
     SpriteFadeTracker,
 } from '$lib/services/map/renderer/clustered/spriteFades';
+import {SPRITE_POP_OUT_MS} from '$lib/services/map/renderer/clustered/spritePopExtension';
 import type {MarkerRenderer} from '$lib/services/map/renderer/markerRenderer';
 
 const RENDER_DEBOUNCE_MS = 16;
@@ -21,6 +23,7 @@ export class ClusteredMarkerRenderer implements MarkerRenderer {
     private markers = new Set<Marker>();
     private clusterIndex = new MarkerClusterIndex();
     private fadeTracker = new SpriteFadeTracker();
+    private exitTracker = new SpriteExitTracker();
     private excludedMarker?: Marker;
     private indexDirty = true;
     private scheduled = false;
@@ -28,6 +31,7 @@ export class ClusteredMarkerRenderer implements MarkerRenderer {
     private renderTimeout?: ReturnType<typeof setTimeout>;
     private renderFrame?: number;
     private fadeTimeout?: ReturnType<typeof setTimeout>;
+    private exitTimeout?: ReturnType<typeof setTimeout>;
 
     public constructor(
         private provider: MapProvider,
@@ -69,7 +73,10 @@ export class ClusteredMarkerRenderer implements MarkerRenderer {
     public remove(marker: Marker, onRemoved?: () => void): void {
         this.markers.delete(marker);
         if (this.excludedMarker === marker) {
+            // The DOM twin owns this one's exit; a sprite copy would animate on top of it.
             this.excludedMarker = undefined;
+        } else {
+            this.exitTracker.keep(marker);
         }
         this.indexDirty = true;
         this.scheduleRender();
@@ -100,6 +107,10 @@ export class ClusteredMarkerRenderer implements MarkerRenderer {
         if (this.fadeTimeout !== undefined) {
             clearTimeout(this.fadeTimeout);
         }
+        if (this.exitTimeout !== undefined) {
+            clearTimeout(this.exitTimeout);
+        }
+        this.exitTracker.clear();
         this.cancelScheduled();
         this.overlay.detach();
     }
@@ -127,13 +138,30 @@ export class ClusteredMarkerRenderer implements MarkerRenderer {
     private render(): void {
         const points = this.clusteringEnabled ? this.clusteredPoints() : this.individualPoints();
         const fades = this.fadeTracker.track(points);
+        const exits = this.exitTracker.listActive();
         this.overlay.setLayers(
-            buildClusteredLayers(points, fades, {
-                onMarkerClick: marker => this.handleMarkerClick(marker),
-                onClusterClick: cluster => this.handleClusterClick(cluster),
-            }),
+            buildClusteredLayers(
+                points,
+                {fades, exits},
+                {
+                    onMarkerClick: marker => this.handleMarkerClick(marker),
+                    onClusterClick: cluster => this.handleClusterClick(cluster),
+                },
+            ),
         );
         this.keepFadesRunning(fades);
+        this.keepExitsRunning(exits);
+    }
+
+    /** The shader animates the exit; this render only takes the finished sprites back out. */
+    private keepExitsRunning(exits: SpriteExit[]): void {
+        if (exits.length === 0 || this.exitTimeout !== undefined) {
+            return;
+        }
+        this.exitTimeout = setTimeout(() => {
+            this.exitTimeout = undefined;
+            this.scheduleRender();
+        }, SPRITE_POP_OUT_MS);
     }
 
     /** A fade needs a second render to ease from and a last one to drop it once it has run out. */

@@ -1,12 +1,12 @@
 import type {Layer} from '@deck.gl/core';
 import {describe, expect, it, vi} from 'vitest';
-import {SPRITE_POP_MS, SpritePopExtension} from './spritePopExtension';
-import {getPopClock} from './spriteSpawns';
+import {SPRITE_POP_IN_MS, SPRITE_POP_OUT_MS, SpritePopExtension} from './spritePopExtension';
+import {readPopTime} from './spriteSpawns';
 
-function createFakeLayer(latestSpawn: number) {
+function createFakeLayer(latestPop: number) {
     const attributeManager = {addInstanced: vi.fn()};
     return {
-        props: {latestSpawn},
+        props: {latestPop},
         getAttributeManager: () => attributeManager,
         setShaderModuleProps: vi.fn(),
         setNeedsRedraw: vi.fn(),
@@ -14,46 +14,72 @@ function createFakeLayer(latestSpawn: number) {
     };
 }
 
-function callOn(layer: ReturnType<typeof createFakeLayer>, method: 'initializeState' | 'draw') {
-    const extension = new SpritePopExtension();
-    (extension[method] as (this: unknown, ...args: unknown[]) => void).call(
-        layer as unknown as Layer,
-        {},
-        extension,
-    );
+type Hook = (this: unknown, ...args: unknown[]) => unknown;
+
+function callOn(
+    extension: SpritePopExtension,
+    method: 'initializeState' | 'draw' | 'getShaders',
+    layer = createFakeLayer(0),
+) {
+    return (extension[method] as Hook).call(layer as unknown as Layer, {}, extension);
+}
+
+function shadersOf(extension: SpritePopExtension) {
+    return (extension.getShaders as Hook).call({}, extension) as {
+        inject: Record<string, string>;
+        modules: {name: string; uniformTypes: Record<string, string>}[];
+    };
 }
 
 describe('SpritePopExtension', () => {
     it('scales the quad through the size hook deck.gl exposes', () => {
-        const {inject, modules} = new SpritePopExtension().getShaders();
+        const {inject, modules} = shadersOf(new SpritePopExtension());
 
-        expect(inject['vs:DECKGL_FILTER_SIZE']).toBe('size *= spritePop_getScale();');
-        expect(inject['vs:#decl']).toContain('in float instanceSpawnTimes;');
-        expect(inject['vs:#decl']).toContain('clamp(');
+        expect(inject['vs:DECKGL_FILTER_SIZE']).toBe('size *= spritePop_scale();');
+        expect(inject['vs:#decl']).toContain('in float instancePopTimes;');
         expect(modules[0].uniformTypes).toEqual({now: 'f32', duration: 'f32'});
     });
 
-    it('carries the spawn stamp as its own instanced attribute', () => {
+    it('grows by default and shrinks when reversed', () => {
+        const growing = shadersOf(new SpritePopExtension()).inject['vs:#decl'];
+        const shrinking = shadersOf(new SpritePopExtension({reverse: true})).inject['vs:#decl'];
+
+        expect(growing).toContain('1.70158');
+        expect(shrinking).toContain('1.0 - t * t * t');
+    });
+
+    it('carries the pop stamp as its own instanced attribute', () => {
         const layer = createFakeLayer(0);
 
-        callOn(layer, 'initializeState');
+        callOn(new SpritePopExtension(), 'initializeState', layer);
 
         expect(layer.attributeManager.addInstanced).toHaveBeenCalledWith({
-            instanceSpawnTimes: {size: 1, accessor: 'getSpawnTime', defaultValue: 0},
+            instancePopTimes: {size: 1, accessor: 'getPopTime', defaultValue: 0},
         });
     });
 
-    it('asks for another frame only while a marker is still growing', () => {
-        const animating = createFakeLayer(getPopClock());
-        const settled = createFakeLayer(getPopClock() - SPRITE_POP_MS * 2);
+    it('asks for another frame only while a sprite is still moving', () => {
+        const animating = createFakeLayer(readPopTime());
+        const settled = createFakeLayer(readPopTime() - SPRITE_POP_IN_MS * 2);
 
-        callOn(animating, 'draw');
-        callOn(settled, 'draw');
+        callOn(new SpritePopExtension(), 'draw', animating);
+        callOn(new SpritePopExtension(), 'draw', settled);
 
         expect(animating.setNeedsRedraw).toHaveBeenCalled();
         expect(settled.setNeedsRedraw).not.toHaveBeenCalled();
-        expect(settled.setShaderModuleProps).toHaveBeenCalledWith({
-            spritePop: {now: expect.any(Number), duration: SPRITE_POP_MS},
+    });
+
+    it('animates an exit over its own shorter duration', () => {
+        const layer = createFakeLayer(readPopTime());
+
+        callOn(
+            new SpritePopExtension({reverse: true, durationMs: SPRITE_POP_OUT_MS}),
+            'draw',
+            layer,
+        );
+
+        expect(layer.setShaderModuleProps).toHaveBeenCalledWith({
+            spritePop: {now: expect.any(Number), duration: SPRITE_POP_OUT_MS},
         });
     });
 });
