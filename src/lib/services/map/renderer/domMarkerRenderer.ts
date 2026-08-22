@@ -2,14 +2,13 @@ import type {MapProvider} from '$lib/interfaces/map';
 import type {Marker} from '$lib/services/map/marker';
 import {DragController} from '$lib/services/map/renderer/dom/dragController';
 import {Factory} from '$lib/services/map/renderer/dom/factory';
+import {applyMarkerAppearance} from '$lib/services/map/renderer/dom/markerAppearance.svelte';
 import {PopAnimator} from '$lib/services/map/renderer/dom/popAnimation';
-import {Styler} from '$lib/services/map/renderer/dom/styler';
 import type {MarkerRenderer} from '$lib/services/map/renderer/markerRenderer';
 
 export class DomMarkerRenderer implements MarkerRenderer {
     private factory: Factory;
     private dragController: DragController;
-    private styler = new Styler();
     private popAnimator = new PopAnimator();
     private pendingRemoval = new WeakSet<Marker>();
 
@@ -84,7 +83,7 @@ export class DomMarkerRenderer implements MarkerRenderer {
     }
 
     public applyState(marker: Marker): void {
-        this.styler.apply(marker);
+        applyMarkerAppearance(marker);
     }
 
     public destroy(): void {

@@ -22,6 +22,8 @@ export type MarkerSource = 'map' | 'list' | 'search' | 'share' | 'draft';
 
 export type MarkerId = string;
 
+export type MarkerStyleUpdate = Pick<MarkerOptions, 'icon' | 'iconKey' | 'iconClassName' | 'color'>;
+
 export interface MarkerStateUpdate {
     isVisited?: boolean;
     isRemoved?: boolean;
