@@ -1,68 +1,44 @@
-import type {MapProvider} from '$lib/interfaces/map';
 import type {Marker} from '$lib/services/map/marker';
 import {markerLifecycle} from '$lib/services/map/markerLifecycle';
 import type {DeckOverlayHost} from '$lib/services/map/providers/google/deckOverlayHost';
-import {buildClusteredLayers} from '$lib/services/map/renderer/clustered/clusteredLayers';
-import {
-    type ClusterPoint,
-    type MarkerPoint,
-    MarkerClusterIndex,
-} from '$lib/services/map/renderer/clustered/markerClusterIndex';
-import {type SpriteExit, SpriteExitTracker} from '$lib/services/map/renderer/clustered/spriteExits';
+import {buildMarkerLayers} from '$lib/services/map/renderer/gpu/markerLayers';
+import {toMarkerPoints} from '$lib/services/map/renderer/gpu/markerPoints';
+import {SpriteExitTracker, type SpriteExit} from '$lib/services/map/renderer/gpu/spriteExits';
 import {
     SPRITE_FADE_MS,
     type SpriteFade,
     SpriteFadeTracker,
-} from '$lib/services/map/renderer/clustered/spriteFades';
-import {SPRITE_POP_OUT_MS} from '$lib/services/map/renderer/clustered/spritePopExtension';
+} from '$lib/services/map/renderer/gpu/spriteFades';
+import {SPRITE_POP_OUT_MS} from '$lib/services/map/renderer/gpu/spritePopExtension';
 import type {MarkerRenderer} from '$lib/services/map/renderer/markerRenderer';
 
 const RENDER_DEBOUNCE_MS = 16;
 
-export class ClusteredMarkerRenderer implements MarkerRenderer {
+export class GpuMarkerRenderer implements MarkerRenderer {
     private markers = new Set<Marker>();
-    private clusterIndex = new MarkerClusterIndex();
     private fadeTracker = new SpriteFadeTracker();
     private exitTracker = new SpriteExitTracker();
     private excludedMarker?: Marker;
-    private indexDirty = true;
     private scheduled = false;
-    private clusteringEnabled: boolean;
     private renderTimeout?: ReturnType<typeof setTimeout>;
     private renderFrame?: number;
     private fadeTimeout?: ReturnType<typeof setTimeout>;
     private exitTimeout?: ReturnType<typeof setTimeout>;
 
     public constructor(
-        private provider: MapProvider,
         private overlay: DeckOverlayHost,
         private onInteraction: () => void,
-        clusteringEnabled = true,
     ) {
-        this.clusteringEnabled = clusteringEnabled;
         this.overlay.attach();
-    }
-
-    public setClusteringEnabled(enabled: boolean): void {
-        if (this.clusteringEnabled === enabled) {
-            return;
-        }
-        this.clusteringEnabled = enabled;
-        this.scheduleRender();
     }
 
     public ensureCreated(marker: Marker): void {
         this.markers.add(marker);
-        this.indexDirty = true;
         this.scheduleRender();
     }
 
     public syncAll(iterable: Iterable<Marker>): void {
-        const nextMarkers = new Set(iterable);
-        if (!sameMembers(this.markers, nextMarkers)) {
-            this.markers = nextMarkers;
-            this.indexDirty = true;
-        }
+        this.markers = new Set(iterable);
         this.scheduleRender();
     }
 
@@ -78,7 +54,6 @@ export class ClusteredMarkerRenderer implements MarkerRenderer {
         } else {
             this.exitTracker.keep(marker);
         }
-        this.indexDirty = true;
         this.scheduleRender();
         onRemoved?.();
     }
@@ -92,7 +67,6 @@ export class ClusteredMarkerRenderer implements MarkerRenderer {
             return;
         }
         this.excludedMarker = marker;
-        this.indexDirty = true;
         this.scheduleRender();
     }
 
@@ -136,16 +110,15 @@ export class ClusteredMarkerRenderer implements MarkerRenderer {
     }
 
     private render(): void {
-        const points = this.clusteringEnabled ? this.clusteredPoints() : this.individualPoints();
+        const points = toMarkerPoints(this.renderedMarkers());
         const fades = this.fadeTracker.track(points);
         const exits = this.exitTracker.listActive();
         this.overlay.setLayers(
-            buildClusteredLayers(
+            buildMarkerLayers(
                 points,
                 {fades, exits},
                 {
                     onMarkerClick: marker => this.handleMarkerClick(marker),
-                    onClusterClick: cluster => this.handleClusterClick(cluster),
                     requestFrame: () => this.overlay.requestRedraw(),
                 },
             ),
@@ -180,24 +153,7 @@ export class ClusteredMarkerRenderer implements MarkerRenderer {
         }, SPRITE_FADE_MS);
     }
 
-    private clusteredPoints() {
-        if (this.indexDirty) {
-            this.clusterIndex.load(this.clusteredMarkers());
-            this.indexDirty = false;
-        }
-        return this.clusterIndex.getPoints(this.provider.getZoom());
-    }
-
-    private individualPoints(): MarkerPoint[] {
-        const points: MarkerPoint[] = [];
-        for (const marker of this.clusteredMarkers()) {
-            const {lat, lng} = marker.getPosition();
-            points.push({kind: 'marker', marker, position: [lng, lat]});
-        }
-        return points;
-    }
-
-    private *clusteredMarkers(): Iterable<Marker> {
+    private *renderedMarkers(): Iterable<Marker> {
         for (const marker of this.markers) {
             if (marker !== this.excludedMarker) {
                 yield marker;
@@ -210,21 +166,6 @@ export class ClusteredMarkerRenderer implements MarkerRenderer {
         marker.options.onClick?.();
     }
 
-    private handleClusterClick(cluster: ClusterPoint): void {
-        this.onInteraction();
-        const [lng, lat] = cluster.position;
-        const expansionZoom = this.clusterIndex.getExpansionZoom(
-            cluster.clusterId,
-            cluster.indexVersion,
-        );
-        if (expansionZoom === undefined) {
-            return;
-        }
-        const zoom = Math.min(this.provider.getMaxZoom(), expansionZoom);
-        this.provider.setCenter(lat, lng);
-        this.provider.setZoom(zoom);
-    }
-
     private cancelScheduled(): void {
         if (!this.scheduled) {
             return;
@@ -232,16 +173,4 @@ export class ClusteredMarkerRenderer implements MarkerRenderer {
         this.scheduled = false;
         markerLifecycle.end();
     }
-}
-
-function sameMembers(current: ReadonlySet<Marker>, next: ReadonlySet<Marker>): boolean {
-    if (current.size !== next.size) {
-        return false;
-    }
-    for (const marker of current) {
-        if (!next.has(marker)) {
-            return false;
-        }
-    }
-    return true;
 }

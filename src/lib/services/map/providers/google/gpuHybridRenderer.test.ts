@@ -1,8 +1,8 @@
 import type {Marker} from '$lib/services/map/marker';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
-import {ClusteredHybridRenderer} from './clusteredHybridRenderer';
+import {GpuHybridRenderer} from './gpuHybridRenderer';
 
-describe('ClusteredHybridRenderer', () => {
+describe('GpuHybridRenderer', () => {
     let frames: FrameRequestCallback[] = [];
 
     // Running frames on request would hide the boundary the retirement relies on.
@@ -14,10 +14,10 @@ describe('ClusteredHybridRenderer', () => {
         }
     }
 
-    function createRenderer(parts: Record<string, unknown>): ClusteredHybridRenderer {
+    function createRenderer(parts: Record<string, unknown>): GpuHybridRenderer {
         const renderer = Object.create(
-            ClusteredHybridRenderer.prototype,
-        ) as ClusteredHybridRenderer;
+            GpuHybridRenderer.prototype,
+        ) as GpuHybridRenderer;
         Object.assign(renderer, {retirements: new Map(), destroyed: false}, parts);
         return renderer;
     }
@@ -39,20 +39,20 @@ describe('ClusteredHybridRenderer', () => {
     it('does not hide the DOM marker while it is promoted', () => {
         const marker = {usesDomRenderer: () => false} as Marker;
         const domHide = vi.fn();
-        const clusteredHide = vi.fn();
+        const gpuHide = vi.fn();
         const renderer = createRenderer({
             dom: {hide: domHide},
-            clustered: {hide: clusteredHide},
+            gpu: {hide: gpuHide},
             promoted: marker,
         });
 
         renderer.hide(marker);
         expect(domHide).not.toHaveBeenCalled();
-        expect(clusteredHide).not.toHaveBeenCalled();
+        expect(gpuHide).not.toHaveBeenCalled();
 
         Object.assign(renderer, {promoted: undefined});
         renderer.hide(marker);
-        expect(clusteredHide).toHaveBeenCalledWith(marker);
+        expect(gpuHide).toHaveBeenCalledWith(marker);
     });
 
     it('hands a held sprite to the DOM renderer and takes it back on release', () => {
@@ -64,14 +64,14 @@ describe('ClusteredHybridRenderer', () => {
             beginDrag: vi.fn(),
             endDrag: vi.fn(),
         };
-        const clustered = {setExcludedMarker: vi.fn()};
+        const gpu = {setExcludedMarker: vi.fn()};
         const onInteraction = vi.fn();
-        const renderer = createRenderer({dom, clustered, onInteraction});
+        const renderer = createRenderer({dom, gpu, onInteraction});
         const gestures = renderer as unknown as {startDrag(m: Marker): void; endDrag(): void};
 
         gestures.startDrag(marker);
 
-        expect(clustered.setExcludedMarker).toHaveBeenCalledWith(marker);
+        expect(gpu.setExcludedMarker).toHaveBeenCalledWith(marker);
         expect(dom.ensureCreated).toHaveBeenCalledWith(marker);
         expect(dom.reveal).toHaveBeenCalledWith(marker);
         expect(dom.beginDrag).toHaveBeenCalledWith(marker);
@@ -82,7 +82,7 @@ describe('ClusteredHybridRenderer', () => {
 
         expect(dom.endDrag).toHaveBeenCalledWith(marker);
         expect(dom.hide).toHaveBeenCalledWith(marker);
-        expect(clustered.setExcludedMarker).toHaveBeenLastCalledWith(undefined);
+        expect(gpu.setExcludedMarker).toHaveBeenLastCalledWith(undefined);
         // Claims the click Maps fires on release, which would otherwise create an object.
         expect(onInteraction).toHaveBeenCalledOnce();
     });
@@ -99,8 +99,8 @@ describe('ClusteredHybridRenderer', () => {
     it('keeps the sprite hidden until the highlight has scaled back down', () => {
         const marker = {usesDomRenderer: () => false} as Marker;
         const dom = {ensureCreated: vi.fn(), reveal: vi.fn(), hide: vi.fn()};
-        const clustered = {setExcludedMarker: vi.fn()};
-        const renderer = createRenderer({dom, clustered});
+        const gpu = {setExcludedMarker: vi.fn()};
+        const renderer = createRenderer({dom, gpu});
         const focus = renderer as unknown as {promote(m: Marker | undefined): void};
 
         focus.promote(marker);
@@ -108,11 +108,12 @@ describe('ClusteredHybridRenderer', () => {
 
         focus.promote(undefined);
         // Both markers would be drawn at once, doubling the halo, if the sprite came back now.
-        expect(clustered.setExcludedMarker).toHaveBeenLastCalledWith(marker);
+        expect(gpu.setExcludedMarker).toHaveBeenLastCalledWith(marker);
         expect(dom.hide).not.toHaveBeenCalled();
 
         vi.runAllTimers();
-        expect(clustered.setExcludedMarker).toHaveBeenLastCalledWith(undefined);
+        
+        expect(gpu.setExcludedMarker).toHaveBeenLastCalledWith(undefined);
         expect(dom.hide).not.toHaveBeenCalled();
 
         flushFrames();

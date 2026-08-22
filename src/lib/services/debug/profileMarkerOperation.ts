@@ -3,7 +3,7 @@ import {tick} from 'svelte';
 import {LoadSampler, type LoadSample} from './loadSampler';
 
 export type ProfileOperation = 'add' | 'remove';
-export type ProfileRenderer = 'dom' | 'deck' | 'clustered';
+export type ProfileRenderer = 'dom' | 'deck' | 'gpu';
 
 export interface ProfileResult {
     operation: ProfileOperation;

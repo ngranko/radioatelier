@@ -114,18 +114,18 @@ describe('MarkerManager', () => {
         expect(created[0].renderer.destroy).not.toHaveBeenCalled();
     });
 
-    it('keeps one GPU renderer at every zoom for the clustered strategy', () => {
+    it('keeps one GPU renderer at every zoom for the gpu strategy', () => {
         const {provider, getZoom} = makeProvider(15);
         const {factory, created} = makeRendererFactory();
         const manager = new MarkerManager(provider, factory, {
-            rendererStrategy: 'clustered',
+            rendererStrategy: 'gpu',
         });
         const marker = manager.addMarker('marker', {lat: 1, lng: 2}, markerOptions);
 
         getZoom.mockReturnValue(8);
         manager.syncRendererWithViewport();
 
-        expect(manager.isClusteredRenderer).toBe(true);
+        expect(manager.isGpuRenderer).toBe(true);
         expect(manager.isDeckRenderer).toBe(true);
         expect(created).toHaveLength(1);
         expect(created[0].mode).toBe('deck');

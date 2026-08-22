@@ -1,11 +1,11 @@
 import {describe, expect, it, vi} from 'vitest';
-import {handleClusteredPickingClick} from './pickingClick';
+import {handleSpritePickingClick} from './pickingClick';
 
-describe('handleClusteredPickingClick', () => {
+describe('handleSpritePickingClick', () => {
     it('invokes the pick handler before stopping the event', () => {
         const order: string[] = [];
 
-        handleClusteredPickingClick(
+        handleSpritePickingClick(
             {object: {id: 1}},
             {
                 srcEvent: {stop: () => order.push('stop')},
@@ -23,7 +23,7 @@ describe('handleClusteredPickingClick', () => {
         const onPick = vi.fn();
         const stop = vi.fn();
 
-        const handled = handleClusteredPickingClick({object: 'marker'}, {srcEvent: {stop}}, onPick);
+        const handled = handleSpritePickingClick({object: 'marker'}, {srcEvent: {stop}}, onPick);
 
         expect(handled).toBe(true);
         expect(onPick).toHaveBeenCalledWith('marker');
@@ -34,8 +34,8 @@ describe('handleClusteredPickingClick', () => {
         const onPick = vi.fn();
         const stopPropagation = vi.fn();
 
-        expect(handleClusteredPickingClick({object: null}, {stopPropagation}, onPick)).toBe(false);
-        expect(handleClusteredPickingClick({}, {stopPropagation}, onPick)).toBe(false);
+        expect(handleSpritePickingClick({object: null}, {stopPropagation}, onPick)).toBe(false);
+        expect(handleSpritePickingClick({}, {stopPropagation}, onPick)).toBe(false);
         expect(onPick).not.toHaveBeenCalled();
         expect(stopPropagation).not.toHaveBeenCalled();
     });
