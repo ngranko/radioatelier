@@ -13,6 +13,13 @@ import {findLatestPop, readPopTime} from '$lib/services/map/renderer/gpu/spriteP
 import type {Layer} from '@deck.gl/core';
 import {IconLayer} from '@deck.gl/layers';
 
+// Chrome ignores `premultiplyAlpha: 'none'` when an ImageBitmap is built from an <img>, and that is
+// the path loaders.gl takes for SVG icons. The atlas then holds premultiplied alpha while the icon
+// shader reads it as straight, darkening every translucent part of a sprite twice: a removed
+// marker's disk and every halo. Keeping the HTMLImageElement uploads straight alpha, so a sprite
+// matches its DOM twin pixel for pixel.
+const SPRITE_LOAD_OPTIONS = {image: {type: 'image'}} as const;
+
 const WHITE: [number, number, number] = [255, 255, 255];
 const OPAQUE = 255;
 const SPRITE_POP_IN = new SpritePopExtension();
@@ -51,6 +58,7 @@ function buildMarkerLayer(data: MarkerPoint[], latestPop: number, handlers: Laye
     return new IconLayer<MarkerPoint, SpritePopProps<MarkerPoint>>({
         id: 'gpu-marker',
         data,
+        loadOptions: SPRITE_LOAD_OPTIONS,
         getPosition: point => point.position,
         getIcon: point => markerSpriteFor(point.marker),
         getSize: MARKER_SPRITE_SIZE,
@@ -70,6 +78,7 @@ function buildExitingMarkerLayer(data: SpriteExit[]) {
     return new IconLayer<SpriteExit, SpritePopProps<SpriteExit>>({
         id: 'gpu-marker-exit',
         data,
+        loadOptions: SPRITE_LOAD_OPTIONS,
         getPosition: exit => exit.position,
         getIcon: exit => exit.sprite,
         getSize: MARKER_SPRITE_SIZE,
@@ -87,6 +96,7 @@ function buildFadingMarkerLayer(data: SpriteFade[]) {
     return new IconLayer<SpriteFade>({
         id: 'gpu-marker-fade',
         data,
+        loadOptions: SPRITE_LOAD_OPTIONS,
         getPosition: fade => fade.point.position,
         getIcon: fade => fade.sprite,
         getColor: fade => [...WHITE, fade.fresh ? OPAQUE : 0],

@@ -105,11 +105,17 @@ export class GpuHybridRenderer implements MarkerRenderer {
         const previous = this.promoted;
         this.promoted = marker && !marker.usesDomRenderer() ? marker : undefined;
         if (this.promoted) {
-            this.gpu.setExcludedMarker(this.promoted);
-            this.dom.ensureCreated(this.promoted);
+            const promoted = this.promoted;
+            this.dom.ensureCreated(promoted);
             // Deliberately not the pop animation: the marker is already on screen as a sprite, and
             // popping in from zero also pins an inline scale that the highlight cannot transition.
-            this.dom.reveal(this.promoted);
+            // The Maps API paints the twin several frames after it is shown, so the sprite holds
+            // the spot until then; dropping it any sooner leaves a frame with no marker at all.
+            this.dom.reveal(promoted, () => {
+                if (!this.destroyed && this.promoted === promoted) {
+                    this.gpu.setExcludedMarker(promoted);
+                }
+            });
         }
         if (previous && previous !== this.promoted) {
             this.retire(previous, this.promoted ? 0 : HIGHLIGHT_EXIT_MS);

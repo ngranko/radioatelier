@@ -4,12 +4,14 @@ import {DragController} from '$lib/services/map/renderer/dom/dragController';
 import {Factory} from '$lib/services/map/renderer/dom/factory';
 import {applyMarkerAppearance} from '$lib/services/map/renderer/dom/markerAppearance.svelte';
 import {PopAnimator} from '$lib/services/map/renderer/dom/popAnimation';
+import {RevealWatcher} from '$lib/services/map/renderer/dom/revealWatcher';
 import type {MarkerRenderer} from '$lib/services/map/renderer/markerRenderer';
 
 export class DomMarkerRenderer implements MarkerRenderer {
     private factory: Factory;
     private dragController: DragController;
     private popAnimator = new PopAnimator();
+    private reveals = new RevealWatcher();
     private pendingRemoval = new WeakSet<Marker>();
 
     public constructor(provider: MapProvider) {
@@ -68,9 +70,13 @@ export class DomMarkerRenderer implements MarkerRenderer {
     }
 
     /** Shows a marker without the pop animation, which would blank it mid-gesture. */
-    public reveal(marker: Marker): void {
+    public reveal(marker: Marker, onRevealed?: () => void): void {
         this.applyState(marker);
         marker.show();
+        const element = marker.getHandle()?.getElement();
+        if (element && onRevealed) {
+            this.reveals.watch(element, onRevealed);
+        }
     }
 
     /** Starts a drag on a marker that was pressed elsewhere, e.g. handed over from the GPU renderer. */

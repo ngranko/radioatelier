@@ -14,10 +14,14 @@ describe('GpuHybridRenderer', () => {
         }
     }
 
+    // The Maps API paints a shown marker a few frames later; the renderer waits for that signal
+    // before it drops the sprite, so a double has to deliver it.
+    function revealsImmediately() {
+        return vi.fn((_marker: Marker, onRevealed?: () => void) => onRevealed?.());
+    }
+
     function createRenderer(parts: Record<string, unknown>): GpuHybridRenderer {
-        const renderer = Object.create(
-            GpuHybridRenderer.prototype,
-        ) as GpuHybridRenderer;
+        const renderer = Object.create(GpuHybridRenderer.prototype) as GpuHybridRenderer;
         Object.assign(renderer, {retirements: new Map(), destroyed: false}, parts);
         return renderer;
     }
@@ -59,7 +63,7 @@ describe('GpuHybridRenderer', () => {
         const marker = {usesDomRenderer: () => false} as Marker;
         const dom = {
             ensureCreated: vi.fn(),
-            reveal: vi.fn(),
+            reveal: vi.fn((_marker: Marker, onRevealed?: () => void) => onRevealed?.()),
             hide: vi.fn(),
             beginDrag: vi.fn(),
             endDrag: vi.fn(),
@@ -73,7 +77,7 @@ describe('GpuHybridRenderer', () => {
 
         expect(gpu.setExcludedMarker).toHaveBeenCalledWith(marker);
         expect(dom.ensureCreated).toHaveBeenCalledWith(marker);
-        expect(dom.reveal).toHaveBeenCalledWith(marker);
+        expect(dom.reveal).toHaveBeenCalledWith(marker, expect.any(Function));
         expect(dom.beginDrag).toHaveBeenCalledWith(marker);
 
         gestures.endDrag();
@@ -87,6 +91,29 @@ describe('GpuHybridRenderer', () => {
         expect(onInteraction).toHaveBeenCalledOnce();
     });
 
+    it('holds the sprite in place until the DOM twin has actually been painted', () => {
+        const marker = {usesDomRenderer: () => false} as Marker;
+        let landed: (() => void) | undefined;
+        const dom = {
+            ensureCreated: vi.fn(),
+            reveal: vi.fn((_marker: Marker, onRevealed?: () => void) => {
+                landed = onRevealed;
+            }),
+            hide: vi.fn(),
+        };
+        const gpu = {setExcludedMarker: vi.fn()};
+        const renderer = createRenderer({dom, gpu});
+
+        (renderer as unknown as {promote(m: Marker | undefined): void}).promote(marker);
+
+        // Dropping it here is the frame the map draws with no marker on it at all.
+        expect(gpu.setExcludedMarker).not.toHaveBeenCalled();
+
+        landed?.();
+
+        expect(gpu.setExcludedMarker).toHaveBeenCalledWith(marker);
+    });
+
     it('leaves a release that never became a drag to the map click handler', () => {
         const onInteraction = vi.fn();
         const renderer = createRenderer({onInteraction});
@@ -98,13 +125,13 @@ describe('GpuHybridRenderer', () => {
 
     it('keeps the sprite hidden until the highlight has scaled back down', () => {
         const marker = {usesDomRenderer: () => false} as Marker;
-        const dom = {ensureCreated: vi.fn(), reveal: vi.fn(), hide: vi.fn()};
+        const dom = {ensureCreated: vi.fn(), reveal: revealsImmediately(), hide: vi.fn()};
         const gpu = {setExcludedMarker: vi.fn()};
         const renderer = createRenderer({dom, gpu});
         const focus = renderer as unknown as {promote(m: Marker | undefined): void};
 
         focus.promote(marker);
-        expect(dom.reveal).toHaveBeenCalledWith(marker);
+        expect(dom.reveal).toHaveBeenCalledWith(marker, expect.any(Function));
 
         focus.promote(undefined);
         // Both markers would be drawn at once, doubling the halo, if the sprite came back now.
@@ -112,7 +139,7 @@ describe('GpuHybridRenderer', () => {
         expect(dom.hide).not.toHaveBeenCalled();
 
         vi.runAllTimers();
-        
+
         expect(gpu.setExcludedMarker).toHaveBeenLastCalledWith(undefined);
         expect(dom.hide).not.toHaveBeenCalled();
 
@@ -123,7 +150,7 @@ describe('GpuHybridRenderer', () => {
     it('retires every marker when focus moves on before the previous swap finished', () => {
         const first = {usesDomRenderer: () => false} as Marker;
         const second = {usesDomRenderer: () => false} as Marker;
-        const dom = {ensureCreated: vi.fn(), reveal: vi.fn(), hide: vi.fn()};
+        const dom = {ensureCreated: vi.fn(), reveal: revealsImmediately(), hide: vi.fn()};
         const gpu = {setExcludedMarker: vi.fn()};
         const renderer = createRenderer({dom, gpu});
         const focus = renderer as unknown as {promote(m: Marker | undefined): void};
@@ -146,7 +173,12 @@ describe('GpuHybridRenderer', () => {
 
     it('drops a retirement whose renderers were destroyed before its frame ran', () => {
         const marker = {usesDomRenderer: () => false} as Marker;
-        const dom = {ensureCreated: vi.fn(), reveal: vi.fn(), hide: vi.fn(), destroy: vi.fn()};
+        const dom = {
+            ensureCreated: vi.fn(),
+            reveal: revealsImmediately(),
+            hide: vi.fn(),
+            destroy: vi.fn(),
+        };
         const gpu = {setExcludedMarker: vi.fn(), destroy: vi.fn()};
         const renderer = createRenderer({
             dom,

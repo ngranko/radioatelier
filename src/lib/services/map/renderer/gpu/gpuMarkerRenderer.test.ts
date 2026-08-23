@@ -3,7 +3,7 @@ import {markerLifecycle} from '$lib/services/map/markerLifecycle';
 import type {DeckOverlayHost} from '$lib/services/map/providers/google/deckOverlayHost';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {GpuMarkerRenderer} from './gpuMarkerRenderer';
-import { SPRITE_POP_OUT_MS } from './spritePopExtension';
+import {SPRITE_POP_OUT_MS} from './spritePopExtension';
 
 function marker(lat = 55.75, lng = 37.61): Marker {
     return {
@@ -154,6 +154,21 @@ describe('GpuMarkerRenderer', () => {
         flush(frames);
 
         expect(layerLength(setLayers, 'gpu-marker-exit')).toBe(0);
+        expect(markerLifecycle.isIdle).toBe(true);
+        renderer.destroy();
+    });
+
+    it('drops an excluded sprite without waiting out the render batch', () => {
+        const {frames, setLayers, overlay} = overlayHarness();
+        const renderer = new GpuMarkerRenderer(overlay, vi.fn());
+        const promoted = marker();
+        renderer.ensureCreated(promoted);
+        flush(frames);
+        expect(layerLength(setLayers, 'gpu-marker')).toBe(1);
+
+        renderer.setExcludedMarker(promoted);
+
+        expect(layerLength(setLayers, 'gpu-marker')).toBe(0);
         expect(markerLifecycle.isIdle).toBe(true);
         renderer.destroy();
     });

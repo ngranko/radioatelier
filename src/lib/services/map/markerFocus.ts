@@ -1,3 +1,4 @@
+import {RevealWatcher} from '$lib/services/map/renderer/dom/revealWatcher';
 import {focusDetailsTarget} from './map.svelte.ts';
 import type {Marker} from './marker';
 
@@ -5,6 +6,8 @@ import type {Marker} from './marker';
 // DOM, so focused identity must outlive any one rendered element.
 
 const registry = new Map<string, Marker>();
+const reveals = new RevealWatcher();
+let cancelPendingHighlight: (() => void) | undefined;
 const listeners = new Set<(marker: Marker | undefined) => void>();
 let focusedId: string | null = null;
 let focusedMarker: Marker | undefined;
@@ -67,17 +70,26 @@ function applyHighlight(marker: Marker) {
     }
 
     const targetId = focusedId;
-    element.classList.add('duration-100');
-    requestAnimationFrame(() => {
-        if (!targetId || focusedId !== targetId || registry.get(targetId) !== marker) {
-            return;
-        }
-        element.classList.add('scale-120');
+    cancelPendingHighlight?.();
+    // The Maps API places marker content several frames after attaching it, so a plain frame wait
+    // sets the scale while the element has still never been laid out and the browser adopts 120%
+    // as its first computed value instead of a value to transition to. Waiting for the same reveal
+    // signal the pop animation uses means the unscaled marker has been painted before it grows.
+    cancelPendingHighlight = reveals.watch(element, () => {
+        cancelPendingHighlight = undefined;
+        requestAnimationFrame(() => {
+            if (!targetId || focusedId !== targetId || registry.get(targetId) !== marker) {
+                return;
+            }
+            element.classList.add('scale-120');
+        });
     });
 }
 
 function removeHighlight(marker: Marker | undefined) {
-    marker?.getHandle()?.getElement()?.classList.remove('scale-120', 'duration-100');
+    cancelPendingHighlight?.();
+    cancelPendingHighlight = undefined;
+    marker?.getHandle()?.getElement()?.classList.remove('scale-120');
 }
 
 function setFocusedMarker(marker: Marker | undefined) {

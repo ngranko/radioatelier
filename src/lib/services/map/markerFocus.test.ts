@@ -1,4 +1,32 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
+
+// RevealWatcher is constructed when markerFocus is imported, and it only takes the observer path
+// when IntersectionObserver exists, so the stub has to be in place before that import runs.
+// Reveals fire immediately unless a test asks to hold them, which is how the map really behaves:
+// content is attached several frames before it is placed.
+const reveals = vi.hoisted(() => {
+    const control = {hold: false, pending: [] as Array<() => void>};
+    class StubIntersectionObserver {
+        public constructor(private callback: IntersectionObserverCallback) {}
+        public observe(target: Element): void {
+            const fire = () =>
+                this.callback(
+                    [{isIntersecting: true, target} as IntersectionObserverEntry],
+                    this as unknown as IntersectionObserver,
+                );
+            if (control.hold) {
+                control.pending.push(fire);
+            } else {
+                fire();
+            }
+        }
+        public unobserve(): void {}
+        public disconnect(): void {}
+    }
+    globalThis.IntersectionObserver =
+        StubIntersectionObserver as unknown as typeof IntersectionObserver;
+    return control;
+});
 import {focusDetailsTarget} from './map.svelte.ts';
 import type {Marker} from './marker';
 import {
@@ -109,7 +137,7 @@ describe('marker focus', () => {
         setFocusedTarget('object-1');
         setFocusedTarget('object-2');
 
-        expect(first.classList.remove).toHaveBeenCalledWith('scale-120', 'duration-100');
+        expect(first.classList.remove).toHaveBeenCalledWith('scale-120');
         expect(second.classList.add).toHaveBeenCalledWith('scale-120');
     });
 
@@ -120,7 +148,7 @@ describe('marker focus', () => {
 
         setFocusedTarget(null);
 
-        expect(classList.remove).toHaveBeenCalledWith('scale-120', 'duration-100');
+        expect(classList.remove).toHaveBeenCalledWith('scale-120');
     });
 
     it('does not let stale cleanup or animation affect a replacement', () => {
@@ -165,13 +193,36 @@ describe('marker focus', () => {
         expect(focusDetailsTarget).not.toHaveBeenCalled();
     });
 
+    it('waits for the element to be placed before scaling it up', () => {
+        const frames = stubDeferredAnimationFrame();
+        reveals.hold = true;
+
+        const {marker, classList} = makeMarker();
+        registerFocusableMarker('object-1', marker);
+        setFocusedTarget('object-1');
+
+        // Maps has attached the content but not yet placed it: scaling now snaps instead of easing.
+        frames.flush();
+        expect(classList.add).not.toHaveBeenCalledWith('scale-120');
+
+        for (const reveal of reveals.pending) {
+            reveal();
+        }
+        frames.flush();
+
+        expect(classList.add).toHaveBeenCalledWith('scale-120');
+
+        reveals.hold = false;
+        reveals.pending.length = 0;
+        stubImmediateAnimationFrame();
+    });
+
     it('does not apply a stale highlight after focus clears before the deferred frame', () => {
         const frames = stubDeferredAnimationFrame();
         const {marker, classList} = makeMarker();
         registerFocusableMarker('object-1', marker);
 
         setFocusedTarget('object-1');
-        expect(classList.add).toHaveBeenCalledWith('duration-100');
         expect(classList.add).not.toHaveBeenCalledWith('scale-120');
 
         setFocusedTarget(null);
