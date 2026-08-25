@@ -9,12 +9,14 @@ import {
     markerSpriteFor,
 } from '$lib/services/map/renderer/clustered/markerSprites';
 import {handleClusteredPickingClick} from '$lib/services/map/renderer/clustered/pickingClick';
+import {findLatestExitTime, type SpriteExit} from '$lib/services/map/renderer/clustered/spriteExits';
 import {SPRITE_FADE_MS, type SpriteFade} from '$lib/services/map/renderer/clustered/spriteFades';
 import {
+    SPRITE_POP_OUT_MS,
     SpritePopExtension,
     type SpritePopProps,
 } from '$lib/services/map/renderer/clustered/spritePopExtension';
-import {getLatestSpawnTime, stampSpawn} from '$lib/services/map/renderer/clustered/spriteSpawns';
+import {findLatestPop, readPopTime} from '$lib/services/map/renderer/clustered/spritePopTimes';
 import type {Layer} from '@deck.gl/core';
 import {IconLayer, ScatterplotLayer, TextLayer} from '@deck.gl/layers';
 
@@ -22,47 +24,54 @@ const WHITE: [number, number, number] = [255, 255, 255];
 const CLUSTER_FILL: [number, number, number, number] = [39, 39, 42, 235];
 const CLUSTER_LINE: [number, number, number, number] = [255, 255, 255, 230];
 const OPAQUE = 255;
-const SPRITE_POP = new SpritePopExtension();
+const SPRITE_POP_IN = new SpritePopExtension();
+const SPRITE_POP_OUT = new SpritePopExtension({reverse: true, durationMs: SPRITE_POP_OUT_MS});
 
 interface LayerHandlers {
     onMarkerClick(marker: Marker): void;
     onClusterClick(cluster: ClusterPoint): void;
 }
 
+export interface SpriteAnimations {
+    fades: SpriteFade[];
+    exits: SpriteExit[];
+}
+
 export function buildClusteredLayers(
     points: ClusteredPoint[],
-    fades: SpriteFade[],
+    animations: SpriteAnimations,
     handlers: LayerHandlers,
 ): Layer[] {
     const markers = points
         .filter((point): point is MarkerPoint => point.kind === 'marker')
-        .sort(northToSouth);
+        .sort(compareNorthToSouth);
     const clusters = points.filter((point): point is ClusterPoint => point.kind === 'cluster');
-    const latestSpawn = getLatestSpawnTime(markers);
+    const latestPop = findLatestPop(markers);
 
     return [
-        markerLayer(markers, latestSpawn, handlers),
-        fadingMarkerLayer(fades),
-        clusterDiskLayer(clusters, handlers),
-        clusterCountLayer(clusters),
+        buildMarkerLayer(markers, latestPop, handlers),
+        buildExitingMarkerLayer(animations.exits),
+        buildFadingMarkerLayer(animations.fades),
+        buildClusterDiskLayer(clusters, handlers),
+        buildClusterCountLayer(clusters),
     ];
 }
 
 /** Sprites occlude by draw order, so a stable geographic order beats the incoming index order. */
-function northToSouth(a: MarkerPoint, b: MarkerPoint): number {
+function compareNorthToSouth(a: MarkerPoint, b: MarkerPoint): number {
     return b.position[1] - a.position[1];
 }
 
-function markerLayer(data: MarkerPoint[], latestSpawn: number, handlers: LayerHandlers) {
+function buildMarkerLayer(data: MarkerPoint[], latestPop: number, handlers: LayerHandlers) {
     return new IconLayer<MarkerPoint, SpritePopProps<MarkerPoint>>({
         id: 'clustered-marker',
         data,
         getPosition: point => point.position,
         getIcon: point => markerSpriteFor(point.marker),
         getSize: MARKER_SPRITE_SIZE,
-        getSpawnTime: point => stampSpawn(point.marker),
-        latestSpawn,
-        extensions: [SPRITE_POP],
+        getPopTime: point => readPopTime(point.marker),
+        latestPop,
+        extensions: [SPRITE_POP_IN],
         sizeUnits: 'pixels',
         billboard: true,
         pickable: true,
@@ -71,8 +80,25 @@ function markerLayer(data: MarkerPoint[], latestSpawn: number, handlers: LayerHa
     });
 }
 
+/** A removed marker shrinks away here, drawn from the copy its tracker kept. */
+function buildExitingMarkerLayer(data: SpriteExit[]) {
+    return new IconLayer<SpriteExit, SpritePopProps<SpriteExit>>({
+        id: 'clustered-marker-exit',
+        data,
+        getPosition: exit => exit.position,
+        getIcon: exit => exit.sprite,
+        getSize: MARKER_SPRITE_SIZE,
+        sizeUnits: 'pixels',
+        billboard: true,
+        pickable: false,
+        getPopTime: exit => exit.leftAt,
+        latestPop: findLatestExitTime(data),
+        extensions: [SPRITE_POP_OUT],
+    });
+}
+
 /** Drawn above the live sprites: the outgoing sprite eases to nothing, revealing the new one under it. */
-function fadingMarkerLayer(data: SpriteFade[]) {
+function buildFadingMarkerLayer(data: SpriteFade[]) {
     return new IconLayer<SpriteFade>({
         id: 'clustered-marker-fade',
         data,
@@ -87,7 +113,7 @@ function fadingMarkerLayer(data: SpriteFade[]) {
     });
 }
 
-function clusterDiskLayer(data: ClusterPoint[], handlers: LayerHandlers) {
+function buildClusterDiskLayer(data: ClusterPoint[], handlers: LayerHandlers) {
     return new ScatterplotLayer<ClusterPoint>({
         id: 'marker-clusters',
         data,
@@ -106,7 +132,7 @@ function clusterDiskLayer(data: ClusterPoint[], handlers: LayerHandlers) {
     });
 }
 
-function clusterCountLayer(data: ClusterPoint[]) {
+function buildClusterCountLayer(data: ClusterPoint[]) {
     return new TextLayer<ClusterPoint>({
         id: 'marker-cluster-counts',
         data,
