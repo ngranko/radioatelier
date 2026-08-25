@@ -17,7 +17,6 @@
         FormFieldErrors,
     } from '$lib/components/ui/form/index.js';
     import {Input} from '$lib/components/ui/input';
-    import {Separator} from '$lib/components/ui/separator';
     import {Textarea} from '$lib/components/ui/textarea';
     import type {LooseObject} from '$lib/interfaces/object';
     import {schema, toFormDefaults} from '$lib/schema/objectSchema.ts';
@@ -310,8 +309,6 @@
                 <FormFieldErrors />
             </FormField>
 
-            <Separator class="col-span-full mt-2" />
-
             <div class="col-span-full flex flex-wrap gap-2">
                 <FlagToggle
                     name="isVisited"
@@ -333,8 +330,6 @@
                 />
             </div>
 
-            <Separator class="col-span-full mt-2" />
-
             <FormField {form} name="category" class="col-span-full">
                 <FormControl>
                     {#snippet children({props})}
@@ -353,11 +348,8 @@
                 </FormControl>
                 <FormFieldErrors />
             </FormField>
-
-            <Separator class="col-span-full mt-2" />
-
             {#if isAddressCollapsed}
-                <div class="col-span-full space-y-1">
+                <div class="col-span-full mt-3 space-y-1">
                     <span class="flex items-center gap-2 text-sm leading-none">адрес</span>
                     <button
                         type="button"
@@ -372,7 +364,7 @@
                 <input type="hidden" name="city" value={$formData.city ?? ''} />
                 <input type="hidden" name="country" value={$formData.country ?? ''} />
             {:else}
-                <FormField {form} name="address" class="col-span-full">
+                <FormField {form} name="address" class="col-span-full mt-3">
                     <FormControl>
                         {#snippet children({props})}
                             <div class="space-y-1">
@@ -421,10 +413,7 @@
                     <FormFieldErrors />
                 </FormField>
             {/if}
-
-            <Separator class="col-span-full mt-2" />
-
-            <FormField {form} name="installedPeriod" class="col-span-1">
+            <FormField {form} name="installedPeriod" class="col-span-1 mt-3">
                 <FormControl>
                     {#snippet children({props})}
                         <div class="space-y-1">
@@ -436,7 +425,7 @@
                 <FormFieldErrors />
             </FormField>
             {#if $formData.isRemoved}
-                <FormField {form} name="removalPeriod" class="col-span-1">
+                <FormField {form} name="removalPeriod" class="col-span-1 mt-3">
                     <FormControl>
                         {#snippet children({props})}
                             <div class="space-y-1">
@@ -452,8 +441,6 @@
                     <FormFieldErrors />
                 </FormField>
             {/if}
-
-            <Separator class="col-span-full mt-2" />
 
             <FormField {form} name="description" class="col-span-full">
                 <FormControl>
