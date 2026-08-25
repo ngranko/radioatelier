@@ -1,4 +1,4 @@
-import {readPopNow} from '$lib/services/map/renderer/clustered/spritePopTimes';
+import {readPopNow} from '$lib/services/map/renderer/gpu/spritePopTimes';
 import {type Accessor, type Layer, LayerExtension} from '@deck.gl/core';
 
 /** Matches --animate-popin and --animate-popout, the DOM markers' entrance and exit. */

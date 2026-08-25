@@ -2,7 +2,6 @@ import {debugMarkerStyle} from '$lib/services/debug/debugMarkerStyle';
 import {generateViewportPositions, rectAround} from '$lib/services/debug/generatePositions';
 import {clampMarkerCount} from '$lib/services/debug/markerCount';
 import {profileMarkerOperation} from '$lib/services/debug/profileMarkerOperation';
-import {isMarkerClusteringEnabled} from '$lib/services/map/markerClustering';
 import {debugMarkerState, type DebugMarkerItem} from '$lib/state/debugMarkers.svelte';
 import {mapState} from '$lib/state/map.svelte';
 
@@ -60,8 +59,8 @@ async function runProfiled(
 }
 
 function resolveRenderer() {
-    if (mapState.markerManager?.isClusteredRenderer) {
-        return isMarkerClusteringEnabled() ? ('clustered' as const) : ('deck' as const);
+    if (mapState.markerManager?.isGpuRenderer) {
+        return 'gpu' as const;
     }
     return mapState.markerManager?.isDeckRenderer ? ('deck' as const) : ('dom' as const);
 }

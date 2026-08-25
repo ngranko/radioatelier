@@ -1,15 +1,30 @@
 import {describe, expect, it, vi} from 'vitest';
-import {CLUSTERED_RENDERER_FLAG, resolveClusteredRendererFlag} from './clusteredRendererFlag';
+import {markIdentityReady} from '../posthogIdentity';
+import {GPU_RENDERER_FLAG, resolveGpuRendererFlag} from './gpuRendererFlag';
 
-describe('resolveClusteredRendererFlag', () => {
-    it.each([true, 'clustered'])('enables the clustered renderer for %s', async value => {
+// The gate is a module singleton, so opening it once here covers every test below except
+// the one that deliberately loads a fresh module graph to keep it shut.
+markIdentityReady();
+
+describe('resolveGpuRendererFlag', () => {
+    it('enables the GPU renderer when the flag is on', async () => {
         const client = {
-            getFeatureFlag: vi.fn(() => value),
+            isFeatureEnabled: vi.fn(() => true),
             onFeatureFlags: vi.fn(),
         };
 
-        await expect(resolveClusteredRendererFlag(client)).resolves.toBe(true);
-        expect(client.getFeatureFlag).toHaveBeenCalledWith(CLUSTERED_RENDERER_FLAG);
+        await expect(resolveGpuRendererFlag(client)).resolves.toBe(true);
+        expect(client.isFeatureEnabled).toHaveBeenCalledWith(GPU_RENDERER_FLAG);
+        expect(client.onFeatureFlags).not.toHaveBeenCalled();
+    });
+
+    it('keeps the legacy renderer when the flag is off', async () => {
+        const client = {
+            isFeatureEnabled: vi.fn(() => false),
+            onFeatureFlags: vi.fn(),
+        };
+
+        await expect(resolveGpuRendererFlag(client)).resolves.toBe(false);
         expect(client.onFeatureFlags).not.toHaveBeenCalled();
     });
 
@@ -17,7 +32,7 @@ describe('resolveClusteredRendererFlag', () => {
         let value: boolean | undefined;
         const unsubscribe = vi.fn();
         const client = {
-            getFeatureFlag: vi.fn(() => value),
+            isFeatureEnabled: vi.fn(() => value),
             onFeatureFlags: vi.fn((callback: () => void) => {
                 value = true;
                 callback();
@@ -25,59 +40,59 @@ describe('resolveClusteredRendererFlag', () => {
             }),
         };
 
-        await expect(resolveClusteredRendererFlag(client)).resolves.toBe(true);
+        await expect(resolveGpuRendererFlag(client)).resolves.toBe(true);
         expect(unsubscribe).toHaveBeenCalledOnce();
     });
 
     it('falls back when the initial flag read throws', async () => {
         const client = {
-            getFeatureFlag: vi.fn(() => {
+            isFeatureEnabled: vi.fn(() => {
                 throw new Error('flag client unavailable');
             }),
             onFeatureFlags: vi.fn(),
         };
 
-        await expect(resolveClusteredRendererFlag(client)).resolves.toBe(false);
+        await expect(resolveGpuRendererFlag(client)).resolves.toBe(false);
         expect(client.onFeatureFlags).not.toHaveBeenCalled();
     });
 
     it('falls back when feature flag subscription throws', async () => {
         const client = {
-            getFeatureFlag: vi.fn(() => undefined),
+            isFeatureEnabled: vi.fn(() => undefined),
             onFeatureFlags: vi.fn(() => {
                 throw new Error('subscription unavailable');
             }),
         };
 
-        await expect(resolveClusteredRendererFlag(client)).resolves.toBe(false);
+        await expect(resolveGpuRendererFlag(client)).resolves.toBe(false);
     });
 
     it('falls back when the subscribed flag read throws', async () => {
-        const getFeatureFlag = vi
+        const isFeatureEnabled = vi
             .fn<() => boolean | undefined>()
             .mockReturnValueOnce(undefined)
             .mockImplementationOnce(() => {
                 throw new Error('flag read unavailable');
             });
         const client = {
-            getFeatureFlag,
+            isFeatureEnabled,
             onFeatureFlags: vi.fn((callback: () => void) => {
                 callback();
                 return vi.fn();
             }),
         };
 
-        await expect(resolveClusteredRendererFlag(client)).resolves.toBe(false);
+        await expect(resolveGpuRendererFlag(client)).resolves.toBe(false);
     });
 
     it('falls back to the legacy renderer when loading times out', async () => {
         vi.useFakeTimers();
         const client = {
-            getFeatureFlag: vi.fn(() => undefined),
+            isFeatureEnabled: vi.fn(() => undefined),
             onFeatureFlags: vi.fn(() => vi.fn()),
         };
 
-        const result = resolveClusteredRendererFlag(client, 10);
+        const result = resolveGpuRendererFlag(client, 10);
         await vi.advanceTimersByTimeAsync(10);
 
         await expect(result).resolves.toBe(false);

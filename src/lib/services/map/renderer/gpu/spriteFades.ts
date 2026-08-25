@@ -1,12 +1,6 @@
 import type {Marker} from '$lib/services/map/marker';
-import type {
-    ClusteredPoint,
-    MarkerPoint,
-} from '$lib/services/map/renderer/clustered/markerClusterIndex';
-import {
-    markerSpriteFor,
-    type MarkerSprite,
-} from '$lib/services/map/renderer/clustered/markerSprites';
+import type {MarkerPoint} from '$lib/services/map/renderer/gpu/markerPoints';
+import {markerSpriteFor, type MarkerSprite} from '$lib/services/map/renderer/gpu/markerSprites';
 
 export const SPRITE_FADE_MS = 160;
 
@@ -31,15 +25,12 @@ export class SpriteFadeTracker {
     private fades = new Map<Marker, TrackedFade>();
 
     /** Outgoing sprites to draw over the current ones, newest first render included. */
-    public track(points: ClusteredPoint[]): SpriteFade[] {
+    public track(points: MarkerPoint[]): SpriteFade[] {
         const now = Date.now();
         const previous = this.sprites;
         this.sprites = new Map();
 
         for (const point of points) {
-            if (point.kind !== 'marker') {
-                continue;
-            }
             // Halo-less, so an unchanged halo is never composited over itself mid-fade.
             const sprite = markerSpriteFor(point.marker, false);
             this.sprites.set(point.marker, sprite);

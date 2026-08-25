@@ -1,14 +1,14 @@
 import type {Marker} from '$lib/services/map/marker';
 import {describe, expect, it} from 'vitest';
-import type {MarkerPoint} from './markerClusterIndex';
+import type {MarkerPoint} from './markerPoints';
 import {findLatestPop, readPopNow, readPopTime} from './spritePopTimes';
 
 function createMarkerPoint(): MarkerPoint {
-    return {kind: 'marker', position: [37.61, 55.75], marker: {} as Marker};
+    return {position: [37.61, 55.75], marker: {} as Marker};
 }
 
 describe('pop stamps', () => {
-    it('stamps a marker once, so a cluster handing it back does not re-pop it', () => {
+    it('stamps a marker once, so a later render does not re-pop it', () => {
         const point = createMarkerPoint();
 
         const first = readPopTime(point.marker);

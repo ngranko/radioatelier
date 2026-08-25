@@ -10,7 +10,7 @@
     import type {ProfileRenderer, ProfileResult} from '$lib/services/debug/profileMarkerOperation';
 
     const RENDERER_LABELS: Record<ProfileRenderer, string> = {
-        clustered: 'Deck.gl clusters',
+        gpu: 'Deck.gl GPU',
         deck: 'Deck.gl',
         dom: 'DOM',
     };

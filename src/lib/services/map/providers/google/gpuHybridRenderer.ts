@@ -1,30 +1,25 @@
 import type {MapProvider} from '$lib/interfaces/map';
 import type {Marker} from '$lib/services/map/marker';
-import {
-    isMarkerClusteringEnabled,
-    subscribeMarkerClustering,
-} from '$lib/services/map/markerClustering';
 import {onFocusedMarkerChange} from '$lib/services/map/markerFocus';
 import {markerLifecycle} from '$lib/services/map/markerLifecycle';
 import type {GoogleMapsProvider} from '$lib/services/map/providers/google/provider';
-import {ClusteredMarkerRenderer} from '$lib/services/map/renderer/clustered/clusteredMarkerRenderer';
-import {SpriteDragGesture} from '$lib/services/map/renderer/clustered/spriteDragGesture';
 import {DomMarkerRenderer} from '$lib/services/map/renderer/domMarkerRenderer';
+import {GpuMarkerRenderer} from '$lib/services/map/renderer/gpu/gpuMarkerRenderer';
+import {SpriteDragGesture} from '$lib/services/map/renderer/gpu/spriteDragGesture';
 import type {MarkerRenderer} from '$lib/services/map/renderer/markerRenderer';
 
 // Long enough for the focus highlight to scale back down (duration-100) before the sprite returns:
 // two identical markers on screen at once would composite their translucent halos into a dark ring.
 const HIGHLIGHT_EXIT_MS = 140;
 
-export class ClusteredHybridRenderer implements MarkerRenderer {
+export class GpuHybridRenderer implements MarkerRenderer {
     private dom: DomMarkerRenderer;
-    private clustered: ClusteredMarkerRenderer;
+    private gpu: GpuMarkerRenderer;
     private promoted?: Marker;
     private dragging?: Marker;
     private dragGesture?: SpriteDragGesture;
     private retirements = new Map<Marker, ReturnType<typeof setTimeout>>();
     private destroyed = false;
-    private unsubscribeClustering: () => void;
     private unsubscribeFocus: () => void;
 
     public constructor(
@@ -33,19 +28,15 @@ export class ClusteredHybridRenderer implements MarkerRenderer {
     ) {
         this.dom = new DomMarkerRenderer(provider);
         if (!('getDeckOverlay' in provider) || typeof provider.getDeckOverlay !== 'function') {
-            throw new Error('ClusteredHybridRenderer requires a GoogleMapsProvider');
+            throw new Error('GpuHybridRenderer requires a GoogleMapsProvider');
         }
+
         const overlay = (provider as GoogleMapsProvider).getDeckOverlay();
-        this.clustered = new ClusteredMarkerRenderer(
-            provider,
-            overlay,
-            onInteraction,
-            isMarkerClusteringEnabled(),
-        );
-        this.unsubscribeClustering = subscribeMarkerClustering(enabled => {
-            this.clustered.setClusteringEnabled(enabled);
+
+        this.gpu = new GpuMarkerRenderer(overlay, onInteraction);
+        this.unsubscribeFocus = onFocusedMarkerChange(marker => {
+            this.promote(marker);
         });
-        this.unsubscribeFocus = onFocusedMarkerChange(marker => this.promote(marker));
         this.attachDragGesture(provider as GoogleMapsProvider);
     }
 
@@ -54,15 +45,15 @@ export class ClusteredHybridRenderer implements MarkerRenderer {
     }
 
     public syncAll(iterable: Iterable<Marker>): void {
-        const clusteredMarkers: Marker[] = [];
+        const gpuMarkers: Marker[] = [];
         for (const marker of iterable) {
             if (marker.usesDomRenderer()) {
                 this.dom.ensureCreated(marker);
             } else {
-                clusteredMarkers.push(marker);
+                gpuMarkers.push(marker);
             }
         }
-        this.clustered.syncAll(clusteredMarkers);
+        this.gpu.syncAll(gpuMarkers);
     }
 
     public show(marker: Marker): void {
@@ -79,7 +70,7 @@ export class ClusteredHybridRenderer implements MarkerRenderer {
     public remove(marker: Marker, onRemoved?: () => void): void {
         if (marker === this.promoted) {
             this.promoted = undefined;
-            this.dom.remove(marker, () => this.clustered.remove(marker, onRemoved));
+            this.dom.remove(marker, () => this.gpu.remove(marker, onRemoved));
             return;
         }
         this.rendererFor(marker).remove(marker, onRemoved);
@@ -87,7 +78,7 @@ export class ClusteredHybridRenderer implements MarkerRenderer {
 
     public applyState(marker: Marker): void {
         if (!marker.usesDomRenderer()) {
-            this.clustered.applyState(marker);
+            this.gpu.applyState(marker);
         }
         if (marker.usesDomRenderer() || marker === this.promoted) {
             this.dom.applyState(marker);
@@ -101,21 +92,20 @@ export class ClusteredHybridRenderer implements MarkerRenderer {
         }
         this.retirements.clear();
         this.detachDragGesture();
-        this.unsubscribeClustering();
         this.unsubscribeFocus();
         this.dom.destroy();
-        this.clustered.destroy();
+        this.gpu.destroy();
     }
 
     private rendererFor(marker: Marker): MarkerRenderer {
-        return marker.usesDomRenderer() || marker === this.promoted ? this.dom : this.clustered;
+        return marker.usesDomRenderer() || marker === this.promoted ? this.dom : this.gpu;
     }
 
     private promote(marker: Marker | undefined): void {
         const previous = this.promoted;
         this.promoted = marker && !marker.usesDomRenderer() ? marker : undefined;
         if (this.promoted) {
-            this.clustered.setExcludedMarker(this.promoted);
+            this.gpu.setExcludedMarker(this.promoted);
             this.dom.ensureCreated(this.promoted);
             // Deliberately not the pop animation: the marker is already on screen as a sprite, and
             // popping in from zero also pins an inline scale that the highlight cannot transition.
@@ -137,7 +127,7 @@ export class ClusteredHybridRenderer implements MarkerRenderer {
             // Promotion already excluded whatever holds the slot now; a marker still on its way
             // out owns it until it lands, so only the last one standing hands the sprite back.
             if (!this.promoted && this.retirements.size === 0) {
-                this.clustered.setExcludedMarker(undefined);
+                this.gpu.setExcludedMarker(undefined);
             }
             // Idle means the layers were handed to deck, not yet painted, hence the extra frame:
             // overlapping for one frame reads better than a frame with no marker at all.

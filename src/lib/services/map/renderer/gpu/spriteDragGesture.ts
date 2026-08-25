@@ -1,6 +1,6 @@
 import type {Marker} from '$lib/services/map/marker';
 import type {DeckOverlayHost} from '$lib/services/map/providers/google/deckOverlayHost';
-import type {ClusteredPoint} from '$lib/services/map/renderer/clustered/markerClusterIndex';
+import type {MarkerPoint} from '$lib/services/map/renderer/gpu/markerPoints';
 import {removeDragTimeout, setDragTimeout} from '$lib/state/marker.svelte';
 
 const HOLD_MS = 300;
@@ -71,10 +71,8 @@ export class SpriteDragGesture {
             event.clientX - left,
             event.clientY - top,
             PICK_RADIUS_PX,
-        ) as ClusteredPoint | undefined;
+        ) as MarkerPoint | undefined;
 
-        return picked?.kind === 'marker' && picked.marker.options.isDraggable
-            ? picked.marker
-            : undefined;
+        return picked?.marker.options.isDraggable ? picked.marker : undefined;
     }
 }

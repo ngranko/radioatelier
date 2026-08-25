@@ -2,13 +2,13 @@
     import StreetView from '$lib/components/map/streetView.svelte';
     import type {Location} from '$lib/interfaces/location';
     import type {MapProvider} from '$lib/interfaces/map';
-    import {resolveClusteredRendererFlag} from '$lib/services/map/clusteredRendererFlag';
     import {createMarkerRenderer} from '$lib/services/map/createMarkerRenderer';
     import {
         getInitialCenter,
         startPositionPolling,
         stopPositionPolling,
     } from '$lib/services/map/geolocation';
+    import {resolveGpuRendererFlag} from '$lib/services/map/gpuRendererFlag';
     import {
         MAP_CLICK_DEBOUNCE_MS,
         MapClickTimeout,
@@ -42,11 +42,11 @@
 
     async function setupProviderAndMarkers() {
         const provider = new GoogleMapsProvider();
-        const clusteredRendererEnabled = resolveClusteredRendererFlag();
+        const gpuRendererEnabled = resolveGpuRendererFlag();
         const center = await getInitialCenter();
         await provider.initialize(container!, center);
         mapState.provider = provider;
-        mapState.markerManager = await initMarkerManager(provider, await clusteredRendererEnabled);
+        mapState.markerManager = await initMarkerManager(provider, await gpuRendererEnabled);
         mapState.isReady = true;
         mapState.markerManager.scheduleViewportUpdate();
     }
@@ -98,14 +98,14 @@
 
     async function initMarkerManager(
         provider: MapProvider,
-        clusteredRendererEnabled: boolean,
+        gpuRendererEnabled: boolean,
     ): Promise<MarkerManager> {
         const manager = new MarkerManager(
             provider,
-            createMarkerRenderer(provider, clusteredRendererEnabled, markRendererInteraction),
+            createMarkerRenderer(provider, gpuRendererEnabled, markRendererInteraction),
             {
                 onMarkerShown: notifyFocusableMarkerShown,
-                rendererStrategy: clusteredRendererEnabled ? 'clustered' : 'legacy',
+                rendererStrategy: gpuRendererEnabled ? 'gpu' : 'legacy',
             },
         );
         await manager.initialize();
@@ -144,7 +144,7 @@
 
     function shouldIgnoreMapClick(): boolean {
         const manager = mapState.markerManager;
-        const legacyDeckMode = Boolean(manager?.isDeckRenderer && !manager.isClusteredRenderer);
+        const legacyDeckMode = Boolean(manager?.isDeckRenderer && !manager.isGpuRenderer);
         if (legacyDeckMode || isInZoomMode) {
             return true;
         }
@@ -152,7 +152,7 @@
     }
 
     function consumeRendererInteraction(): boolean {
-        if (!mapState.markerManager?.isClusteredRenderer) {
+        if (!mapState.markerManager?.isGpuRenderer) {
             return false;
         }
         const paired = takePairedRendererClick(lastRendererInteraction, performance.now());
