@@ -1,4 +1,4 @@
-import {readPopTime} from '$lib/services/map/renderer/clustered/spriteSpawns';
+import {readPopNow} from '$lib/services/map/renderer/clustered/spritePopTimes';
 import {type Accessor, type Layer, LayerExtension} from '@deck.gl/core';
 
 /** Matches --animate-popin and --animate-popout, the DOM markers' entrance and exit. */
@@ -84,7 +84,7 @@ export class SpritePopExtension extends LayerExtension<SpritePopOptions> {
         extension: SpritePopExtension,
     ): void {
         const duration = extension.readOptions().durationMs ?? SPRITE_POP_IN_MS;
-        const now = readPopTime();
+        const now = readPopNow();
         this.setShaderModuleProps({spritePop: {now, duration}});
 
         // Nothing else drives frames while the map sits still, so the layer asks for its own.

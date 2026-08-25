@@ -16,7 +16,7 @@ import {
     SpritePopExtension,
     type SpritePopProps,
 } from '$lib/services/map/renderer/clustered/spritePopExtension';
-import {findLatestSpawn, readSpawnTime} from '$lib/services/map/renderer/clustered/spriteSpawns';
+import {findLatestPop, readPopTime} from '$lib/services/map/renderer/clustered/spritePopTimes';
 import type {Layer} from '@deck.gl/core';
 import {IconLayer, ScatterplotLayer, TextLayer} from '@deck.gl/layers';
 
@@ -46,10 +46,10 @@ export function buildClusteredLayers(
         .filter((point): point is MarkerPoint => point.kind === 'marker')
         .sort(compareNorthToSouth);
     const clusters = points.filter((point): point is ClusterPoint => point.kind === 'cluster');
-    const latestSpawn = findLatestSpawn(markers);
+    const latestPop = findLatestPop(markers);
 
     return [
-        buildMarkerLayer(markers, latestSpawn, handlers),
+        buildMarkerLayer(markers, latestPop, handlers),
         buildExitingMarkerLayer(animations.exits),
         buildFadingMarkerLayer(animations.fades),
         buildClusterDiskLayer(clusters, handlers),
@@ -62,15 +62,15 @@ function compareNorthToSouth(a: MarkerPoint, b: MarkerPoint): number {
     return b.position[1] - a.position[1];
 }
 
-function buildMarkerLayer(data: MarkerPoint[], latestSpawn: number, handlers: LayerHandlers) {
+function buildMarkerLayer(data: MarkerPoint[], latestPop: number, handlers: LayerHandlers) {
     return new IconLayer<MarkerPoint, SpritePopProps<MarkerPoint>>({
         id: 'clustered-marker',
         data,
         getPosition: point => point.position,
         getIcon: point => markerSpriteFor(point.marker),
         getSize: MARKER_SPRITE_SIZE,
-        getPopTime: point => readSpawnTime(point.marker),
-        latestPop: latestSpawn,
+        getPopTime: point => readPopTime(point.marker),
+        latestPop,
         extensions: [SPRITE_POP_IN],
         sizeUnits: 'pixels',
         billboard: true,

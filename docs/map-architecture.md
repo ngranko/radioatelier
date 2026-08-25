@@ -119,7 +119,7 @@ Sprites in the clustered renderer grow in too, but nothing about the DOM sequenc
 
 The same extension runs the exit, constructed with `reverse` and the shorter `--animate-popout` duration. A removed marker is gone from the layer's data immediately, so `spriteExits.ts` keeps a copy of its position and sprite and draws it from `clustered-marker-exit` until it has shrunk away. Nothing downstream waits on that: `remove()` returns as it always did, and the marker object can be collected. A marker that was promoted to DOM is skipped, because its twin is already running the DOM pop-out and a sprite copy would animate on top of it.
 
-`spriteSpawns.ts` stamps each marker the first time the layer draws it and keeps that stamp for good, so a marker pops when it joins the map rather than every time a cluster hands it back. The whole entrance is one float per marker with no per-frame CPU work, so an arriving batch costs the same whether it is 5 markers or 2,500. While anything is still growing the layer asks for its own frames through `setNeedsRedraw()`, because nothing else drives them when the map sits still.
+`spritePopTimes.ts` stamps each marker the first time the layer draws it and keeps that stamp for good, so a marker pops when it joins the map rather than every time a cluster hands it back. The whole entrance is one float per marker with no per-frame CPU work, so an arriving batch costs the same whether it is 5 markers or 2,500. While anything is still growing the layer asks for its own frames through `setNeedsRedraw()`, because nothing else drives them when the map sits still.
 
 ## Map interactions
 

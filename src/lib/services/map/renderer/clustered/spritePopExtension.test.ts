@@ -1,7 +1,7 @@
 import type {Layer} from '@deck.gl/core';
 import {describe, expect, it, vi} from 'vitest';
 import {SPRITE_POP_IN_MS, SPRITE_POP_OUT_MS, SpritePopExtension} from './spritePopExtension';
-import {readPopTime} from './spriteSpawns';
+import {readPopNow} from './spritePopTimes';
 
 function createFakeLayer(latestPop: number) {
     const attributeManager = {addInstanced: vi.fn()};
@@ -59,8 +59,8 @@ describe('SpritePopExtension', () => {
     });
 
     it('asks for another frame only while a sprite is still moving', () => {
-        const animating = createFakeLayer(readPopTime());
-        const settled = createFakeLayer(readPopTime() - SPRITE_POP_IN_MS * 2);
+        const animating = createFakeLayer(readPopNow());
+        const settled = createFakeLayer(readPopNow() - SPRITE_POP_IN_MS * 2);
 
         callOn(new SpritePopExtension(), 'draw', animating);
         callOn(new SpritePopExtension(), 'draw', settled);
@@ -70,7 +70,7 @@ describe('SpritePopExtension', () => {
     });
 
     it('animates an exit over its own shorter duration', () => {
-        const layer = createFakeLayer(readPopTime());
+        const layer = createFakeLayer(readPopNow());
 
         callOn(
             new SpritePopExtension({reverse: true, durationMs: SPRITE_POP_OUT_MS}),

@@ -4,7 +4,7 @@ import {
     type MarkerSprite,
 } from '$lib/services/map/renderer/clustered/markerSprites';
 import {SPRITE_POP_OUT_MS} from '$lib/services/map/renderer/clustered/spritePopExtension';
-import {readPopTime} from '$lib/services/map/renderer/clustered/spriteSpawns';
+import {readPopNow} from '$lib/services/map/renderer/clustered/spritePopTimes';
 
 export interface SpriteExit {
     position: [number, number];
@@ -25,12 +25,12 @@ export class SpriteExitTracker {
         this.exits.push({
             position: [lng, lat],
             sprite: markerSpriteFor(marker),
-            leftAt: readPopTime(),
+            leftAt: readPopNow(),
         });
     }
 
     public listActive(): SpriteExit[] {
-        const now = readPopTime();
+        const now = readPopNow();
         this.exits = this.exits.filter(exit => now - exit.leftAt < SPRITE_POP_OUT_MS);
         return this.exits;
     }
