@@ -33,6 +33,7 @@
     import {resizeImage} from '$lib/utils/imageResizer';
     import GhostIcon from '@lucide/svelte/icons/ghost';
     import LockOpenIcon from '@lucide/svelte/icons/lock-open';
+    import PencilIcon from '@lucide/svelte/icons/pencil';
     import UserCheckIcon from '@lucide/svelte/icons/user-check';
     import {useConvexClient} from 'convex-svelte';
     import {onMount} from 'svelte';
@@ -144,6 +145,14 @@
     const {form: formData, errors, enhance, isTainted, submitting} = form;
 
     onMount(() => registerCloseConfirmationCheck?.(() => isTainted()) ?? undefined);
+
+    let isAddressExpanded = $state(false);
+    const resolvedAddress = $derived(
+        [$formData.address, $formData.city, $formData.country].filter(Boolean).join(', '),
+    );
+    const isAddressCollapsed = $derived(
+        !isAddressExpanded && Boolean(resolvedAddress) && !objectDetailsOverlay.isAddressLoading,
+    );
 
     const addressFields = ['address', 'city', 'country'] as const;
     // Lookup is a one-shot for new points only; edit forms already have their values.
@@ -347,54 +356,71 @@
 
             <Separator class="col-span-full mt-2" />
 
-            <FormField {form} name="address" class="col-span-full">
-                <FormControl>
-                    {#snippet children({props})}
-                        <div class="space-y-1">
-                            <FormLabel>адрес</FormLabel>
-                            <div class="relative">
-                                <Input type="text" {...props} bind:value={$formData.address} />
-                                {#if objectDetailsOverlay.isAddressLoading}
-                                    <AddressLoadingIndicator />
-                                {/if}
+            {#if isAddressCollapsed}
+                <div class="col-span-full space-y-1">
+                    <span class="flex items-center gap-2 text-sm leading-none">адрес</span>
+                    <button
+                        type="button"
+                        onclick={() => (isAddressExpanded = true)}
+                        class="flex w-full items-start gap-2 py-1 text-left"
+                    >
+                        <span class="min-w-0 flex-1 text-base break-words">{resolvedAddress}</span>
+                        <PencilIcon class="text-muted-foreground mt-1 size-4 shrink-0" />
+                    </button>
+                </div>
+                <input type="hidden" name="address" value={$formData.address ?? ''} />
+                <input type="hidden" name="city" value={$formData.city ?? ''} />
+                <input type="hidden" name="country" value={$formData.country ?? ''} />
+            {:else}
+                <FormField {form} name="address" class="col-span-full">
+                    <FormControl>
+                        {#snippet children({props})}
+                            <div class="space-y-1">
+                                <FormLabel>адрес</FormLabel>
+                                <div class="relative">
+                                    <Input type="text" {...props} bind:value={$formData.address} />
+                                    {#if objectDetailsOverlay.isAddressLoading}
+                                        <AddressLoadingIndicator />
+                                    {/if}
+                                </div>
                             </div>
-                        </div>
-                    {/snippet}
-                </FormControl>
-                <FormFieldErrors />
-            </FormField>
-            <FormField {form} name="city" class="col-span-1">
-                <FormControl>
-                    {#snippet children({props})}
-                        <div class="space-y-1">
-                            <FormLabel>город</FormLabel>
-                            <div class="relative">
-                                <Input type="text" {...props} bind:value={$formData.city} />
-                                {#if objectDetailsOverlay.isAddressLoading}
-                                    <AddressLoadingIndicator />
-                                {/if}
+                        {/snippet}
+                    </FormControl>
+                    <FormFieldErrors />
+                </FormField>
+                <FormField {form} name="city" class="col-span-1">
+                    <FormControl>
+                        {#snippet children({props})}
+                            <div class="space-y-1">
+                                <FormLabel>город</FormLabel>
+                                <div class="relative">
+                                    <Input type="text" {...props} bind:value={$formData.city} />
+                                    {#if objectDetailsOverlay.isAddressLoading}
+                                        <AddressLoadingIndicator />
+                                    {/if}
+                                </div>
                             </div>
-                        </div>
-                    {/snippet}
-                </FormControl>
-                <FormFieldErrors />
-            </FormField>
-            <FormField {form} name="country" class="col-span-1">
-                <FormControl>
-                    {#snippet children({props})}
-                        <div class="space-y-1">
-                            <FormLabel>страна</FormLabel>
-                            <div class="relative">
-                                <Input type="text" {...props} bind:value={$formData.country} />
-                                {#if objectDetailsOverlay.isAddressLoading}
-                                    <AddressLoadingIndicator />
-                                {/if}
+                        {/snippet}
+                    </FormControl>
+                    <FormFieldErrors />
+                </FormField>
+                <FormField {form} name="country" class="col-span-1">
+                    <FormControl>
+                        {#snippet children({props})}
+                            <div class="space-y-1">
+                                <FormLabel>страна</FormLabel>
+                                <div class="relative">
+                                    <Input type="text" {...props} bind:value={$formData.country} />
+                                    {#if objectDetailsOverlay.isAddressLoading}
+                                        <AddressLoadingIndicator />
+                                    {/if}
+                                </div>
                             </div>
-                        </div>
-                    {/snippet}
-                </FormControl>
-                <FormFieldErrors />
-            </FormField>
+                        {/snippet}
+                    </FormControl>
+                    <FormFieldErrors />
+                </FormField>
+            {/if}
 
             <Separator class="col-span-full mt-2" />
 
