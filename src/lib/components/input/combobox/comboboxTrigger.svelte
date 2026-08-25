@@ -1,5 +1,4 @@
 <script lang="ts">
-    import ClearButton from '$lib/components/input/combobox/clearButton.svelte';
     import ComboboxValue from '$lib/components/input/combobox/comboboxValue.svelte';
     import {Button} from '$lib/components/ui/button';
     import {PopoverTrigger} from '$lib/components/ui/popover';
@@ -8,7 +7,6 @@
     import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
 
     interface Props {
-        onClear(e: MouseEvent): void;
         onChange(option: Option): void;
         selectedOptions: Option[];
         isOpen: boolean;
@@ -23,7 +21,6 @@
 
     let {
         onChange,
-        onClear,
         selectedOptions,
         isOpen,
         labelField = 'name',
@@ -51,12 +48,6 @@
         {disabled}
     >
         <ComboboxValue {selectedOptions} {labelField} {multiple} {placeholder} {onChange} />
-        <div class="flex items-center gap-1">
-            {#if multiple && selectedOptions.length > 0 && !disabled}
-                <ClearButton onClick={onClear} />
-            {/if}
-
-            <ChevronDownIcon class="size-4 opacity-50" />
-        </div>
+        <ChevronDownIcon class="size-4 shrink-0 opacity-50" />
     </Button>
 </PopoverTrigger>

@@ -11,6 +11,7 @@
     import type {Option} from '$lib/interfaces/option';
     import CheckIcon from '@lucide/svelte/icons/check';
     import PlusIcon from '@lucide/svelte/icons/plus';
+    import XIcon from '@lucide/svelte/icons/x';
     import {tick} from 'svelte';
     type ComboboxValue = string | string[] | null | undefined;
 
@@ -72,6 +73,10 @@
     const selectedOptions = $derived.by(() => {
         return options.filter(opt => selectedValues.includes(opt[valueField]));
     });
+
+    // Clearing lives in the list, not next to the chevron: that corner is where an open
+    // dropdown gets dismissed, so a miss there used to wipe the whole selection.
+    const canClear = $derived(multiple && selectedValues.length > 0 && !disabled);
 
     const showCreateOption = $derived.by(() => {
         if (!creatable || !onCreate) {
@@ -141,15 +146,10 @@
         return createOptionRef?.getAttribute('aria-selected') === 'true';
     }
 
-    function handleClear(e: MouseEvent) {
-        e.stopPropagation();
-        if (multiple) {
-            value = [];
-            onChange?.([]);
-        } else {
-            value = undefined;
-            onChange?.(null);
-        }
+    function handleClear() {
+        value = [];
+        onChange?.([]);
+        refocusSearchInput();
     }
 
     $effect(() => {
@@ -181,7 +181,6 @@
         isOpen={open}
         {selectedOptions}
         onChange={handleSelect}
-        onClear={handleClear}
     />
     <PopoverContent class="w-(--bits-popover-anchor-width) p-0" align="start">
         <Command>
@@ -204,6 +203,18 @@
             />
 
             <CommandList>
+                {#if canClear}
+                    <CommandItem
+                        value="очистить"
+                        onSelect={handleClear}
+                        class="text-destructive"
+                        forceMount
+                    >
+                        <XIcon class="mr-2 size-4" />
+                        Снять все ({selectedValues.length})
+                    </CommandItem>
+                {/if}
+
                 {#if showCreateOption}
                     <CommandItem
                         bind:ref={createOptionRef}
