@@ -1,31 +1,30 @@
 import {describe, expect, it, vi} from 'vitest';
-import {markIdentityReady} from '../posthogIdentity';
 import {GPU_RENDERER_FLAG, resolveGpuRendererFlag} from './gpuRendererFlag';
-
-// The gate is a module singleton, so opening it once here covers every test below except
-// the one that deliberately loads a fresh module graph to keep it shut.
-markIdentityReady();
 
 describe('resolveGpuRendererFlag', () => {
     it('enables the GPU renderer when the flag is on', async () => {
         const client = {
             isFeatureEnabled: vi.fn(() => true),
-            onFeatureFlags: vi.fn(),
+            onFeatureFlags: vi.fn((callback: () => void) => {
+                callback()
+                return vi.fn();
+            }),
         };
 
         await expect(resolveGpuRendererFlag(client)).resolves.toBe(true);
         expect(client.isFeatureEnabled).toHaveBeenCalledWith(GPU_RENDERER_FLAG);
-        expect(client.onFeatureFlags).not.toHaveBeenCalled();
     });
 
     it('keeps the legacy renderer when the flag is off', async () => {
         const client = {
             isFeatureEnabled: vi.fn(() => false),
-            onFeatureFlags: vi.fn(),
+            onFeatureFlags: vi.fn((callback: () => void) => {
+                callback()
+                return vi.fn();
+            }),
         };
 
         await expect(resolveGpuRendererFlag(client)).resolves.toBe(false);
-        expect(client.onFeatureFlags).not.toHaveBeenCalled();
     });
 
     it('waits for unresolved flags and cleans up a synchronous subscription', async () => {
@@ -49,11 +48,13 @@ describe('resolveGpuRendererFlag', () => {
             isFeatureEnabled: vi.fn(() => {
                 throw new Error('flag client unavailable');
             }),
-            onFeatureFlags: vi.fn(),
+            onFeatureFlags: vi.fn((callback: () => void) => {
+                callback()
+                return vi.fn();
+            }),
         };
 
         await expect(resolveGpuRendererFlag(client)).resolves.toBe(false);
-        expect(client.onFeatureFlags).not.toHaveBeenCalled();
     });
 
     it('falls back when feature flag subscription throws', async () => {

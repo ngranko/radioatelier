@@ -29,7 +29,7 @@
         "clsx": "^2.1.1",
         "convex": "^1.42.3",
         "convex-svelte": "^0.14.0",
-        "posthog-js": "^1.404.1",
+        "posthog-js": "^1.421.0",
         "posthog-node": "^5.45.2",
         "svelte-clerk": "^1.1.11",
         "svelte-easy-crop": "^5.0.1",

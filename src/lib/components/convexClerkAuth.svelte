@@ -1,6 +1,5 @@
 <script lang="ts">
     import {browser} from '$app/environment';
-    import {markIdentityReady} from '$lib/services/posthogIdentity';
     import {useConvexClient} from 'convex-svelte';
     import posthog from 'posthog-js';
     import type {Snippet} from 'svelte';
@@ -28,11 +27,9 @@
 
         if (nextAuthUserId) {
             if (browser) {
-                posthog.identify(nextAuthUserId);
-                posthog.setPersonPropertiesForFlags({
+                posthog.identify(nextAuthUserId, {
                     email: clerkCtx.user?.primaryEmailAddress?.emailAddress ?? '',
                 });
-                markIdentityReady();
             }
             convexClient.setAuth(async ({forceRefreshToken}) => {
                 try {

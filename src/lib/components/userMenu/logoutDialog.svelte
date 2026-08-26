@@ -43,7 +43,6 @@
             localStorage.removeItem('lastPosition');
 
             posthog.capture('user_signed_out');
-            posthog.reset();
             await ctx.clerk.signOut({redirectUrl: '/login'});
         } catch (err) {
             console.error('Failed to logout', err);

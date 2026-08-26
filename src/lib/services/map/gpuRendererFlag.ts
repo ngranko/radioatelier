@@ -1,10 +1,6 @@
 import posthog from 'posthog-js';
-import {waitForIdentity} from '../posthogIdentity';
 
-// A multivariate flag whose enabled variant is named 'clustered' in PostHog; the renderer
-// itself no longer clusters, and isFeatureEnabled collapses any active variant to true.
 export const GPU_RENDERER_FLAG = 'map-gpu-clustered-renderer';
-
 const FLAG_TIMEOUT_MS = 1500;
 
 interface FeatureFlagClient {
@@ -17,31 +13,7 @@ export async function resolveGpuRendererFlag(
     timeoutMs = FLAG_TIMEOUT_MS,
 ): Promise<boolean> {
     const deadline = Date.now() + timeoutMs;
-
-    // Signed-out visitors never reach markIdentityReady, and map setup awaits this call
-    // before it builds the marker manager, so an unbounded gate would strand their map.
-    if (!(await waitForIdentityBefore(deadline))) {
-        return false;
-    }
-
-    let current: boolean | undefined;
-    try {
-        current = client.isFeatureEnabled(GPU_RENDERER_FLAG);
-    } catch {
-        return false;
-    }
-
-    return current ?? waitForFlagBefore(client, deadline);
-}
-
-function waitForIdentityBefore(deadline: number): Promise<boolean> {
-    return new Promise(resolve => {
-        const timeout = setTimeout(() => resolve(false), msUntil(deadline));
-        void waitForIdentity().then(() => {
-            clearTimeout(timeout);
-            resolve(true);
-        });
-    });
+    return waitForFlagBefore(client, deadline);
 }
 
 function waitForFlagBefore(client: FeatureFlagClient, deadline: number): Promise<boolean> {
@@ -63,7 +35,7 @@ function waitForFlagBefore(client: FeatureFlagClient, deadline: number): Promise
         try {
             unsubscribe = client.onFeatureFlags(() => {
                 try {
-                    finish(client.isFeatureEnabled(GPU_RENDERER_FLAG) ?? false);
+                    finish(Boolean(client.isFeatureEnabled(GPU_RENDERER_FLAG)));
                 } catch {
                     finish(false);
                 }
