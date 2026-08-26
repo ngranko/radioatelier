@@ -67,17 +67,16 @@ export class GpuMarkerRenderer implements MarkerRenderer {
             return;
         }
         this.excludedMarker = marker;
-        this.scheduleRender();
+        // The caller swaps only once the DOM twin has been painted, so the two overlap for a frame
+        // by design. Batching would stretch that overlap across the debounce too: harmless for an
+        // opaque marker, but a removed one is translucent and composites over itself into a
+        // visibly darker marker.
+        this.renderNow();
     }
 
     public destroy(): void {
         this.markers.clear();
-        if (this.renderTimeout !== undefined) {
-            clearTimeout(this.renderTimeout);
-        }
-        if (this.renderFrame !== undefined) {
-            cancelAnimationFrame(this.renderFrame);
-        }
+        this.dropPendingRender();
         if (this.fadeTimeout !== undefined) {
             clearTimeout(this.fadeTimeout);
         }
@@ -85,8 +84,24 @@ export class GpuMarkerRenderer implements MarkerRenderer {
             clearTimeout(this.exitTimeout);
         }
         this.exitTracker.clear();
-        this.cancelScheduled();
         this.overlay.detach();
+    }
+
+    private renderNow(): void {
+        this.dropPendingRender();
+        this.render();
+    }
+
+    private dropPendingRender(): void {
+        if (this.renderTimeout !== undefined) {
+            clearTimeout(this.renderTimeout);
+            this.renderTimeout = undefined;
+        }
+        if (this.renderFrame !== undefined) {
+            cancelAnimationFrame(this.renderFrame);
+            this.renderFrame = undefined;
+        }
+        this.cancelScheduled();
     }
 
     private scheduleRender(): void {

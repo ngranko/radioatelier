@@ -17,16 +17,27 @@ describe('buildMarkerLayers', () => {
     it('opens a marker from a Google Maps overlay click event', () => {
         const onMarkerClick = vi.fn();
         const point = markerPoint();
-        const layers = buildMarkerLayers(
-            [point],
-            {fades: [], exits: []},
-            {onMarkerClick},
-        );
+        const layers = buildMarkerLayers([point], {fades: [], exits: []}, {onMarkerClick});
         const sprites = layers.find(layer => layer.id === 'gpu-marker');
 
         const handled = sprites?.props.onClick?.({object: point}, {srcEvent: {stop: vi.fn()}});
 
         expect(handled).toBe(true);
         expect(onMarkerClick).toHaveBeenCalledWith(point.marker);
+    });
+
+    it('keeps every sprite layer off the premultiplying ImageBitmap upload path', () => {
+        const layers = buildMarkerLayers(
+            [markerPoint()],
+            {fades: [], exits: []},
+            {
+                onMarkerClick: vi.fn(),
+            },
+        );
+
+        expect(layers).toHaveLength(3);
+        for (const layer of layers) {
+            expect(layer.props.loadOptions).toEqual({image: {type: 'image'}});
+        }
     });
 });
