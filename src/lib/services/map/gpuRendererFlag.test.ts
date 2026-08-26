@@ -6,7 +6,7 @@ describe('resolveGpuRendererFlag', () => {
         const client = {
             isFeatureEnabled: vi.fn(() => true),
             onFeatureFlags: vi.fn((callback: () => void) => {
-                callback()
+                callback();
                 return vi.fn();
             }),
         };
@@ -19,7 +19,7 @@ describe('resolveGpuRendererFlag', () => {
         const client = {
             isFeatureEnabled: vi.fn(() => false),
             onFeatureFlags: vi.fn((callback: () => void) => {
-                callback()
+                callback();
                 return vi.fn();
             }),
         };
@@ -49,7 +49,7 @@ describe('resolveGpuRendererFlag', () => {
                 throw new Error('flag client unavailable');
             }),
             onFeatureFlags: vi.fn((callback: () => void) => {
-                callback()
+                callback();
                 return vi.fn();
             }),
         };
