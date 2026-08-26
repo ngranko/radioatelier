@@ -9,11 +9,7 @@ import {superValidate} from 'sveltekit-superforms';
 import {zod4} from 'sveltekit-superforms/adapters';
 
 export const load = async ({url, locals, isDataRequest}) => {
-    const {client, token} = await getConvexClient(locals);
-    if (!token) {
-        const ref = `${url.pathname}${url.search}`;
-        redirect(307, `/login?ref=${encodeURIComponent(ref)}`);
-    }
+    const {client} = await getConvexClient(locals);
 
     const latitude = normalizeLatitude(url.searchParams.get('lat'));
     const longitude = normalizeLongitude(url.searchParams.get('lng'));
