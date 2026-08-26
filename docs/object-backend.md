@@ -15,13 +15,13 @@ notionSync/objectWriterAdapter.ts — map Notion fields → ObjectRecordData/Pat
 imports.ts, objectsSync.ts        — call writer directly
 ```
 
-| Module | Role |
-| ------ | ---- |
-| `helpers/objectReader.ts` | Batch-load related docs; dedupe ids across a page of objects |
-| `helpers/objectDetails.ts` | Viewer-aware details DTO for `objects.getDetails` |
-| `helpers/objectWriter.ts` | Create/patch `objects` + `mapPoints` + `markers`; enqueue Typesense create/update |
-| `helpers/objectRecordPatch.ts` | Split a logical object patch into per-table slices |
-| `notionSync/objectWriterAdapter.ts` | Resolve categories/tags and build writer payloads for inbound sync |
+| Module                              | Role                                                                              |
+| ----------------------------------- | --------------------------------------------------------------------------------- |
+| `helpers/objectReader.ts`           | Batch-load related docs; dedupe ids across a page of objects                      |
+| `helpers/objectDetails.ts`          | Viewer-aware details DTO for `objects.getDetails`                                 |
+| `helpers/objectWriter.ts`           | Create/patch `objects` + `mapPoints` + `markers`; enqueue Typesense create/update |
+| `helpers/objectRecordPatch.ts`      | Split a logical object patch into per-table slices                                |
+| `notionSync/objectWriterAdapter.ts` | Resolve categories/tags and build writer payloads for inbound sync                |
 
 ## Object aggregate
 
@@ -77,13 +77,13 @@ Fields outside the sync vocabulary (`isPublic`, `description`, `cover`, private 
 
 ## Public Convex API
 
-| Function | Uses |
-| -------- | ---- |
-| `objects.getDetails` | `loadObjectAggregate` + `loadObjectDetails` |
-| `objects.create` / `update` / `reposition` | `createObjectRecords` / `patchObjectRecords` / `replaceObjectRecords` |
-| `objects.delete` | `deleteObjectAggregate` + Typesense remove |
-| `imports.importBatch` | `createObjectRecords` per row |
-| `objectsSync.createObjectFromSync` / `patchObjectFromSync` | writer via adapter |
+| Function                                                   | Uses                                                                  |
+| ---------------------------------------------------------- | --------------------------------------------------------------------- |
+| `objects.getDetails`                                       | `loadObjectAggregate` + `loadObjectDetails`                           |
+| `objects.create` / `update` / `reposition`                 | `createObjectRecords` / `patchObjectRecords` / `replaceObjectRecords` |
+| `objects.delete`                                           | `deleteObjectAggregate` + Typesense remove                            |
+| `imports.importBatch`                                      | `createObjectRecords` per row                                         |
+| `objectsSync.createObjectFromSync` / `patchObjectFromSync` | writer via adapter                                                    |
 
 ## Related docs
 

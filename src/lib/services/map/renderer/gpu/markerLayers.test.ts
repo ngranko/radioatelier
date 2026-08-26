@@ -20,7 +20,10 @@ describe('buildMarkerLayers', () => {
         const layers = buildMarkerLayers([point], {fades: [], exits: []}, {onMarkerClick});
         const sprites = layers.find(layer => layer.id === 'gpu-marker');
 
-        const handled = sprites?.props.onClick?.({object: point}, {srcEvent: {stop: vi.fn()}});
+        const handled = sprites?.props.onClick?.(
+            {object: point} as never,
+            {srcEvent: {stop: vi.fn()}} as never,
+        );
 
         expect(handled).toBe(true);
         expect(onMarkerClick).toHaveBeenCalledWith(point.marker);

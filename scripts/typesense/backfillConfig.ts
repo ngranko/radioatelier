@@ -68,10 +68,7 @@ export function parseArgs(argv: string[]): CliConfig {
         }
 
         if (arg.startsWith('--max-deletes=')) {
-            maxDeletes = parseNonNegativeInteger(
-                arg.slice('--max-deletes='.length),
-                'max-deletes',
-            );
+            maxDeletes = parseNonNegativeInteger(arg.slice('--max-deletes='.length), 'max-deletes');
             continue;
         }
         if (arg === '--max-deletes') {

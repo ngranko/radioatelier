@@ -1,5 +1,5 @@
-import {RevealWatcher} from '$lib/services/map/renderer/dom/revealWatcher';
 import {markerLifecycle} from '$lib/services/map/markerLifecycle';
+import {RevealWatcher} from '$lib/services/map/renderer/dom/revealWatcher';
 
 const POP_IN_CLASS = 'animate-popin';
 const POP_OUT_CLASS = 'animate-popout';

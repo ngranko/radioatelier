@@ -55,14 +55,14 @@ executeInboundDecision → objectsSync / notionSync.state mutations
 
 `decideInboundSync` returns one of:
 
-| Decision | When | Action |
-| -------- | ---- | ------ |
-| `skip` | Unknown page, missing fields, or update without sync record | No-op |
-| `createObject` | `page.created` with no existing sync row | Geocode + `createObjectFromSync` |
-| `patchObject` | Synced page with field diff | `patchObjectFromSync` via object writer |
-| `recordEcho` | Notion hash equals `lastOutboundHash` | Refresh sync metadata only |
-| `deleteObject` | Page trashed/archived/deleted | `deleteObjectFromSync` |
-| `rejectInbound` | Empty `name` or `categoryName` on an active page | Set `lastSyncError` when a sync record exists; throw |
+| Decision        | When                                                        | Action                                               |
+| --------------- | ----------------------------------------------------------- | ---------------------------------------------------- |
+| `skip`          | Unknown page, missing fields, or update without sync record | No-op                                                |
+| `createObject`  | `page.created` with no existing sync row                    | Geocode + `createObjectFromSync`                     |
+| `patchObject`   | Synced page with field diff                                 | `patchObjectFromSync` via object writer              |
+| `recordEcho`    | Notion hash equals `lastOutboundHash`                       | Refresh sync metadata only                           |
+| `deleteObject`  | Page trashed/archived/deleted                               | `deleteObjectFromSync`                               |
+| `rejectInbound` | Empty `name` or `categoryName` on an active page            | Set `lastSyncError` when a sync record exists; throw |
 
 Inbound create/patch mutations go through [object-backend.md](./object-backend.md) (`objectWriterAdapter` → `createObjectRecords` / `patchObjectRecords`). `inbound.test.ts` covers decision gates and mutation dispatch without a Convex harness.
 
