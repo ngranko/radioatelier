@@ -90,10 +90,7 @@ describe('selectVisibleMarkerIds', () => {
             farther: {lat: 70, lng: -54},
             nearer: {lat: 89, lng: -60},
         });
-        const bounds = makeBounds(
-            {north: 90, south: 60, east: 0, west: -90},
-            {lat: 80, lng: 0},
-        );
+        const bounds = makeBounds({north: 90, south: 60, east: 0, west: -90}, {lat: 80, lng: 0});
 
         expect([...selectVisibleMarkerIds(bounds, repo, 1)]).toEqual(['nearer']);
     });

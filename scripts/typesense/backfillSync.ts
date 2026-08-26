@@ -187,9 +187,7 @@ async function deleteDocuments(
                 batch_size: config.batchSize,
             });
         if (result.num_deleted !== batch.length) {
-            throw new Error(
-                `Typesense deleted ${result.num_deleted} of ${batch.length} documents`,
-            );
+            throw new Error(`Typesense deleted ${result.num_deleted} of ${batch.length} documents`);
         }
         deleted += result.num_deleted;
     }

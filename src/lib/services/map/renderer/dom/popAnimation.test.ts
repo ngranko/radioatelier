@@ -1,5 +1,5 @@
-import {afterEach, describe, expect, it, vi} from 'vitest';
 import {markerLifecycle} from '$lib/services/map/markerLifecycle';
+import {afterEach, describe, expect, it, vi} from 'vitest';
 import {MAX_STARTS_PER_FRAME, POP_OUT_FALLBACK_MS, PopAnimator} from './popAnimation';
 import {REVEAL_TIMEOUT_MS} from './revealWatcher';
 

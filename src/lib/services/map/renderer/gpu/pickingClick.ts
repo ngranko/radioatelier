@@ -4,7 +4,8 @@ export interface SpritePickingInfo<T> {
 
 export interface SpritePickingEvent {
     stopPropagation?: () => void;
-    srcEvent?: {stop?: () => void};
+    // Deck.gl's native Event has no `stop`; GoogleMapsOverlay mocks one instead.
+    srcEvent?: Event | {stop?: () => void} | null;
 }
 
 export function handleSpritePickingClick<T>(
@@ -16,8 +17,13 @@ export function handleSpritePickingClick<T>(
         return false;
     }
     onPick(info.object);
-    // GoogleMapsOverlay forwards a mock event without Mjolnir methods.
-    event.srcEvent?.stop?.();
+    stopOverlayClick(event.srcEvent);
     event.stopPropagation?.();
     return true;
+}
+
+function stopOverlayClick(srcEvent: SpritePickingEvent['srcEvent']) {
+    if (srcEvent && 'stop' in srcEvent) {
+        srcEvent.stop?.();
+    }
 }
