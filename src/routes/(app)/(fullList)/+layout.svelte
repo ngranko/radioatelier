@@ -2,7 +2,6 @@
     import {page} from '$app/state';
     import {api} from '$convex/_generated/api.js';
     import type {Id} from '$convex/_generated/dataModel';
-    import DebugMarkers from '$lib/components/debug/debugMarkers.svelte';
     import FirstRunHint from '$lib/components/map/firstRunHint.svelte';
     import Marker from '$lib/components/map/marker.svelte';
     import ObjectDetails from '$lib/components/objectDetails/objectDetails.svelte';
@@ -248,5 +247,4 @@
             source="list"
         />
     {/each}
-    <DebugMarkers />
 {/if}

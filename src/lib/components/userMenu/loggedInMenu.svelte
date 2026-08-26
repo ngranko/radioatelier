@@ -1,6 +1,5 @@
 <script lang="ts">
     import {goto} from '$app/navigation';
-    import {api} from '$convex/_generated/api';
     import ThemeSwitcher from '$lib/components/themeSwitcher.svelte';
     import {Root as AvatarRoot, Fallback} from '$lib/components/ui/avatar';
     import {Button} from '$lib/components/ui/button';
@@ -13,16 +12,13 @@
         Item as DropdownMenuItem,
     } from '$lib/components/ui/dropdown-menu';
     import LogoutDialog from '$lib/components/userMenu/logoutDialog.svelte';
-    import ActivityIcon from '@lucide/svelte/icons/activity';
     import FileInputIcon from '@lucide/svelte/icons/file-input';
     import KeyRoundIcon from '@lucide/svelte/icons/key-round';
     import LogOutIcon from '@lucide/svelte/icons/log-out';
     import PaletteIcon from '@lucide/svelte/icons/palette';
     import UserRoundIcon from '@lucide/svelte/icons/user-round';
-    import {useQuery} from 'convex-svelte';
 
     let isLogoutDialogOpen = $state(false);
-    const isAdmin = useQuery(api.users.isAdmin, {});
 
     function handleImportClick() {
         goto('/import');
@@ -30,10 +26,6 @@
 
     function handleSettingsClick() {
         goto('/settings');
-    }
-
-    function handleDebugClick() {
-        goto('/debug');
     }
 
     function handleChangePasswordClick() {
@@ -75,12 +67,6 @@
                 <PaletteIcon />
                 Настройки категорий
             </DropdownMenuItem>
-            {#if isAdmin.data}
-                <DropdownMenuItem onclick={handleDebugClick}>
-                    <ActivityIcon />
-                    Профилирование маркеров
-                </DropdownMenuItem>
-            {/if}
             <DropdownMenuItem onclick={handleChangePasswordClick}>
                 <KeyRoundIcon />
                 Сменить пароль

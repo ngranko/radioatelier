@@ -53,17 +53,6 @@ export async function getCurrentUser(ctx: QueryCtx) {
     return await getUserByExternalId(ctx, identity.subject);
 }
 
-export const ADMIN_ROLE = 'admin';
-
-export function isAdminUser(user: {role: string; isDeleted: boolean} | null): boolean {
-    return Boolean(user && !user.isDeleted && user.role === ADMIN_ROLE);
-}
-
-export const isAdmin = query({
-    args: {},
-    handler: async ctx => isAdminUser(await getCurrentUser(ctx)),
-});
-
 export async function getUserByExternalId(ctx: QueryCtx, externalId: string) {
     return await ctx.db
         .query('users')
