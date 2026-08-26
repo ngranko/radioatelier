@@ -199,5 +199,5 @@
     });
 </script>
 
-<div class="h-dvh w-full touch-none" bind:this={container}></div>
+<div class="h-full w-full touch-none" bind:this={container}></div>
 <StreetView />

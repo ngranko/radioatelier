@@ -63,30 +63,28 @@ describe('viewport metrics', () => {
         const stopTracking = trackViewportMetrics();
 
         expect(viewportMetrics.height).toBe(800);
-        expect(viewportMetrics.keyboardInset).toBe(0);
+        expect(viewportMetrics.offsetTop).toBe(0);
 
         stopTracking();
     });
 
-    it('reports the keyboard as an inset from the bottom of the layout viewport', () => {
+    it('measures a shrunken visual viewport', () => {
         const stopTracking = trackViewportMetrics();
 
         emitViewportChange({height: 500, offsetTop: 0});
 
         expect(viewportMetrics.height).toBe(500);
-        expect(viewportMetrics.keyboardInset).toBe(300);
+        expect(viewportMetrics.offsetTop).toBe(0);
 
         stopTracking();
     });
 
-    // A panned page moves the visible area up, and the panel has to move with it
-    // to stay glued to the bottom of what the user can actually see.
-    it('takes the page pan out of the keyboard inset', () => {
+    it('tracks where a panned visual viewport begins', () => {
         const stopTracking = trackViewportMetrics();
 
         emitViewportChange({height: 500, offsetTop: 120});
 
-        expect(viewportMetrics.keyboardInset).toBe(180);
+        expect(viewportMetrics.offsetTop).toBe(120);
 
         stopTracking();
     });
