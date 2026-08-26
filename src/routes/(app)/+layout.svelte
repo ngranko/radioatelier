@@ -20,7 +20,6 @@
     } from '$lib/state/objectDetailsOverlay.svelte';
     import {hasSearchPointAt, searchPointList} from '$lib/state/searchPointList.svelte.ts';
     import {sharedMarker} from '$lib/state/sharedMarker.svelte.ts';
-    import {trackViewportMetrics, viewportMetrics} from '$lib/state/viewport.svelte';
     import {buildPointUrl} from '$lib/utils/pointRoute.ts';
     import SearchIcon from '@lucide/svelte/icons/search';
     import SproutIcon from '@lucide/svelte/icons/sprout';
@@ -29,7 +28,6 @@
     import {SvglGoogleLogo} from '@selemondev/svgl-svelte';
     import {useQuery} from 'convex-svelte';
     import posthog from 'posthog-js';
-    import {onMount} from 'svelte';
     import {useClerkContext} from 'svelte-clerk';
     import type {LayoutProps} from './$types';
 
@@ -44,8 +42,6 @@
     const clerkCtx = useClerkContext();
 
     const categories = useQuery(api.categories.list, {}, () => ({initialData: data.categories}));
-
-    onMount(() => trackViewportMetrics());
 
     // A point picked from search is already pinned by its own search marker, so
     // the draft marker would only stack a second pin on the same spot.
@@ -89,75 +85,69 @@
     });
 </script>
 
-<main
-    style:top={`${viewportMetrics.offsetTop}px`}
-    style:height={viewportMetrics.height ? `${viewportMetrics.height}px` : undefined}
-    class="absolute top-0 h-dvh w-full overflow-hidden"
->
-    <div bind:this={consoleElement}></div>
+<div bind:this={consoleElement}></div>
 
-    <div class="menu absolute top-2 right-4 left-2 flex items-center justify-between gap-4">
-        {#if mapState.isReady && clerkCtx.auth.userId}
-            <Search />
-        {:else}
-            <div></div>
-        {/if}
-        <UserMenu />
-    </div>
-
-    <Map onClick={handleMapClick} />
-
-    <EscapeCloseHandler />
-
-    <OrientationButton bind:isEnabled={orientationEnabled} />
-    <PositionButton />
-
-    {@render children?.()}
-
-    {#if mapState.isReady}
-        <LocationMarker {orientationEnabled} />
-
-        {#each Object.keys(searchPointList) as searchPointId (searchPointId)}
-            {@const searchPoint = searchPointList[searchPointId]}
-            {#if searchPoint?.object}
-                <Marker
-                    id={searchPoint.object.id}
-                    {searchPointId}
-                    lat={searchPoint.object.latitude}
-                    lng={searchPoint.object.longitude}
-                    icon={searchPoint.object.type === 'local' ? SearchIcon : SvglGoogleLogo}
-                    iconClassName="stroke-3"
-                    color="#e11d48"
-                    source="search"
-                />
-            {/if}
-        {/each}
-
-        {#if sharedMarker.object}
-            {#key sharedMarker.object.id}
-                <Marker
-                    id={sharedMarker.object.id}
-                    lat={sharedMarker.object.latitude}
-                    lng={sharedMarker.object.longitude}
-                    icon={StarIcon}
-                    iconClassName="fill-current"
-                    color="#d97706"
-                    source="share"
-                />
-            {/key}
-        {/if}
-
-        {#if draftMarkerPosition}
-            {#key `${draftMarkerPosition.lat},${draftMarkerPosition.lng}`}
-                <Marker
-                    lat={draftMarkerPosition.lat}
-                    lng={draftMarkerPosition.lng}
-                    icon={SproutIcon}
-                    iconClassName="fill-current"
-                    color="#16a34a"
-                    source="draft"
-                />
-            {/key}
-        {/if}
+<div class="menu absolute top-2 right-4 left-2 flex items-center justify-between gap-4">
+    {#if mapState.isReady && clerkCtx.auth.userId}
+        <Search />
+    {:else}
+        <div></div>
     {/if}
-</main>
+    <UserMenu />
+</div>
+
+<Map onClick={handleMapClick} />
+
+<EscapeCloseHandler />
+
+<OrientationButton bind:isEnabled={orientationEnabled} />
+<PositionButton />
+
+{@render children?.()}
+
+{#if mapState.isReady}
+    <LocationMarker {orientationEnabled} />
+
+    {#each Object.keys(searchPointList) as searchPointId (searchPointId)}
+        {@const searchPoint = searchPointList[searchPointId]}
+        {#if searchPoint?.object}
+            <Marker
+                id={searchPoint.object.id}
+                {searchPointId}
+                lat={searchPoint.object.latitude}
+                lng={searchPoint.object.longitude}
+                icon={searchPoint.object.type === 'local' ? SearchIcon : SvglGoogleLogo}
+                iconClassName="stroke-3"
+                color="#e11d48"
+                source="search"
+            />
+        {/if}
+    {/each}
+
+    {#if sharedMarker.object}
+        {#key sharedMarker.object.id}
+            <Marker
+                id={sharedMarker.object.id}
+                lat={sharedMarker.object.latitude}
+                lng={sharedMarker.object.longitude}
+                icon={StarIcon}
+                iconClassName="fill-current"
+                color="#d97706"
+                source="share"
+            />
+        {/key}
+    {/if}
+
+    {#if draftMarkerPosition}
+        {#key `${draftMarkerPosition.lat},${draftMarkerPosition.lng}`}
+            <Marker
+                lat={draftMarkerPosition.lat}
+                lng={draftMarkerPosition.lng}
+                icon={SproutIcon}
+                iconClassName="fill-current"
+                color="#16a34a"
+                source="draft"
+            />
+        {/key}
+    {/if}
+{/if}

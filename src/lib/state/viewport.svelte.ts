@@ -1,9 +1,9 @@
 interface ViewportMetrics {
     height: number;
-    offsetTop: number;
+    keyboardInset: number;
 }
 
-const metrics = $state<ViewportMetrics>({height: 0, offsetTop: 0});
+const metrics = $state<ViewportMetrics>({height: 0, keyboardInset: 0});
 
 // Read-only view: the values are owned by the listeners below, and a height of
 // 0 means nothing has measured the viewport yet (server render, first paint).
@@ -11,8 +11,8 @@ export const viewportMetrics = {
     get height() {
         return metrics.height;
     },
-    get offsetTop() {
-        return metrics.offsetTop;
+    get keyboardInset() {
+        return metrics.keyboardInset;
     },
 };
 
@@ -50,8 +50,14 @@ export function trackViewportMetrics(): () => void {
     };
 }
 
+// Mobile browsers answer an open keyboard by shrinking the visual viewport and
+// panning the page, while the layout viewport (and with it dvh) stays as tall
+// as before — hence the page-inside-a-page scrolling. Measuring the on-screen
+// viewport lets a panel size and place itself against what the user can see.
 function readMetrics() {
     const visual = window.visualViewport;
     metrics.height = Math.round(visual?.height ?? window.innerHeight);
-    metrics.offsetTop = Math.round(visual?.offsetTop ?? 0);
+    metrics.keyboardInset = visual
+        ? Math.max(0, Math.round(window.innerHeight - visual.height - visual.offsetTop))
+        : 0;
 }

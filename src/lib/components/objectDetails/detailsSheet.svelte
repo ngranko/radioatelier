@@ -46,7 +46,7 @@
     // The shrunken sheet can leave the field the user is typing in below its
     // fold, so it is pulled back into view once the height has settled.
     $effect(() => {
-        if (!viewportMetrics.height) {
+        if (!viewportMetrics.keyboardInset) {
             return;
         }
 
@@ -141,6 +141,7 @@
 <aside
     bind:this={asideElement}
     style:height={sheetHeight === null ? undefined : `${sheetHeight}px`}
+    style:bottom={`${viewportMetrics.keyboardInset}px`}
     class={cn([
         'bg-background absolute bottom-0 z-3 m-2 flex w-[calc(100dvw-8px*2)] max-w-100 flex-col rounded-2xl transition-[height] ease-out',
         {
