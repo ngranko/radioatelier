@@ -205,7 +205,7 @@
             <CommandList>
                 {#if canClear}
                     <CommandItem
-                        value="очистить"
+                        value="clear-all"
                         onSelect={handleClear}
                         class="text-destructive"
                         forceMount

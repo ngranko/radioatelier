@@ -1,9 +1,7 @@
 <script lang="ts">
-    import Badge from '$lib/components/ui/badge/badge.svelte';
+    import TagChip from '$lib/components/tagChip.svelte';
     import type {PrivateTag} from '$lib/interfaces/privateTag.ts';
     import type {Tag} from '$lib/interfaces/tag.js';
-    import LockIcon from '@lucide/svelte/icons/lock';
-    import TagIcon from '@lucide/svelte/icons/tag';
 
     interface Props {
         tags: Tag[];
@@ -22,15 +20,9 @@
 
 <div class="flex flex-wrap gap-2">
     {#each sortedTags as tag (tag.id)}
-        <Badge variant="secondary" class="text-primary border-primary/15 bg-primary/10">
-            <TagIcon />
-            <span class="lowercase">{tag.name}</span>
-        </Badge>
+        <TagChip name={tag.name} />
     {/each}
     {#each sortedPrivateTags as tag (tag.id)}
-        <Badge variant="secondary" class="border-border bg-muted text-muted-foreground">
-            <LockIcon />
-            <span class="lowercase">{tag.name}</span>
-        </Badge>
+        <TagChip name={tag.name} isPrivate />
     {/each}
 </div>

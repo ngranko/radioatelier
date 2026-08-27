@@ -6,11 +6,9 @@
     import ImageUpload from '$lib/components/input/imageUpload/index.svelte';
     import AddressLoadingIndicator from '$lib/components/objectDetails/objectForm/addressLoadingIndicator.svelte';
     import BackButton from '$lib/components/objectDetails/objectForm/backButton.svelte';
-    import CategorySelect from '$lib/components/objectDetails/objectForm/categorySelect.svelte';
     import DeleteButton from '$lib/components/objectDetails/objectForm/deleteButton.svelte';
     import FlagToggle from '$lib/components/objectDetails/objectForm/flagToggle.svelte';
-    import PrivateTagsSelect from '$lib/components/objectDetails/objectForm/privateTagsSelect.svelte';
-    import TagsSelect from '$lib/components/objectDetails/objectForm/tagsSelect.svelte';
+    import TaxonomyField from '$lib/components/objectDetails/objectForm/taxonomyField.svelte';
     import {Button} from '$lib/components/ui/button';
     import {
         FormField,
@@ -332,41 +330,14 @@
                 <FormControl>
                     {#snippet children({props})}
                         <div class="space-y-1">
-                            <FormLabel>категория</FormLabel>
-                            <CategorySelect
+                            <FormLabel>категория и теги</FormLabel>
+                            <TaxonomyField
                                 {...props}
-                                bind:value={$formData.category}
-                                error={getErrorArray($errors.category)}
-                            />
-                        </div>
-                    {/snippet}
-                </FormControl>
-                <FormFieldErrors />
-            </FormField>
-            <FormField {form} name="tags" class="col-span-full">
-                <FormControl>
-                    {#snippet children({props})}
-                        <div class="space-y-1">
-                            <FormLabel>теги</FormLabel>
-                            <TagsSelect
-                                {...props}
-                                bind:value={$formData.tags}
-                                error={getErrorArray($errors.tags)}
-                            />
-                        </div>
-                    {/snippet}
-                </FormControl>
-                <FormFieldErrors />
-            </FormField>
-            <FormField {form} name="privateTags" class="col-span-full">
-                <FormControl>
-                    {#snippet children({props})}
-                        <div class="space-y-1">
-                            <FormLabel>приватные теги</FormLabel>
-                            <PrivateTagsSelect
-                                {...props}
-                                bind:value={$formData.privateTags}
-                                error={getErrorArray($errors.privateTags)}
+                                bind:category={$formData.category}
+                                bind:tags={$formData.tags}
+                                bind:privateTags={$formData.privateTags}
+                                error={Boolean(getErrorArray($errors.category)?.length)}
+                                disabled={$submitting}
                             />
                         </div>
                     {/snippet}
