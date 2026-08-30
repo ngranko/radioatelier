@@ -64,20 +64,39 @@
         tags: name => client.mutation(api.tags.create, {name}),
         privateTags: name => client.mutation(api.privateTags.create, {name}),
     };
+
+    function removeTag(id: string) {
+        tags = tags.filter(item => item !== id);
+    }
+
+    function removePrivateTag(id: string) {
+        privateTags = privateTags.filter(item => item !== id);
+    }
 </script>
 
-<button
-    {...controlProps}
-    type="button"
-    {disabled}
-    onclick={() => (isOpen = true)}
+<div
     class={cn(
-        'border-input bg-background/50 dark:bg-background/30 flex min-h-12 w-full items-center gap-2 rounded-md border px-3 py-2 text-left',
-        'focus:border-primary focus:ring-primary/30 focus:ring-4 dark:focus:ring-2',
+        'border-input bg-background/50 dark:bg-background/30 relative flex min-h-12 w-full items-center gap-2 rounded-md border px-3 py-2 text-left',
+        'focus-within:border-primary focus-within:ring-primary/30 focus-within:ring-4 dark:focus-within:ring-2',
         error && 'border-destructive',
     )}
 >
-    <span class="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+    <!-- The opener sits under the chips so that a tap anywhere but a chip's cross
+         still opens the sheet, which a <button> wrapping them could not do. -->
+    <button
+        {...controlProps}
+        type="button"
+        {disabled}
+        onclick={() => (isOpen = true)}
+        aria-label="Выбрать категорию и теги"
+        class="absolute inset-0 rounded-md"
+    ></button>
+    <span
+        class={cn(
+            'pointer-events-none relative flex min-w-0 flex-1 flex-wrap items-center gap-2',
+            !disabled && '[&_button]:pointer-events-auto',
+        )}
+    >
         {#if selectedCategory}
             <CategoryBadge
                 name={selectedCategory.name}
@@ -86,10 +105,10 @@
             />
         {/if}
         {#each selectedTags as tag (tag.id)}
-            <TagChip name={tag.name} />
+            <TagChip name={tag.name} onRemove={() => removeTag(tag.id)} />
         {/each}
         {#each selectedPrivateTags as tag (tag.id)}
-            <TagChip name={tag.name} isPrivate />
+            <TagChip name={tag.name} isPrivate onRemove={() => removePrivateTag(tag.id)} />
         {/each}
         {#if isLoading}
             <Skeleton class="h-5 w-32 rounded-full" />
@@ -97,8 +116,8 @@
             <span class="text-muted-foreground/40 text-base">Не выбраны</span>
         {/if}
     </span>
-    <ChevronDownIcon class="size-4 shrink-0 opacity-50" />
-</button>
+    <ChevronDownIcon class="pointer-events-none relative size-4 shrink-0 opacity-50" />
+</div>
 
 <input type="hidden" name="category" value={category ?? ''} />
 {#each tags as tag (tag)}

@@ -71,9 +71,16 @@
                 return [];
         }
     });
-    const matches = $derived(
-        catalog.filter(option => option.name.toLowerCase().includes(query.trim().toLowerCase())),
-    );
+    const matches = $derived.by(() => {
+        const search = query.trim().toLowerCase();
+        const found = catalog.filter(option => option.name.toLowerCase().includes(search));
+        // once a catalog runs to a hundred tags, what is already picked is the part
+        // that has to stay reachable without scrolling
+        return [
+            ...found.filter(option => selectedIds.includes(option.id)),
+            ...found.filter(option => !selectedIds.includes(option.id)),
+        ];
+    });
     const canCreate = $derived.by(() => {
         const name = query.trim();
         return (
@@ -109,16 +116,19 @@
         return ids.includes(id) ? ids.filter(item => item !== id) : [...ids, id];
     }
 
-    function apply(id: string, row: number) {
+    function apply(id: string) {
         select(id);
-        // The row under the pointer must not move: only a cleared query re-lists everything,
-        // and only then does the cursor go back to the top.
-        if (query) {
-            query = '';
-            cursor = 0;
-        } else {
-            cursor = row;
-        }
+        query = '';
+        // the toggled option is re-sorted into or out of the pinned block, so the cursor
+        // follows the option itself rather than the row it used to sit on
+        void tick().then(() =>
+            moveCursorTo(
+                Math.max(
+                    matches.findIndex(option => option.id === id),
+                    0,
+                ),
+            ),
+        );
         // after the selection the field is emptied and focused again, ready for the next query.
         returnFocusToQuery();
     }
@@ -131,7 +141,7 @@
         try {
             select(await onCreate(section, query.trim()));
             query = '';
-            cursor = 0;
+            void tick().then(() => moveCursorTo(0));
         } catch {
             toast.error(`Не удалось создать ${section === 'category' ? 'категорию' : 'тег'}`);
         } finally {
@@ -151,7 +161,7 @@
         }
         const option = matches[canCreate ? row - 1 : row];
         if (option) {
-            apply(option.id, row);
+            apply(option.id);
         }
     }
 
@@ -159,8 +169,12 @@
         if (rowCount === 0) {
             return;
         }
-        cursor = (cursor + step + rowCount) % rowCount;
-        listElement?.querySelector(`[data-row="${cursor}"]`)?.scrollIntoView({block: 'nearest'});
+        moveCursorTo((cursor + step + rowCount) % rowCount);
+    }
+
+    function moveCursorTo(row: number) {
+        cursor = row;
+        listElement?.querySelector(`[data-row="${row}"]`)?.scrollIntoView({block: 'nearest'});
     }
 
     function handleKeydown(event: KeyboardEvent) {
@@ -289,7 +303,7 @@
                     <button
                         type="button"
                         data-row={row}
-                        onclick={() => apply(option.id, row)}
+                        onclick={() => apply(option.id)}
                         onpointerenter={() => (cursor = row)}
                         class={cn(
                             'flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm',
