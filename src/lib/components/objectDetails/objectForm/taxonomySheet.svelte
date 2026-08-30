@@ -192,7 +192,14 @@
     function switchTo(next: Section) {
         section = next;
         query = '';
+        returnToTop();
+    }
+
+    function returnToTop() {
         cursor = 0;
+        // one element is reused as its rows are replaced, so it would otherwise hand
+        // the incoming list the offset the outgoing one was left at
+        void tick().then(() => listElement?.scrollTo({top: 0}));
     }
 
     function clearSection() {
@@ -277,7 +284,7 @@
                 data-form-type="other"
                 bind:ref={queryInput}
                 bind:value={query}
-                oninput={() => (cursor = 0)}
+                oninput={returnToTop}
                 onkeydown={handleKeydown}
             />
             <div bind:this={listElement} class="-mx-1 min-h-0 flex-1 overflow-y-auto px-1">
