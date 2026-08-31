@@ -55,13 +55,14 @@ An archive of urban artifacts — old signs, plaques, mosaics, and other details
 - **Search** — Unified local (Typesense) and Google Places search with preview dropdown and tabbed results ([docs/search.md](docs/search.md))
 - **Notion sync** — Bidirectional sync between app objects and a Notion database ([docs/notion-sync.md](docs/notion-sync.md))
 - **Data import** — CSV import to migrate data from other sources ([docs/import.md](docs/import.md))
-- **User accounts** — Clerk authentication, role-based access, personal (private) tags and visited markers tracking
+- **User accounts** — Clerk authentication, closed-by-default route gate with shared-link exception ([docs/authentication.md](docs/authentication.md)), role-based access, personal (private) tags and visited markers tracking
 
 ## Documentation
 
 | Doc                                                                    | Topics                                                          |
 | ---------------------------------------------------------------------- | --------------------------------------------------------------- |
 | [docs/environment.md](docs/environment.md)                             | `.env.local` vs Convex env vars, setup checklist                |
+| [docs/authentication.md](docs/authentication.md)                       | Route gate, anonymous shared links, login return URLs           |
 | [docs/analytics.md](docs/analytics.md)                                 | PostHog events, ingest proxy, identity, error tracking          |
 | [docs/object-backend.md](docs/object-backend.md)                       | Object reader/writer seam, details projection, Typesense writes |
 | [docs/notion-sync.md](docs/notion-sync.md)                             | Notion webhook setup, sync invariants, audit action             |

@@ -150,10 +150,29 @@ In `viewMode.svelte`, the cover uses `ImageUpload` in read-only mode (`disabled`
 
 Descriptions may arrive with literal escape sequences (`\n`, `\r\n`, `\r`) from CSV import or Notion sync rather than real line breaks. `viewMode.svelte` normalizes these to newline characters before render and uses `whitespace-pre-line` so multi-line descriptions display correctly in read-only view.
 
+## Edit/create form
+
+`objectForm/form.svelte` drives create and edit modes via Superforms + Zod (`objectSchema.ts`).
+
+### Taxonomy field
+
+Category and both tag sets are edited through one control — see [category-settings.md](./category-settings.md#taxonomy-picker-in-forms). Selected values render as a `CategoryBadge` plus `TagChip` rows inside the trigger; the sheet writes back to hidden form inputs (`category`, repeated `tags`, repeated `privateTags`).
+
+### Address collapse
+
+When address, city, and country are all populated and geocoding is not in flight, the three inputs collapse into one read-only line (`address, city, country`). Clicking the pencil expands the separate fields again. Hidden inputs submit the collapsed values so the collapsed state does not drop data on save.
+
+New points apply server geocode results once (`addressLookupApplied` guard); if the user types before lookup finishes, auto-fill stops so manual edits are not overwritten.
+
+### Layout
+
+Form fields use vertical spacing (`gap-y-3`, `mt-3` section breaks) instead of horizontal rules. Flag toggles (visited, removed, public) sit in a wrap row below the name field.
+
 ## Related docs
 
 - [street-view.md](./street-view.md) — opening panorama from object/point actions
 - [map-architecture.md](./map-architecture.md) — map click constraints, marker focus offset, first-run hint
 - [search.md](./search.md) — search → point preview flow
+- [authentication.md](./authentication.md) — anonymous shared links, login gate
 - [analytics.md](./analytics.md) — PostHog setup and event catalog
-- [category-settings.md](./category-settings.md) — `CategoryBadge` reads merged category styles
+- [category-settings.md](./category-settings.md) — `CategoryBadge` reads merged category styles; taxonomy picker
