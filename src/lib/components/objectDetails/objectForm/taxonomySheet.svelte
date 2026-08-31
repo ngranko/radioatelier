@@ -144,6 +144,10 @@
         void tick().then(() => queryInput?.focus());
     }
 
+    $effect(() => {
+        queryInput?.focus();
+    });
+
     function activate(row: number) {
         if (canCreate && row === 0) {
             void create();
@@ -179,6 +183,7 @@
         section = next;
         query = '';
         cursor = 0;
+        returnFocusToQuery();
     }
 
     function clearSection() {
