@@ -79,6 +79,7 @@
 
 <aside
     bind:this={asideElement}
+    data-details-sheet
     class={cn([
         'bg-background absolute bottom-0 z-3 m-2 flex w-[calc(100dvw-8px*2)] max-w-100 flex-col rounded-2xl transition-[height] ease-out',
         {

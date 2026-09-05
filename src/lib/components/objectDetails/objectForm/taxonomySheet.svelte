@@ -7,6 +7,7 @@
     import CheckIcon from '@lucide/svelte/icons/check';
     import PlusIcon from '@lucide/svelte/icons/plus';
     import XIcon from '@lucide/svelte/icons/x';
+    import {Portal} from 'bits-ui';
     import {tick} from 'svelte';
     import {toast} from 'svelte-sonner';
 
@@ -203,120 +204,127 @@
     }
 </script>
 
-<div class="absolute inset-0 z-10 flex flex-col justify-end overflow-hidden rounded-2xl">
-    <button
-        type="button"
-        class="bg-foreground/20 absolute inset-0"
-        aria-label="Закрыть"
-        onclick={onClose}
-    ></button>
-    <div
-        class="bg-background relative flex max-h-[85%] min-h-0 flex-col rounded-t-2xl border-t shadow-2xl"
-    >
-        <div class="flex items-center gap-2 border-b px-4 py-3">
-            <span class="flex-1 text-base">категория и теги</span>
-            <button
-                type="button"
-                onclick={onClose}
-                aria-label="Закрыть"
-                class="text-muted-foreground hover:text-foreground rounded-sm p-0.5"
-            >
-                <XIcon class="size-5" />
-            </button>
-        </div>
-
-        <div class="flex gap-1 p-2">
-            {#each sections as item (item.id)}
+<!-- the sheet is portalled so that it dims the whole card, header row included -->
+<Portal to="[data-details-sheet]">
+    <div class="absolute inset-0 z-10 flex flex-col justify-end overflow-hidden rounded-2xl">
+        <button
+            type="button"
+            class="bg-foreground/20 absolute inset-0"
+            aria-label="Закрыть"
+            onclick={onClose}
+        ></button>
+        <div
+            class="bg-background relative flex max-h-[85%] min-h-0 flex-col rounded-t-2xl border-t shadow-2xl"
+        >
+            <div class="flex items-center gap-2 border-b px-4 py-3">
+                <span class="flex-1 text-base">категория и теги</span>
                 <button
                     type="button"
-                    onclick={() => switchTo(item.id)}
-                    class={cn(
-                        'flex-1 rounded-lg py-1.5 text-sm transition-colors',
-                        section === item.id
-                            ? 'bg-primary text-primary-foreground'
-                            : 'text-muted-foreground hover:bg-accent',
-                    )}
+                    onclick={onClose}
+                    aria-label="Закрыть"
+                    class="text-muted-foreground hover:text-foreground rounded-sm p-0.5"
                 >
-                    {item.label}
+                    <XIcon class="size-5" />
                 </button>
-            {/each}
-        </div>
+            </div>
 
-        <div class="text-muted-foreground flex h-9 items-center gap-2 px-4 text-sm">
-            <span class="min-w-0 flex-1 truncate">{summary}</span>
-            {#if selectedIds.length > 0}
-                <button
-                    type="button"
-                    onclick={clearSection}
-                    class="text-destructive shrink-0 underline-offset-4 hover:underline"
-                >
-                    снять все
-                </button>
-            {/if}
-        </div>
-
-        <div class="flex min-h-0 flex-1 flex-col gap-2 px-4 pb-4">
-            <Input
-                type="text"
-                placeholder="Поиск или новое имя..."
-                autocomplete="off"
-                autocorrect="off"
-                spellcheck="false"
-                data-1p-ignore
-                data-lpignore="true"
-                data-bwignore
-                data-form-type="other"
-                bind:ref={queryInput}
-                bind:value={query}
-                oninput={() => (cursor = 0)}
-                onkeydown={handleKeydown}
-            />
-            <div bind:this={listElement} class="-mx-1 min-h-0 flex-1 overflow-y-auto px-1">
-                {#if canCreate}
+            <div class="flex gap-1 p-2">
+                {#each sections as item (item.id)}
                     <button
                         type="button"
-                        data-row="0"
-                        disabled={isCreating}
-                        onclick={create}
-                        onpointerenter={() => (cursor = 0)}
+                        onclick={() => switchTo(item.id)}
                         class={cn(
-                            'text-primary flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm',
-                            cursor === 0 && 'bg-accent',
+                            'flex-1 rounded-lg py-1.5 text-sm transition-colors',
+                            section === item.id
+                                ? 'bg-primary text-primary-foreground'
+                                : 'text-muted-foreground hover:bg-accent',
                         )}
                     >
-                        <PlusIcon class="size-3.5 shrink-0" />
-                        Создать «{query.trim()}»
+                        {item.label}
+                    </button>
+                {/each}
+            </div>
+
+            <div class="text-muted-foreground flex h-9 items-center gap-2 px-4 text-sm">
+                <span class="min-w-0 flex-1 truncate">{summary}</span>
+                {#if selectedIds.length > 0}
+                    <button
+                        type="button"
+                        onclick={clearSection}
+                        class="text-destructive shrink-0 underline-offset-4 hover:underline"
+                    >
+                        снять все
                     </button>
                 {/if}
-                {#each matches as option, index (option.id)}
-                    {@const row = canCreate ? index + 1 : index}
-                    {@const isSelected = selectedIds.includes(option.id)}
-                    <button
-                        type="button"
-                        data-row={row}
-                        onclick={() => apply(option.id, row)}
-                        onpointerenter={() => (cursor = row)}
-                        class={cn(
-                            'flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm',
-                            cursor === row && 'bg-accent',
-                            isSelected && 'font-medium',
-                        )}
-                    >
-                        <CheckIcon class={cn('size-3.5 shrink-0', !isSelected && 'opacity-0')} />
-                        {#if section === 'category'}
-                            <CategoryBadge
-                                name={option.name}
-                                categoryId={option.id as Id<'categories'>}
-                                showName={false}
-                                size="sm"
+            </div>
+
+            <div class="flex min-h-0 flex-1 flex-col gap-2 px-4 pb-4">
+                <Input
+                    type="text"
+                    placeholder="Поиск или новое имя..."
+                    autocomplete="off"
+                    autocorrect="off"
+                    spellcheck="false"
+                    data-1p-ignore
+                    data-lpignore="true"
+                    data-bwignore
+                    data-form-type="other"
+                    bind:ref={queryInput}
+                    bind:value={query}
+                    oninput={() => (cursor = 0)}
+                    onkeydown={handleKeydown}
+                />
+                <div bind:this={listElement} class="-mx-1 min-h-0 flex-1 overflow-y-auto px-1">
+                    {#if canCreate}
+                        <button
+                            type="button"
+                            data-row="0"
+                            disabled={isCreating}
+                            onclick={create}
+                            onpointerenter={() => (cursor = 0)}
+                            class={cn(
+                                'text-primary flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm',
+                                cursor === 0 && 'bg-accent',
+                            )}
+                        >
+                            <PlusIcon class="size-3.5 shrink-0" />
+                            Создать «{query.trim()}»
+                        </button>
+                    {/if}
+                    {#each matches as option, index (option.id)}
+                        {@const row = canCreate ? index + 1 : index}
+                        {@const isSelected = selectedIds.includes(option.id)}
+                        <button
+                            type="button"
+                            data-row={row}
+                            onclick={() => apply(option.id, row)}
+                            onpointerenter={() => (cursor = row)}
+                            class={cn(
+                                'flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm',
+                                cursor === row && 'bg-accent',
+                                isSelected && 'font-medium',
+                            )}
+                        >
+                            <CheckIcon
+                                class={cn('size-3.5 shrink-0', !isSelected && 'opacity-0')}
                             />
-                        {/if}
-                        <span class="min-w-0 flex-1 break-words">{option.name}</span>
-                    </button>
-                {:else}
-                    <p class="text-muted-foreground px-3 py-6 text-center text-sm">Не найдено</p>
-                {/each}
+                            {#if section === 'category'}
+                                <CategoryBadge
+                                    name={option.name}
+                                    categoryId={option.id as Id<'categories'>}
+                                    showName={false}
+                                    size="sm"
+                                />
+                            {/if}
+                            <span class="min-w-0 flex-1 break-words">{option.name}</span>
+                        </button>
+                    {:else}
+                        <p class="text-muted-foreground px-3 py-6 text-center text-sm">
+                            Не найдено
+                        </p>
+                    {/each}
+                </div>
             </div>
         </div>
     </div>
-</div>
+</Portal>
