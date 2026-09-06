@@ -105,10 +105,15 @@
             />
         {/if}
         {#each selectedTags as tag (tag.id)}
-            <TagChip name={tag.name} onRemove={() => removeTag(tag.id)} />
+            <TagChip name={tag.name} {disabled} onRemove={() => removeTag(tag.id)} />
         {/each}
         {#each selectedPrivateTags as tag (tag.id)}
-            <TagChip name={tag.name} isPrivate onRemove={() => removePrivateTag(tag.id)} />
+            <TagChip
+                name={tag.name}
+                isPrivate
+                {disabled}
+                onRemove={() => removePrivateTag(tag.id)}
+            />
         {/each}
         {#if isLoading}
             <Skeleton class="h-5 w-32 rounded-full" />

@@ -9,9 +9,10 @@
         name: string;
         isPrivate?: boolean;
         onRemove?: () => void;
+        disabled?: boolean;
     }
 
-    let {name, isPrivate = false, onRemove}: Props = $props();
+    let {name, isPrivate = false, onRemove, disabled = false}: Props = $props();
 </script>
 
 <Badge
@@ -34,9 +35,10 @@
     {#if onRemove}
         <button
             type="button"
+            {disabled}
             onclick={onRemove}
             aria-label="Убрать {name}"
-            class="shrink-0 rounded-sm p-1 hover:bg-current/10"
+            class="shrink-0 rounded-sm p-1 hover:bg-current/10 disabled:pointer-events-none"
         >
             <XIcon class="size-3.5" />
         </button>
