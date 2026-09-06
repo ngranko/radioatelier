@@ -9,7 +9,7 @@ MapProvider (GoogleMapsProvider)
     ↓
 MarkerManager (viewport culling, scheduling)
     ↓
-MarkerRenderer (DomMarkerRenderer | HybridMarkerRenderer | ClusteredHybridRenderer)
+MarkerRenderer (DomMarkerRenderer | HybridMarkerRenderer | GpuHybridRenderer)
     ↓
 Marker components in +layout.svelte (data from api.markers.list)
 ```
@@ -55,20 +55,35 @@ Future collection-based access control is planned in [collection-access-control.
 
 `GoogleMapsProvider` is the only implementation. It also exposes `getGoogleMap()` for Google-specific features (Deck.gl overlay, Street View panorama). Adding another provider means implementing `MapProvider` and wiring it in `map.svelte` instead of `GoogleMapsProvider`.
 
-## DOM vs Deck.gl rendering
+## DOM vs Deck.gl vs GPU rendering
 
-The default renderer switches on map idle based on zoom:
+Two renderer strategies are selected once when the map initializes (`map.svelte` → `resolveGpuRendererFlag`):
+
+| Strategy | `rendererStrategy` | Renderers | When active |
+| -------- | ------------------ | --------- | ----------- |
+| **Legacy** (default) | `'legacy'` | `HybridMarkerRenderer` or `DomMarkerRenderer` | PostHog flag off, timed out, or errored |
+| **GPU** | `'gpu'` | `GpuHybridRenderer` | PostHog flag `map-gpu-clustered-renderer` enabled |
+
+### Legacy renderer (zoom-based switch)
+
+On map idle, `MarkerManager.syncRendererWithViewport` picks the renderer from zoom:
 
 - **Zoom ≤ 10** (`config.deckZoomThreshold`): Deck.gl via `HybridMarkerRenderer`
 - **Zoom > 10**: pure DOM via `DomMarkerRenderer`
 
-The zoom→renderer decision and the switch sequence (suppress updates → destroy renderer → recreate → `syncAll` → resume) live inside `MarkerManager.syncRendererWithViewport`; `map.svelte` only reports that the viewport settled on idle. The threshold is a `MarkerManager` option defaulting to `config.deckZoomThreshold`.
+The switch sequence (suppress updates → destroy renderer → recreate → `syncAll` → resume) lives inside `MarkerManager.syncRendererWithViewport`; `map.svelte` only reports that the viewport settled on idle.
 
-At low zoom, list markers (`source: 'list'`) batch-render on a Deck.gl overlay for performance. Service markers always use DOM even in deck mode.
+At low zoom, list markers (`source: 'list'`) batch-render on a Deck.gl overlay for performance. Service markers always use DOM even in deck mode. Map clicks are suppressed while legacy Deck mode is active.
 
-The PostHog flag `map-gpu-clustered-renderer` enables the alternative `ClusteredHybridRenderer` for the lifetime of the map. It keeps list markers in one Deck.gl overlay at every zoom, uses Supercluster to combine dense points, and renders category icons from masked Lucide SVGs. Cluster clicks zoom to their expansion level; individual clicks use the same marker callback as the DOM renderer.
+### GPU renderer (flagged)
 
-Focused list markers are temporarily removed from the GPU layer and promoted to `DomMarkerRenderer`. This preserves the existing focus styling and long-press repositioning while keeping the rest of the catalog batched. Search, share, and draft markers remain DOM-rendered. Flag resolution runs while Google Maps initializes and falls back to the default renderer if PostHog does not respond within 1.5 seconds.
+`GpuHybridRenderer` keeps list markers in one Deck.gl overlay at **every zoom**. Each marker is one composite sprite (category-colored disk + masked Lucide icon). Search, share, and draft markers remain DOM-rendered via the embedded `DomMarkerRenderer`.
+
+**Focus promotion** — the focused list marker is temporarily promoted to DOM: the GPU layer excludes it, a DOM twin takes over for highlight styling and drag repositioning, and the sprite holds the spot until the twin paints. On unfocus, the DOM twin retires after the highlight scales down and the sprite returns.
+
+**Hold to reposition** — `SpriteDragGesture` detects a long press on a GPU marker, promotes it to DOM, and reuses the existing DOM drag controller. Release ends the drag and demotes back to GPU; the gesture marks a renderer interaction so the map click handler does not create a new point.
+
+Flag resolution runs while Google Maps initializes and falls back to the legacy renderer if PostHog does not respond within 1.5 seconds. See [analytics.md](./analytics.md).
 
 ## Marker sources
 
@@ -76,8 +91,8 @@ Focused list markers are temporarily removed from the GPU layer and promoted to 
 
 | Source   | Renderer           | Viewport-managed | Typical use                           |
 | -------- | ------------------ | ---------------- | ------------------------------------- |
-| `list`   | Deck (at low zoom) | Yes              | Archive objects on the map            |
-| `map`    | Same as list       | Yes              | Legacy / map-origin markers           |
+| `list`   | Deck (legacy low zoom) or GPU | Yes              | Archive objects on the map            |
+| `map`    | Same as list                  | Yes              | Legacy / map-origin markers           |
 | `search` | DOM                | Yes              | Google Places search result           |
 | `share`  | DOM                | No               | Deep-linked object not in marker list |
 | `draft`  | DOM                | Yes              | Point being created                   |
@@ -102,7 +117,7 @@ Viewport selection scans the catalog cheaply, while applying its result costs on
 - `VisibilityEngine` diffs the selected ids against the repository's visible set, so it touches only markers entering or leaving the viewport rather than walking every marker.
 - The resulting diff is applied under a time budget (`frameBudgetMs`, default 8 ms) rather than a fixed chunk count: small diffs finish synchronously in the same tick, large ones yield to the browser between `requestAnimationFrame` batches so slow devices stay interactive.
 
-The clustered renderer indexes all list markers and asks Supercluster for the current zoom's world-level cluster set. With the expected 2,000–2,500 marker catalog this avoids viewport churn during pan: Google Maps moves the existing GPU overlay, and the cluster set is refreshed after zoom settles. It does not run DOM entrance animations for list markers; its markers grow in on the GPU instead (see below).
+With the GPU renderer, viewport culling still runs through `selectVisibleMarkerIds`, but list markers draw as sprites rather than DOM elements. The GPU layer does not run DOM entrance animations; markers grow in on the GPU instead (see below).
 
 ## Marker entrance animation
 
@@ -115,15 +130,17 @@ Both ends of the animation are driven by the marker itself rather than by wall-c
 
 `hide()` and `remove()` cancel a pending pop-in so a marker leaving mid-animation cannot keep it. Hiding is never animated, in either renderer (see the comment on `Marker.hide`); removal is.
 
-Sprites in the clustered renderer grow in too, but nothing about the DOM sequence carries over: there is no element to attach an animation to and no reveal to wait for, since a sprite is drawn only once the layer draws it. `SpritePopExtension` (`renderer/clustered/spritePopExtension.ts`) scales the quad in the vertex shader, through deck.gl's `DECKGL_FILTER_SIZE` hook, from an `instancePopTimes` attribute and a `now` uniform it refreshes every draw. deck.gl's own attribute transitions cannot do this: `padBuffer` seeds a newly added instance with its final value, so it has nothing to ease from. That is load-bearing elsewhere, as it is also why growing the data does not make settled markers animate.
+Sprites in the GPU renderer grow in too, but nothing about the DOM sequence carries over: there is no element to attach an animation to and no reveal to wait for, since a sprite is drawn only once the layer draws it. `SpritePopExtension` (`renderer/gpu/spritePopExtension.ts`) scales the quad in the vertex shader, through deck.gl's `DECKGL_FILTER_SIZE` hook, from an `instancePopTimes` attribute and a `now` uniform it refreshes every draw. deck.gl's own attribute transitions cannot do this: `padBuffer` seeds a newly added instance with its final value, so it has nothing to ease from. That is load-bearing elsewhere, as it is also why growing the data does not make settled markers animate.
 
-The same extension runs the exit, constructed with `reverse` and the shorter `--animate-popout` duration. A removed marker is gone from the layer's data immediately, so `spriteExits.ts` keeps a copy of its position and sprite and draws it from `clustered-marker-exit` until it has shrunk away. Nothing downstream waits on that: `remove()` returns as it always did, and the marker object can be collected. A marker that was promoted to DOM is skipped, because its twin is already running the DOM pop-out and a sprite copy would animate on top of it.
+The same extension runs the exit, constructed with `reverse` and the shorter `--animate-popout` duration. A removed marker is gone from the layer's data immediately, so `spriteExits.ts` keeps a copy of its position and sprite and draws it from a dedicated exit layer until it has shrunk away. Nothing downstream waits on that: `remove()` returns as it always did, and the marker object can be collected. A marker that was promoted to DOM is skipped, because its twin is already running the DOM pop-out and a sprite copy would animate on top of it.
 
-`spritePopTimes.ts` stamps each marker the first time the layer draws it and keeps that stamp for good, so a marker pops when it joins the map rather than every time a cluster hands it back. The whole entrance is one float per marker with no per-frame CPU work, so an arriving batch costs the same whether it is 5 markers or 2,500. While anything is still growing the layer asks for its own frames through `setNeedsRedraw()`, because nothing else drives them when the map sits still.
+When category style or marker state changes, `SpriteFadeTracker` (`renderer/gpu/spriteFades.ts`) crossfades the outgoing sprite over the incoming one for one deck.gl colour transition — an instantaneous sprite swap would otherwise pop.
+
+`spritePopTimes.ts` stamps each marker the first time the layer draws it and keeps that stamp for good, so a marker pops when it joins the map rather than on every re-render. The whole entrance is one float per marker with no per-frame CPU work, so an arriving batch costs the same whether it is 5 markers or 2,500. While anything is still growing the layer asks for its own frames through `setNeedsRedraw()`, because nothing else drives them when the map sits still.
 
 ## Map interactions
 
-- **Click** — 300 ms debounce; suppressed while legacy Deck mode is active or during double-tap drag-zoom (`PointerDragZoomController`). Clustered markers consume their own picked clicks while empty-map clicks keep the point-creation flow.
+- **Click** — 300 ms debounce; suppressed while legacy Deck mode is active or during double-tap drag-zoom (`PointerDragZoomController`). GPU marker picks forward through `pickingClick.ts` and pair with the Maps click via `takePairedRendererClick` so marker clicks do not also create points. Empty-map clicks keep the point-creation flow.
 - **Drag** — cancels pending marker-reposition timeouts (`removeDragTimeout`).
 - **Idle** — persists center/zoom to `localStorage` (`lastCenter`), then `syncRendererWithViewport` picks the renderer for the new zoom and schedules a viewport update.
 - **Min zoom** — computed from container size so the map cannot zoom out far enough to show duplicate tile instances (`computeMinZoomForContainer` in the Google provider).
@@ -171,7 +188,8 @@ Archive marker color and icon come from the object's category, merged with per-u
 
 ## Related docs
 
+- [authentication.md](./authentication.md) — map click and route access require sign-in
 - [street-view.md](./street-view.md) — panorama overlay and minimap (requires `GoogleMapsProvider`)
 - [object-details-overlay.md](./object-details-overlay.md) — map click → `/point` create flow
 - [search.md](./search.md) — search result markers and map focus
-- [analytics.md](./analytics.md) — PostHog setup and event catalog
+- [analytics.md](./analytics.md) — PostHog setup, GPU renderer flag, event catalog

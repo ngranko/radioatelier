@@ -55,7 +55,7 @@ See `.env.local.example`.
 | `CLERK_JWT_ISSUER_DOMAIN` | `src/convex/auth.config.ts` — Clerk JWT issuer URL (e.g. `https://your-app.clerk.accounts.dev`) |
 | `CLERK_WEBHOOK_SECRET`    | `src/convex/http.ts` — verifies `POST /clerk-users-webhook`                                     |
 
-Configure the Clerk JWT template named `convex` and add the Convex issuer URL in the Clerk dashboard as described in [Convex + Clerk](https://docs.convex.dev/auth/clerk).
+Configure the Clerk JWT template named `convex` and add the Convex issuer URL in the Clerk dashboard as described in [Convex + Clerk](https://docs.convex.dev/auth/clerk). Route-level auth behavior is documented in [authentication.md](./authentication.md).
 
 ### Google (server)
 

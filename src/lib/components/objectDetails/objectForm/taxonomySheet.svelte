@@ -154,6 +154,10 @@
         void tick().then(() => queryInput?.focus());
     }
 
+    $effect(() => {
+        queryInput?.focus();
+    });
+
     function activate(row: number) {
         if (canCreate && row === 0) {
             void create();
@@ -197,9 +201,7 @@
 
     function returnToTop() {
         cursor = 0;
-        // one element is reused as its rows are replaced, so it would otherwise hand
-        // the incoming list the offset the outgoing one was left at
-        void tick().then(() => listElement?.scrollTo({top: 0}));
+        returnFocusToQuery();
     }
 
     function clearSection() {

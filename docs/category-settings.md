@@ -44,13 +44,27 @@ The settings UI uses `ColorPicker`, `IconPicker`, and `MarkerPreview` (`src/lib/
 
 ## What `isHidden` does
 
-The settings checkbox is labeled "hide from list" (`categoryStyleEditor.svelte`). In code, `isHidden` only affects the category picker in object forms:
+The settings checkbox is labeled "hide from list" (`categoryStyleEditor.svelte`). In code, `isHidden` only affects the taxonomy picker in object forms:
 
-```19:19:src/lib/components/objectDetails/objectForm/categorySelect.svelte
+```44:46:src/lib/components/objectDetails/objectForm/taxonomyField.svelte
+        Object.values(categoriesState.categories)
             .filter(item => !item.isHidden)
+            .map(item => ({id: item.id, name: item.name}))
 ```
 
 Hidden categories **still appear on the map** with their customized marker style. They are excluded only when choosing a category while creating or editing an object.
+
+## Taxonomy picker in forms
+
+Create and edit forms use a single **категория и теги** field (`taxonomyField.svelte`) instead of separate category and tag dropdowns. Clicking it opens `taxonomySheet.svelte` — a bottom sheet with three tabs:
+
+| Tab | Field | Selection |
+| --- | ----- | --------- |
+| категория | `category` | Single select |
+| теги | `tags` | Multi select (shared tags) |
+| приватные | `privateTags` | Multi select (owner-only) |
+
+Each tab shares one search/create input. Typing filters the catalog; a **Создать** row appears when the query does not match an existing name. Arrow keys move the cursor; Enter selects or creates. New categories and tags call `api.categories.create`, `api.tags.create`, or `api.privateTags.create` respectively. Hidden categories are omitted from the category tab (see above).
 
 ## Save flow
 

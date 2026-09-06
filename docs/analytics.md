@@ -57,7 +57,7 @@ Set in `.env.local` (see `.env.local.example`):
 
 ### Feature flags
 
-The map evaluates `map-gpu-clustered-renderer` while Google Maps initializes. Boolean `true` and the multivariate value `clustered` select the clustered GPU renderer; missing, disabled, errored, or timed-out evaluations retain the legacy renderer. Evaluation uses `getFeatureFlag`, so PostHog records the standard `$feature_flag_called` exposure event.
+The map evaluates `map-gpu-clustered-renderer` while Google Maps initializes (historical flag name — clustering was removed; the flag now toggles `GpuHybridRenderer`). `resolveGpuRendererFlag` uses PostHog's `onFeatureFlags` + `isFeatureEnabled`; `true` selects the GPU renderer, and missing, disabled, errored, or timed-out evaluations retain the legacy zoom-based renderer. The 1.5 s timeout is defined in `gpuRendererFlag.ts`.
 
 The renderer is selected once per map instance rather than changing after display. This prevents a live flag refresh from destroying and recreating marker layers during interaction.
 
