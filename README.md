@@ -59,5 +59,6 @@ Start with [Context](CONTEXT.md) for domain terms.
 - [Map architecture](docs/map-architecture.md): marker feeds, renderers, focus, and gestures.
 - [Object details overlay](docs/object-details-overlay.md): view, edit, preview, and create flows.
 - [Category settings](docs/category-settings.md): personal styles and the taxonomy picker.
+- [Taxonomy management](docs/taxonomy-management.md): renaming, deleting, and merging categories, tags, and private tags.
 - [Street View](docs/street-view.md): panorama lookup, caching, and minimap.
 - [CSV import](docs/import.md): accepted fields, batches, progress, and failure handling.

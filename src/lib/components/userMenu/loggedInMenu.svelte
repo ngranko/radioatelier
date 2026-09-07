@@ -1,5 +1,6 @@
 <script lang="ts">
     import {goto} from '$app/navigation';
+    import {api} from '$convex/_generated/api';
     import ThemeSwitcher from '$lib/components/themeSwitcher.svelte';
     import {Root as AvatarRoot, Fallback} from '$lib/components/ui/avatar';
     import {Button} from '$lib/components/ui/button';
@@ -16,9 +17,14 @@
     import KeyRoundIcon from '@lucide/svelte/icons/key-round';
     import LogOutIcon from '@lucide/svelte/icons/log-out';
     import PaletteIcon from '@lucide/svelte/icons/palette';
+    import TagsIcon from '@lucide/svelte/icons/tags';
     import UserRoundIcon from '@lucide/svelte/icons/user-round';
+    import {useQuery} from 'convex-svelte';
 
     let isLogoutDialogOpen = $state(false);
+
+    const currentUser = useQuery(api.users.current, {});
+    const isAdmin = $derived(currentUser.data?.role === 'admin');
 
     function handleImportClick() {
         goto('/import');
@@ -26,6 +32,10 @@
 
     function handleSettingsClick() {
         goto('/settings');
+    }
+
+    function handleTaxonomiesClick() {
+        goto('/taxonomies');
     }
 
     function handleChangePasswordClick() {
@@ -67,6 +77,12 @@
                 <PaletteIcon />
                 Настройки категорий
             </DropdownMenuItem>
+            {#if isAdmin}
+                <DropdownMenuItem onclick={handleTaxonomiesClick}>
+                    <TagsIcon />
+                    Справочники
+                </DropdownMenuItem>
+            {/if}
             <DropdownMenuItem onclick={handleChangePasswordClick}>
                 <KeyRoundIcon />
                 Сменить пароль
