@@ -58,6 +58,21 @@ export const updateInTypesense = internalAction({
     },
 });
 
+export const updateManyInTypesense = internalAction({
+    args: {
+        objects: v.array(typesenseObjectSchema),
+    },
+    handler: async (ctx, {objects}) => {
+        const client = createTypesenseSyncClient();
+        for (const object of objects) {
+            await updateObjectInTypesense(client, {
+                ...object,
+                location: object.location as [number, number],
+            });
+        }
+    },
+});
+
 export const removeFromTypesense = internalAction({
     args: {
         objectId: v.id('objects'),

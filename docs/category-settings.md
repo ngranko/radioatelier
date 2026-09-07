@@ -41,4 +41,4 @@ Arrow keys move the highlight with wrapping, Enter selects or creates, and Escap
 
 The sheet mounts inside the details panel's portal target. Selections bind to the form immediately, so closing the sheet dismisses it without reverting those selections. The parent form's save persists the object.
 
-See [Map architecture](map-architecture.md) for rendering and [Object details overlay](object-details-overlay.md) for panel behavior.
+See [Map architecture](map-architecture.md) for rendering, [Object details overlay](object-details-overlay.md) for panel behavior, and [Taxonomy management](taxonomy-management.md) for renaming and deleting categories and tags.
