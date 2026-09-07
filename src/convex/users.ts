@@ -1,5 +1,5 @@
 import type {UserJSON} from '@clerk/backend';
-import {v, type Validator} from 'convex/values';
+import {ConvexError, v, type Validator} from 'convex/values';
 import {internalMutation, query, type QueryCtx} from './_generated/server';
 
 export const current = query({
@@ -41,6 +41,14 @@ export async function getCurrentUserOrThrow(ctx: QueryCtx) {
     const userRecord = await getCurrentUser(ctx);
     if (!userRecord || userRecord.isDeleted) {
         throw new Error("Can't get current user");
+    }
+    return userRecord;
+}
+
+export async function getCurrentAdminOrThrow(ctx: QueryCtx) {
+    const userRecord = await getCurrentUserOrThrow(ctx);
+    if (userRecord.role !== 'admin') {
+        throw new ConvexError('Forbidden');
     }
     return userRecord;
 }

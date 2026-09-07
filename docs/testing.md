@@ -47,6 +47,8 @@ Tests live next to the code they cover. Both `*.test.ts` and `*.spec.ts` suffixe
 | `src/convex/helpers/objectWriter.test.ts`                           | Object writer create/patch and search-index scheduling |
 | `src/convex/helpers/objectRecordPatch.test.ts`                      | Object record patch splitting                          |
 | `src/convex/helpers/clerkTimestamps.test.ts`                        | Clerk webhook timestamp parsing                        |
+| `src/convex/helpers/objectTaxonomy.test.ts`                         | Taxonomy usage counting and bulk tag/category rewrites |
+| `src/convex/helpers/taxonomyEditor.test.ts`                         | Taxonomy rename conflicts and delete-with-move rules   |
 
 Convex logic is tested as plain TypeScript modules — there is no Convex test harness or emulated database in the repo. Tests import helpers directly and use Vitest mocks (`vi.mock`, `vi.fn`).
 
