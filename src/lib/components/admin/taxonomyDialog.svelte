@@ -28,10 +28,14 @@
 
     const taxonomies = useQuery(api.taxonomies.list, {});
 
-    let activeType = $state<TaxonomyType>('category');
+    let pickedType = $state<TaxonomyType>('category');
     let searchQuery = $state('');
     let closeRedirectTimer: ReturnType<typeof setTimeout> | undefined;
 
+    // Without the shared vocabulary there is only one list to show, so the
+    // picked tab cannot lead anywhere but the private tags.
+    const isAdmin = $derived(taxonomies.data?.isAdmin ?? false);
+    const activeType = $derived<TaxonomyType>(isAdmin ? pickedType : 'privateTag');
     const entries = $derived.by((): TaxonomyEntry[] => {
         const data = taxonomies.data;
         if (!data) {
@@ -94,32 +98,36 @@
                 </div>
                 <div>
                     <Title class="text-lg font-semibold tracking-[-0.01em]">
-                        Справочники
+                        {isAdmin ? 'Справочники' : 'Приватные теги'}
                     </Title>
                     <p class="text-muted-foreground mt-0.5 text-xs leading-snug">
-                        Переименование и удаление по всему архиву
+                        {isAdmin
+                            ? 'Переименование и удаление по всему архиву'
+                            : 'Переименование и удаление ваших меток'}
                     </p>
                 </div>
             </div>
         </div>
 
         <div class="shrink-0 space-y-3 px-6 pb-3">
-            <div class="bg-muted/50 flex gap-1 rounded-lg p-1">
-                {#each sections as section (section.type)}
-                    <button
-                        type="button"
-                        onclick={() => (activeType = section.type)}
-                        class={cn(
-                            'flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
-                            activeType === section.type
-                                ? 'bg-background shadow-sm'
-                                : 'text-muted-foreground hover:text-foreground',
-                        )}
-                    >
-                        {section.label}
-                    </button>
-                {/each}
-            </div>
+            {#if isAdmin}
+                <div class="bg-muted/50 flex gap-1 rounded-lg p-1">
+                    {#each sections as section (section.type)}
+                        <button
+                            type="button"
+                            onclick={() => (pickedType = section.type)}
+                            class={cn(
+                                'flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+                                activeType === section.type
+                                    ? 'bg-background shadow-sm'
+                                    : 'text-muted-foreground hover:text-foreground',
+                            )}
+                        >
+                            {section.label}
+                        </button>
+                    {/each}
+                </div>
+            {/if}
             <div class="relative">
                 <SearchIcon class="text-muted-foreground/50 pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2" />
                 <Input type="text" placeholder="Поиск..." class="pl-10" bind:value={searchQuery} />
