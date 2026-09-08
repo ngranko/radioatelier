@@ -2,20 +2,23 @@
     import Combobox from '$lib/components/input/combobox.svelte';
     import {Button} from '$lib/components/ui/button';
     import type {Option} from '$lib/interfaces/option';
-    import type {TaxonomyEntry} from '$lib/interfaces/taxonomy';
+    import type {TaxonomyEntry, TaxonomyType} from '$lib/interfaces/taxonomy';
 
     interface Props {
         entry: TaxonomyEntry;
+        type: TaxonomyType;
         replacements: Option[];
-        isReplacementRequired: boolean;
         isBusy: boolean;
         onConfirm(replacementId: string | null): void;
         onCancel(): void;
     }
 
-    let {entry, replacements, isReplacementRequired, isBusy, onConfirm, onCancel}: Props = $props();
+    let {entry, type, replacements, isBusy, onConfirm, onCancel}: Props = $props();
 
     let replacementId = $state<string | undefined>();
+
+    const isUsed = $derived(entry.usageCount > 0);
+    const isReplacementRequired = $derived(type === 'category' && isUsed);
 
     const canConfirm = $derived(!isReplacementRequired || Boolean(replacementId));
 </script>
@@ -24,14 +27,16 @@
     <p class="text-muted-foreground text-xs leading-snug">
         {#if isReplacementRequired}
             Объекты не могут остаться без категории — выберите, куда их перенести.
-        {:else if entry.usageCount > 0}
+        {:else if isUsed}
             Без переноса метка просто снимется с объектов.
+        {:else if type === 'category'}
+            Эту категорию никто не использует.
         {:else}
             Эту метку никто не использует.
         {/if}
     </p>
 
-    {#if entry.usageCount > 0}
+    {#if isUsed}
         <Combobox
             options={replacements}
             bind:value={replacementId}

@@ -66,7 +66,8 @@ export default defineSchema({
     })
         .index('byCreatedByIdAndIsPublic', ['createdById', 'isPublic'])
         .index('byIsPublic', ['isPublic'])
-        .index('byObjectId', ['objectId']),
+        .index('byObjectId', ['objectId'])
+        .index('byCategoryId', ['categoryId']),
     objects: defineTable(objectTableFields)
         .index('byIsPublic', ['isPublic'])
         .index('byMysqlId', ['mysqlId'])
@@ -76,7 +77,9 @@ export default defineSchema({
         objectId: v.id('objects'),
         privateTagIds: v.array(v.id('privateTags')),
         userId: v.id('users'),
-    }).index('byObjectIdUserId', ['objectId', 'userId']),
+    })
+        .index('byObjectIdUserId', ['objectId', 'userId'])
+        .index('byUserId', ['userId']),
     privateTags: defineTable({
         name: v.string(),
         createdById: v.id('users'),
@@ -117,7 +120,8 @@ export default defineSchema({
         isHidden: v.boolean(),
     })
         .index('byUserId', ['userId'])
-        .index('byUserIdCategoryId', ['userId', 'categoryId']),
+        .index('byUserIdCategoryId', ['userId', 'categoryId'])
+        .index('byCategoryId', ['categoryId']),
     userVisitedChunks: defineTable({
         userId: v.id('users'),
         chunkId: v.string(),
