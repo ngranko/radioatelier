@@ -1,6 +1,6 @@
 import {randomMarkerColor, randomMarkerIconKey} from '../../lib/services/map/markerStyling.data';
 import type {Id} from '../_generated/dataModel';
-import type {MutationCtx} from '../_generated/server';
+import type {MutationCtx, QueryCtx} from '../_generated/server';
 
 export function capitalizeCategoryName(value: string) {
     return value
@@ -9,7 +9,9 @@ export function capitalizeCategoryName(value: string) {
         .replace(/\p{L}+/gu, word => word.charAt(0).toUpperCase() + word.slice(1));
 }
 
-async function findCategoryByName(ctx: MutationCtx, name: string) {
+// Legacy rows hold lowercase names, so an exact index hit is not enough to
+// prove a name is free.
+export async function findCategoryByName(ctx: Pick<QueryCtx, 'db'>, name: string) {
     const exactMatch = await ctx.db
         .query('categories')
         .withIndex('byName', q => q.eq('name', name))

@@ -1,7 +1,8 @@
 <script lang="ts">
-    import {api} from '$convex/_generated/api';
-    import {describeTaxonomyError} from '$lib/components/admin/taxonomyErrors';
-    import TaxonomyRemovalPanel from '$lib/components/admin/taxonomyRemovalPanel.svelte';
+    import Spinner from '$lib/components/spinner.svelte';
+    import {bindTaxonomyActions} from '$lib/components/taxonomies/taxonomyActions';
+    import {describeTaxonomyError} from '$lib/components/taxonomies/taxonomyErrors';
+    import TaxonomyRemovalPanel from '$lib/components/taxonomies/taxonomyRemovalPanel.svelte';
     import {Button} from '$lib/components/ui/button';
     import {Input} from '$lib/components/ui/input';
     import type {TaxonomyEntry, TaxonomyType} from '$lib/interfaces/taxonomy';
@@ -22,22 +23,16 @@
 
     let {entry, type, siblings}: Props = $props();
 
-    const client = useConvexClient();
+    const actionsByType = bindTaxonomyActions(useConvexClient());
 
-    let mode = $state<'view' | 'rename' | 'remove'>('view');
+    let mode = $state<'view' | 'rename' | 'remove' | 'removing'>('view');
     let draftName = $state('');
     let isBusy = $state(false);
     let nameInput = $state<HTMLInputElement | null>(null);
 
-    // A private tag belongs to one owner, so only that owner's tags can take its objects.
+    const actions = $derived(actionsByType[type]);
     const replacements = $derived(
-        siblings
-            .filter(
-                item =>
-                    item.id !== entry.id &&
-                    (type !== 'privateTag' || item.ownerEmail === entry.ownerEmail),
-            )
-            .map(item => ({id: item.id, name: item.name})),
+        siblings.filter(item => item.id !== entry.id).map(item => ({id: item.id, name: item.name})),
     );
     const usageLabel = $derived(
         `${entry.usageCount} ${pluralizeRussian(entry.usageCount, ['объект', 'объекта', 'объектов'])}`,
@@ -57,7 +52,7 @@
 
         isBusy = true;
         try {
-            await client.mutation(api.taxonomies.rename, {type, id: entry.id, name: draftName});
+            await actions.rename(entry.id, draftName);
             mode = 'view';
         } catch (error) {
             toast.error(describeTaxonomyError(error));
@@ -69,9 +64,10 @@
     async function applyRemoval(replacementId: string | null) {
         isBusy = true;
         try {
-            await client.mutation(api.taxonomies.remove, {type, id: entry.id, replacementId});
-            toast.success(`«${entry.name}» удалено`);
-            mode = 'view';
+            await actions.remove(entry.id, replacementId);
+            // Shared taxonomies are rewritten in scheduled batches, so the row
+            // stays until the last batch deletes it and unmounts it.
+            mode = 'removing';
         } catch (error) {
             toast.error(describeTaxonomyError(error));
         } finally {
@@ -97,33 +93,45 @@
                 <XIcon class="size-4" />
             </Button>
         {:else}
-            <div class="min-w-0 flex-1">
-                <p class="truncate text-sm font-medium">{entry.name}</p>
-                {#if entry.ownerEmail}
-                    <p class="text-muted-foreground truncate text-xs">{entry.ownerEmail}</p>
-                {/if}
-            </div>
-            <span class="text-muted-foreground shrink-0 text-xs">{usageLabel}</span>
-            <Button size="icon" variant="ghost" onclick={startRename} aria-label="Переименовать">
-                <PencilIcon class="size-4" />
-            </Button>
-            <Button
-                size="icon"
-                variant="ghost"
-                class="text-destructive hover:text-destructive"
-                onclick={() => (mode = mode === 'remove' ? 'view' : 'remove')}
-                aria-label="Удалить"
+            <p
+                class="min-w-0 flex-1 truncate text-sm font-medium"
+                class:text-muted-foreground={mode === 'removing'}
             >
-                <Trash2Icon class="size-4" />
-            </Button>
+                {entry.name}
+            </p>
+            <span class="text-muted-foreground shrink-0 text-xs">{usageLabel}</span>
+            {#if mode === 'removing'}
+                <span class="text-muted-foreground flex h-9 shrink-0 items-center gap-1.5 text-xs">
+                    <Spinner class="size-3.5" />
+                    Удаляется…
+                </span>
+            {:else}
+                <Button
+                    size="icon"
+                    variant="ghost"
+                    onclick={startRename}
+                    aria-label="Переименовать"
+                >
+                    <PencilIcon class="size-4" />
+                </Button>
+                <Button
+                    size="icon"
+                    variant="ghost"
+                    class="text-destructive hover:text-destructive"
+                    onclick={() => (mode = mode === 'remove' ? 'view' : 'remove')}
+                    aria-label="Удалить"
+                >
+                    <Trash2Icon class="size-4" />
+                </Button>
+            {/if}
         {/if}
     </div>
 
     {#if mode === 'remove'}
         <TaxonomyRemovalPanel
             {entry}
+            {type}
             {replacements}
-            isReplacementRequired={type === 'category' && entry.usageCount > 0}
             {isBusy}
             onConfirm={applyRemoval}
             onCancel={() => (mode = 'view')}

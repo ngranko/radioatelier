@@ -65,6 +65,23 @@ export async function updateObjectInTypesense(
     return client.collections(getTypesenseCollectionName()).documents(object.id).update(object);
 }
 
+// A partial update leaves every other field to the Object writer, so a
+// concurrent edit of the same Object cannot be overwritten by stale values.
+export async function setCategoryNameInTypesense(
+    client: InstanceType<typeof Typesense.Client>,
+    objectIds: Id<'objects'>[],
+    categoryName: string,
+) {
+    const results = await client
+        .collections<Pick<TypesenseObject, 'id' | 'categoryName'>>(getTypesenseCollectionName())
+        .documents()
+        .import(
+            objectIds.map(id => ({id, categoryName})),
+            {action: 'update', throwOnFail: false},
+        );
+    return results.flatMap(result => (result.success ? [] : [result.error]));
+}
+
 export async function searchObjectsInTypesense(
     client: InstanceType<typeof Typesense.Client>,
     options: OptionalSearchOptions,

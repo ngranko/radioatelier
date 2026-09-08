@@ -13,7 +13,7 @@
 
 - `list`, which requires a current user and merges overrides over defaults. `isHidden` defaults to `false`.
 - `updateStyles`, which validates colors and icons against `MARKER_COLORS` and `MARKER_ICON_KEYS`, then upserts the user's overrides.
-- `create`, which requires authentication, trims and lowercases the name, reuses an exact normalized match, and assigns random default styling to a new category. It is not restricted to an admin role.
+- `create`, which requires authentication, goes through the same `ensureCategory` as imports and Notion sync: it capitalizes each word, reuses a case-insensitive match, and assigns random default styling to a new category. It is not restricted to an admin role.
 
 Allowed colors and icon keys live in `src/lib/services/map/markerStyling.data.ts`. Import uses its own case-insensitive category lookup and title-casing helper; see [CSV import](import.md).
 

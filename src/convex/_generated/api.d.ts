@@ -55,6 +55,7 @@ import type * as sharedValidators from "../sharedValidators.js";
 import type * as storage from "../storage.js";
 import type * as tags from "../tags.js";
 import type * as taxonomies from "../taxonomies.js";
+import type * as taxonomyRewrites from "../taxonomyRewrites.js";
 import type * as typesense from "../typesense.js";
 import type * as typesense_client from "../typesense/client.js";
 import type * as typesense_objects from "../typesense/objects.js";
@@ -116,6 +117,7 @@ declare const fullApi: ApiFromModules<{
   storage: typeof storage;
   tags: typeof tags;
   taxonomies: typeof taxonomies;
+  taxonomyRewrites: typeof taxonomyRewrites;
   typesense: typeof typesense;
   "typesense/client": typeof typesense_client;
   "typesense/objects": typeof typesense_objects;

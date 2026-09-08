@@ -1,30 +1,40 @@
 # Taxonomy management
 
-Admins curate the archive's shared vocabulary at `/taxonomies` (dialog opened from the logged-in menu, "Справочники"). The page lists every category, tag, and private tag in the system with an archive-wide usage count, and allows renaming or deleting each one.
+`/taxonomies` (dialog opened from the logged-in menu) is where a taxonomy gets renamed or deleted. Every signed-in user manages their own **private tags** there; admins additionally manage the shared vocabulary — **categories** and **tags** — with an archive-wide usage count.
 
 ## Access
 
-Every function in `src/convex/taxonomies.ts` starts with `getCurrentAdminOrThrow` (`src/convex/users.ts`), which requires `role === 'admin'` on the `users` row. The role is mirrored from Clerk `public_metadata.role` by `upsertFromClerk`. The menu entry is hidden for everyone else; a non-admin who opens the route directly gets an error state instead of a list.
+The split follows ownership: a private tag belongs to the user who created it, while categories and tags are the archive's.
+
+| Kind        | Who may rename and delete | Usage count covers      |
+| ----------- | ------------------------- | ----------------------- |
+| Category    | Admins                    | Every owner's Objects   |
+| Tag         | Admins                    | Every owner's Objects   |
+| Private tag | Its owner                 | The owner's own Objects |
+
+`taxonomies.list` requires only a signed-in user; it returns the caller's private tags always, and the shared lists (plus an `isAdmin` flag the dialog uses to decide whether to show tabs at all) only for admins. The category and tag mutations call `getCurrentAdminOrThrow` first. The private-tag mutations pass the caller's id into the editor, which treats a private tag with another `createdById` as missing (`notFound`), so a guessed id reveals nothing, and refuses a merge target the caller does not own the same way. Admin means `role === 'admin'` on the `users` row, mirrored from Clerk `public_metadata.role` by `upsertFromClerk`.
 
 ## Usage counts
 
-`countTaxonomyUsage` (`src/convex/helpers/objectTaxonomy.ts`) scans `markers` — which mirror the category and tags of their Object — plus `objectPrivateTags`. Counting from markers is what makes the numbers archive-wide rather than viewer-scoped: they include Objects owned by other users, public or not.
+`countSharedTaxonomyUsage` (`src/convex/helpers/objectTaxonomy.ts`) scans `markers`, which mirror the category and tags of their Object. Counting from markers is what makes those numbers archive-wide rather than viewer-scoped: they include Objects owned by other users, public or not.
 
-Private tags are per-owner rows, so the list shows the owner's email next to each one and a private tag can only be merged into another tag of the same owner.
+`countPrivateTagUsage` reads only the calling user's `objectPrivateTags` rows (index `byUserId`), so a private tag's count is how many of that user's Objects carry it. Non-admins never trigger the marker scan.
 
 ## Convex API
 
-| Function            | Purpose                                                  |
-| ------------------- | -------------------------------------------------------- |
-| `taxonomies.list`   | Categories, tags, and private tags with usage counts     |
-| `taxonomies.rename` | Rename one taxonomy (normalized to trimmed lowercase)    |
-| `taxonomies.remove` | Delete one taxonomy, optionally moving its Objects first |
+| Function                                                 | Purpose                                                                     |
+| -------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `taxonomies.list`                                        | The caller's private tags, plus the shared lists for admins                 |
+| `categories.rename`, `tags.rename`, `privateTags.rename` | Rename one taxonomy (normalized like `create`)                              |
+| `categories.remove`, `tags.remove`, `privateTags.remove` | Delete one taxonomy, optionally moving its Objects to `replacementId` first |
 
-Both mutations take `{type, id}` where `type` is `category | tag | privateTag` and `id` is a plain string; `resolveTaxonomyRef` (`helpers/taxonomyRef.ts`) normalizes it against the table the type names, which is what proves the id belongs there.
+Each kind's mutations sit beside its `create` and take typed ids (`v.id('categories')` and so on), so Convex argument validation proves an id belongs to its table. They delegate to one function per kind and action in `helpers/taxonomyEditor.ts` (`renameCategory`, `removeTag`, …). Name normalization is shared with `create` through `helpers/taxonomyNames.ts`.
+
+Failures are thrown as `ConvexError({code})`, where `code` is a `TaxonomyErrorCode` from `src/lib/interfaces/taxonomy.ts`: `nameRequired`, `nameTaken`, `notFound`, `categoryInUse`, `selfReplacement`.
 
 ## Rename
 
-Names are normalized the same way `create` normalizes them (trimmed, lowercased). A name already held by another taxonomy of the same kind is refused — private tags collide only within one owner. Merging is done through delete-with-move, not through renaming onto an existing name.
+Names are normalized the same way `create` normalizes them: categories capitalize each word (`capitalizeCategoryName`), tags and private tags are trimmed and lowercased. A name already held by another taxonomy of the same kind is refused — category names collide case-insensitively, because rows created before categories were capitalized still hold lowercase names, and private tags collide only within one owner. Merging is done through delete-with-move, not through renaming onto an existing name.
 
 ## Delete
 
@@ -34,30 +44,33 @@ Names are normalized the same way `create` normalizes them (trimmed, lowercased)
 | Tag         | Tag is dropped from its Objects | Replacement takes its place, never duplicated        |
 | Private tag | Tag is dropped from its Objects | Replacement (same owner only) takes its place        |
 
-Objects cannot exist without a category, so deleting a category that is still in use requires a replacement — `removeCategory` throws `ConvexError('Category is still in use')` otherwise. Deleting a category also drops the per-user `userCategoryMarkerStyles` rows pointing at it.
+Objects cannot exist without a category, so deleting a category that is still in use requires a replacement — `removeCategory` throws `categoryInUse` otherwise. Deleting a category also drops the per-user `userCategoryMarkerStyles` rows pointing at it.
 
 ## Write path
 
-Bulk rewrites live in `helpers/objectTaxonomy.ts` rather than in the Object writer: they touch `objects` and `markers` for many Objects at once, and the resulting search and sync work is batched instead of scheduled per Object.
+Bulk rewrites live in `helpers/objectTaxonomy.ts` rather than in the Object writer: they touch `objects` and `markers` for many Objects at once, and the resulting search and sync work is scheduled once for the whole list instead of per Object.
 
 `scheduleTaxonomyFanout` (`helpers/taxonomyFanout.ts`) takes the affected Object ids and:
 
-1. Rebuilds the Typesense record when the edit changed the category name an Object ends up with (`internal.typesense.updateManyInTypesense`, batches of 100). Tag names are not part of the search record, so tag edits skip this step.
-2. Schedules `enqueueOutboundObjectSyncBatchLenient` for the same ids — both `categoryName` and `tagNames` are Object Sync Fields, so Notion would otherwise keep the old wording. Objects owned by non-sync users are skipped inside the action.
+1. Sets `categoryName` on the Typesense records when the edit changed the category name an Object ends up with (`internal.typesense.setCategoryNameInTypesenseBatch`, one bulk partial import for all affected Objects). Only that field is sent, so it cannot overwrite a concurrent Object edit, and a failed document is logged without stopping the rest of the import. Tag names are not part of the search record, so tag edits skip this step.
+2. Schedules one `enqueueOutboundObjectSyncBatchLenient` for all the same ids — both `categoryName` and `tagNames` are Object Sync Fields, so Notion would otherwise keep the old wording. The action syncs 100 Objects and schedules itself for the rest, so a large edit never hits the Notion rate limit from parallel actions. Objects owned by non-sync users are skipped inside the action; a failed Object keeps its error in `objectNotionSync.lastSyncError`.
 
 Private tags reach neither search nor Notion, so their edits fan out to nothing.
 
+Each rename or delete runs in a single Convex transaction. Category edits read markers through `byCategoryId` and private-tag edits read the owner's rows through `objectPrivateTags.byUserId`, but tag edits must scan every marker because `tagIds` is an array and cannot be indexed. Deleting a tag also writes two documents per affected Object, so a tag on many thousands of Objects can exceed Convex's per-transaction read and write limits; at that size the rewrite would have to move to a paginated internal mutation.
+
 ## UI
 
-| File                                                   | Role                                             |
-| ------------------------------------------------------ | ------------------------------------------------ |
-| `src/routes/(app)/(fullList)/taxonomies/+page.svelte`  | Route that opens the dialog over the map         |
-| `src/lib/components/admin/taxonomyDialog.svelte`       | Kind tabs, search, list                          |
-| `src/lib/components/admin/taxonomyRow.svelte`          | One row with inline rename and the delete toggle |
-| `src/lib/components/admin/taxonomyRemovalPanel.svelte` | Replacement picker and confirmation              |
-| `src/lib/components/admin/taxonomyErrors.ts`           | `ConvexError` message → Russian toast text       |
+| File                                                        | Role                                             |
+| ----------------------------------------------------------- | ------------------------------------------------ |
+| `src/routes/(app)/(fullList)/taxonomies/+page.svelte`       | Route that opens the dialog over the map         |
+| `src/lib/components/taxonomies/taxonomyDialog.svelte`       | Kind tabs, search, list                          |
+| `src/lib/components/taxonomies/taxonomyRow.svelte`          | One row with inline rename and the delete toggle |
+| `src/lib/components/taxonomies/taxonomyRemovalPanel.svelte` | Replacement picker and confirmation              |
+| `src/lib/components/taxonomies/taxonomyActions.ts`          | Binds each kind to its rename/remove mutations   |
+| `src/lib/components/taxonomies/taxonomyErrors.ts`           | `TaxonomyErrorCode` → Russian toast text         |
 
-Rename is inline in the row and delete expands a panel underneath it, so the flow never stacks a second modal over the dialog. The list refreshes itself: `taxonomies.list` is a reactive query, as are `categories.list`, `tags.list`, and `privateTags.list` elsewhere in the app.
+Non-admins see a single private-tag list with no tab bar, under a "Приватные теги" heading. Rename is inline in the row and delete expands a panel underneath it, so the flow never stacks a second modal over the dialog. The list refreshes itself: `taxonomies.list` is a reactive query, as are `categories.list`, `tags.list`, and `privateTags.list` elsewhere in the app.
 
 ## Related docs
 

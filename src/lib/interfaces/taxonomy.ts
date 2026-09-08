@@ -4,5 +4,13 @@ export interface TaxonomyEntry {
     id: string;
     name: string;
     usageCount: number;
-    ownerEmail: string | null;
 }
+
+// Carried as `ConvexError` data so the client can translate failures without
+// matching on server wording.
+export type TaxonomyErrorCode =
+    | 'nameRequired'
+    | 'nameTaken'
+    | 'notFound'
+    | 'categoryInUse'
+    | 'selfReplacement';
