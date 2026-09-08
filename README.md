@@ -52,7 +52,7 @@ An archive of urban artifacts — old signs, plaques, mosaics, and other details
 - **Interactive map** — Provider abstraction over Google Maps; Deck.gl at low zoom, DOM markers at high zoom; Street View with minimap ([docs/map-architecture.md](docs/map-architecture.md), [docs/street-view.md](docs/street-view.md))
 - **Object archive** — Create and manage archive entries with location, metadata, categories, tags, and images; point preview/create overlay ([docs/object-details-overlay.md](docs/object-details-overlay.md), [docs/object-backend.md](docs/object-backend.md))
 - **Category settings** — Per-user marker color, icon, and form-picker visibility ([docs/category-settings.md](docs/category-settings.md))
-- **Taxonomy management** — Admin page to rename or delete categories, tags, and private tags archive-wide, moving objects between them ([docs/taxonomy-management.md](docs/taxonomy-management.md))
+- **Taxonomy management** — Rename or delete taxonomies and move objects between them: private tags for every user, categories and tags for admins ([docs/taxonomy-management.md](docs/taxonomy-management.md))
 - **Search** — Unified local (Typesense) and Google Places search with preview dropdown and tabbed results ([docs/search.md](docs/search.md))
 - **Notion sync** — Bidirectional sync between app objects and a Notion database ([docs/notion-sync.md](docs/notion-sync.md))
 - **Data import** — CSV import to migrate data from other sources ([docs/import.md](docs/import.md))
@@ -69,7 +69,7 @@ An archive of urban artifacts — old signs, plaques, mosaics, and other details
 | [docs/notion-sync.md](docs/notion-sync.md)                             | Notion webhook setup, sync invariants, audit action             |
 | [docs/map-architecture.md](docs/map-architecture.md)                   | Map provider, marker pipeline, DOM vs Deck.gl                   |
 | [docs/category-settings.md](docs/category-settings.md)                 | Per-user category marker styles                                 |
-| [docs/taxonomy-management.md](docs/taxonomy-management.md)             | Admin rename/delete for categories, tags, private tags          |
+| [docs/taxonomy-management.md](docs/taxonomy-management.md)             | Rename/delete for categories, tags, and private tags            |
 | [docs/object-details-overlay.md](docs/object-details-overlay.md)       | View/edit/create overlay modes and routes                       |
 | [docs/search.md](docs/search.md)                                       | Local + Google search actions and UI flow                       |
 | [docs/street-view.md](docs/street-view.md)                             | Panorama, minimap sync, lookup caching                          |

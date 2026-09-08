@@ -47,7 +47,7 @@ Notion sync snapshots (`notionSync/snapshot.ts`) and discrepancy reports assembl
 
 ## Writer seam
 
-All object **creates** and **field patches** that should stay consistent across tables go through `objectWriter.ts`. The one deliberate exception is admin taxonomy editing, which rewrites the category or tags of many objects at once and batches the resulting search/sync work — see [taxonomy-management.md](./taxonomy-management.md).
+All object **creates** and **field patches** that should stay consistent across tables go through `objectWriter.ts`. The one deliberate exception is taxonomy editing, which rewrites the category or tags of many objects at once and batches the resulting search/sync work — see [taxonomy-management.md](./taxonomy-management.md).
 
 ### Create
 

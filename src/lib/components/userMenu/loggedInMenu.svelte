@@ -77,12 +77,10 @@
                 <PaletteIcon />
                 Настройки категорий
             </DropdownMenuItem>
-            {#if isAdmin}
-                <DropdownMenuItem onclick={handleTaxonomiesClick}>
-                    <TagsIcon />
-                    Справочники
-                </DropdownMenuItem>
-            {/if}
+            <DropdownMenuItem onclick={handleTaxonomiesClick}>
+                <TagsIcon />
+                {isAdmin ? 'Справочники' : 'Приватные теги'}
+            </DropdownMenuItem>
             <DropdownMenuItem onclick={handleChangePasswordClick}>
                 <KeyRoundIcon />
                 Сменить пароль

@@ -1,24 +1,32 @@
 # Taxonomy management
 
-Admins curate the archive's shared vocabulary at `/taxonomies` (dialog opened from the logged-in menu, "Справочники"). The page lists every category, tag, and private tag in the system with an archive-wide usage count, and allows renaming or deleting each one.
+`/taxonomies` (dialog opened from the logged-in menu) is where a taxonomy gets renamed or deleted. Every signed-in user manages their own **private tags** there; admins additionally manage the shared vocabulary — **categories** and **tags** — with an archive-wide usage count.
 
 ## Access
 
-Every function in `src/convex/taxonomies.ts` starts with `getCurrentAdminOrThrow` (`src/convex/users.ts`), which requires `role === 'admin'` on the `users` row. The role is mirrored from Clerk `public_metadata.role` by `upsertFromClerk`. The menu entry is hidden for everyone else; a non-admin who opens the route directly gets an error state instead of a list.
+The split follows ownership: a private tag belongs to the user who created it, while categories and tags are the archive's.
+
+| Kind        | Who may rename and delete | Usage count covers      |
+| ----------- | ------------------------- | ----------------------- |
+| Category    | Admins                    | Every owner's Objects   |
+| Tag         | Admins                    | Every owner's Objects   |
+| Private tag | Its owner                 | The owner's own Objects |
+
+`taxonomies.list` requires only a signed-in user; it returns the caller's private tags always, and the shared lists (plus an `isAdmin` flag the dialog uses to decide whether to show tabs at all) only for admins. Both mutations route through `authorizeTaxonomyEdit`: `getCurrentAdminOrThrow` for a category or tag, an ownership check on `createdById` for a private tag. Admin means `role === 'admin'` on the `users` row, mirrored from Clerk `public_metadata.role` by `upsertFromClerk`.
 
 ## Usage counts
 
-`countTaxonomyUsage` (`src/convex/helpers/objectTaxonomy.ts`) scans `markers` — which mirror the category and tags of their Object — plus `objectPrivateTags`. Counting from markers is what makes the numbers archive-wide rather than viewer-scoped: they include Objects owned by other users, public or not.
+`countSharedTaxonomyUsage` (`src/convex/helpers/objectTaxonomy.ts`) scans `markers`, which mirror the category and tags of their Object. Counting from markers is what makes those numbers archive-wide rather than viewer-scoped: they include Objects owned by other users, public or not.
 
-Private tags are per-owner rows, so the list shows the owner's email next to each one and a private tag can only be merged into another tag of the same owner.
+`countPrivateTagUsage` scans `objectPrivateTags` for the calling user's rows only, so a private tag's count is how many of that user's Objects carry it. Non-admins never trigger the marker scan.
 
 ## Convex API
 
-| Function            | Purpose                                                  |
-| ------------------- | -------------------------------------------------------- |
-| `taxonomies.list`   | Categories, tags, and private tags with usage counts     |
-| `taxonomies.rename` | Rename one taxonomy (normalized to trimmed lowercase)    |
-| `taxonomies.remove` | Delete one taxonomy, optionally moving its Objects first |
+| Function            | Purpose                                                     |
+| ------------------- | ----------------------------------------------------------- |
+| `taxonomies.list`   | The caller's private tags, plus the shared lists for admins |
+| `taxonomies.rename` | Rename one taxonomy (normalized to trimmed lowercase)       |
+| `taxonomies.remove` | Delete one taxonomy, optionally moving its Objects first    |
 
 Both mutations take `{type, id}` where `type` is `category | tag | privateTag` and `id` is a plain string; `resolveTaxonomyRef` (`helpers/taxonomyRef.ts`) normalizes it against the table the type names, which is what proves the id belongs there.
 
@@ -57,7 +65,7 @@ Private tags reach neither search nor Notion, so their edits fan out to nothing.
 | `src/lib/components/admin/taxonomyRemovalPanel.svelte` | Replacement picker and confirmation              |
 | `src/lib/components/admin/taxonomyErrors.ts`           | `ConvexError` message → Russian toast text       |
 
-Rename is inline in the row and delete expands a panel underneath it, so the flow never stacks a second modal over the dialog. The list refreshes itself: `taxonomies.list` is a reactive query, as are `categories.list`, `tags.list`, and `privateTags.list` elsewhere in the app.
+Non-admins see a single private-tag list with no tab bar, under a "Приватные теги" heading. Rename is inline in the row and delete expands a panel underneath it, so the flow never stacks a second modal over the dialog. The list refreshes itself: `taxonomies.list` is a reactive query, as are `categories.list`, `tags.list`, and `privateTags.list` elsewhere in the app.
 
 ## Related docs
 

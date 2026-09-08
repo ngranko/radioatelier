@@ -3,34 +3,33 @@ import type {MutationCtx, QueryCtx} from '../_generated/server';
 
 type ReaderCtx = Pick<QueryCtx, 'db'> | Pick<MutationCtx, 'db'>;
 
-export type TaxonomyUsage = {
+export type SharedTaxonomyUsage = {
     categories: Map<Id<'categories'>, number>;
     tags: Map<Id<'tags'>, number>;
-    privateTags: Map<Id<'privateTags'>, number>;
 };
 
 // Markers mirror the category and tags of their Object, so one scan of the
-// lighter table answers the usage question for every user at once.
-export async function countTaxonomyUsage(ctx: ReaderCtx): Promise<TaxonomyUsage> {
-    const [markers, privateTagRows] = await Promise.all([
-        ctx.db.query('markers').collect(),
-        ctx.db.query('objectPrivateTags').collect(),
-    ]);
+// lighter table answers the usage question for every owner at once.
+export async function countSharedTaxonomyUsage(ctx: ReaderCtx): Promise<SharedTaxonomyUsage> {
+    const markers = await ctx.db.query('markers').collect();
 
-    const usage: TaxonomyUsage = {
-        categories: new Map(),
-        tags: new Map(),
-        privateTags: new Map(),
-    };
+    const usage: SharedTaxonomyUsage = {categories: new Map(), tags: new Map()};
     for (const marker of markers) {
         countOne(usage.categories, marker.categoryId);
         for (const tagId of new Set(marker.tagIds)) {
             countOne(usage.tags, tagId);
         }
     }
-    for (const row of privateTagRows) {
+    return usage;
+}
+
+export async function countPrivateTagUsage(ctx: ReaderCtx, userId: Id<'users'>) {
+    const rows = await ctx.db.query('objectPrivateTags').collect();
+
+    const usage = new Map<Id<'privateTags'>, number>();
+    for (const row of rows.filter(item => item.userId === userId)) {
         for (const tagId of new Set(row.privateTagIds)) {
-            countOne(usage.privateTags, tagId);
+            countOne(usage, tagId);
         }
     }
     return usage;

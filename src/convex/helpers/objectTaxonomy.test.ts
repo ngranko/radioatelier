@@ -2,7 +2,8 @@ import {describe, expect, it, vi} from 'vitest';
 import type {Id} from '../_generated/dataModel';
 import type {MutationCtx} from '../_generated/server';
 import {
-    countTaxonomyUsage,
+    countPrivateTagUsage,
+    countSharedTaxonomyUsage,
     moveObjectsToCategory,
     rebuildIdList,
     replaceTagOnObjects,
@@ -42,24 +43,37 @@ function createMarker(overrides: Record<string, unknown> = {}) {
     };
 }
 
-describe('countTaxonomyUsage', () => {
+describe('countSharedTaxonomyUsage', () => {
     it('counts markers from every owner, not only one user', async () => {
-        const {ctx} = createMockCtx(
-            [
-                createMarker({_id: 'marker-1', objectId: 'object-1'}),
-                createMarker({_id: 'marker-2', objectId: 'object-2', tagIds: [tagId, otherTagId]}),
-                createMarker({_id: 'marker-3', objectId: 'object-3', categoryId: otherCategoryId}),
-            ],
-            [{objectId: 'object-1', privateTagIds: ['private-1', 'private-1']}],
-        );
+        const {ctx} = createMockCtx([
+            createMarker({_id: 'marker-1', objectId: 'object-1'}),
+            createMarker({_id: 'marker-2', objectId: 'object-2', tagIds: [tagId, otherTagId]}),
+            createMarker({_id: 'marker-3', objectId: 'object-3', categoryId: otherCategoryId}),
+        ]);
 
-        const usage = await countTaxonomyUsage(ctx);
+        const usage = await countSharedTaxonomyUsage(ctx);
 
         expect(usage.categories.get(categoryId)).toBe(2);
         expect(usage.categories.get(otherCategoryId)).toBe(1);
         expect(usage.tags.get(tagId)).toBe(3);
         expect(usage.tags.get(otherTagId)).toBe(1);
-        expect(usage.privateTags.get('private-1' as Id<'privateTags'>)).toBe(1);
+    });
+});
+
+describe('countPrivateTagUsage', () => {
+    it('leaves out rows that belong to another user', async () => {
+        const privateTagId = 'private-1' as Id<'privateTags'>;
+        const {ctx} = createMockCtx(
+            [],
+            [
+                {objectId: 'object-1', userId: 'user-1', privateTagIds: [privateTagId]},
+                {objectId: 'object-2', userId: 'user-2', privateTagIds: [privateTagId]},
+            ],
+        );
+
+        const usage = await countPrivateTagUsage(ctx, 'user-1' as Id<'users'>);
+
+        expect(usage.get(privateTagId)).toBe(1);
     });
 });
 

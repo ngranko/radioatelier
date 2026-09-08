@@ -76,4 +76,4 @@ Each tab shares one search/create input. Typing filters the catalog; a **Соз�
 ## Related docs
 
 - [map-architecture.md](./map-architecture.md) — how marker color/icon reach the map renderer
-- [taxonomy-management.md](./taxonomy-management.md) — the admin page that renames and deletes categories, tags, and private tags
+- [taxonomy-management.md](./taxonomy-management.md) — the page that renames and deletes categories, tags, and private tags

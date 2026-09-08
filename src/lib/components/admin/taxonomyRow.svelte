@@ -29,15 +29,8 @@
     let isBusy = $state(false);
     let nameInput = $state<HTMLInputElement | null>(null);
 
-    // A private tag belongs to one owner, so only that owner's tags can take its objects.
     const replacements = $derived(
-        siblings
-            .filter(
-                item =>
-                    item.id !== entry.id &&
-                    (type !== 'privateTag' || item.ownerEmail === entry.ownerEmail),
-            )
-            .map(item => ({id: item.id, name: item.name})),
+        siblings.filter(item => item.id !== entry.id).map(item => ({id: item.id, name: item.name})),
     );
     const usageLabel = $derived(
         `${entry.usageCount} ${pluralizeRussian(entry.usageCount, ['объект', 'объекта', 'объектов'])}`,
@@ -97,12 +90,7 @@
                 <XIcon class="size-4" />
             </Button>
         {:else}
-            <div class="min-w-0 flex-1">
-                <p class="truncate text-sm font-medium">{entry.name}</p>
-                {#if entry.ownerEmail}
-                    <p class="text-muted-foreground truncate text-xs">{entry.ownerEmail}</p>
-                {/if}
-            </div>
+            <p class="min-w-0 flex-1 truncate text-sm font-medium">{entry.name}</p>
             <span class="text-muted-foreground shrink-0 text-xs">{usageLabel}</span>
             <Button size="icon" variant="ghost" onclick={startRename} aria-label="Переименовать">
                 <PencilIcon class="size-4" />
