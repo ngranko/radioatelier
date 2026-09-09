@@ -21,15 +21,18 @@ export async function getInitialCenter(): Promise<Location> {
     return {lat: 0, lng: 0};
 }
 
-export function startPositionPolling(intervalMs = 5000): number {
-    updateCurrentPosition();
-    const id = window.setInterval(updateCurrentPosition, intervalMs);
-    return id;
+// A single watch keeps one authorization alive instead of asking for a fresh one on every poll,
+// which is what makes iOS re-prompt for permissions mid-session.
+export function startWatchingPosition(): number {
+    return navigator.geolocation.watchPosition(rememberPosition, markLastPositionStale, {
+        enableHighAccuracy: false,
+        timeout: 5000,
+    });
 }
 
-export function stopPositionPolling(id?: number) {
-    if (id) {
-        window.clearInterval(id);
+export function stopWatchingPosition(id?: number) {
+    if (id !== undefined) {
+        navigator.geolocation.clearWatch(id);
     }
 }
 
@@ -52,38 +55,24 @@ async function getLocationFromGoogle(): Promise<GetLocationResponseData> {
     return response.json();
 }
 
-function updateCurrentPosition() {
-    navigator.permissions.query({name: 'geolocation'}).then(
-        result => {
-            if (result.state === 'granted' || result.state === 'prompt') {
-                navigator.geolocation.getCurrentPosition(
-                    position => {
-                        const location = {
-                            lat: position.coords.latitude,
-                            lng: position.coords.longitude,
-                            isCurrent: true,
-                        };
-                        localStorage.setItem('lastPosition', JSON.stringify(location));
-                    },
-                    error => {
-                        console.error(error);
-                        if (localStorage.getItem('lastPosition')) {
-                            const location = JSON.parse(
-                                localStorage.getItem('lastPosition') as string,
-                            );
-                            location.isCurrent = false;
-                            localStorage.setItem('lastPosition', JSON.stringify(location));
-                        }
-                    },
-                    {enableHighAccuracy: false, timeout: 5000},
-                );
-            } else {
-                console.error('geolocation is not granted, browser location services are disabled');
-            }
-        },
-        error => {
-            console.error('browser permission service unavailable');
-            console.error(error);
-        },
+function rememberPosition(position: GeolocationPosition) {
+    localStorage.setItem(
+        'lastPosition',
+        JSON.stringify({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+            isCurrent: true,
+        }),
     );
+}
+
+function markLastPositionStale(error: GeolocationPositionError) {
+    console.error(error);
+
+    const stored = localStorage.getItem('lastPosition');
+    if (!stored) {
+        return;
+    }
+
+    localStorage.setItem('lastPosition', JSON.stringify({...JSON.parse(stored), isCurrent: false}));
 }
