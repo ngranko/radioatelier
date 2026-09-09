@@ -18,6 +18,11 @@ const posthogProxy: Handle = async ({event, resolve}) => {
         url.pathname = pathname.replace(/^\/ingest/, '');
 
         const headers = new Headers(event.request.headers);
+        // `/ingest` is same-origin, so the browser attaches the Clerk session
+        // cookie to every analytics request. PostHog has no use for it and it
+        // must not cross into a third party.
+        headers.delete('cookie');
+        headers.delete('authorization');
         headers.set('host', hostname);
         headers.set('accept-encoding', '');
 

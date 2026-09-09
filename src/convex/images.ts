@@ -15,9 +15,10 @@ export const create = mutation({
         storageId: v.id('_storage'),
     },
     handler: async (ctx, {storageId}) => {
-        await getCurrentUserOrThrow(ctx);
+        const user = await getCurrentUserOrThrow(ctx);
         const imageId = await ctx.db.insert('images', {
             originalStorageId: storageId,
+            createdById: user._id,
         });
         const url = await ctx.storage.getUrl(storageId);
         if (!url) {
@@ -34,10 +35,13 @@ export const updatePreview = mutation({
         storageId: v.id('_storage'),
     },
     handler: async (ctx, {id, storageId}) => {
-        await getCurrentUserOrThrow(ctx);
+        const user = await getCurrentUserOrThrow(ctx);
 
         const image = await ctx.db.get(id);
-        if (!image) {
+        // Cover ids are handed to every viewer of an Object, so without an owner
+        // check any signed-in user could repoint someone else's preview at their
+        // own upload and delete the file behind the old one.
+        if (!image || image.createdById !== user._id) {
             throw new ConvexError('Image not found');
         }
 

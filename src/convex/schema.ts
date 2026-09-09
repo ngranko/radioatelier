@@ -15,6 +15,9 @@ export default defineSchema({
     images: defineTable({
         originalStorageId: v.id('_storage'),
         previewStorageId: v.optional(v.id('_storage')),
+        // Optional for rows created before uploads were attributed; those are
+        // already attached to an Object and never get a second preview write.
+        createdById: v.optional(v.id('users')),
     }),
     importJobs: defineTable({
         createdById: v.id('users'),

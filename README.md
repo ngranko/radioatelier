@@ -74,3 +74,4 @@ An archive of urban artifacts — old signs, plaques, mosaics, and other details
 | [docs/testing.md](docs/testing.md)                                     | Vitest commands, test layout, adding tests                      |
 | [docs/import.md](docs/import.md)                                       | CSV upload, column mapping, batch import, Notion enqueue        |
 | [docs/collection-access-control.md](docs/collection-access-control.md) | Future collection-based marker access design                    |
+| [docs/pre-release-backlog.md](docs/pre-release-backlog.md)             | Audit findings still open: security, scale, leaks, hygiene      |

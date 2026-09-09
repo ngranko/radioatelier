@@ -1,3 +1,4 @@
+import {isSafeExternalUrl} from '../../lib/utils/url';
 import {
     type MapPointCoreData,
     type ObjectCoreData,
@@ -48,6 +49,18 @@ export function filterChangedPatch<T extends object>(record: T, patch: T): Parti
 
 export function hasKeys(patch: object) {
     return Object.keys(patch).length > 0;
+}
+
+// `source` is rendered as a link, so a `javascript:` value would be stored XSS.
+// Callers each validate their own input, but they are three separate adapters
+// (form, Notion sync, import) — dropping an unsafe value here means no write
+// path can reach the client with one. An absent key still means "leave as is".
+export function dropUnsafeSource<T extends {source?: string | null}>(data: T): T {
+    if (data.source === undefined || data.source === null || isSafeExternalUrl(data.source)) {
+        return data;
+    }
+
+    return {...data, source: null};
 }
 
 function pickPresent<K extends keyof ObjectRecordPatch>(
