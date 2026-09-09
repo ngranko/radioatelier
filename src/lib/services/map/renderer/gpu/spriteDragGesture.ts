@@ -1,9 +1,8 @@
 import type {Marker} from '$lib/services/map/marker';
 import type {DeckOverlayHost} from '$lib/services/map/providers/google/deckOverlayHost';
 import type {MarkerPoint} from '$lib/services/map/renderer/gpu/markerPoints';
-import {removeDragTimeout, setDragTimeout} from '$lib/state/marker.svelte';
+import {MarkerHold} from '$lib/services/map/renderer/markerHold';
 
-const HOLD_MS = 300;
 const PICK_RADIUS_PX = 4;
 
 interface GestureHandlers {
@@ -18,6 +17,7 @@ interface GestureHandlers {
  */
 export class SpriteDragGesture {
     private activePointerId?: number;
+    private hold = new MarkerHold();
 
     public constructor(
         private container: HTMLElement,
@@ -37,11 +37,12 @@ export class SpriteDragGesture {
         window.removeEventListener('pointerup', this.handlePointerUp);
         window.removeEventListener('pointercancel', this.handlePointerUp);
         this.activePointerId = undefined;
-        removeDragTimeout();
+        this.hold.cancel();
     }
 
     private handlePointerDown = (event: PointerEvent): void => {
-        // A second finger landing mid-hold must not restart the gesture on another marker.
+        // A second finger landing mid-hold must not restart the gesture on another marker; the hold
+        // itself is already dropped by then, as that finger means the map is about to zoom.
         if (this.activePointerId !== undefined || !event.isPrimary || event.button !== 0) {
             return;
         }
@@ -51,7 +52,7 @@ export class SpriteDragGesture {
             return;
         }
         this.activePointerId = event.pointerId;
-        setDragTimeout(window.setTimeout(() => this.handlers.onHold(marker), HOLD_MS));
+        this.hold.arm(event, () => this.handlers.onHold(marker));
     };
 
     private handlePointerUp = (event: PointerEvent): void => {
@@ -61,7 +62,7 @@ export class SpriteDragGesture {
         }
 
         this.activePointerId = undefined;
-        removeDragTimeout();
+        this.hold.cancel();
         this.handlers.onRelease();
     };
 

@@ -18,8 +18,8 @@
     import {MarkerManager} from '$lib/services/map/markerManager';
     import {PointerDragZoomController} from '$lib/services/map/pointerDragZoom';
     import {GoogleMapsProvider} from '$lib/services/map/providers/google/provider';
+    import {cancelActiveMarkerHold} from '$lib/services/map/renderer/markerHold';
     import {mapState} from '$lib/state/map.svelte';
-    import {removeDragTimeout} from '$lib/state/marker.svelte';
     import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
     import {onMount, onDestroy} from 'svelte';
 
@@ -60,6 +60,8 @@
             getMinZoom: () => mapState.provider!.getMinZoom(),
             getMaxZoom: () => mapState.provider!.getMaxZoom(),
             onStart: () => {
+                // The second tap of a double-tap zoom can land on a marker and arm a hold.
+                cancelActiveMarkerHold();
                 mapClickTimeout.clear();
                 isInZoomMode = true;
                 mapState.provider?.setDraggable(false);
@@ -119,12 +121,12 @@
     }
 
     function handleMapDragStart() {
-        removeDragTimeout();
+        cancelActiveMarkerHold();
         mapClickTimeout.clear();
     }
 
     function handleIdle() {
-        removeDragTimeout();
+        cancelActiveMarkerHold();
         persistMapView();
         mapState.markerManager?.syncRendererWithViewport();
     }

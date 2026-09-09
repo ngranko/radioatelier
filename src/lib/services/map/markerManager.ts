@@ -202,6 +202,17 @@ export class MarkerManager {
         this.renderer.applyState(marker);
     }
 
+    /** Sprites read their coordinates at render time, so a moved marker needs a re-render too. */
+    public moveMarker(id: MarkerId, position: LatLngLiteral) {
+        const marker = this.repo.get(id);
+        if (!marker) {
+            return;
+        }
+
+        marker.setPosition(position);
+        this.renderer.applyState(marker);
+    }
+
     public updateMarkerStyle(id: MarkerId, style: MarkerStyleUpdate) {
         const marker = this.repo.get(id);
         if (!marker?.setStyle(style)) {
