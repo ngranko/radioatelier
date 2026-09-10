@@ -4,7 +4,7 @@
  * raw pointer stream is watched here as well: everything that hints at navigating the map instead of
  * grabbing a marker drops the hold.
  */
-export const HOLD_MS = 650;
+export const HOLD_MS = 350;
 
 // A finger never sits perfectly still, but a pan shows up as a slide well before this.
 const DRIFT_TOLERANCE_PX = 8;
