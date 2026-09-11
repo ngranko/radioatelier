@@ -83,6 +83,10 @@ At low zoom, list markers (`source: 'list'`) batch-render on a Deck.gl overlay f
 
 **Hold to reposition** — `SpriteDragGesture` detects a long press on a GPU marker, promotes it to DOM, and reuses the existing DOM drag controller. Release ends the drag and demotes back to GPU; the gesture marks a renderer interaction so the map click handler does not create a new point.
 
+Both renderers time the press with `MarkerHold` (`renderer/markerHold.ts`): `HOLD_MS` (350 ms) of a pointer that stays within 8 px of where it landed. The hold is dropped by a release, a slide beyond that tolerance, a second finger (a pinch about to zoom), a wheel, and by losing the window or tab — all watched in the capture phase, because Maps reports its own dragstart only once the map has moved and never reports a pinch at all. `cancelActiveMarkerHold()` lets map-level gestures (dragstart, idle, double-tap drag-zoom) drop whichever hold is armed.
+
+A finished drag saves through `saveReposition` (`services/map/markerReposition.ts`), whose success toast carries a **Вернуть** action for 10 s: it moves the marker back and stores the original coordinates. A rejected save moves the marker back to the position the server still has.
+
 Flag resolution runs while Google Maps initializes and falls back to the legacy renderer if PostHog does not respond within 1.5 seconds. See [analytics.md](./analytics.md).
 
 ## Marker sources
@@ -141,7 +145,7 @@ When category style or marker state changes, `SpriteFadeTracker` (`renderer/gpu/
 ## Map interactions
 
 - **Click** — 300 ms debounce; suppressed while legacy Deck mode is active or during double-tap drag-zoom (`PointerDragZoomController`). GPU marker picks forward through `pickingClick.ts` and pair with the Maps click via `takePairedRendererClick` so marker clicks do not also create points. Empty-map clicks keep the point-creation flow.
-- **Drag** — cancels pending marker-reposition timeouts (`removeDragTimeout`).
+- **Drag** — cancels an armed reposition hold (`cancelActiveMarkerHold`).
 - **Idle** — persists center/zoom to `localStorage` (`lastCenter`), then `syncRendererWithViewport` picks the renderer for the new zoom and schedules a viewport update.
 - **Min zoom** — computed from container size so the map cannot zoom out far enough to show duplicate tile instances (`computeMinZoomForContainer` in the Google provider).
 
