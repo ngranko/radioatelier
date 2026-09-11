@@ -1,9 +1,10 @@
 import type {LatLngLiteral, MapProvider} from '$lib/interfaces/map';
 import type {Marker} from '$lib/services/map/marker';
-import {removeDragTimeout, setDragTimeout} from '$lib/state/marker.svelte';
+import {MarkerHold} from '$lib/services/map/renderer/markerHold';
 
 export class DragController {
     private skipClick = false;
+    private hold = new MarkerHold();
 
     public constructor(private provider: MapProvider) {}
 
@@ -65,9 +66,7 @@ export class DragController {
     }
 
     private handlePointerDown(marker: Marker) {
-        return () => {
-            setDragTimeout(window.setTimeout(() => this.startDrag(marker), 300));
-        };
+        return (event: PointerEvent) => this.hold.arm(event, () => this.startDrag(marker));
     }
 
     public startDrag(marker: Marker) {
@@ -107,7 +106,7 @@ export class DragController {
 
     /** Safe to call more than once: a release can reach us from the element and from the map. */
     public endDrag(marker: Marker): void {
-        removeDragTimeout();
+        this.hold.cancel();
         this.removeMapMoveListener(marker);
         this.provider.setDraggable(true);
         if (marker.isDragged) {
