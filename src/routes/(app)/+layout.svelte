@@ -37,6 +37,10 @@
 
     let {children, data}: LayoutProps = $props();
 
+    // Hoisted so every render hands a marker the same object, keeping its style check a no-op.
+    const SEARCH_ICON_STYLE = {strokeWidth: 3};
+    const FILLED_ICON_STYLE = {filled: true};
+
     let consoleElement: HTMLElement | undefined = $state();
     let orientationEnabled = $state(false);
     const clerkCtx = useClerkContext();
@@ -117,7 +121,7 @@
                 lat={searchPoint.object.latitude}
                 lng={searchPoint.object.longitude}
                 icon={searchPoint.object.type === 'local' ? SearchIcon : SvglGoogleLogo}
-                iconClassName="stroke-3"
+                iconStyle={SEARCH_ICON_STYLE}
                 color="#e11d48"
                 source="search"
             />
@@ -131,7 +135,7 @@
                 lat={sharedMarker.object.latitude}
                 lng={sharedMarker.object.longitude}
                 icon={StarIcon}
-                iconClassName="fill-current"
+                iconStyle={FILLED_ICON_STYLE}
                 color="#d97706"
                 source="share"
             />
@@ -144,7 +148,7 @@
                 lat={draftMarkerPosition.lat}
                 lng={draftMarkerPosition.lng}
                 icon={SproutIcon}
-                iconClassName="fill-current"
+                iconStyle={FILLED_ICON_STYLE}
                 color="#16a34a"
                 source="draft"
             />

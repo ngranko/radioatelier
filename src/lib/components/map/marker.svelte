@@ -6,7 +6,7 @@
     import type {MarkerIcon, MarkerSource} from '$lib/interfaces/marker';
     import {Marker as MarkerObject} from '$lib/services/map/marker';
     import {registerFocusableMarker} from '$lib/services/map/markerFocus';
-    import type {MarkerIconKey} from '$lib/services/map/markerStyling.data';
+    import type {MarkerIconKey, MarkerIconStyle} from '$lib/services/map/markerStyling.data';
     import {mapState} from '$lib/state/map.svelte';
     import {
         objectDetailsOverlay,
@@ -29,7 +29,7 @@
         isVisited?: boolean;
         icon: MarkerIcon;
         iconKey?: MarkerIconKey;
-        iconClassName?: string;
+        iconStyle?: MarkerIconStyle;
         color: string;
         isDraggable?: boolean;
         source: MarkerSource;
@@ -45,7 +45,7 @@
         isVisited = false,
         icon,
         iconKey,
-        iconClassName = '',
+        iconStyle,
         color,
         isDraggable = false,
         source,
@@ -82,7 +82,7 @@
         if (!marker || !markerId || !mapState.markerManager) {
             return;
         }
-        mapState.markerManager.updateMarkerStyle(markerId, {icon, iconKey, iconClassName, color});
+        mapState.markerManager.updateMarkerStyle(markerId, {icon, iconKey, iconStyle, color});
     });
 
     $effect(() => {
@@ -114,7 +114,7 @@
         marker = mapState.markerManager.addMarker(markerId, position, {
             icon,
             iconKey,
-            iconClassName,
+            iconStyle,
             color,
             isDraggable,
             source,

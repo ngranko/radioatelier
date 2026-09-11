@@ -242,7 +242,7 @@
             isDraggable={point.isOwner}
             icon={markerIcon.component}
             iconKey={category.markerIcon as MarkerIconKey}
-            iconClassName={markerIcon.className}
+            iconStyle={markerIcon.style}
             color={category.markerColor}
             source="list"
         />

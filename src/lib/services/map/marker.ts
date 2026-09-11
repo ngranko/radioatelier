@@ -73,11 +73,11 @@ export class Marker {
 
     /** Reports whether anything moved, so an unchanged category re-render costs nothing. */
     public setStyle(style: MarkerStyleUpdate): boolean {
-        const {icon, iconKey, iconClassName, color} = this.options;
+        const {icon, iconKey, iconStyle, color} = this.options;
         if (
             icon === style.icon &&
             iconKey === style.iconKey &&
-            iconClassName === style.iconClassName &&
+            iconStyle === style.iconStyle &&
             color === style.color
         ) {
             return false;

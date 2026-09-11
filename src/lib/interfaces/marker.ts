@@ -1,13 +1,19 @@
 import type {Id} from '$convex/_generated/dataModel';
-import type {MarkerIconKey} from '$lib/services/map/markerStyling.data';
+import type {MarkerIconKey, MarkerIconStyle} from '$lib/services/map/markerStyling.data';
 import type {Component} from 'svelte';
 
-export type MarkerIcon = Component<{class?: string; width?: number; height?: number}>;
+export type MarkerIcon = Component<{
+    class?: string;
+    width?: number;
+    height?: number;
+    strokeWidth?: number;
+    fill?: string;
+}>;
 
 export interface MarkerOptions {
     icon: MarkerIcon;
     iconKey?: MarkerIconKey;
-    iconClassName?: string;
+    iconStyle?: MarkerIconStyle;
     color: string;
     isDraggable?: boolean;
     source: MarkerSource;
@@ -22,7 +28,7 @@ export type MarkerSource = 'map' | 'list' | 'search' | 'share' | 'draft';
 
 export type MarkerId = string;
 
-export type MarkerStyleUpdate = Pick<MarkerOptions, 'icon' | 'iconKey' | 'iconClassName' | 'color'>;
+export type MarkerStyleUpdate = Pick<MarkerOptions, 'icon' | 'iconKey' | 'iconStyle' | 'color'>;
 
 export interface MarkerStateUpdate {
     isVisited?: boolean;

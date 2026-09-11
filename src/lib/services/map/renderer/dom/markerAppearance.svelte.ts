@@ -2,7 +2,7 @@ import MarkerIcon from '$lib/components/map/markerIcon.svelte';
 import type {MarkerIcon as MarkerIconComponent} from '$lib/interfaces/marker';
 import {markerHaloColor} from '$lib/services/colorConverter';
 import type {Marker} from '$lib/services/map/marker';
-import {cn} from '$lib/utils';
+import type {MarkerIconStyle} from '$lib/services/map/markerStyling.data';
 import {mount} from 'svelte';
 
 const VISITED_BRIGHT = '#39ff14';
@@ -10,6 +10,7 @@ const ICON_CLASS = 'block size-3.5';
 
 interface IconProps {
     icon: MarkerIconComponent;
+    iconStyle?: MarkerIconStyle;
     className: string;
 }
 
@@ -37,15 +38,15 @@ export function applyMarkerAppearance(marker: Marker): void {
 
 /** The glyph is mounted once against a reactive props object; a later swap just reassigns it. */
 function applyIcon(element: HTMLElement, marker: Marker): void {
-    const className = cn(ICON_CLASS, marker.options.iconClassName);
+    const {icon, iconStyle} = marker.options;
     const mounted = mountedIcons.get(element);
     if (mounted) {
-        mounted.icon = marker.options.icon;
-        mounted.className = className;
+        mounted.icon = icon;
+        mounted.iconStyle = iconStyle;
         return;
     }
 
-    const props: IconProps = $state({icon: marker.options.icon, className});
+    const props: IconProps = $state({icon, iconStyle, className: ICON_CLASS});
     mountedIcons.set(element, props);
     mount(MarkerIcon, {target: element, props});
 }
