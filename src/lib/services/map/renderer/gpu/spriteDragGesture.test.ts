@@ -1,7 +1,7 @@
 import type {Marker} from '$lib/services/map/marker';
 import type {DeckOverlayHost} from '$lib/services/map/providers/google/deckOverlayHost';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
-import {HOLD_MS} from '../markerHold';
+import {cancelActiveMarkerHold, HOLD_MS} from '../markerHold';
 import {SpriteDragGesture} from './spriteDragGesture';
 
 type Listener = (event: PointerEvent) => void;
@@ -136,6 +136,18 @@ describe('SpriteDragGesture', () => {
 
         release(2);
         expect(onRelease).not.toHaveBeenCalled();
+    });
+
+    it('can start another gesture after the map cancels its hold', () => {
+        const point = markerPoint(true);
+        const {press, onHold} = harness(point);
+
+        press();
+        cancelActiveMarkerHold();
+        press({pointerId: 2});
+        vi.advanceTimersByTime(HOLD_MS);
+
+        expect(onHold).toHaveBeenCalledWith(point.marker);
     });
 
     it('leaves non-left-button presses to the browser', () => {

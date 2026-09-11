@@ -41,9 +41,9 @@ export class SpriteDragGesture {
     }
 
     private handlePointerDown = (event: PointerEvent): void => {
-        // A second finger landing mid-hold must not restart the gesture on another marker; the hold
-        // itself is already dropped by then, as that finger means the map is about to zoom.
-        if (this.activePointerId !== undefined || !event.isPrimary || event.button !== 0) {
+        // A second finger landing mid-hold is never primary, so it cannot restart the gesture on
+        // another marker. A stale pointer whose release never arrived must not block the next press.
+        if (!event.isPrimary || event.button !== 0) {
             return;
         }
 

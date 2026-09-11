@@ -5,7 +5,7 @@ interface RepositionRequest {
     position: LatLngLiteral;
     /** Where the marker sat before the drag, when it is known; the undo goes back to it. */
     origin?: LatLngLiteral;
-    save(position: LatLngLiteral): Promise<void>;
+    save: (position: LatLngLiteral) => Promise<void>;
     moveTo(position: LatLngLiteral): void;
 }
 
@@ -35,6 +35,9 @@ const UNDO_FEEDBACK: Feedback = {
     success: 'Позиция возвращена',
     error: 'Не удалось вернуть позицию',
 };
+
+// Drag requests are recreated, but their save callback stays stable for the life of the marker.
+const latestAttempts = new WeakMap<RepositionRequest['save'], number>();
 
 export async function saveReposition(request: RepositionRequest): Promise<void> {
     await persistPosition(request, {
@@ -75,6 +78,8 @@ async function persistPosition(
     request: RepositionRequest,
     {target, rollbackTo, feedback, action}: SaveAttempt,
 ): Promise<void> {
+    const attempt = (latestAttempts.get(request.save) ?? 0) + 1;
+    latestAttempts.set(request.save, attempt);
     const toastId = toast.loading(feedback.loading);
     try {
         await request.save(target);
@@ -85,7 +90,8 @@ async function persistPosition(
         });
     } catch (error) {
         console.error(error);
-        if (rollbackTo) {
+        // A newer drag already moved the marker on; a stale failure must not yank it back.
+        if (rollbackTo && latestAttempts.get(request.save) === attempt) {
             request.moveTo(rollbackTo);
         }
         toast.error(feedback.error, {id: toastId});

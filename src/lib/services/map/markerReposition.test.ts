@@ -11,6 +11,7 @@ vi.mock('svelte-sonner', () => ({toast}));
 
 const origin = {lat: 1, lng: 2};
 const dragged = {lat: 3, lng: 4};
+const draggedAgain = {lat: 5, lng: 6};
 
 function request(save: (position: {lat: number; lng: number}) => Promise<void>) {
     const moveTo = vi.fn();
@@ -68,5 +69,22 @@ describe('saveReposition', () => {
 
         expect(moveTo).toHaveBeenCalledWith(origin);
         expect(toast.error).toHaveBeenCalled();
+    });
+
+    it('does not roll back a newer drag when an earlier save is rejected', async () => {
+        let rejectEarlier!: (reason: Error) => void;
+        const save = vi
+            .fn<(position: typeof dragged) => Promise<void>>()
+            .mockImplementationOnce(() => new Promise((_, reject) => (rejectEarlier = reject)))
+            .mockResolvedValueOnce();
+        const moveTo = vi.fn();
+        vi.spyOn(console, 'error').mockImplementation(() => {});
+
+        const earlier = saveReposition({position: dragged, origin, save, moveTo});
+        const later = saveReposition({position: draggedAgain, origin: dragged, save, moveTo});
+        rejectEarlier(new Error('older save failed'));
+        await Promise.all([earlier, later]);
+
+        expect(moveTo).not.toHaveBeenCalled();
     });
 });
