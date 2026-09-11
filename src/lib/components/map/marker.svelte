@@ -3,9 +3,11 @@
     import {page} from '$app/state';
     import {api} from '$convex/_generated/api';
     import type {Id} from '$convex/_generated/dataModel';
+    import type {LatLngLiteral} from '$lib/interfaces/map';
     import type {MarkerIcon, MarkerSource} from '$lib/interfaces/marker';
     import {Marker as MarkerObject} from '$lib/services/map/marker';
     import {registerFocusableMarker} from '$lib/services/map/markerFocus';
+    import {saveReposition} from '$lib/services/map/markerReposition';
     import type {MarkerIconKey} from '$lib/services/map/markerStyling.data';
     import {mapState} from '$lib/state/map.svelte';
     import {
@@ -18,7 +20,6 @@
     import {buildPointUrl} from '$lib/utils/pointRoute.ts';
     import {useConvexClient} from 'convex-svelte';
     import {onMount, onDestroy} from 'svelte';
-    import {toast} from 'svelte-sonner';
 
     interface Props {
         id?: Id<'objects'> | null;
@@ -65,6 +66,7 @@
         return searchPointId ?? id ?? fallbackMarkerId;
     });
     let marker: MarkerObject | null = $state(null);
+    let positionBeforeDrag: LatLngLiteral | undefined;
 
     const client = useConvexClient();
     const activeTargetId = $derived(resolveDetailsTargetId());
@@ -121,18 +123,26 @@
             isVisited,
             isRemoved,
             onClick: handleMarkerClick,
+            onDragStart: rememberPositionBeforeDrag,
             onDragEnd: handleDragEnd,
         });
     }
 
+    function rememberPositionBeforeDrag() {
+        positionBeforeDrag = marker?.getPosition();
+    }
+
     async function handleDragEnd() {
-        const promise = updateObjectCoordinates();
-        toast.promise(promise, {
-            loading: 'Обновляю...',
-            success: 'Позиция обновлена!',
-            error: 'Не удалось обновить позицию',
+        if (!marker || !id) {
+            return;
+        }
+
+        await saveReposition({
+            position: marker.getPosition(),
+            origin: positionBeforeDrag,
+            save: persistPosition,
+            moveTo: moveMarker,
         });
-        await promise;
     }
 
     onDestroy(() => {
@@ -145,23 +155,15 @@
         }
     });
 
-    async function updateObjectCoordinates() {
-        if (!marker) {
-            return;
-        }
+    async function persistPosition(position: LatLngLiteral) {
+        await client.mutation(api.objects.reposition, {
+            id: id!,
+            data: {latitude: position.lat, longitude: position.lng},
+        });
+    }
 
-        try {
-            await client.mutation(api.objects.reposition, {
-                id: id!,
-                data: {
-                    latitude: marker.getPosition().lat,
-                    longitude: marker.getPosition().lng,
-                },
-            });
-        } catch (error) {
-            marker.revertPosition();
-            throw error;
-        }
+    function moveMarker(position: LatLngLiteral) {
+        mapState.markerManager?.moveMarker(markerId, position);
     }
 
     function handleMarkerClick() {

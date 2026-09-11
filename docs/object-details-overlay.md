@@ -113,7 +113,7 @@ When a user opens `/object/[id]` for an object they **do not own** and that obje
 | --------------------------- | ------------------------------------------------------------------- |
 | `background.svelte`         | Backdrop click → `requestClose`                                     |
 | `closeConfirmDialog.svelte` | Unsaved-changes alert (edit/create taint check)                     |
-| `detailsSheet.svelte`       | Bottom sheet shell, drag-to-resize, position snap                   |
+| `detailsSheet.svelte`       | Bottom sheet shell, drag-to-resize, position snap; `data-details-sheet` portal target for nested sheets (taxonomy picker backdrop) |
 | `detailsHeader.svelte`      | Drag handle, `internalId` badge, minimized title row, chevron/close |
 | `detailsContent.svelte`     | Mode router → view/edit/preview/create children                     |
 
@@ -156,7 +156,7 @@ Descriptions may arrive with literal escape sequences (`\n`, `\r\n`, `\r`) from 
 
 ### Taxonomy field
 
-Category and both tag sets are edited through one control — see [category-settings.md](./category-settings.md#taxonomy-picker-in-forms). Selected values render as a `CategoryBadge` plus `TagChip` rows inside the trigger; the sheet writes back to hidden form inputs (`category`, repeated `tags`, repeated `privateTags`).
+Category and both tag sets are edited through one control — see [category-settings.md](./category-settings.md#taxonomy-picker-in-forms). Selected values render as a `CategoryBadge` plus removable `TagChip` rows inside the trigger; opening the sheet portalls into `data-details-sheet` on the details card so the dimming backdrop covers the header as well as the form. The sheet writes back to hidden form inputs (`category`, repeated `tags`, repeated `privateTags`).
 
 ### Address collapse
 
