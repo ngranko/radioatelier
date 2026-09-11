@@ -59,19 +59,19 @@ An archive of urban artifacts — old signs, plaques, mosaics, and other details
 
 ## Documentation
 
-| Doc                                                                    | Topics                                                          |
-| ---------------------------------------------------------------------- | --------------------------------------------------------------- |
-| [docs/environment.md](docs/environment.md)                             | `.env.local` vs Convex env vars, setup checklist                |
-| [docs/authentication.md](docs/authentication.md)                       | Route gate, anonymous shared links, login return URLs           |
-| [docs/analytics.md](docs/analytics.md)                                 | PostHog events, ingest proxy, identity, error tracking          |
-| [docs/object-backend.md](docs/object-backend.md)                       | Object reader/writer seam, details projection, Typesense writes |
-| [docs/notion-sync.md](docs/notion-sync.md)                             | Notion webhook setup, sync invariants, audit action             |
-| [docs/map-architecture.md](docs/map-architecture.md)                   | Map provider, marker pipeline, DOM vs Deck.gl                   |
-| [docs/category-settings.md](docs/category-settings.md)                 | Per-user category marker styles                                 |
-| [docs/object-details-overlay.md](docs/object-details-overlay.md)       | View/edit/create overlay modes and routes                       |
-| [docs/search.md](docs/search.md)                                       | Local + Google search actions and UI flow                       |
-| [docs/street-view.md](docs/street-view.md)                             | Panorama, minimap sync, lookup caching                          |
-| [docs/testing.md](docs/testing.md)                                     | Vitest commands, test layout, adding tests                      |
-| [docs/import.md](docs/import.md)                                       | CSV upload, column mapping, batch import, Notion enqueue        |
-| [docs/collection-access-control.md](docs/collection-access-control.md) | Future collection-based marker access design                    |
-| [docs/pre-release-backlog.md](docs/pre-release-backlog.md)             | Audit findings still open: security, scale, leaks, hygiene      |
+| Doc                                                                    | Topics                                                                  |
+| ---------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| [docs/environment.md](docs/environment.md)                             | `.env.local` vs Convex env vars, setup checklist                        |
+| [docs/authentication.md](docs/authentication.md)                       | Route gate, anonymous shared links, login return URLs                   |
+| [docs/analytics.md](docs/analytics.md)                                 | PostHog events, ingest proxy, identity, error tracking                  |
+| [docs/object-backend.md](docs/object-backend.md)                       | Object reader/writer seam, details projection, Typesense writes         |
+| [docs/notion-sync.md](docs/notion-sync.md)                             | Notion webhook setup, sync invariants, audit action                     |
+| [docs/map-architecture.md](docs/map-architecture.md)                   | Map provider, marker pipeline, DOM vs Deck.gl                           |
+| [docs/category-settings.md](docs/category-settings.md)                 | Per-user category marker styles                                         |
+| [docs/object-details-overlay.md](docs/object-details-overlay.md)       | View/edit/create overlay modes and routes                               |
+| [docs/search.md](docs/search.md)                                       | Local + Google search actions and UI flow                               |
+| [docs/street-view.md](docs/street-view.md)                             | Panorama, minimap sync, lookup caching                                  |
+| [docs/testing.md](docs/testing.md)                                     | Vitest commands, test layout, adding tests                              |
+| [docs/import.md](docs/import.md)                                       | CSV upload, column mapping, batch import, Notion enqueue                |
+| [docs/collection-access-control.md](docs/collection-access-control.md) | Future collection-based marker access design                            |
+| [docs/pre-release-backlog.md](docs/pre-release-backlog.md)             | Audit findings still open: security, scale, leaks, correctness, hygiene |

@@ -20,7 +20,11 @@ Listed so the audit is reconstructable, not as work to redo.
 - **IDOR in `images.updatePreview`.** Auth was checked, ownership was not, and
   cover ids are handed to every viewer — so any signed-in user could repoint
   another user's image preview and delete the file behind the old one. Images
-  now carry `createdById` and the mutation checks it.
+  now carry `createdById` and the mutation checks it. Before deploying, run
+  `npx convex run migrations:run '{"fn": "migrations:backfillImageOwners"}'` so
+  legacy covers inherit their Object's author; the migration logs every image
+  it cannot resolve to exactly one owner, and those stay locked until assigned
+  by hand.
 - **Clerk session cookie forwarded to PostHog.** The `/ingest` proxy copied
   request headers verbatim; `cookie` and `authorization` are now stripped.
 - **`.dockerignore` did not exclude env files**, so `COPY . .` could bake

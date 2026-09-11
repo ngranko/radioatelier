@@ -15,8 +15,9 @@ export default defineSchema({
     images: defineTable({
         originalStorageId: v.id('_storage'),
         previewStorageId: v.optional(v.id('_storage')),
-        // Optional for rows created before uploads were attributed; those are
-        // already attached to an Object and never get a second preview write.
+        // Optional for rows created before uploads were attributed. The
+        // backfillImageOwners migration fills them in; rows it cannot resolve to
+        // a single owner stay unset and locked against preview writes.
         createdById: v.optional(v.id('users')),
     }),
     importJobs: defineTable({
@@ -62,7 +63,8 @@ export default defineSchema({
     objects: defineTable(objectTableFields)
         .index('byIsPublic', ['isPublic'])
         .index('byMysqlId', ['mysqlId'])
-        .index('byCreatedById', ['createdById']),
+        .index('byCreatedById', ['createdById'])
+        .index('byCoverId', ['coverId']),
     objectPrivateTags: defineTable({
         objectId: v.id('objects'),
         privateTagIds: v.array(v.id('privateTags')),
