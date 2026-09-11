@@ -72,6 +72,9 @@ export const schema = z.object({
     ),
     source: z.preprocess(
         emptyOrMissingToNull,
-        z.union([z.url('Должна быть валидной ссылкой'), z.null()]),
+        z.union([
+            z.url({protocol: /^https?$/, error: 'Должна быть валидной ссылкой http или https'}),
+            z.null(),
+        ]),
     ),
 });

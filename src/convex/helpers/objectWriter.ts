@@ -5,6 +5,7 @@ import {buildObjectSearchRecord} from './objectAggregate';
 import {getNextInternalId} from './objectHelpers';
 import {loadObjectAggregate, type ObjectAggregate} from './objectReader';
 import {
+    dropUnsafeSource,
     filterChangedPatch,
     hasKeys,
     type ObjectRecordData,
@@ -22,8 +23,9 @@ export type ObjectTarget = ObjectAggregate & {
 export async function createObjectRecords(
     ctx: MutationCtx,
     ownerId: Id<'users'>,
-    data: ObjectRecordData,
+    rawData: ObjectRecordData,
 ) {
+    const data = dropUnsafeSource(rawData);
     const category = await requireCategory(ctx, data.categoryId);
     const {latitude, longitude, address, city, country, ...object} = data;
     const mapPointId = await ctx.db.insert('mapPoints', {
@@ -75,7 +77,7 @@ export async function patchObjectRecords(
     target: ObjectTarget,
     patch: ObjectRecordPatch,
 ) {
-    const patches = splitObjectRecordPatch(patch);
+    const patches = splitObjectRecordPatch(dropUnsafeSource(patch));
     const objectPatch = filterChangedPatch(target.object, patches.objectPatch);
     const mapPointPatch = filterChangedPatch(target.mapPoint, patches.mapPointPatch);
     const markerPatch = filterChangedPatch(target.marker, patches.markerPatch);
