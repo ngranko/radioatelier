@@ -5,8 +5,8 @@
     import {createMarkerRenderer} from '$lib/services/map/createMarkerRenderer';
     import {
         getInitialCenter,
-        startPositionPolling,
-        stopPositionPolling,
+        startWatchingPosition,
+        stopWatchingPosition,
     } from '$lib/services/map/geolocation';
     import {resolveGpuRendererFlag} from '$lib/services/map/gpuRendererFlag';
     import {
@@ -31,7 +31,7 @@
 
     let container: HTMLDivElement | undefined = $state();
     const mapClickTimeout = new MapClickTimeout();
-    let positionInterval: number | undefined;
+    let positionWatch: number | undefined;
     let isInZoomMode = false;
     let lastRendererInteraction: number | undefined;
 
@@ -74,7 +74,7 @@
     }
 
     onMount(async () => {
-        positionInterval = startPositionPolling(5000);
+        positionWatch = startWatchingPosition();
 
         try {
             await setupProviderAndMarkers();
@@ -185,9 +185,7 @@
     }
 
     onDestroy(() => {
-        if (positionInterval) {
-            stopPositionPolling(positionInterval);
-        }
+        stopWatchingPosition(positionWatch);
 
         unsubIdle?.();
         unsubClick?.();
