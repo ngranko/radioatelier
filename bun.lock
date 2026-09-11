@@ -5,7 +5,7 @@
     "": {
       "name": "Radioatelier. Archive",
       "dependencies": {
-        "@convex-dev/migrations": "^0.3.5",
+        "@convex-dev/migrations": "^0.3.6",
         "@deck.gl/core": "^9.3.7",
         "@deck.gl/google-maps": "^9.3.7",
         "@deck.gl/layers": "^9.3.7",
@@ -40,7 +40,7 @@
         "eslint": "^9.39.5",
         "eslint-plugin-svelte": "^3.20.0",
         "formsnap": "^2.0.1",
-        "globals": "^15.15.0",
+        "globals": "^17.12.0",
         "lucide-static": "^1.31.0",
         "mode-watcher": "^1.1.0",
         "oxfmt": "^0.59.0",
@@ -73,7 +73,7 @@
 
     "@clerk/shared": ["@clerk/shared@4.25.5", "", { "dependencies": { "@tanstack/query-core": "^5.100.6", "dequal": "2.0.3", "glob-to-regexp": "0.4.1", "js-cookie": "3.0.7" }, "peerDependencies": { "react": "^18.0.0 || ~19.0.3 || ~19.1.4 || ~19.2.3 || ~19.3.0-0", "react-dom": "^18.0.0 || ~19.0.3 || ~19.1.4 || ~19.2.3 || ~19.3.0-0" }, "optionalPeers": ["react", "react-dom"] }, "sha512-pb+pA+88OACHSuE0JhsnV7Qzl1j9UhI9KrXivS831x1BJOtNYORnDqRg3xss2SPFcC46clE9S5QqkRQqv1lSsg=="],
 
-    "@convex-dev/migrations": ["@convex-dev/migrations@0.3.5", "", { "peerDependencies": { "convex": "^1.35.0", "convex-helpers": "^0.1.115" } }, "sha512-vj5qjY5XB8laX9WvvxeIFZe8sNW8DGvJ5cPo1zvpjJzYnPLqs5C+VG9HP6sSkEW2QGhsfYOZv56FUNkHiLe1wA=="],
+    "@convex-dev/migrations": ["@convex-dev/migrations@0.3.6", "", { "peerDependencies": { "convex": "^1.42.0", "convex-helpers": "^0.1.115" } }, "sha512-cURYG4uy323MDi55QWNF5HAGemS4QspSgJ4uP+gGPAJdBLBbk2KFO7toFlKhacc1NinJQiG6+D/YEFyFyBS1/A=="],
 
     "@deck.gl/core": ["@deck.gl/core@9.3.7", "", { "dependencies": { "@loaders.gl/core": "^4.4.3", "@loaders.gl/images": "^4.4.3", "@luma.gl/core": "^9.3.3", "@luma.gl/engine": "^9.3.3", "@luma.gl/shadertools": "^9.3.3", "@luma.gl/webgl": "^9.3.3", "@math.gl/core": "^4.1.0", "@math.gl/sun": "^4.1.0", "@math.gl/types": "^4.1.0", "@math.gl/web-mercator": "^4.1.0", "@probe.gl/env": "^4.1.1", "@probe.gl/log": "^4.1.1", "@probe.gl/stats": "^4.1.1", "@types/offscreencanvas": "^2019.6.4", "gl-matrix": "^3.0.0", "mjolnir.js": "^3.0.0" } }, "sha512-l+YPm1I0Fwj+b7xsu8FvyDT5MGPgEPJe2cQJUpQNgG742b2goB4tyYpteUhNAOeVo1gmenvqv36ZJGNsGxipJA=="],
 
@@ -805,7 +805,7 @@
 
     "glob-to-regexp": ["glob-to-regexp@0.4.1", "", {}, "sha512-lkX1HJXwyMcprw/5YUZc2s7DrpAiHB21/V+E1rHUrVNokkvB6bqMzT0VfV6/86ZNabt1k14YOIaT7nDvOX3Iiw=="],
 
-    "globals": ["globals@15.15.0", "", {}, "sha512-7ACyT3wmyp3I61S4fG682L0VA2RGD9otkqGJIwNUMF1SWUombIIk+af1unuDYgMm082aHYwD+mzJvv9Iu8dsgg=="],
+    "globals": ["globals@17.12.0", "", {}, "sha512-cezEd/DTyyht9cvSSURyygXPfy04GtWO/5e6ZPvH7fCtjKz9PYOmuawphw1Ctd1f6C+5JypXfGD7ahNMXvevBA=="],
 
     "gopd": ["gopd@1.2.0", "", {}, "sha512-ZUKRh6/kUFoAiTAtTYPZJ3hw9wNxx+BIBOijnlG9PnrJsCcSjs1wyyD6vJpaYtgnzDrKYRSqf3OO6Rfa93xsRg=="],
 

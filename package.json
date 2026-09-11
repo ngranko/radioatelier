@@ -17,7 +17,7 @@
         "format": "oxfmt ."
     },
     "dependencies": {
-        "@convex-dev/migrations": "^0.3.5",
+        "@convex-dev/migrations": "^0.3.6",
         "@deck.gl/core": "^9.3.7",
         "@deck.gl/google-maps": "^9.3.7",
         "@deck.gl/layers": "^9.3.7",
@@ -52,7 +52,7 @@
         "eslint": "^9.39.5",
         "eslint-plugin-svelte": "^3.20.0",
         "formsnap": "^2.0.1",
-        "globals": "^15.15.0",
+        "globals": "^17.12.0",
         "lucide-static": "^1.31.0",
         "mode-watcher": "^1.1.0",
         "oxfmt": "^0.59.0",
