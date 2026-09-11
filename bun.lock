@@ -10,7 +10,7 @@
         "@deck.gl/google-maps": "^9.3.7",
         "@deck.gl/layers": "^9.3.7",
         "@googlemaps/js-api-loader": "^2.1.1",
-        "@lucide/svelte": "^1.25.0",
+        "@lucide/svelte": "^1.43.0",
         "@luma.gl/webgl": "^9.3.6",
         "@selemondev/svgl-svelte": "^2.17.0",
         "@tailwindcss/vite": "^4.3.3",
@@ -205,7 +205,7 @@
 
     "@loaders.gl/worker-utils": ["@loaders.gl/worker-utils@4.4.3", "", { "peerDependencies": { "@loaders.gl/core": "~4.4.0" } }, "sha512-RZt/NwFXm6Kx3Fn/rqiW3Alse9Z0XtBktH/EFAp8W6LvsKuxpRMjULqGfybTu2waRXRYUNYZ6zGs9aOWbtDRLw=="],
 
-    "@lucide/svelte": ["@lucide/svelte@1.25.0", "", { "peerDependencies": { "svelte": "^5" } }, "sha512-v9m+dD68jxVnqkU3K59mG/RSRFlPGzmKCGSyMfnXcaGv9jODDQMyQkcp1CGvk3Y/cUj9v7f8rw1n//K0B53xGQ=="],
+    "@lucide/svelte": ["@lucide/svelte@1.43.0", "", { "peerDependencies": { "svelte": "^5" } }, "sha512-IfxS4hVxojnafzFKkQGzndoM6yUODmGc07I0h6R/1SlwDoZwd/5gl90zHz+fTaBVLZo7uE5sPDySFGiK4iMQKw=="],
 
     "@luma.gl/core": ["@luma.gl/core@9.3.6", "", { "dependencies": { "@math.gl/types": "^4.1.0", "@probe.gl/env": "^4.1.1", "@probe.gl/log": "^4.1.1", "@probe.gl/stats": "^4.1.1", "@types/offscreencanvas": "^2019.7.3" } }, "sha512-eqHnCPh2xHYkdd9rEkiIIkGMixNiJkq1ROrnTob6npvmZNVHXL0ubIw5KueL7rqW0+J1tm+p2+TXZaCmn0sP7Q=="],
 
