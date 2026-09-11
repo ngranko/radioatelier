@@ -64,7 +64,29 @@ Create and edit forms use a single **категория и теги** field (`ta
 | теги | `tags` | Multi select (shared tags) |
 | приватные | `privateTags` | Multi select (owner-only) |
 
-Each tab shares one search/create input. Typing filters the catalog; a **Создать** row appears when the query does not match an existing name. Arrow keys move the cursor; Enter selects or creates. New categories and tags call `api.categories.create`, `api.tags.create`, or `api.privateTags.create` respectively. Hidden categories are omitted from the category tab (see above).
+Each tab shares one search/create input. Typing filters the catalog; a **Создать** row appears when the query does not match an existing name. New categories and tags call `api.categories.create`, `api.tags.create`, or `api.privateTags.create` respectively. Hidden categories are omitted from the category tab (see above).
+
+### Sheet placement
+
+The sheet is portalled into the details card shell (`detailsSheet.svelte` sets `data-details-sheet`) so its backdrop dims the **entire** overlay card — header row included — not only the scrollable form body. Tap the backdrop or the header **×** to close without saving form changes (taxonomy values bind live; closing only dismisses the sheet).
+
+### Trigger and chips
+
+The field trigger shows a `CategoryBadge` plus `TagChip` rows for selected tags. An invisible opener button covers the field; chip **×** buttons sit above it with `pointer-events-auto`, so removing a tag from the trigger does not reopen the sheet. Values still submit through hidden inputs (`category`, repeated `tags`, repeated `privateTags`).
+
+### List behavior
+
+After filtering, already-selected rows are **pinned to the top** of the list so long tag catalogs stay scannable. Toggling a multi-select re-sorts the row; keyboard highlight follows the toggled option rather than staying on the old row index.
+
+The search input auto-focuses when the sheet opens, when switching tabs, and after each select/create (the query clears and focus returns for the next filter). **снять все** clears the current tab only (category, shared tags, or private tags).
+
+### Keyboard
+
+| Key | Action |
+| --- | ------ |
+| ↑ / ↓ | Move highlight (wraps; includes the create row when shown) |
+| Enter | Select highlighted row or create from query |
+| Escape | Close sheet |
 
 ## Save flow
 
