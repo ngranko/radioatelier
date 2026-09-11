@@ -23,7 +23,12 @@ export async function getInitialCenter(): Promise<Location> {
 
 // A single watch keeps one authorization alive instead of asking for a fresh one on every poll,
 // which is what makes iOS re-prompt for permissions mid-session.
-export function startWatchingPosition(): number {
+export function startWatchingPosition(): number | undefined {
+    if (!navigator.geolocation) {
+        console.error('geolocation is unavailable, the map will run without the current position');
+        return undefined;
+    }
+
     return navigator.geolocation.watchPosition(rememberPosition, markLastPositionStale, {
         enableHighAccuracy: false,
         timeout: 5000,
