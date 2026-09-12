@@ -86,7 +86,7 @@ The scheduled record is built from post-write object + map point + category name
 
 ### Backfill reconcile
 
-When the index drifts from Convex (e.g. after a bulk migration or missed schedules), run the reconcile backfill:
+Runtime writes are scheduled per mutation and are not retried, so the index drifts after a bulk migration or whenever Typesense was unreachable while an object changed. The reconcile backfill repairs that drift:
 
 ```bash
 bun scripts/typesense/backfill.ts \
@@ -97,6 +97,26 @@ bun scripts/typesense/backfill.ts \
 ```
 
 The script exports existing Typesense documents, fetches all objects from Convex via `typesense:getBackfillPage`, then plans **create**, **update**, **unchanged**, and **delete** operations. Unreadable Typesense rows are treated as deletes. Use `--dry-run` to inspect the plan without applying; use `--max-deletes <n>` to abort when too many stale documents would be removed. Run `bun scripts/typesense/setup.ts` first if the collection does not exist. Env var details are in [environment.md](./environment.md).
+
+### Running the backfill against production
+
+The script only makes HTTP calls to Convex and Typesense — it never runs on the app server, so lack of shell access to Railway does not matter. Run it from a local machine with production values.
+
+Production Typesense is self-hosted on Railway at `https://search.radioatelier.one`, so there is no admin-key UI. The admin key is the server's bootstrap key, stored as `TYPESENSE_API_KEY` on the Railway Typesense service (dashboard → Variables, or `railway variables --service <name>`). The scoped `TYPESENSE_SYNC_KEY` cannot stand in for it: the script calls `collections(name).exists()`, which needs collection read access that the `documents:*` scope lacks.
+
+1. Set a backfill secret on prod Convex. `typesense:getBackfillPage` rejects every call while it is unset:
+
+    ```bash
+    BACKFILL_KEY=$(openssl rand -hex 32)
+    npx convex env set --prod TYPESENSE_BACKFILL_KEY "$BACKFILL_KEY"
+    ```
+
+2. Run the command above with production values and `--dry-run`, then run it again without `--dry-run` and with `--max-deletes` set to the delete count the dry run reported.
+3. Remove the secret afterwards: `npx convex env remove --prod TYPESENSE_BACKFILL_KEY`. The action is public and returns every object, private ones included; it is only guarded by that shared secret.
+
+**Pass all four flags explicitly.** Bun auto-loads `.env.local`, and `parseArgs` falls back to those values for any flag left out, so one missing flag silently mixes environments — pushing prod objects into the dev index and queueing dev-only documents for deletion.
+
+Run it while nobody is editing. The script snapshots Typesense before Convex, so an object created or deleted between the two reads collides with its own scheduled write and aborts the run (`Typesense rejected …` or `deleted X of Y`). Nothing is corrupted; rerun it.
 
 ## Related docs
 

@@ -69,7 +69,7 @@ An archive of urban artifacts — old signs, plaques, mosaics, and other details
 | [docs/map-architecture.md](docs/map-architecture.md)                   | Map provider, marker pipeline, DOM vs Deck.gl                           |
 | [docs/category-settings.md](docs/category-settings.md)                 | Per-user category marker styles                                         |
 | [docs/object-details-overlay.md](docs/object-details-overlay.md)       | View/edit/create overlay modes and routes                               |
-| [docs/search.md](docs/search.md)                                       | Local + Google search actions and UI flow                               |
+| [docs/search.md](docs/search.md)                                       | Local + Google search actions, UI flow, production backfill runbook     |
 | [docs/street-view.md](docs/street-view.md)                             | Panorama, minimap sync, lookup caching                                  |
 | [docs/testing.md](docs/testing.md)                                     | Vitest commands, test layout, adding tests                              |
 | [docs/import.md](docs/import.md)                                       | CSV upload, column mapping, batch import, Notion enqueue                |
