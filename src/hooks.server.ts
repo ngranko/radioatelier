@@ -1,7 +1,13 @@
+import {assertServerEnv} from '$lib/server/env';
 import {getPostHogClient} from '$lib/server/posthog';
-import type {Handle, HandleServerError} from '@sveltejs/kit';
+import type {Handle, HandleServerError, ServerInit} from '@sveltejs/kit';
 import {sequence} from '@sveltejs/kit/hooks';
 import {withClerkHandler} from 'svelte-clerk/server';
+
+// Throwing here fails `server.init()` before the node server listens, so a
+// misconfigured deployment dies at boot with the variable names instead of
+// answering every request with a 500.
+export const init: ServerInit = assertServerEnv;
 
 const posthogProxy: Handle = async ({event, resolve}) => {
     const {pathname} = event.url;
