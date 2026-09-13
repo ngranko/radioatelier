@@ -29,7 +29,7 @@
                 {#if activeIcon}
                     <MarkerIcon
                         icon={activeIcon.component as MarkerIconType}
-                        class="{activeIcon.class} text-foreground"
+                        className="{activeIcon.className} size-3.5 text-foreground"
                     />
                 {/if}
                 Иконка
@@ -51,7 +51,7 @@
                 >
                     <MarkerIcon
                         icon={icon.component as MarkerIconType}
-                        class="{icon.class} size-4"
+                        className="{icon.className} size-4"
                     />
                 </button>
             {/each}

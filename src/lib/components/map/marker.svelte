@@ -30,7 +30,7 @@
         isVisited?: boolean;
         icon: MarkerIcon;
         iconKey?: MarkerIconKey;
-        iconClass?: string;
+        iconClassName?: string;
         color: string;
         isDraggable?: boolean;
         source: MarkerSource;
@@ -46,7 +46,7 @@
         isVisited = false,
         icon,
         iconKey,
-        iconClass,
+        iconClassName = '',
         color,
         isDraggable = false,
         source,
@@ -84,7 +84,7 @@
         if (!marker || !markerId || !mapState.markerManager) {
             return;
         }
-        mapState.markerManager.updateMarkerStyle(markerId, {icon, iconKey, iconClass, color});
+        mapState.markerManager.updateMarkerStyle(markerId, {icon, iconKey, iconClassName, color});
     });
 
     $effect(() => {
@@ -116,7 +116,7 @@
         marker = mapState.markerManager.addMarker(markerId, position, {
             icon,
             iconKey,
-            iconClass,
+            iconClassName,
             color,
             isDraggable,
             source,

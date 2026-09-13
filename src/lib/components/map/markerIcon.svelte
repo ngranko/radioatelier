@@ -4,10 +4,10 @@
 
     interface Props {
         icon: MarkerIcon;
-        class?: string;
+        className?: string;
     }
 
-    let {icon, class: className = ''}: Props = $props();
+    let {icon, className = ''}: Props = $props();
 
     const Icon = $derived(icon);
 </script>

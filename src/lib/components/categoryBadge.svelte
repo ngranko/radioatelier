@@ -1,7 +1,5 @@
 <script lang="ts">
     import type {Id} from '$convex/_generated/dataModel';
-    import MarkerIcon from '$lib/components/map/markerIcon.svelte';
-    import type {MarkerIcon as MarkerIconType} from '$lib/interfaces/marker';
     import {markerIconMap} from '$lib/services/map/markerStyling';
     import {categoriesState} from '$lib/state/categories.svelte';
     import {cn} from '$lib/utils.ts';
@@ -44,10 +42,7 @@
             )}
             style="background-color: {category.markerColor}"
         >
-            <MarkerIcon
-                icon={icon.component as MarkerIconType}
-                class={cn(icon.class, size === 'md' ? 'size-3' : 'size-2.5')}
-            />
+            <icon.component class={cn(icon.className, size === 'md' ? 'size-3' : 'size-2.5')} />
         </span>
     {/if}
     {#if showName}

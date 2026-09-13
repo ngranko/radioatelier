@@ -2,13 +2,15 @@ import MarkerIcon from '$lib/components/map/markerIcon.svelte';
 import type {MarkerIcon as MarkerIconComponent} from '$lib/interfaces/marker';
 import {markerHaloColor} from '$lib/services/colorConverter';
 import type {Marker} from '$lib/services/map/marker';
+import {cn} from '$lib/utils';
 import {mount} from 'svelte';
 
 const VISITED_BRIGHT = '#39ff14';
+const ICON_CLASS = 'block size-3.5';
 
 interface IconProps {
     icon: MarkerIconComponent;
-    class: string;
+    className: string;
 }
 
 const mountedIcons = new WeakMap<HTMLElement, IconProps>();
@@ -35,15 +37,15 @@ export function applyMarkerAppearance(marker: Marker): void {
 
 /** The glyph is mounted once against a reactive props object; a later swap just reassigns it. */
 function applyIcon(element: HTMLElement, marker: Marker): void {
-    const {icon, iconClass = ''} = marker.options;
+    const className = cn(ICON_CLASS, marker.options.iconClassName);
     const mounted = mountedIcons.get(element);
     if (mounted) {
-        mounted.icon = icon;
-        mounted.class = `block ${iconClass}`;
+        mounted.icon = marker.options.icon;
+        mounted.className = className;
         return;
     }
 
-    const props: IconProps = $state({icon, class: `block ${iconClass}`});
+    const props: IconProps = $state({icon: marker.options.icon, className});
     mountedIcons.set(element, props);
     mount(MarkerIcon, {target: element, props});
 }

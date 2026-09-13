@@ -40,7 +40,7 @@ import {
 
 interface MarkerIcon {
     component: Component;
-    class: string;
+    className: string;
 }
 
 export const markerColorMap = MARKER_COLORS;
@@ -81,7 +81,7 @@ const ICON_COMPONENTS: Record<MarkerIconKey, Component> = {
 export const markerIconMap = Object.fromEntries(
     MARKER_ICON_KEYS.map(key => [
         key,
-        {component: ICON_COMPONENTS[key], class: MARKER_ICON_CLASSES[key]},
+        {component: ICON_COMPONENTS[key], className: MARKER_ICON_CLASSES[key]},
     ]),
 ) as Record<MarkerIconKey, MarkerIcon>;
 

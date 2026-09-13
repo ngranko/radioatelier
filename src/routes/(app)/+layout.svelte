@@ -117,7 +117,7 @@
                 lat={searchPoint.object.latitude}
                 lng={searchPoint.object.longitude}
                 icon={searchPoint.object.type === 'local' ? SearchIcon : SvglGoogleLogo}
-                iconClass="stroke-3"
+                iconClassName="stroke-3"
                 color="#e11d48"
                 source="search"
             />
@@ -131,7 +131,7 @@
                 lat={sharedMarker.object.latitude}
                 lng={sharedMarker.object.longitude}
                 icon={StarIcon}
-                iconClass="fill-current"
+                iconClassName="fill-current"
                 color="#d97706"
                 source="share"
             />
@@ -144,7 +144,7 @@
                 lat={draftMarkerPosition.lat}
                 lng={draftMarkerPosition.lng}
                 icon={SproutIcon}
-                iconClass="fill-current"
+                iconClassName="fill-current"
                 color="#16a34a"
                 source="draft"
             />
