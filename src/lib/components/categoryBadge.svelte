@@ -46,8 +46,7 @@
         >
             <MarkerIcon
                 icon={icon.component as MarkerIconType}
-                iconStyle={icon.style}
-                class={size === 'md' ? 'size-3' : 'size-2.5'}
+                class={cn(icon.class, size === 'md' ? 'size-3' : 'size-2.5')}
             />
         </span>
     {/if}

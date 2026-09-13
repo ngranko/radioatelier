@@ -33,15 +33,14 @@ import {
 import type {Component} from 'svelte';
 import {
     MARKER_COLORS,
+    MARKER_ICON_CLASSES,
     MARKER_ICON_KEYS,
-    MARKER_ICON_STYLES,
     type MarkerIconKey,
-    type MarkerIconStyle,
 } from './markerStyling.data';
 
 interface MarkerIcon {
     component: Component;
-    style: MarkerIconStyle;
+    class: string;
 }
 
 export const markerColorMap = MARKER_COLORS;
@@ -82,7 +81,7 @@ const ICON_COMPONENTS: Record<MarkerIconKey, Component> = {
 export const markerIconMap = Object.fromEntries(
     MARKER_ICON_KEYS.map(key => [
         key,
-        {component: ICON_COMPONENTS[key], style: MARKER_ICON_STYLES[key]},
+        {component: ICON_COMPONENTS[key], class: MARKER_ICON_CLASSES[key]},
     ]),
 ) as Record<MarkerIconKey, MarkerIcon>;
 

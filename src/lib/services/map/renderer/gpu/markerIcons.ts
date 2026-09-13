@@ -1,8 +1,7 @@
 import {
+    MARKER_ICON_CLASSES,
     MARKER_ICON_KEYS,
-    MARKER_ICON_STYLES,
     type MarkerIconKey,
-    type MarkerIconStyle,
 } from '$lib/services/map/markerStyling.data';
 import {
     Activity,
@@ -74,15 +73,17 @@ export const GLYPH_VIEWBOX_SIZE = 24;
 
 /** White 24x24 SVG markup per icon, embedded into the composed marker sprites. */
 export const MARKER_GLYPHS = Object.fromEntries(
-    MARKER_ICON_KEYS.map(key => [key, whiteGlyph(ICON_SVGS[key], MARKER_ICON_STYLES[key])]),
+    MARKER_ICON_KEYS.map(key => [key, whiteGlyph(ICON_SVGS[key], MARKER_ICON_CLASSES[key])]),
 ) as Record<MarkerIconKey, string>;
 
-function whiteGlyph(svg: string, style: MarkerIconStyle): string {
+function whiteGlyph(svg: string, iconClass: string): string {
+    const strokeWidth = /stroke-\[?([\d.]+)\]?/.exec(iconClass)?.[1] ?? '2';
+    const isFilled = iconClass.split(' ').includes('fill-current');
     return (
         svg
             .replace('stroke="currentColor"', 'stroke="white"')
-            .replace('stroke-width="2"', `stroke-width="${style.strokeWidth ?? 2}"`)
-            .replace('fill="none"', style.filled ? 'fill="white"' : 'fill="none"')
+            .replace('stroke-width="2"', `stroke-width="${strokeWidth}"`)
+            .replace('fill="none"', isFilled ? 'fill="white"' : 'fill="none"')
             // lucide-static ships pretty-printed markup; every newline costs three bytes once the
             // sprite is percent-encoded into a data URL.
             .replace(/\s*\n\s*/g, ' ')

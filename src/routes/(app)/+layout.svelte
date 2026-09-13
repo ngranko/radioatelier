@@ -11,7 +11,6 @@
     import Search from '$lib/components/search/search.svelte';
     import UserMenu from '$lib/components/userMenu/userMenu.svelte';
     import type {Location} from '$lib/interfaces/location.ts';
-    import type {MarkerIconStyle} from '$lib/services/map/markerStyling.data';
     import {setCategories} from '$lib/state/categories.svelte';
     import {createDraftState, setCreateDraftPosition} from '$lib/state/createDraft.svelte.ts';
     import {mapState} from '$lib/state/map.svelte.ts';
@@ -37,10 +36,6 @@
     webgl2Adapter;
 
     let {children, data}: LayoutProps = $props();
-
-    // Hoisted so every render hands a marker the same object, keeping its style check a no-op.
-    const SEARCH_ICON_STYLE: MarkerIconStyle = {strokeWidth: 3};
-    const FILLED_ICON_STYLE: MarkerIconStyle = {filled: true};
 
     let consoleElement: HTMLElement | undefined = $state();
     let orientationEnabled = $state(false);
@@ -122,7 +117,7 @@
                 lat={searchPoint.object.latitude}
                 lng={searchPoint.object.longitude}
                 icon={searchPoint.object.type === 'local' ? SearchIcon : SvglGoogleLogo}
-                iconStyle={SEARCH_ICON_STYLE}
+                iconClass="stroke-3"
                 color="#e11d48"
                 source="search"
             />
@@ -136,7 +131,7 @@
                 lat={sharedMarker.object.latitude}
                 lng={sharedMarker.object.longitude}
                 icon={StarIcon}
-                iconStyle={FILLED_ICON_STYLE}
+                iconClass="fill-current"
                 color="#d97706"
                 source="share"
             />
@@ -149,7 +144,7 @@
                 lat={draftMarkerPosition.lat}
                 lng={draftMarkerPosition.lng}
                 icon={SproutIcon}
-                iconStyle={FILLED_ICON_STYLE}
+                iconClass="fill-current"
                 color="#16a34a"
                 source="draft"
             />

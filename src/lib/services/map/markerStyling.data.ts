@@ -47,47 +47,39 @@ export const MARKER_ICON_KEYS = [
 
 export type MarkerIconKey = (typeof MARKER_ICON_KEYS)[number];
 
-/** Only widths the DOM glyph has a matching Tailwind class for, so both renderers stay in step. */
-export type MarkerStrokeWidth = 1 | 1.5 | 2 | 2.5 | 3;
-
-export interface MarkerIconStyle {
-    filled?: boolean;
-    strokeWidth?: MarkerStrokeWidth;
-}
-
-// The sprite atlas and the DOM glyph both draw from this table, so a marker promoted from a sprite
-// to a DOM element keeps its exact look.
-export const MARKER_ICON_STYLES: Record<MarkerIconKey, MarkerIconStyle> = {
-    activity: {strokeWidth: 3},
-    anchor: {strokeWidth: 3},
-    antenna: {strokeWidth: 3},
-    bookmark: {filled: true, strokeWidth: 1},
-    cableCar: {filled: true},
-    cctv: {filled: true, strokeWidth: 1.5},
-    crown: {filled: true},
-    flag: {filled: true},
-    flame: {filled: true, strokeWidth: 1},
-    flask: {filled: true, strokeWidth: 1.5},
-    footprints: {filled: true, strokeWidth: 1},
-    hammer: {filled: true, strokeWidth: 1},
-    heart: {filled: true, strokeWidth: 1},
-    hourglass: {filled: true, strokeWidth: 1.5},
-    house: {strokeWidth: 3},
-    lamp: {filled: true, strokeWidth: 1.5},
-    landmark: {filled: true, strokeWidth: 2.5},
-    library: {filled: true, strokeWidth: 3},
-    lightbulb: {filled: true},
-    martini: {filled: true, strokeWidth: 2.5},
-    milestone: {filled: true, strokeWidth: 2.5},
-    mountain: {filled: true, strokeWidth: 1},
-    plane: {filled: true, strokeWidth: 1},
-    plug: {filled: true, strokeWidth: 2.5},
-    puzzle: {filled: true, strokeWidth: 1},
-    rocket: {filled: true, strokeWidth: 1},
-    shopping: {filled: true, strokeWidth: 1.5},
-    trafficCone: {strokeWidth: 3},
-    wrench: {filled: true, strokeWidth: 1},
-    zap: {filled: true, strokeWidth: 1},
+// The DOM glyph renders these classes and the sprite atlas reads its stroke and fill from them, so a
+// marker promoted from a sprite to a DOM element keeps its exact look.
+export const MARKER_ICON_CLASSES: Record<MarkerIconKey, string> = {
+    activity: 'stroke-3',
+    anchor: 'stroke-3',
+    antenna: 'stroke-3',
+    bookmark: 'fill-current stroke-1',
+    cableCar: 'fill-current',
+    cctv: 'fill-current stroke-[1.5]',
+    crown: 'fill-current',
+    flag: 'fill-current',
+    flame: 'fill-current stroke-1',
+    flask: 'fill-current stroke-[1.5]',
+    footprints: 'fill-current stroke-1',
+    hammer: 'fill-current stroke-1',
+    heart: 'fill-current stroke-1',
+    hourglass: 'fill-current stroke-[1.5]',
+    house: 'stroke-3',
+    lamp: 'fill-current stroke-[1.5]',
+    landmark: 'fill-current stroke-[2.5]',
+    library: 'fill-current stroke-3',
+    lightbulb: 'fill-current',
+    martini: 'fill-current stroke-[2.5]',
+    milestone: 'fill-current stroke-[2.5]',
+    mountain: 'fill-current stroke-1',
+    plane: 'fill-current stroke-1',
+    plug: 'fill-current stroke-[2.5]',
+    puzzle: 'fill-current stroke-1',
+    rocket: 'fill-current stroke-1',
+    shopping: 'fill-current stroke-[1.5]',
+    trafficCone: 'stroke-3',
+    wrench: 'fill-current stroke-1',
+    zap: 'fill-current stroke-1',
 };
 
 export function randomMarkerColor(): MarkerColor {

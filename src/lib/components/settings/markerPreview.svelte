@@ -24,8 +24,7 @@
     {#if icon}
         <MarkerIcon
             icon={icon.component as MarkerIconType}
-            iconStyle={icon.style}
-            class="{iconSizeClass} text-white"
+            class="{icon.class} {iconSizeClass} text-white"
         />
     {/if}
 </div>
