@@ -1,4 +1,8 @@
-import type {MarkerIconKey} from '$lib/services/map/markerStyling.data';
+import {
+    MARKER_ICON_CLASSES,
+    MARKER_ICON_KEYS,
+    type MarkerIconKey,
+} from '$lib/services/map/markerStyling.data';
 import {
     Activity,
     Anchor,
@@ -32,58 +36,54 @@ import {
     Zap,
 } from 'lucide-static';
 
-interface IconStyle {
-    svg: string;
-    filled?: boolean;
-    strokeWidth?: number;
-}
-
-const ICON_STYLES: Record<MarkerIconKey, IconStyle> = {
-    activity: {svg: Activity, strokeWidth: 3},
-    anchor: {svg: Anchor, strokeWidth: 3},
-    antenna: {svg: Antenna, strokeWidth: 3},
-    bookmark: {svg: Bookmark, filled: true, strokeWidth: 1},
-    cableCar: {svg: CableCar, filled: true},
-    cctv: {svg: Cctv, filled: true, strokeWidth: 1.5},
-    crown: {svg: Crown, filled: true},
-    flag: {svg: Flag, filled: true},
-    flame: {svg: Flame, filled: true, strokeWidth: 1},
-    flask: {svg: FlaskConical, filled: true, strokeWidth: 1.5},
-    footprints: {svg: Footprints, filled: true, strokeWidth: 1},
-    hammer: {svg: Hammer, filled: true, strokeWidth: 1},
-    heart: {svg: Heart, filled: true, strokeWidth: 1},
-    hourglass: {svg: Hourglass, filled: true, strokeWidth: 1.5},
-    house: {svg: House, strokeWidth: 3},
-    lamp: {svg: Lamp, filled: true, strokeWidth: 1.5},
-    landmark: {svg: Landmark, filled: true, strokeWidth: 2.5},
-    library: {svg: Library, filled: true, strokeWidth: 3},
-    lightbulb: {svg: Lightbulb, filled: true},
-    martini: {svg: Martini, filled: true, strokeWidth: 2.5},
-    milestone: {svg: Milestone, filled: true, strokeWidth: 2.5},
-    mountain: {svg: Mountain, filled: true, strokeWidth: 1},
-    plane: {svg: Plane, filled: true, strokeWidth: 1},
-    plug: {svg: Plug, filled: true, strokeWidth: 2.5},
-    puzzle: {svg: Puzzle, filled: true, strokeWidth: 1},
-    rocket: {svg: Rocket, filled: true, strokeWidth: 1},
-    shopping: {svg: ShoppingCart, filled: true, strokeWidth: 1.5},
-    trafficCone: {svg: TrafficCone, strokeWidth: 3},
-    wrench: {svg: Wrench, filled: true, strokeWidth: 1},
-    zap: {svg: Zap, filled: true, strokeWidth: 1},
+const ICON_SVGS: Record<MarkerIconKey, string> = {
+    activity: Activity,
+    anchor: Anchor,
+    antenna: Antenna,
+    bookmark: Bookmark,
+    cableCar: CableCar,
+    cctv: Cctv,
+    crown: Crown,
+    flag: Flag,
+    flame: Flame,
+    flask: FlaskConical,
+    footprints: Footprints,
+    hammer: Hammer,
+    heart: Heart,
+    hourglass: Hourglass,
+    house: House,
+    lamp: Lamp,
+    landmark: Landmark,
+    library: Library,
+    lightbulb: Lightbulb,
+    martini: Martini,
+    milestone: Milestone,
+    mountain: Mountain,
+    plane: Plane,
+    plug: Plug,
+    puzzle: Puzzle,
+    rocket: Rocket,
+    shopping: ShoppingCart,
+    trafficCone: TrafficCone,
+    wrench: Wrench,
+    zap: Zap,
 };
 
 export const GLYPH_VIEWBOX_SIZE = 24;
 
 /** White 24x24 SVG markup per icon, embedded into the composed marker sprites. */
 export const MARKER_GLYPHS = Object.fromEntries(
-    Object.entries(ICON_STYLES).map(([key, style]) => [key, whiteGlyph(style)]),
+    MARKER_ICON_KEYS.map(key => [key, whiteGlyph(ICON_SVGS[key], MARKER_ICON_CLASSES[key])]),
 ) as Record<MarkerIconKey, string>;
 
-function whiteGlyph(style: IconStyle): string {
+function whiteGlyph(svg: string, iconClass: string): string {
+    const strokeWidth = /stroke-\[?([\d.]+)\]?/.exec(iconClass)?.[1] ?? '2';
+    const isFilled = iconClass.split(' ').includes('fill-current');
     return (
-        style.svg
+        svg
             .replace('stroke="currentColor"', 'stroke="white"')
-            .replace('stroke-width="2"', `stroke-width="${style.strokeWidth ?? 2}"`)
-            .replace('fill="none"', style.filled ? 'fill="white"' : 'fill="none"')
+            .replace('stroke-width="2"', `stroke-width="${strokeWidth}"`)
+            .replace('fill="none"', isFilled ? 'fill="white"' : 'fill="none"')
             // lucide-static ships pretty-printed markup; every newline costs three bytes once the
             // sprite is percent-encoded into a data URL.
             .replace(/\s*\n\s*/g, ' ')
