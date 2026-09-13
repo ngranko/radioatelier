@@ -6,12 +6,12 @@ import type {MarkerIconStyle} from '$lib/services/map/markerStyling.data';
 import {mount} from 'svelte';
 
 const VISITED_BRIGHT = '#39ff14';
-const ICON_CLASS = 'block size-3.5';
+const ICON_CLASS = 'block';
 
 interface IconProps {
     icon: MarkerIconComponent;
     iconStyle?: MarkerIconStyle;
-    className: string;
+    class: string;
 }
 
 const mountedIcons = new WeakMap<HTMLElement, IconProps>();
@@ -46,7 +46,7 @@ function applyIcon(element: HTMLElement, marker: Marker): void {
         return;
     }
 
-    const props: IconProps = $state({icon, iconStyle, className: ICON_CLASS});
+    const props: IconProps = $state({icon, iconStyle, class: ICON_CLASS});
     mountedIcons.set(element, props);
     mount(MarkerIcon, {target: element, props});
 }

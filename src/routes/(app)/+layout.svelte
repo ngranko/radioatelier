@@ -11,6 +11,7 @@
     import Search from '$lib/components/search/search.svelte';
     import UserMenu from '$lib/components/userMenu/userMenu.svelte';
     import type {Location} from '$lib/interfaces/location.ts';
+    import type {MarkerIconStyle} from '$lib/services/map/markerStyling.data';
     import {setCategories} from '$lib/state/categories.svelte';
     import {createDraftState, setCreateDraftPosition} from '$lib/state/createDraft.svelte.ts';
     import {mapState} from '$lib/state/map.svelte.ts';
@@ -38,8 +39,8 @@
     let {children, data}: LayoutProps = $props();
 
     // Hoisted so every render hands a marker the same object, keeping its style check a no-op.
-    const SEARCH_ICON_STYLE = {strokeWidth: 3};
-    const FILLED_ICON_STYLE = {filled: true};
+    const SEARCH_ICON_STYLE: MarkerIconStyle = {strokeWidth: 3};
+    const FILLED_ICON_STYLE: MarkerIconStyle = {filled: true};
 
     let consoleElement: HTMLElement | undefined = $state();
     let orientationEnabled = $state(false);

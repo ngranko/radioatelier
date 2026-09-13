@@ -47,9 +47,12 @@ export const MARKER_ICON_KEYS = [
 
 export type MarkerIconKey = (typeof MARKER_ICON_KEYS)[number];
 
+/** Only widths the DOM glyph has a matching Tailwind class for, so both renderers stay in step. */
+export type MarkerStrokeWidth = 1 | 1.5 | 2 | 2.5 | 3;
+
 export interface MarkerIconStyle {
     filled?: boolean;
-    strokeWidth?: number;
+    strokeWidth?: MarkerStrokeWidth;
 }
 
 // The sprite atlas and the DOM glyph both draw from this table, so a marker promoted from a sprite

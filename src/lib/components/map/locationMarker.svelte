@@ -27,7 +27,7 @@
             target: icon,
             props: {
                 icon: DotIcon,
-                className: 'stroke-3',
+                class: 'stroke-3',
             },
         });
 
