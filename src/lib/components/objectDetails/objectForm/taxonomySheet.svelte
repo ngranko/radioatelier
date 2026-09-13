@@ -6,7 +6,6 @@
     import {cn} from '$lib/utils.js';
     import CheckIcon from '@lucide/svelte/icons/check';
     import PlusIcon from '@lucide/svelte/icons/plus';
-    import XIcon from '@lucide/svelte/icons/x';
     import {Portal} from 'bits-ui';
     import {tick} from 'svelte';
     import {toast} from 'svelte-sonner';
@@ -239,10 +238,10 @@
                 <button
                     type="button"
                     onclick={onClose}
-                    aria-label="Закрыть"
+                    aria-label="Готово"
                     class="text-muted-foreground hover:text-foreground rounded-sm p-0.5"
                 >
-                    <XIcon class="size-5" />
+                    <CheckIcon class="size-5" />
                 </button>
             </div>
 

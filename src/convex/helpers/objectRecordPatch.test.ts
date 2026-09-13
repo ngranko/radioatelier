@@ -1,6 +1,11 @@
 import {describe, expect, it} from 'vitest';
 import type {Id} from '../_generated/dataModel';
-import {filterChangedPatch, splitObjectRecordPatch} from './objectRecordPatch';
+import {
+    dropUnsafeSource,
+    filterChangedPatch,
+    type ObjectRecordPatch,
+    splitObjectRecordPatch,
+} from './objectRecordPatch';
 
 const categoryId = 'category-1' as Id<'categories'>;
 const tagIds = ['tag-1' as Id<'tags'>];
@@ -106,5 +111,30 @@ describe('filterChangedPatch', () => {
         );
 
         expect(patch).toEqual({});
+    });
+});
+
+describe('dropUnsafeSource', () => {
+    it('keeps http and https sources', () => {
+        expect(dropUnsafeSource({source: 'https://example.com/a'}).source).toBe(
+            'https://example.com/a',
+        );
+        expect(dropUnsafeSource({source: 'http://example.com/a'}).source).toBe(
+            'http://example.com/a',
+        );
+    });
+
+    it('clears sources that would execute when rendered as a link', () => {
+        expect(dropUnsafeSource({source: 'javascript:alert(1)'}).source).toBeNull();
+        expect(dropUnsafeSource({source: 'JaVaScRiPt:alert(1)'}).source).toBeNull();
+        expect(dropUnsafeSource({source: 'data:text/html,<script></script>'}).source).toBeNull();
+        expect(dropUnsafeSource({source: 'not a url'}).source).toBeNull();
+    });
+
+    it('leaves an absent source absent so a patch does not clear it', () => {
+        const patch: ObjectRecordPatch = {name: 'Mosaic'};
+
+        expect(dropUnsafeSource(patch)).toEqual({name: 'Mosaic'});
+        expect(dropUnsafeSource({source: null}).source).toBeNull();
     });
 });

@@ -28,12 +28,6 @@ export class Marker {
         this.position = position;
     }
 
-    public revertPosition() {
-        if (this.handle) {
-            this.handle.setPosition(this.position);
-        }
-    }
-
     public isLazy(): boolean {
         return this.options.source === 'list';
     }

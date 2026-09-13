@@ -1,5 +1,6 @@
 import {ConvexError, v} from 'convex/values';
 import type {ImportJobStatus, ImportLineFeedback} from '../lib/interfaces/importShared';
+import {isSafeExternalUrl} from '../lib/utils/url';
 import {internal} from './_generated/api';
 import type {Id} from './_generated/dataModel';
 import {internalMutation, mutation, query} from './_generated/server';
@@ -111,18 +112,6 @@ function appendFeedback(existing: ImportLineFeedback[], extra: ImportLineFeedbac
         return existing;
     }
     return trimFeedback([...existing, ...extra]);
-}
-
-function isValidUrl(value: string | null) {
-    if (!value) {
-        return false;
-    }
-    try {
-        const url = new URL(value);
-        return url.protocol === 'http:' || url.protocol === 'https:';
-    } catch {
-        return false;
-    }
 }
 
 function toJobStatus(status: string): ImportJobStatus {
@@ -267,7 +256,7 @@ export const importBatch = mutation({
 
                 const sourceCandidate = toNullableString(row.source);
                 const source = sourceCandidate ? trimToLimit(sourceCandidate, LIMITS.source) : null;
-                const validatedSource = isValidUrl(source) ? source : null;
+                const validatedSource = isSafeExternalUrl(source) ? source : null;
                 if (source && !validatedSource) {
                     rowFeedback.push({
                         line: row.line,

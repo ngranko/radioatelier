@@ -1,6 +1,6 @@
 /**
  * Usage:
- * bun run typesense:setup --url <typesense-url> --admin-key <admin-key> [--collection <name>]
+ * bun scripts/typesense/setup.ts --url <typesense-url> --admin-key <admin-key> [--collection <name>]
  *
  * Environment variables:
  * TYPESENSE_URL

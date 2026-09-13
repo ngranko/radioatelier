@@ -75,7 +75,7 @@ Restrict this key to server APIs (Geocoding, Places) in Google Cloud. Use `PUBLI
 | `TYPESENSE_COLLECTION`   | Optional; defaults to `objects`                                      |
 | `TYPESENSE_BACKFILL_KEY` | `typesense:getBackfillPage` action; must match local backfill script |
 
-`TYPESENSE_ADMIN_KEY` is **not** used by Convex — only local setup/backfill scripts.
+`TYPESENSE_ADMIN_KEY` is **not** used by Convex — only local setup/backfill scripts. Typesense is self-hosted, so the admin key is the server's bootstrap key (`TYPESENSE_API_KEY` on the Railway Typesense service), not a key minted from a dashboard. See [search.md](./search.md#running-the-backfill-against-production).
 
 ### Notion sync
 
