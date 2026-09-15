@@ -9,6 +9,13 @@
     let {onRequestClose}: Props = $props();
 </script>
 
-<Button variant="ghost" size="icon" class="h-8 w-8" onclick={onRequestClose}>
+<Button
+    variant="ghost"
+    size="icon"
+    class="h-8 w-8"
+    onclick={onRequestClose}
+    aria-label="Закрыть карточку точки"
+    title="Закрыть карточку точки"
+>
     <XMarkIcon class="stroke-3" />
 </Button>
