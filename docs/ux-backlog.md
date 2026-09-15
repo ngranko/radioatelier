@@ -11,6 +11,20 @@ them as a starting point, not a coordinate.
 Ordered so the top of each section is the most worth doing. If only four get
 done, make them the two map-and-card items, the route link, and page titles.
 
+## Already done
+
+Listed so the list stays reconstructable, not as work to redo.
+
+- **Share an object link.** The card's action row now opens the system share
+  sheet and falls back to the clipboard (`utils/share.ts`,
+  `viewMode/shareButton.svelte`).
+- **Labels on icon-only controls.** The edit, route and street-view buttons in
+  `viewMode/actions.svelte`, the sheet's position chevron, and the close
+  button now carry an `aria-label` and a `title`. The two edit variants (own
+  object vs. personal marks only) name themselves apart.
+
+---
+
 ## Map and the details card
 
 ### An open card locks the map
@@ -87,23 +101,6 @@ owns that state.
 `window.location.href`. On desktop this replaces the app and loses the map
 view. An `<a target="_blank" rel="noopener">` fixes desktop while phones still
 hand off to the Maps app.
-
-### No share or copy-link action
-
-Shared links already work on the receiving side (`sharedMarker` state,
-anonymous `/object/[id]`), but the sender has to copy the URL bar — which an
-installed PWA does not show. `navigator.share` with a clipboard fallback, next
-to the existing actions. The ID chip in `detailsHeader.svelte:67` copies the
-`RA-n` id, not a link.
-
-### Icon-only actions have no labels
-
-`viewMode/actions.svelte:41-64` — edit, route and street view carry no
-`aria-label` or `title`, while the same buttons in `pointPreview.svelte:52-71`
-do. The two edit variants (`PenIcon` for full edit, `UserPenIcon` for
-personal-only edit) are indistinguishable without one. The header's chevron
-(`detailsHeader.svelte:107`) and close button
-(`objectDetails/closeButton.svelte`) are unlabelled too.
 
 ### Every tab is titled "Радиоателье. Архив"
 

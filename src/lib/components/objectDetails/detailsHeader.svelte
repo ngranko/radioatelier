@@ -36,6 +36,10 @@
         onTogglePosition,
     }: Props = $props();
 
+    const positionToggleLabel = $derived(
+        position === 'full' ? 'Свернуть карточку' : 'Развернуть карточку',
+    );
+
     async function copyInternalId(text: string) {
         try {
             await navigator.clipboard.writeText(text);
@@ -104,7 +108,14 @@
             </div>
         </div>
     </div>
-    <Button variant="ghost" size="icon" class="h-8 w-8 shrink-0" onclick={onTogglePosition}>
+    <Button
+        variant="ghost"
+        size="icon"
+        class="h-8 w-8 shrink-0"
+        onclick={onTogglePosition}
+        aria-label={positionToggleLabel}
+        title={positionToggleLabel}
+    >
         {#if position === 'full'}
             <ChevronDownIcon class="stroke-3" />
         {:else}
