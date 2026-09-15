@@ -26,6 +26,7 @@ Tests live next to the code they cover. Both `*.test.ts` and `*.spec.ts` suffixe
 | File                                                                | Coverage                                               |
 | ------------------------------------------------------------------- | ------------------------------------------------------ |
 | `src/index.test.ts`                                                 | Frontend utilities (EXIF, image resizer)               |
+| `src/lib/utils/share.test.ts`                                        | Share sheet, clipboard fallback, and dismissal         |
 | `src/lib/state/objectDetailsOverlay.svelte.test.ts`                 | Overlay state transitions                              |
 | `src/lib/state/searchPointList.svelte.test.ts`                      | Search point pins and the single previewed selection   |
 | `src/lib/components/objectDetails/sheetSnap.test.ts`                | Sheet drag snap and flick inertia                      |

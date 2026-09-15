@@ -39,7 +39,7 @@
         out:fade={{duration: 150}}
     >
         {#if isLoading}
-            <ViewModeSkeleton />
+            <ViewModeSkeleton {permissions} />
         {:else if mode === 'objectEdit' && initialValues.id}
             <ObjectEdit
                 initialValues={initialValues as ObjectType}
