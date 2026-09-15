@@ -47,11 +47,23 @@
 
 <div class="bg-muted/40 flex items-center justify-end gap-2 border-b px-4 py-2.5">
     {#if permissions.canEditAll}
-        <Button variant="default" size="icon" onclick={handleEditClick}>
+        <Button
+            variant="default"
+            size="icon"
+            onclick={handleEditClick}
+            aria-label="Редактировать точку"
+            title="Редактировать точку"
+        >
             <PenIcon class="fill-current" />
         </Button>
     {:else if permissions.canEditPersonal}
-        <Button variant="default" size="icon" onclick={handleEditClick}>
+        <Button
+            variant="default"
+            size="icon"
+            onclick={handleEditClick}
+            aria-label="Редактировать личные отметки"
+            title="Редактировать личные отметки"
+        >
             <UserPenIcon class="fill-current" />
         </Button>
     {/if}
@@ -60,6 +72,8 @@
         size="icon"
         class="text-muted-foreground hover:text-foreground"
         onclick={handleRouteClick}
+        aria-label="Проложить маршрут"
+        title="Проложить маршрут"
     >
         <RouteIcon />
     </Button>
@@ -68,6 +82,8 @@
         size="icon"
         class="text-muted-foreground hover:text-foreground"
         onclick={handleStreetViewClick}
+        aria-label="Открыть панораму"
+        title="Открыть панораму"
     >
         <BinocularsIcon />
     </Button>
