@@ -39,14 +39,14 @@ export function shouldOfferAreaSearch(searched: SearchViewport, current: SearchV
     return zoomChange > ZOOM_RATIO || zoomChange < 1 / ZOOM_RATIO;
 }
 
-// Called whenever the app itself moves the map for the results. fitBounds and panTo
-// still animate on screen, but the map reports the destination camera as soon as they
-// return, and a fit that changes nothing fires no idle, so the map is read right away
-// instead of on the next idle. Old Maps API versions applied fitBounds asynchronously,
-// but the weekly channel does not: reads straight after fitBounds and panTo were checked
-// against the next idle on both raster and vector renderers and agree to within metres.
+// Read right away rather than on the next idle: a fit that changes nothing fires no idle,
+// and the map already reports the destination camera while fitBounds and panTo animate.
 export function rememberSearchedArea() {
     searchArea.searched = searchArea.current = readMapViewport();
+}
+
+export function forgetSearchedArea() {
+    searchArea.searched = null;
 }
 
 export function followMapViewport() {

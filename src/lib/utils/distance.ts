@@ -23,14 +23,16 @@ const METRES_IN_KM = 1000;
 
 /** Distance as a search result shows it: coarse enough to read at a glance. */
 export function formatDistance(metres: number): string {
-    if (metres < METRES_IN_KM) {
-        return `${Math.round(metres / 10) * 10} м`;
+    // Each unit is picked by the rounded value, so 995 m never reads as "1000 м".
+    const roundedMetres = Math.round(metres / 10) * 10;
+    if (roundedMetres < METRES_IN_KM) {
+        return `${roundedMetres} м`;
     }
 
-    const kilometres = metres / METRES_IN_KM;
+    const kilometres = Math.round(metres / 100) / 10;
     if (kilometres < 10) {
         return `${kilometres.toFixed(1).replace('.', ',')} км`;
     }
 
-    return `${Math.round(kilometres)} км`;
+    return `${Math.round(metres / METRES_IN_KM)} км`;
 }
