@@ -16,6 +16,7 @@ import {DeckOverlayHost} from '$lib/services/map/providers/google/deckOverlayHos
 import {GoogleMarkerHandle} from '$lib/services/map/providers/google/markerHandle';
 import {themeState} from '$lib/state/theme.svelte';
 import {importLibrary as loadGoogleMapsLibrary, setOptions} from '@googlemaps/js-api-loader';
+import {prefersReducedMotion} from 'svelte/motion';
 
 type GoogleMapsLibraryName = Parameters<typeof loadGoogleMapsLibrary>[0];
 
@@ -129,7 +130,12 @@ export class GoogleMapsProvider implements MapProvider {
     }
 
     setCenter(lat: number, lng: number): void {
-        this.map?.panTo(new google.maps.LatLng(lat, lng));
+        const center = new google.maps.LatLng(lat, lng);
+        if (prefersReducedMotion.current) {
+            this.map?.setCenter(center);
+            return;
+        }
+        this.map?.panTo(center);
     }
 
     fitBounds(bounds: MapBounds, padding?: BoundsPadding): void {
@@ -137,6 +143,15 @@ export class GoogleMapsProvider implements MapProvider {
             return;
         }
         this.map.fitBounds(bounds.raw, padding);
+        if (prefersReducedMotion.current) {
+            this.jumpToCurrentCamera(this.map);
+        }
+    }
+
+    // fitBounds has no instant form, but the map reports its destination as soon as the call
+    // returns, so moving the camera there cuts the glide short.
+    private jumpToCurrentCamera(map: google.maps.Map): void {
+        map.moveCamera({center: map.getCenter(), zoom: map.getZoom()});
     }
 
     createBounds(): MapBounds {

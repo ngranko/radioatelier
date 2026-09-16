@@ -83,7 +83,7 @@
             {/if}
             <div
                 class={cn(
-                    'grid min-w-0 flex-1 transition-[grid-template-columns,opacity] ease-out',
+                    'grid min-w-0 flex-1 transition-[grid-template-columns,opacity] ease-out motion-reduce:transition-none',
                     isDragging && 'transition-none',
                     isMinimized ? 'grid-cols-[1fr] opacity-100' : 'grid-cols-[0fr] opacity-0',
                 )}
