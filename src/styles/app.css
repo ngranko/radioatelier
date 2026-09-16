@@ -296,3 +296,20 @@
 [data-sonner-toast][data-type='info'] {
     --toast-accent: var(--primary);
 }
+
+/* Unlayered on purpose: these have to outrank the utilities that set the animations. */
+@media (prefers-reduced-motion: reduce) {
+    /* Marker pops report their own end, so they are shortened rather than switched off:
+       an animation that never runs never fires animationend, and the marker would be
+       left mid-lifecycle. */
+    .animate-popin,
+    .animate-popout {
+        animation-duration: 1ms;
+    }
+
+    /* Decorative and endless, which is the worst combination to keep running here. */
+    .marker-dragging::before,
+    .marker-dragging::after {
+        animation: none;
+    }
+}
