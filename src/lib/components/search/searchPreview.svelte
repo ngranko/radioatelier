@@ -9,6 +9,7 @@
     import {cubicInOut} from 'svelte/easing';
     import {fade} from 'svelte/transition';
     import LoadMoreButton from './loadMoreButton.svelte';
+    import {focusSearchResults} from './resultFocus';
     import SearchItemSkeleton from './searchItemSkeleton.svelte';
     import SearchPreviewItem from './searchPreviewItem.svelte';
 
@@ -48,8 +49,9 @@
             });
     });
 
-    function handleLoadMoreClick() {
+    function handleLoadMoreClick(evt: MouseEvent) {
         searchState.isResultsShown = true;
+        void focusSearchResults(evt.currentTarget as HTMLElement);
     }
 
     function getPreviewKey(object: SearchPreviewResponsePayload['items'][number]) {
