@@ -61,6 +61,16 @@ describe('MarkerHold', () => {
         expect(onHold).toHaveBeenCalledOnce();
     });
 
+    it('confirms the fired hold with a haptic tick', () => {
+        const vibrate = vi.fn();
+        vi.stubGlobal('navigator', {vibrate});
+
+        hold.arm(press(), onHold);
+        vi.advanceTimersByTime(HOLD_MS);
+
+        expect(vibrate).toHaveBeenCalledOnce();
+    });
+
     it('stops watching the pointer once it fired', () => {
         hold.arm(press(), onHold);
         vi.advanceTimersByTime(HOLD_MS);
