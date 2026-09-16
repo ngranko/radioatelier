@@ -3,6 +3,7 @@
     import {Button} from '$lib/components/ui/button';
     import type {SearchItem} from '$lib/interfaces/object';
     import {SvglGoogleLogo} from '@selemondev/svgl-svelte';
+    import {focusAdjacentResult, readArrowStep} from './resultFocus';
 
     let {object, onClick}: {object: SearchItem; onClick: () => void} = $props();
 
@@ -24,6 +25,13 @@
         return result;
     }
 
+    function handleKeydown(evt: KeyboardEvent) {
+        const step = readArrowStep(evt.key);
+        if (step && focusAdjacentResult(evt.currentTarget as HTMLElement, step)) {
+            evt.preventDefault();
+        }
+    }
+
     let isCoordinateOnly = $derived(!object.categoryName && !object.name && !object.address);
     let address = $derived(composeAddress(object));
 </script>
@@ -32,6 +40,8 @@
     variant="ghost"
     class="font-branding block h-auto w-full rounded-none px-3.5 py-2.5 text-left"
     onclick={onClick}
+    onkeydown={handleKeydown}
+    data-search-item
 >
     {#if isCoordinateOnly}
         <div class="flex items-center justify-between gap-2">
