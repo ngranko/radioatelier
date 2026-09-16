@@ -30,6 +30,9 @@ Listed so the list stays reconstructable, not as work to redo.
   idle rather than drag end, so a zoom raises it too, and it compares the
   viewport the results belong to with the one on screen by distance and by
   how much wider or narrower it got (`search/searchArea.ts`).
+- **Distance on search results.** Each result carries its distance from the
+  point the search ran at, so the list keeps agreeing with itself while the map
+  moves (`utils/distance.ts`).
 
 ---
 
@@ -76,13 +79,12 @@ a card must not also create a point.
 
 ## Search
 
-### Results carry no distance
+### Hovering a result does not highlight its pin
 
-`src/lib/components/search/searchItemCard.svelte` — every item has coordinates
-and `searchState` holds the search centre, so "1,2 км" is cheap and is usually
-the deciding factor between two similar results. On desktop, hovering a result
-could also highlight its pin; `src/lib/services/map/markerFocus.ts` already
-owns that state.
+`src/lib/services/map/markerFocus.ts` — the one highlight the app has both
+recentres the map and reaches for the marker's DOM element, which markers drawn
+by the GPU renderer do not have. Pointing at a result from the list would need
+a highlight both renderers can draw and that leaves the viewport alone.
 
 ## Details card
 

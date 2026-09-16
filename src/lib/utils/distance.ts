@@ -18,3 +18,19 @@ export function metresBetween(from: LatLngLiteral, to: LatLngLiteral): number {
 function toRadians(degrees: number): number {
     return (degrees * Math.PI) / 180;
 }
+
+const METRES_IN_KM = 1000;
+
+/** Distance as a search result shows it: coarse enough to read at a glance. */
+export function formatDistance(metres: number): string {
+    if (metres < METRES_IN_KM) {
+        return `${Math.round(metres / 10) * 10} м`;
+    }
+
+    const kilometres = metres / METRES_IN_KM;
+    if (kilometres < 10) {
+        return `${kilometres.toFixed(1).replace('.', ',')} км`;
+    }
+
+    return `${Math.round(kilometres)} км`;
+}
