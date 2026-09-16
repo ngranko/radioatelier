@@ -1,5 +1,6 @@
 <script lang="ts">
     import ClearButton from '$lib/components/search/clearButton.svelte';
+    import {focusAdjacentResult, readArrowStep} from '$lib/components/search/resultFocus';
     import {Input} from '$lib/components/ui/input';
     import {mapState} from '$lib/state/map.svelte';
     import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
@@ -12,6 +13,8 @@
     import {fade} from 'svelte/transition';
 
     let {disabled = false}: {disabled?: boolean} = $props();
+
+    const DEBOUNCE_MS = 400;
 
     let val: string = $state('');
     let timeout: number | undefined;
@@ -27,18 +30,47 @@
         val = (evt.target as HTMLInputElement).value;
         clearTimeout(timeout);
         timeout = window.setTimeout(() => {
-            const query = (evt.target as HTMLInputElement).value;
-            searchState.query = query;
-            const center = mapState.provider?.getCenter();
-            if (center) {
-                searchState.lat = center.lat.toString();
-                searchState.lng = center.lng.toString();
-            }
-            if (query) {
-                posthog.capture('search_performed', {query_length: query.length});
-            }
+            runSearch(val);
             timeout = undefined;
-        }, 400);
+        }, DEBOUNCE_MS);
+    }
+
+    function handleKeydown(evt: KeyboardEvent) {
+        const step = readArrowStep(evt.key);
+        if (step && focusAdjacentResult(evt.currentTarget as HTMLElement, step)) {
+            evt.preventDefault();
+            return;
+        }
+
+        if (evt.key !== 'Enter') {
+            return;
+        }
+
+        // Enter means the query is finished, so it outruns the debounce and goes
+        // straight to the full list; the keyboard gets out of the way with it.
+        evt.preventDefault();
+        clearTimeout(timeout);
+        timeout = undefined;
+
+        if (!val.trim()) {
+            return;
+        }
+
+        runSearch(val);
+        searchState.isResultsShown = true;
+        (evt.currentTarget as HTMLInputElement).blur();
+    }
+
+    function runSearch(query: string) {
+        searchState.query = query;
+        const center = mapState.provider?.getCenter();
+        if (center) {
+            searchState.lat = center.lat.toString();
+            searchState.lng = center.lng.toString();
+        }
+        if (query) {
+            posthog.capture('search_performed', {query_length: query.length});
+        }
     }
 
     function handleClearClick() {
@@ -75,18 +107,24 @@
         <SearchIcon class="size-4" />
     </div>
     <Input
-        type="text"
+        type="search"
         name="search"
         placeholder="Искать..."
+        enterkeyhint="search"
+        autocomplete="off"
+        autocorrect="off"
+        spellcheck={false}
         {disabled}
         oninput={handleInput}
+        onkeydown={handleKeydown}
         onfocus={() => (isFocused = true)}
         onblur={() => (isFocused = false)}
         bind:value={val}
         class="glass placeholder:text-muted-foreground/60 focus:ring-primary/25 h-10 w-full rounded-full border-none bg-white/95 pt-2 pr-10
             pb-2 pl-9.5 text-sm shadow-sm transition-all
             ease-out focus:bg-white focus:shadow-md
-            dark:bg-neutral-800/90 dark:focus:bg-neutral-800"
+            dark:bg-neutral-800/90 dark:focus:bg-neutral-800
+            [&::-webkit-search-cancel-button]:hidden"
     />
     {#if val}
         <div
