@@ -1,6 +1,12 @@
 <script lang="ts">
     import {replaceState} from '$app/navigation';
     import {page} from '$app/state';
+    import {
+        followMapViewport,
+        rememberSearchedArea,
+        searchArea,
+        shouldOfferAreaSearch,
+    } from '$lib/components/search/searchArea.svelte.ts';
     import SearchAreaButton from '$lib/components/search/searchAreaButton.svelte';
     import SearchBar from '$lib/components/search/searchBar.svelte';
     import SearchPreview from '$lib/components/search/searchPreview.svelte';
@@ -10,19 +16,31 @@
     import {searchState, applyUrlToSearchState, buildSearchUrl} from '$lib/state/search.svelte';
     import {onDestroy, onMount} from 'svelte';
 
-    let centerLat = $state('');
-    let centerLng = $state('');
-    let unsubDragEnd: (() => void) | undefined;
+    let unsubIdle: (() => void) | undefined;
+
+    const areaSearchCenter = $derived.by(() => {
+        const {searched, current} = searchArea;
+        if (!searchState.isResultsShown || !searched || !current) {
+            return null;
+        }
+        return shouldOfferAreaSearch(searched, current) ? current.center : null;
+    });
+
+    // Runs before the template, so fresh results are never compared, even for a frame,
+    // against the area of a search that was cleared.
+    $effect.pre(() => {
+        if (searchState.isResultsShown) {
+            rememberSearchedArea();
+        }
+    });
 
     onMount(() => {
-        updateCenter();
-        unsubDragEnd = mapState.provider!.onDragEnd(updateCenter);
+        // Idle covers the zooms a drag never reports, and the pans that end without one.
+        unsubIdle = mapState.provider!.onIdle(followMapViewport);
 
         const applied = applyUrlToSearchState(page.url);
         if (applied) {
             mapState.provider!.setCenter(Number(searchState.lat), Number(searchState.lng));
-            centerLat = searchState.lat;
-            centerLng = searchState.lng;
         }
     });
 
@@ -41,17 +59,8 @@
         }
     });
 
-    function updateCenter() {
-        const center = mapState.provider!.getCenter();
-        if (!center) {
-            return;
-        }
-        centerLat = center.lat.toString();
-        centerLng = center.lng.toString();
-    }
-
     onDestroy(() => {
-        unsubDragEnd?.();
+        unsubIdle?.();
     });
 </script>
 
@@ -69,7 +78,10 @@
             {/key}
         {/if}
     </div>
-    {#if searchState.query && (centerLat !== searchState.lat || centerLng !== searchState.lng) && searchState.isResultsShown}
-        <SearchAreaButton lat={centerLat} lng={centerLng} />
+    {#if areaSearchCenter}
+        <SearchAreaButton
+            lat={areaSearchCenter.lat.toString()}
+            lng={areaSearchCenter.lng.toString()}
+        />
     {/if}
 </div>

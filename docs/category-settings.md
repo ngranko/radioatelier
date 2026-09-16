@@ -58,11 +58,11 @@ Hidden categories **still appear on the map** with their customized marker style
 
 Create and edit forms use a single **категория и теги** field (`taxonomyField.svelte`) instead of separate category and tag dropdowns. Clicking it opens `taxonomySheet.svelte` — a bottom sheet with three tabs:
 
-| Tab | Field | Selection |
-| --- | ----- | --------- |
-| категория | `category` | Single select |
-| теги | `tags` | Multi select (shared tags) |
-| приватные | `privateTags` | Multi select (owner-only) |
+| Tab       | Field         | Selection                  |
+| --------- | ------------- | -------------------------- |
+| категория | `category`    | Single select              |
+| теги      | `tags`        | Multi select (shared tags) |
+| приватные | `privateTags` | Multi select (owner-only)  |
 
 Each tab shares one search/create input. Typing filters the catalog; a **Создать** row appears when the query does not match an existing name. New categories and tags call `api.categories.create`, `api.tags.create`, or `api.privateTags.create` respectively. Hidden categories are omitted from the category tab (see above).
 
@@ -82,11 +82,11 @@ The search input auto-focuses when the sheet opens, when switching tabs, and aft
 
 ### Keyboard
 
-| Key | Action |
-| --- | ------ |
-| ↑ / ↓ | Move highlight (wraps; includes the create row when shown) |
-| Enter | Select highlighted row or create from query |
-| Escape | Close sheet |
+| Key    | Action                                                     |
+| ------ | ---------------------------------------------------------- |
+| ↑ / ↓  | Move highlight (wraps; includes the create row when shown) |
+| Enter  | Select highlighted row or create from query                |
+| Escape | Close sheet                                                |
 
 ## Save flow
 

@@ -7,6 +7,7 @@
     import {replaceSearchPointList, searchPointList} from '$lib/state/searchPointList.svelte.ts';
     import CircleAlertIcon from '@lucide/svelte/icons/circle-alert';
     import ZoomOutIcon from '@lucide/svelte/icons/zoom-out';
+    import {rememberSearchedArea} from './searchArea.svelte.ts';
     import SearchItemSkeleton from './searchItemSkeleton.svelte';
     import SearchResultsItem from './searchResultsItem.svelte';
 
@@ -44,6 +45,7 @@
                 latitude: Number(searchState.lat),
                 longitude: Number(searchState.lng),
             });
+            rememberSearchedArea();
         }
     });
 

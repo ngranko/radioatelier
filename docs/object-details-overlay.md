@@ -109,13 +109,13 @@ When a user opens `/object/[id]` for an object they **do not own** and that obje
 
 `objectDetails.svelte` is a thin orchestrator; chrome and content live in dedicated modules:
 
-| Component                   | Role                                                                |
-| --------------------------- | ------------------------------------------------------------------- |
-| `background.svelte`         | Backdrop click → `requestClose`                                     |
-| `closeConfirmDialog.svelte` | Unsaved-changes alert (edit/create taint check)                     |
+| Component                   | Role                                                                                                                               |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `background.svelte`         | Backdrop click → `requestClose`                                                                                                    |
+| `closeConfirmDialog.svelte` | Unsaved-changes alert (edit/create taint check)                                                                                    |
 | `detailsSheet.svelte`       | Bottom sheet shell, drag-to-resize, position snap; `data-details-sheet` portal target for nested sheets (taxonomy picker backdrop) |
-| `detailsHeader.svelte`      | Drag handle, `internalId` badge, minimized title row, chevron/close |
-| `detailsContent.svelte`     | Mode router → view/edit/preview/create children                     |
+| `detailsHeader.svelte`      | Drag handle, `internalId` badge, minimized title row, chevron/close                                                                |
+| `detailsContent.svelte`     | Mode router → view/edit/preview/create children                                                                                    |
 
 ### Sheet drag gestures
 

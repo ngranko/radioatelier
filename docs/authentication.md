@@ -6,11 +6,11 @@ The app uses [Clerk](https://clerk.com) for sign-in and [Convex](https://convex.
 
 Route access follows a **closed-by-default** model. `(app)/+layout.server.ts` is the central gate:
 
-| Condition | Behavior |
-| --------- | -------- |
-| Signed in | Load continues; `(app)/+layout.server.ts` fetches `api.categories.list` |
+| Condition                               | Behavior                                                                    |
+| --------------------------------------- | --------------------------------------------------------------------------- |
+| Signed in                               | Load continues; `(app)/+layout.server.ts` fetches `api.categories.list`     |
 | Anonymous + path starts with `/object/` | Load continues with `{categories: []}` — shared object pages stay reachable |
-| Anonymous + any other `(app)` path | `307` redirect to `/login?ref=<original path + query>` |
+| Anonymous + any other `(app)` path      | `307` redirect to `/login?ref=<original path + query>`                      |
 
 Individual pages and form actions add their own checks where needed (see below). New routes under `(app)` inherit the layout gate automatically — no per-page opt-in is required.
 
@@ -37,10 +37,10 @@ Redirects and login forms carry a `ref` query param (pathname, optionally with s
 
 ## Mutations and form actions
 
-| Action | File | Anonymous behavior |
-| ------ | ---- | ------------------ |
-| Create object | `point/+page.server.ts` `save` | Redirect to `/login?ref=…` |
-| Update object | `object/[id]/+page.server.ts` `save` | Redirect to `/login?ref=…` |
+| Action        | File                                   | Anonymous behavior         |
+| ------------- | -------------------------------------- | -------------------------- |
+| Create object | `point/+page.server.ts` `save`         | Redirect to `/login?ref=…` |
+| Update object | `object/[id]/+page.server.ts` `save`   | Redirect to `/login?ref=…` |
 | Delete object | `object/[id]/+page.server.ts` `delete` | Redirect to `/login?ref=…` |
 
 Client-side forms show a toast ("Пользователь не авторизован") when a redirect response arrives from Superforms.
