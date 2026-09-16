@@ -36,6 +36,10 @@ Listed so the list stays reconstructable, not as work to redo.
 - **A haptic tick when a marker hold arms.** The hold fires on its own timing
   with nothing on screen to show for it, so it now ticks against the finger
   (`utils/haptics.ts`; Android only, iOS Safari has no web equivalent).
+- **Reduced motion outside the login page.** The sheet, the results panel and
+  the first-run hint collapse their transitions when the system asks for less
+  motion (`utils/motion.ts` plus `motion-reduce:` variants), and `app.css`
+  shortens the marker pop and stops the endless pulse under a dragged marker.
 
 ---
 
@@ -126,14 +130,6 @@ object name in the title is a one-line change per route.
 offender. Superforms can scroll to and focus the first invalid control; worth
 checking that `TaxonomyField` (a button trigger, not an input) is marked
 invalid in a way the error selector finds.
-
-## Map controls and microinteractions
-
-### Reduced motion is respected only on the login page
-
-`src/routes/login/+layout.svelte:28` is the only place with `motion-reduce`
-variants. The details sheet, search panel and first-run hint animate
-regardless of the system setting.
 
 ## Deliberately excluded
 
