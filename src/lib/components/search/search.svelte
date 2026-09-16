@@ -1,12 +1,6 @@
 <script lang="ts">
     import {replaceState} from '$app/navigation';
     import {page} from '$app/state';
-    import {
-        followMapViewport,
-        rememberSearchedArea,
-        searchArea,
-        shouldOfferAreaSearch,
-    } from '$lib/components/search/searchArea.svelte.ts';
     import SearchAreaButton from '$lib/components/search/searchAreaButton.svelte';
     import SearchBar from '$lib/components/search/searchBar.svelte';
     import SearchPreview from '$lib/components/search/searchPreview.svelte';
@@ -14,6 +8,11 @@
     import {mapState} from '$lib/state/map.svelte';
     import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
     import {searchState, applyUrlToSearchState, buildSearchUrl} from '$lib/state/search.svelte';
+    import {
+        followMapViewport,
+        searchArea,
+        shouldOfferAreaSearch,
+    } from '$lib/state/searchArea.svelte.ts';
     import {onDestroy, onMount} from 'svelte';
 
     let unsubIdle: (() => void) | undefined;
@@ -24,14 +23,6 @@
             return null;
         }
         return shouldOfferAreaSearch(searched, current) ? current.center : null;
-    });
-
-    // Runs before the template, so fresh results are never compared, even for a frame,
-    // against the area of a search that was cleared.
-    $effect.pre(() => {
-        if (searchState.isResultsShown) {
-            rememberSearchedArea();
-        }
     });
 
     onMount(() => {

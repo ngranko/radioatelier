@@ -4,10 +4,10 @@
     import type {SearchItem, SearchPageSource, SearchResultsPage} from '$lib/interfaces/object';
     import {fitMarkerList} from '$lib/services/map/map.svelte';
     import {searchState} from '$lib/state/search.svelte';
+    import {rememberSearchedArea} from '$lib/state/searchArea.svelte.ts';
     import {replaceSearchPointList, searchPointList} from '$lib/state/searchPointList.svelte.ts';
     import CircleAlertIcon from '@lucide/svelte/icons/circle-alert';
     import ZoomOutIcon from '@lucide/svelte/icons/zoom-out';
-    import {rememberSearchedArea} from './searchArea.svelte.ts';
     import SearchItemSkeleton from './searchItemSkeleton.svelte';
     import SearchResultsItem from './searchResultsItem.svelte';
 
