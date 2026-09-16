@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {metresBetween} from './distance';
+import {formatDistance, metresBetween} from './distance';
 
 describe('metresBetween', () => {
     it('measures nothing between a point and itself', () => {
@@ -16,5 +16,21 @@ describe('metresBetween', () => {
 
         expect(atAmsterdam).toBeLessThan(atEquator);
         expect(atAmsterdam).toBeCloseTo(atEquator * Math.cos((52.37 * Math.PI) / 180), -1);
+    });
+});
+
+describe('formatDistance', () => {
+    it('rounds metres to the nearest ten', () => {
+        expect(formatDistance(123)).toBe('120 м');
+        expect(formatDistance(8)).toBe('10 м');
+    });
+
+    it('keeps one decimal below ten kilometres, with a Russian comma', () => {
+        expect(formatDistance(1240)).toBe('1,2 км');
+        expect(formatDistance(9949)).toBe('9,9 км');
+    });
+
+    it('drops the decimal further out', () => {
+        expect(formatDistance(15400)).toBe('15 км');
     });
 });
