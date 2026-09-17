@@ -8,14 +8,23 @@
     import RouteIcon from '@lucide/svelte/icons/route';
     import UserPenIcon from '@lucide/svelte/icons/user-pen';
     import {toast} from 'svelte-sonner';
+    import ShareButton from './shareButton.svelte';
 
     interface Props {
+        id?: string;
+        name?: string;
         lat: string;
         lng: string;
         permissions?: Permissions;
     }
 
-    let {lat, lng, permissions = {canEditAll: true, canEditPersonal: true}}: Props = $props();
+    let {
+        id,
+        name,
+        lat,
+        lng,
+        permissions = {canEditAll: true, canEditPersonal: true},
+    }: Props = $props();
 
     function handleEditClick() {
         if (!objectDetailsOverlay.detailsId) {
@@ -62,4 +71,7 @@
     >
         <BinocularsIcon />
     </Button>
+    {#if id}
+        <ShareButton {id} {name} />
+    {/if}
 </div>

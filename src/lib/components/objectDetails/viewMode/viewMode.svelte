@@ -25,6 +25,8 @@
 </script>
 
 <Actions
+    id={initialValues.id ?? undefined}
+    name={initialValues.name}
     lat={initialValues.latitude != null ? String(initialValues.latitude) : ''}
     lng={initialValues.longitude != null ? String(initialValues.longitude) : ''}
     {permissions}
