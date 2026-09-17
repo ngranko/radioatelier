@@ -2,7 +2,9 @@
     import CategoryBadge from '$lib/components/categoryBadge.svelte';
     import {Button} from '$lib/components/ui/button';
     import type {SearchItem} from '$lib/interfaces/object';
+    import {cn} from '$lib/utils';
     import {SvglGoogleLogo} from '@selemondev/svgl-svelte';
+    import {focusAdjacentResult, readArrowStep} from './resultFocus';
 
     let {object, onClick}: {object: SearchItem; onClick: () => void} = $props();
 
@@ -24,14 +26,31 @@
         return result;
     }
 
+    function handleKeydown(evt: KeyboardEvent) {
+        const step = readArrowStep(evt.key);
+        if (step && focusAdjacentResult(evt.currentTarget as HTMLElement, step)) {
+            evt.preventDefault();
+        }
+    }
+
     let isCoordinateOnly = $derived(!object.categoryName && !object.name && !object.address);
     let address = $derived(composeAddress(object));
 </script>
 
 <Button
     variant="ghost"
-    class="font-branding block h-auto w-full rounded-none px-3.5 py-2.5 text-left"
+    class={cn(
+        'font-branding relative block h-auto w-full rounded-none px-3.5 py-2.5 text-left',
+        // the row is full-bleed inside the list, so a focus ring would trace a box across it;
+        // the keyboard's place in the list is painted instead, as a stronger shade of the hover
+        // tint plus a marker on the edge the list is walked along
+        'hover:bg-accent/50 dark:hover:bg-accent/40',
+        'focus-visible:bg-accent/80 focus-visible:text-accent-foreground dark:focus-visible:bg-accent/60 focus-visible:ring-0',
+        'before:bg-primary before:absolute before:inset-y-1.5 before:left-0 before:w-[3px] before:rounded-r-full before:opacity-0 before:transition-opacity focus-visible:before:opacity-100',
+    )}
     onclick={onClick}
+    onkeydown={handleKeydown}
+    data-search-item
 >
     {#if isCoordinateOnly}
         <div class="flex items-center justify-between gap-2">

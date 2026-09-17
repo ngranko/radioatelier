@@ -56,7 +56,7 @@
 </script>
 
 <div class="w-full max-w-sm p-2" inert={objectDetailsOverlay.isOpen}>
-    <div class="relative z-2">
+    <div class="relative z-2" data-search-scope>
         <SearchBar disabled={objectDetailsOverlay.isOpen} />
         {#if searchState.query && !searchState.isResultsShown}
             {#key searchState.query}

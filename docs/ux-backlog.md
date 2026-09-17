@@ -22,6 +22,10 @@ Listed so the list stays reconstructable, not as work to redo.
   `viewMode/actions.svelte`, the sheet's position chevron, and the close
   button now carry an `aria-label` and a `title`. The two edit variants (own
   object vs. personal marks only) name themselves apart.
+- **Keyboard and phone-keyboard handling in search.** The field is a
+  `type="search"` input with `enterkeyhint="search"`; Enter outruns the
+  debounce, opens the full list and drops the on-screen keyboard; the arrow
+  keys walk the preview list (`search/resultFocus.ts`).
 
 ---
 
@@ -67,14 +71,6 @@ longer blocks the map, the tap rule needs to be explicit: a tap that dismisses
 a card must not also create a point.
 
 ## Search
-
-### Enter does nothing and phones get no search key
-
-`src/lib/components/search/searchBar.svelte:78` — the input is `type="text"`.
-It wants `type="search"` with `enterkeyhint="search"`, and Enter should skip
-the 400 ms debounce (`searchBar.svelte:29`) and open full results. Arrow-key
-movement through the preview list is the natural follow-up; preview items are
-already focusable buttons.
 
 ### "Искать в этой области" never appears after a zoom
 
