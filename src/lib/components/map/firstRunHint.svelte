@@ -1,4 +1,5 @@
 <script lang="ts">
+    import {respectReducedMotion} from '$lib/utils/motion';
     import MapPinPlusIcon from '@lucide/svelte/icons/map-pin-plus';
     import XIcon from '@lucide/svelte/icons/x';
     import {onMount} from 'svelte';
@@ -22,7 +23,7 @@
 
 {#if !isDismissed}
     <div
-        transition:fly={{y: 16, duration: 200, easing: cubicInOut}}
+        transition:fly={{y: 16, duration: respectReducedMotion(200), easing: cubicInOut}}
         class="pointer-events-none absolute right-4 bottom-8 left-4 z-2 flex justify-center"
     >
         <div
