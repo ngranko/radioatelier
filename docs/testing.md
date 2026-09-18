@@ -28,6 +28,8 @@ Tests live next to the code they cover. Both `*.test.ts` and `*.spec.ts` suffixe
 | `src/index.test.ts`                                                 | Frontend utilities (EXIF, image resizer)               |
 | `src/lib/utils/share.test.ts`                                        | Share sheet, clipboard fallback, and dismissal         |
 | `src/lib/components/search/resultFocus.test.ts`                      | Arrow-key movement through the search result list      |
+| `src/lib/components/search/searchArea.test.ts`                       | When a moved or zoomed map offers an area re-search    |
+| `src/lib/utils/distance.test.ts`                                     | Great-circle distance between two coordinates          |
 | `src/lib/state/objectDetailsOverlay.svelte.test.ts`                 | Overlay state transitions                              |
 | `src/lib/state/searchPointList.svelte.test.ts`                      | Search point pins and the single previewed selection   |
 | `src/lib/components/objectDetails/sheetSnap.test.ts`                | Sheet drag snap and flick inertia                      |

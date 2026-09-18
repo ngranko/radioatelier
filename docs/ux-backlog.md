@@ -26,6 +26,10 @@ Listed so the list stays reconstructable, not as work to redo.
   `type="search"` input with `enterkeyhint="search"`; Enter outruns the
   debounce, opens the full list and drops the on-screen keyboard; the arrow
   keys walk the preview list (`search/resultFocus.ts`).
+- **"Искать в этой области" follows the map.** The prompt is driven by map
+  idle rather than drag end, so a zoom raises it too, and it compares the
+  viewport the results belong to with the one on screen by distance and by
+  how much wider or narrower it got (`search/searchArea.ts`).
 
 ---
 
@@ -71,14 +75,6 @@ longer blocks the map, the tap rule needs to be explicit: a tap that dismisses
 a card must not also create a point.
 
 ## Search
-
-### "Искать в этой области" never appears after a zoom
-
-`src/lib/components/search/search.svelte:19` — the centre is re-read on
-`onDragEnd` only, so zooming out to widen the area never offers a re-search.
-Listening to map idle instead covers both. The visibility check at
-`search.svelte:72` also compares coordinate strings exactly, so a one-pixel
-nudge is enough to show the button — it should compare by distance.
 
 ### Results carry no distance
 

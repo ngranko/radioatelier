@@ -5,25 +5,49 @@
     import SearchBar from '$lib/components/search/searchBar.svelte';
     import SearchPreview from '$lib/components/search/searchPreview.svelte';
     import SearchResults from '$lib/components/search/searchResults.svelte';
+    import {
+        measureViewport,
+        shouldOfferAreaSearch,
+        type SearchViewport,
+    } from '$lib/components/search/searchArea';
     import {mapState} from '$lib/state/map.svelte';
     import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
     import {searchState, applyUrlToSearchState, buildSearchUrl} from '$lib/state/search.svelte';
     import {onDestroy, onMount} from 'svelte';
 
-    let centerLat = $state('');
-    let centerLng = $state('');
-    let unsubDragEnd: (() => void) | undefined;
+    // The area the shown results belong to: the map as it settled after the search,
+    // fit of the result pins included.
+    let searchedViewport: SearchViewport | null = $state(null);
+    let currentViewport: SearchViewport | null = $state(null);
+    let unsubIdle: (() => void) | undefined;
+
+    const isAreaSearchOffered = $derived(
+        Boolean(
+            searchState.isResultsShown &&
+                searchedViewport &&
+                currentViewport &&
+                shouldOfferAreaSearch(searchedViewport, currentViewport),
+        ),
+    );
 
     onMount(() => {
-        updateCenter();
-        unsubDragEnd = mapState.provider!.onDragEnd(updateCenter);
+        updateViewport();
+        // Idle covers the zooms a drag never reports, and the pans that end without one.
+        unsubIdle = mapState.provider!.onIdle(updateViewport);
 
         const applied = applyUrlToSearchState(page.url);
         if (applied) {
             mapState.provider!.setCenter(Number(searchState.lat), Number(searchState.lng));
-            centerLat = searchState.lat;
-            centerLng = searchState.lng;
         }
+    });
+
+    // Searching somewhere else leaves the shown results behind, so the next settle
+    // of the map becomes the area they belong to.
+    $effect(() => {
+        void searchState.query;
+        void searchState.lat;
+        void searchState.lng;
+        searchedViewport = null;
     });
 
     $effect(() => {
@@ -41,17 +65,28 @@
         }
     });
 
-    function updateCenter() {
-        const center = mapState.provider!.getCenter();
-        if (!center) {
+    function updateViewport() {
+        const viewport = readViewport();
+        if (!viewport) {
             return;
         }
-        centerLat = center.lat.toString();
-        centerLng = center.lng.toString();
+
+        currentViewport = viewport;
+        searchedViewport ??= viewport;
+    }
+
+    function readViewport(): SearchViewport | null {
+        const center = mapState.provider?.getCenter();
+        const bounds = mapState.provider?.getBounds()?.toRect();
+        if (!center || !bounds) {
+            return null;
+        }
+
+        return measureViewport(center, bounds);
     }
 
     onDestroy(() => {
-        unsubDragEnd?.();
+        unsubIdle?.();
     });
 </script>
 
@@ -69,7 +104,10 @@
             {/key}
         {/if}
     </div>
-    {#if searchState.query && (centerLat !== searchState.lat || centerLng !== searchState.lng) && searchState.isResultsShown}
-        <SearchAreaButton lat={centerLat} lng={centerLng} />
+    {#if isAreaSearchOffered && currentViewport}
+        <SearchAreaButton
+            lat={currentViewport.center.lat.toString()}
+            lng={currentViewport.center.lng.toString()}
+        />
     {/if}
 </div>
