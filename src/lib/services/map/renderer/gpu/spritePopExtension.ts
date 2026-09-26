@@ -1,4 +1,5 @@
 import {readPopNow} from '$lib/services/map/renderer/gpu/spritePopTimes';
+import {respectReducedMotion} from '$lib/utils/motion';
 import {type Accessor, type Layer, LayerExtension} from '@deck.gl/core';
 
 /** Matches --animate-popin and --animate-popout, the DOM markers' entrance and exit. */
@@ -83,7 +84,11 @@ export class SpritePopExtension extends LayerExtension<SpritePopOptions> {
         _params: unknown,
         extension: SpritePopExtension,
     ): void {
-        const duration = extension.readOptions().durationMs ?? SPRITE_POP_IN_MS;
+        // The shader divides by this, so reduced motion gets the same 1 ms pop as DOM markers.
+        const duration = Math.max(
+            respectReducedMotion(extension.readOptions().durationMs ?? SPRITE_POP_IN_MS),
+            1,
+        );
         const now = readPopNow();
         this.setShaderModuleProps({spritePop: {now, duration}});
 

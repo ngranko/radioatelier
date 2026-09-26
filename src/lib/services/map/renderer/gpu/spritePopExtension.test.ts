@@ -1,7 +1,10 @@
 import type {Layer} from '@deck.gl/core';
-import {describe, expect, it, vi} from 'vitest';
+import {afterEach, describe, expect, it, vi} from 'vitest';
 import {SPRITE_POP_IN_MS, SPRITE_POP_OUT_MS, SpritePopExtension} from './spritePopExtension';
 import {readPopNow} from './spritePopTimes';
+
+const motion = vi.hoisted(() => ({prefersReducedMotion: {current: false}}));
+vi.mock('svelte/motion', () => motion);
 
 function createFakeLayer(latestPop: number) {
     const attributeManager = {addInstanced: vi.fn()};
@@ -32,6 +35,10 @@ function shadersOf(extension: SpritePopExtension) {
 }
 
 describe('SpritePopExtension', () => {
+    afterEach(() => {
+        motion.prefersReducedMotion.current = false;
+    });
+
     it('scales the quad through the size hook deck.gl exposes', () => {
         const {inject, modules} = shadersOf(new SpritePopExtension());
 
@@ -80,6 +87,17 @@ describe('SpritePopExtension', () => {
 
         expect(layer.setShaderModuleProps).toHaveBeenCalledWith({
             spritePop: {now: expect.any(Number), duration: SPRITE_POP_OUT_MS},
+        });
+    });
+
+    it('collapses the pop for anyone who asked for less motion', () => {
+        motion.prefersReducedMotion.current = true;
+        const layer = createFakeLayer(readPopNow());
+
+        callOn(new SpritePopExtension(), 'draw', layer);
+
+        expect(layer.setShaderModuleProps).toHaveBeenCalledWith({
+            spritePop: {now: expect.any(Number), duration: 1},
         });
     });
 });

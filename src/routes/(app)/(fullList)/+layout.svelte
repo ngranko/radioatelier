@@ -20,11 +20,10 @@
         setSharedMarkerObject,
         sharedMarker,
     } from '$lib/state/sharedMarker.svelte.ts';
+    import {slideFromLeft} from '$lib/utils/motion';
     import {useQuery} from 'convex-svelte';
     import {onDestroy} from 'svelte';
     import {useClerkContext} from 'svelte-clerk';
-    import {cubicInOut} from 'svelte/easing';
-    import {fly} from 'svelte/transition';
 
     type RenderedMarkerPoint = MarkerListItem & {isVisited: boolean};
 
@@ -172,7 +171,7 @@
         if (disableOverlayIntro) {
             return {duration: 0, css: () => ''};
         }
-        return fly(node, {x: -100, duration: 200, easing: cubicInOut});
+        return slideFromLeft(node);
     }
 
     function getActiveListMarker(): RenderedMarkerPoint | null {
@@ -212,11 +211,7 @@
 {/if}
 
 {#if showOverlay}
-    <div
-        in:flyTransition
-        out:fly={{x: -100, duration: 200, easing: cubicInOut}}
-        class="absolute right-0 bottom-0 left-0 z-3"
-    >
+    <div in:flyTransition out:slideFromLeft class="absolute right-0 bottom-0 left-0 z-3">
         <ObjectDetails
             initialValues={overlayValues}
             pointDetails={overlayPointDetails}
