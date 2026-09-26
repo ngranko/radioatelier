@@ -1,4 +1,4 @@
-FROM oven/bun:1-alpine AS base
+FROM oven/bun:1.4-alpine AS base
 WORKDIR /app
 COPY package.json .
 COPY bun.lock .
@@ -9,8 +9,8 @@ FROM base AS dev
 EXPOSE 5173
 CMD ["bun", "run", "dev", "--", "--host"]
 
-# using NPM here because bun (at least 1.3.8) leads to a sigill error
-# most likely because of the incompatibility with docker build environment
+# using NPM here because bun's x64 build requires AVX, which emulated amd64
+# builds on Apple Silicon (Rosetta) lack, so it crashes with SIGILL (still true in 1.4.2)
 FROM node:26.5-alpine AS build
 WORKDIR /app
 ARG PUBLIC_CONVEX_URL
