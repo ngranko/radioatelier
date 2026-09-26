@@ -33,6 +33,9 @@ Listed so the list stays reconstructable, not as work to redo.
 - **Distance on search results.** Each result carries its distance from the
   point the search ran at, so the list keeps agreeing with itself while the map
   moves (`utils/distance.ts`).
+- **A haptic tick when a marker hold arms.** The hold fires on its own timing
+  with nothing on screen to show for it, so it now ticks against the finger
+  (`utils/haptics.ts`; Android only, iOS Safari has no web equivalent).
 
 ---
 
@@ -125,12 +128,6 @@ checking that `TaxonomyField` (a button trigger, not an input) is marked
 invalid in a way the error selector finds.
 
 ## Map controls and microinteractions
-
-### No haptic tick when a marker drag arms
-
-`src/lib/services/map/renderer/markerHold.ts:7` — the hold fires after 350 ms
-with no confirmation until the marker moves. A short `navigator.vibrate` on
-fire would confirm it (Android only; iOS Safari ignores it).
 
 ### Reduced motion is respected only on the login page
 

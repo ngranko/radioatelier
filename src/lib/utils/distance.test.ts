@@ -33,4 +33,9 @@ describe('formatDistance', () => {
     it('drops the decimal further out', () => {
         expect(formatDistance(15400)).toBe('15 км');
     });
+
+    it('moves up a unit when rounding reaches the next one', () => {
+        expect(formatDistance(996)).toBe('1,0 км');
+        expect(formatDistance(9960)).toBe('10 км');
+    });
 });

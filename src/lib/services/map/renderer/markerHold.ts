@@ -4,6 +4,8 @@
  * raw pointer stream is watched here as well: everything that hints at navigating the map instead of
  * grabbing a marker drops the hold.
  */
+import {tickHaptic} from '$lib/utils/haptics';
+
 export const HOLD_MS = 350;
 
 // A finger never sits perfectly still, but a pan shows up as a slide well before this.
@@ -43,6 +45,9 @@ export class MarkerHold {
     private fire = (): void => {
         const onHold = this.onHold;
         this.disarm();
+        // Nothing has moved yet at this point, so the tick is the only sign that the
+        // press stopped being a tap and the marker is now under the finger.
+        tickHaptic();
         onHold?.();
     };
 
