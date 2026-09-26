@@ -59,10 +59,10 @@ Future collection-based access control is planned in [collection-access-control.
 
 Two renderer strategies are selected once when the map initializes (`map.svelte` → `resolveGpuRendererFlag`):
 
-| Strategy | `rendererStrategy` | Renderers | When active |
-| -------- | ------------------ | --------- | ----------- |
-| **Legacy** (default) | `'legacy'` | `HybridMarkerRenderer` or `DomMarkerRenderer` | PostHog flag off, timed out, or errored |
-| **GPU** | `'gpu'` | `GpuHybridRenderer` | PostHog flag `map-gpu-clustered-renderer` enabled |
+| Strategy             | `rendererStrategy` | Renderers                                     | When active                                       |
+| -------------------- | ------------------ | --------------------------------------------- | ------------------------------------------------- |
+| **Legacy** (default) | `'legacy'`         | `HybridMarkerRenderer` or `DomMarkerRenderer` | PostHog flag off, timed out, or errored           |
+| **GPU**              | `'gpu'`            | `GpuHybridRenderer`                           | PostHog flag `map-gpu-clustered-renderer` enabled |
 
 ### Legacy renderer (zoom-based switch)
 
@@ -93,13 +93,13 @@ Flag resolution runs while Google Maps initializes and falls back to the legacy 
 
 `MarkerSource` (`src/lib/interfaces/marker.ts`) controls rendering and viewport behavior:
 
-| Source   | Renderer           | Viewport-managed | Typical use                           |
-| -------- | ------------------ | ---------------- | ------------------------------------- |
+| Source   | Renderer                      | Viewport-managed | Typical use                           |
+| -------- | ----------------------------- | ---------------- | ------------------------------------- |
 | `list`   | Deck (legacy low zoom) or GPU | Yes              | Archive objects on the map            |
 | `map`    | Same as list                  | Yes              | Legacy / map-origin markers           |
-| `search` | DOM                | Yes              | Google Places search result           |
-| `share`  | DOM                | No               | Deep-linked object not in marker list |
-| `draft`  | DOM                | Yes              | Point being created                   |
+| `search` | DOM                           | Yes              | Google Places search result           |
+| `share`  | DOM                           | No               | Deep-linked object not in marker list |
+| `draft`  | DOM                           | Yes              | Point being created                   |
 
 Service markers (`search`, `share`, `draft`) call `usesDomRenderer()` and render as DOM overlays inside `HybridMarkerRenderer` so they stay interactive above the Deck layer.
 
