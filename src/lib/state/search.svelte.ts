@@ -1,3 +1,4 @@
+import {searchArea} from '$lib/state/searchArea.svelte.ts';
 import {clearSearchPointList} from '$lib/state/searchPointList.svelte.ts';
 import {normalizeLatitude, normalizeLongitude} from '$lib/utils/coordinates.ts';
 
@@ -48,6 +49,8 @@ export function clearSearch() {
     searchState.lng = '';
     searchState.isResultsShown = false;
     clearSearchPointList();
+    // The next results must not be compared, even for a frame, against this search's area.
+    searchArea.searched = null;
 }
 
 export function getActiveSearchUrl(): string {

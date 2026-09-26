@@ -2,7 +2,9 @@
     import CategoryBadge from '$lib/components/categoryBadge.svelte';
     import {Button} from '$lib/components/ui/button';
     import type {SearchItem} from '$lib/interfaces/object';
+    import {searchState} from '$lib/state/search.svelte';
     import {cn} from '$lib/utils';
+    import {formatDistance, metresBetween} from '$lib/utils/distance';
     import {SvglGoogleLogo} from '@selemondev/svgl-svelte';
     import {focusAdjacentResult, readArrowStep} from './resultFocus';
 
@@ -33,9 +35,33 @@
         }
     }
 
+    // Every result is measured from the point the search ran at, not from the map
+    // as it stands now, so the whole list keeps agreeing with itself while panning.
+    const distance = $derived.by(() => {
+        if (!searchState.lat || !searchState.lng) {
+            return '';
+        }
+
+        const searchedAt = {lat: Number(searchState.lat), lng: Number(searchState.lng)};
+        return formatDistance(
+            metresBetween(searchedAt, {lat: object.latitude, lng: object.longitude}),
+        );
+    });
+
     let isCoordinateOnly = $derived(!object.categoryName && !object.name && !object.address);
     let address = $derived(composeAddress(object));
 </script>
+
+{#snippet resultMeta()}
+    {#if distance}
+        <span class="text-muted-foreground shrink-0 text-xs tabular-nums">
+            {distance}
+        </span>
+    {/if}
+    {#if object.type === 'google'}
+        <SvglGoogleLogo width={12} height={12} class="opacity-50" />
+    {/if}
+{/snippet}
 
 <Button
     variant="ghost"
@@ -57,18 +83,14 @@
             <div class="flex-1 truncate text-sm font-medium">
                 {object.latitude.toFixed(5)}, {object.longitude.toFixed(5)}
             </div>
-            {#if object.type === 'google'}
-                <SvglGoogleLogo width={12} height={12} class="opacity-50" />
-            {/if}
+            {@render resultMeta()}
         </div>
     {:else}
         <div class="flex items-center justify-between gap-2">
             <div class="text-muted-foreground flex-1 truncate text-xs">
                 {address}
             </div>
-            {#if object.type === 'google'}
-                <SvglGoogleLogo width={12} height={12} class="opacity-50" />
-            {/if}
+            {@render resultMeta()}
         </div>
         {#if object.categoryName}
             <CategoryBadge name={object.categoryName} size="sm" class="max-w-full" />
