@@ -1,93 +1,90 @@
 # Object backend
 
-Archive objects are split across several Convex tables (`objects`, `mapPoints`, `markers`, `categories`, `tags`). The backend keeps reads and writes behind three small helpers so callers do not reimplement joins, viewer-specific projection, or search-index scheduling.
+Convex stores archive data and schedules external synchronization. The interactive API, CSV import, and Notion inbound sync share the object reader and writer helpers.
 
-## Layer overview
+## Data ownership
 
+| Table                              | Contents                                                                        |
+| ---------------------------------- | ------------------------------------------------------------------------------- |
+| `objects`                          | Metadata, owner, category/tag IDs, cover reference, visibility, and internal ID |
+| `mapPoints`                        | Coordinates and address fields                                                  |
+| `markers`                          | Compact map projection, including owner, category, coordinates, and visibility  |
+| `categories`, `tags`               | Shared taxonomy                                                                 |
+| `privateTags`, `objectPrivateTags` | Personal labels and per-object associations                                     |
+| `userVisitedChunks`                | Per-user visited object IDs                                                     |
+| `images`                           | Original and preview storage references, plus uploader ownership                |
+| `objectNotionSync`                 | Notion page link, sync hashes, timestamps, and errors                           |
+
+The complete schema is in [schema.ts](../src/convex/schema.ts). See [Authentication](authentication.md#object-permissions) for read and write permissions.
+
+## Read path
+
+```text
+objects.getDetails
+  -> objectReader.loadObjectAggregate
+  -> objectDetails.loadObjectDetails
+  -> viewer-specific details DTO
 ```
-objects.ts (public queries/mutations)
-    ↓
-objectReader.ts   — load ObjectAggregate (object + mapPoint + category + tags)
-objectDetails.ts  — project aggregate → client DTO (cover, private tags, isOwner)
-objectWriter.ts   — create/patch records + schedule Typesense updates
-    ↓
-notionSync/objectWriterAdapter.ts — map Notion fields → ObjectRecordData/Patch
-imports.ts, objectsSync.ts        — call writer directly
+
+`helpers/objectReader.ts` joins objects with map points, categories, and public tags. Batch reads deduplicate related IDs. A missing map point or category invalidates the aggregate; missing tags are omitted.
+
+`helpers/objectDetails.ts` adds image URLs, the viewer's private tags and visited flag, and `isOwner`. It returns `internalId` to signed-in viewers and `null` to anonymous viewers. Its pure `buildObjectDetails` helper accepts a preloaded aggregate and viewer context.
+
+`objects.resolveShareId` accepts a canonical Convex ID or resolves a legacy `mysqlId`. The object page redirects legacy links to the canonical URL while retaining the query string.
+
+## Write path
+
+```text
+objects.ts / imports.ts / objectsSync.ts
+  -> helpers/objectWriter.ts
+  -> objects + mapPoints + markers
+  -> scheduled Typesense action
 ```
 
-| Module                              | Role                                                                              |
-| ----------------------------------- | --------------------------------------------------------------------------------- |
-| `helpers/objectReader.ts`           | Batch-load related docs; dedupe ids across a page of objects                      |
-| `helpers/objectDetails.ts`          | Viewer-aware details DTO for `objects.getDetails`                                 |
-| `helpers/objectWriter.ts`           | Create/patch `objects` + `mapPoints` + `markers`; enqueue Typesense create/update |
-| `helpers/objectRecordPatch.ts`      | Split a logical object patch into per-table slices                                |
-| `notionSync/objectWriterAdapter.ts` | Resolve categories/tags and build writer payloads for inbound sync                |
+| Writer helper          | Responsibility                                                                                         |
+| ---------------------- | ------------------------------------------------------------------------------------------------------ |
+| `createObjectRecords`  | Validate category existence, insert the three records, assign an internal ID, schedule search creation |
+| `loadObjectTarget`     | Load the aggregate and marker required for patching                                                    |
+| `replaceObjectRecords` | Apply a full editable-field payload through the patch path                                             |
+| `patchObjectRecords`   | Split fields by table and write changed values only                                                    |
+| `upsertPrivateTags`    | Store a user's personal tag associations                                                               |
 
-## Object aggregate
+`objectRecordPatch.ts` routes fields to tables and filters unchanged values. The writer drops unsafe source URLs. If no stored field changes, patching returns without writes or a search action. Otherwise it schedules a Typesense update from the resulting object and map point, even if the changed field itself is not indexed.
 
-`ObjectAggregate` joins one `objects` row with its `mapPoint`, `category`, and resolved `tags`:
+Callers handle authentication, category/tag resolution, visited state, and outbound Notion scheduling. Visited changes use `helpers/objectHelpers.ts`; they do not rewrite the marker catalog.
 
-- Missing **map point** or **category** invalidates the aggregate — the object is treated as unusable.
-- Missing **tag** docs are omitted silently so a deleted tag does not orphan objects that still reference it.
+## Personal state and deletion
 
-`loadObjectAggregates(ctx, objects[])` deduplicates related ids and loads map points, categories, and tags in parallel. `loadObjectAggregate` is the single-object wrapper.
+Visited state is bucketed by user and object-ID hash. `src/convex/utils/visitedChunks.ts` takes the first three hexadecimal characters of an FNV-1a hash, giving 4,096 possible bucket keys. A `userVisitedChunks` row stores visited IDs for one user and bucket; it is not a fixed-size page of objects.
 
-Notion sync snapshots (`notionSync/snapshot.ts`) and discrepancy reports assemble sync field payloads from aggregates via `assembleObjectSnapshot` / `buildAppFields`.
+`getIsVisited` reads one bucket through `byUserIdAndChunkId`. `updateIsVisited` adds or removes an ID only when its value changes and deletes empty buckets. The marker query reads all buckets for the viewer and flattens them into a separate visited-ID feed.
 
-## Details projection
+Private tag definitions belong to a user in `privateTags`. `objectPrivateTags` associates those IDs with an object and user; details loading resolves only the viewer's association and omits deleted tag definitions.
 
-`loadObjectDetails(ctx, aggregate, user)` returns the shape consumed by the object details overlay:
+Object deletion removes personal tag associations for all viewers. It uses the object's hash bucket and `byChunkId` index to remove visited references across users, then deletes the map point, marker, and object. Shared taxonomy definitions and uploaded cover files are not deleted by this helper; file retention is handled by cleanup.
 
-- **Location and metadata** — from the aggregate (`name`, `description`, periods, `source`, category, public tags).
-- **Viewer context** — private tags, visited flag, cover image URLs, `isOwner`, and `internalId` (owners only).
+## Entry points
 
-`buildObjectDetails` is pure given a preloaded aggregate and viewer context; tests cover per-viewer field visibility without a database.
+| Module                              | Operations                                                                         |
+| ----------------------------------- | ---------------------------------------------------------------------------------- |
+| `objects.ts`                        | Public `create`, `update`, `reposition`, and `remove` mutations                    |
+| `imports.ts`                        | `importBatch`, creating records for each accepted row                              |
+| `objectsSync.ts`                    | Internal `createObjectFromSync`, `patchObjectFromSync`, and `deleteObjectFromSync` |
+| `notionSync/objectWriterAdapter.ts` | Resolve sync taxonomy and translate sync fields into writer payloads               |
 
-`objects.getDetails` allows anonymous reads because `/object/[id]` is the shared-object entry point.
+Inbound sync excludes description, cover, visibility, and private tags from its field vocabulary. It cannot clear those fields through an ordinary sync patch.
 
-## Writer seam
+Removal uses `helpers/objectAggregate.ts` to delete the aggregate, removes sync state, and schedules Typesense deletion. Owner removal also schedules Notion page archival when the user has sync enabled and a linked page exists. Repositioning patches coordinates and search data; it does not schedule outbound Notion sync.
 
-All object **creates** and **field patches** that should stay consistent across tables go through `objectWriter.ts`.
+## Images and maintenance
 
-### Create
+Images are stored separately from object cover references. Uploading, saving an object, and cropping a preview are distinct writes, with different cancellation behavior. See [Images and cover photos](images.md) for processing, ownership, and cleanup.
 
-`createObjectRecords(ctx, ownerId, data)` inserts `mapPoints`, `objects`, and `markers`, then schedules `internal.typesense.createInTypesense`. CSV import and inbound Notion create both use this path — import indexing depends on create going through the writer, not ad-hoc inserts.
+[Database maintenance](maintenance.md) documents the migration runner, category-style and image-owner backfills, daily cleanup jobs, and external-data repair paths.
 
-### Patch
+## Related guides
 
-`patchObjectRecords(ctx, target, patch)` splits the patch via `objectRecordPatch`, applies only changed fields to `objects`, `mapPoints`, and `markers`, then schedules `internal.typesense.updateInTypesense`.
-
-`loadObjectTarget(ctx, objectId)` loads the aggregate plus the owner's `markers` row — required before patching.
-
-Search records mirror **post-write** state: the writer merges applied patches over the loaded target rather than trusting caller-held copies (callers often hold stale slices).
-
-### Out of scope for the writer
-
-Per-user overlays that do not affect search or map pins — private tags, visited state — are updated via dedicated helpers (`upsertPrivateTags`, `updateIsVisited`) from `objects.ts` or `objectsSync.ts`.
-
-## Notion sync adapter
-
-Inbound sync never patches Convex tables directly. `objectsSync.ts` calls:
-
-1. `resolveCreateClassification` / `resolvePatchClassification` — ensure category and tag rows exist.
-2. `buildSyncCreateData` / `buildSyncRecordPatch` — map Notion vocabulary to `ObjectRecordData` / `ObjectRecordPatch`.
-3. `createObjectRecords` / `patchObjectRecords` — persist and index.
-
-Fields outside the sync vocabulary (`isPublic`, `description`, `cover`, private tags) never appear in sync patches, so inbound webhooks cannot clear them accidentally.
-
-## Public Convex API
-
-| Function                                                   | Uses                                                                  |
-| ---------------------------------------------------------- | --------------------------------------------------------------------- |
-| `objects.getDetails`                                       | `loadObjectAggregate` + `loadObjectDetails`                           |
-| `objects.create` / `update` / `reposition`                 | `createObjectRecords` / `patchObjectRecords` / `replaceObjectRecords` |
-| `objects.delete`                                           | `deleteObjectAggregate` + Typesense remove                            |
-| `imports.importBatch`                                      | `createObjectRecords` per row                                         |
-| `objectsSync.createObjectFromSync` / `patchObjectFromSync` | writer via adapter                                                    |
-
-## Related docs
-
-- [notion-sync.md](./notion-sync.md) — inbound decisions and sync field hashing
-- [import.md](./import.md) — CSV batches call `createObjectRecords`
-- [search.md](./search.md) — Typesense reads; indexing is scheduled by the writer
-- [testing.md](./testing.md) — unit tests for reader, details, and writer
+- [Search](search.md) for index reads and reconciliation.
+- [CSV import](import.md) for batch processing and feedback.
+- [Notion sync](notion-sync.md) for field direction and sync state.
+- [Testing](testing.md) for helper-level coverage.

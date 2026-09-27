@@ -1,69 +1,54 @@
 # Testing
 
-The project uses [Vitest](https://vitest.dev/) 4.x, configured through the shared Vite config.
+Vitest runs colocated TypeScript tests through [vite.config.ts](../vite.config.ts). Most tests exercise helpers with mocked browser, map, or Convex dependencies. The repository does not configure a browser end-to-end suite or a Convex database test harness.
 
 ## Commands
 
-| Command              | Description                       |
-| -------------------- | --------------------------------- |
-| `bun run test`       | Run all tests once (`vitest run`) |
-| `bun run test:watch` | Watch mode (`vitest`)             |
-
-## Configuration
-
-`vite.config.ts` sets the test glob:
-
-```15:17:vite.config.ts
-    test: {
-        include: ['src/**/*.{test,spec}.{js,ts}'],
-    },
+```bash
+bun run test
+bun run test:watch
+bun run check
 ```
 
-Tests live next to the code they cover. Both `*.test.ts` and `*.spec.ts` suffixes match.
+Run a focused suite by passing a path:
 
-## Current test suites
+```bash
+bun run test src/convex/helpers/objectWriter.test.ts
+```
 
-| File                                                                | Coverage                                               |
-| ------------------------------------------------------------------- | ------------------------------------------------------ |
-| `src/index.test.ts`                                                 | Frontend utilities (EXIF, image resizer)               |
-| `src/lib/utils/share.test.ts`                                       | Share sheet, clipboard fallback, and dismissal         |
-| `src/lib/components/search/resultFocus.test.ts`                     | Arrow-key movement through the search result list      |
-| `src/lib/state/searchArea.svelte.test.ts`                           | When a moved or zoomed map offers an area re-search    |
-| `src/lib/utils/distance.test.ts`                                    | Great-circle distance between two coordinates          |
-| `src/lib/state/objectDetailsOverlay.svelte.test.ts`                 | Overlay state transitions                              |
-| `src/lib/state/searchPointList.svelte.test.ts`                      | Search point pins and the single previewed selection   |
-| `src/lib/components/objectDetails/sheetSnap.test.ts`                | Sheet drag snap and flick inertia                      |
-| `src/lib/services/map/detailsFocusOffset.test.ts`                   | Map focus offsets for side-panel vs mobile peek sheet  |
-| `src/lib/services/map/markerManager.test.ts`                        | Marker add/remove lifecycle and id reuse               |
-| `src/lib/services/map/visibilityEngine.test.ts`                     | Marker viewport visibility rules                       |
-| `src/lib/services/map/viewportSelection.test.ts`                    | Viewport bounds selection and max-visible cap          |
-| `src/lib/services/map/renderer/dom/popAnimation.test.ts`            | Pop-in animation start/end and cancellation            |
-| `src/lib/services/map/providers/google/deckOverlayHost.test.ts`     | Deck overlay host lifecycle                            |
-| `src/lib/services/map/providers/google/deckOverlayRenderer.test.ts` | Deck marker batch rendering                            |
-| `src/lib/services/import/normalize.test.ts`                         | CSV row normalization before import batches            |
-| `src/lib/services/map/markerFocus.test.ts`                          | Marker focus highlight, registry, and recentering      |
-| `src/convex/notion.test.ts`                                         | Notion sync decisions and sync-state rules             |
-| `src/convex/notionSync/snapshot.test.ts`                            | Snapshot assembly and sync-extras batching             |
-| `src/convex/helpers/objectReader.test.ts`                           | Object aggregate loading and read deduping             |
-| `src/convex/helpers/objectDetails.test.ts`                          | Client details DTO projection per viewer               |
-| `src/convex/notionSync/outbound.test.ts`                            | Outbound Notion page create/update/archive             |
-| `src/convex/notionSync/inbound.test.ts`                             | Inbound webhook gates and mutation dispatch            |
-| `src/convex/helpers/objectWriter.test.ts`                           | Object writer create/patch and search-index scheduling |
-| `src/convex/helpers/objectRecordPatch.test.ts`                      | Object record patch splitting                          |
-| `src/convex/helpers/clerkTimestamps.test.ts`                        | Clerk webhook timestamp parsing                        |
+`check` runs SvelteKit type generation and `svelte-check`. It does not run tests. Builds run automatically; do not invoke the build command directly.
 
-Convex logic is tested as plain TypeScript modules — there is no Convex test harness or emulated database in the repo. Tests import helpers directly and use Vitest mocks (`vi.mock`, `vi.fn`).
+## Find existing coverage
 
-## Adding tests
+The configured test glob is `src/**/*.{test,spec}.{js,ts}`. Discover current files instead of maintaining a second inventory:
 
-1. Place a `*.test.ts` file under `src/` matching the glob above.
-2. Import the module under test; avoid pulling in Svelte components unless needed.
-3. For Convex code, mock `ctx` / external APIs at the function boundary rather than running against a deployment.
-4. Run `bun run test` before opening a PR.
+```bash
+rg --files src -g '*.test.ts' -g '*.spec.ts' -g '*.test.js' -g '*.spec.js'
+```
 
-Vitest 4 uses the same `vi` API as Vitest 3. Global test APIs are available without extra setup because the config extends `vitest/config`.
+| Area           | Test locations and focus                                                                                                       |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Map            | `src/lib/services/map/`: viewport selection, marker lifecycle and focus, renderer changes, gestures, GPU picking and animation |
+| UI state       | `src/lib/state/` and component helpers: overlay transitions, search pins and area search, keyboard focus, sheet snapping       |
+| Object backend | `src/convex/helpers/`: aggregate loading, viewer projection, patch routing, and indexing                                       |
+| Notion         | `src/convex/notion.test.ts` and `src/convex/notionSync/`: matching, hashing, snapshots, inbound decisions, and outbound writes |
+| Utilities      | Import normalization, sharing, distance, EXIF orientation, and image resizing                                                  |
 
-## Related docs
+Tests explicitly import `describe`, `it`, `expect`, and `vi` from `vitest`; the config does not enable global test APIs.
 
-- [notion-sync.md](./notion-sync.md) — manual verification checklist for sync features
-- [object-backend.md](./object-backend.md) — reader/writer modules under test in `src/convex/helpers/`
+## Add or change tests
+
+Place a test beside the behavior it covers and mock external APIs at the module boundary. Backend helper tests use mock contexts rather than a live deployment. Assert observable behavior, such as writes and scheduled actions, rather than duplicating implementation steps.
+
+Run the relevant suite after a change, then the full test suite and type check as appropriate. `bun run lint` and `bun run format` both rewrite files, so review their diffs.
+
+## Manual checks
+
+Unit tests do not verify real Google Maps rendering, Clerk sessions, or external service credentials. For changes in those areas, check the affected flow in the running app:
+
+- Open a shared object signed out, then sign in and return to it.
+- Create, edit, reposition, and delete an object; check its marker and search result.
+- Exercise both renderer strategies, including focus, drag, and touch gestures.
+- Open and close Street View and move its minimap.
+- Import a small CSV containing valid and invalid rows; inspect feedback.
+- Follow the [Notion verification checklist](notion-sync.md#verify-sync) for sync changes.

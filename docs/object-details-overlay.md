@@ -1,178 +1,105 @@
 # Object details overlay
 
-The object details panel is a bottom overlay used to view, edit, and create archive entries. It spans client-side state, SvelteKit routes, and SSR hydration.
+The shared details panel displays archive objects and turns map coordinates or Google Places results into new objects. Routes provide initial data; reactive state controls subsequent transitions.
 
-## Overlay modes
+## Routes and modes
 
-`ObjectDetailsOverlayMode` (`src/lib/state/objectDetailsOverlay.svelte.ts`):
+| Route                       | Initial content                                               |
+| --------------------------- | ------------------------------------------------------------- |
+| `/object/[id]`              | `activeObject`, loaded through `objects.getDetails`           |
+| `/point?lat=&lng=`          | `activePoint`, including a draft and reverse-geocoded preview |
+| `/point?lat=&lng=&placeId=` | Point preview enriched with Google Place details              |
 
-| Mode           | UI component          | Purpose                                                   |
-| -------------- | --------------------- | --------------------------------------------------------- |
-| `objectView`   | `viewMode.svelte`     | Read an existing object                                   |
-| `objectEdit`   | `objectEdit.svelte`   | Edit an existing object                                   |
-| `pointPreview` | `pointPreview.svelte` | Preview a map coordinate or Places result before creating |
-| `pointCreate`  | `pointCreate.svelte`  | Create form for a new point                               |
+`src/lib/state/objectDetailsOverlay.svelte.ts` defines four modes:
 
-State helpers: `showObjectDetailsOverlay`, `showPointPreviewOverlay`, `showPointCreateOverlay`, `showLoadingDetailsOverlay`, `closeDetailsOverlay`.
+| Mode           | Component             | Purpose                                               |
+| -------------- | --------------------- | ----------------------------------------------------- |
+| `objectView`   | `viewMode.svelte`     | Read an existing object                               |
+| `objectEdit`   | `objectEdit.svelte`   | Edit full or personal fields according to permissions |
+| `pointPreview` | `pointPreview.svelte` | Inspect a coordinate or place                         |
+| `pointCreate`  | `pointCreate.svelte`  | Fill in a new object                                  |
 
-Mode transitions: `enterEditMode`, `returnToViewMode`, `returnToPointPreview`.
+Use the state module's transition functions to open, load, edit, return, and close. They reset unrelated state between selections. Reopening the same open object preserves mode and position. `showObjectDetailsOverlay` can retain existing details when no initial values are supplied.
 
-Position helpers: `setOverlayPosition` (used by the sheet, chevron, and Street View open/close).
+## Panel position
 
-## State model
+Height is independent of mode.
 
-Overlay state is a single `$state` object exposed through read-only getters on `objectDetailsOverlay`. All writes go through **transition functions** that merge partial updates onto a fresh default state, so opening a new overlay clears leftovers from the previous one (loading flags, point details, minimized state).
+| Position    | Height                      | Entry points                             |
+| ----------- | --------------------------- | ---------------------------------------- |
+| `minimized` | 56 px header                | Chevron, drag, or opening Street View    |
+| `peek`      | 42% of viewport height      | Drag snap                                |
+| `full`      | Viewport height minus 16 px | Default open position and expand control |
 
-### Sheet positions
+`detailsSheet.svelte` implements dragging and delegates snap decisions to `sheetSnap.ts`. Position changes feed marker focus so a selected pin stays visible beside or above the panel. Street View minimizes the panel on open and restores `full` on close.
 
-`ObjectDetailsOverlayPosition` adds a third height between minimized and full:
+## Map and search selection
 
-| Position    | Height                      | How to reach                                   |
-| ----------- | --------------------------- | ---------------------------------------------- |
-| `minimized` | 56 px header only           | Chevron button, drag snap, or Street View open |
-| `peek`      | ~42% viewport               | Drag snap                                      |
-| `full`      | Viewport minus 16 px margin | Default on open; chevron from minimized/peek   |
+1. An authenticated map click sets the draft position and opens a loading overlay.
+2. `buildPointUrl` in `src/lib/utils/pointRoute.ts` creates the `/point` URL.
+3. The server loader resolves address or Place details while the overlay shows address loading state.
+4. `point/+page.svelte` merges route data with any selected search-point data and opens preview or preserves create mode.
+5. The `save` form action calls `objects.create`.
 
-`isMinimized` is derived (`position === 'minimized'`). Street View calls `setOverlayPosition('minimized')` on open and `setOverlayPosition('full')` when the panorama closes.
+Map click suppression and renderer behavior are documented in [Map architecture](map-architecture.md#focus-and-gestures).
 
-Notable behaviors:
+The point route avoids reopening a closed overlay when the point ID has not changed. Search maintains its temporary pins separately; see [Search](search.md#map-integration).
 
-- `showObjectDetailsOverlay` keeps the previous `details` when called without `initialValues`, avoiding a flash while Convex re-fetches.
-- When the overlay is already open, reopening the same object preserves `mode` and `position` (e.g. staying in edit mode or peek height after a refresh).
-- `closeDetailsOverlay({ preserveDetails: true })` keeps `details` in memory for anonymous users who close the panel without losing SSR values.
+## Address lookup and form submission
 
-## Route-driven vs client-driven
+The point loader validates URL coordinates through `src/lib/utils/coordinates.ts`; invalid or missing values redirect to `/`. A point with `placeId` requests Google Place details, while an ordinary point uses `locations.getAddress` for reverse geocoding. Lookup failures are caught, leaving a usable draft with empty address fields. A failed Places request does not trigger a second reverse-geocoding request.
 
-The full-list layout (`src/routes/(app)/(fullList)/+layout.svelte`) derives overlay content from two sources:
+`src/convex/utils/googleAddress.ts` extracts street, locality, and country. It chooses street/house-number order using country code or a normalized country-name fallback. The separate `helpers/geocode.ts` converts an address to coordinates for Notion creation and times out after five seconds.
 
-1. **Client state** — when `objectDetailsOverlay.isOpen`, mode and details come from overlay state.
-2. **Route data** — when navigating directly (SSR), `page.data.activeObject` or `page.data.activePoint` seed the overlay.
+New drafts default to private, unvisited, and not removed. The create form applies a late address result only once and only if the user has not already entered address text. Existing-object edit forms retain their loaded address.
 
-```51:61:src/routes/(app)/(fullList)/+layout.svelte
-    const overlayMode = $derived.by(() => {
-        if (objectDetailsOverlay.isOpen) {
-            return objectDetailsOverlay.mode;
-        }
+`src/lib/schema/objectSchema.ts` supplies the Zod schema used by Superforms client validation and server actions. `toFormDefaults` converts category, tag, and cover records into IDs.
 
-        if (page.data.activePoint) {
-            return 'pointPreview';
-        }
+| Interactive form field           | Validation                                            |
+| -------------------------------- | ----------------------------------------------------- |
+| Name                             | Required, at most 255 characters                      |
+| Category                         | Required ID                                           |
+| Coordinates                      | Numeric latitude within ±90 and longitude within ±180 |
+| Address                          | At most 128 characters                                |
+| City and country                 | At most 64 characters each                            |
+| Installation and removal periods | At most 20 characters each                            |
+| Source                           | Empty or an HTTP/HTTPS URL                            |
 
-        return 'objectView';
-    });
-```
+Empty optional text becomes `null`. These form limits differ from [CSV import limits](import.md#column-mapping); the backend Convex validators are a separate validation layer.
 
-`isServerRequest` (from `+page.server.ts` via `!isDataRequest`) skips the fly-in animation on first paint (`disableOverlayIntro`).
+The point `save` action creates an object; the object page's `save` and `delete` actions update or remove it. Invalid form submissions return status 400 with form errors. The enhanced form shows progress and result toasts without invalidating every loader. Cover upload and cropping follow the separate [image lifecycle](images.md).
 
-## Map click → point preview
+## Server rendering and shared links
 
-Authenticated users can create objects from the map:
+The full-list layout takes values from overlay state, then falls back to `activeObject` or `activePoint` route data. `isServerRequest` prevents the initial server-rendered panel from flying in again during hydration.
 
-1. `map.svelte` fires `onClick` after a 300 ms debounce (not in Deck mode).
-2. `src/routes/(app)/+layout.svelte` `handleMapClick` sets draft position, shows a loading overlay, and navigates to `/point?lat=&lng=` via `buildPointUrl`.
-3. While `/point` is loading, `setOverlayAddressLoading(true)` shows address spinners (geocoding runs server-side).
-4. `point/+page.server.ts` loads address (reverse geocode) or Google Place details (`placeId` query param).
-5. `point/+page.svelte` syncs SSR data into `showPointPreviewOverlay` (or `showPointCreateOverlay` if already in create mode).
+Owners and signed-in viewers of public objects use list markers, including a temporary active entry while the catalog catches up. Anonymous viewers and non-owner private-link recipients use a share marker. This choice depends on ownership, visibility, and authentication, not merely whether the catalog has finished loading.
 
-URL helper: `src/lib/utils/pointRoute.ts` — `buildPointUrl({ latitude, longitude, placeId? })`.
+Anonymous object pages are read-only. Closing with `preserveDetails: true` retains their server-loaded values. See [Authentication](authentication.md) for the full permission rules.
 
-## Route sync guard
+## Sharing
 
-`point/+page.svelte` avoids clobbering an open overlay while the user is editing:
+`viewMode/shareButton.svelte` builds `/object/<id>` on the current origin and passes it to `src/lib/utils/share.ts`. On supported mobile devices, including iPads identifying as Macs, the helper opens the native share sheet. Desktop browsers use clipboard copying.
 
-- Sync runs when the overlay is open **or** when the active point id changes (initial navigation or a new coordinate).
-- If the overlay is closed and the point id is unchanged, the effect returns early.
+Cancelling the native sheet returns `dismissed` and does not copy anything. Other share failures fall back to the clipboard. The button shows a success toast for copying and an error only when sharing and copying fail. Shared links use the access rules in [Authentication](authentication.md#object-permissions).
 
-Switching from preview to create uses `showPointCreateOverlay` when `objectDetailsOverlay.mode === 'pointCreate'`.
+## Unsaved changes and nested sheets
 
-Search results enrich the preview: when `googlePlaceId` is present, fields from `searchPointList` merge into SSR preview data before the overlay opens.
+`objectDetails.svelte` routes close-button, backdrop, and Escape requests through `requestClose`. Create and edit forms register a taint check; unsaved changes open `closeConfirmDialog.svelte` before discard.
 
-## Unsaved-changes guard
+The taxonomy sheet uses the `data-details-sheet` portal target on the panel shell so its backdrop covers the header and form. Dismissing taxonomy keeps its live-bound selections in the parent form; saving the object persists them.
 
-Closing the overlay (close button, backdrop, or Esc) runs through `requestClose` in `objectDetails.svelte`. Edit and create forms register a taint check via `registerCloseConfirmationCheck`; when Superforms reports `isTainted()`, an alert dialog asks for confirmation before discarding changes.
+## Component responsibilities
 
-## Object routes
+All components below live in `src/lib/components/objectDetails/`.
 
-| Route                       | Overlay behavior                                        |
-| --------------------------- | ------------------------------------------------------- |
-| `/object/[id]`              | SSR loads `activeObject`; overlay opens in `objectView` |
-| `/point?lat=&lng=`          | SSR loads `activePoint` with `draft` + `preview`        |
-| `/point?lat=&lng=&placeId=` | Preview enriched from Google Place details              |
+| Component                                     | Responsibility                                        |
+| --------------------------------------------- | ----------------------------------------------------- |
+| `objectDetails.svelte`                        | Coordinate modes, permissions, and close confirmation |
+| `detailsSheet.svelte`, `detailsHeader.svelte` | Panel shell, sizing, and header                       |
+| `detailsContent.svelte`                       | Select content for the active mode                    |
+| `background.svelte`, `closeButton.svelte`     | Request closure                                       |
+| `objectForm/`                                 | Editable fields, taxonomy, and delete control         |
+| `viewMode/`                                   | Read-only metadata, sharing, and Street View actions  |
 
-`objects.create` runs from the `save` action in `point/+page.server.ts`.
-
-## Shared deep links
-
-When a user opens `/object/[id]` for an object they **do not own** and that object is **not** in their marker list (`api.markers.list`), the full-list layout sets `sharedMarker` and renders a `source="share"` marker in the app layout. The share marker is cleared when the object joins the user's list or when the viewer is the owner (owners always use list markers, never share markers).
-
-## Component layout
-
-`objectDetails.svelte` is a thin orchestrator; chrome and content live in dedicated modules:
-
-| Component                   | Role                                                                                                                               |
-| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `background.svelte`         | Backdrop click → `requestClose`                                                                                                    |
-| `closeConfirmDialog.svelte` | Unsaved-changes alert (edit/create taint check)                                                                                    |
-| `detailsSheet.svelte`       | Bottom sheet shell, drag-to-resize, position snap; `data-details-sheet` portal target for nested sheets (taxonomy picker backdrop) |
-| `detailsHeader.svelte`      | Drag handle, `internalId` badge, minimized title row, chevron/close                                                                |
-| `detailsContent.svelte`     | Mode router → view/edit/preview/create children                                                                                    |
-
-### Sheet drag gestures
-
-`detailsSheet.svelte` exposes pointer handlers to the header via a snippet. Dragging the header resizes the sheet live; on release, height snaps to the nearest of `minimized`, `peek`, or `full`. Button clicks inside the header do not start a drag (`closest('button')` guard).
-
-Snap math lives in `sheetSnap.ts` (unit-tested in `sheetSnap.test.ts`):
-
-| Constant                | Value  | Role                                  |
-| ----------------------- | ------ | ------------------------------------- |
-| `MINIMIZED_HEIGHT`      | 56 px  | Minimized header height               |
-| `PEEK_HEIGHT_RATIO`     | 0.42   | Peek height as a fraction of viewport |
-| `SHEET_MARGIN`          | 16 px  | Top margin for full height            |
-| `INERTIA_PROJECTION_MS` | 220 ms | Velocity projection window on release |
-| `MAX_INERTIA_DELTA`     | 220 px | Cap on projected flick distance       |
-
-On pointer release, `getSettledPosition` projects release height from the last two drag samples (height + timestamp). A fast flick can settle one snap position past where the finger stopped — e.g. a downward flick from near-full can land on `peek` instead of `full`. Slow drags snap to the nearest position without inertia. During drag, CSS height transitions are disabled (`transition-none`); settled position restores Tailwind height classes via `setOverlayPosition`.
-
-Settling on a new position also recenters the active map marker via `focusDetailsTarget`. On narrow viewports, `peek` applies a vertical offset of half the peek sheet height (same uncovered-area centering as the desktop side-panel offset); `full` and `minimized` center with no offset. Wide viewports keep the existing westward side-panel offset regardless of sheet position — see [map-architecture.md](./map-architecture.md).
-
-### Header chrome
-
-- **Drag handle** — centered pill at the top of the header.
-- **`internalId`** — outline badge; click copies to clipboard (`toast` on success/failure).
-- **Minimized row** — when `position === 'minimized'`, shows `CategoryBadge` (icon only) and object name beside the id badge.
-- **Chevron** — from `full`, collapses to `minimized`; from `minimized` or `peek`, expands to `full` (`handleMinimizeClick` in `objectDetails.svelte`).
-
-### View mode cover image
-
-In `viewMode.svelte`, the cover uses `ImageUpload` in read-only mode (`disabled`). When a cover URL exists, the image is a `cursor-zoom-in` button that opens `ImageViewer` for the full-resolution `url` (hover scales the preview slightly). Upload/remove controls are hidden while disabled.
-
-### View mode description text
-
-Descriptions may arrive with literal escape sequences (`\n`, `\r\n`, `\r`) from CSV import or Notion sync rather than real line breaks. `viewMode.svelte` normalizes these to newline characters before render and uses `whitespace-pre-line` so multi-line descriptions display correctly in read-only view.
-
-## Edit/create form
-
-`objectForm/form.svelte` drives create and edit modes via Superforms + Zod (`objectSchema.ts`).
-
-### Taxonomy field
-
-Category and both tag sets are edited through one control — see [category-settings.md](./category-settings.md#taxonomy-picker-in-forms). Selected values render as a `CategoryBadge` plus removable `TagChip` rows inside the trigger; opening the sheet portalls into `data-details-sheet` on the details card so the dimming backdrop covers the header as well as the form. The sheet writes back to hidden form inputs (`category`, repeated `tags`, repeated `privateTags`).
-
-### Address collapse
-
-When address, city, and country are all populated and geocoding is not in flight, the three inputs collapse into one read-only line (`address, city, country`). Clicking the pencil expands the separate fields again. Hidden inputs submit the collapsed values so the collapsed state does not drop data on save.
-
-New points apply server geocode results once (`addressLookupApplied` guard); if the user types before lookup finishes, auto-fill stops so manual edits are not overwritten.
-
-### Layout
-
-Form fields use vertical spacing (`gap-y-3`, `mt-3` section breaks) instead of horizontal rules. Flag toggles (visited, removed, public) sit in a wrap row below the name field.
-
-## Related docs
-
-- [street-view.md](./street-view.md) — opening panorama from object/point actions
-- [map-architecture.md](./map-architecture.md) — map click constraints, marker focus offset, first-run hint
-- [search.md](./search.md) — search → point preview flow
-- [authentication.md](./authentication.md) — anonymous shared links, login gate
-- [analytics.md](./analytics.md) — PostHog setup and event catalog
-- [category-settings.md](./category-settings.md) — `CategoryBadge` reads merged category styles; taxonomy picker
+See [Category settings](category-settings.md) for taxonomy selection and [Object backend](object-backend.md) for persistence.

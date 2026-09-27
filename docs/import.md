@@ -1,90 +1,77 @@
 # CSV import
 
-Bulk import lets signed-in users create archive objects from a CSV file. The flow lives under **User menu → Import** (`/import`), implemented as a multi-step dialog.
+Signed-in users open `/import` from the user menu. The browser parses the file, maps columns, uploads images, and sends batches to Convex. Keep the browser session open while it sends rows.
 
-## End-to-end flow
+## Import flow
 
-```
-uploadFile.svelte (pick CSV, separator, header row)
-    ↓ parseCsv
-preview.svelte (column mapping + row preview)
-    ↓ normalizeRows + ImportProvider.start
-importProvider.ts (25-row batches, image upload)
-    ↓ api.imports.importBatch
-Convex imports.ts (validate, createObjectRecords + Typesense enqueue, feedback)
-    ↓ optional Notion batch
-notionSync/outbound.enqueueOutboundObjectSyncBatchLenient
+```text
+Upload CSV and choose separator/header handling
+  -> preview rows and map columns
+  -> normalize rows
+  -> resolve images and send batches of 25
+  -> imports.importBatch creates objects and updates the job
+  -> scheduled Typesense writes and optional Notion batch
 ```
 
-Progress and completion are driven by `api.imports.getJob` (`progress.svelte` subscribes via `useQuery`). Job records are retained for seven days (`cleanupOldJobs` internal mutation).
+`src/lib/services/importProvider.ts` owns batch submission. `progress.svelte` subscribes to `imports.getJob` for progress and feedback. Parsing and normalization live in `src/lib/services/import/`; the UI lives in `src/lib/components/userMenu/import/`.
 
-## Required and optional columns
+The separator defaults to `;` and must be one character. Quoted fields support escaped quotes, and completely blank rows are discarded. Users specify whether the first row is a header.
 
-Users map CSV columns to fields in the preview step. Three mappings are required:
+## Column mapping
 
-| Field                                | Required | Notes                                                                              |
-| ------------------------------------ | -------- | ---------------------------------------------------------------------------------- |
-| `coordinates`                        | Yes      | `"lat,lng"` — comma-separated, optional space after comma                          |
-| `name`                               | Yes      | Trimmed; max 256 chars (longer values truncated)                                   |
-| `category`                           | Yes      | Trimmed; max 128 chars                                                             |
-| `isVisited`, `isPublic`, `isRemoved` | No       | True when value is `1`, `true`, `yes`, `y`, or `да` (case-insensitive)             |
-| `tags`, `privateTags`                | No       | Split on `;` or `,`; each tag lowercased, max 128 chars                            |
-| `address`, `city`, `country`         | No       | Location text fields with per-field length limits                                  |
-| `installedPeriod`, `removalPeriod`   | No       | Max 64 chars                                                                       |
-| `description`                        | No       | Max 8000 chars                                                                     |
-| `source`                             | No       | Must be a valid `http://` or `https://` URL; invalid values skipped with a warning |
-| `image`                              | No       | HTTP(S) URL or base64 data URL (`jpeg`, `png`, `webp` only)                        |
+Coordinates, name, and category mappings are required. Text limits are applied on the backend by trimming and truncation.
 
-Field-level validation hints shown in the UI are defined in `src/lib/components/userMenu/import/preview/preview.ts`.
+| Field                                | Accepted value and limit                                                             |
+| ------------------------------------ | ------------------------------------------------------------------------------------ |
+| `coordinates`                        | Latitude and longitude separated by a comma, within geographic bounds                |
+| `name`                               | Required text, 256 characters                                                        |
+| `category`                           | Required text, 128 characters                                                        |
+| `isVisited`, `isPublic`, `isRemoved` | True for `1`, `true`, `yes`, `y`, or `да`, ignoring case; otherwise false            |
+| `tags`, `privateTags`                | Separated by commas or semicolons; lowercased, deduplicated, 128 characters per tag  |
+| `address`                            | 256 characters                                                                       |
+| `city`, `country`                    | 128 characters each                                                                  |
+| `installedPeriod`, `removalPeriod`   | 64 characters each                                                                   |
+| `description`                        | 8,000 characters                                                                     |
+| `source`                             | HTTP or HTTPS URL, up to 2,048 characters; invalid values are omitted with a warning |
+| `image`                              | HTTP/HTTPS URL or base64 data URL; JPEG, PNG, or WebP                                |
 
-## Normalization and backend rules
+Import category resolution title-cases words and matches existing names case-insensitively. New categories receive random default marker styling. Private tags belong to the importing user.
 
-Client normalization (`src/lib/services/import/normalize.ts`) trims cells and parses booleans/tags before rows reach Convex.
+## Images
 
-Server-side processing (`src/convex/imports.ts`):
+`imageResolver.ts` fetches or decodes images in the browser, checks MIME type, resizes, and uploads them to Convex storage. Remote hosts must permit the browser fetch. Failed images produce a warning and the row can still import without a cover.
 
-- **Categories** — `ensureCategory` title-cases each word and matches existing categories case-insensitively (`helpers/importHelpers.ts`). New categories get a random marker color and icon.
-- **Tags** — Public tags are deduplicated and stored lowercased. Private tags are scoped to the importing user.
-- **Coordinates** — Invalid latitude/longitude produce a per-line error; the row is skipped.
-- **Source URLs** — Invalid URLs are dropped with a warning; the object is still created.
-- **Images** — Resolved client-side per batch (`imageResolver.ts`): fetch or decode, resize, upload to Convex storage, then pass `imageId` to `importBatch`. Failures log a warning and import continues without a cover image.
-- **Search indexing** — Each row calls `createObjectRecords`, which schedules a Typesense create. Import must use the writer path so new objects appear in local search immediately.
-- **Feedback** — Per-line warnings and errors are stored on the job (capped at 300 entries).
+Successfully resolved image sources are cached during the job. Image upload happens before the object batch, so cancellation or a failed row can leave an unused upload for scheduled storage cleanup.
 
-## Batch processing and idempotency
+See [Images and cover photos](images.md) for resize policy, ownership, and storage retention.
 
-`ImportProvider` sends rows in batches of 25 (`BATCH_SIZE` in `importProvider.ts`). Each batch carries a monotonically increasing `sequence` number.
+## Progress and failure handling
 
-`imports.importBatch` ignores batches whose `sequence` is less than or equal to `lastBatchSequence` on the job, so retries do not double-import rows.
+`imports.importBatch` validates job ownership and processes rows. Invalid coordinates, missing names, and missing categories count as processed failures. Per-row exceptions add error feedback; feedback is capped at 300 entries.
 
-The submit button is disabled while a job is starting or already running (`preview.svelte`), preventing accidental duplicate submissions.
+A terminal `success` status means processing completed, not that every row succeeded. Compare `successfulRows` with `processedRows` and inspect feedback. Fatal client-side failures finalize the job as `error`.
 
-## Notion sync on import
+Each batch has an increasing sequence number. Convex ignores a sequence less than or equal to the job's last accepted sequence, preventing replay of that batch. This does not deduplicate a new import job containing the same CSV.
 
-When the importing user has `notionSyncEnabled`, successfully imported object ids from a batch are collected and enqueued as a single outbound sync via `enqueueOutboundObjectSyncBatchLenient`. That lenient action logs per-object failures and continues with the rest of the batch — one bad row does not abort the whole import sync.
-
-See [notion-sync.md](./notion-sync.md) for sync setup and invariants.
+Cancellation marks a running job `cancelled` and stops further client batches. Already imported objects remain. Job records are removed after seven days, measured from their finish time or start time, by the daily 00:15 UTC cleanup.
 
 ## Convex API
 
-| Function                 | Type              | Purpose                                                                   |
-| ------------------------ | ----------------- | ------------------------------------------------------------------------- |
-| `imports.startJob`       | mutation          | Create a `running` job with `totalRows` and column mappings               |
-| `imports.importBatch`    | mutation          | Process one batch; update progress, feedback, and optional Notion enqueue |
-| `imports.getJob`         | query             | Poll job status (owner-only)                                              |
-| `imports.cancelJob`      | mutation          | Mark a running job as `cancelled`                                         |
-| `imports.finalizeJob`    | mutation          | Force terminal status on client-side failure                              |
-| `imports.cleanupOldJobs` | internal mutation | Delete jobs older than seven days                                         |
+All public functions below check the current user; existing-job operations check ownership.
 
-## CSV parsing constraints
+| Function                 | Purpose                                                                                 |
+| ------------------------ | --------------------------------------------------------------------------------------- |
+| `imports.startJob`       | Create a running job with row count; accepts validated mappings but does not store them |
+| `imports.importBatch`    | Process rows and update counters, feedback, and last sequence                           |
+| `imports.getJob`         | Subscribe to job status and feedback                                                    |
+| `imports.cancelJob`      | Cancel a running job                                                                    |
+| `imports.finalizeJob`    | Finish or report a client-side failure                                                  |
+| `imports.cleanupOldJobs` | Internal scheduled retention cleanup                                                    |
 
-- Default separator is `;`; users can change it in the upload step (must be a single character).
-- Quoted fields support escaped double quotes (`""` inside `"..."`).
-- Empty rows (all cells blank) are filtered out after parsing.
+## Search and Notion
 
-## Related docs
+Each accepted row uses `createObjectRecords`, which schedules Typesense indexing. Search availability follows the asynchronous index write.
 
-- [notion-sync.md](./notion-sync.md) — outbound sync after import batches
-- [object-backend.md](./object-backend.md) — `createObjectRecords` and Typesense scheduling
-- [map-architecture.md](./map-architecture.md) — imported objects appear on the map via `markers.list`
-- [category-settings.md](./category-settings.md) — per-user styling for imported categories
+For a sync-enabled importer, a successful batch schedules `enqueueOutboundObjectSyncBatchLenient` with its created object IDs. It logs individual Notion failures and continues with other objects. Completing the import does not guarantee that indexing or Notion sync has finished.
+
+See [Object backend](object-backend.md), [Search](search.md), and [Notion sync](notion-sync.md) for those downstream paths.

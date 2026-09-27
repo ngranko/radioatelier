@@ -1,61 +1,72 @@
-# Authentication
+# Authentication and access
 
-The app uses [Clerk](https://clerk.com) for sign-in and [Convex](https://convex.dev) for backend auth. SvelteKit wires them together through `svelte-clerk` (`withClerkHandler` in `src/hooks.server.ts`) and a Convex JWT template named `convex`.
+Clerk handles sessions. SvelteKit uses `withClerkHandler` in `src/hooks.server.ts`, and Convex validates the Clerk JWT template named `convex`. Clerk webhooks maintain the app's `users` records.
 
-## Default: closed with explicit exceptions
+## Route access
 
-Route access follows a **closed-by-default** model. `(app)/+layout.server.ts` is the central gate:
+`src/routes/(app)/+layout.server.ts` checks the Convex token before loading app pages.
 
-| Condition                               | Behavior                                                                    |
-| --------------------------------------- | --------------------------------------------------------------------------- |
-| Signed in                               | Load continues; `(app)/+layout.server.ts` fetches `api.categories.list`     |
-| Anonymous + path starts with `/object/` | Load continues with `{categories: []}` — shared object pages stay reachable |
-| Anonymous + any other `(app)` path      | `307` redirect to `/login?ref=<original path + query>`                      |
+| Viewer                 | Route            | Result                                                    |
+| ---------------------- | ---------------- | --------------------------------------------------------- |
+| Signed in with a token | Any app route    | Load categories and continue                              |
+| Anonymous              | `/object/[id]`   | Continue with an empty category list for the shared view  |
+| Anonymous              | Other app routes | Redirect with status 307 to `/login?ref=<path and query>` |
 
-Individual pages and form actions add their own checks where needed (see below). New routes under `(app)` inherit the layout gate automatically — no per-page opt-in is required.
+The exception tests the `/object/` path prefix. New routes under the app layout otherwise inherit its sign-in requirement. `/login` redirects signed-in users to `/`.
 
-### Public anonymous surface
+`normalizeRef` in `src/lib/utils.ts` reduces login return URLs to a safe same-origin path. Password and SSO flows carry `ref` through authentication.
 
-Today the only anonymous `(app)` route is **`/object/[id]`** (read-only object view via shared links). Everything else under `(app)` — map home (`/`), `/point`, `/settings`, `/import`, search-driven flows — requires sign-in.
+## Sign-in and account recovery
 
-Anonymous viewers on `/object/[id]`:
+The login UI lives under `src/routes/login/` and calls Clerk from the browser. There is no application sign-up route in this repository.
 
-- See object details in the overlay (SSR + Convex `objects.getDetails` without auth)
-- Cannot save, delete, or create objects (server actions redirect to login)
-- Cannot place map points (`handleMapClick` in `(app)/+layout.svelte` returns early when `!clerkCtx.auth.userId`)
-- Close the overlay with `preserveDetails: true` so SSR values are not lost on close
+| Flow                    | Implementation and behavior                                                                                                |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Email and password      | `loginForm.svelte` creates a sign-in attempt and activates its completed session                                           |
+| Second factor           | `secondFactorForm.svelte` submits an email code; the login form prepares it when Clerk offers `email_code`                 |
+| SSO                     | `ssoButtons.svelte` shows Google, Apple, and GitHub only when the corresponding strategy is enabled in Clerk               |
+| OAuth callback          | `/login/sso-callback` renders Clerk's redirect callback component                                                          |
+| Forgotten password      | `/login/forgot-password` requests a `reset_password_email_code`, then submits the code and new password                    |
+| Required password reset | `/login/reset-password` mounts Clerk's reset-password task UI when the current session has that task                       |
+| Change password         | `/change-password` calls `user.updatePassword` with current and new passwords; available only to password-enabled accounts |
 
-### Login return URL
+The custom second-factor form implements email codes only. Other required strategies show an additional-verification message rather than a matching input flow. A compromised-password error sends the user to forgotten-password recovery.
 
-Redirects and login forms carry a `ref` query param (pathname, optionally with search). After sign-in, `normalizeRef` in `src/lib/utils.ts` resolves it to a safe same-origin pathname. SSO and password flows preserve `ref` through forgot-password and reset-password routes.
+After password sign-in, email-code verification, or recovery, the client checks for a reset-password session task before navigating to the normalized `ref`. The login server layout still redirects requests with an authenticated `userId` to `/`; the task page does not have a separate server-side exemption.
 
-`/login` itself redirects signed-in users to `/` (`login/+layout.server.ts`).
+Password change can also revoke other sessions while retaining the current one. A revocation failure shows an error but does not roll back the password change. Logout calls Clerk sign-out, clears saved map location, and navigates to `/login`.
 
-## Server-side Convex client
+## Object permissions
 
-`getConvexClient` (`src/lib/server/convexClient.ts`) builds a `ConvexHttpClient` and attaches the Clerk JWT when present. Anonymous SSR for `/object/[id]` calls Convex without auth; queries that require a user throw on the backend.
+Route access and data permissions are separate. The current backend behavior is defined in `src/convex/objects.ts`.
 
-## Mutations and form actions
+| Operation                              | Allowed viewers                                                           |
+| -------------------------------------- | ------------------------------------------------------------------------- |
+| Read `objects.getDetails` by ID        | Anyone, including anonymous viewers and private-object link recipients    |
+| List map markers or search the archive | Signed-in users; results include their own objects and all public objects |
+| Create an object                       | A current app user                                                        |
+| Edit shared object fields              | The owner                                                                 |
+| Edit private tags and visited state    | The owner, or a signed-in user viewing a public object                    |
+| Reposition or remove an object         | The owner                                                                 |
 
-| Action        | File                                   | Anonymous behavior         |
-| ------------- | -------------------------------------- | -------------------------- |
-| Create object | `point/+page.server.ts` `save`         | Redirect to `/login?ref=…` |
-| Update object | `object/[id]/+page.server.ts` `save`   | Redirect to `/login?ref=…` |
-| Delete object | `object/[id]/+page.server.ts` `delete` | Redirect to `/login?ref=…` |
+`isPublic` controls discovery in the catalog and search. It does not block reads by object ID. A private-object link grants a read-only view to non-owners, not personal editing rights.
 
-Client-side forms show a toast ("Пользователь не авторизован") when a redirect response arrives from Superforms.
+Details return the viewer's own private tags and visited state. Anonymous viewers receive no private tags, `isVisited: false`, and no internal ID. Signed-in viewers receive the internal ID, including when they are not the owner.
 
-## Client-side identity
+The stored user `role` is not the authorization rule for these object operations. Collection and individual-grant permissions are a [proposal](collection-access-control.md), with no corresponding tables in the current schema.
 
-`convexClerkAuth.svelte` syncs Clerk session state to the Convex client and PostHog identify/reset. See [analytics.md](./analytics.md) for event identity rules.
+## Server and browser identity
 
-Marker list queries pass `authUserId` to Convex; the server rejects a mismatched id so retained client data cannot leak across account switches. See [map-architecture.md](./map-architecture.md).
+`src/lib/server/convexClient.ts` creates a Convex HTTP client and attaches a Clerk JWT when available. Object page loaders can call it anonymously. Create, save, and delete form actions redirect anonymous requests to login; Convex mutations enforce their own user and ownership checks.
 
-## Setup
+`src/lib/components/convexClerkAuth.svelte` sets and clears Convex browser authentication and PostHog identity. Marker queries include the Clerk `authUserId`; the backend rejects mismatches. The list layout also gates retained query results with identity and stale-data checks.
 
-Clerk and Convex env vars, JWT template, and webhook configuration are documented in [environment.md](./environment.md#authentication-clerk--convex).
+Anonymous shared-link viewers cannot place map points. Closing their overlay preserves its details so the shared view can retain its server-loaded data.
 
-## Related docs
+## Clerk user synchronization
 
-- [collection-access-control.md](./collection-access-control.md) — planned collection-based marker access (not yet enforced)
-- [object-details-overlay.md](./object-details-overlay.md) — anonymous overlay close behavior
+`POST /clerk-users-webhook` verifies Svix signatures using `CLERK_WEBHOOK_SECRET`. It handles `user.created`, `user.updated`, and `user.deleted`; deletion marks the app user as deleted.
+
+`users.upsertFromClerk` copies email, role, `notionSyncEnabled`, and `notionUserId` from the event. Backend operations that require a current app user need this record as well as a valid Clerk session.
+
+See [Environment](environment.md#authentication) for configuration and [Analytics](analytics.md) for event identity.

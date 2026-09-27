@@ -1,100 +1,44 @@
 # Category settings
 
-Users customize how categories appear on the map and in object forms. Settings live at `/settings` (dialog opened from the logged-in menu).
+`/settings` opens a dialog for personal category colors, icons, and picker visibility. These settings change the current user's presentation of shared categories.
 
-## Data model
+## Stored values and API
 
-Two tables drive category appearance:
+| Table                      | Scope                 | Fields                                  |
+| -------------------------- | --------------------- | --------------------------------------- |
+| `categories`               | Shared defaults       | `name`, `markerColor`, `markerIcon`     |
+| `userCategoryMarkerStyles` | Per user and category | `markerColor`, `markerIcon`, `isHidden` |
 
-| Table                      | Scope              | Fields                                  |
-| -------------------------- | ------------------ | --------------------------------------- |
-| `categories`               | Global defaults    | `name`, `markerColor`, `markerIcon`     |
-| `userCategoryMarkerStyles` | Per-user overrides | `markerColor`, `markerIcon`, `isHidden` |
+`src/convex/categories.ts` provides:
 
-`api.categories.list` merges them: user overrides win when present; `isHidden` defaults to `false`.
+- `list`, which requires a current user and merges overrides over defaults. `isHidden` defaults to `false`.
+- `updateStyles`, which validates colors and icons against `MARKER_COLORS` and `MARKER_ICON_KEYS`, then upserts the user's overrides.
+- `create`, which requires authentication, trims and lowercases the name, reuses an exact normalized match, and assigns random default styling to a new category. It is not restricted to an admin role.
 
-New categories created via `api.categories.create` get a random color and icon from `MARKER_COLORS` / `MARKER_ICON_KEYS` in `src/lib/services/map/markerStyling.data.ts`.
+Allowed colors and icon keys live in `src/lib/services/map/markerStyling.data.ts`. Import uses its own case-insensitive category lookup and title-casing helper; see [CSV import](import.md).
 
-## Convex API
+## Settings flow
 
-| Function                  | File                       | Purpose                                     |
-| ------------------------- | -------------------------- | ------------------------------------------- |
-| `categories.list`         | `src/convex/categories.ts` | Merged category list for the signed-in user |
-| `categories.updateStyles` | `src/convex/categories.ts` | Upsert per-user style rows                  |
-| `categories.create`       | `src/convex/categories.ts` | Add a global category (admin flow)          |
+`settingsDialog.svelte` keeps local edits and submits changed rows to `categories.updateStyles`. The reactive category query updates `categoriesState`, which supplies map marker styles, badges, and form choices.
 
-`updateStyles` validates `markerColor` and `markerIcon` against the allowed palettes. Invalid values throw `ConvexError('Invalid category style')`.
+`CategoryBadge` in `src/lib/components/categoryBadge.svelte` looks up a category by ID or, for search results, by name. `ColorPicker`, `IconPicker`, and `MarkerPreview` live under `src/lib/components/settings/`.
 
-## Allowed values
+The "hide from list" checkbox sets `isHidden`. It excludes the category from the object form's category picker. Objects in that category remain visible on the map with their chosen styles.
 
-Colors and icon keys are defined in `src/lib/services/map/markerStyling.data.ts`:
+## Taxonomy picker
 
-- **Colors** — nine OKLCH values (`MARKER_COLORS`)
-- **Icons** — Lucide-based keys such as `activity`, `anchor`, `landmark`, … (`MARKER_ICON_KEYS`)
+Create and edit forms use `objectForm/taxonomyField.svelte` and `taxonomySheet.svelte` for a combined category-and-tags field.
 
-The settings UI uses `ColorPicker`, `IconPicker`, and `MarkerPreview` (`src/lib/components/settings/`).
+| Tab       | Form field    | Selection              |
+| --------- | ------------- | ---------------------- |
+| категория | `category`    | Single category        |
+| теги      | `tags`        | Multiple shared tags   |
+| приватные | `privateTags` | Multiple personal tags |
 
-## Client state
+The shared input filters the current tab and offers creation for a new name through `categories.create`, `tags.create`, or `privateTags.create`. Selected rows sort first. Selecting or creating clears the query and returns input focus; clearing a tab affects only that tab.
 
-`categoriesState` (`src/lib/state/categories.svelte.ts`) is populated from `api.categories.list` in the app layout. The full-list layout reads `categoriesState.categories[point.categoryId]` when rendering map markers.
+Arrow keys move the highlight with wrapping, Enter selects or creates, and Escape closes the sheet. Removing a chip from the field does not reopen it. Hidden inputs submit the category and repeated tag IDs with the object form.
 
-## `CategoryBadge` component
+The sheet mounts inside the details panel's portal target. Selections bind to the form immediately, so closing the sheet dismisses it without reverting those selections. The parent form's save persists the object.
 
-`src/lib/components/categoryBadge.svelte` renders a category's marker icon and optional name using merged styles from `categoriesState`. It accepts `categoryId` (preferred) or falls back to a name lookup — search results often carry only the name. Used in the object details header (minimized row, icon-only) and view mode title row.
-
-## What `isHidden` does
-
-The settings checkbox is labeled "hide from list" (`categoryStyleEditor.svelte`). In code, `isHidden` only affects the taxonomy picker in object forms:
-
-```44:46:src/lib/components/objectDetails/objectForm/taxonomyField.svelte
-        Object.values(categoriesState.categories)
-            .filter(item => !item.isHidden)
-            .map(item => ({id: item.id, name: item.name}))
-```
-
-Hidden categories **still appear on the map** with their customized marker style. They are excluded only when choosing a category while creating or editing an object.
-
-## Taxonomy picker in forms
-
-Create and edit forms use a single **категория и теги** field (`taxonomyField.svelte`) instead of separate category and tag dropdowns. Clicking it opens `taxonomySheet.svelte` — a bottom sheet with three tabs:
-
-| Tab       | Field         | Selection                  |
-| --------- | ------------- | -------------------------- |
-| категория | `category`    | Single select              |
-| теги      | `tags`        | Multi select (shared tags) |
-| приватные | `privateTags` | Multi select (owner-only)  |
-
-Each tab shares one search/create input. Typing filters the catalog; a **Создать** row appears when the query does not match an existing name. New categories and tags call `api.categories.create`, `api.tags.create`, or `api.privateTags.create` respectively. Hidden categories are omitted from the category tab (see above).
-
-### Sheet placement
-
-The sheet is portalled into the details card shell (`detailsSheet.svelte` sets `data-details-sheet`) so its backdrop dims the **entire** overlay card — header row included — not only the scrollable form body. Tap the backdrop or the header **×** to close without saving form changes (taxonomy values bind live; closing only dismisses the sheet).
-
-### Trigger and chips
-
-The field trigger shows a `CategoryBadge` plus `TagChip` rows for selected tags. An invisible opener button covers the field; chip **×** buttons sit above it with `pointer-events-auto`, so removing a tag from the trigger does not reopen the sheet. Values still submit through hidden inputs (`category`, repeated `tags`, repeated `privateTags`).
-
-### List behavior
-
-After filtering, already-selected rows are **pinned to the top** of the list so long tag catalogs stay scannable. Toggling a multi-select re-sorts the row; keyboard highlight follows the toggled option rather than staying on the old row index.
-
-The search input auto-focuses when the sheet opens, when switching tabs, and after each select/create (the query clears and focus returns for the next filter). **снять все** clears the current tab only (category, shared tags, or private tags).
-
-### Keyboard
-
-| Key    | Action                                                     |
-| ------ | ---------------------------------------------------------- |
-| ↑ / ↓  | Move highlight (wraps; includes the create row when shown) |
-| Enter  | Select highlighted row or create from query                |
-| Escape | Close sheet                                                |
-
-## Save flow
-
-1. User edits styles in `settingsDialog.svelte` (local `StyleState` per category).
-2. On save, changed rows are sent to `categories.updateStyles`.
-3. Convex upserts `userCategoryMarkerStyles` rows.
-4. `categories.list` reactive query refreshes map markers and the form picker.
-
-## Related docs
-
-- [map-architecture.md](./map-architecture.md) — how marker color/icon reach the map renderer
+See [Map architecture](map-architecture.md) for rendering and [Object details overlay](object-details-overlay.md) for panel behavior.

@@ -1,199 +1,92 @@
 # Map architecture
 
-The interactive map is built around a provider abstraction, a marker pipeline, and zoom-based renderer switching. Today only Google Maps is implemented.
+Google Maps is the only implemented map provider. A shared marker manager connects reactive marker data to DOM and Deck.gl renderers.
 
-## Layer overview
+## Data and rendering flow
 
+```text
+Convex marker catalog + visited IDs
+  -> full-list layout merges viewer state and category styles
+  -> Marker components register with MarkerManager
+  -> repository + viewport selection + visibility updates
+  -> DOM or Deck.gl renderer
+  -> GoogleMapsProvider
 ```
-MapProvider (GoogleMapsProvider)
-    ↓
-MarkerManager (viewport culling, scheduling)
-    ↓
-MarkerRenderer (DomMarkerRenderer | HybridMarkerRenderer | GpuHybridRenderer)
-    ↓
-Marker components in +layout.svelte (data from api.markers.list)
-```
 
-Key entry points:
+| Responsibility                                 | Source                                         |
+| ---------------------------------------------- | ---------------------------------------------- |
+| Provider contract                              | `src/lib/interfaces/map.ts`                    |
+| Google Maps and Deck overlay host              | `src/lib/services/map/providers/google/`       |
+| Initialization and event wiring                | `src/lib/components/map/map.svelte`            |
+| Marker repository, renderer selection, updates | `src/lib/services/map/markerManager.ts`        |
+| Renderer factory                               | `src/lib/services/map/createMarkerRenderer.ts` |
+| Map state                                      | `src/lib/state/map.svelte.ts`                  |
+| Archive marker feed                            | `src/routes/(app)/(fullList)/+layout.svelte`   |
+| Search, share, and draft markers               | `src/routes/(app)/+layout.svelte`              |
 
-| Layer             | File                                                | Role                                                      |
-| ----------------- | --------------------------------------------------- | --------------------------------------------------------- |
-| Provider contract | `src/lib/interfaces/map.ts`                         | `MapProvider`, `MarkerHandle`, `MapBounds`                |
-| Google provider   | `src/lib/services/map/providers/google/provider.ts` | Map init, events, marker handles, Street View             |
-| Map shell         | `src/lib/components/map/map.svelte`                 | Bootstraps provider + `MarkerManager`                     |
-| Global state      | `src/lib/state/map.svelte.ts`                       | `mapState.provider`, `markerManager`, `streetViewVisible` |
-| Marker pipeline   | `src/lib/services/map/markerManager.ts`             | Add/update/remove markers, renderer mode                  |
-| Data feed         | `src/routes/(app)/(fullList)/+layout.svelte`        | Renders `<Marker>` per merged marker list row             |
+## Catalog and personal state
 
-## Marker list data feed
+The full-list layout subscribes to two authenticated Convex queries:
 
-The map marker catalog is loaded client-side from two Convex queries in `(fullList)/+layout.svelte`:
+- `markers.list` reads the user's private markers and all public markers from the compact `markers` table.
+- `markers.listVisitedIds` reads the user's visited object IDs from `userVisitedChunks`.
 
-| Query                        | Returns                                      | Why split                                                                             |
-| ---------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------- |
-| `api.markers.list`           | Owner private markers + all public markers   | Stable catalog payload for map rendering                                              |
-| `api.markers.listVisitedIds` | Flat list of visited object ids for the user | Visited toggles change often; isolating them avoids invalidating the full marker list |
+The layout merges visited IDs into the catalog. Keeping them separate prevents a visit toggle from invalidating the entire marker payload. Category colors and icons come from the merged [category settings](category-settings.md).
 
-`markers.list` reads the compact `markers` table (not full `objects` rows):
+Both queries pass the Clerk user ID, which the backend checks against the session. `keepPreviousData` retains results during reconnects; client identity and `isStale` guards decide when those results can render. The layout waits for usable visited data before rendering the merged list. Neither query seeds an empty initial result, so first-load state remains distinguishable from an empty catalog.
 
-- Owner markers: index `byCreatedByIdAndIsPublic` with `isPublic: false`
-- Public markers: index `byIsPublic` with `isPublic: true`
+An active object can supply a temporary list entry while its catalog row catches up, if the viewer owns it or is signed in and it is public. Anonymous viewers and non-owner private-link recipients use a separate `share` marker. Share IDs use a `share-` prefix to avoid collisions.
 
-The layout merges visited state in a `$derived` block: each list item gets `isVisited` from a `Set` built from `listVisitedIds`. Marker list data is **not** SSR-prefetched (no server load for markers).
+This is a full accessible-catalog subscription, not a viewport query. [Collection access](collection-access-control.md) remains a proposal.
 
-Both queries pass the Clerk `authUserId` and use `keepPreviousData: true` so markers stay visible while Convex reconnects after the browser resumes a background tab. The server rejects a mismatched `authUserId` so retained client data cannot leak across account switches.
+## Renderer selection
 
-Neither query uses `initialData: []` — with empty initial data, `isLoading` becomes false before the first server response, which breaks the first-run hint (it must distinguish "no markers yet" from "list not loaded yet"). See **First-run onboarding** below.
+The PostHog flag `map-gpu-clustered-renderer` selects a strategy once per map instance. Despite the flag name, the GPU renderer does not cluster markers. A disabled, missing, failed, or timed-out flag selects the legacy strategy; the timeout is 1.5 seconds.
 
-When the user opens `/object/[id]` for an object that is not already in the catalog (e.g. a newly shared private object they can view), `getActiveListMarker()` injects a synthetic list entry so the pin still renders. Share-only deep links use the separate share marker path in `(app)/+layout.svelte` instead — see **Share markers** below.
+| Strategy                | Archive markers                               | Service markers |
+| ----------------------- | --------------------------------------------- | --------------- |
+| Legacy, zoom at most 10 | Deck.gl through `HybridMarkerRenderer`        | DOM             |
+| Legacy, zoom above 10   | `DomMarkerRenderer`                           | DOM             |
+| GPU, every zoom         | Composite sprites through `GpuHybridRenderer` | DOM             |
 
-Future collection-based access control is planned in [collection-access-control.md](./collection-access-control.md); the current query shape above is the production behavior today.
+The threshold lives in `src/lib/config/index.ts`. `MarkerManager.syncRendererWithViewport` switches legacy renderers on map idle, suppressing visibility updates while rebuilding. GPU mode keeps one renderer across zoom levels.
 
-## Provider abstraction
+Service markers are `search`, `share`, and `draft`. `list` and `map` use the archive renderer. Every source except `share` participates in viewport selection.
 
-`MapProvider` (`src/lib/interfaces/map.ts`) hides map-vendor details behind a small interface: zoom/center/bounds, drag/click/idle events, and DOM-based marker handles.
+## Viewport updates
 
-`GoogleMapsProvider` is the only implementation. It also exposes `getGoogleMap()` for Google-specific features (Deck.gl overlay, Street View panorama). Adding another provider means implementing `MapProvider` and wiring it in `map.svelte` instead of `GoogleMapsProvider`.
+`selectVisibleMarkerIds` tests numeric bounds, including antimeridian crossings. When candidates exceed the default limit of 1,000, it ranks them by distance from the viewport center. Share markers bypass the cap and bounds filtering.
 
-## DOM vs Deck.gl vs GPU rendering
+`VisibilityEngine` applies only the difference from the visible set. Its default frame budget is 8 ms; large changes continue on animation frames. `UpdateScheduler` coalesces update requests. DOM list markers defer creation until needed; Deck renderers maintain batched marker data.
 
-Two renderer strategies are selected once when the map initializes (`map.svelte` → `resolveGpuRendererFlag`):
+## Focus and gestures
 
-| Strategy             | `rendererStrategy` | Renderers                                     | When active                                       |
-| -------------------- | ------------------ | --------------------------------------------- | ------------------------------------------------- |
-| **Legacy** (default) | `'legacy'`         | `HybridMarkerRenderer` or `DomMarkerRenderer` | PostHog flag off, timed out, or errored           |
-| **GPU**              | `'gpu'`            | `GpuHybridRenderer`                           | PostHog flag `map-gpu-clustered-renderer` enabled |
+`markerFocus.ts` owns focused-marker registration, highlighting, and recentering. The map component bridges the overlay's `detailsId` and sheet position into it. Search selection uses the same `focusDetailsTarget` helper.
 
-### Legacy renderer (zoom-based switch)
+Focus zooms to 15 when the current zoom is below 13. `detailsFocusOffset.ts` shifts the center for a 424 px side panel when at least 400 px of map remains. On narrower screens, only the `peek` sheet adds a vertical offset.
 
-On map idle, `MarkerManager.syncRendererWithViewport` picks the renderer from zoom:
+A GPU marker temporarily gains a DOM copy when focused or held for dragging. The sprite remains until that copy paints, then returns when the copy retires. `markerLifecycle.ts` tracks pending rendering work during these handoffs.
 
-- **Zoom ≤ 10** (`config.deckZoomThreshold`): Deck.gl via `HybridMarkerRenderer`
-- **Zoom > 10**: pure DOM via `DomMarkerRenderer`
+Repositioning requires an owner-draggable marker. `MarkerHold` arms after 350 ms within an 8 px tolerance and cancels on release, larger movement, a second pointer, wheel input, or lost window/tab focus. Map gestures also cancel active holds. `saveReposition` persists the move, restores the previous position on failure, and offers a 10-second undo action after success.
 
-The switch sequence (suppress updates → destroy renderer → recreate → `syncAll` → resume) lives inside `MarkerManager.syncRendererWithViewport`; `map.svelte` only reports that the viewport settled on idle.
+Map clicks wait 300 ms before opening a point preview. Legacy Deck mode suppresses point creation. GPU picking pairs renderer clicks with Google Maps clicks so selecting a sprite does not also create a point. Double-tap drag-zoom suppresses point creation as well.
 
-At low zoom, list markers (`source: 'list'`) batch-render on a Deck.gl overlay for performance. Service markers always use DOM even in deck mode. Map clicks are suppressed while legacy Deck mode is active.
+## Animation ownership
 
-### GPU renderer (flagged)
+DOM entrance animation lives in `renderer/dom/popAnimation.ts`. `RevealWatcher` waits until Maps positions the element in view before starting, with a timeout fallback. Animation events control completion, and hiding or removing a marker cancels pending entrance work.
 
-`GpuHybridRenderer` keeps list markers in one Deck.gl overlay at **every zoom**. Each marker is one composite sprite (category-colored disk + masked Lucide icon). Search, share, and draft markers remain DOM-rendered via the embedded `DomMarkerRenderer`.
+GPU animation lives in `renderer/gpu/`:
 
-**Focus promotion** — the focused list marker is temporarily promoted to DOM: the GPU layer excludes it, a DOM twin takes over for highlight styling and drag repositioning, and the sprite holds the spot until the twin paints. On unfocus, the DOM twin retires after the highlight scales down and the sprite returns.
+- `spritePopExtension.ts` and `spritePopTimes.ts` grow sprites using shader timing.
+- `spriteExits.ts` retains removed sprite data until its exit finishes.
+- `spriteFades.ts` crossfades style and state changes.
 
-**Hold to reposition** — `SpriteDragGesture` detects a long press on a GPU marker, promotes it to DOM, and reuses the existing DOM drag controller. Release ends the drag and demotes back to GPU; the gesture marks a renderer interaction so the map click handler does not create a new point.
+Viewport hiding is immediate. Removal uses an exit animation. These are separate operations because culling and renderer switching should not produce visible exit effects.
 
-Both renderers time the press with `MarkerHold` (`renderer/markerHold.ts`): `HOLD_MS` (350 ms) of a pointer that stays within 8 px of where it landed. The hold is dropped by a release, a slide beyond that tolerance, a second finger (a pinch about to zoom), a wheel, and by losing the window or tab — all watched in the capture phase, because Maps reports its own dragstart only once the map has moved and never reports a pinch at all. `cancelActiveMarkerHold()` lets map-level gestures (dragstart, idle, double-tap drag-zoom) drop whichever hold is armed.
+## Controls and persisted state
 
-A finished drag saves through `saveReposition` (`services/map/markerReposition.ts`), whose success toast carries a **Вернуть** action for 10 s: it moves the marker back and stores the original coordinates. A rejected save moves the marker back to the position the server still has.
+Initial centering, the location watch, and local-storage lifetimes are documented in [Browser state](browser-state.md#initial-location-and-live-tracking). Map idle stores the viewport in `localStorage.lastCenter`. Geolocation stores `lastPosition`, which the position button uses to recenter. The compass button uses device orientation where supported and requests permission where required. The provider calculates minimum zoom from container size to avoid repeated world tiles.
 
-Flag resolution runs while Google Maps initializes and falls back to the legacy renderer if PostHog does not respond within 1.5 seconds. See [analytics.md](./analytics.md).
+The first-run hint appears only after marker data loads, for a signed-in user with no owned markers, while the map is ready and the details overlay is closed. Dismissal persists under `firstRunHintDismissed`.
 
-## Marker sources
-
-`MarkerSource` (`src/lib/interfaces/marker.ts`) controls rendering and viewport behavior:
-
-| Source   | Renderer                      | Viewport-managed | Typical use                           |
-| -------- | ----------------------------- | ---------------- | ------------------------------------- |
-| `list`   | Deck (legacy low zoom) or GPU | Yes              | Archive objects on the map            |
-| `map`    | Same as list                  | Yes              | Legacy / map-origin markers           |
-| `search` | DOM                           | Yes              | Google Places search result           |
-| `share`  | DOM                           | No               | Deep-linked object not in marker list |
-| `draft`  | DOM                           | Yes              | Point being created                   |
-
-Service markers (`search`, `share`, `draft`) call `usesDomRenderer()` and render as DOM overlays inside `HybridMarkerRenderer` so they stay interactive above the Deck layer.
-
-**Share markers** render in `src/routes/(app)/+layout.svelte` when a deep-linked object is not in the user's marker list. They use a distinct star icon and `source="share"`. The marker id is prefixed with `share-` so it does not collide with list markers for the same object id.
-
-## Viewport culling
-
-The default renderer keeps only visible markers rendered:
-
-- `selectVisibleMarkerIds` (`viewportSelection.ts`) — picks the ids inside the current bounds
-- `VisibilityEngine` — applies the show/hide difference
-- `UpdateScheduler` — debounces viewport recalculations on map idle
-
-List markers are lazy: they are created in the renderer only when entering the viewport. `maxVisibleMarkers` defaults to 1000.
-
-Viewport selection scans the catalog cheaply, while applying its result costs only what changed:
-
-- `selectVisibleMarkerIds` tests each marker against plain numeric bounds edges (`MapBounds.toRect()`) instead of a vendor `contains()` call, and skips distance ranking entirely unless the viewport holds more markers than `maxVisibleMarkers`. When ranking is needed it sorts on Haversine ordering keys computed once per marker, omitting the final distance conversion because only the ordering matters.
-- `VisibilityEngine` diffs the selected ids against the repository's visible set, so it touches only markers entering or leaving the viewport rather than walking every marker.
-- The resulting diff is applied under a time budget (`frameBudgetMs`, default 8 ms) rather than a fixed chunk count: small diffs finish synchronously in the same tick, large ones yield to the browser between `requestAnimationFrame` batches so slow devices stay interactive.
-
-With the GPU renderer, viewport culling still runs through `selectVisibleMarkerIds`, but list markers draw as sprites rather than DOM elements. The GPU layer does not run DOM entrance animations; markers grow in on the GPU instead (see below).
-
-## Marker entrance animation
-
-DOM markers pop in when they enter the viewport; `PopAnimator` (`renderer/dom/popAnimation.ts`) owns it.
-
-Both ends of the animation are driven by the marker itself rather than by wall-clock timers, because the Maps API decides when marker content is attached and when its draw pass gives that content a screen position, and those are not the same moment:
-
-- **Start** — `popIn` hides the element and waits for `RevealWatcher` (`renderer/dom/revealWatcher.ts`) before queuing `animate-popin`. The Maps API attaches marker content several frames before positioning it, and until then paints it far outside the viewport; a CSS animation started at attach time therefore spends its growth phase where nobody can see it. `checkVisibility()` cannot catch this — it reads style visibility, never geometry — so the gate is an `IntersectionObserver`. Once revealed, the marker is painted once at zero scale before its animation starts. Starts are capped per frame so a large intersection batch cannot promote hundreds of animated layers in one long task. The marker's transform transition is suspended during this sequence so it cannot interpolate the zero-scale hold. After `REVEAL_TIMEOUT_MS` the animation is queued regardless, so a marker the map never positions cannot stay hidden.
-- **End** — teardown hangs off the animation's own `animationend` / `animationcancel`, so the class stays until playback finishes. Previously a wall-clock timer stripped the class before the animation had played whenever the draw was late — which is what happens when a pan brings hundreds of markers in at once.
-
-`hide()` and `remove()` cancel a pending pop-in so a marker leaving mid-animation cannot keep it. Hiding is never animated, in either renderer (see the comment on `Marker.hide`); removal is.
-
-Sprites in the GPU renderer grow in too, but nothing about the DOM sequence carries over: there is no element to attach an animation to and no reveal to wait for, since a sprite is drawn only once the layer draws it. `SpritePopExtension` (`renderer/gpu/spritePopExtension.ts`) scales the quad in the vertex shader, through deck.gl's `DECKGL_FILTER_SIZE` hook, from an `instancePopTimes` attribute and a `now` uniform it refreshes every draw. deck.gl's own attribute transitions cannot do this: `padBuffer` seeds a newly added instance with its final value, so it has nothing to ease from. That is load-bearing elsewhere, as it is also why growing the data does not make settled markers animate.
-
-The same extension runs the exit, constructed with `reverse` and the shorter `--animate-popout` duration. A removed marker is gone from the layer's data immediately, so `spriteExits.ts` keeps a copy of its position and sprite and draws it from a dedicated exit layer until it has shrunk away. Nothing downstream waits on that: `remove()` returns as it always did, and the marker object can be collected. A marker that was promoted to DOM is skipped, because its twin is already running the DOM pop-out and a sprite copy would animate on top of it.
-
-When category style or marker state changes, `SpriteFadeTracker` (`renderer/gpu/spriteFades.ts`) crossfades the outgoing sprite over the incoming one for one deck.gl colour transition — an instantaneous sprite swap would otherwise pop.
-
-`spritePopTimes.ts` stamps each marker the first time the layer draws it and keeps that stamp for good, so a marker pops when it joins the map rather than on every re-render. The whole entrance is one float per marker with no per-frame CPU work, so an arriving batch costs the same whether it is 5 markers or 2,500. While anything is still growing the layer asks for its own frames through `setNeedsRedraw()`, because nothing else drives them when the map sits still.
-
-## Map interactions
-
-- **Click** — 300 ms debounce; suppressed while legacy Deck mode is active or during double-tap drag-zoom (`PointerDragZoomController`). GPU marker picks forward through `pickingClick.ts` and pair with the Maps click via `takePairedRendererClick` so marker clicks do not also create points. Empty-map clicks keep the point-creation flow.
-- **Drag** — cancels an armed reposition hold (`cancelActiveMarkerHold`).
-- **Idle** — persists center/zoom to `localStorage` (`lastCenter`), then `syncRendererWithViewport` picks the renderer for the new zoom and schedules a viewport update.
-- **Min zoom** — computed from container size so the map cannot zoom out far enough to show duplicate tile instances (`computeMinZoomForContainer` in the Google provider).
-
-## Focus and overlay offset
-
-When the details overlay opens for a marker (and when the bottom sheet snaps between positions), the map recenters so the pin stays in the visible map area:
-
-- `focusDetailsTarget(lat, lng)` (`src/lib/services/map/map.svelte.ts`) zooms in if below `FOCUS_MIN_ZOOM` (13), then applies offsets from `detailsFocusOffsets` (`src/lib/services/map/detailsFocusOffset.ts`).
-- **Wide viewports** (at least 400 px left beside a 424 px panel): shift the center west by half `DETAILS_OVERLAY_WIDTH` (424 px). Sheet position does not change this.
-- **Narrow viewports** (mobile bottom-sheet layout):
-    - `peek` — shift the center south by half the peek overlay height so the pin sits in the uncovered map above the sheet
-    - `full` / `minimized` — center on the marker with no offset
-- **Marker focus** (`src/lib/services/map/markerFocus.ts`) owns which marker is focused: the highlight (`scale-120` class), the `focusDetailsTarget` recenter, and a registry of focusable markers keyed by the id the overlay would show for them. `marker.svelte` registers/unregisters; a single `$effect` in `map.svelte` bridges `objectDetailsOverlay.detailsId` (plus sheet position and map readiness) into `setFocusedTarget`, so flicking to peek recenters with the vertical offset.
-- `map.svelte` registers `onMarkerShown: notifyFocusableMarkerShown` on `MarkerManager` so share/deep-link pages re-apply focus once the marker's element enters the viewport.
-
-Search result selection (`searchPreviewItem.svelte`, `searchResultsItem.svelte`) uses the same `focusDetailsTarget` helper as overlay focus — conditional zoom to `FOCUS_ZOOM` (15) when below `FOCUS_MIN_ZOOM` (13), plus the viewport-aware overlay offsets above.
-
-## Map controls
-
-Floating controls in `src/routes/(app)/+layout.svelte` (bottom-right stack):
-
-| Control             | File                       | Behavior                                                                                                                                                                                                                                                                                                   |
-| ------------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Last position       | `positionButton.svelte`    | Reads `localStorage` key `lastPosition` (updated by geolocation polling in `geolocation.ts`). If unset or `{lat:0,lng:0}`, shows `toast.info` instead of panning. Otherwise zooms to 15 and centers. Distinct from `lastCenter`, which stores the map viewport on idle.                                    |
-| Compass orientation | `orientationButton.svelte` | Shown only when `DeviceOrientationEvent` exists and either iOS permission API is present or `navigator.maxTouchPoints > 0`. Requests permission on first enable; denied/explicit tap failures show `toast.error`. Silent auto-enable on mount may fail on iOS (no user gesture) without surfacing a toast. |
-
-Controls use `--map-control*` CSS tokens from `src/styles/app.css` (`bg-map-control`, `text-map-control-active-foreground`, etc.) so they stay readable over the map in light and dark themes.
-
-## First-run onboarding
-
-`firstRunHint.svelte` shows a dismissible chip above the map: "Нажмите на карту, чтобы добавить точку". It appears in `(fullList)/+layout.svelte` when **all** of:
-
-- Map is ready (`mapState.isReady`)
-- User is signed in
-- Marker list has loaded (`objects.data !== undefined`)
-- User owns no markers yet (`!rawMarkerPoints.some(point => point.isOwner)`)
-- Details overlay is closed
-
-Dismissal persists in `localStorage` under `firstRunHintDismissed`. The component starts hidden and reads storage in `onMount` to avoid a flash for returning users.
-
-## Marker styling on the map
-
-Archive marker color and icon come from the object's category, merged with per-user overrides from `api.categories.list`. See [category-settings.md](./category-settings.md).
-
-## Related docs
-
-- [authentication.md](./authentication.md) — map click and route access require sign-in
-- [street-view.md](./street-view.md) — panorama overlay and minimap (requires `GoogleMapsProvider`)
-- [object-details-overlay.md](./object-details-overlay.md) — map click → `/point` create flow
-- [search.md](./search.md) — search result markers and map focus
-- [analytics.md](./analytics.md) — PostHog setup, GPU renderer flag, event catalog
+See [Object details overlay](object-details-overlay.md), [Search](search.md), [Street View](street-view.md), and [Analytics](analytics.md) for the related flows.

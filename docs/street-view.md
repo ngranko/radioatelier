@@ -1,59 +1,42 @@
 # Street View
 
-Street View opens as a panorama on the main Google map. A minimap overlay lets users reposition the panorama without leaving the view.
+Object actions and point previews open a Google Street View panorama through `getStreetView` in `src/lib/services/map/streetView.svelte.ts`. The active provider must be an initialized `GoogleMapsProvider`.
 
-## Requirements
+## Open and close
 
-Street View is tied to `GoogleMapsProvider`:
+1. Resolve a panorama within 30 metres of the selected coordinates.
+2. Set its panorama ID, or position if no ID is present, and make it visible.
+3. Minimize the details panel.
 
-- `getStreetView()` rejects if the active provider is not `GoogleMapsProvider` or the map is not initialized.
-- Uses `PUBLIC_GOOGLE_MAPS_API_KEY` (browser) — see [environment.md](./environment.md).
+`mapState.streetViewVisible` tracks visibility. The close control calls the provider's `closeStreetView`; the panorama's `visible_changed` listener restores the details panel to `full`.
 
-## Opening Street View
+The browser uses `PUBLIC_GOOGLE_MAPS_API_KEY`, shared with the map. See [Environment](environment.md).
 
-Entry points call `getStreetView(lat, lng)` from `src/lib/services/map/streetView.svelte.ts`:
+## Lookup policy
 
-- Object view actions (`viewMode/actions.svelte`)
-- Point preview (`pointPreview.svelte`)
+`resolveStreetViewLocation` keeps module-level caches for the browser session.
 
-Flow:
+| Mechanism         | Behavior                                                                                   |
+| ----------------- | ------------------------------------------------------------------------------------------ |
+| Coordinate key    | Latitude and longitude rounded to four decimal places                                      |
+| Successful lookup | Reused for the session                                                                     |
+| Failed lookup     | Cached for five minutes, or 60 seconds for a rate-limit error                              |
+| Concurrent lookup | Requests for the same key share one promise                                                |
+| Global cooldown   | New requests pause for 60 seconds after `429`, `over_query_limit`, or `resource_exhausted` |
 
-1. `resolveStreetViewLocation` queries `google.maps.StreetViewService` (30 m radius).
-2. `applyStreetViewLocation` sets pano or position on the map's `StreetViewPanorama`.
-3. `setOverlayPosition('minimized')` so the details panel stays out of the way.
+## Minimap
 
-Components: `streetView.svelte` (panorama host), `streetViewOverlay.svelte` (close control), `streetViewMinimap.svelte` (position minimap).
+`streetViewMinimap.svelte` uses the main map's Map ID. Panorama position and heading update the minimap. Dragging the minimap starts a lookup after a 300 ms debounce and preserves panorama heading when moving to the new location.
 
-## Lookup caching and rate limits
+A generation counter ignores stale asynchronous results when the user drags again. Expanding or collapsing the minimap triggers a map resize.
 
-`resolveStreetViewLocation` deduplicates and caches lookups:
+## Source guide
 
-| Mechanism           | Behavior                                                           |
-| ------------------- | ------------------------------------------------------------------ |
-| Coordinate key      | Rounded to 4 decimal places                                        |
-| Success cache       | Stored in `lookupCache` for the session                            |
-| Failure cache       | 5 minutes (60 seconds after a 429)                                 |
-| Pending dedup       | Concurrent requests for the same key share one promise             |
-| Rate-limit cooldown | 60 seconds after `429` / `over_query_limit` / `resource_exhausted` |
+| File under `src/lib/`                     | Responsibility                           |
+| ----------------------------------------- | ---------------------------------------- |
+| `services/map/streetView.svelte.ts`       | Lookup, caches, rate limits, and opening |
+| `components/map/streetView.svelte`        | Panorama host and visibility events      |
+| `components/map/streetViewOverlay.svelte` | Overlay close control                    |
+| `components/map/streetViewMinimap.svelte` | Minimap and panorama synchronization     |
 
-## Minimap behavior
-
-`streetViewMinimap.svelte` renders a small Google map synced with the panorama:
-
-- **Panorama → minimap** — heading and position update the minimap center on panorama moves.
-- **Minimap → panorama** — after drag ends, a 300 ms debounced lookup moves the panorama to the minimap center while preserving POV heading.
-- **Expand/collapse** — toggles minimap size; triggers `resize` on the mini map.
-- **Concurrency** — `syncGeneration` cancels stale syncs if the user drags again mid-flight.
-
-The minimap uses the same `mapId` as the main map (`config.googleMapsId`).
-
-## Visibility state
-
-`mapState.streetViewVisible` tracks whether the Street View overlay is shown. Closing Street View calls `mapState.provider.closeStreetView()`.
-
-When the panorama hides (`streetView.svelte` listens to `visible_changed`), the details overlay restores to `setOverlayPosition('full')` so the object panel is usable again. Opening Street View still collapses the sheet to `minimized` via `getStreetView` in `streetView.svelte.ts`.
-
-## Related docs
-
-- [map-architecture.md](./map-architecture.md) — `GoogleMapsProvider` and map state
-- [object-details-overlay.md](./object-details-overlay.md) — overlay minimize on Street View open
+See [Map architecture](map-architecture.md) for the provider and [Object details overlay](object-details-overlay.md) for panel positions.

@@ -1,110 +1,90 @@
-# Environment variables
+# Environment
 
-The project uses two configuration surfaces:
+App configuration and backend secrets live in separate environments. Copy [.env.local.example](../.env.local.example) for local development. Code under `src/convex/` reads variables from its Convex deployment, not from the app's `.env.local`.
 
-| Surface               | Purpose                                                                           |
-| --------------------- | --------------------------------------------------------------------------------- |
-| **`.env.local`**      | SvelteKit dev/build, Convex CLI linkage, and local maintenance scripts.           |
-| **Convex deployment** | Everything executed inside `src/convex/` (actions, mutations, HTTP routes, cron). |
+## Setup order
 
-`bun run dev` runs Vite and `convex dev` together. Convex functions read **only** deployment env vars (`process.env` in `src/convex/`), not SvelteKit’s `.env.local`, unless you have also set the same names on the Convex deployment.
+1. Install dependencies and configure the development Convex project.
+2. Fill in `.env.local` for SvelteKit, Clerk, browser Maps, and PostHog.
+3. Configure authentication and server Google APIs on the Convex development deployment.
+4. Create the Typesense collection and install its scoped keys on Convex. See [Search setup](search.md#typesense-setup).
+5. Configure [Notion sync](notion-sync.md) if users will have sync enabled.
+6. Run `bun run dev` to start Vite and Convex together.
 
-Set Convex variables for each deployment (dev, prod) via the [dashboard](https://dashboard.convex.dev) or:
-
-```bash
-npx convex env set VARIABLE_NAME "value"
-```
-
-List current values:
+Set deployment variables through the Convex dashboard or CLI:
 
 ```bash
-npx convex env list
+npx convex env set VARIABLE_NAME 'value'
 ```
 
-## `.env.local` (local app)
+Use `--prod` when deliberately configuring production. Development and production need their own values.
 
-See `.env.local.example`.
+## Local app and scripts
 
-| Variable                       | Used by                                                                                          |
-| ------------------------------ | ------------------------------------------------------------------------------------------------ |
-| `CONVEX_DEPLOYMENT`            | Convex CLI (`convex dev`, `convex deploy`)                                                       |
-| `PUBLIC_CONVEX_URL`            | SvelteKit client, server Convex HTTP client, Typesense backfill script                           |
-| `PUBLIC_CONVEX_SITE_URL`       | Operational reference for webhook URLs (`https://….convex.site/...`); not read in code           |
-| `PUBLIC_CLERK_PUBLISHABLE_KEY` | `svelte-clerk` in the browser                                                                    |
-| `CLERK_SECRET_KEY`             | `svelte-clerk` on the SvelteKit server                                                           |
-| `TYPESENSE_URL`                | Local Typesense setup/backfill scripts                                                           |
-| `TYPESENSE_ADMIN_KEY`          | Local Typesense setup/backfill scripts (admin scope)                                             |
-| `TYPESENSE_COLLECTION`         | Local scripts; optional on Convex (defaults to `objects`)                                        |
-| `TYPESENSE_BACKFILL_KEY`       | Backfill script; **must match** the Convex variable of the same name                             |
-| `PUBLIC_GOOGLE_MAPS_API_KEY`   | Map UI, Street View, browser geolocation (`$lib/config`)                                         |
-| `PUBLIC_GOOGLE_MAPS_MAP_ID`    | Google Maps map style / vector map id                                                            |
-| `PUBLIC_POSTHOG_PROJECT_TOKEN` | PostHog client + server SDK (`hooks.client.ts`, `lib/server/posthog.ts`)                         |
-| `PUBLIC_POSTHOG_HOST`          | PostHog API host for `posthog-node`; client `ui_host`                                            |
-| `GIT_COMMIT_SHA`               | Optional locally; set in CI/CD — first 7 chars become `__APP_SERVICE_VERSION__` for PostHog logs |
+| Variable                       | Consumer                                                            |
+| ------------------------------ | ------------------------------------------------------------------- |
+| `CONVEX_DEPLOYMENT`            | Convex CLI deployment selection                                     |
+| `PUBLIC_CONVEX_URL`            | Browser and server Convex clients; default URL for backfill scripts |
+| `PUBLIC_CONVEX_SITE_URL`       | Reference host for webhook URLs; app code does not read it          |
+| `PUBLIC_CLERK_PUBLISHABLE_KEY` | Browser Clerk integration                                           |
+| `CLERK_SECRET_KEY`             | SvelteKit Clerk server integration                                  |
+| `PUBLIC_GOOGLE_MAPS_API_KEY`   | Browser Google Maps, Street View, and initial-location fallback     |
+| `PUBLIC_GOOGLE_MAPS_MAP_ID`    | Google map styling and vector map configuration                     |
+| `PUBLIC_POSTHOG_PROJECT_TOKEN` | Browser and SvelteKit server PostHog clients                        |
+| `PUBLIC_POSTHOG_HOST`          | Server PostHog API host and browser `ui_host`                       |
+| `GIT_COMMIT_SHA`               | Optional build-time release identifier; defaults to `local`         |
+| `TYPESENSE_URL`                | Local setup and backfill scripts                                    |
+| `TYPESENSE_ADMIN_KEY`          | Local setup and backfill administration                             |
+| `TYPESENSE_COLLECTION`         | Local script collection name; defaults to `objects`                 |
+| `TYPESENSE_BACKFILL_KEY`       | Backfill credential, matching the target Convex deployment          |
 
-**Google keys:** the `PUBLIC_GOOGLE_*` pair is for the browser (Maps JavaScript API, referrer-restricted). `GOOGLE_API_KEY` on Convex is a separate server key for Geocoding and Places — see below.
+`PUBLIC_` variables are browser-visible. Values imported from `$env/static/public` are compiled into the app. Supply them to the automated build environment as well as local development.
 
-**PostHog:** both `PUBLIC_POSTHOG_*` variables are required for analytics. The browser sends events through the `/ingest` reverse proxy (same origin); see [analytics.md](./analytics.md).
+`src/lib/config/index.ts` rejects blank browser Maps keys or Map IDs. Live position tracking uses `navigator.geolocation`. When there is no saved viewport or position, initial centering also calls Google's Geolocation API with the browser key; see [Browser state](browser-state.md#initial-location-and-live-tracking).
 
-## Convex deployment (backend)
+## Convex deployment
 
-### Authentication (Clerk ↔ Convex)
+### Authentication
 
-| Variable                  | Used by                                                                                         |
-| ------------------------- | ----------------------------------------------------------------------------------------------- |
-| `CLERK_JWT_ISSUER_DOMAIN` | `src/convex/auth.config.ts` — Clerk JWT issuer URL (e.g. `https://your-app.clerk.accounts.dev`) |
-| `CLERK_WEBHOOK_SECRET`    | `src/convex/http.ts` — verifies `POST /clerk-users-webhook`                                     |
+| Variable                  | Consumer                                                  |
+| ------------------------- | --------------------------------------------------------- |
+| `CLERK_JWT_ISSUER_DOMAIN` | `src/convex/auth.config.ts`, with application ID `convex` |
+| `CLERK_WEBHOOK_SECRET`    | Svix verification at `POST /clerk-users-webhook`          |
 
-Configure the Clerk JWT template named `convex` and add the Convex issuer URL in the Clerk dashboard as described in [Convex + Clerk](https://docs.convex.dev/auth/clerk). Route-level auth behavior is documented in [authentication.md](./authentication.md).
+Configure a Clerk JWT template named `convex`. The server client requests that template and the browser auth bridge uses it for Convex authentication. The issuer must match the Clerk application.
 
-### Google (server)
+Point Clerk user webhooks at `https://<deployment>.convex.site/clerk-users-webhook` and enable `user.created`, `user.updated`, and `user.deleted`. These events populate the app user records required by most authenticated backend functions. See [Authentication](authentication.md).
 
-| Variable         | Used by                                                                                           |
-| ---------------- | ------------------------------------------------------------------------------------------------- |
-| `GOOGLE_API_KEY` | Geocoding (`helpers/geocode.ts`, `locations.ts`), Google Places search (`search/googlePlaces.ts`) |
+### Google server APIs
 
-Restrict this key to server APIs (Geocoding, Places) in Google Cloud. Use `PUBLIC_GOOGLE_MAPS_API_KEY` for the map UI, not this variable.
+`GOOGLE_API_KEY` is used by Convex geocoding and Google Places search. Configure it separately from the browser key. The browser key serves Maps JavaScript, Street View, and initial geolocation; the server key serves Geocoding and Places.
 
-### Typesense (runtime sync + search)
+### Typesense
 
-| Variable                 | Used by                                                              |
-| ------------------------ | -------------------------------------------------------------------- |
-| `TYPESENSE_URL`          | `src/convex/typesense/client.ts`                                     |
-| `TYPESENSE_SYNC_KEY`     | Index writes from Convex                                             |
-| `TYPESENSE_SEARCH_KEY`   | Search actions (read-only key)                                       |
-| `TYPESENSE_COLLECTION`   | Optional; defaults to `objects`                                      |
-| `TYPESENSE_BACKFILL_KEY` | `typesense:getBackfillPage` action; must match local backfill script |
+| Variable                 | Consumer                                        |
+| ------------------------ | ----------------------------------------------- |
+| `TYPESENSE_URL`          | Runtime Typesense clients                       |
+| `TYPESENSE_SYNC_KEY`     | Scheduled index writes                          |
+| `TYPESENSE_SEARCH_KEY`   | Search actions                                  |
+| `TYPESENSE_COLLECTION`   | Optional collection name, default `objects`     |
+| `TYPESENSE_BACKFILL_KEY` | Temporary access to `typesense:getBackfillPage` |
 
-`TYPESENSE_ADMIN_KEY` is **not** used by Convex — only local setup/backfill scripts. Typesense is self-hosted, so the admin key is the server's bootstrap key (`TYPESENSE_API_KEY` on the Railway Typesense service), not a key minted from a dashboard. See [search.md](./search.md#running-the-backfill-against-production).
+Convex does not use `TYPESENSE_ADMIN_KEY`. Keep that key with local maintenance configuration. The backfill endpoint exports all objects, including private objects, and rejects requests while its secret is unset. See the [backfill runbook](search.md#running-the-backfill-against-production).
 
-### Notion sync
+### Notion
 
-| Variable                                | Used by                                               |
-| --------------------------------------- | ----------------------------------------------------- |
-| `NOTION_API_KEY`                        | Notion API client                                     |
-| `NOTION_DATA_SOURCE_ID`                 | Target database / data source                         |
-| `NOTION_WEBHOOK_VERIFICATION_TOKEN`     | `POST /notion-webhook` signature verification         |
-| `NOTION_SYNC_APP_URL`                   | Builds `/object/[id]` map links in outbound sync      |
-| `NOTION_SYNC_FALLBACK_USER_EXTERNAL_ID` | Clerk user id for pages without a mapped Notion owner |
+| Variable                                | Purpose                                     |
+| --------------------------------------- | ------------------------------------------- |
+| `NOTION_API_KEY`                        | Notion integration token                    |
+| `NOTION_DATA_SOURCE_ID`                 | Target data source ID                       |
+| `NOTION_WEBHOOK_VERIFICATION_TOKEN`     | Verify signatures at `POST /notion-webhook` |
+| `NOTION_SYNC_APP_URL`                   | App origin used to construct object links   |
+| `NOTION_SYNC_FALLBACK_USER_EXTERNAL_ID` | Clerk ID of the fallback sync owner         |
 
-Webhook URL: `https://<deployment>.convex.site/notion-webhook` (use `PUBLIC_CONVEX_SITE_URL` from `.env.local` as the host prefix).
+The fallback user must exist in Convex, be active, and have sync enabled. Property mapping, metadata, and webhook setup are in [Notion sync](notion-sync.md).
 
-Further Notion setup: [notion-sync.md](./notion-sync.md).
+## Deployment configuration
 
-## Quick setup checklist
+The app uses the Node adapter. `docker/app/Dockerfile` has development, build, and production stages; the production stage serves the generated app on port 3000. The Docker build accepts `GIT_COMMIT_SHA` or falls back to `RAILWAY_GIT_COMMIT_SHA` for the release identifier.
 
-**Local (`.env.local`):**
-
-1. Copy `.env.local.example` → `.env.local`.
-2. Fill Convex/Clerk public URLs, Clerk secret, `PUBLIC_GOOGLE_MAPS_*`, and `PUBLIC_POSTHOG_*` for the frontend.
-3. Add Typesense admin URL/key if you run setup/backfill scripts.
-4. Optionally set `GIT_COMMIT_SHA` when testing production-like PostHog service versions locally.
-
-**Convex (dev deployment):**
-
-1. `CLERK_JWT_ISSUER_DOMAIN`, `CLERK_WEBHOOK_SECRET`
-2. `GOOGLE_API_KEY`
-3. `TYPESENSE_URL`, `TYPESENSE_SYNC_KEY`, `TYPESENSE_SEARCH_KEY`, `TYPESENSE_BACKFILL_KEY` (and optionally `TYPESENSE_COLLECTION`)
-4. All `NOTION_*` variables if sync is enabled
-
-Repeat the Convex step for production with production credentials.
+The package deploy script runs Convex deployment with an automated frontend build command. Builds are handled automatically; do not invoke the build command directly. See [Analytics](analytics.md) for release tagging and the fixed EU ingest proxy.

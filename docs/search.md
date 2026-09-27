@@ -1,126 +1,95 @@
 # Search
 
-Search combines archive full-text lookup (Typesense) with Google Places. The UI has a compact preview dropdown and a full results panel with tabbed pagination.
+Search combines Typesense archive results with Google Places. The browser uses authenticated Convex actions; it does not receive Typesense credentials.
 
-## Convex actions
+## Actions and results
 
-All search actions live in `src/convex/search.ts` and require an authenticated user.
+All actions are defined in `src/convex/search.ts` and require a current app user.
 
-| Action                      | Purpose                                       | Pagination                                                                                |
-| --------------------------- | --------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| `search.preview`            | Mixed local + Google results for the dropdown | Returns up to 5 local + 2 Google items; `hasMore` when either source has additional pages |
-| `search.local`              | Typesense object search                       | Offset-based (`offset` arg, page size 20)                                                 |
-| `search.google`             | Google Places text search                     | Token-based (`pageToken` arg, page size 20)                                               |
-| `search.googlePlaceDetails` | Place details for a selected Google result    | Single fetch                                                                              |
+| Action                      | Result                                    | Pagination        |
+| --------------------------- | ----------------------------------------- | ----------------- |
+| `search.preview`            | Up to five archive and two Places results | `hasMore`         |
+| `search.local`              | Archive results, 20 per page              | Numeric offset    |
+| `search.google`             | Places results, 20 per page               | Google page token |
+| `search.googlePlaceDetails` | Details for one place                     | None              |
 
-Coordinate queries (`"55.75, 37.61"`) bypass Typesense and Google; `preview` returns a synthetic local item at those coordinates.
+A valid latitude/longitude query, such as `55.75, 37.61`, returns one synthetic coordinate result from preview without calling either search provider. Google preview failures are logged and leave archive results available; a failed archive lookup fails preview.
+
+Typesense searches name, address, city, country, and category. It filters to the viewer's own objects or public objects, then sorts by text match and distance from the supplied center. It fetches an extra row to determine `hasMore`.
 
 ## UI flow
 
-```
-search.svelte (bar + area button)
-    ↓ query + map center
-searchPreview.svelte → api.search.preview
-    ↓ "Load more"
-searchResults.svelte (Local | Google tabs)
-    ↓ per tab
-searchResultsList.svelte → SearchPageSource callback
-```
+`src/lib/components/search/search.svelte` hosts the search bar and area-search control. `searchPreview.svelte` requests mixed results and hides while object details are selected.
 
-### Preview dropdown
+Selecting an archive preview result focuses its marker and opens `/object/[id]`, using a loading overlay if the marker is not yet available. Selecting a Places or coordinate result opens `/point` with coordinates and an optional `placeId`.
 
-`searchPreview.svelte` calls `api.search.preview` whenever `searchState.query`, `lat`, and `lng` are set. It hides while an object details overlay is open (`objectDetailsOverlay.detailsId`).
+The expanded results panel has archive and Google tabs. Both use `searchResultsList.svelte` for loading, pagination, errors, and map pins. Selecting a full-list result focuses its location and invokes its registered marker click handler when available. An empty archive result offers a button to switch the same query to Google. Moving the map can offer an explicit area re-search through `searchArea.svelte.ts`.
 
-Selecting a preview item calls `focusDetailsTarget` (same helper as the details overlay — zooms in when below `FOCUS_MIN_ZOOM`, then applies the viewport-aware overlay offsets from `detailsFocusOffsets`). Then:
+`SearchItem`, `SearchPageSource`, and `SearchResultsPage` live in `src/lib/interfaces/object.ts`. The list treats each page cursor as opaque; the tab callback translates it to an offset or page token.
 
-- **Existing list marker** — triggers the marker's `onClick` (opens object details).
-- **Known object id, no marker yet** — `showLoadingDetailsOverlay` + navigate to `/object/[id]`.
-- **Google / coordinate hit without id** — upsert into `searchPointList`, show loading overlay, navigate to `/point?lat=&lng=&placeId=`.
-
-Full results items (`searchResultsItem.svelte`) also call `focusDetailsTarget`, then fire the marker click when the result id is already on the map.
-
-### Full results panel
-
-`searchResults.svelte` defines two `SearchPageSource` callbacks:
-
-- **Local tab** — `api.search.local` with numeric offset cursors.
-- **Google tab** — `api.search.google` with opaque `pageToken` cursors.
-
-Both tabs share `searchResultsList.svelte`, which handles initial load, append pagination, error states, and marker rendering.
-
-### Empty local results
-
-When the **Local** tab returns no items, `searchResultsList.svelte` shows a centered empty state with a "Поискать в Google" button. `searchResults.svelte` passes `emptyAction` only on the local tab; clicking it switches `currentTab` to `google` so users can retry the same query against Places without retyping.
+Search URLs use `/?q=<query>&lat=<latitude>&lng=<longitude>`. Valid query and center values restore the full results panel; see [Browser state](browser-state.md#url-and-transient-state).
 
 ## Map integration
 
-When a results tab is active, `searchResultsList.svelte`:
+Results enter `searchPointList` and `fitMarkerList` frames them with panel padding. The app layout renders search pins as DOM markers. Selection shares the overlay's focus and zoom helper.
 
-1. Writes items into `searchPointList` (keyed by `googlePlaceId` or object id).
-2. Calls `fitMarkerList` to frame all visible results, padding for the search panel on desktop and the preview sheet on mobile.
+`selectSearchPoint` tracks a single temporary preview pin. If the selected item already belongs to the results list, closing the preview does not remove that list-owned pin. Selecting an existing object clears any temporary preview pin.
 
-Search markers render in `src/routes/(app)/+layout.svelte` with `source="search"` — a magnifying glass for local hits and the Google logo for Places results.
+See [Map architecture](map-architecture.md) and [Object details overlay](object-details-overlay.md) for rendering and route behavior.
 
-### Preview pins vs result-list pins
+## Index writes
 
-`searchPointList.svelte.ts` tracks temporary preview pins for Google/coordinate hits that do not yet have an object id. Only one preview pin is active at a time:
+`helpers/objectWriter.ts` schedules a Typesense create after object creation and an update after any nonempty stored-field patch. No-op patches schedule nothing. Interactive removal and inbound sync deletion schedule `typesense.removeFromTypesense`.
 
-- **`selectSearchPoint`** — adds a preview pin for a new place/coordinate hit. If the key already exists in the list (e.g. the full results tab already rendered it), selection does not take ownership — the existing pin outlives the preview.
-- **`clearSelectedSearchPoint`** — removes the current preview pin when selecting an existing object from the preview dropdown (that object has its own list marker).
+Index actions are asynchronous, so a successful object write does not mean its search result is already available. There is no application-level retry queue for failed index actions. The backfill script reconciles drift after failures or migrations.
 
-Preview selection (`searchPreviewItem.svelte`) clears any preview pin before opening an existing object id; place-only hits call `selectSearchPoint` then navigate to `/point`.
+## Typesense setup
 
-## Shared types
-
-`SearchItem`, `SearchPageSource`, and `SearchResultsPage` are defined in `src/lib/interfaces/object.ts`. A `SearchPageSource` is an async function `(cursor: string) => Promise<SearchResultsPage>`; the list component treats the cursor as opaque (starting with `''`).
-
-## Typesense indexing
-
-Search reads go through `src/convex/search.ts` → Typesense. **Writes** are scheduled by the object writer seam — not by search actions directly:
-
-- `createObjectRecords` enqueues `typesense.createInTypesense` after insert (covers interactive create, CSV import, and inbound Notion create).
-- `patchObjectRecords` enqueues `typesense.updateInTypesense` when name, location, category, or visibility fields change.
-- `objects.delete` and inbound delete enqueue `typesense.removeFromTypesense`.
-
-The scheduled record is built from post-write object + map point + category name via `buildObjectSearchRecord`. See [object-backend.md](./object-backend.md).
-
-### Backfill reconcile
-
-Runtime writes are scheduled per mutation and are not retried, so the index drifts after a bulk migration or whenever Typesense was unreachable while an object changed. The reconcile backfill repairs that drift:
+Run the local setup script with the intended server and collection:
 
 ```bash
-bun scripts/typesense/backfill.ts \
-  --convex-url "$PUBLIC_CONVEX_URL" \
-  --backfill-key "$TYPESENSE_BACKFILL_KEY" \
-  --typesense-url "$TYPESENSE_URL" \
-  --typesense-admin-key "$TYPESENSE_ADMIN_KEY"
+bun scripts/typesense/setup.ts \
+  --url '<typesense-url>' \
+  --admin-key '<admin-key>' \
+  --collection objects
 ```
 
-The script exports existing Typesense documents, fetches all objects from Convex via `typesense:getBackfillPage`, then plans **create**, **update**, **unchanged**, and **delete** operations. Unreadable Typesense rows are treated as deletes. Use `--dry-run` to inspect the plan without applying; use `--max-deletes <n>` to abort when too many stale documents would be removed. Run `bun scripts/typesense/setup.ts` first if the collection does not exist. Env var details are in [environment.md](./environment.md).
+For a new collection it creates the schema and prints a sync key with `documents:*` access and a search key with `documents:search` access. Set them as `TYPESENSE_SYNC_KEY` and `TYPESENSE_SEARCH_KEY` on Convex, along with the URL and collection name.
 
-### Running the backfill against production
+If the collection already exists, setup exits without changing the schema or issuing keys. Rerunning it is not a schema migration or key-rotation procedure. The backfill also needs an admin key because it checks collection existence and exports documents.
 
-The script only makes HTTP calls to Convex and Typesense — it never runs on the app server, so lack of shell access to Railway does not matter. Run it from a local machine with production values.
+## Running the backfill against production
 
-Production Typesense is self-hosted on Railway at `https://search.radioatelier.one`, so there is no admin-key UI. The admin key is the server's bootstrap key, stored as `TYPESENSE_API_KEY` on the Railway Typesense service (dashboard → Variables, or `railway variables --service <name>`). The scoped `TYPESENSE_SYNC_KEY` cannot stand in for it: the script calls `collections(name).exists()`, which needs collection read access that the `documents:*` scope lacks.
+The script runs locally and calls Convex and Typesense over HTTP. It needs no app-server shell access. Obtain the target Typesense admin key from the service configuration; a document-sync key is insufficient.
 
-1. Set a backfill secret on prod Convex. `typesense:getBackfillPage` rejects every call while it is unset:
+1. Configure a temporary `TYPESENSE_BACKFILL_KEY` on the target Convex deployment. For production:
 
     ```bash
-    BACKFILL_KEY=$(openssl rand -hex 32)
-    npx convex env set --prod TYPESENSE_BACKFILL_KEY "$BACKFILL_KEY"
+    npx convex env set --prod TYPESENSE_BACKFILL_KEY '<temporary-secret>'
     ```
 
-2. Run the command above with production values and `--dry-run`, then run it again without `--dry-run` and with `--max-deletes` set to the delete count the dry run reported.
-3. Remove the secret afterwards: `npx convex env remove --prod TYPESENSE_BACKFILL_KEY`. The action is public and returns every object, private ones included; it is only guarded by that shared secret.
+2. Pause editing and run a dry run with explicit target values:
 
-**Pass all four flags explicitly.** Bun auto-loads `.env.local`, and `parseArgs` falls back to those values for any flag left out, so one missing flag silently mixes environments — pushing prod objects into the dev index and queueing dev-only documents for deletion.
+    ```bash
+    bun scripts/typesense/backfill.ts \
+      --convex-url '<production-convex-url>' \
+      --backfill-key '<temporary-secret>' \
+      --typesense-url '<production-typesense-url>' \
+      --typesense-admin-key '<production-admin-key>' \
+      --collection objects \
+      --dry-run
+    ```
 
-Run it while nobody is editing. The script snapshots Typesense before Convex, so an object created or deleted between the two reads collides with its own scheduled write and aborts the run (`Typesense rejected …` or `deleted X of Y`). Nothing is corrupted; rerun it.
+3. Review create, update, unchanged, and delete counts. Unreadable existing index rows are included in deletion candidates.
+4. Repeat with the same values, replace `--dry-run` with `--max-deletes <reviewed-count>`, and inspect the result. `--batch-size` defaults to 200.
+5. Remove the temporary endpoint credential:
 
-## Related docs
+    ```bash
+    npx convex env remove --prod TYPESENSE_BACKFILL_KEY
+    ```
 
-- [object-details-overlay.md](./object-details-overlay.md) — point preview/create after selecting a search result
-- [object-backend.md](./object-backend.md) — writer seam that keeps Typesense in sync
-- [map-architecture.md](./map-architecture.md) — search marker source and map focus helpers
-- [environment.md](./environment.md) — Typesense and Google API keys
+Supply the collection explicitly as well as all four connection/credential flags. Omitted values fall back to the local environment, so a partially specified command can mix development and production.
+
+The script snapshots Typesense before reading Convex and applies changes in batches. Concurrent edits can conflict with scheduled index writes, and a failed run may have applied earlier batches. After resolving the cause, repeat the dry run before applying again. The delete limit is checked before applying; it is not a rollback mechanism.
+
+Source files are `scripts/typesense/backfill.ts`, `backfillConfig.ts`, `backfillDocuments.ts`, and `backfillSync.ts`. Environment details are in [Environment](environment.md).

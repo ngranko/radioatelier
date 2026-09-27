@@ -34,6 +34,31 @@ Listed so the audit is reconstructable, not as work to redo.
 
 ## Security
 
+### A dropped promise in the object load can kill the server
+
+`src/routes/(app)/(fullList)/object/[id]/+page.server.ts:22` starts the
+`getDetails` query before checking `isDataRequest`, and on data requests
+(every client-side navigation to `/object/:id`) never awaits it. When that
+query rejects, nothing handles the rejection, and Node 26 exits the process on
+an unhandled rejection. `adapter-node` installs no handler.
+
+`getDetails` throws instead of returning `null` when the object is missing, and
+`resolveShareId` only checks that the id is well-formed, so the trigger is
+easy: press Back to a card you just deleted, or request
+`/object/<deleted-id>/__data.json` anonymously. A transient Convex failure on
+any data request does the same. Full-page requests to a deleted id get a 500
+instead of the intended 404. The fix: have `getDetails` return `null`, and
+start the query only on the branch that awaits it.
+
+### The Notion discrepancy report is a public action
+
+`src/convex/notionSync/discrepancyReport.ts:13` — `reportDiscrepancies` is an
+`action` with no auth check. Anyone who has the Convex URL (it ships in the
+client bundle) can run a full Notion data-source scan on our API quota. The
+response includes the id and name of every synced object, private ones too.
+It is only ever run by hand, so make it an `internalAction`; the dashboard and
+`npx convex run` can still call it.
+
 ### Shared objects are unlisted, not private
 
 `src/convex/objects.ts:30` — `getDetails` is deliberately anonymous and never
@@ -120,7 +145,7 @@ say, a day) and paginate the scan.
 
 ### `imports.cleanupOldJobs` has the same shape
 
-`src/convex/imports.ts:407` — `collect()` over every import job ever created.
+`src/convex/imports.ts:396` — `collect()` over every import job ever created.
 
 ### The `counters` row is a global write hotspot
 
@@ -135,13 +160,15 @@ removes the contention.
 ## Memory leaks
 
 The map teardown is careful overall (`map.svelte:185`, `gpuHybridRenderer.ts:88`,
-`DeckOverlayHost.destroy()` calling `finalize()`), so these two are the whole
-list.
+`DeckOverlayHost.destroy()` calling `finalize()`), so these are the whole list.
 
 - `src/lib/components/map/locationMarker.svelte:87` — the `$effect` adds a
   `deviceorientation` listener and returns no teardown. Destroying the component
   while orientation is enabled leaves the listener attached, holding the marker
-  and its DOM element alive.
+  and its DOM element alive. The same file's `onMount` awaits
+  `preloadMarkerLibrary()` before it creates the marker and the 1-second
+  interval. If the component is destroyed during that await, `onDestroy` has
+  already run, so both are created afterwards and never cleaned up.
 - `src/lib/components/tooltip.svelte:21` — the window `click` listener is only
   removed by a second click. Destroy the component while the tooltip is open and
   it leaks, and keeps toggling state on a dead component.
@@ -166,7 +193,7 @@ Cosmetic, but the ids are user-visible.
 
 ### A missing category crashes the map render
 
-`src/routes/(app)/(fullList)/+layout.svelte:234` —
+`src/routes/(app)/(fullList)/+layout.svelte:229` —
 `categoriesState.categories[point.categoryId]` is unguarded, and the next line
 reads `category.markerIcon`. A marker referencing a deleted category throws
 during render and takes the whole map down. Skip the marker instead.
@@ -196,3 +223,21 @@ throw at use.
 A `rejectInbound` decision throws, the route returns 500, and Notion retries the
 delivery indefinitely. Acknowledging the webhook and scheduling the work would
 decouple the two.
+
+### A redelivered `page.created` duplicates the Object
+
+`src/convex/objectsSync.ts:71` — `createSyncedObject` does not check whether a
+sync record for the page already exists. The inbound action checks once at the
+start, then spends seconds on a Notion fetch and a geocode before the mutation
+runs. Notion delivers webhooks at least once, so a retry that arrives in that
+window creates a second Object linked to the same page. After that,
+`getSyncRecordByPageId` calls `.unique()` and throws on every later event for
+the page. Re-check `byNotionPageId` inside the mutation and skip if a record
+already exists.
+
+### Saves wait on PostHog
+
+The `save` and `delete` actions in both `+page.server.ts` files, and
+`handleError` in `hooks.server.ts`, `await posthog.flush()` before responding.
+When PostHog is slow, every save is slow with it, up to the client's request
+timeout. Capture without awaiting the flush, or flush on shutdown.

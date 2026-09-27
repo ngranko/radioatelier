@@ -113,6 +113,15 @@ object name in the title is a one-line change per route.
 
 ## Forms
 
+### Saving during a photo upload loses the photo
+
+`form.svelte:266` disables Save only while the form submits, not while
+`handleImageChange` is still resizing and uploading. If Save is tapped mid-upload,
+the form is submitted without the new `cover`. The card returns to view mode, and
+when the upload finishes it writes `cover` into a form that has already been
+saved, so the photo is silently dropped. Disable Save until the upload
+settles, or await the pending upload before submitting.
+
 ### New-point form friction
 
 `src/lib/components/objectDetails/objectForm/form.svelte`:
