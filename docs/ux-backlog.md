@@ -88,6 +88,14 @@ a card must not also create a point.
 
 ## Search
 
+### Results lead with the address, not the name
+
+`src/lib/components/search/searchItemCard.svelte:90` — a row reads address
+(muted, `text-xs`), then category, then the name in plain `text-sm` last. The
+name is what the eye scans a list for. Put it first at medium weight, and fold
+category and address into one muted line under it, distance on the right. Rows
+get shorter as well as easier to scan.
+
 ### Hovering a result does not highlight its pin
 
 `src/lib/services/map/markerFocus.ts` — the one highlight the app has both
@@ -96,6 +104,53 @@ by the GPU renderer do not have. Pointing at a result from the list would need
 a highlight both renderers can draw and that leaves the viewport alone.
 
 ## Details card
+
+### The address outranks the description
+
+`src/lib/components/objectDetails/viewMode/address.svelte:25` renders the
+address at `text-base` in full foreground, while the description — the actual
+archive content — sits at `text-sm` and 80% opacity
+(`viewMode/viewMode.svelte:79`). Demote the address to muted `text-sm` with a
+small map-pin icon and let the description be the body text.
+
+### Flags are icons explained only by tooltips
+
+`src/lib/components/objectDetails/viewMode/flags.svelte` — lock, user-check
+and ghost carry their meaning in tooltips, which never open on a phone. The
+form's toggle chips already settled on icon + text; small muted chips in view
+mode would match them. Showing only the flags that are set, instead of a lock
+on every card, cuts the noise further.
+
+### The empty cover says nothing about the object
+
+`src/lib/components/input/imageUpload/emptyPlaceholder.svelte` — a card
+without a photo spends a third of its height on a grey box with the generic
+logo. The box has to stay at 2:1 so view and edit mode keep the same layout,
+so change what fills it instead:
+
+- tint it with the category's marker colour and centre the category icon,
+  large and faint, in place of the logo (`categoryBadge.svelte` already
+  resolves colour and icon). Free — no Street View or static-map requests;
+- for anyone who can edit, make the box an "Добавить фото" target that enters
+  edit mode with the file picker already open — one tap instead of three.
+  Viewers see the tinted box only.
+
+### The periods read as two muted sentences
+
+`src/lib/components/objectDetails/viewMode/viewMode.svelte:87` — "Появилась в
+…" and "Пропала в …" sit below the description in muted text. Lay them out as
+two labelled columns, mirroring the form's side-by-side fields
+(`objectForm/form.svelte:416`): a small muted label ("Появилась", "Пропала")
+over the value in foreground. Each end wraps on its own, so ranges on both
+sides ("1965–1969", "2019–2021") stay readable, and the `startsWithNumber`
+"в" prefix goes away. Show only the column that has a value. Worth moving up
+to just under the tags — the era is among the first things a reader wants.
+
+### The source link does not say where it goes
+
+`src/lib/components/objectDetails/viewMode/viewMode.svelte:113` — "Источник"
+alone. "Источник · pastvu.com", with the hostname taken from the URL, tells
+the reader what they are about to open.
 
 ### The route link navigates the tab away
 
@@ -142,6 +197,38 @@ offender. Superforms can scroll to and focus the first invalid control; worth
 checking that `TaxonomyField` (a button trigger, not an input) is marked
 invalid in a way the error selector finds.
 
+## Surfaces and loading
+
+### The card and the results panel have no edge
+
+`src/lib/components/objectDetails/detailsSheet.svelte:84` and
+`src/lib/components/search/searchResults.svelte:46` are opaque surfaces with
+no shadow or ring, so they sit flat on the map — in dark mode the card's
+background is close to the tiles themselves. `map/firstRunHint.svelte` already
+has the treatment: `shadow-lg ring-1 ring-black/[0.08] dark:ring-white/[0.12]`.
+
+### The search preview is glass, the results panel is not
+
+`src/lib/components/search/searchPreview.svelte:64` uses `.glass` while the
+full results panel one step later uses `bg-background`, so the same list
+changes surface as it expands. Moving the preview to the opaque surface
+continues the glass removal; the search bar and the avatar button still carry
+`.glass` too.
+
+### The top bar assembles itself on load
+
+The search bar only renders once the map is ready
+(`src/routes/(app)/+layout.svelte`), and the avatar has no Clerk loading state
+(`src/lib/components/userMenu/userMenu.svelte:7`), so both pop in separately.
+Reserving their space, or rendering them disabled until ready, keeps the top
+of the screen still.
+
+### The Typekit stylesheet has no preconnect
+
+`src/app.html` — a `<link rel="preconnect" href="https://use.typekit.net"
+crossorigin>` ahead of the stylesheet shortens the wait before text switches
+to Sofia Pro.
+
 ## Deliberately excluded
 
 Directions already settled in earlier reviews and not to be re-proposed here:
@@ -155,3 +242,9 @@ contradicting how the app is actually used: returning focus to the search input
 after clearing it, tap-to-copy on address and coordinates, replacing the delete
 confirm with an undo toast, and changing what the location button centres on or
 does to the zoom.
+
+Also rejected (late September 2026): hiding the empty cover placeholder in view
+mode, because the card then jumps by a third of its height when edit mode puts
+the box back; and collapsing the installed and removal periods into one
+"from – to" line, because each end can itself be a range ("1965–1969 –
+2019–2021") and the result stops being readable.
