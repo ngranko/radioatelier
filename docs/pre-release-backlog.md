@@ -69,6 +69,8 @@ Listed so the audit is reconstructable, not as work to redo.
   references through indexes, and both skip anything younger than a day.
 - **`imports.cleanupOldJobs` had the same shape.** It collected every import
   job. It now pages through them in batches and reschedules itself.
+- **`getNextInternalId` skipped `RA-2`.** The first call returned `RA-1` but
+  seeded the counter at `2`. It now seeds `1`, so the next call returns `RA-2`.
 
 ---
 
@@ -121,6 +123,11 @@ serialize against each other and retry on OCC conflicts. Sharding the counter,
 or deriving the internal id from something that does not need a global sequence,
 removes the contention.
 
+Deferred: with one or two active writers the conflicts are rare and Convex
+retries them in milliseconds, while sharding makes ids non-consecutive (a
+user-sharded counter was tried and dropped). Revisit when many users create
+objects concurrently.
+
 ---
 
 ## Memory leaks
@@ -150,12 +157,6 @@ SvelteKit generates, and the redeclaration omits `PUBLIC_CONVEX_URL` and
 `PUBLIC_CLERK_PUBLISHABLE_KEY`. Two errors, in `src/lib/server/convexClient.ts`
 and `src/routes/+layout.svelte`. Deleting the manual block is most likely the
 right fix — the generated ambient types already cover every `PUBLIC_` var.
-
-### `getNextInternalId` skips `RA-2`
-
-`src/convex/helpers/objectHelpers.ts:19` — the first call returns `RA-1` but
-seeds the counter at `2`, so the next call increments to `3` and returns `RA-3`.
-Cosmetic, but the ids are user-visible.
 
 ### A missing category crashes the map render
 
