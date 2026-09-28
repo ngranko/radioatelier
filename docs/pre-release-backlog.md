@@ -77,6 +77,12 @@ Listed so the audit is reconstructable, not as work to redo.
   interval. The effect now returns a teardown, and `onMount` bails out after the
   await if the component is gone. `tooltip.svelte`'s window `click` listener
   lived until a second click; it now belongs to an `$effect` on `isOpen`.
+- **`bun run check` was red on a clean checkout.** SvelteKit generates the
+  `$env/static/public` types from whatever env files exist at sync time, so
+  without `.env.local` it declares nothing. The hand-written block in
+  `src/app.d.ts` merges with it (it does not shadow it) and is what types a
+  clean checkout, but it lacked `PUBLIC_CONVEX_URL`; now it declares it.
+  `PUBLIC_CLERK_PUBLISHABLE_KEY` comes from the `svelte-clerk/env` reference.
 
 ---
 
@@ -137,14 +143,6 @@ objects concurrently.
 ---
 
 ## Correctness and hygiene
-
-### `bun run check` is red on a clean checkout
-
-`src/app.d.ts:3` redeclares `$env/static/public`, which shadows the declaration
-SvelteKit generates, and the redeclaration omits `PUBLIC_CONVEX_URL` and
-`PUBLIC_CLERK_PUBLISHABLE_KEY`. Two errors, in `src/lib/server/convexClient.ts`
-and `src/routes/+layout.svelte`. Deleting the manual block is most likely the
-right fix — the generated ambient types already cover every `PUBLIC_` var.
 
 ### A missing category crashes the map render
 
