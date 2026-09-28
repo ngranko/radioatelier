@@ -19,19 +19,12 @@ export const load = async ({params, locals, isDataRequest, url}) => {
         redirect(307, `/object/${resolvedShareId.canonicalId}${url.search}`);
     }
 
-    const object = client.query(api.objects.getDetails, {
-        id: resolvedShareId.canonicalId as Id<'objects'>,
-    });
-
     return {
         isServerRequest: !isDataRequest,
         activeObject: isDataRequest
             ? undefined
-            : await object.then(result => {
-                  if (!result) {
-                      error(404, 'Object not found');
-                  }
-                  return result;
+            : await client.query(api.objects.getDetails, {
+                  id: resolvedShareId.canonicalId as Id<'objects'>,
               }),
     };
 };
