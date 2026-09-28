@@ -62,6 +62,11 @@ Listed so the audit is reconstructable, not as work to redo.
   `package.json` now requires the patched Kit. The remaining low-severity
   `cookie@0.6` advisory is pinned by Kit itself and only matters when cookie
   names or paths come from user input, which the app never does.
+- **`storage.cleanup` read three whole tables in one mutation**, which would hit
+  Convex's per-query document limits, and it could delete an upload sitting in
+  an unsaved form. It is now `storage.sweepUnusedImages` followed by
+  `storage.sweepUnusedFiles`. Each pages through its table and checks
+  references through indexes, and both skip anything younger than a day.
 
 ---
 
@@ -105,17 +110,6 @@ The client pipeline is already built for far more than the server will hand it
 ceiling is server-side. Bounding the query by viewport bounds, or tiling markers
 by geohash prefix and fetching the tiles in view, both fit the existing client
 without changes to it.
-
-### `storage.cleanup` reads three whole tables in one mutation
-
-`src/convex/storage.ts:8` collects all objects, all images, and all of
-`_storage`. Same document limits apply, and when it starts failing it fails
-silently inside a cron.
-
-It also races uploads: an image created by `images.create` but not yet attached
-to a saved object is unreferenced, so a cron run landing between upload and save
-deletes it. Add a grace period on `_creationTime` (skip anything younger than,
-say, a day) and paginate the scan.
 
 ### `imports.cleanupOldJobs` has the same shape
 
