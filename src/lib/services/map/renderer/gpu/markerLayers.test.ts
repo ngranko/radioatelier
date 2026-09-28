@@ -29,7 +29,7 @@ describe('buildMarkerLayers', () => {
         expect(onMarkerClick).toHaveBeenCalledWith(point.marker);
     });
 
-    it('keeps every sprite layer off the premultiplying ImageBitmap upload path', () => {
+    it('uploads every sprite layer as straight-alpha ImageData', () => {
         const layers = buildMarkerLayers(
             [markerPoint()],
             {fades: [], exits: []},
@@ -40,7 +40,7 @@ describe('buildMarkerLayers', () => {
 
         expect(layers).toHaveLength(3);
         for (const layer of layers) {
-            expect(layer.props.loadOptions).toEqual({image: {type: 'image'}});
+            expect(layer.props.loadOptions).toEqual({image: {type: 'data'}});
         }
     });
 });
