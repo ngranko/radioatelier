@@ -4,6 +4,7 @@
     import Flags from '$lib/components/objectDetails/viewMode/flags.svelte';
     import type {LooseObject} from '$lib/interfaces/object.ts';
     import type {Permissions} from '$lib/interfaces/permissions';
+    import {hasAnyFlag} from '$lib/utils/objectFlags';
     import {extractHostname} from '$lib/utils/url';
     import ExternalLinkIcon from '@lucide/svelte/icons/external-link';
     import Actions from './actions.svelte';
@@ -18,6 +19,15 @@
 
     let {initialValues, permissions = {canEditAll: true, canEditPersonal: true}}: Props = $props();
 
+    const flags = $derived({
+        isPublic: initialValues.isPublic ?? false,
+        isVisited: initialValues.isVisited ?? false,
+        isRemoved: initialValues.isRemoved ?? false,
+    });
+    const hasChips = $derived(
+        hasAnyFlag(flags) ||
+            Boolean(initialValues.tags?.length || initialValues.privateTags?.length),
+    );
     const description = $derived(initialValues.description?.replace(/\\r\\n|\\n|\\r/g, '\n'));
     // unticking "утрачена" hides the field in the form but keeps its value
     const removalPeriod = $derived(initialValues.isRemoved ? initialValues.removalPeriod : null);
@@ -50,28 +60,22 @@
             />
         {/if}
     </div>
-    <div class={!initialValues.tags?.length && !initialValues.privateTags?.length ? 'mb-4' : ''}>
-        <div class="flex items-center justify-between">
-            {#if initialValues.category}
+    <div class={hasChips ? '' : 'mb-4'}>
+        {#if initialValues.category}
+            <div class="flex">
                 <CategoryBadge
                     name={initialValues.category.name}
                     categoryId={initialValues.category.id}
                 />
-            {:else}
-                <span></span>
-            {/if}
-            <Flags
-                isPublic={initialValues.isPublic ?? false}
-                isVisited={initialValues.isVisited ?? false}
-                isRemoved={initialValues.isRemoved ?? false}
-            />
-        </div>
+            </div>
+        {/if}
         <h1 class="text-foreground text-2xl leading-tight font-semibold">
             {initialValues.name}
         </h1>
     </div>
-    {#if initialValues.tags?.length || initialValues.privateTags?.length}
-        <div class="mb-4">
+    {#if hasChips}
+        <div class="mb-4 flex flex-wrap gap-2">
+            <Flags {...flags} />
             <Tags tags={initialValues.tags ?? []} privateTags={initialValues.privateTags ?? []} />
         </div>
     {/if}
