@@ -72,6 +72,10 @@ Listed so the list stays reconstructable, not as work to redo.
   to the page data on the server render that link previews read. It owns the
   title for every route because Svelte leaves `document.title` as it was when a
   page's own `<title>` unmounts.
+- **Results lead with the name.** Each row is the name at medium weight with
+  the distance on the right, then one muted line of category · address
+  (`search/searchItemCard.svelte`); a result without a name shows its address
+  as the title instead.
 
 ---
 
@@ -117,14 +121,6 @@ longer blocks the map, the tap rule needs to be explicit: a tap that dismisses
 a card must not also create a point.
 
 ## Search
-
-### Results lead with the address, not the name
-
-`src/lib/components/search/searchItemCard.svelte:90` — a row reads address
-(muted, `text-xs`), then category, then the name in plain `text-sm` last. The
-name is what the eye scans a list for. Put it first at medium weight, and fold
-category and address into one muted line under it, distance on the right. Rows
-get shorter as well as easier to scan.
 
 ### Hovering a result does not highlight its pin
 
