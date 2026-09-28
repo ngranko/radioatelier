@@ -2,6 +2,7 @@
     import '../styles/app.css';
     import {PUBLIC_CONVEX_URL} from '$env/static/public';
     import ConvexClerkAuth from '$lib/components/convexClerkAuth.svelte';
+    import DocumentHead from '$lib/components/documentHead.svelte';
     import Spinner from '$lib/components/spinner.svelte';
     import {Toaster} from '$lib/components/ui/sonner';
     import {initTheme, themeState} from '$lib/state/theme.svelte';
@@ -26,6 +27,8 @@
 
     let {children}: Props = $props();
 </script>
+
+<DocumentHead />
 
 <ClerkProvider>
     <ConvexClerkAuth>

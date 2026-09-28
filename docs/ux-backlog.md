@@ -67,6 +67,11 @@ Listed so the list stays reconstructable, not as work to redo.
 - **The description outranks the address.** The address is muted `text-sm`
   behind a map pin (`viewMode/address.svelte`, also in the point preview), and
   the description is full-foreground `text-base` body text.
+- **Tabs carry the object name.** `documentHead.svelte`, mounted once in the
+  root layout, sets `<title>` and `og:title` from the open object, falling back
+  to the page data on the server render that link previews read. It owns the
+  title for every route because Svelte leaves `document.title` as it was when a
+  page's own `<title>` unmounts.
 
 ---
 
@@ -129,12 +134,6 @@ by the GPU renderer do not have. Pointing at a result from the list would need
 a highlight both renderers can draw and that leaves the viewport alone.
 
 ## Details card
-
-### Every tab is titled "Радиоателье. Архив"
-
-There is no `<svelte:head>` anywhere in `src/routes`, so object tabs, history
-entries, bookmarks and the `og:title` of a shared link are all identical. The
-object name in the title is a one-line change per route.
 
 ## Forms
 
