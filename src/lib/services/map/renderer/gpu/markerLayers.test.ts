@@ -40,7 +40,10 @@ describe('buildMarkerLayers', () => {
 
         expect(layers).toHaveLength(3);
         for (const layer of layers) {
-            expect(layer.props.loadOptions).toEqual({image: {type: 'data'}});
+            expect(layer.props.loadOptions).toEqual({
+                image: {type: 'data'},
+                imagebitmap: {premultiplyAlpha: 'default'},
+            });
         }
     });
 });
