@@ -5,7 +5,7 @@
     import BackButton from '$lib/components/objectDetails/objectForm/backButton.svelte';
     import FlagToggle from '$lib/components/objectDetails/objectForm/flagToggle.svelte';
     import PrivateTagsSelect from '$lib/components/objectDetails/objectForm/privateTagsSelect.svelte';
-    import Flags from '$lib/components/objectDetails/viewMode/flags.svelte';
+    import Flags, {hasAnyFlag} from '$lib/components/objectDetails/viewMode/flags.svelte';
     import {Button} from '$lib/components/ui/button';
     import {
         FormControl,
@@ -32,6 +32,11 @@
     }
 
     let {initialValues, registerCloseConfirmationCheck}: Props = $props();
+    const flags = $derived({
+        isPublic: initialValues.isPublic ?? false,
+        isVisited: initialValues.isVisited ?? false,
+        isRemoved: initialValues.isRemoved ?? false,
+    });
 
     let submitToastId: string | number | undefined;
 
@@ -125,24 +130,22 @@
                 disabled
             />
         </div>
-        <div class="flex items-center justify-between">
-            {#if initialValues.category}
+        {#if initialValues.category}
+            <div class="flex">
                 <CategoryBadge
                     name={initialValues.category.name}
                     categoryId={initialValues.category.id}
                 />
-            {:else}
-                <span></span>
-            {/if}
-            <Flags
-                isPublic={initialValues.isPublic ?? false}
-                isVisited={initialValues.isVisited ?? false}
-                isRemoved={initialValues.isRemoved ?? false}
-            />
-        </div>
+            </div>
+        {/if}
         <h1 class="text-foreground mb-3 text-2xl leading-tight font-semibold">
             {initialValues.name}
         </h1>
+        {#if hasAnyFlag(flags)}
+            <div class="mb-3 flex flex-wrap gap-2">
+                <Flags {...flags} />
+            </div>
+        {/if}
 
         <Input type="hidden" name="id" bind:value={$formData.id} />
         <Input type="hidden" name="latitude" bind:value={$formData.latitude} />

@@ -1,49 +1,40 @@
-<script lang="ts">
-    import Tooltip from '$lib/components/tooltip.svelte';
-    import GhostIcon from '@lucide/svelte/icons/ghost';
-    import LockIcon from '@lucide/svelte/icons/lock';
-    import LockOpenIcon from '@lucide/svelte/icons/lock-open';
-    import UserCheckIcon from '@lucide/svelte/icons/user-check';
-
-    interface Props {
+<script module lang="ts">
+    interface FlagValues {
         isPublic: boolean;
         isVisited: boolean;
         isRemoved: boolean;
     }
 
-    let {isPublic, isVisited, isRemoved}: Props = $props();
+    export function hasAnyFlag({isPublic, isVisited, isRemoved}: FlagValues): boolean {
+        return isPublic || isVisited || isRemoved;
+    }
 </script>
 
-<span class="text-muted-foreground flex gap-1">
-    {#if isPublic}
-        <Tooltip>
-            {#snippet button()}
-                <LockOpenIcon class="size-4" />
-            {/snippet}
-            Публичная
-        </Tooltip>
-    {:else}
-        <Tooltip>
-            {#snippet button()}
-                <LockIcon class="size-4" />
-            {/snippet}
-            Приватная
-        </Tooltip>
-    {/if}
-    {#if isVisited}
-        <Tooltip>
-            {#snippet button()}
-                <UserCheckIcon class="size-4" />
-            {/snippet}
-            Посещена
-        </Tooltip>
-    {/if}
-    {#if isRemoved}
-        <Tooltip>
-            {#snippet button()}
-                <GhostIcon class="size-4" />
-            {/snippet}
-            Утрачена
-        </Tooltip>
-    {/if}
-</span>
+<script lang="ts">
+    import GhostIcon from '@lucide/svelte/icons/ghost';
+    import LockOpenIcon from '@lucide/svelte/icons/lock-open';
+    import UserCheckIcon from '@lucide/svelte/icons/user-check';
+    import type {Component} from 'svelte';
+
+    let {isPublic, isVisited, isRemoved}: FlagValues = $props();
+</script>
+
+<!-- no wrapper: the chips join whatever wrapping row the parent puts them in -->
+{#snippet flag(Icon: Component<{class?: string}>, label: string)}
+    <span
+        class="border-border text-muted-foreground inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs"
+    >
+        <Icon class="size-3" />
+        {label}
+    </span>
+{/snippet}
+
+{#if isVisited}
+    {@render flag(UserCheckIcon, 'посещена')}
+{/if}
+{#if isRemoved}
+    {@render flag(GhostIcon, 'утрачена')}
+{/if}
+{#if isPublic}
+    {@render flag(LockOpenIcon, 'публичная')}
+{/if}
