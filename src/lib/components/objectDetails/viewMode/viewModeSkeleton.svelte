@@ -23,14 +23,10 @@
     </div>
 
     <div>
-        <div class="flex h-6 items-center justify-between">
+        <div class="flex h-6 items-center">
             <div class="flex items-center gap-1.5">
                 <Skeleton class="size-5 rounded-full" />
                 <Skeleton class="h-4 w-24" />
-            </div>
-            <div class="flex gap-3 px-1">
-                <Skeleton class="size-4 rounded-full" />
-                <Skeleton class="size-4 rounded-full" />
             </div>
         </div>
         <Skeleton class="h-7.5 w-3/4" />
