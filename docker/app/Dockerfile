@@ -2,7 +2,7 @@ FROM oven/bun:1.4-alpine AS base
 WORKDIR /app
 COPY package.json .
 COPY bun.lock .
-RUN bun i
+RUN bun i --frozen-lockfile
 COPY . .
 
 FROM base AS dev
@@ -28,4 +28,5 @@ COPY --from=build /app/node_modules node_modules/
 COPY package.json .
 EXPOSE 3000
 ENV NODE_ENV=production
+USER node
 CMD [ "node", "build" ]
