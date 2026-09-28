@@ -95,6 +95,9 @@ Listed so the audit is reconstructable, not as work to redo.
   geocode before `createObjectFromSync` ran, so a retry in that window created a
   second Object for the page. The mutation now re-checks `byNotionPageId` and
   returns the linked Object instead.
+- **Leftover debug logging.** `src/lib/services/map/markerManager.ts:50` logged on
+  every construction. `src/convex/http.ts:58` still logs the Notion webhook
+  verification token into the Convex logs, this is needed to set up the integration.
 
 ---
 
@@ -162,12 +165,6 @@ objects concurrently.
 `categoriesState.categories[point.categoryId]` is unguarded, and the next line
 reads `category.markerIcon`. A marker referencing a deleted category throws
 during render and takes the whole map down. Skip the marker instead.
-
-### Leftover debug logging
-
-- `src/lib/services/map/markerManager.ts:50` logs on every construction.
-- `src/convex/http.ts:58` logs the Notion webhook verification token into the
-  Convex logs.
 
 ### The test suite needs env vars to run
 
