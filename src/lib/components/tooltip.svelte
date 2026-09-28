@@ -17,12 +17,17 @@
     function handleClick(event: Event) {
         event.stopPropagation();
         isOpen = !isOpen;
-        if (isOpen) {
-            window.addEventListener('click', handleClick);
-        } else {
-            window.removeEventListener('click', handleClick);
-        }
     }
+
+    $effect(() => {
+        if (!isOpen) {
+            return;
+        }
+
+        const close = () => (isOpen = false);
+        window.addEventListener('click', close);
+        return () => window.removeEventListener('click', close);
+    });
 </script>
 
 <div class={cn(['relative', {[className!]: className}])}>

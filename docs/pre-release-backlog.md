@@ -71,6 +71,12 @@ Listed so the audit is reconstructable, not as work to redo.
   job. It now pages through them in batches and reschedules itself.
 - **`getNextInternalId` skipped `RA-2`.** The first call returned `RA-1` but
   seeded the counter at `2`. It now seeds `1`, so the next call returns `RA-2`.
+- **Memory leaks.** `locationMarker.svelte`'s orientation `$effect` never
+  removed its `deviceorientation` listener, and a component destroyed while
+  `onMount` awaited the marker library still created the marker and its
+  interval. The effect now returns a teardown, and `onMount` bails out after the
+  await if the component is gone. `tooltip.svelte`'s window `click` listener
+  lived until a second click; it now belongs to an `$effect` on `isOpen`.
 
 ---
 
@@ -127,24 +133,6 @@ Deferred: with one or two active writers the conflicts are rare and Convex
 retries them in milliseconds, while sharding makes ids non-consecutive (a
 user-sharded counter was tried and dropped). Revisit when many users create
 objects concurrently.
-
----
-
-## Memory leaks
-
-The map teardown is careful overall (`map.svelte:185`, `gpuHybridRenderer.ts:88`,
-`DeckOverlayHost.destroy()` calling `finalize()`), so these are the whole list.
-
-- `src/lib/components/map/locationMarker.svelte:87` — the `$effect` adds a
-  `deviceorientation` listener and returns no teardown. Destroying the component
-  while orientation is enabled leaves the listener attached, holding the marker
-  and its DOM element alive. The same file's `onMount` awaits
-  `preloadMarkerLibrary()` before it creates the marker and the 1-second
-  interval. If the component is destroyed during that await, `onDestroy` has
-  already run, so both are created afterwards and never cleaned up.
-- `src/lib/components/tooltip.svelte:21` — the window `click` listener is only
-  removed by a second click. Destroy the component while the tooltip is open and
-  it leaks, and keeps toggling state on a dead component.
 
 ---
 
