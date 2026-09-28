@@ -78,7 +78,6 @@ export const actions: Actions = {
                     is_removed: d.isRemoved,
                 },
             });
-            await posthog.flush();
 
             return {form, id};
         } catch (err) {
@@ -105,7 +104,6 @@ export const actions: Actions = {
                 event: 'object_deleted',
                 properties: {object_id: id},
             });
-            await posthog.flush();
 
             return {form, id};
         } catch (err) {

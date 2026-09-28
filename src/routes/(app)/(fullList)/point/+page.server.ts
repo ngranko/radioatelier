@@ -96,7 +96,6 @@ export const actions: Actions = {
                     is_visited: d.isVisited,
                 },
             });
-            await posthog.flush();
 
             return {form, id};
         } catch (err) {
