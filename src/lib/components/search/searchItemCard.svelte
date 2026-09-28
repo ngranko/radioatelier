@@ -50,6 +50,9 @@
 
     let isCoordinateOnly = $derived(!object.categoryName && !object.name && !object.address);
     let address = $derived(composeAddress(object));
+    // unnamed results (bare addresses) promote the address to the title line
+    let title = $derived(object.name || address);
+    let secondaryAddress = $derived(object.name ? address : '');
 </script>
 
 {#snippet resultMeta()}
@@ -87,16 +90,19 @@
         </div>
     {:else}
         <div class="flex items-center justify-between gap-2">
-            <div class="text-muted-foreground flex-1 truncate text-xs">
-                {address}
-            </div>
+            <div class="flex-1 truncate text-sm font-medium">{title}</div>
             {@render resultMeta()}
         </div>
-        {#if object.categoryName}
-            <CategoryBadge name={object.categoryName} size="sm" class="max-w-full" />
-        {/if}
-        {#if object.name}
-            <div class="truncate text-sm">{object.name}</div>
+        {#if object.categoryName || secondaryAddress}
+            <div class="text-muted-foreground flex min-w-0 items-center gap-1.5 text-xs">
+                {#if object.categoryName}
+                    <CategoryBadge name={object.categoryName} size="sm" class="shrink-0" />
+                {/if}
+                {#if object.categoryName && secondaryAddress}
+                    <span aria-hidden="true">·</span>
+                {/if}
+                <span class="truncate">{secondaryAddress}</span>
+            </div>
         {/if}
     {/if}
 </Button>
