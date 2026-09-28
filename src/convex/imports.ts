@@ -1,5 +1,6 @@
 import {ConvexError, v} from 'convex/values';
 import type {ImportJobStatus, ImportLineFeedback} from '../lib/interfaces/importShared';
+import {LIMITS} from '../lib/utils/fieldLimits';
 import {isSafeExternalUrl} from '../lib/utils/url';
 import {internal} from './_generated/api';
 import type {Id} from './_generated/dataModel';
@@ -51,18 +52,6 @@ const importRowValidator = {
 
 const FEEDBACK_LIMIT = 300;
 const JOB_RETENTION_MS = 1000 * 60 * 60 * 24 * 7;
-
-const LIMITS = {
-    name: 256,
-    category: 128,
-    tag: 128,
-    address: 256,
-    city: 128,
-    country: 128,
-    period: 64,
-    description: 8000,
-    source: 2048,
-} as const;
 
 function trimToLimit(value: string, maxLength: number) {
     return value.trim().slice(0, maxLength);

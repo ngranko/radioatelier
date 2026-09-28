@@ -1,5 +1,6 @@
 import type {Id} from '$convex/_generated/dataModel';
 import type {LooseObject} from '$lib/interfaces/object';
+import {LIMITS} from '$lib/utils/fieldLimits';
 import {z} from 'zod';
 
 const emptyOrMissingToNull = (v: unknown) => (!v ? null : v);
@@ -42,7 +43,10 @@ export const schema = z.object({
     isPublic: z.boolean(),
     isVisited: z.boolean(),
     name: z.string().min(1, 'Пожалуйста, введите название').max(255, 'Слишком длинное название'),
-    description: z.preprocess(emptyOrMissingToNull, z.string().nullable()),
+    description: z.preprocess(
+        emptyOrMissingToNull,
+        z.string().max(LIMITS.description, 'Слишком длинное описание').nullable(),
+    ),
     category: z
         .string()
         .min(1, 'Нужно выбрать категорию')
@@ -73,7 +77,9 @@ export const schema = z.object({
     source: z.preprocess(
         emptyOrMissingToNull,
         z.union([
-            z.url({protocol: /^https?$/, error: 'Должна быть валидной ссылкой http или https'}),
+            z
+                .url({protocol: /^https?$/, error: 'Должна быть валидной ссылкой http или https'})
+                .max(LIMITS.source, 'Слишком длинная ссылка'),
             z.null(),
         ]),
     ),

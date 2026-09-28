@@ -41,6 +41,11 @@ Listed so the audit is reconstructable, not as work to redo.
   name of every synced object, private ones included. `reportDiscrepancies` is
   now an `internalAction`, still runnable from the dashboard and
   `npx convex run`.
+- **No server-side length limits on object fields.** `objects.create` and
+  `objects.update` accepted strings of any length, and the browser calls them
+  directly, so the form's zod caps were not a trust boundary. The import's
+  `LIMITS` table now lives in `src/lib/utils/fieldLimits.ts`; both mutations
+  reject over-limit fields, and the form caps `description` and `source` too.
 
 ---
 
@@ -58,17 +63,6 @@ This is a design decision rather than a defect, but it should be a conscious one
 before launch. If links need to be revocable, the usual shape is a signed share
 token carried in the URL and checked by `getDetails`, with the bare id requiring
 auth.
-
-### No server-side length limits on object fields
-
-`src/convex/sharedValidators.ts:34` — `objects.create` and `objects.update`
-accept unbounded `v.string()` for `name`, `description`, `source`, `address`,
-and the period fields. The zod schema caps them, but the browser talks to Convex
-directly through `convex-svelte`, so the form is not a trust boundary.
-`description` is uncapped on both sides.
-
-`src/convex/imports.ts` already defines a `LIMITS` table with sensible values —
-lift it to a shared module and apply it in the mutation validators too.
 
 ### Any signed-in user can write global taxonomy
 
