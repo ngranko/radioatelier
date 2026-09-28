@@ -15,6 +15,7 @@ import {
 } from './helpers/objectWriter';
 import {deleteSyncStateForObject} from './notionSync/state';
 import {
+    assertObjectFieldLengths,
     assertValidMapPointCoordinates,
     createObjectRecordFields,
     repositionObjectRecordFields,
@@ -82,6 +83,7 @@ export const create = mutation({
     handler: async (ctx, {data}) => {
         const user = await getCurrentUserOrThrow(ctx);
         assertValidMapPointCoordinates(data.latitude, data.longitude);
+        assertObjectFieldLengths(data);
 
         const {objectId} = await createObjectRecords(ctx, user._id, {
             name: data.name,
@@ -127,6 +129,7 @@ export const update = mutation({
     },
     handler: async (ctx, {id, data}) => {
         const user = await getCurrentUserOrThrow(ctx);
+        assertObjectFieldLengths(data);
 
         const target = await loadObjectTarget(ctx, id);
 

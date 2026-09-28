@@ -1,4 +1,5 @@
 import {type Infer, v} from 'convex/values';
+import {LIMITS} from '../lib/utils/fieldLimits';
 
 export function assertValidMapPointCoordinates(latitude: number, longitude: number): void {
     if (
@@ -10,6 +11,30 @@ export function assertValidMapPointCoordinates(latitude: number, longitude: numb
         longitude > 180
     ) {
         throw new Error('Invalid map coordinates');
+    }
+}
+
+const objectTextFieldLimits = {
+    name: LIMITS.name,
+    description: LIMITS.description,
+    installedPeriod: LIMITS.period,
+    removalPeriod: LIMITS.period,
+    source: LIMITS.source,
+    address: LIMITS.address,
+    city: LIMITS.city,
+    country: LIMITS.country,
+};
+
+type ObjectTextFields = Partial<Record<keyof typeof objectTextFieldLimits, string | null>>;
+
+// Convex validators cannot express length, and the browser calls mutations
+// directly, so the form's zod caps do not protect the database.
+export function assertObjectFieldLengths(data: ObjectTextFields): void {
+    for (const [field, maxLength] of Object.entries(objectTextFieldLimits)) {
+        const value = data[field as keyof ObjectTextFields];
+        if (value && value.length > maxLength) {
+            throw new Error(`Field ${field} exceeds ${maxLength} characters`);
+        }
     }
 }
 
