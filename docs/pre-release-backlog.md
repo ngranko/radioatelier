@@ -46,6 +46,9 @@ Listed so the audit is reconstructable, not as work to redo.
   directly, so the form's zod caps were not a trust boundary. The import's
   `LIMITS` table now lives in `src/lib/utils/fieldLimits.ts`; both mutations
   reject over-limit fields, and the form caps `description` and `source` too.
+- **`placeId` was interpolated into a URL unencoded.** A crafted id could
+  traverse to a different endpoint on `places.googleapis.com`. The Places
+  details request now passes it through `encodeURIComponent`.
 
 ---
 
@@ -70,12 +73,6 @@ auth.
 tables behind nothing but an auth check, with no length cap and no rate limit. A
 single account can pollute the tag and category vocabulary for everyone. Worth
 either restricting creation by role or capping and normalising harder.
-
-### `placeId` is interpolated into a URL unencoded
-
-`src/convex/search/googlePlaces.ts:148` builds
-`https://places.googleapis.com/v1/places/${placeId}`. A crafted `placeId` can
-traverse to a different endpoint on that host. `encodeURIComponent` it.
 
 ### Unmetered Google API spend
 
