@@ -20,6 +20,11 @@ export default defineSchema({
         // a single owner stay unset and locked against preview writes.
         createdById: v.optional(v.id('users')),
     }),
+    geocodeLookupLeases: defineTable({
+        latitude: v.number(),
+        longitude: v.number(),
+        expiresAt: v.number(),
+    }).index('byLatitudeAndLongitude', ['latitude', 'longitude']),
     importJobs: defineTable({
         createdById: v.id('users'),
         status: v.union(
