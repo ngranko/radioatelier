@@ -13,12 +13,11 @@ import {findLatestPop, readPopTime} from '$lib/services/map/renderer/gpu/spriteP
 import type {Layer} from '@deck.gl/core';
 import {IconLayer} from '@deck.gl/layers';
 
-// Chrome ignores `premultiplyAlpha: 'none'` when an ImageBitmap is built from an <img>, and that is
-// the path loaders.gl takes for SVG icons. The atlas then holds premultiplied alpha while the icon
-// shader reads it as straight, darkening every translucent part of a sprite twice: a removed
-// marker's disk and every halo. Keeping the HTMLImageElement uploads straight alpha, so a sprite
-// matches its DOM twin pixel for pixel.
-const SPRITE_LOAD_OPTIONS = {image: {type: 'image'}} as const;
+// Browsers disagree on whether an SVG ImageBitmap or <img> reaches WebGL premultiplied, and when it
+// does the icon shader reads it as straight alpha, darkening every translucent part of a sprite
+// twice: a removed marker's disk and every halo. ImageData is straight alpha by spec and uploads
+// verbatim everywhere, so a sprite matches its DOM twin pixel for pixel.
+const SPRITE_LOAD_OPTIONS = {image: {type: 'data'}} as const;
 
 const WHITE: [number, number, number] = [255, 255, 255];
 const OPAQUE = 255;
