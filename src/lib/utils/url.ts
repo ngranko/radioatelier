@@ -13,3 +13,11 @@ export function isSafeExternalUrl(value: string | null | undefined): value is st
         return false;
     }
 }
+
+export function extractHostname(value: string): string | null {
+    try {
+        return new URL(value).hostname.replace(/^www\./, '') || null;
+    } catch {
+        return null;
+    }
+}
