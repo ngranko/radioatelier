@@ -145,7 +145,7 @@ export async function searchGooglePlaces(options: SearchOptions): Promise<Google
 
 export async function getGooglePlaceDetails(placeId: string): Promise<GoogleSearchItem | null> {
     const place = (await fetchGooglePlacesResource(
-        `https://places.googleapis.com/v1/places/${placeId}`,
+        `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}`,
         GOOGLE_PLACE_DETAILS_FIELD_MASK,
     )) as GooglePlace | null;
 
