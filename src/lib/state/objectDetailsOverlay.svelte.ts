@@ -14,6 +14,8 @@ interface ObjectDetailsOverlay {
     mode: ObjectDetailsOverlayMode;
     details?: Partial<LooseObject>;
     pointDetails?: PointPreviewDetails;
+    // picked from the empty cover in view mode, uploaded once the edit form mounts
+    pendingCoverFile?: File;
 }
 
 function defaultState(): ObjectDetailsOverlay {
@@ -26,6 +28,7 @@ function defaultState(): ObjectDetailsOverlay {
         mode: 'objectView',
         details: undefined,
         pointDetails: undefined,
+        pendingCoverFile: undefined,
     };
 }
 
@@ -61,6 +64,9 @@ export const objectDetailsOverlay = {
     get pointDetails() {
         return overlay.pointDetails;
     },
+    get pendingCoverFile() {
+        return overlay.pendingCoverFile;
+    },
 };
 
 function transition(next: Partial<ObjectDetailsOverlay>) {
@@ -74,6 +80,7 @@ function transition(next: Partial<ObjectDetailsOverlay>) {
     overlay.mode = nextState.mode;
     overlay.details = nextState.details;
     overlay.pointDetails = nextState.pointDetails;
+    overlay.pendingCoverFile = nextState.pendingCoverFile;
 }
 
 export function showLoadingDetailsOverlay(id: string) {
@@ -135,8 +142,9 @@ export function closeDetailsOverlay(options?: {preserveDetails?: boolean}) {
     transition(options?.preserveDetails ? {details} : {});
 }
 
-export function enterEditMode() {
+export function enterEditMode(coverFile?: File) {
     overlay.mode = 'objectEdit';
+    overlay.pendingCoverFile = coverFile;
 }
 
 export function returnToViewMode() {

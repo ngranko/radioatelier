@@ -121,6 +121,7 @@
                 }}
                 url={initialValues.cover?.url}
                 previewUrl={initialValues.cover?.previewUrl}
+                categoryId={initialValues.category?.id}
                 disabled
             />
         </div>

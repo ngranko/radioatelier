@@ -283,6 +283,8 @@
                         bind:url={imageUrl}
                         bind:previewUrl={imagePreviewUrl}
                         bind:isUploading={isUploadingImage}
+                        categoryId={$formData.category || null}
+                        initialFile={objectDetailsOverlay.pendingCoverFile}
                         disabled={$submitting}
                         onChange={handleImageChange}
                     />
