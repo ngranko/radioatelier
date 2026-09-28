@@ -227,7 +227,7 @@
         pointer-events: none;
         background: conic-gradient(
             from -30deg,
-            color-mix(in srgb, currentColor 40%, transparent) 0 60deg,
+            color-mix(in srgb, var(--primary) 40%, transparent) 0 60deg,
             transparent 60deg 360deg
         );
         mask-image: radial-gradient(circle at 50% 50%, #000 0%, #000 40%, rgba(0, 0, 0, 0) 70%);

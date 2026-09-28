@@ -27,12 +27,10 @@
     }
 
     onMount(() => {
-        // Desktop browsers expose DeviceOrientationEvent but have no compass,
-        // so only show the button where a sensor is plausible: iOS (permission
-        // API present) or a touch device.
-        isSupported =
-            Boolean(window.DeviceOrientationEvent) &&
-            (needsPermission() || navigator.maxTouchPoints > 0);
+        // Desktop browsers expose DeviceOrientationEvent without a compass, and
+        // desktop Chrome now also ships requestPermission, so only a touch
+        // screen reliably hints at a real sensor.
+        isSupported = Boolean(window.DeviceOrientationEvent) && navigator.maxTouchPoints > 0;
 
         // let's try it in case android allows doing it
         if (isSupported) {
