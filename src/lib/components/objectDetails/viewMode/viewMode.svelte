@@ -86,7 +86,7 @@
         />
     {/if}
     {#if description}
-        <p class="text-foreground/80 text-sm leading-relaxed whitespace-pre-line">
+        <p class="text-foreground text-base leading-relaxed whitespace-pre-line">
             {description}
         </p>
     {/if}

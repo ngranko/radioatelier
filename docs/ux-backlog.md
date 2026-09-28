@@ -64,6 +64,9 @@ Listed so the list stays reconstructable, not as work to redo.
   outlined chips with the form's icons, shown only when set; the lock for a
   private object is gone. They lead the tag row rather than sharing a line
   with the category, so the two wrap together as one row.
+- **The description outranks the address.** The address is muted `text-sm`
+  behind a map pin (`viewMode/address.svelte`, also in the point preview), and
+  the description is full-foreground `text-base` body text.
 
 ---
 
@@ -126,14 +129,6 @@ by the GPU renderer do not have. Pointing at a result from the list would need
 a highlight both renderers can draw and that leaves the viewport alone.
 
 ## Details card
-
-### The address outranks the description
-
-`src/lib/components/objectDetails/viewMode/address.svelte:25` renders the
-address at `text-base` in full foreground, while the description — the actual
-archive content — sits at `text-sm` and 80% opacity
-(`viewMode/viewMode.svelte:79`). Demote the address to muted `text-sm` with a
-small map-pin icon and let the description be the body text.
 
 ### Every tab is titled "Радиоателье. Архив"
 
