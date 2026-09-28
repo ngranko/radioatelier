@@ -29,26 +29,17 @@ Listed so the audit is reconstructable, not as work to redo.
   request headers verbatim; `cookie` and `authorization` are now stripped.
 - **`.dockerignore` did not exclude env files**, so `COPY . .` could bake
   `CLERK_SECRET_KEY` into an image layer.
+- **A dropped promise in the object load could kill the server.** The
+  `/object/[id]` load started `getDetails` on every request but awaited it only
+  on full-page loads. On data requests a rejection went unhandled, and Node
+  exits on those. The query now starts only on the branch that awaits it.
+  `resolveShareId` returns `null` for a well-formed id whose object is gone, so
+  deleted ids get a 404 on both full-page and data requests. `getDetails` still
+  throws when the object is missing.
 
 ---
 
 ## Security
-
-### A dropped promise in the object load can kill the server
-
-`src/routes/(app)/(fullList)/object/[id]/+page.server.ts:22` starts the
-`getDetails` query before checking `isDataRequest`, and on data requests
-(every client-side navigation to `/object/:id`) never awaits it. When that
-query rejects, nothing handles the rejection, and Node 26 exits the process on
-an unhandled rejection. `adapter-node` installs no handler.
-
-`getDetails` throws instead of returning `null` when the object is missing, and
-`resolveShareId` only checks that the id is well-formed, so the trigger is
-easy: press Back to a card you just deleted, or request
-`/object/<deleted-id>/__data.json` anonymously. A transient Convex failure on
-any data request does the same. Full-page requests to a deleted id get a 500
-instead of the intended 404. The fix: have `getDetails` return `null`, and
-start the query only on the branch that awaits it.
 
 ### The Notion discrepancy report is a public action
 

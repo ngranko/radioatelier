@@ -50,6 +50,10 @@ export const resolveShareId = query({
     handler: async (ctx, {id}) => {
         const canonicalId = ctx.db.normalizeId('objects', id);
         if (canonicalId) {
+            // A well-formed id can still point at a deleted object; the load answers 404 only through this null.
+            if (!(await ctx.db.get('objects', canonicalId))) {
+                return null;
+            }
             return {
                 canonicalId,
                 shouldRedirect: false,
