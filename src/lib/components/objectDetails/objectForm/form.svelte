@@ -55,7 +55,8 @@
     let imagePreviewUrl = $state(initialValues.cover?.previewUrl);
     let isUploadingImage = $state(false);
 
-    let lastAction = '';
+    let lastAction = $state('');
+    let nameInput = $state<HTMLInputElement | null>(null);
     let submitToastId: string | number | undefined;
 
     function getSubmitErrorMessage(error: unknown, fallback: string): string {
@@ -145,6 +146,22 @@
     const {form: formData, errors, enhance, isTainted, submitting} = form;
 
     onMount(() => registerCloseConfirmationCheck?.(() => isTainted()) ?? undefined);
+
+    onMount(() => {
+        if (!$formData.id) {
+            nameInput?.focus({preventScroll: true});
+        }
+    });
+
+    const isSaveBlocked = $derived($submitting || isUploadingImage);
+
+    function handleFormKeydown(event: KeyboardEvent) {
+        if (event.key !== 'Enter' || !(event.metaKey || event.ctrlKey) || isSaveBlocked) {
+            return;
+        }
+        event.preventDefault();
+        (event.currentTarget as HTMLFormElement).requestSubmit();
+    }
 
     let isAddressExpanded = $state(false);
     const resolvedAddress = $derived(
@@ -262,9 +279,22 @@
     }
 </script>
 
-<form method="POST" action="?/save" class="flex min-h-0 flex-1 flex-col" use:enhance>
+<!-- the listener only catches Cmd/Ctrl+Enter bubbling up from the fields -->
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+<form
+    method="POST"
+    action="?/save"
+    class="flex min-h-0 flex-1 flex-col"
+    use:enhance
+    onkeydown={handleFormKeydown}
+>
     <div class="bg-muted/40 flex items-center justify-between gap-3 border-b px-4 py-2.5">
-        <Button type="submit" disabled={$submitting || isUploadingImage} class="px-6 text-base">
+        <Button
+            type="submit"
+            disabled={isSaveBlocked}
+            loading={$submitting && lastAction === 'save'}
+            class="px-6 text-base"
+        >
             Сохранить
         </Button>
         <BackButton isConfirmationRequired={isTainted()} onClick={handleBack} />
@@ -306,6 +336,7 @@
                             <Input
                                 type="text"
                                 {...props}
+                                bind:ref={nameInput}
                                 bind:value={$formData.name}
                                 data-1p-ignore
                             />
@@ -468,7 +499,14 @@
                     {#snippet children({props})}
                         <div class="space-y-1">
                             <FormLabel>ссылка на источник</FormLabel>
-                            <Input type="text" {...props} bind:value={$formData.source} />
+                            <Input
+                                type="text"
+                                inputmode="url"
+                                autocapitalize="off"
+                                spellcheck="false"
+                                {...props}
+                                bind:value={$formData.source}
+                            />
                         </div>
                     {/snippet}
                 </FormControl>
