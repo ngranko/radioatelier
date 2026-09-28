@@ -50,6 +50,10 @@ Listed so the list stays reconstructable, not as work to redo.
 - **Save waits for a photo upload.** The image field exposes its upload state
   and the form keeps Save disabled until the resize and upload settle, so a
   mid-upload save can no longer go out without the new `cover`.
+- **The periods as two labelled columns.** "Появилась" and "Пропала" are muted
+  labels over the value, each column wrapping on its own, and "Пропала" shows
+  only while the object is marked removed. The block stays below the
+  description by choice.
 
 ---
 
@@ -142,17 +146,6 @@ so change what fills it instead:
 - for anyone who can edit, make the box an "Добавить фото" target that enters
   edit mode with the file picker already open — one tap instead of three.
   Viewers see the tinted box only.
-
-### The periods read as two muted sentences
-
-`src/lib/components/objectDetails/viewMode/viewMode.svelte:87` — "Появилась в
-…" and "Пропала в …" sit below the description in muted text. Lay them out as
-two labelled columns, mirroring the form's side-by-side fields
-(`objectForm/form.svelte:416`): a small muted label ("Появилась", "Пропала")
-over the value in foreground. Each end wraps on its own, so ranges on both
-sides ("1965–1969", "2019–2021") stay readable, and the `startsWithNumber`
-"в" prefix goes away. Show only the column that has a value. Worth moving up
-to just under the tags — the era is among the first things a reader wants.
 
 ### Every tab is titled "Радиоателье. Архив"
 
