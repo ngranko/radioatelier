@@ -90,6 +90,11 @@ Listed so the audit is reconstructable, not as work to redo.
   `rejectInbound` decision returned 500 and Notion redelivered the event
   indefinitely. The route now schedules `processWebhookEvent` and acknowledges
   right away; a rejected page fails the scheduled run and shows in the logs.
+- **A redelivered `page.created` duplicated the Object.** The inbound action
+  checked for an existing link, then spent seconds on a Notion fetch and a
+  geocode before `createObjectFromSync` ran, so a retry in that window created a
+  second Object for the page. The mutation now re-checks `byNotionPageId` and
+  returns the linked Object instead.
 
 ---
 
@@ -170,17 +175,6 @@ during render and takes the whole map down. Skip the marker instead.
 `PUBLIC_GOOGLE_MAPS_API_KEY` is unset, which fails one test file in a bare
 checkout. CI needs those vars set, or the config should degrade at import and
 throw at use.
-
-### A redelivered `page.created` duplicates the Object
-
-`src/convex/objectsSync.ts:71` — `createSyncedObject` does not check whether a
-sync record for the page already exists. The inbound action checks once at the
-start, then spends seconds on a Notion fetch and a geocode before the mutation
-runs. Notion delivers webhooks at least once, so a retry that arrives in that
-window creates a second Object linked to the same page. After that,
-`getSyncRecordByPageId` calls `.unique()` and throws on every later event for
-the page. Re-check `byNotionPageId` inside the mutation and skip if a record
-already exists.
 
 ### Saves wait on PostHog
 
