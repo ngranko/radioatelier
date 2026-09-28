@@ -42,7 +42,7 @@ A dry run checks a batch, not the whole table. Review completion status and logs
 | 00:00     | `storage.sweepUnusedImages` | Remove image rows unused by covers, then storage files unreferenced by any image           |
 | 00:15     | `imports.cleanupOldJobs`    | Remove jobs older than seven days, using finish time or start time                         |
 
-Storage cleanup pages through images and then files in batches, rescheduling itself until done, and skips anything younger than a day. Import-job cleanup removes progress and feedback records, not imported objects, and collects the whole jobs table.
+Storage cleanup pages through images and then files in batches, rescheduling itself until done, and skips anything younger than a day. Import-job cleanup pages through jobs the same way and removes progress and feedback records, not imported objects.
 
 Object removal separately deletes its map point, marker, all personal tag associations, and visited references. It leaves shared category/tag definitions intact. External index removal and any Notion archival are scheduled separately from the database deletion.
 
