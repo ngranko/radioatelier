@@ -227,19 +227,22 @@
 {#if mapState.isReady}
     {#each markerPoints as point (point.id)}
         {@const category = categoriesState.categories[point.categoryId]}
-        {@const markerIcon = markerIconMap[category.markerIcon as MarkerIconKey]}
-        <Marker
-            id={point.id}
-            lat={point.latitude}
-            lng={point.longitude}
-            isVisited={point.isVisited}
-            isRemoved={point.isRemoved}
-            isDraggable={point.isOwner}
-            icon={markerIcon.component}
-            iconKey={category.markerIcon as MarkerIconKey}
-            iconClassName={markerIcon.className}
-            color={category.markerColor}
-            source="list"
-        />
+        <!-- A marker whose category was deleted would otherwise throw and take the whole map down. -->
+        {#if category}
+            {@const markerIcon = markerIconMap[category.markerIcon as MarkerIconKey]}
+            <Marker
+                id={point.id}
+                lat={point.latitude}
+                lng={point.longitude}
+                isVisited={point.isVisited}
+                isRemoved={point.isRemoved}
+                isDraggable={point.isOwner}
+                icon={markerIcon.component}
+                iconKey={category.markerIcon as MarkerIconKey}
+                iconClassName={markerIcon.className}
+                color={category.markerColor}
+                source="list"
+            />
+        {/if}
     {/each}
 {/if}

@@ -98,6 +98,10 @@ Listed so the audit is reconstructable, not as work to redo.
 - **Leftover debug logging.** `src/lib/services/map/markerManager.ts:50` logged on
   every construction. `src/convex/http.ts:58` still logs the Notion webhook
   verification token into the Convex logs, this is needed to set up the integration.
+- **A missing category crashed the map render.** The marker loop read
+  `category.markerIcon` without checking the category exists, so one marker
+  pointing at a deleted category threw and took the map down. The loop now skips
+  such markers.
 
 ---
 
@@ -158,13 +162,6 @@ objects concurrently.
 ---
 
 ## Correctness and hygiene
-
-### A missing category crashes the map render
-
-`src/routes/(app)/(fullList)/+layout.svelte:229` —
-`categoriesState.categories[point.categoryId]` is unguarded, and the next line
-reads `category.markerIcon`. A marker referencing a deleted category throws
-during render and takes the whole map down. Skip the marker instead.
 
 ### The test suite needs env vars to run
 
