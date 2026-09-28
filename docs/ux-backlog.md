@@ -8,8 +8,8 @@ and event handling, so check it on a real phone before acting.
 Each item names the file and line it was found at. Line numbers drift — treat
 them as a starting point, not a coordinate.
 
-Ordered so the top of each section is the most worth doing. If only four get
-done, make them the two map-and-card items, the route link, and page titles.
+Ordered so the top of each section is the most worth doing. If only three get
+done, make them the two map-and-card items and page titles.
 
 ## Already done
 
@@ -44,6 +44,9 @@ Listed so the list stays reconstructable, not as work to redo.
   and the camera jumps instead of gliding on `setCenter` and `fitBounds`.
 - **The source link names its site.** It reads "Источник · pastvu.com", with
   the hostname taken from the URL (`utils/url.ts`).
+- **The route link opens a new tab.** The route buttons on the card and the
+  point preview are `target="_blank"` links rather than a `window.location`
+  assignment, so desktop keeps the map and phones still hand off to Maps.
 
 ---
 
@@ -147,14 +150,6 @@ over the value in foreground. Each end wraps on its own, so ranges on both
 sides ("1965–1969", "2019–2021") stay readable, and the `startsWithNumber`
 "в" prefix goes away. Show only the column that has a value. Worth moving up
 to just under the tags — the era is among the first things a reader wants.
-
-### The route link navigates the tab away
-
-`src/lib/components/objectDetails/viewMode/actions.svelte:28` and
-`src/lib/components/objectDetails/pointPreview.svelte:35` assign
-`window.location.href`. On desktop this replaces the app and loses the map
-view. An `<a target="_blank" rel="noopener">` fixes desktop while phones still
-hand off to the Maps app.
 
 ### Every tab is titled "Радиоателье. Архив"
 
