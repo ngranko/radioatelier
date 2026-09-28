@@ -11,6 +11,8 @@ crons.daily(
         cursor: null,
     },
 );
-crons.daily('clean old import jobs', {hourUTC: 0, minuteUTC: 15}, internal.imports.cleanupOldJobs);
+crons.daily('clean old import jobs', {hourUTC: 0, minuteUTC: 15}, internal.imports.cleanupOldJobs, {
+    cursor: null,
+});
 
 export default crons;
