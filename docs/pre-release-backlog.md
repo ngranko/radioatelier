@@ -36,19 +36,15 @@ Listed so the audit is reconstructable, not as work to redo.
   `resolveShareId` returns `null` for a well-formed id whose object is gone, so
   deleted ids get a 404 on both full-page and data requests. `getDetails` still
   throws when the object is missing.
+- **The Notion discrepancy report was a public action.** Anyone with the Convex
+  URL could run a full Notion scan on our API quota and read back the id and
+  name of every synced object, private ones included. `reportDiscrepancies` is
+  now an `internalAction`, still runnable from the dashboard and
+  `npx convex run`.
 
 ---
 
 ## Security
-
-### The Notion discrepancy report is a public action
-
-`src/convex/notionSync/discrepancyReport.ts:13` — `reportDiscrepancies` is an
-`action` with no auth check. Anyone who has the Convex URL (it ships in the
-client bundle) can run a full Notion data-source scan on our API quota. The
-response includes the id and name of every synced object, private ones too.
-It is only ever run by hand, so make it an `internalAction`; the dashboard and
-`npx convex run` can still call it.
 
 ### Shared objects are unlisted, not private
 

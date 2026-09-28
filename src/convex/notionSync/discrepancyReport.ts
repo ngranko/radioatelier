@@ -1,5 +1,5 @@
 import {internal} from '../_generated/api';
-import {action} from '../_generated/server';
+import {internalAction} from '../_generated/server';
 import {queryAllDataSourcePages, retrieveDataSource} from '../notion/client';
 import {belongsToConfiguredDataSource, getNotionDataSourceId} from '../notion/config';
 import {readNotionPageFields} from '../notion/fields';
@@ -10,7 +10,7 @@ import type {ObjectSyncSnapshot, ObjectSyncSnapshotPage} from './snapshot';
 const ELIGIBLE_OWNER_PAGE_SIZE = 50;
 const OBJECT_SNAPSHOT_PAGE_SIZE = 200;
 
-export const reportDiscrepancies = action({
+export const reportDiscrepancies = internalAction({
     args: {},
     handler: async ctx => {
         const dataSource = await retrieveDataSource(getNotionDataSourceId());
