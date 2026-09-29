@@ -13,9 +13,7 @@
         searchArea,
         shouldOfferAreaSearch,
     } from '$lib/state/searchArea.svelte.ts';
-    import {onDestroy, onMount} from 'svelte';
-
-    let unsubIdle: (() => void) | undefined;
+    import {untrack} from 'svelte';
 
     const areaSearchCenter = $derived.by(() => {
         const {searched, current} = searchArea;
@@ -25,17 +23,31 @@
         return shouldOfferAreaSearch(searched, current) ? current.center : null;
     });
 
-    onMount(() => {
+    // The bar renders before the map so the top bar does not pop in; only the
+    // parts that read or move the map wait for it.
+    $effect(() => {
+        if (mapState.isReady) {
+            return untrack(attachToMap);
+        }
+    });
+
+    function attachToMap() {
         // Idle covers the zooms a drag never reports, and the pans that end without one.
-        unsubIdle = mapState.provider!.onIdle(followMapViewport);
+        const unsubIdle = mapState.provider!.onIdle(followMapViewport);
 
         const applied = applyUrlToSearchState(page.url);
         if (applied) {
             mapState.provider!.setCenter(Number(searchState.lat), Number(searchState.lng));
         }
-    });
+
+        return unsubIdle;
+    }
 
     $effect(() => {
+        // Until the URL's search is restored above, an empty query would wipe it.
+        if (!mapState.isReady) {
+            return;
+        }
         if (searchState.query && searchState.lat && searchState.lng && searchState.isResultsShown) {
             if (page.url.pathname === '/') {
                 const url = buildSearchUrl({
@@ -49,15 +61,11 @@
             replaceState('/', {});
         }
     });
-
-    onDestroy(() => {
-        unsubIdle?.();
-    });
 </script>
 
 <div class="w-full max-w-sm p-2" inert={objectDetailsOverlay.isOpen}>
     <div class="relative z-2" data-search-scope>
-        <SearchBar disabled={objectDetailsOverlay.isOpen} />
+        <SearchBar disabled={objectDetailsOverlay.isOpen || !mapState.isReady} />
         {#if searchState.query && !searchState.isResultsShown}
             {#key searchState.query}
                 <SearchPreview />
