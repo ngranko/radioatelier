@@ -170,6 +170,14 @@
         @apply bg-white/[0.08] shadow-black/40 ring-white/[0.1];
     }
 
+    .surface-edge {
+        @apply shadow-lg ring-1 ring-black/[0.08];
+    }
+
+    .dark .surface-edge {
+        @apply ring-white/[0.12];
+    }
+
     .marker-dragging {
         opacity: 0.5;
         scale: 1.2;

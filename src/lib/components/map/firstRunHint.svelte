@@ -27,7 +27,7 @@
         class="pointer-events-none absolute right-4 bottom-8 left-4 z-2 flex justify-center"
     >
         <div
-            class="bg-background/95 pointer-events-auto flex min-w-0 items-center gap-2 rounded-full py-2 pr-2 pl-4 shadow-lg ring-1 ring-black/[0.08] backdrop-blur-sm dark:ring-white/[0.12]"
+            class="bg-background/95 pointer-events-auto flex min-w-0 items-center gap-2 rounded-full py-2 pr-2 pl-4 surface-edge backdrop-blur-sm"
         >
             <MapPinPlusIcon class="text-primary size-4 shrink-0" />
             <span class="text-foreground min-w-0 truncate text-sm">
