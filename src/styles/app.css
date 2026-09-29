@@ -178,6 +178,10 @@
         @apply ring-white/[0.12];
     }
 
+    .marker-hovered {
+        scale: 1.2;
+    }
+
     .marker-dragging {
         opacity: 0.5;
         scale: 1.2;
