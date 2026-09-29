@@ -25,6 +25,9 @@
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:image" content="%sveltekit.assets%/meta_img.jpg" />
 
+		<!-- the font files are CORS fetches, so they need their own crossorigin connection;
+		     opening it now saves a round trip once the stylesheet names them -->
+		<link rel="preconnect" href="https://use.typekit.net" crossorigin>
 		<link rel="stylesheet" href="https://use.typekit.net/pps7ann.css">
 
 		<script>
