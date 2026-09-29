@@ -8,7 +8,14 @@
     import {SvglGoogleLogo} from '@selemondev/svgl-svelte';
     import {focusAdjacentResult, readArrowStep} from './resultFocus';
 
-    let {object, onClick}: {object: SearchItem; onClick: () => void} = $props();
+    interface Props {
+        object: SearchItem;
+        onClick: () => void;
+        onPointAt?: () => void;
+        onPointAway?: () => void;
+    }
+
+    let {object, onClick, onPointAt, onPointAway}: Props = $props();
 
     function composeAddress(object: SearchItem) {
         let result = object.address ?? '';
@@ -26,6 +33,29 @@
         result += object.country ?? '';
 
         return result;
+    }
+
+    let isPointerInside = false;
+    let isFocused = false;
+
+    function trackPointer(inside: boolean) {
+        isPointerInside = inside;
+        reportPointing(inside);
+    }
+
+    function trackFocus(focused: boolean) {
+        isFocused = focused;
+        reportPointing(focused);
+    }
+
+    // Only a new interaction re-points: re-pointing on a leave would bring the pin
+    // back after a click handed it to the details highlight.
+    function reportPointing(started: boolean) {
+        if (started) {
+            onPointAt?.();
+        } else if (!isPointerInside && !isFocused) {
+            onPointAway?.();
+        }
     }
 
     function handleKeydown(evt: KeyboardEvent) {
@@ -79,6 +109,10 @@
     )}
     onclick={onClick}
     onkeydown={handleKeydown}
+    onpointerenter={() => trackPointer(true)}
+    onpointerleave={() => trackPointer(false)}
+    onfocus={() => trackFocus(true)}
+    onblur={() => trackFocus(false)}
     data-search-item
 >
     {#if isCoordinateOnly}
