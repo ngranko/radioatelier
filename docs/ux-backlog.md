@@ -90,6 +90,8 @@ Listed so the list stays reconstructable, not as work to redo.
 - **The card and the results panel have an edge.** Both now carry the first-run
   hint's shadow and hairline ring, shared as `.surface-edge` in `app.css`, so
   they lift off the map — the ring is what separates them from dark tiles.
+- **Typekit preconnect.** `app.html` opens the crossorigin connection the font
+  files need before the stylesheet arrives to name them.
 
 ---
 
@@ -164,12 +166,6 @@ The search bar only renders once the map is ready
 (`src/lib/components/userMenu/userMenu.svelte:7`), so both pop in separately.
 Reserving their space, or rendering them disabled until ready, keeps the top
 of the screen still.
-
-### The Typekit stylesheet has no preconnect
-
-`src/app.html` — a `<link rel="preconnect" href="https://use.typekit.net"
-crossorigin>` ahead of the stylesheet shortens the wait before text switches
-to Sofia Pro.
 
 ## Deliberately excluded
 
