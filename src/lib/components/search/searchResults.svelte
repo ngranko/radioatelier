@@ -43,7 +43,7 @@
     let currentTab = $state('local');
     let classes: string = $derived(
         cn({
-            'bg-background fixed top-0 left-0 w-[calc(100vw-16px)] max-w-sm m-2 rounded-2xl overflow-hidden transition-[height] ease-out motion-reduce:transition-none z-0': true,
+            'bg-background surface-edge fixed top-0 left-0 w-[calc(100vw-16px)] max-w-sm m-2 rounded-2xl overflow-hidden transition-[height] ease-out motion-reduce:transition-none z-0': true,
             'h-[calc(100dvh-16px)]': !searchState.isResultsMinimized,
             'h-25': searchState.isResultsMinimized,
         }),
