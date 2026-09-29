@@ -28,7 +28,7 @@
     } from '$lib/state/objectDetailsOverlay.svelte';
     import {getActiveSearchUrl} from '$lib/state/search.svelte';
     import {removeSearchPoint, removeSearchPointsAt} from '$lib/state/searchPointList.svelte.ts';
-    import {getErrorArray} from '$lib/utils/formErrors.ts';
+    import {describeValidationFailure, getErrorArray} from '$lib/utils/formErrors.ts';
     import {resizeImage} from '$lib/utils/imageResizer';
     import GhostIcon from '@lucide/svelte/icons/ghost';
     import LockOpenIcon from '@lucide/svelte/icons/lock-open';
@@ -100,7 +100,9 @@
             }
 
             if (result.type === 'failure') {
-                toast.error('Что-то не так во введенных данных', {id: submitToastId});
+                toast.error(describeValidationFailure(result.data?.form?.errors), {
+                    id: submitToastId,
+                });
                 submitToastId = undefined;
                 return;
             }
