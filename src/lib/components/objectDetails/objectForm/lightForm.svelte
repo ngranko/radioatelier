@@ -19,7 +19,7 @@
     import type {LooseObject} from '$lib/interfaces/object';
     import {schema, toFormDefaults} from '$lib/schema/objectSchema.ts';
     import {returnToViewMode} from '$lib/state/objectDetailsOverlay.svelte';
-    import {getErrorArray} from '$lib/utils/formErrors';
+    import {describeValidationFailure, getErrorArray} from '$lib/utils/formErrors';
     import UserCheckIcon from '@lucide/svelte/icons/user-check';
     import {onMount} from 'svelte';
     import {toast} from 'svelte-sonner';
@@ -76,7 +76,9 @@
             }
 
             if (result.type === 'failure') {
-                toast.error('Что-то не так во введенных данных', {id: submitToastId});
+                toast.error(describeValidationFailure(result.data?.form?.errors), {
+                    id: submitToastId,
+                });
                 submitToastId = undefined;
                 return;
             }
