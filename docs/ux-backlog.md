@@ -96,6 +96,10 @@ Listed so the list stays reconstructable, not as work to redo.
   page, disabled until the map is ready; only its map-dependent setup waits
   (`search/search.svelte`). The avatar never popped in: `Show` resolves from
   the server's `initialState`, so it is in the server-rendered HTML.
+- **The search preview is opaque.** It shares the results panel's
+  `bg-background` and `.surface-edge`, so the list keeps its surface as it
+  expands. The search bar, the avatar and the area-search button keep `.glass`:
+  they are small, and a blur costs by area.
 
 ---
 
@@ -154,14 +158,6 @@ a highlight both renderers can draw and that leaves the viewport alone.
 ## Forms
 
 ## Surfaces and loading
-
-### The search preview is glass, the results panel is not
-
-`src/lib/components/search/searchPreview.svelte:64` uses `.glass` while the
-full results panel one step later uses `bg-background`, so the same list
-changes surface as it expands. Moving the preview to the opaque surface
-continues the glass removal; the search bar and the avatar button still carry
-`.glass` too.
 
 ## Deliberately excluded
 
