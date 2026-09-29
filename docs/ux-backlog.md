@@ -100,6 +100,12 @@ Listed so the list stays reconstructable, not as work to redo.
   `bg-background` and `.surface-edge`, so the list keeps its surface as it
   expands. The search bar, the avatar and the area-search button keep `.glass`:
   they are small, and a blur costs by area.
+- **Pointing at a result highlights its pin.** Hovering or keyboard-focusing a
+  row in the results list scales its pin like the focus highlight does and
+  raises it over its neighbours, without moving the map
+  (`services/map/markerHover.ts`). The GPU renderer never mattered here: every
+  row's pin is a search marker, and those are DOM markers in every renderer.
+  The preview list has no pins, so it has nothing to highlight.
 
 ---
 
@@ -145,13 +151,6 @@ longer blocks the map, the tap rule needs to be explicit: a tap that dismisses
 a card must not also create a point.
 
 ## Search
-
-### Hovering a result does not highlight its pin
-
-`src/lib/services/map/markerFocus.ts` — the one highlight the app has both
-recentres the map and reaches for the marker's DOM element, which markers drawn
-by the GPU renderer do not have. Pointing at a result from the list would need
-a highlight both renderers can draw and that leaves the viewport alone.
 
 ## Details card
 
