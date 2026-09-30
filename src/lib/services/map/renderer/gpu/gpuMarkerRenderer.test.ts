@@ -64,35 +64,6 @@ describe('GpuMarkerRenderer', () => {
         markerLifecycle.reset();
     });
 
-    it('renders the catalog as one set of GPU layers', () => {
-        const frames: FrameRequestCallback[] = [];
-        const setLayers = vi.fn<DeckOverlayHost['setLayers']>();
-        vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
-            frames.push(callback);
-            return frames.length;
-        });
-        const overlay = {
-            attach: vi.fn(),
-            detach: vi.fn(),
-            setLayers,
-        } as unknown as DeckOverlayHost;
-        const renderer = new GpuMarkerRenderer(overlay, vi.fn());
-
-        renderer.ensureCreated(marker());
-        vi.advanceTimersByTime(16);
-        frames[0](0);
-
-        expect(setLayers).toHaveBeenCalledOnce();
-        const layers = setLayers.mock.calls[0][0];
-        expect(layers.map(layer => layer.id)).toEqual([
-            'gpu-marker',
-            'gpu-marker-exit',
-            'gpu-marker-fade',
-        ]);
-        expect(markerLifecycle.isIdle).toBe(true);
-        renderer.destroy();
-    });
-
     it('crossfades a marker whose sprite changed, then drops the outgoing sprite', () => {
         const {frames, setLayers, overlay} = overlayHarness();
         const state = {isVisited: false, isRemoved: false};

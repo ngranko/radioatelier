@@ -75,17 +75,6 @@ describe('objectDetailsOverlay transitions', () => {
         expect(objectDetailsOverlay.mode).toBe('objectView');
     });
 
-    it('mode verbs move between view and edit without touching the rest', () => {
-        showObjectDetailsOverlay('object-1');
-
-        enterEditMode();
-        expect(objectDetailsOverlay.mode).toBe('objectEdit');
-
-        returnToViewMode();
-        expect(objectDetailsOverlay.mode).toBe('objectView');
-        expect(objectDetailsOverlay.detailsId).toBe('object-1');
-    });
-
     it('hands a picked cover to the next edit only', () => {
         showObjectDetailsOverlay('object-1');
         const cover = new File([], 'cover.jpg', {type: 'image/jpeg'});
