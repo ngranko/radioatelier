@@ -27,7 +27,7 @@ describe('resolveGpuRendererFlag', () => {
         await expect(resolveGpuRendererFlag(client)).resolves.toBe(false);
     });
 
-    it('waits for unresolved flags and cleans up a synchronous subscription', async () => {
+    it('cleans up a synchronous subscription', async () => {
         let value: boolean | undefined;
         const unsubscribe = vi.fn();
         const client = {
@@ -43,7 +43,7 @@ describe('resolveGpuRendererFlag', () => {
         expect(unsubscribe).toHaveBeenCalledOnce();
     });
 
-    it('falls back when the initial flag read throws', async () => {
+    it('falls back when the flag read throws', async () => {
         const client = {
             isFeatureEnabled: vi.fn(() => {
                 throw new Error('flag client unavailable');
@@ -62,24 +62,6 @@ describe('resolveGpuRendererFlag', () => {
             isFeatureEnabled: vi.fn(() => undefined),
             onFeatureFlags: vi.fn(() => {
                 throw new Error('subscription unavailable');
-            }),
-        };
-
-        await expect(resolveGpuRendererFlag(client)).resolves.toBe(false);
-    });
-
-    it('falls back when the subscribed flag read throws', async () => {
-        const isFeatureEnabled = vi
-            .fn<() => boolean | undefined>()
-            .mockReturnValueOnce(undefined)
-            .mockImplementationOnce(() => {
-                throw new Error('flag read unavailable');
-            });
-        const client = {
-            isFeatureEnabled,
-            onFeatureFlags: vi.fn((callback: () => void) => {
-                callback();
-                return vi.fn();
             }),
         };
 

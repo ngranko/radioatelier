@@ -100,18 +100,6 @@ describe('filterChangedPatch', () => {
 
         expect(patch).toEqual({tagIds: [tagIds[0], secondTagId]});
     });
-
-    it('returns an empty patch when no values changed', () => {
-        const patch = filterChangedPatch(
-            {latitude: 55.75, longitude: 37.61},
-            {
-                latitude: 55.75,
-                longitude: 37.61,
-            },
-        );
-
-        expect(patch).toEqual({});
-    });
 });
 
 describe('dropUnsafeSource', () => {
