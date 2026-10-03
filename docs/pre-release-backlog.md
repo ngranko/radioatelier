@@ -67,6 +67,8 @@ Listed so the audit is reconstructable, not as work to redo.
   an unsaved form. It is now `storage.sweepUnusedImages` followed by
   `storage.sweepUnusedFiles`. Each pages through its table and checks
   references through indexes, and both skip anything younger than a day.
+- **`imports.cleanupOldJobs` had the same shape.** It collected every import
+  job. It now pages through them in batches and reschedules itself.
 
 ---
 
@@ -110,10 +112,6 @@ The client pipeline is already built for far more than the server will hand it
 ceiling is server-side. Bounding the query by viewport bounds, or tiling markers
 by geohash prefix and fetching the tiles in view, both fit the existing client
 without changes to it.
-
-### `imports.cleanupOldJobs` has the same shape
-
-`src/convex/imports.ts:396` — `collect()` over every import job ever created.
 
 ### The `counters` row is a global write hotspot
 

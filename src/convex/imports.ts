@@ -52,6 +52,7 @@ const importRowValidator = {
 
 const FEEDBACK_LIMIT = 300;
 const JOB_RETENTION_MS = 1000 * 60 * 60 * 24 * 7;
+const CLEANUP_BATCH_SIZE = 50;
 
 function trimToLimit(value: string, maxLength: number) {
     return value.trim().slice(0, maxLength);
@@ -378,17 +379,25 @@ export const finalizeJob = mutation({
 });
 
 export const cleanupOldJobs = internalMutation({
-    args: {},
+    args: {cursor: v.nullable(v.string())},
     returns: v.null(),
-    handler: async ctx => {
+    handler: async (ctx, {cursor}) => {
         const threshold = Date.now() - JOB_RETENTION_MS;
-        const jobs = await ctx.db.query('importJobs').collect();
+        const page = await ctx.db
+            .query('importJobs')
+            .paginate({numItems: CLEANUP_BATCH_SIZE, cursor});
 
-        for (const job of jobs) {
+        for (const job of page.page) {
             const lastRelevantTimestamp = job.finishedAt ?? job.startedAt ?? job._creationTime;
             if (lastRelevantTimestamp < threshold) {
                 await ctx.db.delete(job._id);
             }
+        }
+
+        if (!page.isDone) {
+            await ctx.scheduler.runAfter(0, internal.imports.cleanupOldJobs, {
+                cursor: page.continueCursor,
+            });
         }
 
         return null;
