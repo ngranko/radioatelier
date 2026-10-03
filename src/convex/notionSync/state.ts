@@ -1,6 +1,11 @@
 import {v} from 'convex/values';
 import type {Doc, Id} from '../_generated/dataModel';
-import {internalMutation, internalQuery, type MutationCtx} from '../_generated/server';
+import {
+    internalMutation,
+    internalQuery,
+    type MutationCtx,
+    type QueryCtx,
+} from '../_generated/server';
 import type {NotionPageFields} from '../notion/types';
 import {computeSyncHash} from './reconcile';
 import type {AppSyncFields} from './types';
@@ -74,12 +79,16 @@ export const getSyncRecordByPageId = internalQuery({
         notionPageId: v.string(),
     },
     handler: async (ctx, {notionPageId}) => {
-        return await ctx.db
-            .query('objectNotionSync')
-            .withIndex('byNotionPageId', q => q.eq('notionPageId', notionPageId))
-            .unique();
+        return await findSyncRecordByPageId(ctx, notionPageId);
     },
 });
+
+export async function findSyncRecordByPageId(ctx: QueryCtx, notionPageId: string) {
+    return await ctx.db
+        .query('objectNotionSync')
+        .withIndex('byNotionPageId', q => q.eq('notionPageId', notionPageId))
+        .unique();
+}
 
 export async function upsertSyncStateInMutation(ctx: MutationCtx, args: SyncStateArgs) {
     const existing = await ctx.db
