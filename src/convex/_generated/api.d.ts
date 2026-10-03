@@ -11,6 +11,7 @@
 import type * as categories from "../categories.js";
 import type * as crons from "../crons.js";
 import type * as helpers_geocode from "../helpers/geocode.js";
+import type * as helpers_googleQuota from "../helpers/googleQuota.js";
 import type * as helpers_importHelpers from "../helpers/importHelpers.js";
 import type * as helpers_objectAggregate from "../helpers/objectAggregate.js";
 import type * as helpers_objectDetails from "../helpers/objectDetails.js";
@@ -66,6 +67,7 @@ declare const fullApi: ApiFromModules<{
   categories: typeof categories;
   crons: typeof crons;
   "helpers/geocode": typeof helpers_geocode;
+  "helpers/googleQuota": typeof helpers_googleQuota;
   "helpers/importHelpers": typeof helpers_importHelpers;
   "helpers/objectAggregate": typeof helpers_objectAggregate;
   "helpers/objectDetails": typeof helpers_objectDetails;
@@ -140,4 +142,6 @@ export declare const internal: FilterApi<
 
 export declare const components: {
   migrations: import("@convex-dev/migrations/_generated/component.js").ComponentApi<"migrations">;
+  rateLimiter: import("@convex-dev/rate-limiter/_generated/component.js").ComponentApi<"rateLimiter">;
+  actionCache: import("@convex-dev/action-cache/_generated/component.js").ComponentApi<"actionCache">;
 };

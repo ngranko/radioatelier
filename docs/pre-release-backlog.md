@@ -49,6 +49,12 @@ Listed so the audit is reconstructable, not as work to redo.
 - **`placeId` was interpolated into a URL unencoded.** A crafted id could
   traverse to a different endpoint on `places.googleapis.com`. The Places
   details request now passes it through `encodeURIComponent`.
+- **Unmetered Google API spend.** `/point` reverse-geocoded on every navigation
+  and `search.preview` hit Places on every debounced keystroke, with no limit.
+  Every Google-billed action now draws from one per-user token bucket
+  (`helpers/googleQuota.ts`, 50 burst, 200/hour). The search preview drops its
+  Google results when the bucket is empty. Reverse geocodes are cached for a
+  week by coordinates rounded to about 1 m, and cache hits don't use quota.
 
 ---
 
@@ -73,15 +79,6 @@ auth.
 tables behind nothing but an auth check, with no length cap and no rate limit. A
 single account can pollute the tag and category vocabulary for everyone. Worth
 either restricting creation by role or capping and normalising harder.
-
-### Unmetered Google API spend
-
-`/point` calls `locations.getAddress` on every navigation
-(`src/routes/(app)/(fullList)/point/+page.server.ts:24`), and `search.preview`
-hits Places on each debounced keystroke. Neither is rate-limited or cached, so
-one authenticated account can run up the Maps bill without doing anything
-unusual. A per-user token bucket in the action, plus caching geocode results by
-rounded coordinates, covers both.
 
 ### Dependency advisories
 

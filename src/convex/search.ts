@@ -2,6 +2,7 @@ import {makeFunctionReference} from 'convex/server';
 import {ConvexError, v} from 'convex/values';
 import type {Id} from './_generated/dataModel';
 import {action, type ActionCtx} from './_generated/server';
+import {consumeGoogleQuota, tryConsumeGoogleQuota} from './helpers/googleQuota';
 import {getGooglePlaceDetails, searchGooglePlaces} from './search/googlePlaces';
 import {createTypesenseSearchClient} from './typesense/client';
 import {searchObjectsInTypesense} from './typesense/objects';
@@ -32,20 +33,7 @@ export const preview = action({
         }
 
         const localPage = await searchLocalPage(userId, args, PREVIEW_LOCAL_LIMIT);
-
-        let googleItems: Awaited<ReturnType<typeof searchGooglePlaces>>['items'] = [];
-        try {
-            const googleResults = await searchGooglePlaces({
-                query: args.query,
-                latitude: args.latitude,
-                longitude: args.longitude,
-                limit: PREVIEW_GOOGLE_LIMIT + 1,
-                pageToken: '',
-            });
-            googleItems = googleResults.items;
-        } catch (error) {
-            console.warn('Preview Google search failed', error);
-        }
+        const googleItems = await searchPreviewGoogleItems(ctx, args);
 
         return {
             items: [...localPage.items, ...googleItems.slice(0, PREVIEW_GOOGLE_LIMIT)],
@@ -77,6 +65,7 @@ export const google = action({
     },
     handler: async (ctx, args) => {
         await requireCurrentUserId(ctx);
+        await consumeGoogleQuota(ctx);
         const results = await searchGooglePlaces({
             query: args.query,
             latitude: args.latitude,
@@ -99,9 +88,35 @@ export const googlePlaceDetails = action({
     },
     handler: async (ctx, args) => {
         await requireCurrentUserId(ctx);
+        await consumeGoogleQuota(ctx);
         return await getGooglePlaceDetails(args.placeId);
     },
 });
+
+// The preview is fired on every debounced keystroke, so an exhausted Google
+// quota degrades it to local results instead of failing the whole search.
+async function searchPreviewGoogleItems(
+    ctx: ActionCtx,
+    args: {query: string; latitude: number; longitude: number},
+) {
+    if (!(await tryConsumeGoogleQuota(ctx))) {
+        return [];
+    }
+
+    try {
+        const googleResults = await searchGooglePlaces({
+            query: args.query,
+            latitude: args.latitude,
+            longitude: args.longitude,
+            limit: PREVIEW_GOOGLE_LIMIT + 1,
+            pageToken: '',
+        });
+        return googleResults.items;
+    } catch (error) {
+        console.warn('Preview Google search failed', error);
+        return [];
+    }
+}
 
 // Fetches one extra row so hasMore reflects the actual index state instead of
 // guessing from a full page.
