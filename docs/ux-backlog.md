@@ -54,6 +54,12 @@ Listed so the list stays reconstructable, not as work to redo.
   labels over the value, each column wrapping on its own, and "Пропала" shows
   only while the object is marked removed. The block stays below the
   description by choice.
+- **The empty cover shows the category.** The box keeps its 2:1 shape but is
+  tinted with the category's marker colour behind a large, faint category icon
+  (`imageUpload/emptyPlaceholder.svelte`). For anyone who can edit, it is an
+  "Добавить фото" button: the file picker opens from the tap itself, and the
+  picked file rides into edit mode, where the form starts uploading it
+  (`viewMode/addCoverButton.svelte`, `pendingCoverFile` in the overlay state).
 
 ---
 
@@ -132,20 +138,6 @@ and ghost carry their meaning in tooltips, which never open on a phone. The
 form's toggle chips already settled on icon + text; small muted chips in view
 mode would match them. Showing only the flags that are set, instead of a lock
 on every card, cuts the noise further.
-
-### The empty cover says nothing about the object
-
-`src/lib/components/input/imageUpload/emptyPlaceholder.svelte` — a card
-without a photo spends a third of its height on a grey box with the generic
-logo. The box has to stay at 2:1 so view and edit mode keep the same layout,
-so change what fills it instead:
-
-- tint it with the category's marker colour and centre the category icon,
-  large and faint, in place of the logo (`categoryBadge.svelte` already
-  resolves colour and icon). Free — no Street View or static-map requests;
-- for anyone who can edit, make the box an "Добавить фото" target that enters
-  edit mode with the file picker already open — one tap instead of three.
-  Viewers see the tinted box only.
 
 ### Every tab is titled "Радиоателье. Архив"
 
