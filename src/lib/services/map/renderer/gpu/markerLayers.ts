@@ -16,8 +16,12 @@ import {IconLayer} from '@deck.gl/layers';
 // Browsers disagree on whether an SVG ImageBitmap or <img> reaches WebGL premultiplied, and when it
 // does the icon shader reads it as straight alpha, darkening every translucent part of a sprite
 // twice: a removed marker's disk and every halo. ImageData is straight alpha by spec and uploads
-// verbatim everywhere, so a sprite matches its DOM twin pixel for pixel.
-const SPRITE_LOAD_OPTIONS = {image: {type: 'data'}} as const;
+// verbatim everywhere. loaders.gl builds it from an ImageBitmap, and deck's default
+// `premultiplyAlpha: 'none'` for that bitmap is what Firefox mangles, so it is reset here.
+const SPRITE_LOAD_OPTIONS = {
+    image: {type: 'data'},
+    imagebitmap: {premultiplyAlpha: 'default'},
+} as const;
 
 const WHITE: [number, number, number] = [255, 255, 255];
 const OPAQUE = 255;
