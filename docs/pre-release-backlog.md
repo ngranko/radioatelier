@@ -105,6 +105,10 @@ Listed so the audit is reconstructable, not as work to redo.
 - **The test suite needed env vars to run.** `src/lib/config/index.ts` threw at
   import when the Google Maps keys were unset, failing `markerManager.test.ts`
   in a bare checkout. The keys are now getters, so they throw only when read.
+- **Saves waited on PostHog.** The `save` and `delete` actions and
+  `handleError` awaited `posthog.flush()` before responding. The client already
+  sends each capture immediately (`flushAt: 1`), so the awaits are gone, and
+  pending events are drained on adapter-node's graceful shutdown instead.
 
 ---
 
@@ -161,14 +165,3 @@ Deferred: with one or two active writers the conflicts are rare and Convex
 retries them in milliseconds, while sharding makes ids non-consecutive (a
 user-sharded counter was tried and dropped). Revisit when many users create
 objects concurrently.
-
----
-
-## Correctness and hygiene
-
-### Saves wait on PostHog
-
-The `save` and `delete` actions in both `+page.server.ts` files, and
-`handleError` in `hooks.server.ts`, `await posthog.flush()` before responding.
-When PostHog is slow, every save is slow with it, up to the client's request
-timeout. Capture without awaiting the flush, or flush on shutdown.
