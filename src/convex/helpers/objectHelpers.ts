@@ -21,7 +21,7 @@ export async function getNextInternalId(ctx: MutationCtx) {
 
         await ctx.db.insert('counters', {
             name: 'internalId',
-            value: 2,
+            value: 1,
         });
     }
 
