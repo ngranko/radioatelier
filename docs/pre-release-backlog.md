@@ -55,6 +55,13 @@ Listed so the audit is reconstructable, not as work to redo.
   (`helpers/googleQuota.ts`, 50 burst, 200/hour). The search preview drops its
   Google results when the bucket is empty. Reverse geocodes are cached for a
   week by coordinates rounded to about 1 m, and cache hits don't use quota.
+- **Dependency advisories.** `bun audit` reported 16. `bun audit fix` cleared
+  all but one within existing ranges, including the `@sveltejs/kit` `Accept`
+  header ReDoS
+  ([GHSA-29g2-3rmr-qm68](https://github.com/advisories/GHSA-29g2-3rmr-qm68));
+  `package.json` now requires the patched Kit. The remaining low-severity
+  `cookie@0.6` advisory is pinned by Kit itself and only matters when cookie
+  names or paths come from user input, which the app never does.
 
 ---
 
@@ -79,14 +86,6 @@ auth.
 tables behind nothing but an auth check, with no length cap and no rate limit. A
 single account can pollute the tag and category vocabulary for everyone. Worth
 either restricting creation by role or capping and normalising harder.
-
-### Dependency advisories
-
-`bun audit` reports 16, mostly dev-only. The one that reaches production is
-`@sveltejs/kit` ReDoS via the `Accept` header
-([GHSA-29g2-3rmr-qm68](https://github.com/advisories/GHSA-29g2-3rmr-qm68)) —
-unauthenticated DoS against the adapter-node server. Bump before launch;
-re-run `bun audit` after.
 
 ---
 
