@@ -92,6 +92,10 @@ Listed so the list stays reconstructable, not as work to redo.
   they lift off the map — the ring is what separates them from dark tiles.
 - **Typekit preconnect.** `app.html` opens the crossorigin connection the font
   files need before the stylesheet arrives to name them.
+- **The top bar no longer assembles itself.** The search bar renders with the
+  page, disabled until the map is ready; only its map-dependent setup waits
+  (`search/search.svelte`). The avatar never popped in: `Show` resolves from
+  the server's `initialState`, so it is in the server-rendered HTML.
 
 ---
 
@@ -158,14 +162,6 @@ full results panel one step later uses `bg-background`, so the same list
 changes surface as it expands. Moving the preview to the opaque surface
 continues the glass removal; the search bar and the avatar button still carry
 `.glass` too.
-
-### The top bar assembles itself on load
-
-The search bar only renders once the map is ready
-(`src/routes/(app)/+layout.svelte`), and the avatar has no Clerk loading state
-(`src/lib/components/userMenu/userMenu.svelte:7`), so both pop in separately.
-Reserving their space, or rendering them disabled until ready, keeps the top
-of the screen still.
 
 ## Deliberately excluded
 
