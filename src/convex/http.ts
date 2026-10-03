@@ -84,7 +84,9 @@ http.route({
             return new Response(null, {status: 200});
         }
 
-        await ctx.runAction(internal.notionSync.inbound.processWebhookEvent, {
+        // Processing inline tied the response to the sync outcome: a rejected
+        // page returned 500 and Notion redelivered it indefinitely.
+        await ctx.scheduler.runAfter(0, internal.notionSync.inbound.processWebhookEvent, {
             pageId,
             eventType,
         });

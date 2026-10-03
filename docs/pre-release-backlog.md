@@ -86,6 +86,10 @@ Listed so the audit is reconstructable, not as work to redo.
 - **Dockerfile.** The production stage ran as root and `bun i` was not frozen,
   so image builds could drift from `bun.lock`. The prod stage now runs as the
   image's `node` user, and the install uses `--frozen-lockfile`.
+- **Notion webhook retries.** The route ran the inbound sync inline, so a
+  `rejectInbound` decision returned 500 and Notion redelivered the event
+  indefinitely. The route now schedules `processWebhookEvent` and acknowledges
+  right away; a rejected page fails the scheduled run and shows in the logs.
 
 ---
 
@@ -166,13 +170,6 @@ during render and takes the whole map down. Skip the marker instead.
 `PUBLIC_GOOGLE_MAPS_API_KEY` is unset, which fails one test file in a bare
 checkout. CI needs those vars set, or the config should degrade at import and
 throw at use.
-
-### Notion webhook retries
-
-`src/convex/http.ts:87` runs the inbound sync action inline in the HTTP handler.
-A `rejectInbound` decision throws, the route returns 500, and Notion retries the
-delivery indefinitely. Acknowledging the webhook and scheduling the work would
-decouple the two.
 
 ### A redelivered `page.created` duplicates the Object
 

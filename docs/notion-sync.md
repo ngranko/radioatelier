@@ -17,7 +17,7 @@ To configure the webhook:
 3. Set it as `NOTION_WEBHOOK_VERIFICATION_TOKEN` and enter the same token in Notion's verification dialog.
 4. Enable `page.created`, `page.properties_updated`, `page.deleted`, and `page.undeleted`.
 
-`src/convex/http.ts` verifies `x-notion-signature` before dispatching supported events. Ordinary page retrievals must belong to the configured data source. Delete events use the existing sync link directly.
+`src/convex/http.ts` verifies `x-notion-signature`, schedules supported events for processing, and acknowledges them immediately. Ordinary page retrievals must belong to the configured data source. Delete events use the existing sync link directly.
 
 ## Synced fields
 
@@ -57,7 +57,7 @@ Notion API requests retry rate limits and transient server failures. Sync state 
 
 ```text
 notion-webhook
-  -> notionSync/inbound.processWebhookEvent
+  -> scheduled notionSync/inbound.processWebhookEvent
   -> retrieve page and load sync context
   -> inboundDecision.decideInboundSync
   -> objectsSync mutation or sync-state update
@@ -70,7 +70,7 @@ notion-webhook
 | `patchObject`   | Apply a linked page's field diff through the object writer adapter      |
 | `recordEcho`    | Update sync metadata when the field hash matches the last outbound hash |
 | `deleteObject`  | Delete an object linked to a removed page                               |
-| `rejectInbound` | Record an error where linked, then throw for an empty name or category  |
+| `rejectInbound` | Record an error where linked, then fail the scheduled run               |
 
 An unlinked update or undelete event does not create an object. Creation also skips when no eligible owner or geocoded location is available.
 
