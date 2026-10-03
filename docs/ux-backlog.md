@@ -87,6 +87,9 @@ Listed so the list stays reconstructable, not as work to redo.
   line (`utils/formErrors.ts`). Scrolling to and focusing the offender was
   already superforms' default; `TaxonomyField` spreads the control props onto
   its trigger, so it carries the `aria-invalid` the error selector looks for.
+- **The card and the results panel have an edge.** Both now carry the first-run
+  hint's shadow and hairline ring, shared as `.surface-edge` in `app.css`, so
+  they lift off the map — the ring is what separates them from dark tiles.
 
 ---
 
@@ -145,14 +148,6 @@ a highlight both renderers can draw and that leaves the viewport alone.
 ## Forms
 
 ## Surfaces and loading
-
-### The card and the results panel have no edge
-
-`src/lib/components/objectDetails/detailsSheet.svelte:84` and
-`src/lib/components/search/searchResults.svelte:46` are opaque surfaces with
-no shadow or ring, so they sit flat on the map — in dark mode the card's
-background is close to the tiles themselves. `map/firstRunHint.svelte` already
-has the treatment: `shadow-lg ring-1 ring-black/[0.08] dark:ring-white/[0.12]`.
 
 ### The search preview is glass, the results panel is not
 
