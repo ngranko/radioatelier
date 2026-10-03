@@ -8,7 +8,14 @@
     import {SvglGoogleLogo} from '@selemondev/svgl-svelte';
     import {focusAdjacentResult, readArrowStep} from './resultFocus';
 
-    let {object, onClick}: {object: SearchItem; onClick: () => void} = $props();
+    interface Props {
+        object: SearchItem;
+        onClick: () => void;
+        onPointAt?: () => void;
+        onPointAway?: () => void;
+    }
+
+    let {object, onClick, onPointAt, onPointAway}: Props = $props();
 
     function composeAddress(object: SearchItem) {
         let result = object.address ?? '';
@@ -79,6 +86,10 @@
     )}
     onclick={onClick}
     onkeydown={handleKeydown}
+    onpointerenter={onPointAt}
+    onpointerleave={onPointAway}
+    onfocus={onPointAt}
+    onblur={onPointAway}
     data-search-item
 >
     {#if isCoordinateOnly}
