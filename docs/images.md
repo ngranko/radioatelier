@@ -43,6 +43,6 @@ The image field displays `previewUrl` when available and otherwise the original 
 
 Old image rows may lack an owner. They reject preview updates until attributed through the [image-owner migration](maintenance.md#available-migrations) or a deliberate manual correction.
 
-`storage.cleanup` runs daily at 00:00 UTC. It deletes image rows unused by object covers, then deletes storage files unreferenced by remaining images. It has no age-based grace period, so an upload left in an unsaved form can be collected. Removing one object's cover does not collect an image still referenced by another object.
+`storage.sweepUnusedImages` runs daily at 00:00 UTC. It deletes image rows unused by object covers, then hands off to `storage.sweepUnusedFiles`, which deletes storage files no image references. Both page through their table in batches and skip anything younger than a day, so an upload waiting in an unsaved form survives. Removing one object's cover does not collect an image still referenced by another object.
 
 See [Object backend](object-backend.md) for record relationships and [Maintenance](maintenance.md) for scheduled jobs.

@@ -19,7 +19,9 @@ export default defineSchema({
         // backfillImageOwners migration fills them in; rows it cannot resolve to
         // a single owner stay unset and locked against preview writes.
         createdById: v.optional(v.id('users')),
-    }),
+    })
+        .index('byOriginalStorageId', ['originalStorageId'])
+        .index('byPreviewStorageId', ['previewStorageId']),
     geocodeLookupLeases: defineTable({
         latitude: v.number(),
         longitude: v.number(),

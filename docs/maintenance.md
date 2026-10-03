@@ -37,12 +37,12 @@ A dry run checks a batch, not the whole table. Review completion status and logs
 
 `src/convex/crons.ts` registers two daily internal mutations:
 
-| Time, UTC | Function                 | Effect                                                                                 |
-| --------- | ------------------------ | -------------------------------------------------------------------------------------- |
-| 00:00     | `storage.cleanup`        | Remove image rows unused by covers, then storage files unreferenced by retained images |
-| 00:15     | `imports.cleanupOldJobs` | Remove jobs older than seven days, using finish time or start time                     |
+| Time, UTC | Function                    | Effect                                                                                     |
+| --------- | --------------------------- | ------------------------------------------------------------------------------------------ |
+| 00:00     | `storage.sweepUnusedImages` | Remove image rows unused by covers, then storage files unreferenced by any image           |
+| 00:15     | `imports.cleanupOldJobs`    | Remove jobs older than seven days, using finish time or start time                         |
 
-Storage cleanup has no grace period for fresh uploads. Import-job cleanup removes progress and feedback records, not imported objects. Both implementations collect their relevant tables rather than processing a paginated maintenance queue.
+Storage cleanup pages through images and then files in batches, rescheduling itself until done, and skips anything younger than a day. Import-job cleanup removes progress and feedback records, not imported objects, and collects the whole jobs table.
 
 Object removal separately deletes its map point, marker, all personal tag associations, and visited references. It leaves shared category/tag definitions intact. External index removal and any Notion archival are scheduled separately from the database deletion.
 
