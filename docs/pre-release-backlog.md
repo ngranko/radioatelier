@@ -102,6 +102,9 @@ Listed so the audit is reconstructable, not as work to redo.
   `category.markerIcon` without checking the category exists, so one marker
   pointing at a deleted category threw and took the map down. The loop now skips
   such markers.
+- **The test suite needed env vars to run.** `src/lib/config/index.ts` threw at
+  import when the Google Maps keys were unset, failing `markerManager.test.ts`
+  in a bare checkout. The keys are now getters, so they throw only when read.
 
 ---
 
@@ -162,13 +165,6 @@ objects concurrently.
 ---
 
 ## Correctness and hygiene
-
-### The test suite needs env vars to run
-
-`src/lib/config/index.ts:12` throws at import time when
-`PUBLIC_GOOGLE_MAPS_API_KEY` is unset, which fails one test file in a bare
-checkout. CI needs those vars set, or the config should degrade at import and
-throw at use.
 
 ### Saves wait on PostHog
 
