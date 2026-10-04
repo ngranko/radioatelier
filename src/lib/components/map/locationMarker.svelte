@@ -19,6 +19,7 @@
     let handle: MarkerHandle | undefined = $state();
     let markerIcon: ReturnType<typeof mount> | undefined;
     let updateLocationInterval: ReturnType<typeof setInterval> | undefined;
+    let isDestroyed = false;
 
     onMount(async () => {
         const icon = document.createElement('div');
@@ -32,6 +33,11 @@
         });
 
         await mapState.provider!.preloadMarkerLibrary();
+        // onDestroy may have run during the await; creating the marker now
+        // would leave it and the interval with nothing to clean them up.
+        if (isDestroyed) {
+            return;
+        }
 
         handle = mapState.provider!.createMarkerHandle({lat: 0, lng: 0}, icon, {
             zIndex: 10,
@@ -44,6 +50,7 @@
     });
 
     onDestroy(() => {
+        isDestroyed = true;
         if (updateLocationInterval) {
             clearInterval(updateLocationInterval);
         }
@@ -86,12 +93,13 @@
 
     $effect(() => {
         const element = handle?.getElement();
-        if (orientationEnabled) {
-            element?.classList.add('nav-marker-oriented');
-            window.addEventListener('deviceorientation', handleOrientation, true);
-        } else {
+        if (!orientationEnabled) {
             element?.classList.remove('nav-marker-oriented');
-            window.removeEventListener('deviceorientation', handleOrientation, true);
+            return;
         }
+
+        element?.classList.add('nav-marker-oriented');
+        window.addEventListener('deviceorientation', handleOrientation, true);
+        return () => window.removeEventListener('deviceorientation', handleOrientation, true);
     });
 </script>
