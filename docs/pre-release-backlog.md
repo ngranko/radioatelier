@@ -83,6 +83,9 @@ Listed so the audit is reconstructable, not as work to redo.
   `src/app.d.ts` merges with it (it does not shadow it) and is what types a
   clean checkout, but it lacked `PUBLIC_CONVEX_URL`; now it declares it.
   `PUBLIC_CLERK_PUBLISHABLE_KEY` comes from the `svelte-clerk/env` reference.
+- **Dockerfile.** The production stage ran as root and `bun i` was not frozen,
+  so image builds could drift from `bun.lock`. The prod stage now runs as the
+  image's `node` user, and the install uses `--frozen-lockfile`.
 
 ---
 
@@ -163,12 +166,6 @@ during render and takes the whole map down. Skip the marker instead.
 `PUBLIC_GOOGLE_MAPS_API_KEY` is unset, which fails one test file in a bare
 checkout. CI needs those vars set, or the config should degrade at import and
 throw at use.
-
-### Dockerfile
-
-`docker/app/Dockerfile` — the production stage runs as root (add a `USER`), and
-`bun i` at line 5 is not frozen, so image builds are not reproducible against
-`bun.lock`.
 
 ### Notion webhook retries
 
