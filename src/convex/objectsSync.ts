@@ -23,6 +23,7 @@ import type {
 import {
     buildSyncStateArgs,
     deleteSyncStateForObject,
+    findSyncRecordByPageId,
     upsertSyncStateInMutation,
 } from './notionSync/state';
 import {appApplyPatchValidator, notionFieldsValidator, nullableString} from './notionSync/types';
@@ -69,6 +70,15 @@ export const patchObjectFromSync = internalMutation({
 });
 
 async function createSyncedObject(ctx: MutationCtx, input: CreateSyncedObjectInput) {
+    // The inbound action checks for a link seconds earlier, before a page fetch
+    // and a geocode, so a redelivered page.created can get here after the first
+    // delivery already created the Object. Checking inside the mutation makes
+    // concurrent deliveries conflict instead of both inserting.
+    const existingSync = await findSyncRecordByPageId(ctx, input.notionPageId);
+    if (existingSync) {
+        return existingSync.objectId;
+    }
+
     await requireActiveOwner(ctx, input.ownerId);
     const classification = await resolveCreateClassification(ctx, input);
     const {objectId} = await createObjectRecords(
