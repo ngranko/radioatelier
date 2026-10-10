@@ -1,5 +1,4 @@
 import type {Id} from '$convex/_generated/dataModel';
-import type {Component} from 'svelte';
 import {SvelteSet} from 'svelte/reactivity';
 
 export type FilterKind = 'categories' | 'tags' | 'privateTags';
@@ -7,16 +6,10 @@ export type FilterKind = 'categories' | 'tags' | 'privateTags';
 export interface FilterOption {
     id: string;
     name: string;
-    // category dot color (oklch string); omitted for tags
-    color?: string;
 }
 
-export interface TrayItem {
+export interface TrayItem extends FilterOption {
     kind: FilterKind;
-    id: string;
-    name: string;
-    color?: string;
-    icon?: Component;
 }
 
 interface MarkerFilterState {
