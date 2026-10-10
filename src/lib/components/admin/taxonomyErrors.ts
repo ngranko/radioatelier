@@ -1,6 +1,7 @@
 const messages: Record<string, string> = {
     'Taxonomy name is required': 'Название не может быть пустым',
-    'Taxonomy name is already taken': 'Такое название уже занято',
+    'Taxonomy name is already taken':
+        'Такое название уже занято. Чтобы объединить, удалите с переносом объектов',
     'Taxonomy not found': 'Запись не найдена',
     'Category is still in use': 'Категория ещё используется объектами',
     'A taxonomy cannot replace itself': 'Нельзя перенести объекты в удаляемую запись',

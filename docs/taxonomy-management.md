@@ -12,7 +12,7 @@ The split follows ownership: a private tag belongs to the user who created it, w
 | Tag         | Admins                    | Every owner's Objects   |
 | Private tag | Its owner                 | The owner's own Objects |
 
-`taxonomies.list` requires only a signed-in user; it returns the caller's private tags always, and the shared lists (plus an `isAdmin` flag the dialog uses to decide whether to show tabs at all) only for admins. Both mutations route through `authorizeTaxonomyEdit`: `getCurrentAdminOrThrow` for a category or tag, an ownership check on `createdById` for a private tag. Admin means `role === 'admin'` on the `users` row, mirrored from Clerk `public_metadata.role` by `upsertFromClerk`.
+`taxonomies.list` requires only a signed-in user; it returns the caller's private tags always, and the shared lists only for admins. The dialog reads the role from `users.current`, which the menu already subscribes to, so the heading and tabs are settled before the list arrives. Both mutations route through `authorizeTaxonomyEdit`: `getCurrentAdminOrThrow` for a category or tag, an ownership check on `createdById` for a private tag. Admin means `role === 'admin'` on the `users` row, mirrored from Clerk `public_metadata.role` by `upsertFromClerk`.
 
 ## Usage counts
 
@@ -60,12 +60,14 @@ Private tags reach neither search nor Notion, so their edits fan out to nothing.
 | File                                                   | Role                                             |
 | ------------------------------------------------------ | ------------------------------------------------ |
 | `src/routes/(app)/(fullList)/taxonomies/+page.svelte`  | Route that opens the dialog over the map         |
-| `src/lib/components/admin/taxonomyDialog.svelte`       | Kind tabs, search, list                          |
+| `src/lib/components/admin/taxonomyDialog.svelte`       | Kind tabs, search, list, the one active row      |
 | `src/lib/components/admin/taxonomyRow.svelte`          | One row with inline rename and the delete toggle |
 | `src/lib/components/admin/taxonomyRemovalPanel.svelte` | Replacement picker and confirmation              |
 | `src/lib/components/admin/taxonomyErrors.ts`           | `ConvexError` message → Russian toast text       |
 
-Non-admins see a single private-tag list with no tab bar, under a "Приватные теги" heading. Rename is inline in the row and delete expands a panel underneath it, so the flow never stacks a second modal over the dialog. The list refreshes itself: `taxonomies.list` is a reactive query, as are `categories.list`, `tags.list`, and `privateTags.list` elsewhere in the app.
+Admins get the dialog under a "Категории и теги" heading with the same three tabs as the object form's taxonomy sheet; non-admins see a single private-tag list with no tab bar, under "Приватные теги". Category rows lead with their marker badge.
+
+Rename is inline in the row and delete expands a panel underneath it, so the flow never stacks a second modal over the dialog. The dialog owns which row is being renamed or deleted, so only one is open at a time; Escape closes that row first and the dialog second, and switching tabs or typing in the search closes it too. Picking a replacement turns the confirm button into "Перенести и удалить". The list refreshes itself: `taxonomies.list` is a reactive query, as are `categories.list`, `tags.list`, and `privateTags.list` elsewhere in the app.
 
 ## Related docs
 
