@@ -5,15 +5,11 @@
     import {tagsState} from '$lib/state/tags.svelte';
     import MarkerFilterPanel from './markerFilterPanel.svelte';
 
-    // Categories are real (already loaded into categoriesState).
     const categories = $derived<FilterOption[]>(
         Object.values(categoriesState.categories)
             .filter(category => !category.isHidden)
-            .map(category => ({
-                id: category.id,
-                name: category.name,
-                color: category.markerColor,
-            })),
+            .map(category => ({id: category.id, name: category.name}))
+            .sort((a, b) => a.name.localeCompare(b.name)),
     );
 
     const tags = $derived<FilterOption[]>(tagsState.tags);
