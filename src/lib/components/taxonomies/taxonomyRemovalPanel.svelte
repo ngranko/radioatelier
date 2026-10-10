@@ -23,25 +23,19 @@
     const canConfirm = $derived(!isReplacementRequired || Boolean(replacementId));
 </script>
 
-<div class="border-border/60 bg-muted/30 space-y-3 rounded-md border p-3">
-    <p class="text-muted-foreground text-xs leading-snug">
-        {#if isReplacementRequired}
-            Объекты не могут остаться без категории — выберите, куда их перенести.
-        {:else if isUsed}
-            Без переноса метка просто снимется с объектов.
-        {:else if type === 'category'}
-            Эту категорию никто не использует.
-        {:else}
-            Эту метку никто не использует.
-        {/if}
-    </p>
-
+<div class="space-y-3 px-3 pb-3">
     {#if isUsed}
+        <p class="text-muted-foreground text-xs leading-snug">
+            {isReplacementRequired
+                ? 'Объекты не могут остаться без категории — выберите, куда их перенести.'
+                : 'Без переноса тег просто снимется с объектов.'}
+        </p>
         <Combobox
             options={replacements}
             bind:value={replacementId}
             placeholder="Перенести объекты в..."
             disabled={isBusy}
+            wrapperClass="w-full"
         />
     {/if}
 
@@ -54,7 +48,7 @@
             disabled={!canConfirm}
             onclick={() => onConfirm(replacementId ?? null)}
         >
-            Удалить
+            {replacementId ? 'Перенести и удалить' : 'Удалить'}
         </Button>
     </div>
 </div>
