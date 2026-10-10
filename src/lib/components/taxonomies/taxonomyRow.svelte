@@ -1,10 +1,13 @@
 <script lang="ts">
+    import type {Id} from '$convex/_generated/dataModel';
+    import CategoryBadge from '$lib/components/categoryBadge.svelte';
     import {bindTaxonomyActions} from '$lib/components/taxonomies/taxonomyActions';
     import {describeTaxonomyError} from '$lib/components/taxonomies/taxonomyErrors';
     import TaxonomyRemovalPanel from '$lib/components/taxonomies/taxonomyRemovalPanel.svelte';
     import {Button} from '$lib/components/ui/button';
     import {Input} from '$lib/components/ui/input';
-    import type {TaxonomyEntry, TaxonomyType} from '$lib/interfaces/taxonomy';
+    import type {TaxonomyEntry, TaxonomyRowMode, TaxonomyType} from '$lib/interfaces/taxonomy';
+    import {cn} from '$lib/utils.js';
     import {pluralizeRussian} from '$lib/utils/plural';
     import CheckIcon from '@lucide/svelte/icons/check';
     import PencilIcon from '@lucide/svelte/icons/pencil';
@@ -18,13 +21,20 @@
         entry: TaxonomyEntry;
         type: TaxonomyType;
         siblings: TaxonomyEntry[];
+        mode: TaxonomyRowMode;
+        onModeChange(mode: TaxonomyRowMode): void;
     }
 
-    let {entry, type, siblings}: Props = $props();
+    let {entry, type, siblings, mode, onModeChange}: Props = $props();
+
+    const removalNotices: Record<TaxonomyType, string> = {
+        category: 'Категория удалена',
+        tag: 'Тег удалён',
+        privateTag: 'Тег удалён',
+    };
 
     const actionsByType = bindTaxonomyActions(useConvexClient());
 
-    let mode = $state<'view' | 'rename' | 'remove'>('view');
     let draftName = $state('');
     let isBusy = $state(false);
     let nameInput = $state<HTMLInputElement | null>(null);
@@ -34,25 +44,27 @@
         siblings.filter(item => item.id !== entry.id).map(item => ({id: item.id, name: item.name})),
     );
     const usageLabel = $derived(
-        `${entry.usageCount} ${pluralizeRussian(entry.usageCount, ['объект', 'объекта', 'объектов'])}`,
+        entry.usageCount === 0
+            ? 'не используется'
+            : `${entry.usageCount} ${pluralizeRussian(entry.usageCount, ['объект', 'объекта', 'объектов'])}`,
     );
 
     function startRename() {
         draftName = entry.name;
-        mode = 'rename';
+        onModeChange('rename');
         tick().then(() => nameInput?.select());
     }
 
     async function applyRename() {
-        if (draftName.trim() === entry.name) {
-            mode = 'view';
+        if (draftName.trim().toLowerCase() === entry.name) {
+            onModeChange('view');
             return;
         }
 
         isBusy = true;
         try {
             await actions.rename(entry.id, draftName);
-            mode = 'view';
+            onModeChange('view');
         } catch (error) {
             toast.error(describeTaxonomyError(error));
         } finally {
@@ -64,8 +76,8 @@
         isBusy = true;
         try {
             await actions.remove(entry.id, replacementId);
-            toast.success(`«${entry.name}» удалено`);
-            mode = 'view';
+            toast.success(removalNotices[type]);
+            onModeChange('view');
         } catch (error) {
             toast.error(describeTaxonomyError(error));
         } finally {
@@ -74,36 +86,66 @@
     }
 </script>
 
-<div class="border-border/50 space-y-2.5 rounded-lg border p-3">
-    <div class="flex items-center gap-3">
+<div class={cn('rounded-lg', mode === 'view' ? 'hover:bg-accent/50' : 'bg-muted/50')}>
+    <div class="flex min-h-11 items-center gap-2 py-1 pr-1 pl-3">
         {#if mode === 'rename'}
             <Input
                 bind:value={draftName}
                 bind:ref={nameInput}
                 disabled={isBusy}
                 onkeydown={event => event.key === 'Enter' && applyRename()}
-                class="h-9"
+                aria-label="Новое название"
+                class="-ml-2 h-9"
             />
-            <Button size="icon" variant="ghost" loading={isBusy} onclick={applyRename}>
-                <CheckIcon class="size-4" />
-            </Button>
-            <Button size="icon" variant="ghost" disabled={isBusy} onclick={() => (mode = 'view')}>
-                <XIcon class="size-4" />
-            </Button>
-        {:else}
-            <p class="min-w-0 flex-1 truncate text-sm font-medium">{entry.name}</p>
-            <span class="text-muted-foreground shrink-0 text-xs">{usageLabel}</span>
-            <Button size="icon" variant="ghost" onclick={startRename} aria-label="Переименовать">
-                <PencilIcon class="size-4" />
+            <Button
+                size="icon"
+                variant="ghost"
+                loading={isBusy}
+                onclick={applyRename}
+                aria-label="Сохранить"
+            >
+                <CheckIcon />
             </Button>
             <Button
                 size="icon"
                 variant="ghost"
-                class="text-destructive hover:text-destructive"
-                onclick={() => (mode = mode === 'remove' ? 'view' : 'remove')}
-                aria-label="Удалить"
+                class="text-muted-foreground"
+                disabled={isBusy}
+                onclick={() => onModeChange('view')}
+                aria-label="Отменить"
             >
-                <Trash2Icon class="size-4" />
+                <XIcon />
+            </Button>
+        {:else}
+            {#if type === 'category'}
+                <CategoryBadge
+                    name={entry.name}
+                    categoryId={entry.id as Id<'categories'>}
+                    showName={false}
+                />
+            {/if}
+            <span class="min-w-0 flex-1 py-1 text-sm break-words">{entry.name}</span>
+            <span class="text-muted-foreground shrink-0 text-xs">{usageLabel}</span>
+            <Button
+                size="icon"
+                variant="ghost"
+                class="text-muted-foreground"
+                onclick={startRename}
+                aria-label="Переименовать"
+            >
+                <PencilIcon />
+            </Button>
+            <Button
+                size="icon"
+                variant="ghost"
+                class={mode === 'remove'
+                    ? 'text-destructive hover:text-destructive'
+                    : 'text-muted-foreground hover:text-destructive'}
+                onclick={() => onModeChange(mode === 'remove' ? 'view' : 'remove')}
+                aria-label="Удалить"
+                aria-expanded={mode === 'remove'}
+            >
+                <Trash2Icon />
             </Button>
         {/if}
     </div>
@@ -115,7 +157,7 @@
             {replacements}
             {isBusy}
             onConfirm={applyRemoval}
-            onCancel={() => (mode = 'view')}
+            onCancel={() => onModeChange('view')}
         />
     {/if}
 </div>

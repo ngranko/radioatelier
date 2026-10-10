@@ -79,7 +79,7 @@
             </DropdownMenuItem>
             <DropdownMenuItem onclick={handleTaxonomiesClick}>
                 <TagsIcon />
-                {isAdmin ? 'Справочники' : 'Приватные теги'}
+                {isAdmin ? 'Категории и теги' : 'Приватные теги'}
             </DropdownMenuItem>
             <DropdownMenuItem onclick={handleChangePasswordClick}>
                 <KeyRoundIcon />
