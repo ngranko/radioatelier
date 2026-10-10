@@ -1,10 +1,13 @@
 <script lang="ts">
+    import ClearButton from '$lib/components/search/clearButton.svelte';
+    import {Button} from '$lib/components/ui/button';
     import {
         markerFilterState,
         closeMarkerFilter,
         clearMarkerFilter,
         selectedFilterCount,
         isFilterSelected,
+        type FilterKind,
         type FilterOption,
         type TrayItem,
     } from '$lib/state/markerFilter.svelte';
@@ -12,12 +15,10 @@
     import ChevronLeftIcon from '@lucide/svelte/icons/chevron-left';
     import LockIcon from '@lucide/svelte/icons/lock';
     import MapPinIcon from '@lucide/svelte/icons/map-pin';
-    import SearchIcon from '@lucide/svelte/icons/search';
     import TagIcon from '@lucide/svelte/icons/tag';
-    import XIcon from '@lucide/svelte/icons/x';
     import {onMount, tick} from 'svelte';
     import {cubicOut} from 'svelte/easing';
-    import {fade, fly} from 'svelte/transition';
+    import {fly} from 'svelte/transition';
     import MarkerFilterSection from './markerFilterSection.svelte';
     import MarkerFilterTray from './markerFilterTray.svelte';
 
@@ -45,16 +46,16 @@
     );
 
     const trayItems = $derived.by<TrayItem[]>(() => [
-        ...categories
-            .filter(c => isFilterSelected('categories', c.id))
-            .map(c => ({kind: 'categories' as const, id: c.id, name: c.name, color: c.color})),
-        ...tags
-            .filter(t => isFilterSelected('tags', t.id))
-            .map(t => ({kind: 'tags' as const, id: t.id, name: t.name, icon: TagIcon})),
-        ...privateTags
-            .filter(p => isFilterSelected('privateTags', p.id))
-            .map(p => ({kind: 'privateTags' as const, id: p.id, name: p.name, icon: LockIcon})),
+        ...pickSelected('categories', categories),
+        ...pickSelected('tags', tags),
+        ...pickSelected('privateTags', privateTags),
     ]);
+
+    function pickSelected(kind: FilterKind, options: FilterOption[]): TrayItem[] {
+        return options
+            .filter(option => isFilterSelected(kind, option.id))
+            .map(option => ({kind, id: option.id, name: option.name}));
+    }
 
     onMount(() =>
         registerEscapeCloseHandler({
@@ -72,55 +73,41 @@
 </script>
 
 {#if markerFilterState.isOpen}
-    <div
-        class="fixed inset-0 z-10 bg-black/30 backdrop-blur-[2px]"
-        transition:fade={{duration: 180}}
-        onclick={closeMarkerFilter}
-        role="presentation"
-    ></div>
-
-    <div
-        class="glass fixed inset-2 z-30 flex flex-col overflow-hidden rounded-[22px]
-            sm:inset-auto sm:top-2 sm:left-2 sm:max-h-[min(78vh,660px)] sm:w-[420px] sm:max-w-[calc(100%-1rem)]"
+    <aside
+        aria-label="Фильтр маркеров"
+        class="bg-background surface-edge fixed top-0 left-0 z-30 m-2 flex max-h-[calc(100dvh-16px)] w-[calc(100vw-16px)] max-w-sm flex-col overflow-hidden rounded-2xl"
         in:fly={{y: -6, duration: 200, easing: cubicOut}}
         out:fly={{y: -6, duration: 150, easing: cubicOut}}
     >
-        <div class="border-border flex items-center gap-2 border-b py-2.5 pr-2.5 pl-2">
-            <button
-                type="button"
+        <div class="flex items-center gap-1 border-b p-1.5">
+            <Button
+                variant="ghost"
+                size="icon"
                 onclick={closeMarkerFilter}
-                aria-label="Назад к поиску маркеров"
-                class="text-muted-foreground hover:bg-muted/55 hover:text-foreground grid size-[34px]
-                    flex-none place-items-center rounded-full transition-colors"
+                aria-label="Закрыть фильтр"
+                class="text-muted-foreground hover:text-foreground h-8 w-8 rounded-full"
             >
-                <ChevronLeftIcon class="size-[18px]" />
-            </button>
-            <SearchIcon class="text-muted-foreground size-[17px] flex-none" />
+                <ChevronLeftIcon />
+            </Button>
             <input
                 bind:this={input}
                 bind:value={markerFilterState.query}
-                placeholder="Фильтр по категориям и тегам…"
-                class="placeholder:text-muted-foreground min-w-0 flex-1 border-none bg-transparent text-sm outline-none"
+                placeholder="Категория или тег..."
+                autocomplete="off"
+                autocorrect="off"
+                spellcheck="false"
+                class="placeholder:text-muted-foreground/60 h-8 min-w-0 flex-1 bg-transparent text-sm outline-none"
             />
             {#if markerFilterState.query}
-                <button
-                    type="button"
-                    onclick={() => (markerFilterState.query = '')}
-                    aria-label="Очистить"
-                    class="text-muted-foreground bg-muted/60 grid size-[30px] flex-none place-items-center rounded-full"
-                >
-                    <XIcon class="size-[13px]" />
-                </button>
+                <ClearButton onClick={() => (markerFilterState.query = '')} />
             {/if}
         </div>
 
         <MarkerFilterTray items={trayItems} />
 
-        <div class="flex-1 overflow-y-auto px-1.5 py-1">
+        <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain">
             {#if noMatches}
-                <p class="text-muted-foreground px-5 py-9 text-center text-[13px]">
-                    Ничего не найдено по запросу «{markerFilterState.query.trim()}»
-                </p>
+                <p class="text-muted-foreground px-4 py-8 text-center text-sm">Ничего не найдено</p>
             {:else}
                 <MarkerFilterSection
                     kind="categories"
@@ -131,7 +118,7 @@
                 <MarkerFilterSection kind="tags" label="Теги" icon={TagIcon} options={tags} />
                 <MarkerFilterSection
                     kind="privateTags"
-                    label="Личные теги"
+                    label="Приватные теги"
                     icon={LockIcon}
                     options={privateTags}
                 />
@@ -139,21 +126,21 @@
         </div>
 
         <div
-            class="border-border text-muted-foreground flex items-center gap-3 border-t px-3.5 py-2.5 text-xs"
+            class="text-muted-foreground flex min-h-14 items-center gap-3 border-t py-2 pr-2 pl-4 text-sm"
         >
             <span>
-                Показано <b class="text-primary text-[13.5px] font-bold tabular-nums">{shown}</b>
+                Показано <span class="text-foreground font-medium tabular-nums">{shown}</span>
                 из {total}
             </span>
             {#if count > 0}
                 <button
                     type="button"
                     onclick={clearMarkerFilter}
-                    class="text-muted-foreground ml-auto text-xs font-semibold"
+                    class="text-destructive ml-auto shrink-0 rounded-md px-2 py-2.5 underline-offset-4 hover:underline"
                 >
-                    Сбросить · {count}
+                    сбросить все
                 </button>
             {/if}
         </div>
-    </div>
+    </aside>
 {/if}
