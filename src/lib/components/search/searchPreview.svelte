@@ -61,7 +61,7 @@
 
 {#if !objectDetailsOverlay.detailsId}
     <div
-        class="glass absolute top-0 flex max-h-[calc(100dvh-24px)] w-full flex-col overflow-hidden rounded-t-2xl rounded-b-xl pt-11"
+        class="bg-background surface-edge absolute top-0 flex max-h-[calc(100dvh-24px)] w-full flex-col overflow-hidden rounded-t-2xl rounded-b-xl pt-11"
         transition:fade={{duration: 120, easing: cubicInOut}}
     >
         <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain">
