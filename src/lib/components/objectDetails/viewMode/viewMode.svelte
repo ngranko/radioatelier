@@ -7,6 +7,7 @@
     import {extractHostname} from '$lib/utils/url';
     import ExternalLinkIcon from '@lucide/svelte/icons/external-link';
     import Actions from './actions.svelte';
+    import AddCoverButton from './addCoverButton.svelte';
     import Address from './address.svelte';
     import Tags from './tags.svelte';
 
@@ -34,15 +35,20 @@
 />
 <div class="relative min-h-0 flex-1 space-y-3 overflow-x-hidden overflow-y-auto p-4">
     <div class="mb-3">
-        <ImageUpload
-            value={initialValues.cover?.id}
-            onChange={() => {
-                /* do nothing */
-            }}
-            url={initialValues.cover?.url}
-            previewUrl={initialValues.cover?.previewUrl}
-            disabled
-        />
+        {#if !initialValues.cover && permissions.canEditAll}
+            <AddCoverButton categoryId={initialValues.category?.id} />
+        {:else}
+            <ImageUpload
+                value={initialValues.cover?.id}
+                onChange={() => {
+                    /* do nothing */
+                }}
+                url={initialValues.cover?.url}
+                previewUrl={initialValues.cover?.previewUrl}
+                categoryId={initialValues.category?.id}
+                disabled
+            />
+        {/if}
     </div>
     <div class={!initialValues.tags?.length && !initialValues.privateTags?.length ? 'mb-4' : ''}>
         <div class="flex items-center justify-between">
