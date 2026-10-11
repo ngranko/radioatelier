@@ -106,12 +106,10 @@
             return [];
         }
 
-        const catalogMarkers = rawMarkerPoints.map(
-            (item): RenderedMarkerPoint => ({
-                ...item,
-                isVisited: visitedObjectIdSet.has(item.id),
-            }),
-        );
+        const catalogMarkers = rawMarkerPoints.map((item): RenderedMarkerPoint => ({
+            ...item,
+            isVisited: visitedObjectIdSet.has(item.id),
+        }));
 
         const activeMarker = getActiveListMarker();
         if (activeMarker && !catalogMarkers.some(item => item.id === activeMarker.id)) {
