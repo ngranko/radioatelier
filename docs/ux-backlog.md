@@ -60,6 +60,10 @@ Listed so the list stays reconstructable, not as work to redo.
   "Добавить фото" button: the file picker opens from the tap itself, and the
   picked file rides into edit mode, where the form starts uploading it
   (`viewMode/addCoverButton.svelte`, `pendingCoverFile` in the overlay state).
+- **Flags as labelled chips.** "посещена", "утрачена" and "публичная" are small
+  outlined chips with the form's icons, shown only when set; the lock for a
+  private object is gone. They lead the tag row rather than sharing a line
+  with the category, so the two wrap together as one row.
 
 ---
 
@@ -130,14 +134,6 @@ address at `text-base` in full foreground, while the description — the actual
 archive content — sits at `text-sm` and 80% opacity
 (`viewMode/viewMode.svelte:79`). Demote the address to muted `text-sm` with a
 small map-pin icon and let the description be the body text.
-
-### Flags are icons explained only by tooltips
-
-`src/lib/components/objectDetails/viewMode/flags.svelte` — lock, user-check
-and ghost carry their meaning in tooltips, which never open on a phone. The
-form's toggle chips already settled on icon + text; small muted chips in view
-mode would match them. Showing only the flags that are set, instead of a lock
-on every card, cuts the noise further.
 
 ### Every tab is titled "Радиоателье. Архив"
 
