@@ -39,6 +39,7 @@ export interface MarkerHandle {
     hide(): void;
     remove(): void;
     getElement(): HTMLElement | null;
+    setZIndex(zIndex: number): void;
     addClickListener(callback: () => void): EventUnsubscribe;
 }
 
