@@ -88,7 +88,7 @@
 <div bind:this={consoleElement}></div>
 
 <div class="menu absolute top-2 right-4 left-2 flex items-center justify-between gap-4">
-    {#if mapState.isReady && clerkCtx.auth.userId}
+    {#if clerkCtx.auth.userId}
         <Search />
     {:else}
         <div></div>
