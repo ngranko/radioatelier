@@ -17,12 +17,9 @@
 
     let {initialValues, permissions = {canEditAll: true, canEditPersonal: true}}: Props = $props();
 
-    function startsWithNumber(str: string): boolean {
-        const char = str.charAt(0);
-        return char >= '0' && char <= '9';
-    }
-
     const description = $derived(initialValues.description?.replace(/\\r\\n|\\n|\\r/g, '\n'));
+    // unticking "утрачена" hides the field in the form but keeps its value
+    const removalPeriod = $derived(initialValues.isRemoved ? initialValues.removalPeriod : null);
     const sourceHost = $derived(
         initialValues.source ? extractHostname(initialValues.source) : null,
     );
@@ -84,27 +81,21 @@
             {description}
         </p>
     {/if}
-    {#if initialValues.installedPeriod || initialValues.removalPeriod}
-        <div class="space-y-1">
+    {#if initialValues.installedPeriod || removalPeriod}
+        <dl class="flex gap-4 text-sm">
             {#if initialValues.installedPeriod}
-                <div class="text-muted-foreground text-sm">
-                    Появилась <span class="lowercase">
-                        {startsWithNumber(initialValues.installedPeriod)
-                            ? 'в ' + initialValues.installedPeriod
-                            : initialValues.installedPeriod}
-                    </span>
+                <div class="flex-1">
+                    <dt class="text-muted-foreground">Появилась</dt>
+                    <dd>{initialValues.installedPeriod}</dd>
                 </div>
             {/if}
-            {#if initialValues.removalPeriod}
-                <div class="text-muted-foreground text-sm">
-                    Пропала <span class="lowercase">
-                        {startsWithNumber(initialValues.removalPeriod)
-                            ? 'в ' + initialValues.removalPeriod
-                            : initialValues.removalPeriod}
-                    </span>
+            {#if removalPeriod}
+                <div class="flex-1">
+                    <dt class="text-muted-foreground">Пропала</dt>
+                    <dd>{removalPeriod}</dd>
                 </div>
             {/if}
-        </div>
+        </dl>
     {/if}
     {#if initialValues.source}
         <div class="pt-2">
