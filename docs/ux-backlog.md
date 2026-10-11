@@ -42,6 +42,8 @@ Listed so the list stays reconstructable, not as work to redo.
   the marker pop, drops the endless pulse under a dragged marker and keeps only
   the fade of dialogs, menus and popovers; the GPU sprites pop in a millisecond,
   and the camera jumps instead of gliding on `setCenter` and `fitBounds`.
+- **The source link names its site.** It reads "Источник · pastvu.com", with
+  the hostname taken from the URL (`utils/url.ts`).
 
 ---
 
@@ -145,12 +147,6 @@ over the value in foreground. Each end wraps on its own, so ranges on both
 sides ("1965–1969", "2019–2021") stay readable, and the `startsWithNumber`
 "в" prefix goes away. Show only the column that has a value. Worth moving up
 to just under the tags — the era is among the first things a reader wants.
-
-### The source link does not say where it goes
-
-`src/lib/components/objectDetails/viewMode/viewMode.svelte:113` — "Источник"
-alone. "Источник · pastvu.com", with the hostname taken from the URL, tells
-the reader what they are about to open.
 
 ### The route link navigates the tab away
 

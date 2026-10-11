@@ -4,6 +4,7 @@
     import Flags from '$lib/components/objectDetails/viewMode/flags.svelte';
     import type {LooseObject} from '$lib/interfaces/object.ts';
     import type {Permissions} from '$lib/interfaces/permissions';
+    import {extractHostname} from '$lib/utils/url';
     import ExternalLinkIcon from '@lucide/svelte/icons/external-link';
     import Actions from './actions.svelte';
     import Address from './address.svelte';
@@ -22,6 +23,9 @@
     }
 
     const description = $derived(initialValues.description?.replace(/\\r\\n|\\n|\\r/g, '\n'));
+    const sourceHost = $derived(
+        initialValues.source ? extractHostname(initialValues.source) : null,
+    );
 </script>
 
 <Actions
@@ -110,7 +114,7 @@
                 rel="noopener noreferrer nofollow"
                 class="text-primary hover:text-primary/90 inline-flex items-center gap-1 text-sm hover:underline"
             >
-                Источник
+                {sourceHost ? `Источник · ${sourceHost}` : 'Источник'}
                 <ExternalLinkIcon class="ml-1 size-3.5" />
             </a>
         </div>
