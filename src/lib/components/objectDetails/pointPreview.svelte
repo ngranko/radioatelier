@@ -22,6 +22,9 @@
         details.name || (details.type === 'map' ? details.address : '') || 'Новая точка',
     );
     const coordinates = $derived(`${details.latitude.toFixed(5)}, ${details.longitude.toFixed(5)}`);
+    const routeUrl = $derived(
+        `https://www.google.com/maps/dir/?api=1&destination=${details.latitude},${details.longitude}&dir_action=navigate`,
+    );
 
     function handleCreateClick() {
         const draft = objectDetailsOverlay.details;
@@ -29,10 +32,6 @@
             return;
         }
         showPointCreateOverlay(objectDetailsOverlay.detailsId, draft, details);
-    }
-
-    function handleRouteClick() {
-        window.location.href = `https://www.google.com/maps/dir/?api=1&destination=${details.latitude},${details.longitude}&dir_action=navigate`;
     }
 
     function handleStreetViewClick() {
@@ -53,7 +52,9 @@
             variant="ghost"
             size="icon"
             class="text-muted-foreground hover:text-foreground"
-            onclick={handleRouteClick}
+            href={routeUrl}
+            target="_blank"
+            rel="noopener"
             aria-label="Проложить маршрут"
             title="Проложить маршрут"
         >

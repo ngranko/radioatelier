@@ -26,15 +26,15 @@
         permissions = {canEditAll: true, canEditPersonal: true},
     }: Props = $props();
 
+    const routeUrl = $derived(
+        `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&dir_action=navigate`,
+    );
+
     function handleEditClick() {
         if (!objectDetailsOverlay.detailsId) {
             return;
         }
         enterEditMode();
-    }
-
-    function handleRouteClick() {
-        window.location.href = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&dir_action=navigate`;
     }
 
     function handleStreetViewClick() {
@@ -71,7 +71,9 @@
         variant="ghost"
         size="icon"
         class="text-muted-foreground hover:text-foreground"
-        onclick={handleRouteClick}
+        href={routeUrl}
+        target="_blank"
+        rel="noopener"
         aria-label="Проложить маршрут"
         title="Проложить маршрут"
     >
