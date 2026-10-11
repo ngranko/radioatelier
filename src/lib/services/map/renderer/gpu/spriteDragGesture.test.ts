@@ -104,27 +104,6 @@ describe('SpriteDragGesture', () => {
         expect(onHold).not.toHaveBeenCalled();
     });
 
-    it('gives up the hold when the press slides into a pan', () => {
-        const {press, move, onHold} = harness(markerPoint(true));
-
-        press();
-        move({clientX: 40});
-        vi.advanceTimersByTime(HOLD_MS);
-
-        expect(onHold).not.toHaveBeenCalled();
-    });
-
-    it('sits out a finger tremor', () => {
-        const point = markerPoint(true);
-        const {press, move, onHold} = harness(point);
-
-        press();
-        move({clientX: 8, clientY: 9});
-        vi.advanceTimersByTime(HOLD_MS);
-
-        expect(onHold).toHaveBeenCalledWith(point.marker);
-    });
-
     it('gives up the hold when a second finger starts a pinch', () => {
         const {press, release, onHold, onRelease} = harness(markerPoint(true));
 

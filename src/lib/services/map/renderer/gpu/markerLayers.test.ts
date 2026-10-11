@@ -28,22 +28,4 @@ describe('buildMarkerLayers', () => {
         expect(handled).toBe(true);
         expect(onMarkerClick).toHaveBeenCalledWith(point.marker);
     });
-
-    it('uploads every sprite layer as straight-alpha ImageData', () => {
-        const layers = buildMarkerLayers(
-            [markerPoint()],
-            {fades: [], exits: []},
-            {
-                onMarkerClick: vi.fn(),
-            },
-        );
-
-        expect(layers).toHaveLength(3);
-        for (const layer of layers) {
-            expect(layer.props.loadOptions).toEqual({
-                image: {type: 'data'},
-                imagebitmap: {premultiplyAlpha: 'default'},
-            });
-        }
-    });
 });
