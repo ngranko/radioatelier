@@ -10,6 +10,9 @@ export function getPostHogClient() {
             flushAt: 1,
             flushInterval: 0,
         });
+        // Captures send in the background instead of being awaited by the
+        // request, so drain whatever is still in flight on a graceful shutdown.
+        process.on('sveltekit:shutdown', () => posthogClient?.shutdown());
     }
     return posthogClient;
 }

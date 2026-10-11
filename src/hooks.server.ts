@@ -58,7 +58,5 @@ export const handleError: HandleServerError = async ({error, status, message}) =
         },
     });
 
-    await posthog.flush();
-
     return {message, status};
 };
