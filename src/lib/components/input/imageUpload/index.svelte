@@ -15,6 +15,7 @@
         disabled?: boolean;
         url?: string;
         previewUrl?: string;
+        isUploading?: boolean;
         onChange(file: File): void | Promise<void>;
     }
 
@@ -25,11 +26,11 @@
         disabled = false,
         url = $bindable(),
         previewUrl = $bindable(),
+        isUploading = $bindable(false),
         onChange,
     }: Props = $props();
 
     let isViewerOpen = $state(false);
-    let isUploading = $state(false);
     let imageUploadRef: HTMLInputElement | undefined = $state();
     let displayUrl = $derived(previewUrl || url);
 

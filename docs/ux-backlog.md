@@ -47,6 +47,9 @@ Listed so the list stays reconstructable, not as work to redo.
 - **The route link opens a new tab.** The route buttons on the card and the
   point preview are `target="_blank"` links rather than a `window.location`
   assignment, so desktop keeps the map and phones still hand off to Maps.
+- **Save waits for a photo upload.** The image field exposes its upload state
+  and the form keeps Save disabled until the resize and upload settle, so a
+  mid-upload save can no longer go out without the new `cover`.
 
 ---
 
@@ -158,15 +161,6 @@ entries, bookmarks and the `og:title` of a shared link are all identical. The
 object name in the title is a one-line change per route.
 
 ## Forms
-
-### Saving during a photo upload loses the photo
-
-`form.svelte:266` disables Save only while the form submits, not while
-`handleImageChange` is still resizing and uploading. If Save is tapped mid-upload,
-the form is submitted without the new `cover`. The card returns to view mode, and
-when the upload finishes it writes `cover` into a form that has already been
-saved, so the photo is silently dropped. Disable Save until the upload
-settles, or await the pending upload before submitting.
 
 ### New-point form friction
 

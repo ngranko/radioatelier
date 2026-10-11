@@ -53,6 +53,7 @@
     let imageUrl = $state(initialValues.cover?.url);
     // svelte-ignore state_referenced_locally
     let imagePreviewUrl = $state(initialValues.cover?.previewUrl);
+    let isUploadingImage = $state(false);
 
     let lastAction = '';
     let submitToastId: string | number | undefined;
@@ -263,7 +264,9 @@
 
 <form method="POST" action="?/save" class="flex min-h-0 flex-1 flex-col" use:enhance>
     <div class="bg-muted/40 flex items-center justify-between gap-3 border-b px-4 py-2.5">
-        <Button type="submit" disabled={$submitting} class="px-6 text-base">Сохранить</Button>
+        <Button type="submit" disabled={$submitting || isUploadingImage} class="px-6 text-base">
+            Сохранить
+        </Button>
         <BackButton isConfirmationRequired={isTainted()} onClick={handleBack} />
         <span class="flex-1"></span>
         {#if $formData.id}
@@ -279,6 +282,7 @@
                         bind:value={$formData.cover}
                         bind:url={imageUrl}
                         bind:previewUrl={imagePreviewUrl}
+                        bind:isUploading={isUploadingImage}
                         disabled={$submitting}
                         onChange={handleImageChange}
                     />
