@@ -18,11 +18,9 @@
     );
 </script>
 
-<div class="flex flex-wrap gap-2">
-    {#each sortedTags as tag (tag.id)}
-        <TagChip name={tag.name} />
-    {/each}
-    {#each sortedPrivateTags as tag (tag.id)}
-        <TagChip name={tag.name} isPrivate />
-    {/each}
-</div>
+{#each sortedTags as tag (tag.id)}
+    <TagChip name={tag.name} />
+{/each}
+{#each sortedPrivateTags as tag (tag.id)}
+    <TagChip name={tag.name} isPrivate />
+{/each}
