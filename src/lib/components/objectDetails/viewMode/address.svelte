@@ -1,4 +1,6 @@
 <script lang="ts">
+    import MapPinIcon from '@lucide/svelte/icons/map-pin';
+
     interface Props {
         address?: string | null;
         city?: string | null;
@@ -22,6 +24,7 @@
     }
 </script>
 
-<p class="text-foreground text-base">
+<p class="text-muted-foreground flex items-start gap-1.5 text-sm">
+    <MapPinIcon class="mt-0.5 size-4 shrink-0" aria-hidden="true" />
     {composeAddress()}
 </p>
