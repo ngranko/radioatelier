@@ -86,6 +86,18 @@ describe('objectDetailsOverlay transitions', () => {
         expect(objectDetailsOverlay.detailsId).toBe('object-1');
     });
 
+    it('hands a picked cover to the next edit only', () => {
+        showObjectDetailsOverlay('object-1');
+        const cover = new File([], 'cover.jpg', {type: 'image/jpeg'});
+
+        enterEditMode(cover);
+        expect(objectDetailsOverlay.pendingCoverFile).toBe(cover);
+
+        returnToViewMode();
+        enterEditMode();
+        expect(objectDetailsOverlay.pendingCoverFile).toBeUndefined();
+    });
+
     it('close clears everything unless details are preserved', () => {
         showObjectDetailsOverlay('object-1', {name: 'Plaque'} as never);
         closeDetailsOverlay();

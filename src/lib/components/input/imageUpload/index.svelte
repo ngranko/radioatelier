@@ -1,11 +1,17 @@
 <script lang="ts">
+    import type {Id} from '$convex/_generated/dataModel';
     import CropDialog from '$lib/components/input/imageUpload/cropDialog.svelte';
     import EmptyPlaceholder from '$lib/components/input/imageUpload/emptyPlaceholder.svelte';
+    import {
+        IMAGE_INPUT_ACCEPT,
+        SUPPORTED_IMAGE_TYPES,
+    } from '$lib/components/input/imageUpload/imageTypes';
     import ImageViewer from '$lib/components/input/imageUpload/imageViewer.svelte';
     import LoadingOverlay from '$lib/components/input/imageUpload/loadingOverlay.svelte';
     import {Button} from '$lib/components/ui/button';
     import TrashIcon from '@lucide/svelte/icons/trash-2';
     import UploadIcon from '@lucide/svelte/icons/upload';
+    import {onMount} from 'svelte';
     import {toast} from 'svelte-sonner';
 
     interface Props {
@@ -16,6 +22,8 @@
         url?: string;
         previewUrl?: string;
         isUploading?: boolean;
+        categoryId?: Id<'categories'> | null;
+        initialFile?: File;
         onChange(file: File): void | Promise<void>;
     }
 
@@ -27,14 +35,14 @@
         url = $bindable(),
         previewUrl = $bindable(),
         isUploading = $bindable(false),
+        categoryId = null,
+        initialFile,
         onChange,
     }: Props = $props();
 
     let isViewerOpen = $state(false);
     let imageUploadRef: HTMLInputElement | undefined = $state();
     let displayUrl = $derived(previewUrl || url);
-
-    const SUPPORTED_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
 
     async function handleImageChange(event: Event) {
         const file = (event.target as HTMLInputElement).files?.[0];
@@ -45,6 +53,10 @@
             return;
         }
 
+        await uploadFile(file);
+    }
+
+    async function uploadFile(file: File) {
         if (!SUPPORTED_IMAGE_TYPES.has(file.type)) {
             console.error('Неподдерживаемый тип файла', file.type);
             toast.warning('Неподдерживаемый тип файла');
@@ -58,6 +70,12 @@
             isUploading = false;
         }
     }
+
+    onMount(() => {
+        if (initialFile) {
+            uploadFile(initialFile);
+        }
+    });
 
     function handlePreviewChange(newPreviewUrl: string) {
         previewUrl = newPreviewUrl;
@@ -97,7 +115,7 @@
             />
         </button>
     {:else}
-        <EmptyPlaceholder />
+        <EmptyPlaceholder {categoryId} />
     {/if}
 
     {#if isUploading}
@@ -138,7 +156,7 @@
         class="hidden"
         {id}
         type="file"
-        accept={[...SUPPORTED_IMAGE_TYPES].join(',')}
+        accept={IMAGE_INPUT_ACCEPT}
         onchange={handleImageChange}
         {disabled}
     />
