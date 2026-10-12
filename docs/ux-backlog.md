@@ -76,6 +76,12 @@ Listed so the list stays reconstructable, not as work to redo.
   the distance on the right, then one muted line of category · address
   (`search/searchItemCard.svelte`); a result without a name shows its address
   as the title instead.
+- **New-point form friction.** A new point's form opens with the name field
+  focused; the source field asks phones for a URL keyboard (`inputmode="url"`,
+  no autocapitalise or spellcheck); Cmd/Ctrl+Enter saves; and Save shows its own
+  spinner while the save runs. The description already grew with its content
+  through `field-sizing-content` in the shared `Textarea` — everywhere but
+  Firefox, which has no `field-sizing` yet.
 
 ---
 
@@ -132,18 +138,6 @@ a highlight both renderers can draw and that leaves the viewport alone.
 ## Details card
 
 ## Forms
-
-### New-point form friction
-
-`src/lib/components/objectDetails/objectForm/form.svelte`:
-
-- no focus in the name field when the form opens (`:295`);
-- `source` is `type="text"` (`:465`), so phones show a prose keyboard;
-- the description textarea does not grow with its content (`:450`);
-- no Cmd/Ctrl+Enter to save;
-- the Save button (`:266`) only disables while submitting — progress lives in
-  a toast at the top of the screen, far from the thumb. An inline spinner
-  keeps the feedback where the tap was.
 
 ### The validation error does not say what is wrong
 
