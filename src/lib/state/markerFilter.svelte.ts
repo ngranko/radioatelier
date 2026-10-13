@@ -1,5 +1,8 @@
 import type {Id} from '$convex/_generated/dataModel';
+import posthog from 'posthog-js';
 import {SvelteSet} from 'svelte/reactivity';
+
+export const MARKER_FILTER_FLAG = 'marker-filter-panel';
 
 export type FilterKind = 'categories' | 'tags' | 'privateTags';
 
@@ -13,6 +16,7 @@ export interface TrayItem extends FilterOption {
 }
 
 interface MarkerFilterState {
+    isEnabled: boolean;
     isOpen: boolean;
     query: string;
     sections: Record<FilterKind, boolean>;
@@ -24,6 +28,7 @@ interface MarkerFilterState {
 }
 
 export const markerFilterState = $state<MarkerFilterState>({
+    isEnabled: false,
     isOpen: false,
     query: '',
     sections: {categories: true, tags: false, privateTags: false},
@@ -41,6 +46,12 @@ export function isFilterSelected(kind: FilterKind, id: string): boolean {
 export function selectedFilterCount(): number {
     const {categories, tags, privateTags} = markerFilterState.selected;
     return categories.size + tags.size + privateTags.size;
+}
+
+export function watchMarkerFilterFlag(): () => void {
+    return posthog.onFeatureFlags(() => {
+        markerFilterState.isEnabled = Boolean(posthog.isFeatureEnabled(MARKER_FILTER_FLAG));
+    });
 }
 
 export function openMarkerFilter(): void {

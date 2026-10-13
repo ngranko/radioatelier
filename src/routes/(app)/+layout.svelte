@@ -15,6 +15,7 @@
     import {setCategories} from '$lib/state/categories.svelte';
     import {createDraftState, setCreateDraftPosition} from '$lib/state/createDraft.svelte.ts';
     import {mapState} from '$lib/state/map.svelte.ts';
+    import {markerFilterState, watchMarkerFilterFlag} from '$lib/state/markerFilter.svelte';
     import {
         setOverlayAddressLoading,
         showLoadingDetailsOverlay,
@@ -31,6 +32,7 @@
     import {SvglGoogleLogo} from '@selemondev/svgl-svelte';
     import {useQuery} from 'convex-svelte';
     import posthog from 'posthog-js';
+    import {onMount} from 'svelte';
     import {useClerkContext} from 'svelte-clerk';
     import type {LayoutProps} from './$types';
 
@@ -66,6 +68,8 @@
         showLoadingDetailsOverlay(new Date().getTime().toString());
         goto(buildPointUrl({latitude: location.lat, longitude: location.lng}));
     }
+
+    onMount(watchMarkerFilterFlag);
 
     $effect(() => {
         setCategories(categories.data ?? data.categories);
@@ -103,7 +107,7 @@
     <UserMenu />
 </div>
 
-{#if mapState.isReady && clerkCtx.auth.userId}
+{#if markerFilterState.isEnabled && mapState.isReady && clerkCtx.auth.userId}
     <MarkerFilter />
 {/if}
 
