@@ -15,3 +15,14 @@ export function getErrorArray(fieldErrors: unknown): string[] | null {
     }
     return null;
 }
+
+export function describeValidationFailure(errors: unknown): string {
+    const fieldErrors = typeof errors === 'object' && errors !== null ? Object.values(errors) : [];
+    for (const value of fieldErrors) {
+        const message = getErrorArray(value)?.[0];
+        if (message) {
+            return message;
+        }
+    }
+    return 'Что-то не так во введенных данных';
+}

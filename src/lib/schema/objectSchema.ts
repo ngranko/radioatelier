@@ -23,7 +23,17 @@ export function toFormDefaults(obj: Partial<LooseObject>): Partial<ObjectFormDat
     };
 }
 
+// Keys follow the form's layout: superforms reports errors in this order, and
+// the failure toast names the first one, so it should be the field the form
+// scrolls to.
 export const schema = z.object({
+    cover: z.preprocess(
+        emptyOrMissingToNull,
+        z
+            .string()
+            .transform(v => v as Id<'images'>)
+            .nullable(),
+    ),
     id: z.preprocess(
         emptyOrMissingToNull,
         z
@@ -33,20 +43,10 @@ export const schema = z.object({
     ),
     latitude: coordinateField(-90, 90, 'Широта должна быть от -90 до 90'),
     longitude: coordinateField(-180, 180, 'Долгота должна быть от -180 до 180'),
-    cover: z.preprocess(
-        emptyOrMissingToNull,
-        z
-            .string()
-            .transform(v => v as Id<'images'>)
-            .nullable(),
-    ),
-    isPublic: z.boolean(),
-    isVisited: z.boolean(),
     name: z.string().min(1, 'Пожалуйста, введите название').max(255, 'Слишком длинное название'),
-    description: z.preprocess(
-        emptyOrMissingToNull,
-        z.string().max(LIMITS.description, 'Слишком длинное описание').nullable(),
-    ),
+    isVisited: z.boolean(),
+    isRemoved: z.boolean(),
+    isPublic: z.boolean(),
     category: z
         .string()
         .min(1, 'Нужно выбрать категорию')
@@ -69,10 +69,13 @@ export const schema = z.object({
         emptyOrMissingToNull,
         z.string().max(20, 'Слишком длинный период создания').nullable(),
     ),
-    isRemoved: z.boolean(),
     removalPeriod: z.preprocess(
         emptyOrMissingToNull,
         z.string().max(20, 'Слишком длинный период утраты').nullable(),
+    ),
+    description: z.preprocess(
+        emptyOrMissingToNull,
+        z.string().max(LIMITS.description, 'Слишком длинное описание').nullable(),
     ),
     source: z.preprocess(
         emptyOrMissingToNull,

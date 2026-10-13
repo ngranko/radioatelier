@@ -82,6 +82,11 @@ Listed so the list stays reconstructable, not as work to redo.
   spinner while the save runs. The description already grew with its content
   through `field-sizing-content` in the shared `Textarea` — everywhere but
   Firefox, which has no `field-sizing` yet.
+- **Validation errors name the field.** A failed save in either object form
+  toasts the first field error ("Нужно выбрать категорию") instead of a generic
+  line (`utils/formErrors.ts`). Scrolling to and focusing the offender was
+  already superforms' default; `TaxonomyField` spreads the control props onto
+  its trigger, so it carries the `aria-invalid` the error selector looks for.
 
 ---
 
@@ -138,14 +143,6 @@ a highlight both renderers can draw and that leaves the viewport alone.
 ## Details card
 
 ## Forms
-
-### The validation error does not say what is wrong
-
-`form.svelte:100` — a client failure surfaces as "Что-то не так во введенных
-данных" with no field and no scroll, in a form long enough to hide the
-offender. Superforms can scroll to and focus the first invalid control; worth
-checking that `TaxonomyField` (a button trigger, not an input) is marked
-invalid in a way the error selector finds.
 
 ## Surfaces and loading
 
