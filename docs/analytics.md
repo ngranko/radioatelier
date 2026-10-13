@@ -35,6 +35,10 @@ The service version combines `package.json` version with the first seven charact
 
 An enabled flag selects GPU mode. Disabled, missing, failed, or timed-out evaluations select the legacy zoom-based renderer. The timeout is 1.5 seconds. Later flag refreshes do not replace the active renderer. See [Map architecture](map-architecture.md#renderer-selection).
 
+## Marker filter feature flag
+
+`watchMarkerFilterFlag` in `src/lib/state/markerFilter.svelte.ts` mirrors `marker-filter-panel` into `markerFilterState.isEnabled`. The app layout subscribes on mount, and the flag gates both the filter trigger in the search bar and the panel itself. Disabled, missing, or not-yet-loaded flags hide the filter. Unlike the renderer flag, later flag refreshes (for example after sign-in) apply immediately.
+
 ## Identity
 
 The browser identifies signed-in users by Clerk user ID and sets their primary email as a person property. Sign-out resets PostHog and clears Convex authentication. Anonymous viewers can emit events without an identify call.
