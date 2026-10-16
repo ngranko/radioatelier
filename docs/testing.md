@@ -30,7 +30,7 @@ rg --files src -g '*.test.ts' -g '*.spec.ts' -g '*.test.js' -g '*.spec.js'
 | -------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | Map            | `src/lib/services/map/`: viewport selection, marker lifecycle and focus, renderer changes, gestures, GPU picking and animation |
 | UI state       | `src/lib/state/` and component helpers: overlay transitions, search pins and area search, keyboard focus, sheet snapping       |
-| Object backend | `src/convex/helpers/`: aggregate loading, viewer projection, patch routing, and indexing                                       |
+| Object backend | `src/convex/helpers/`: aggregate loading, viewer projection, patch routing, indexing, and taxonomy rewrites                    |
 | Notion         | `src/convex/notion.test.ts` and `src/convex/notionSync/`: matching, hashing, snapshots, inbound decisions, and outbound writes |
 | Utilities      | Import normalization, sharing, distance, EXIF orientation, and image resizing                                                  |
 
