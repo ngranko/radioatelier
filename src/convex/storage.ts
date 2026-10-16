@@ -1,6 +1,6 @@
 import {v} from 'convex/values';
 import {internal} from './_generated/api';
-import type {Id} from './_generated/dataModel';
+import type {Doc, Id} from './_generated/dataModel';
 import {internalMutation, type MutationCtx} from './_generated/server';
 
 const SWEEP_BATCH_SIZE = 100;
@@ -16,7 +16,7 @@ export const sweepUnusedImages = internalMutation({
         const cutoff = Date.now() - GRACE_PERIOD_MS;
 
         for (const image of page.page) {
-            if (image._creationTime < cutoff && !(await isImageReferenced(ctx, image._id))) {
+            if (image._creationTime < cutoff && !(await isImageReferenced(ctx, image))) {
                 await ctx.db.delete('images', image._id);
             }
         }
@@ -56,10 +56,14 @@ export const sweepUnusedFiles = internalMutation({
     },
 });
 
-async function isImageReferenced(ctx: MutationCtx, imageId: Id<'images'>) {
+async function isImageReferenced(ctx: MutationCtx, image: Doc<'images'>) {
+    if (image.objectId && (await ctx.db.get('objects', image.objectId))) {
+        return true;
+    }
+
     const cover = await ctx.db
         .query('objects')
-        .withIndex('byCoverId', q => q.eq('coverId', imageId))
+        .withIndex('byCoverId', q => q.eq('coverId', image._id))
         .first();
     return cover !== null;
 }

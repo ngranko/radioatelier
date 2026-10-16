@@ -20,6 +20,7 @@
             tags: value.tags.map(tag => ({...tag})),
             privateTags: value.privateTags.map(tag => ({...tag})),
             cover: value.cover ? {...value.cover} : null,
+            images: value.images.map(image => ({...image})),
         };
     }
 

@@ -41,6 +41,7 @@ function makeViewer(overrides: Partial<ObjectViewerContext> = {}): ObjectViewerC
         privateTags: [],
         isVisited: false,
         cover: null,
+        images: [],
         ...overrides,
     };
 }

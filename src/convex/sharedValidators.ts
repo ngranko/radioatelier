@@ -82,6 +82,7 @@ export const objectTableFields = {
 export const createObjectRecordFields = {
     ...objectCoreFields,
     ...mapPointCoreFields,
+    imageIds: v.array(v.id('images')),
     privateTags: v.array(v.id('privateTags')),
     isVisited: v.boolean(),
 };
@@ -89,6 +90,7 @@ export const createObjectRecordFields = {
 export const updateObjectRecordFields = {
     ...objectCoreFields,
     ...mapPointAddressFields,
+    imageIds: v.array(v.id('images')),
     privateTags: v.array(v.id('privateTags')),
     isVisited: v.boolean(),
 };

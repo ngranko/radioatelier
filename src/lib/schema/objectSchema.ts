@@ -1,6 +1,6 @@
 import type {Id} from '$convex/_generated/dataModel';
 import type {LooseObject} from '$lib/interfaces/object';
-import {LIMITS} from '$lib/utils/fieldLimits';
+import {LIMITS, MAX_OBJECT_IMAGES} from '$lib/utils/fieldLimits';
 import {z} from 'zod';
 
 const emptyOrMissingToNull = (v: unknown) => (!v ? null : v);
@@ -20,6 +20,7 @@ export function toFormDefaults(obj: Partial<LooseObject>): Partial<ObjectFormDat
         tags: obj.tags?.map(tag => tag.id) ?? [],
         privateTags: obj.privateTags?.map(tag => tag.id) ?? [],
         cover: obj.cover?.id,
+        images: obj.images?.map(image => image.id) ?? [],
     };
 }
 
@@ -34,6 +35,9 @@ export const schema = z.object({
             .transform(v => v as Id<'images'>)
             .nullable(),
     ),
+    images: z
+        .array(z.string().transform(v => v as Id<'images'>))
+        .max(MAX_OBJECT_IMAGES, `Не больше ${MAX_OBJECT_IMAGES} фото`),
     id: z.preprocess(
         emptyOrMissingToNull,
         z

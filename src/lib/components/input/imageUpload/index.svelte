@@ -1,39 +1,44 @@
 <script lang="ts">
     import type {Id} from '$convex/_generated/dataModel';
     import ImageViewer from '$lib/components/imageViewer/imageViewer.svelte';
+    import Carousel from '$lib/components/input/imageUpload/carousel.svelte';
     import CropDialog from '$lib/components/input/imageUpload/cropDialog.svelte';
     import EmptyPlaceholder from '$lib/components/input/imageUpload/emptyPlaceholder.svelte';
     import {
         IMAGE_INPUT_ACCEPT,
-        SUPPORTED_IMAGE_TYPES,
+        selectUploadable,
     } from '$lib/components/input/imageUpload/imageTypes';
     import LoadingOverlay from '$lib/components/input/imageUpload/loadingOverlay.svelte';
+    import Thumbnails from '$lib/components/input/imageUpload/thumbnails.svelte';
     import {Button} from '$lib/components/ui/button';
+    import type {ObjectImage} from '$lib/interfaces/object';
+    import {MAX_OBJECT_IMAGES} from '$lib/utils/fieldLimits';
+    import StarIcon from '@lucide/svelte/icons/star';
     import TrashIcon from '@lucide/svelte/icons/trash-2';
     import UploadIcon from '@lucide/svelte/icons/upload';
-    import {onMount} from 'svelte';
+    import {onMount, tick} from 'svelte';
     import {toast} from 'svelte-sonner';
 
     interface Props {
         id?: string;
         name?: string;
-        value?: string;
+        value?: string | null;
+        /** In display order; the first one is the cover. */
+        images?: ObjectImage[];
         disabled?: boolean;
-        url?: string;
-        previewUrl?: string;
         isUploading?: boolean;
         categoryId?: Id<'categories'> | null;
         initialFile?: File;
+        /** Uploads the file and appends it to `images`. */
         onChange(file: File): void | Promise<void>;
     }
 
     let {
         id,
         name,
-        value = $bindable(),
+        value,
+        images = $bindable([]),
         disabled = false,
-        url = $bindable(),
-        previewUrl = $bindable(),
         isUploading = $bindable(false),
         categoryId = null,
         initialFile,
@@ -42,80 +47,79 @@
 
     let isViewerOpen = $state(false);
     let imageUploadRef: HTMLInputElement | undefined = $state();
-    let displayUrl = $derived(previewUrl || url);
+    let carousel: Carousel | undefined = $state();
+    let index = $state(0);
+    let current = $derived<ObjectImage | undefined>(images[Math.min(index, images.length - 1)]);
+    let isCover = $derived(current === images[0]);
+    let isFull = $derived(images.length >= MAX_OBJECT_IMAGES);
 
     async function handleImageChange(event: Event) {
-        const file = (event.target as HTMLInputElement).files?.[0];
+        const input = event.target as HTMLInputElement;
+        const files = [...(input.files ?? [])];
+        // lets the same file be picked again after it was removed
+        input.value = '';
 
-        if (!file) {
+        if (!files.length) {
             console.error('Не удалось получить файл');
             toast.warning('Не удалось загрузить изображение');
             return;
         }
 
-        await uploadFile(file);
+        await uploadFiles(files);
     }
 
-    async function uploadFile(file: File) {
-        if (!SUPPORTED_IMAGE_TYPES.has(file.type)) {
-            console.error('Неподдерживаемый тип файла', file.type);
-            toast.warning('Неподдерживаемый тип файла');
+    async function uploadFiles(files: File[]) {
+        const uploadable = selectUploadable(files, MAX_OBJECT_IMAGES - images.length);
+        if (!uploadable.length) {
             return;
         }
 
         isUploading = true;
         try {
-            await onChange(file);
+            for (const file of uploadable) {
+                await onChange(file);
+            }
         } finally {
             isUploading = false;
+            await tick();
+            carousel?.show(images.length - 1);
         }
     }
 
     onMount(() => {
         if (initialFile) {
-            uploadFile(initialFile).catch(() => {
+            uploadFiles([initialFile]).catch(() => {
                 // onChange already reports upload failures through its toast.
             });
         }
     });
 
-    function handlePreviewChange(newPreviewUrl: string) {
-        previewUrl = newPreviewUrl;
-    }
-
-    function handleUploadClick() {
-        imageUploadRef?.click();
+    function handlePreviewChange(imageId: string, previewUrl: string) {
+        images = images.map(image => (image.id === imageId ? {...image, previewUrl} : image));
     }
 
     function handleRemoveClick() {
-        value = undefined;
-        url = undefined;
-        previewUrl = undefined;
+        const removed = current;
+        images = images.filter(image => image !== removed);
     }
 
-    function handleViewerOpen() {
-        if (displayUrl) {
-            isViewerOpen = true;
-        }
+    function handleCoverClick() {
+        const cover = current!;
+        images = [cover, ...images.filter(image => image !== cover)];
+        carousel?.show(0);
     }
 </script>
 
 <div class="bg-muted/30 border-border relative w-full overflow-hidden rounded-lg border">
-    {#if displayUrl}
-        <button
-            type="button"
-            class="group bg-muted relative block aspect-2/1 w-full cursor-zoom-in border-none"
-            onclick={handleViewerOpen}
+    {#if images.length}
+        <Carousel
+            bind:this={carousel}
+            bind:index
+            {images}
+            coverId={disabled || images.length < 2 ? undefined : images[0].id}
             disabled={isUploading}
-            aria-label="Открыть оригинал изображения"
-            aria-busy={isUploading}
-        >
-            <img
-                class="h-full w-full object-cover transition-transform ease-out group-hover:scale-[1.03]"
-                src={displayUrl}
-                alt="Изображение"
-            />
-        </button>
+            onOpen={() => (isViewerOpen = true)}
+        />
     {:else}
         <EmptyPlaceholder {categoryId} />
     {/if}
@@ -124,27 +128,45 @@
         <LoadingOverlay />
     {/if}
     {#if !disabled}
-        <div class="absolute right-3 bottom-3 flex gap-3">
+        <div class="absolute right-3 bottom-3 flex gap-2">
             <Button
                 variant="secondary"
                 size="icon"
                 class="text-foreground/80 hover:bg-secondary/90 shadow-sm"
-                onclick={handleUploadClick}
-                disabled={isUploading}
+                onclick={() => imageUploadRef?.click()}
+                disabled={isUploading || isFull}
                 aria-label="Загрузить изображение"
             >
                 <UploadIcon />
             </Button>
-            {#if value && !isUploading}
-                {#if url}
-                    <CropDialog imageId={value} imageUrl={url} onChange={handlePreviewChange} />
+            {#if current && !isUploading}
+                {#if current.url}
+                    {#key current.id}
+                        <CropDialog
+                            imageId={current.id}
+                            imageUrl={current.url}
+                            onChange={url => handlePreviewChange(current.id, url)}
+                        />
+                    {/key}
+                {/if}
+                {#if images.length > 1}
+                    <Button
+                        variant="secondary"
+                        size="icon"
+                        class="text-foreground/80 shadow-sm"
+                        onclick={handleCoverClick}
+                        aria-pressed={isCover}
+                        aria-label={isCover ? 'Это обложка' : 'Сделать обложкой'}
+                        title={isCover ? 'Это обложка' : 'Сделать обложкой'}
+                    >
+                        <StarIcon class={isCover ? 'text-primary fill-current' : ''} />
+                    </Button>
                 {/if}
                 <Button
                     variant="secondary"
                     size="icon"
                     class="text-destructive hover:text-destructive"
                     onclick={handleRemoveClick}
-                    disabled={isUploading}
                     aria-label="Удалить изображение"
                 >
                     <TrashIcon />
@@ -159,11 +181,24 @@
         {id}
         type="file"
         accept={IMAGE_INPUT_ACCEPT}
+        multiple
         onchange={handleImageChange}
         {disabled}
     />
 
-    {#if url}
-        <ImageViewer bind:isOpen={isViewerOpen} {url} />
+    {#if images.length}
+        <ImageViewer
+            bind:isOpen={isViewerOpen}
+            urls={images.map(image => image.url)}
+            bind:index={() => index, target => carousel?.show(target, 'instant')}
+        />
     {/if}
 </div>
+{#if !disabled && images.length > 1}
+    <Thumbnails
+        bind:images
+        {index}
+        disabled={isUploading}
+        onSelect={target => carousel?.show(target)}
+    />
+{/if}

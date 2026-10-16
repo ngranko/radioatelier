@@ -18,7 +18,7 @@
     } from '$lib/components/ui/form/index.js';
     import {Input} from '$lib/components/ui/input';
     import {Textarea} from '$lib/components/ui/textarea';
-    import type {LooseObject} from '$lib/interfaces/object';
+    import type {LooseObject, ObjectImage} from '$lib/interfaces/object';
     import {schema, toFormDefaults} from '$lib/schema/objectSchema.ts';
     import {
         objectDetailsOverlay,
@@ -48,11 +48,9 @@
     const client = useConvexClient();
 
     let {initialValues, registerCloseConfirmationCheck}: Props = $props();
-    // the form intentionally captures only the initial cover
+    // the form intentionally captures only the initial images
     // svelte-ignore state_referenced_locally
-    let imageUrl = $state(initialValues.cover?.url);
-    // svelte-ignore state_referenced_locally
-    let imagePreviewUrl = $state(initialValues.cover?.previewUrl);
+    let images = $state.raw(initialValues.images ?? []);
     let isUploadingImage = $state(false);
 
     let lastAction = $state('');
@@ -236,9 +234,13 @@
         const resizedFile = await resizeImage(file);
         const image = await uploadImage(resizedFile);
 
-        $formData.cover = image.id;
-        imageUrl = image.url;
-        imagePreviewUrl = image.previewUrl;
+        showImages([...images, image]);
+    }
+
+    function showImages(next: ObjectImage[]) {
+        images = next;
+        $formData.images = next.map(image => image.id);
+        $formData.cover = next[0]?.id ?? null;
     }
 
     async function uploadImage(file: File) {
@@ -311,9 +313,8 @@
                 {#snippet children({props})}
                     <ImageUpload
                         {...props}
-                        bind:value={$formData.cover}
-                        bind:url={imageUrl}
-                        bind:previewUrl={imagePreviewUrl}
+                        value={$formData.cover}
+                        bind:images={() => images, showImages}
                         bind:isUploading={isUploadingImage}
                         categoryId={$formData.category || null}
                         initialFile={objectDetailsOverlay.pendingCoverFile}
@@ -325,6 +326,9 @@
             <FormFieldErrors />
         </FormField>
 
+        {#each $formData.images as image (image)}
+            <input type="hidden" name="images" value={image} />
+        {/each}
         <Input type="hidden" name="id" bind:value={$formData.id} />
         <Input type="hidden" name="latitude" bind:value={$formData.latitude} />
         <Input type="hidden" name="longitude" bind:value={$formData.longitude} />

@@ -51,6 +51,7 @@ export const actions: Actions = {
                     name: d.name,
                     description: d.description,
                     coverId: d.cover,
+                    imageIds: d.images,
                     categoryId: d.category,
                     tagIds: d.tags,
                     privateTags: d.privateTags,
