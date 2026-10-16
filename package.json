@@ -32,7 +32,7 @@
         "convex": "^1.45.0",
         "convex-svelte": "^0.14.0",
         "posthog-js": "^1.428.6",
-        "posthog-node": "^5.45.2",
+        "posthog-node": "^5.54.1",
         "svelte-clerk": "^1.2.0",
         "svelte-easy-crop": "^5.0.1",
         "svelte-portal": "^2.2.1",
