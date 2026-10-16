@@ -17,9 +17,10 @@
     interface Props {
         url: string;
         onClose(): void;
+        onStep?(delta: number): void;
     }
 
-    let {url, onClose}: Props = $props();
+    let {url, onClose, onStep}: Props = $props();
 
     const ZOOM_STEP = 1.5;
     const PAN_STEP = 80;
@@ -49,6 +50,7 @@
             pull = offset;
         },
         release: settlePull,
+        swipe: direction => onStep?.(direction),
         tap: closeOnOutsideTap,
     });
 
@@ -57,8 +59,8 @@
         '=': () => zoomBy(ZOOM_STEP),
         '-': () => zoomBy(1 / ZOOM_STEP),
         '0': () => show(FIT_VIEW, true),
-        ArrowLeft: () => nudge({x: PAN_STEP, y: 0}),
-        ArrowRight: () => nudge({x: -PAN_STEP, y: 0}),
+        ArrowLeft: () => (view.scale > 1 ? nudge({x: PAN_STEP, y: 0}) : onStep?.(-1)),
+        ArrowRight: () => (view.scale > 1 ? nudge({x: -PAN_STEP, y: 0}) : onStep?.(1)),
         ArrowUp: () => nudge({x: 0, y: PAN_STEP}),
         ArrowDown: () => nudge({x: 0, y: -PAN_STEP}),
     };
