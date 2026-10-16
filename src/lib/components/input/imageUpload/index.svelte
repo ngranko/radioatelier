@@ -1,12 +1,12 @@
 <script lang="ts">
     import type {Id} from '$convex/_generated/dataModel';
+    import ImageViewer from '$lib/components/imageViewer/imageViewer.svelte';
     import CropDialog from '$lib/components/input/imageUpload/cropDialog.svelte';
     import EmptyPlaceholder from '$lib/components/input/imageUpload/emptyPlaceholder.svelte';
     import {
         IMAGE_INPUT_ACCEPT,
         SUPPORTED_IMAGE_TYPES,
     } from '$lib/components/input/imageUpload/imageTypes';
-    import ImageViewer from '$lib/components/input/imageUpload/imageViewer.svelte';
     import LoadingOverlay from '$lib/components/input/imageUpload/loadingOverlay.svelte';
     import {Button} from '$lib/components/ui/button';
     import TrashIcon from '@lucide/svelte/icons/trash-2';
