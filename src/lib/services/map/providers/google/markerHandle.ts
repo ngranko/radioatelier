@@ -57,6 +57,10 @@ export class GoogleMarkerHandle implements MarkerHandle {
         return this.marker.content instanceof HTMLElement ? this.marker.content : null;
     }
 
+    setZIndex(zIndex: number): void {
+        this.marker.zIndex = zIndex;
+    }
+
     addClickListener(callback: () => void): EventUnsubscribe {
         const listener = this.marker.addListener('gmp-click', callback);
         return () => google.maps.event.removeListener(listener);
