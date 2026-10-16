@@ -7,10 +7,13 @@ export type ZoomGestureOptions = {
     /** A drag of the fitted image has nowhere to pan to, so it is reported as a pull instead. */
     pull(offset: number): void;
     release(): void;
+    /** A sideways drag of the fitted image: 1 asks for the next image, -1 for the previous. */
+    swipe(direction: number): void;
     tap(point: Point): void;
 };
 
 const TAP_SLOP = 6;
+const SWIPE_DISTANCE = 60;
 const DOUBLE_TAP_SCALE = 2.5;
 const WHEEL_ZOOM_RATE = 0.002;
 // Browsers report a trackpad pinch as ctrl+wheel, with far smaller deltas than a real wheel.
@@ -33,6 +36,7 @@ export class ZoomGestures {
     private node: HTMLElement | null = null;
     private travelled = 0;
     private pulled = 0;
+    private swiped = 0;
 
     constructor(options: ZoomGestureOptions) {
         this.options = options;
@@ -70,6 +74,7 @@ export class ZoomGestures {
             // the viewer as a tap nor carry on dismissing it as a pull
             this.travelled = Infinity;
             this.pulled = 0;
+            this.swiped = 0;
             this.options.pull(0);
         }
     };
@@ -92,6 +97,7 @@ export class ZoomGestures {
         const view = this.options.getView();
         if (this.pointers.size === 1 && view.scale === 1) {
             this.pulled += delta.y;
+            this.swiped += delta.x;
             this.options.pull(this.pulled);
             return;
         }
@@ -108,8 +114,19 @@ export class ZoomGestures {
 
     private handleLift = (event: PointerEvent) => {
         this.pointers.delete(event.pointerId);
-        if (this.pointers.size === 0 && this.pulled !== 0) {
-            this.pulled = 0;
+        if (this.pointers.size > 0 || (this.pulled === 0 && this.swiped === 0)) {
+            return;
+        }
+
+        const isSwipe = Math.abs(this.swiped) > Math.max(SWIPE_DISTANCE, Math.abs(this.pulled));
+        const direction = -Math.sign(this.swiped);
+        this.pulled = 0;
+        this.swiped = 0;
+
+        if (isSwipe) {
+            this.options.pull(0);
+            this.options.swipe(direction);
+        } else {
             this.options.release();
         }
     };
