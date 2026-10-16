@@ -8,6 +8,7 @@
     import Marker from '$lib/components/map/marker.svelte';
     import OrientationButton from '$lib/components/map/orientationButton.svelte';
     import PositionButton from '$lib/components/map/positionButton.svelte';
+    import MarkerFilter from '$lib/components/markerFilter/markerFilter.svelte';
     import Search from '$lib/components/search/search.svelte';
     import UserMenu from '$lib/components/userMenu/userMenu.svelte';
     import type {Location} from '$lib/interfaces/location.ts';
@@ -18,8 +19,10 @@
         setOverlayAddressLoading,
         showLoadingDetailsOverlay,
     } from '$lib/state/objectDetailsOverlay.svelte';
+    import {setPrivateTags} from '$lib/state/privateTags.svelte';
     import {hasSearchPointAt, searchPointList} from '$lib/state/searchPointList.svelte.ts';
     import {sharedMarker} from '$lib/state/sharedMarker.svelte.ts';
+    import {setTags} from '$lib/state/tags.svelte';
     import {buildPointUrl} from '$lib/utils/pointRoute.ts';
     import SearchIcon from '@lucide/svelte/icons/search';
     import SproutIcon from '@lucide/svelte/icons/sprout';
@@ -42,6 +45,8 @@
     const clerkCtx = useClerkContext();
 
     const categories = useQuery(api.categories.list, {}, () => ({initialData: data.categories}));
+    const tags = useQuery(api.tags.list, {}, () => ({initialData: data.tags}));
+    const privateTags = useQuery(api.privateTags.list, {}, () => ({initialData: data.privateTags}));
 
     // A point picked from search is already pinned by its own search marker, so
     // the draft marker would only stack a second pin on the same spot.
@@ -64,6 +69,8 @@
 
     $effect(() => {
         setCategories(categories.data ?? data.categories);
+        setTags(tags.data ?? data.tags);
+        setPrivateTags(privateTags.data ?? data.privateTags);
     });
 
     // The /point load geocodes the address server-side, so while that
@@ -87,7 +94,7 @@
 
 <div bind:this={consoleElement}></div>
 
-<div class="menu absolute top-2 right-4 left-2 flex items-center justify-between gap-4">
+<div class="menu absolute top-2 right-4 left-2 z-20 flex items-center justify-between gap-4">
     {#if clerkCtx.auth.userId}
         <Search />
     {:else}
@@ -95,6 +102,10 @@
     {/if}
     <UserMenu />
 </div>
+
+{#if mapState.isReady && clerkCtx.auth.userId}
+    <MarkerFilter />
+{/if}
 
 <Map onClick={handleMapClick} />
 
