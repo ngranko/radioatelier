@@ -17,6 +17,7 @@
     import {mapState} from '$lib/state/map.svelte.ts';
     import {markerFilterState, watchMarkerFilterFlag} from '$lib/state/markerFilter.svelte';
     import {
+        objectDetailsOverlay,
         setOverlayAddressLoading,
         showLoadingDetailsOverlay,
     } from '$lib/state/objectDetailsOverlay.svelte';
@@ -24,6 +25,7 @@
     import {hasSearchPointAt, searchPointList} from '$lib/state/searchPointList.svelte.ts';
     import {sharedMarker} from '$lib/state/sharedMarker.svelte.ts';
     import {setTags} from '$lib/state/tags.svelte';
+    import {requestDetailsClose} from '$lib/utils/detailsExit.ts';
     import {buildPointUrl} from '$lib/utils/pointRoute.ts';
     import SearchIcon from '@lucide/svelte/icons/search';
     import SproutIcon from '@lucide/svelte/icons/sprout';
@@ -58,6 +60,11 @@
     });
 
     function handleMapClick(location: Location) {
+        // A tap that dismisses the card must not also place a point behind it.
+        if (objectDetailsOverlay.isOpen) {
+            requestDetailsClose();
+            return;
+        }
         if (!clerkCtx.auth.userId) {
             return;
         }

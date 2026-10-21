@@ -5,6 +5,7 @@
     import type {Id} from '$convex/_generated/dataModel';
     import type {LatLngLiteral} from '$lib/interfaces/map';
     import type {MarkerIcon, MarkerSource} from '$lib/interfaces/marker';
+    import type {SearchPointListItem} from '$lib/interfaces/object';
     import {Marker as MarkerObject} from '$lib/services/map/marker';
     import {registerFocusableMarker} from '$lib/services/map/markerFocus';
     import {saveReposition} from '$lib/services/map/markerReposition';
@@ -17,6 +18,7 @@
         showObjectDetailsOverlay,
     } from '$lib/state/objectDetailsOverlay.svelte';
     import {searchPointList} from '$lib/state/searchPointList.svelte.ts';
+    import {requestDetailsSwitch} from '$lib/utils/detailsExit';
     import {buildPointUrl} from '$lib/utils/pointRoute.ts';
     import {useConvexClient} from 'convex-svelte';
     import {onMount, onDestroy} from 'svelte';
@@ -170,30 +172,33 @@
         const searchPoint = searchPointId ? searchPointList[searchPointId] : null;
         const targetId = resolveDetailsTargetId();
 
-        if (source === 'search' && !targetId && searchPoint && searchPointId) {
-            showLoadingDetailsOverlay(searchPointId);
-            goto(
-                buildPointUrl({
-                    latitude: searchPoint.object.latitude,
-                    longitude: searchPoint.object.longitude,
-                    placeId: searchPoint.object.googlePlaceId,
-                }),
-            );
-            return;
-        }
-
-        if (!targetId) {
-            return;
-        }
-
-        if (page.params.id === targetId) {
+        if (targetId && page.params.id === targetId) {
             // this is a case for anonymous users accessing a shared page
             // the details are not set here because there is a workaround in the objectDetails.svelte
             showObjectDetailsOverlay(targetId);
             return;
         }
 
+        if (targetId) {
+            requestDetailsSwitch(() => openObject(targetId));
+        } else if (source === 'search' && searchPoint && searchPointId) {
+            requestDetailsSwitch(() => openSearchPoint(searchPointId, searchPoint));
+        }
+    }
+
+    function openObject(targetId: string) {
         showLoadingDetailsOverlay(targetId);
         goto(`/object/${targetId}`);
+    }
+
+    function openSearchPoint(pointId: string, {object}: SearchPointListItem) {
+        showLoadingDetailsOverlay(pointId);
+        goto(
+            buildPointUrl({
+                latitude: object.latitude,
+                longitude: object.longitude,
+                placeId: object.googlePlaceId,
+            }),
+        );
     }
 </script>
