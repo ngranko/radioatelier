@@ -45,6 +45,15 @@ describe('objectDetailsOverlay transitions', () => {
         expect(objectDetailsOverlay.pointDetails).toBeUndefined();
     });
 
+    it('switching from a peeking card keeps it peeking', () => {
+        showObjectDetailsOverlay('object-1', {name: 'Plaque'} as never);
+        setOverlayPosition('peek');
+
+        showLoadingDetailsOverlay('object-2');
+
+        expect(objectDetailsOverlay.position).toBe('peek');
+    });
+
     it('keeps previous details when reopening without fresh values', () => {
         showObjectDetailsOverlay('object-1', {name: 'Plaque'} as never);
         showObjectDetailsOverlay('object-1');
