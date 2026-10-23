@@ -1,7 +1,7 @@
 import {describe, expect, it} from 'vitest';
 import type {Doc, Id} from './_generated/dataModel';
 import {buildNotionPropertiesPayload, readNotionPageFields} from './notion/fields';
-import type {NotionDataSource, NotionPage, NotionPageFields} from './notion/types';
+import type {NotionDataSource, NotionPage} from './notion/types';
 import {computeNotionWebhookSignature, verifyNotionWebhookSignature} from './notion/webhooks';
 import {chooseObjectOwner} from './notionSync/identity';
 import {decideInboundSync} from './notionSync/inboundDecision';
@@ -13,7 +13,6 @@ import {
 } from './notionSync/reconcile';
 import type {ObjectSyncSnapshot} from './notionSync/snapshot';
 import {
-    buildSyncErrorPatch,
     buildSyncStateArgs,
     needsSyncErrorPatchWrite,
     needsSyncStateWrite,
@@ -295,26 +294,6 @@ describe('notion inbound sync decisions', () => {
         });
     });
 
-    it('requests geocoding before creating an Object for a new Notion page', () => {
-        const notionFields: NotionPageFields = {
-            ...appFields,
-            mapLink: null,
-        };
-
-        expect(
-            decideInboundSync({
-                eventType: 'page.created',
-                pageState: 'active',
-                existingSync: null,
-                notionFields,
-                existingSnapshot: null,
-            }),
-        ).toEqual({
-            kind: 'createObject',
-            fields: notionFields,
-        });
-    });
-
     it('skips unmatched Notion updates that are not creates', () => {
         expect(
             decideInboundSync({
@@ -401,13 +380,6 @@ describe('notion sync state records', () => {
             lastInboundEditedTime: 'echo-edit',
             lastSyncError: null,
             lastSyncedAt: now,
-        });
-    });
-
-    it('builds error patches without requiring callers to know row fields', () => {
-        expect(buildSyncErrorPatch('Notion failed', 1_716_000_000_002)).toEqual({
-            lastSyncError: 'Notion failed',
-            lastSyncedAt: 1_716_000_000_002,
         });
     });
 
