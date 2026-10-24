@@ -1,15 +1,15 @@
 import {api} from '$convex/_generated/api';
 import {getConvexClient} from '$lib/server/convexClient';
+import {allowsAnonymousViewer, buildLoginUrl} from '$lib/utils/loginRoute';
 import {redirect} from '@sveltejs/kit';
 
 export const load = async ({locals, url}) => {
     const {client, token} = await getConvexClient(locals);
-    if (!token && url.pathname.startsWith('/object/')) {
+    if (!token && allowsAnonymousViewer(url.pathname)) {
         return {categories: [], tags: [], privateTags: []};
     }
-    if (!token && !url.pathname.startsWith('/object/')) {
-        const ref = `${url.pathname}${url.search}`;
-        redirect(307, `/login?ref=${encodeURIComponent(ref)}`);
+    if (!token) {
+        redirect(307, buildLoginUrl(url));
     }
 
     const categories = await client.query(api.categories.list, {});
