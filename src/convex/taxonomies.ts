@@ -9,8 +9,6 @@ export const list = query({
     args: {},
     handler: async ctx => {
         const user = await getCurrentUserOrThrow(ctx);
-        const isAdmin = user.role === 'admin';
-
         const [privateTags, privateTagUsage] = await Promise.all([
             ctx.db
                 .query('privateTags')
@@ -18,12 +16,12 @@ export const list = query({
                 .collect(),
             countPrivateTagUsage(ctx, user._id),
         ]);
-        const shared = isAdmin
-            ? await loadSharedTaxonomies(ctx)
-            : {categories: [] as TaxonomyEntry[], tags: [] as TaxonomyEntry[]};
+        const shared =
+            user.role === 'admin'
+                ? await loadSharedTaxonomies(ctx)
+                : {categories: [] as TaxonomyEntry[], tags: [] as TaxonomyEntry[]};
 
         return {
-            isAdmin,
             ...shared,
             privateTags: buildEntries(privateTags, privateTagUsage),
         };

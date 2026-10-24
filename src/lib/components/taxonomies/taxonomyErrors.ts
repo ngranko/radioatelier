@@ -3,7 +3,7 @@ import {ConvexError} from 'convex/values';
 
 const messages: Record<TaxonomyErrorCode, string> = {
     nameRequired: 'Название не может быть пустым',
-    nameTaken: 'Такое название уже занято',
+    nameTaken: 'Такое название уже занято. Чтобы объединить, удалите с переносом объектов',
     notFound: 'Запись не найдена',
     categoryInUse: 'Категория ещё используется объектами',
     selfReplacement: 'Нельзя перенести объекты в удаляемую запись',
