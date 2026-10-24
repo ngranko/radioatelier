@@ -12,7 +12,12 @@ Clerk handles sessions. SvelteKit uses `withClerkHandler` in `src/hooks.server.t
 | Anonymous              | `/object/[id]`   | Continue with an empty category list for the shared view  |
 | Anonymous              | Other app routes | Redirect with status 307 to `/login?ref=<path and query>` |
 
-The exception tests the `/object/` path prefix. New routes under the app layout otherwise inherit its sign-in requirement. `/login` redirects signed-in users to `/`.
+The exception tests the `/object/` path prefix (`allowsAnonymousViewer` in `src/lib/utils/loginRoute.ts`). New routes under the app layout otherwise inherit its sign-in requirement. `/login` redirects signed-in users to `/`.
+
+The server only judges the request in front of it, so the browser repeats both checks against Clerk's client-side session:
+
+- The app layout sends a signed-out viewer to login. This covers pages restored from the back-forward cache and sessions ended in another tab.
+- The login page, once Clerk loads with an active session, refreshes the session token and returns to `ref`. A client-side navigation from a backgrounded tab can carry an expired session cookie: Clerk only performs its refresh handshake for document requests, so the server treats the data request as signed out.
 
 `normalizeRef` in `src/lib/utils.ts` reduces login return URLs to a safe same-origin path. Password and SSO flows carry `ref` through authentication.
 

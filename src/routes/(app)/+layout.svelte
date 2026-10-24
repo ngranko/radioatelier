@@ -26,6 +26,7 @@
     import {sharedMarker} from '$lib/state/sharedMarker.svelte.ts';
     import {setTags} from '$lib/state/tags.svelte';
     import {requestDetailsClose} from '$lib/utils/detailsExit.ts';
+    import {allowsAnonymousViewer, buildLoginUrl} from '$lib/utils/loginRoute';
     import {buildPointUrl} from '$lib/utils/pointRoute.ts';
     import SearchIcon from '@lucide/svelte/icons/search';
     import SproutIcon from '@lucide/svelte/icons/sprout';
@@ -95,11 +96,17 @@
         if (!clerkCtx.isLoaded) {
             return;
         }
-        if (clerkCtx.session?.currentTask?.key !== 'reset-password') {
+        if (clerkCtx.session?.currentTask?.key === 'reset-password') {
+            const ref = `${page.url.pathname}${page.url.search}`;
+            goto(`/login/reset-password?ref=${encodeURIComponent(ref)}`);
             return;
         }
-        const ref = `${page.url.pathname}${page.url.search}`;
-        goto(`/login/reset-password?ref=${encodeURIComponent(ref)}`);
+        // The server gate only judges the request that rendered this page. A page restored
+        // from the back-forward cache, or a session ended in another tab, leaves the map up
+        // for a signed-out viewer unless the browser-side session is followed too.
+        if (clerkCtx.auth.userId === null && !allowsAnonymousViewer(page.url.pathname)) {
+            goto(buildLoginUrl(page.url), {replaceState: true});
+        }
     });
 </script>
 
