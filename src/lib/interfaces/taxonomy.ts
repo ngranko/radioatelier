@@ -1,0 +1,16 @@
+export type TaxonomyType = 'category' | 'tag' | 'privateTag';
+
+export interface TaxonomyEntry {
+    id: string;
+    name: string;
+    usageCount: number;
+}
+
+// Carried as `ConvexError` data so the client can translate failures without
+// matching on server wording.
+export type TaxonomyErrorCode =
+    | 'nameRequired'
+    | 'nameTaken'
+    | 'notFound'
+    | 'categoryInUse'
+    | 'selfReplacement';
