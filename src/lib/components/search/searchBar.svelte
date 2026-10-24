@@ -8,6 +8,7 @@
     } from '$lib/components/search/resultFocus';
     import {Input} from '$lib/components/ui/input';
     import {mapState} from '$lib/state/map.svelte';
+    import {markerFilterState} from '$lib/state/markerFilter.svelte';
     import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
     import {clearSearch, searchState} from '$lib/state/search.svelte';
     import {registerEscapeCloseHandler} from '$lib/utils/escapeClose';
@@ -90,6 +91,8 @@
         timeout = undefined;
     }
 
+    const hasFilterTrigger = $derived(markerFilterState.isEnabled && !disabled);
+
     const iconClass = $derived.by(() => {
         if (disabled) {
             return 'text-muted-foreground/50';
@@ -130,21 +133,21 @@
         onfocus={() => (isFocused = true)}
         onblur={() => (isFocused = false)}
         bind:value={val}
-        class="glass placeholder:text-muted-foreground/60 focus:ring-primary/25 h-10 w-full rounded-full border-none bg-white/95 pt-2 pr-[4.5rem]
+        class="glass placeholder:text-muted-foreground/60 focus:ring-primary/25 h-10 w-full rounded-full border-none bg-white/95 pt-2
             pb-2 pl-9.5 text-sm shadow-sm transition-all
             ease-out focus:bg-white focus:shadow-md
             dark:bg-neutral-800/90 dark:focus:bg-neutral-800
-            [&::-webkit-search-cancel-button]:hidden"
+            [&::-webkit-search-cancel-button]:hidden {hasFilterTrigger ? 'pr-[4.5rem]' : 'pr-10'}"
     />
     {#if val}
         <div
-            class="absolute top-1/2 right-9 -translate-y-1/2"
+            class="absolute top-1/2 -translate-y-1/2 {hasFilterTrigger ? 'right-9' : 'right-0.5'}"
             transition:fade={{duration: 100, easing: cubicInOut}}
         >
             <ClearButton onClick={handleClearClick} />
         </div>
     {/if}
-    {#if !disabled}
+    {#if hasFilterTrigger}
         <MarkerFilterTrigger />
     {/if}
 </div>
