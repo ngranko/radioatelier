@@ -5,7 +5,6 @@
     import TaxonomySheet from '$lib/components/objectDetails/objectForm/taxonomySheet.svelte';
     import TagChip from '$lib/components/tagChip.svelte';
     import {Skeleton} from '$lib/components/ui/skeleton';
-    import type {Option} from '$lib/interfaces/option';
     import {categoriesState} from '$lib/state/categories.svelte';
     import {cn} from '$lib/utils.js';
     import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
@@ -38,7 +37,7 @@
     const tagsQuery = useQuery(api.tags.list);
     const privateTagsQuery = useQuery(api.privateTags.list);
 
-    const byName = (a: Option, b: Option) => a.name.localeCompare(b.name);
+    const byName = (a: {name: string}, b: {name: string}) => a.name.localeCompare(b.name);
     const categories = $derived(
         Object.values(categoriesState.categories)
             .filter(item => !item.isHidden)
@@ -134,8 +133,12 @@
 
 {#if isOpen}
     <TaxonomySheet
-        {categories}
-        {tagOptions}
+        categories={categories.filter(
+            item => !categoriesState.categories[item.id as Id<'categories'>]?.isDeleting,
+        )}
+        tagOptions={tagOptions
+            .filter(item => !item.isDeleting)
+            .map(item => ({id: item.id, name: item.name}))}
         {privateTagOptions}
         bind:category
         bind:tags

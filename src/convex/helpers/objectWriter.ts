@@ -13,6 +13,7 @@ import {
     type ObjectRecordReplace,
     splitObjectRecordPatch,
 } from './objectRecordPatch';
+import {assertTagsAvailable, assertTaxonomyAvailable, loadAvailableTaxonomy} from './taxonomyState';
 
 export type {ObjectRecordData, ObjectRecordPatch, ObjectRecordReplace} from './objectRecordPatch';
 
@@ -27,6 +28,7 @@ export async function createObjectRecords(
 ) {
     const data = dropUnsafeSource(rawData);
     const category = await requireCategory(ctx, data.categoryId);
+    await assertTagsAvailable(ctx, data.tagIds);
     const {latitude, longitude, address, city, country, ...object} = data;
     const mapPointId = await ctx.db.insert('mapPoints', {
         latitude,
@@ -79,6 +81,7 @@ export async function patchObjectRecords(
 ) {
     const patches = splitObjectRecordPatch(dropUnsafeSource(patch));
     const objectPatch = filterChangedPatch(target.object, patches.objectPatch);
+    await validateTaxonomyPatch(ctx, objectPatch);
     const mapPointPatch = filterChangedPatch(target.mapPoint, patches.mapPointPatch);
     const markerPatch = filterChangedPatch(target.marker, patches.markerPatch);
     if (!hasKeys(objectPatch) && !hasKeys(mapPointPatch) && !hasKeys(markerPatch)) {
@@ -124,11 +127,16 @@ async function scheduleSearchUpdate(
 }
 
 async function requireCategory(ctx: MutationCtx, categoryId: Id<'categories'>) {
-    const category = await ctx.db.get('categories', categoryId);
-    if (!category) {
-        throw new Error('Category not found');
+    return await loadAvailableTaxonomy(ctx, 'categories', categoryId);
+}
+
+async function validateTaxonomyPatch(ctx: MutationCtx, patch: ObjectRecordPatch) {
+    if (patch.categoryId !== undefined) {
+        await requireCategory(ctx, patch.categoryId);
     }
-    return category;
+    if (patch.tagIds !== undefined) {
+        await assertTagsAvailable(ctx, patch.tagIds);
+    }
 }
 
 export async function loadObjectTarget(
@@ -158,6 +166,7 @@ export async function upsertPrivateTags(
     userId: Id<'users'>,
     privateTagIds: Id<'privateTags'>[],
 ) {
+    await validatePrivateTags(ctx, userId, privateTagIds);
     const existing = await ctx.db
         .query('objectPrivateTags')
         .withIndex('byObjectIdUserId', q => q.eq('objectId', objectId).eq('userId', userId))
@@ -166,5 +175,16 @@ export async function upsertPrivateTags(
         await ctx.db.patch('objectPrivateTags', existing._id, {privateTagIds});
     } else {
         await ctx.db.insert('objectPrivateTags', {objectId, userId, privateTagIds});
+    }
+}
+
+async function validatePrivateTags(
+    ctx: MutationCtx,
+    userId: Id<'users'>,
+    tagIds: Id<'privateTags'>[],
+) {
+    for (const id of new Set(tagIds)) {
+        const tag = await ctx.db.get('privateTags', id);
+        assertTaxonomyAvailable(tag?.createdById === userId ? tag : null);
     }
 }

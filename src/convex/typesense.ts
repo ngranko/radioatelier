@@ -6,6 +6,7 @@ import {createTypesenseSyncClient} from './typesense/client';
 import {
     addObjectToTypesense,
     removeObjectFromTypesense,
+    setCategoryNameInTypesense,
     updateObjectInTypesense,
 } from './typesense/objects';
 
@@ -55,6 +56,20 @@ export const updateInTypesense = internalAction({
             ...object,
             location: object.location as [number, number],
         });
+    },
+});
+
+export const setCategoryNameInTypesenseBatch = internalAction({
+    args: {
+        objectIds: v.array(v.id('objects')),
+        categoryName: v.string(),
+    },
+    handler: async (ctx, {objectIds, categoryName}) => {
+        const client = createTypesenseSyncClient();
+        const errors = await setCategoryNameInTypesense(client, objectIds, categoryName);
+        if (errors.length > 0) {
+            console.error('[Typesense] Failed to update category name', {categoryName, errors});
+        }
     },
 });
 

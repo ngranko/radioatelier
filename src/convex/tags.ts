@@ -1,5 +1,9 @@
 import {ConvexError, v} from 'convex/values';
 import {mutation, query} from './_generated/server';
+import {removeTag, renameTag} from './helpers/taxonomyEditor';
+import {findTagByName, normalizeTagName} from './helpers/taxonomyNames';
+import {assertTaxonomyAvailable} from './helpers/taxonomyState';
+import {getCurrentAdminOrThrow} from './users';
 
 export const list = query({
     args: {},
@@ -11,7 +15,11 @@ export const list = query({
 
         const tags = await ctx.db.query('tags').collect();
 
-        return tags.map(item => ({id: item._id, name: item.name}));
+        return tags.map(item => ({
+            id: item._id,
+            name: item.name,
+            isDeleting: item.isDeleting ?? false,
+        }));
     },
 });
 
@@ -25,20 +33,37 @@ export const create = mutation({
             throw new ConvexError('Unauthorized');
         }
 
-        const normalizedName = args.name.trim().toLowerCase();
-        if (!normalizedName) {
-            throw new ConvexError('Tag name is required');
-        }
+        const normalizedName = normalizeTagName(args.name);
 
-        const existing = await ctx.db
-            .query('tags')
-            .withIndex('byName', q => q.eq('name', normalizedName))
-            .first();
+        const existing = await findTagByName(ctx, normalizedName);
         if (existing) {
+            assertTaxonomyAvailable(existing);
             return existing._id;
         }
 
         const result = await ctx.db.insert('tags', {name: normalizedName});
         return result;
+    },
+});
+
+export const rename = mutation({
+    args: {
+        id: v.id('tags'),
+        name: v.string(),
+    },
+    handler: async (ctx, {id, name}) => {
+        await getCurrentAdminOrThrow(ctx);
+        await renameTag(ctx, id, name);
+    },
+});
+
+export const remove = mutation({
+    args: {
+        id: v.id('tags'),
+        replacementId: v.nullable(v.id('tags')),
+    },
+    handler: async (ctx, {id, replacementId}) => {
+        await getCurrentAdminOrThrow(ctx);
+        await removeTag(ctx, id, replacementId);
     },
 });
