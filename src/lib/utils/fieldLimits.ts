@@ -9,3 +9,5 @@ export const LIMITS = {
     description: 8000,
     source: 2048,
 } as const;
+
+export const MAX_OBJECT_IMAGES = 10;
