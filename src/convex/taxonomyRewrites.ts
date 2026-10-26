@@ -4,6 +4,7 @@ import {internalMutation} from './_generated/server';
 import {moveCategoryBatch, replaceTagBatch} from './helpers/objectTaxonomy';
 import {deleteCategory} from './helpers/taxonomyEditor';
 import {scheduleTaxonomyFanout} from './helpers/taxonomyFanout';
+import {loadAvailableTaxonomy} from './helpers/taxonomyState';
 
 // Each run rewrites one bounded batch and hands the rest to the next run; the
 // taxonomy is deleted in the run that finds nothing left, so no committed
@@ -11,10 +12,8 @@ import {scheduleTaxonomyFanout} from './helpers/taxonomyFanout';
 export const moveObjectsToCategory = internalMutation({
     args: {categoryId: v.id('categories'), replacementId: v.id('categories')},
     handler: async (ctx, args) => {
-        const replacement = await ctx.db.get('categories', args.replacementId);
-        if (!replacement) {
-            throw new Error(`Replacement category ${args.replacementId} no longer exists`);
-        }
+        if (!(await ctx.db.get('categories', args.categoryId))) return;
+        const replacement = await loadAvailableTaxonomy(ctx, 'categories', args.replacementId);
 
         const {objectIds, isDone} = await moveCategoryBatch(ctx, args.categoryId, replacement._id);
         await scheduleTaxonomyFanout(ctx, objectIds, replacement.name);
@@ -33,6 +32,10 @@ export const replaceTagOnObjects = internalMutation({
         cursor: v.nullable(v.string()),
     },
     handler: async (ctx, {tagId, replacementId, cursor}) => {
+        if (!(await ctx.db.get('tags', tagId))) return;
+        if (replacementId !== null) {
+            await loadAvailableTaxonomy(ctx, 'tags', replacementId);
+        }
         const batch = await replaceTagBatch(ctx, tagId, replacementId, cursor);
         await scheduleTaxonomyFanout(ctx, batch.objectIds, null);
         if (!batch.isDone) {

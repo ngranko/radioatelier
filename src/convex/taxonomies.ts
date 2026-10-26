@@ -44,13 +44,14 @@ async function loadSharedTaxonomies(ctx: QueryCtx) {
 }
 
 function buildEntries<K extends string>(
-    items: {_id: K; name: string}[],
+    items: {_id: K; name: string; isDeleting?: boolean}[],
     usage: Map<K, number>,
 ): TaxonomyEntry[] {
     return items
         .map(item => ({
             id: item._id,
             name: item.name,
+            isDeleting: item.isDeleting ?? false,
             usageCount: usage.get(item._id) ?? 0,
         }))
         .sort((left, right) => left.name.localeCompare(right.name));

@@ -26,13 +26,16 @@
     const actionsByType = bindTaxonomyActions(useConvexClient());
 
     let mode = $state<'view' | 'rename' | 'remove' | 'removing'>('view');
+    const isRemoving = $derived(mode === 'removing' || Boolean(entry.isDeleting));
     let draftName = $state('');
     let isBusy = $state(false);
     let nameInput = $state<HTMLInputElement | null>(null);
 
     const actions = $derived(actionsByType[type]);
     const replacements = $derived(
-        siblings.filter(item => item.id !== entry.id).map(item => ({id: item.id, name: item.name})),
+        siblings
+            .filter(item => item.id !== entry.id && !item.isDeleting)
+            .map(item => ({id: item.id, name: item.name})),
     );
     const usageLabel = $derived(
         `${entry.usageCount} ${pluralizeRussian(entry.usageCount, ['объект', 'объекта', 'объектов'])}`,
@@ -78,7 +81,7 @@
 
 <div class="border-border/50 space-y-2.5 rounded-lg border p-3">
     <div class="flex items-center gap-3">
-        {#if mode === 'rename'}
+        {#if mode === 'rename' && !isRemoving}
             <Input
                 bind:value={draftName}
                 bind:ref={nameInput}
@@ -95,12 +98,12 @@
         {:else}
             <p
                 class="min-w-0 flex-1 truncate text-sm font-medium"
-                class:text-muted-foreground={mode === 'removing'}
+                class:text-muted-foreground={isRemoving}
             >
                 {entry.name}
             </p>
             <span class="text-muted-foreground shrink-0 text-xs">{usageLabel}</span>
-            {#if mode === 'removing'}
+            {#if isRemoving}
                 <span class="text-muted-foreground flex h-9 shrink-0 items-center gap-1.5 text-xs">
                     <Spinner class="size-3.5" />
                     Удаляется…
@@ -127,7 +130,7 @@
         {/if}
     </div>
 
-    {#if mode === 'remove'}
+    {#if mode === 'remove' && !isRemoving}
         <TaxonomyRemovalPanel
             {entry}
             {type}

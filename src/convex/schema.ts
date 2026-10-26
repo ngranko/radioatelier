@@ -4,10 +4,14 @@ import {mapPointTableFields, objectTableFields} from './sharedValidators';
 
 export default defineSchema({
     categories: defineTable({
+        isDeleting: v.optional(v.boolean()),
+        deletionReplacementId: v.optional(v.id('categories')),
         name: v.string(),
         markerColor: v.string(),
         markerIcon: v.string(),
-    }).index('byName', ['name']),
+    })
+        .index('byName', ['name'])
+        .index('byDeletionReplacementId', ['deletionReplacementId']),
     counters: defineTable({
         name: v.string(),
         value: v.number(),
@@ -88,7 +92,11 @@ export default defineSchema({
         .index('byNameCreatedById', ['name', 'createdById']),
     tags: defineTable({
         name: v.string(),
-    }).index('byName', ['name']),
+        isDeleting: v.optional(v.boolean()),
+        deletionReplacementId: v.optional(v.id('tags')),
+    })
+        .index('byName', ['name'])
+        .index('byDeletionReplacementId', ['deletionReplacementId']),
     users: defineTable({
         email: v.string(),
         // this is the Clerk ID, stored in the subject JWT field

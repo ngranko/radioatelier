@@ -1,6 +1,7 @@
 import {randomMarkerColor, randomMarkerIconKey} from '../../lib/services/map/markerStyling.data';
 import type {Id} from '../_generated/dataModel';
 import type {MutationCtx, QueryCtx} from '../_generated/server';
+import {assertTaxonomyAvailable} from './taxonomyState';
 
 export function capitalizeCategoryName(value: string) {
     return value
@@ -29,6 +30,7 @@ export async function ensureCategory(ctx: MutationCtx, rawName: string) {
     const name = capitalizeCategoryName(rawName);
     const existing = await findCategoryByName(ctx, name);
     if (existing) {
+        assertTaxonomyAvailable(existing);
         return existing._id;
     }
     return await ctx.db.insert('categories', {
@@ -47,6 +49,7 @@ export async function ensureTags(ctx: MutationCtx, tags: string[]) {
             .withIndex('byName', q => q.eq('name', name))
             .first();
         if (existing) {
+            assertTaxonomyAvailable(existing);
             tagIds.push(existing._id);
             continue;
         }

@@ -16,6 +16,7 @@ import {
     normalizeTagName,
     taxonomyError,
 } from './taxonomyNames';
+import {assertNoIncomingMigration, assertTaxonomyAvailable} from './taxonomyState';
 
 type TaxonomyTable = 'categories' | 'tags' | 'privateTags';
 
@@ -41,8 +42,13 @@ export async function removeCategory(
     replacementId: Id<'categories'> | null,
 ) {
     await loadTaxonomy(ctx, 'categories', id);
+    await assertNoIncomingMigration(ctx, 'categories', id);
     const replacement = await loadReplacement(ctx, 'categories', id, replacementId);
     if (replacement) {
+        await ctx.db.patch('categories', id, {
+            isDeleting: true,
+            deletionReplacementId: replacement._id,
+        });
         await ctx.scheduler.runAfter(0, internal.taxonomyRewrites.moveObjectsToCategory, {
             categoryId: id,
             replacementId: replacement._id,
@@ -78,7 +84,12 @@ export async function removeTag(
     replacementId: Id<'tags'> | null,
 ) {
     await loadTaxonomy(ctx, 'tags', id);
+    await assertNoIncomingMigration(ctx, 'tags', id);
     const replacement = await loadReplacement(ctx, 'tags', id, replacementId);
+    await ctx.db.patch('tags', id, {
+        isDeleting: true,
+        deletionReplacementId: replacement?._id,
+    });
     await ctx.scheduler.runAfter(0, internal.taxonomyRewrites.replaceTagOnObjects, {
         tagId: id,
         replacementId: replacement?._id ?? null,
@@ -122,6 +133,7 @@ async function loadTaxonomy<T extends TaxonomyTable>(ctx: MutationCtx, table: T,
     if (!taxonomy) {
         throw taxonomyError('notFound');
     }
+    assertTaxonomyAvailable(taxonomy);
     return taxonomy;
 }
 

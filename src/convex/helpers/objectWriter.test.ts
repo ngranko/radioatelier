@@ -7,6 +7,7 @@ import {
     type ObjectRecordData,
     type ObjectTarget,
     patchObjectRecords,
+    upsertPrivateTags,
 } from './objectWriter';
 
 vi.mock('./objectHelpers', () => ({
@@ -118,9 +119,9 @@ describe('createObjectRecords', () => {
         const {ctx, db, scheduler} = createMockCtx();
         db.get.mockResolvedValue(null);
 
-        await expect(createObjectRecords(ctx, ownerId, createData)).rejects.toThrow(
-            'Category not found',
-        );
+        await expect(createObjectRecords(ctx, ownerId, createData)).rejects.toMatchObject({
+            data: {code: 'notFound'},
+        });
         expect(db.insert).not.toHaveBeenCalled();
         expect(scheduler.runAfter).not.toHaveBeenCalled();
     });
@@ -182,4 +183,67 @@ describe('patchObjectRecords', () => {
             },
         });
     });
+});
+
+describe('assigning taxonomies during deletion', () => {
+    it.each(['categories', 'tags'] as const)(
+        'blocks creating objects with deleting %s',
+        async table => {
+            const {ctx, db, scheduler} = createMockCtx();
+            db.get.mockImplementation(async requested => ({
+                _id: categoryId,
+                name: 'old',
+                isDeleting: requested === table,
+            }));
+            await expect(
+                createObjectRecords(ctx, ownerId, {
+                    ...createData,
+                    tagIds: ['tag-1' as Id<'tags'>],
+                }),
+            ).rejects.toMatchObject({data: {code: 'deletionInProgress'}});
+            expect(db.insert).not.toHaveBeenCalled();
+            expect(scheduler.runAfter).not.toHaveBeenCalled();
+        },
+    );
+
+    it.each(['categories', 'tags'] as const)(
+        'blocks reassigning objects to deleting %s',
+        async table => {
+            const {ctx, db, scheduler} = createMockCtx();
+            db.get.mockResolvedValue({_id: otherCategoryId, name: 'old', isDeleting: true});
+            const patch =
+                table === 'categories'
+                    ? {categoryId: otherCategoryId}
+                    : {tagIds: ['tag-1' as Id<'tags'>]};
+            await expect(patchObjectRecords(ctx, createTarget(), patch)).rejects.toMatchObject({
+                data: {code: 'deletionInProgress'},
+            });
+            expect(db.patch).not.toHaveBeenCalled();
+            expect(scheduler.runAfter).not.toHaveBeenCalled();
+        },
+    );
+
+    it('allows unrelated edits while the current taxonomy is being deleted', async () => {
+        const {ctx, db} = createMockCtx();
+        db.get.mockResolvedValue({_id: categoryId, name: 'old', isDeleting: true});
+        await patchObjectRecords(ctx, createTarget(), {name: 'Updated'});
+        expect(db.patch).toHaveBeenCalledWith('objects', 'object-1', {name: 'Updated'});
+    });
+});
+
+describe('assigning private tags after deletion', () => {
+    it.each([null, {_id: 'private-1', createdById: 'another-user'}])(
+        'rejects missing or foreign private tags before writing associations',
+        async tag => {
+            const db = {get: vi.fn().mockResolvedValue(tag), insert: vi.fn(), patch: vi.fn()};
+            const ctx = {db} as unknown as MutationCtx;
+            await expect(
+                upsertPrivateTags(ctx, 'object-1' as Id<'objects'>, ownerId, [
+                    'private-1' as Id<'privateTags'>,
+                ]),
+            ).rejects.toMatchObject({data: {code: 'notFound'}});
+            expect(db.insert).not.toHaveBeenCalled();
+            expect(db.patch).not.toHaveBeenCalled();
+        },
+    );
 });

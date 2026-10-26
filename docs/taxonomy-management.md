@@ -30,7 +30,7 @@ The split follows ownership: a private tag belongs to the user who created it, w
 
 Each kind's mutations sit beside its `create` and take typed ids (`v.id('categories')` and so on), so Convex argument validation proves an id belongs to its table. They delegate to one function per kind and action in `helpers/taxonomyEditor.ts` (`renameCategory`, `removeTag`, …). Name normalization is shared with `create` through `helpers/taxonomyNames.ts`.
 
-Failures are thrown as `ConvexError({code})`, where `code` is a `TaxonomyErrorCode` from `src/lib/interfaces/taxonomy.ts`: `nameRequired`, `nameTaken`, `notFound`, `categoryInUse`, `selfReplacement`.
+Failures are thrown as `ConvexError({code})`, where `code` is a `TaxonomyErrorCode` from `src/lib/interfaces/taxonomy.ts`: `nameRequired`, `nameTaken`, `notFound`, `categoryInUse`, `selfReplacement`, `deletionInProgress`, `migrationInProgress`.
 
 ## Rename
 
@@ -57,7 +57,9 @@ Bulk rewrites live in `helpers/objectTaxonomy.ts` rather than in the Object writ
 
 Private tags reach neither search nor Notion, so their edits fan out to nothing.
 
-Each rename or delete runs in a single Convex transaction. Category edits read markers through `byCategoryId` and private-tag edits read the owner's rows through `objectPrivateTags.byUserId`, but tag edits must scan every marker because `tagIds` is an array and cannot be indexed. Deleting a tag also writes two documents per affected Object, so a tag on many thousands of Objects can exceed Convex's per-transaction read and write limits; at that size the rewrite would have to move to a paginated internal mutation.
+Shared taxonomy deletion runs in scheduled batches of up to 500 markers. The initiating transaction sets `isDeleting` on the source and records `deletionReplacementId` when moving Objects. Both fields are optional for existing rows. Each batch updates Objects and their markers together, schedules fanout, and deletes the taxonomy after the final batch. Category batches use `markers.byCategoryId`; tag batches paginate all markers because tag arrays cannot be indexed.
+
+Deleting taxonomies reject renames, repeated deletions, new assignments, and use as another deletion's replacement. `byDeletionReplacementId` prevents deleting a destination while an incoming migration still depends on it. These checks read the taxonomy within the writing transaction, so concurrent deletions and assignments conflict and retry against the current state. Object creation, changed taxonomy assignments, imports, and Notion sync share these checks. Unrelated Object edits remain available. Private tags are removed in one transaction; assignment validates that each private tag still exists and belongs to the caller.
 
 ## UI
 
@@ -70,7 +72,7 @@ Each rename or delete runs in a single Convex transaction. Category edits read m
 | `src/lib/components/taxonomies/taxonomyActions.ts`          | Binds each kind to its rename/remove mutations   |
 | `src/lib/components/taxonomies/taxonomyErrors.ts`           | `TaxonomyErrorCode` → Russian toast text         |
 
-Non-admins see a single private-tag list with no tab bar, under a "Приватные теги" heading. Rename is inline in the row and delete expands a panel underneath it, so the flow never stacks a second modal over the dialog. The list refreshes itself: `taxonomies.list` is a reactive query, as are `categories.list`, `tags.list`, and `privateTags.list` elsewhere in the app.
+Non-admins see a single private-tag list with no tab bar, under a "Приватные теги" heading. Rename is inline in the row and delete expands a panel underneath it, so the flow never stacks a second modal over the dialog. The deleting indicator comes from the persisted state, so every client sees it after a reload. Deleting entries are excluded from assignment and replacement pickers. The list refreshes itself: `taxonomies.list` is a reactive query, as are `categories.list`, `tags.list`, and `privateTags.list` elsewhere in the app.
 
 ## Related docs
 

@@ -55,11 +55,11 @@
 <RoutedDialog bind:isOpen>
     <Content class="flex max-h-[85vh] flex-col overflow-hidden border-t-0 p-0 sm:max-w-lg">
         <div
-            class="from-primary via-primary/60 absolute top-0 right-0 left-0 h-0.5 bg-gradient-to-r to-transparent"
+            class="from-primary via-primary/60 absolute top-0 right-0 left-0 h-0.5 bg-linear-to-r to-transparent"
         ></div>
         <div class="relative shrink-0 px-6 pt-6 pb-4">
             <div
-                class="from-primary/[0.07] via-primary/[0.03] absolute inset-0 bg-gradient-to-br to-transparent"
+                class="from-primary/[0.07] via-primary/3 absolute inset-0 bg-linear-to-br to-transparent"
             ></div>
             <div class="relative flex items-center gap-3.5">
                 <div

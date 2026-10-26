@@ -21,6 +21,7 @@ export const list = query({
         return categories.map(item => ({
             id: item._id,
             name: item.name,
+            isDeleting: item.isDeleting ?? false,
             markerColor: byKey.get(item._id)?.markerColor ?? item.markerColor,
             markerIcon: byKey.get(item._id)?.markerIcon ?? item.markerIcon,
             isHidden: byKey.get(item._id)?.isHidden ?? false,

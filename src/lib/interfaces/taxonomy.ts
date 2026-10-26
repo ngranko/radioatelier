@@ -4,6 +4,7 @@ export interface TaxonomyEntry {
     id: string;
     name: string;
     usageCount: number;
+    isDeleting?: boolean;
 }
 
 // Carried as `ConvexError` data so the client can translate failures without
@@ -13,4 +14,6 @@ export type TaxonomyErrorCode =
     | 'nameTaken'
     | 'notFound'
     | 'categoryInUse'
-    | 'selfReplacement';
+    | 'selfReplacement'
+    | 'deletionInProgress'
+    | 'migrationInProgress';

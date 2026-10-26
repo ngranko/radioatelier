@@ -5,6 +5,7 @@ import {matchIndexRange, type IndexRange} from './mockIndexRange';
 import {
     removeCategory,
     removePrivateTag,
+    removeTag,
     renameCategory,
     renamePrivateTag,
     renameTag,
@@ -147,6 +148,10 @@ describe('removal', () => {
             categoryId,
             replacementId: replacementCategoryId,
         });
+        expect(db.patch).toHaveBeenCalledWith('categories', categoryId, {
+            isDeleting: true,
+            deletionReplacementId: replacementCategoryId,
+        });
         expect(db.delete).not.toHaveBeenCalled();
     });
 
@@ -175,5 +180,75 @@ describe('removal', () => {
             removePrivateTag(ctx, ownerId, privateTagId, foreignTagId),
         ).rejects.toMatchObject({data: {code: 'notFound'}});
         expect(db.delete).not.toHaveBeenCalled();
+    });
+});
+
+describe('concurrent taxonomy edits', () => {
+    it.each(['categories', 'tags'] as const)('blocks edits to deleting %s', async table => {
+        const {ctx, db, scheduler} = createMockCtx({
+            docs: {[`${table}:pending`]: {_id: 'pending', name: 'old', isDeleting: true}},
+        });
+        const rename = table === 'categories' ? renameCategory : renameTag;
+        const remove = table === 'categories' ? removeCategory : removeTag;
+        await expect(rename(ctx, 'pending' as never, 'new')).rejects.toMatchObject({
+            data: {code: 'deletionInProgress'},
+        });
+        await expect(remove(ctx, 'pending' as never, null)).rejects.toMatchObject({
+            data: {code: 'deletionInProgress'},
+        });
+        expect(db.patch).not.toHaveBeenCalled();
+        expect(scheduler.runAfter).not.toHaveBeenCalled();
+    });
+
+    it.each(['categories', 'tags'] as const)(
+        'refuses deleting %s as a migration destination',
+        async table => {
+            const {ctx, db, scheduler} = createMockCtx({
+                docs: {
+                    [`${table}:source`]: {_id: 'source', name: 'old'},
+                    [`${table}:target`]: {_id: 'target', name: 'new', isDeleting: true},
+                },
+            });
+            const remove = table === 'categories' ? removeCategory : removeTag;
+            await expect(remove(ctx, 'source' as never, 'target' as never)).rejects.toMatchObject({
+                data: {code: 'deletionInProgress'},
+            });
+            expect(db.patch).not.toHaveBeenCalled();
+            expect(scheduler.runAfter).not.toHaveBeenCalled();
+        },
+    );
+
+    it.each(['categories', 'tags'] as const)(
+        'keeps %s migration destinations until incoming work finishes',
+        async table => {
+            const {ctx, db, scheduler} = createMockCtx({
+                docs: {[`${table}:target`]: {_id: 'target', name: 'new'}},
+                rows: {
+                    [table]: [{_id: 'source', isDeleting: true, deletionReplacementId: 'target'}],
+                },
+            });
+            const remove = table === 'categories' ? removeCategory : removeTag;
+            await expect(remove(ctx, 'target' as never, null)).rejects.toMatchObject({
+                data: {code: 'migrationInProgress'},
+            });
+            expect(db.delete).not.toHaveBeenCalled();
+            expect(scheduler.runAfter).not.toHaveBeenCalled();
+        },
+    );
+
+    it('marks tags before scheduling their removal', async () => {
+        const {ctx, db, scheduler} = createMockCtx({
+            docs: {'tags:tag-1': {_id: tagId, name: 'old'}},
+        });
+        await removeTag(ctx, tagId, null);
+        expect(db.patch).toHaveBeenCalledWith('tags', tagId, {
+            isDeleting: true,
+            deletionReplacementId: undefined,
+        });
+        expect(scheduler.runAfter).toHaveBeenCalledWith(0, expect.anything(), {
+            tagId,
+            replacementId: null,
+            cursor: null,
+        });
     });
 });

@@ -7,4 +7,5 @@ export interface Category {
     markerColor: MarkerColor;
     markerIcon: MarkerIconKey;
     isHidden: boolean;
+    isDeleting?: boolean;
 }
