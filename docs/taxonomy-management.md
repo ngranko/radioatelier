@@ -12,7 +12,7 @@ The split follows ownership: a private tag belongs to the user who created it, w
 | Tag         | Admins                    | Every owner's Objects   |
 | Private tag | Its owner                 | The owner's own Objects |
 
-`taxonomies.list` requires only a signed-in user; it returns the caller's private tags always, and the shared lists (plus an `isAdmin` flag the dialog uses to decide whether to show tabs at all) only for admins. The category and tag mutations call `getCurrentAdminOrThrow` first. The private-tag mutations pass the caller's id into the editor, which treats a private tag with another `createdById` as missing (`notFound`), so a guessed id reveals nothing, and refuses a merge target the caller does not own the same way. Admin means `role === 'admin'` on the `users` row, mirrored from Clerk `public_metadata.role` by `upsertFromClerk`.
+`taxonomies.list` requires only a signed-in user; it returns the caller's private tags always, and the shared lists only for admins. The dialog reads the role from `users.current`, which the menu already subscribes to, so the heading and tabs are settled before the list arrives. The category and tag mutations call `getCurrentAdminOrThrow` first. The private-tag mutations pass the caller's id into the editor, which treats a private tag with another `createdById` as missing (`notFound`), so a guessed id reveals nothing, and refuses a merge target the caller does not own the same way. Admin means `role === 'admin'` on the `users` row, mirrored from Clerk `public_metadata.role` by `upsertFromClerk`.
 
 ## Usage counts
 
@@ -72,7 +72,9 @@ Deleting taxonomies reject renames, repeated deletions, new assignments, and use
 | `src/lib/components/taxonomies/taxonomyActions.ts`          | Binds each kind to its rename/remove mutations   |
 | `src/lib/components/taxonomies/taxonomyErrors.ts`           | `TaxonomyErrorCode` → Russian toast text         |
 
-Non-admins see a single private-tag list with no tab bar, under a "Приватные теги" heading. Rename is inline in the row and delete expands a panel underneath it, so the flow never stacks a second modal over the dialog. The deleting indicator comes from the persisted state, so every client sees it after a reload. Deleting entries are excluded from assignment and replacement pickers. The list refreshes itself: `taxonomies.list` is a reactive query, as are `categories.list`, `tags.list`, and `privateTags.list` elsewhere in the app.
+Admins get the dialog under a "Категории и теги" heading with the same three tabs as the object form's taxonomy sheet; non-admins see a single private-tag list with no tab bar, under "Приватные теги". Category rows lead with their marker badge.
+
+Rename is inline in the row and delete expands a panel underneath it, so the flow never stacks a second modal over the dialog. The dialog owns which row is being renamed or deleted, so only one is open at a time; Escape closes that row first and the dialog second, and switching tabs or typing in the search closes it too. Picking a replacement turns the confirm button into "Перенести и удалить". The list refreshes itself: `taxonomies.list` is a reactive query, as are `categories.list`, `tags.list`, and `privateTags.list` elsewhere in the app.
 
 ## Related docs
 
