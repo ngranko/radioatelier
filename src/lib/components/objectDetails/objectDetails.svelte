@@ -1,6 +1,5 @@
 <script lang="ts">
     import {goto} from '$app/navigation';
-    import Background from '$lib/components/objectDetails/background.svelte';
     import CloseConfirmDialog from '$lib/components/objectDetails/closeConfirmDialog.svelte';
     import DetailsContent from '$lib/components/objectDetails/detailsContent.svelte';
     import DetailsHeader from '$lib/components/objectDetails/detailsHeader.svelte';
@@ -16,6 +15,7 @@
     } from '$lib/state/objectDetailsOverlay.svelte';
     import type {ObjectDetailsOverlayMode} from '$lib/state/objectDetailsOverlay.svelte';
     import {getActiveSearchUrl} from '$lib/state/search.svelte';
+    import {registerDetailsExitGuard} from '$lib/utils/detailsExit';
     import {registerEscapeCloseHandler} from '$lib/utils/escapeClose';
     import {onMount} from 'svelte';
     import {useClerkContext} from 'svelte-clerk';
@@ -38,6 +38,7 @@
 
     let isCloseConfirmOpen = $state(false);
     let closeConfirmationCheck = $state<(() => boolean) | null>(null);
+    let pendingExit: () => void = handleClose;
 
     const resolvedInitialValues = $derived(initialValues ?? {});
     const resolvedMode = $derived(objectDetailsOverlay.isOpen ? objectDetailsOverlay.mode : mode);
@@ -84,26 +85,41 @@
         return closeConfirmationCheck?.() === true;
     }
 
-    function requestClose() {
+    function requestExit(proceed: () => void = handleClose) {
         if (isCloseConfirmationRequired()) {
+            pendingExit = proceed;
             isCloseConfirmOpen = true;
             return;
         }
 
-        handleClose();
+        proceed();
     }
 
-    onMount(() =>
-        registerEscapeCloseHandler({
+    function requestClose() {
+        requestExit();
+    }
+
+    function confirmExit() {
+        isCloseConfirmOpen = false;
+        pendingExit();
+    }
+
+    onMount(() => {
+        const unregisterEscape = registerEscapeCloseHandler({
             priority: 20,
             isActive: () => objectDetailsOverlay.isOpen,
             close: requestClose,
-        }),
-    );
+        });
+        const unregisterExitGuard = registerDetailsExitGuard(requestExit);
+
+        return () => {
+            unregisterEscape();
+            unregisterExitGuard();
+        };
+    });
 </script>
 
-<Background onRequestClose={requestClose} />
-<CloseConfirmDialog bind:open={isCloseConfirmOpen} onConfirmClose={handleClose} />
+<CloseConfirmDialog bind:open={isCloseConfirmOpen} onConfirmClose={confirmExit} />
 <DetailsSheet>
     {#snippet header(sheet)}
         <DetailsHeader
