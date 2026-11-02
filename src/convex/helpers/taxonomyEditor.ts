@@ -3,6 +3,7 @@ import type {Id} from '../_generated/dataModel';
 import type {MutationCtx} from '../_generated/server';
 import {findCategoryByName} from './importHelpers';
 import {
+    isCategoryInUse,
     listObjectIdsUsingCategory,
     listObjectIdsUsingTag,
     replacePrivateTagOnObjects,
@@ -46,7 +47,7 @@ export async function removeCategory(
     await loadAvailableTaxonomy(ctx, 'categories', id);
     await assertNoIncomingMigration(ctx, 'categories', id);
     const replacement = await loadReplacement(ctx, 'categories', id, replacementId);
-    if (!replacement && (await listObjectIdsUsingCategory(ctx, id)).length > 0) {
+    if (!replacement && (await isCategoryInUse(ctx, id))) {
         throw taxonomyError('categoryInUse');
     }
     await ctx.db.patch('categories', id, {

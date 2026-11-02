@@ -39,6 +39,14 @@ export async function listObjectIdsUsingCategory(ctx: ReaderCtx, categoryId: Id<
     return collectObjectIds(await listMarkersUsingCategory(ctx, categoryId));
 }
 
+export async function isCategoryInUse(ctx: ReaderCtx, categoryId: Id<'categories'>) {
+    const marker = await ctx.db
+        .query('markers')
+        .withIndex('byCategoryId', q => q.eq('categoryId', categoryId))
+        .first();
+    return marker !== null;
+}
+
 export async function listObjectIdsUsingTag(ctx: ReaderCtx, tagId: Id<'tags'>) {
     return collectObjectIds(await listMarkersUsingTag(ctx, tagId));
 }
