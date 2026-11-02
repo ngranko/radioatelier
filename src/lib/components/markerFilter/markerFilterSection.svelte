@@ -70,7 +70,7 @@
                             style="background: {option.color}"
                         ></span>
                         <span class="text-left">
-                            {#each highlight(option.name, query) as part (part.text + part.hit)}
+                            {#each highlight(option.name, query) as part, index (index)}
                                 {#if part.hit}<mark
                                         class="rounded-[3px] bg-[color-mix(in_srgb,var(--warning)_55%,transparent)] px-px text-inherit"
                                     >
@@ -99,7 +99,7 @@
                                 ? 'text-primary border-transparent bg-[color-mix(in_srgb,var(--primary)_12%,var(--card))] shadow-[inset_0_0_0_1.5px_color-mix(in_srgb,var(--primary)_35%,transparent)]'
                                 : 'border-border hover:border-primary/40'}"
                         >
-                            {#each highlight(option.name, query) as part (part.text + part.hit)}
+                            {#each highlight(option.name, query) as part, index (index)}
                                 {#if part.hit}<mark
                                         class="rounded-[3px] bg-[color-mix(in_srgb,var(--warning)_55%,transparent)] px-px text-inherit"
                                     >

@@ -12,8 +12,10 @@ export const load = async ({locals, url}) => {
         redirect(307, `/login?ref=${encodeURIComponent(ref)}`);
     }
 
-    const categories = await client.query(api.categories.list, {});
-    const tags = await client.query(api.tags.list, {});
-    const privateTags = await client.query(api.privateTags.list, {});
+    const [categories, tags, privateTags] = await Promise.all([
+        client.query(api.categories.list, {}),
+        client.query(api.tags.list, {}),
+        client.query(api.privateTags.list, {}),
+    ]);
     return {categories, tags, privateTags};
 };

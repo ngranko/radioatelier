@@ -40,7 +40,7 @@
             .filter(item => !item.isHidden)
             .map(item => ({id: item.id, name: item.name})),
     );
-    const tagOptions = $derived(tagsState.tags.map(tag => ({id: tag.id, name: tag.name})));
+    const tagOptions = $derived(tagsState.tags);
     const privateTagOptions = $derived(
         privateTagsState.privateTags.map(tag => ({id: tag.id, name: tag.name})),
     );
