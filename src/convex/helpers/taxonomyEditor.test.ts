@@ -155,16 +155,18 @@ describe('removal', () => {
         expect(db.delete).not.toHaveBeenCalled();
     });
 
-    it('drops an unused category together with its marker styles', async () => {
-        const {ctx, db} = createMockCtx({
+    it('hands an unused category to the batched job with nothing to move', async () => {
+        const {ctx, db, scheduler} = createMockCtx({
             docs: {'categories:category-1': {_id: categoryId, name: 'Mosaic'}},
-            rows: {userCategoryMarkerStyles: [{_id: 'style-1', categoryId}]},
         });
 
         await removeCategory(ctx, categoryId, null);
 
-        expect(db.delete).toHaveBeenCalledWith('userCategoryMarkerStyles', 'style-1');
-        expect(db.delete).toHaveBeenCalledWith('categories', categoryId);
+        expect(scheduler.runAfter).toHaveBeenCalledWith(0, expect.anything(), {
+            categoryId,
+            replacementId: null,
+        });
+        expect(db.delete).not.toHaveBeenCalled();
     });
 
     it('refuses to merge a private tag into one its owner does not hold', async () => {

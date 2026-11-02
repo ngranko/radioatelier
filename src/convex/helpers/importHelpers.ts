@@ -1,7 +1,7 @@
 import {randomMarkerColor, randomMarkerIconKey} from '../../lib/services/map/markerStyling.data';
 import type {Id} from '../_generated/dataModel';
 import type {MutationCtx, QueryCtx} from '../_generated/server';
-import {assertTaxonomyAvailable} from './taxonomyState';
+import {assertTaxonomyAvailable} from './taxonomyGuards';
 
 export function capitalizeCategoryName(value: string) {
     return value

@@ -24,6 +24,7 @@
     ];
     const listKeyByType = {category: 'categories', tag: 'tags', privateTag: 'privateTags'} as const;
 
+    const currentUser = useQuery(api.users.current, {});
     const taxonomies = useQuery(api.taxonomies.list, {});
 
     let pickedType = $state<TaxonomyType>('category');
@@ -31,12 +32,12 @@
 
     // Without the shared vocabulary there is only one list to show, so the
     // picked tab cannot lead anywhere but the private tags.
-    const isAdmin = $derived(taxonomies.data?.isAdmin ?? false);
+    const isAdmin = $derived(currentUser.data?.role === 'admin');
     const activeType = $derived<TaxonomyType>(isAdmin ? pickedType : 'privateTag');
-    // Left empty until the list resolves, so an admin never sees the private-tag
+    // Left empty until the user resolves, so an admin never sees the private-tag
     // heading flash first.
     const heading = $derived.by(() => {
-        if (!taxonomies.data) {
+        if (!currentUser.data) {
             return null;
         }
         return isAdmin

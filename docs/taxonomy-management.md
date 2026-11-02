@@ -12,7 +12,7 @@ The split follows ownership: a private tag belongs to the user who created it, w
 | Tag         | Admins                    | Every owner's Objects   |
 | Private tag | Its owner                 | The owner's own Objects |
 
-`taxonomies.list` requires only a signed-in user; it returns the caller's private tags always, and the shared lists (plus an `isAdmin` flag the dialog uses to decide whether to show tabs at all) only for admins. The category and tag mutations call `getCurrentAdminOrThrow` first. The private-tag mutations pass the caller's id into the editor, which treats a private tag with another `createdById` as missing (`notFound`), so a guessed id reveals nothing, and refuses a merge target the caller does not own the same way. Admin means `role === 'admin'` on the `users` row, mirrored from Clerk `public_metadata.role` by `upsertFromClerk`.
+`taxonomies.list` requires only a signed-in user; it returns the caller's private tags always, and the shared lists only for admins. The dialog decides whether to show tabs from the caller's role in `users.current`. The category and tag mutations call `getCurrentAdminOrThrow` first. The private-tag mutations pass the caller's id into the editor, which treats a private tag with another `createdById` as missing (`notFound`), so a guessed id reveals nothing, and refuses a merge target the caller does not own the same way. Admin means `role === 'admin'` on the `users` row, mirrored from Clerk `public_metadata.role` by `upsertFromClerk`.
 
 ## Usage counts
 
@@ -28,7 +28,7 @@ The split follows ownership: a private tag belongs to the user who created it, w
 | `categories.rename`, `tags.rename`, `privateTags.rename` | Rename one taxonomy (normalized like `create`)                              |
 | `categories.remove`, `tags.remove`, `privateTags.remove` | Delete one taxonomy, optionally moving its Objects to `replacementId` first |
 
-Each kind's mutations sit beside its `create` and take typed ids (`v.id('categories')` and so on), so Convex argument validation proves an id belongs to its table. They delegate to one function per kind and action in `helpers/taxonomyEditor.ts` (`renameCategory`, `removeTag`, …). Name normalization is shared with `create` through `helpers/taxonomyNames.ts`.
+Each kind's mutations sit beside its `create` and take typed ids (`v.id('categories')` and so on), so Convex argument validation proves an id belongs to its table. They delegate to one function per kind and action in `helpers/taxonomyEditor.ts` (`renameCategory`, `removeTag`, …). Name normalization is shared with `create` through `helpers/taxonomyNames.ts`; the checks that refuse an edit (name taken, self-replacement, deletion in progress, incoming migration) live in `helpers/taxonomyGuards.ts`, shared with the Object writer, imports, and Notion sync.
 
 Failures are thrown as `ConvexError({code})`, where `code` is a `TaxonomyErrorCode` from `src/lib/interfaces/taxonomy.ts`: `nameRequired`, `nameTaken`, `notFound`, `categoryInUse`, `selfReplacement`, `deletionInProgress`, `migrationInProgress`.
 
@@ -44,7 +44,7 @@ Names are normalized the same way `create` normalizes them: categories capitaliz
 | Tag         | Tag is dropped from its Objects | Replacement takes its place, never duplicated        |
 | Private tag | Tag is dropped from its Objects | Replacement (same owner only) takes its place        |
 
-Objects cannot exist without a category, so deleting a category that is still in use requires a replacement — `removeCategory` throws `categoryInUse` otherwise. Deleting a category also drops the per-user `userCategoryMarkerStyles` rows pointing at it.
+Objects cannot exist without a category, so deleting a category that is still in use requires a replacement — `removeCategory` throws `categoryInUse` otherwise. An unused category still goes through the scheduled job, which finds nothing to move and deletes it in its first run. Deleting a category also drops the per-user `userCategoryMarkerStyles` rows pointing at it.
 
 ## Write path
 
@@ -59,7 +59,7 @@ Private tags reach neither search nor Notion, so their edits fan out to nothing.
 
 Shared taxonomy deletion runs in scheduled batches of up to 500 markers. The initiating transaction sets `isDeleting` on the source and records `deletionReplacementId` when moving Objects. Both fields are optional for existing rows. Each batch updates Objects and their markers together, schedules fanout, and deletes the taxonomy after the final batch. Category batches use `markers.byCategoryId`; tag batches paginate all markers because tag arrays cannot be indexed.
 
-Deleting taxonomies reject renames, repeated deletions, new assignments, and use as another deletion's replacement. `byDeletionReplacementId` prevents deleting a destination while an incoming migration still depends on it. These checks read the taxonomy within the writing transaction, so concurrent deletions and assignments conflict and retry against the current state. Object creation, changed taxonomy assignments, imports, and Notion sync share these checks. Unrelated Object edits remain available. Private tags are removed in one transaction; assignment validates that each private tag still exists and belongs to the caller.
+Deleting taxonomies reject renames, repeated deletions, new assignments, and use as another deletion's replacement. `byDeletionReplacementId` prevents deleting a destination while an incoming migration still depends on it. These checks read the taxonomy within the writing transaction, so concurrent deletions and assignments conflict and retry against the current state. Object creation, changed taxonomy assignments, imports, and Notion sync share these checks. Unrelated Object edits remain available. Private tags are removed in one transaction: they touch only their owner's `objectPrivateTags` rows, one write each, and fan out to nothing. Assignment validates that each private tag still exists and belongs to the caller.
 
 ## UI
 

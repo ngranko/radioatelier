@@ -13,7 +13,11 @@ import {
     type ObjectRecordReplace,
     splitObjectRecordPatch,
 } from './objectRecordPatch';
-import {assertTagsAvailable, assertTaxonomyAvailable, loadAvailableTaxonomy} from './taxonomyState';
+import {
+    assertTagsAvailable,
+    assertTaxonomyAvailable,
+    loadAvailableTaxonomy,
+} from './taxonomyGuards';
 
 export type {ObjectRecordData, ObjectRecordPatch, ObjectRecordReplace} from './objectRecordPatch';
 

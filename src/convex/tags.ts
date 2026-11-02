@@ -1,8 +1,8 @@
 import {ConvexError, v} from 'convex/values';
 import {mutation, query} from './_generated/server';
 import {removeTag, renameTag} from './helpers/taxonomyEditor';
+import {assertTaxonomyAvailable} from './helpers/taxonomyGuards';
 import {findTagByName, normalizeTagName} from './helpers/taxonomyNames';
-import {assertTaxonomyAvailable} from './helpers/taxonomyState';
 import {getCurrentAdminOrThrow} from './users';
 
 export const list = query({
