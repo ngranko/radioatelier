@@ -1,9 +1,9 @@
 <script lang="ts">
-    import {goto} from '$app/navigation';
     import {api} from '$convex/_generated/api';
     import type {Id} from '$convex/_generated/dataModel';
+    import RoutedDialog from '$lib/components/routedDialog.svelte';
     import {Button} from '$lib/components/ui/button';
-    import {Root as DialogRoot, Content, Title, Footer} from '$lib/components/ui/dialog';
+    import {Content, Title, Footer} from '$lib/components/ui/dialog';
     import {DialogClose} from '$lib/components/ui/dialog/index.js';
     import {Input} from '$lib/components/ui/input';
     import type {Category} from '$lib/interfaces/category';
@@ -12,11 +12,8 @@
     import PaletteIcon from '@lucide/svelte/icons/palette';
     import SearchIcon from '@lucide/svelte/icons/search';
     import {useConvexClient} from 'convex-svelte';
-    import {onDestroy} from 'svelte';
     import {toast} from 'svelte-sonner';
     import CategoryStyleEditor from './categoryStyleEditor.svelte';
-
-    const DIALOG_ANIMATION_DURATION = 200;
 
     interface Props {
         isOpen: boolean;
@@ -36,7 +33,6 @@
     let edits: Record<string, EditEntry> = $state({});
     let isSaving = $state(false);
     let searchQuery = $state('');
-    let closeRedirectTimer: ReturnType<typeof setTimeout> | undefined;
 
     const categoryList = $derived(
         Object.values(categoriesState.categories).sort((a, b) => a.name.localeCompare(b.name)) ??
@@ -128,36 +124,11 @@
             await client.mutation(api.categories.updateStyles, {styles: changedEntries});
             edits = {};
             toast.success('Настройки маркеров сохранены');
-            setIsOpen(false);
+            isOpen = false;
         } catch {
             toast.error('Не удалось сохранить настройки');
         } finally {
             isSaving = false;
-        }
-    }
-
-    function getIsOpen() {
-        return isOpen;
-    }
-
-    function clearCloseRedirectTimer() {
-        if (closeRedirectTimer !== undefined) {
-            clearTimeout(closeRedirectTimer);
-            closeRedirectTimer = undefined;
-        }
-    }
-
-    function setIsOpen(newOpen: boolean) {
-        clearCloseRedirectTimer();
-        isOpen = newOpen;
-
-        if (!newOpen) {
-            edits = {};
-            searchQuery = '';
-            closeRedirectTimer = setTimeout(() => {
-                closeRedirectTimer = undefined;
-                goto('/');
-            }, DIALOG_ANIMATION_DURATION);
         }
     }
 
@@ -166,31 +137,26 @@
             event.preventDefault();
         }
     }
-
-    onDestroy(() => {
-        clearCloseRedirectTimer();
-    });
 </script>
 
-<!-- prettier-ignore -->
-<DialogRoot bind:open={getIsOpen, setIsOpen}>
+<RoutedDialog bind:isOpen>
     <Content
         class="flex max-h-[85vh] flex-col overflow-hidden border-t-0 p-0 sm:max-w-lg"
         onEscapeKeydown={preventCloseWhileSaving}
         onInteractOutside={preventCloseWhileSaving}
     >
         <div
-            class="absolute top-0 right-0 left-0 h-0.5 bg-gradient-to-r from-primary via-primary/60 to-transparent"
+            class="from-primary via-primary/60 absolute top-0 right-0 left-0 h-0.5 bg-gradient-to-r to-transparent"
         ></div>
         <div class="relative shrink-0 px-6 pt-6 pb-4">
             <div
-                class="absolute inset-0 bg-gradient-to-br from-primary/[0.07] via-primary/[0.03] to-transparent"
+                class="from-primary/[0.07] via-primary/[0.03] absolute inset-0 bg-gradient-to-br to-transparent"
             ></div>
             <div class="relative flex items-center gap-3.5">
                 <div
-                    class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/20"
+                    class="bg-primary/10 ring-primary/20 flex size-10 shrink-0 items-center justify-center rounded-xl ring-1"
                 >
-                    <PaletteIcon class="size-4.5 text-primary" />
+                    <PaletteIcon class="text-primary size-4.5" />
                 </div>
                 <div>
                     <Title class="text-lg font-semibold tracking-[-0.01em]">
@@ -205,7 +171,9 @@
 
         <div class="shrink-0 px-6 pb-3">
             <div class="relative">
-                <SearchIcon class="text-muted-foreground/50 pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2" />
+                <SearchIcon
+                    class="text-muted-foreground/50 pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2"
+                />
                 <Input
                     type="text"
                     placeholder="Поиск категорий..."
@@ -227,18 +195,18 @@
                 {/each}
 
                 {#if filteredCategories.length === 0}
-                    <div class="py-8 text-center text-sm text-muted-foreground">
+                    <div class="text-muted-foreground py-8 text-center text-sm">
                         Ничего не найдено
                     </div>
                 {/if}
             </div>
         </div>
 
-        <Footer class="border-border/50 shrink-0 gap-3 border-t bg-muted/20 px-6 py-4">
+        <Footer class="border-border/50 bg-muted/20 shrink-0 gap-3 border-t px-6 py-4">
             <DialogClose disabled={isSaving} class="mr-2">Закрыть</DialogClose>
             <Button disabled={!hasChanges} loading={isSaving} onclick={handleSave}>
                 Сохранить
             </Button>
         </Footer>
     </Content>
-</DialogRoot>
+</RoutedDialog>

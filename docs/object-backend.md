@@ -51,6 +51,8 @@ objects.ts / imports.ts / objectsSync.ts
 
 `objectRecordPatch.ts` routes fields to tables and filters unchanged values. The writer drops unsafe source URLs. If no stored field changes, patching returns without writes or a search action. Otherwise it schedules a Typesense update from the resulting object and map point, even if the changed field itself is not indexed.
 
+Taxonomy editing is the one deliberate exception to the writer: it rewrites the category or tags of many objects at once and batches the resulting search and sync work. See [Taxonomy management](taxonomy-management.md).
+
 Callers handle authentication, category/tag resolution, visited state, and outbound Notion scheduling. Visited changes use `helpers/objectHelpers.ts`; they do not rewrite the marker catalog.
 
 ## Personal state and deletion

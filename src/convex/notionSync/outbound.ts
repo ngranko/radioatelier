@@ -17,6 +17,8 @@ import type {ObjectSyncSnapshot} from './snapshot';
 import {buildSyncStateArgs, needsSyncStateWrite} from './state';
 import type {AppSyncFields} from './types';
 
+const LENIENT_BATCH_CHUNK_SIZE = 100;
+
 type OutboundBatchResult = {
     synced: number;
     skipped: number;
@@ -41,12 +43,27 @@ export const enqueueOutboundObjectSyncBatch = internalAction({
     },
 });
 
+// Notion rate-limits the whole integration, so a long list is worked through
+// one chunk at a time; each chunk hands the rest to a fresh action to stay
+// within the action time limit.
 export const enqueueOutboundObjectSyncBatchLenient = internalAction({
     args: {
         objectIds: v.array(v.id('objects')),
     },
-    handler: async (ctx, {objectIds}) => {
-        return await performOutboundObjectSyncBatchLenient(ctx, objectIds);
+    handler: async (ctx, {objectIds}): Promise<OutboundBatchResult> => {
+        const result = await performOutboundObjectSyncBatchLenient(
+            ctx,
+            objectIds.slice(0, LENIENT_BATCH_CHUNK_SIZE),
+        );
+        const rest = objectIds.slice(LENIENT_BATCH_CHUNK_SIZE);
+        if (rest.length > 0) {
+            await ctx.scheduler.runAfter(
+                0,
+                internal.notionSync.outbound.enqueueOutboundObjectSyncBatchLenient,
+                {objectIds: rest},
+            );
+        }
+        return result;
     },
 });
 

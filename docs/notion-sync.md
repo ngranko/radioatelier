@@ -45,7 +45,7 @@ Outbound property conversion uses the data source's property schema. Missing sch
 
 ## Outbound flow
 
-Owner create and update mutations schedule `notionSync/outbound.enqueueOutboundObjectSync` when sync is enabled. Owner removal archives a linked page. CSV import schedules one lenient batch per successful import batch, logging individual failures and continuing.
+Owner create and update mutations schedule `notionSync/outbound.enqueueOutboundObjectSync` when sync is enabled. Owner removal archives a linked page. CSV import schedules one lenient batch per successful import batch, logging individual failures and continuing. A lenient batch syncs 100 Objects per action and schedules itself for the rest, so bulk taxonomy edits reach Notion in sequence rather than in parallel.
 
 Personal edits by non-owners do not schedule outbound sync. Repositioning updates coordinates and search indexing without scheduling Notion sync.
 

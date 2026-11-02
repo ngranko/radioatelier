@@ -1,9 +1,9 @@
 <script lang="ts">
-    import {goto} from '$app/navigation';
     import PasswordInput from '$lib/components/input/passwordInput.svelte';
+    import RoutedDialog from '$lib/components/routedDialog.svelte';
     import {Button} from '$lib/components/ui/button';
     import {Checkbox} from '$lib/components/ui/checkbox';
-    import {Root as DialogRoot, Content, Title, Footer} from '$lib/components/ui/dialog';
+    import {Content, Title, Footer} from '$lib/components/ui/dialog';
     import {DialogClose} from '$lib/components/ui/dialog/index.ts';
     import {FormLabel, FormField, FormControl, FormFieldErrors} from '$lib/components/ui/form';
     import KeyRoundIcon from '@lucide/svelte/icons/key-round';
@@ -15,8 +15,6 @@
     import {defaults, superForm} from 'sveltekit-superforms';
     import {zod4, zod4Client} from 'sveltekit-superforms/adapters';
     import {schema} from './schema.ts';
-
-    const DIALOG_ANIMATION_DURATION = 200;
 
     interface Props {
         isOpen: boolean;
@@ -91,7 +89,7 @@
                     signed_out_other_sessions: validation.data.signOutOtherSessions,
                 });
                 toast.success('Пароль успешно изменен');
-                setIsOpen(false);
+                isOpen = false;
             } catch (err: unknown) {
                 const clerkError = err as {
                     errors?: Array<{
@@ -137,39 +135,27 @@
     });
 
     const {form: formData, errors, enhance, submitting} = form;
-
-    function getIsOpen() {
-        return isOpen;
-    }
-
-    function setIsOpen(newOpen: boolean) {
-        isOpen = newOpen;
-        if (!newOpen) {
-            setTimeout(() => {
-                goto('/');
-            }, DIALOG_ANIMATION_DURATION);
-        }
-    }
 </script>
 
-<!-- prettier-ignore -->
-<DialogRoot bind:open={getIsOpen, setIsOpen}>
+<RoutedDialog bind:isOpen>
     <Content class="overflow-hidden border-t-0 p-0 sm:max-w-md">
         <div
-            class="absolute top-0 right-0 left-0 h-[2px] bg-gradient-to-r from-primary via-primary/60 to-transparent"
+            class="from-primary via-primary/60 absolute top-0 right-0 left-0 h-[2px] bg-gradient-to-r to-transparent"
         ></div>
         <div class="relative px-6 pt-6 pb-4">
             <div
-                class="absolute inset-0 bg-gradient-to-br from-primary/[0.07] via-primary/[0.03] to-transparent"
+                class="from-primary/[0.07] via-primary/[0.03] absolute inset-0 bg-gradient-to-br to-transparent"
             ></div>
             <div class="relative flex items-center gap-3.5">
                 <div
-                    class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/20"
+                    class="bg-primary/10 ring-primary/20 flex size-10 shrink-0 items-center justify-center rounded-xl ring-1"
                 >
-                    <KeyRoundIcon class="size-[18px] text-primary" />
+                    <KeyRoundIcon class="text-primary size-[18px]" />
                 </div>
                 <div>
-                    <Title class="text-[17px] font-semibold tracking-[-0.01em]">Сменить пароль</Title>
+                    <Title class="text-[17px] font-semibold tracking-[-0.01em]">
+                        Сменить пароль
+                    </Title>
                     <p class="text-muted-foreground mt-0.5 text-[13px] leading-snug">
                         Обновите пароль для защиты учетной записи
                     </p>
@@ -179,9 +165,11 @@
 
         <form method="POST" class="flex flex-col" use:enhance>
             {#if !isPasswordEnabled}
-                <div class="mx-6 mb-1 flex items-start gap-2.5 rounded-lg border border-warning/30 bg-warning/[0.07] px-3.5 py-3">
-                    <TriangleAlertIcon class="mt-px size-4 shrink-0 text-warning" />
-                    <p class="text-[13px] leading-snug text-warning">
+                <div
+                    class="border-warning/30 bg-warning/[0.07] mx-6 mb-1 flex items-start gap-2.5 rounded-lg border px-3.5 py-3"
+                >
+                    <TriangleAlertIcon class="text-warning mt-px size-4 shrink-0" />
+                    <p class="text-warning text-[13px] leading-snug">
                         Смена пароля доступна только для учетных записей с паролем.
                     </p>
                 </div>
@@ -240,10 +228,10 @@
                     <FormControl>
                         {#snippet children({props})}
                             <label
-                                class="flex cursor-pointer items-center gap-3 rounded-lg border border-border bg-muted/50 px-3.5 py-3 shadow-xs transition-all select-none hover:border-primary/30 hover:bg-primary/[0.04] hover:shadow-sm"
+                                class="border-border bg-muted/50 hover:border-primary/30 hover:bg-primary/[0.04] flex cursor-pointer items-center gap-3 rounded-lg border px-3.5 py-3 shadow-xs transition-all select-none hover:shadow-sm"
                             >
-                                <ShieldCheckIcon class="size-4 shrink-0 text-primary/60" />
-                                <span class="text-[13px] leading-snug grow">
+                                <ShieldCheckIcon class="text-primary/60 size-4 shrink-0" />
+                                <span class="grow text-[13px] leading-snug">
                                     Завершить другие сессии
                                 </span>
                                 <Checkbox
@@ -258,10 +246,8 @@
                 </FormField>
             </div>
 
-            <Footer class="border-border/50 gap-3 border-t bg-muted/20 px-6 py-4">
-                <DialogClose disabled={$submitting} class="mr-2">
-                    Отменить
-                </DialogClose>
+            <Footer class="border-border/50 bg-muted/20 gap-3 border-t px-6 py-4">
+                <DialogClose disabled={$submitting} class="mr-2">Отменить</DialogClose>
                 <Button
                     variant="default"
                     type="submit"
@@ -273,4 +259,4 @@
             </Footer>
         </form>
     </Content>
-</DialogRoot>
+</RoutedDialog>

@@ -1,12 +1,10 @@
 import {ConvexError, v} from 'convex/values';
-import {
-    MARKER_COLORS,
-    MARKER_ICON_KEYS,
-    randomMarkerColor,
-    randomMarkerIconKey,
-} from '../lib/services/map/markerStyling.data';
+import {MARKER_COLORS, MARKER_ICON_KEYS} from '../lib/services/map/markerStyling.data';
 import {mutation, query} from './_generated/server';
-import {getCurrentUserOrThrow} from './users';
+import {ensureCategory} from './helpers/importHelpers';
+import {removeCategory, renameCategory} from './helpers/taxonomyEditor';
+import {normalizeCategoryName} from './helpers/taxonomyNames';
+import {getCurrentAdminOrThrow, getCurrentUserOrThrow} from './users';
 
 export const list = query({
     args: {},
@@ -23,6 +21,7 @@ export const list = query({
         return categories.map(item => ({
             id: item._id,
             name: item.name,
+            isDeleting: item.isDeleting ?? false,
             markerColor: byKey.get(item._id)?.markerColor ?? item.markerColor,
             markerIcon: byKey.get(item._id)?.markerIcon ?? item.markerIcon,
             isHidden: byKey.get(item._id)?.isHidden ?? false,
@@ -88,24 +87,28 @@ export const create = mutation({
             throw new ConvexError('Unauthorized');
         }
 
-        const normalizedName = args.name.trim().toLowerCase();
-        if (!normalizedName) {
-            throw new ConvexError('Category name is required');
-        }
+        return await ensureCategory(ctx, normalizeCategoryName(args.name));
+    },
+});
 
-        const existing = await ctx.db
-            .query('categories')
-            .withIndex('byName', q => q.eq('name', normalizedName))
-            .first();
-        if (existing) {
-            return existing._id;
-        }
+export const rename = mutation({
+    args: {
+        id: v.id('categories'),
+        name: v.string(),
+    },
+    handler: async (ctx, {id, name}) => {
+        await getCurrentAdminOrThrow(ctx);
+        await renameCategory(ctx, id, name);
+    },
+});
 
-        const result = await ctx.db.insert('categories', {
-            name: normalizedName,
-            markerColor: randomMarkerColor(),
-            markerIcon: randomMarkerIconKey(),
-        });
-        return result;
+export const remove = mutation({
+    args: {
+        id: v.id('categories'),
+        replacementId: v.nullable(v.id('categories')),
+    },
+    handler: async (ctx, {id, replacementId}) => {
+        await getCurrentAdminOrThrow(ctx);
+        await removeCategory(ctx, id, replacementId);
     },
 });
