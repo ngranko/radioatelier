@@ -58,6 +58,8 @@ Route access and data permissions are separate. The current backend behavior is 
 
 Details return the viewer's own private tags and visited state. Anonymous viewers receive no private tags, `isVisited: false`, and no internal ID. Signed-in viewers receive the internal ID, including when they are not the owner.
 
+The dedicated `objectPersonal.update` mutation uses the same owner-or-public permission rule for personal writes. It rechecks the Object's visibility in the transaction, so a non-owner cannot save after the Object becomes private. Shared fields are absent from this mutation's payload.
+
 The stored user `role` is not the authorization rule for these object operations. Collection and individual-grant permissions are a [proposal](collection-access-control.md), with no corresponding tables in the current schema.
 
 ## Server and browser identity

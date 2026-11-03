@@ -61,12 +61,13 @@ Server form actions use the Clerk user ID, with `anonymous` as the fallback. Ser
 
 ### SvelteKit server
 
-| Event            | Source                 | Properties                                           |
-| ---------------- | ---------------------- | ---------------------------------------------------- |
-| `object_created` | Point `save` action    | `object_id`, `is_public`, `is_visited`               |
-| `object_updated` | Object `save` action   | `object_id`, `is_public`, `is_visited`, `is_removed` |
-| `object_deleted` | Object `delete` action | `object_id`                                          |
-| `server_error`   | Server error hook      | `error`, `status`, `message`                         |
+| Event            | Source                       | Properties                                           |
+| ---------------- | ---------------------------- | ---------------------------------------------------- |
+| `object_created` | Point `save` action          | `object_id`, `is_public`, `is_visited`               |
+| `object_updated` | Object `save` action         | `object_id`, `is_public`, `is_visited`, `is_removed` |
+| `object_updated` | Object `savePersonal` action | `object_id`, `is_visited`                            |
+| `object_deleted` | Object `delete` action       | `object_id`                                          |
+| `server_error`   | Server error hook            | `error`, `status`, `message`                         |
 
 Client errors call `posthog.captureException(error)`. Server errors emit `server_error` and flush.
 

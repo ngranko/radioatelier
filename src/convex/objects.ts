@@ -6,6 +6,7 @@ import {buildObjectSearchRecord, deleteObjectAggregate} from './helpers/objectAg
 import {loadObjectDetails} from './helpers/objectDetails';
 import {updateIsVisited} from './helpers/objectHelpers';
 import {replaceObjectImages} from './helpers/objectImages';
+import {updateObjectPersonalState} from './helpers/objectPersonalState';
 import {loadObjectAggregate, loadObjectAggregates} from './helpers/objectReader';
 import {
     createObjectRecords,
@@ -129,6 +130,7 @@ export const update = mutation({
         id: v.id('objects'),
         data: v.object(updateObjectRecordFields),
     },
+    returns: v.id('objects'),
     handler: async (ctx, {id, data}) => {
         const user = await getCurrentUserOrThrow(ctx);
         assertObjectFieldLengths(data);
@@ -136,38 +138,34 @@ export const update = mutation({
         const target = await loadObjectTarget(ctx, id);
 
         const isOwner = target.object.createdById === user._id;
-        if (!isOwner && !target.object.isPublic) {
-            throw new Error('Not allowed to update this object');
+        if (!isOwner) {
+            return updateObjectPersonalState(ctx, id, user, data);
         }
 
-        if (isOwner) {
-            await replaceObjectRecords(ctx, target, {
-                name: data.name,
-                description: data.description,
-                categoryId: data.categoryId,
-                tagIds: data.tagIds,
-                isPublic: data.isPublic,
-                isRemoved: data.isRemoved,
-                installedPeriod: data.installedPeriod,
-                removalPeriod: data.removalPeriod,
-                source: data.source,
-                address: data.address,
-                city: data.city,
-                country: data.country,
-            });
-            await replaceObjectImages(ctx, id, user._id, data.imageIds);
+        await replaceObjectRecords(ctx, target, {
+            name: data.name,
+            description: data.description,
+            categoryId: data.categoryId,
+            tagIds: data.tagIds,
+            isPublic: data.isPublic,
+            isRemoved: data.isRemoved,
+            installedPeriod: data.installedPeriod,
+            removalPeriod: data.removalPeriod,
+            source: data.source,
+            address: data.address,
+            city: data.city,
+            country: data.country,
+        });
+        await replaceObjectImages(ctx, id, user._id, data.imageIds);
 
-            // Non-owners only touch per-user state (private tags, visited), so
-            // outbound sync stays untouched for them.
-            if (user.notionSyncEnabled) {
-                await ctx.scheduler.runAfter(
-                    0,
-                    internal.notionSync.outbound.enqueueOutboundObjectSync,
-                    {
-                        objectId: id,
-                    },
-                );
-            }
+        if (user.notionSyncEnabled) {
+            await ctx.scheduler.runAfter(
+                0,
+                internal.notionSync.outbound.enqueueOutboundObjectSync,
+                {
+                    objectId: id,
+                },
+            );
         }
 
         await upsertPrivateTags(ctx, id, user._id, data.privateTags);

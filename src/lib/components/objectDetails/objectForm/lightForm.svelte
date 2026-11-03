@@ -1,5 +1,4 @@
 <script lang="ts">
-    import {page} from '$app/state';
     import CategoryBadge from '$lib/components/categoryBadge.svelte';
     import ImageUpload from '$lib/components/input/imageUpload/index.svelte';
     import BackButton from '$lib/components/objectDetails/objectForm/backButton.svelte';
@@ -14,10 +13,9 @@
         FormFieldErrors,
         FormLabel,
     } from '$lib/components/ui/form';
-    import {Input} from '$lib/components/ui/input';
     import {Separator} from '$lib/components/ui/separator';
     import type {LooseObject} from '$lib/interfaces/object';
-    import {schema, toFormDefaults} from '$lib/schema/objectSchema.ts';
+    import {objectPersonalSchema, toPersonalFormDefaults} from '$lib/schema/objectPersonalSchema';
     import {returnToViewMode} from '$lib/state/objectDetailsOverlay.svelte';
     import {describeValidationFailure, getErrorArray} from '$lib/utils/formErrors';
     import {hasAnyFlag} from '$lib/utils/objectFlags';
@@ -54,17 +52,14 @@
         return fallback;
     }
 
-    // During client-side navigation, page.data.form may be undefined
-    // In that case, create form data from initialValues
-    function getFormData() {
-        if (page.data.form) {
-            return page.data.form;
-        }
-        return defaults(toFormDefaults(initialValues), zod4Client(schema));
-    }
-
-    const form = superForm(getFormData(), {
-        validators: zod4Client(schema),
+    // Editing starts from a snapshot so live updates cannot overwrite unsaved personal changes.
+    // svelte-ignore state_referenced_locally
+    const initialForm = defaults(
+        toPersonalFormDefaults(initialValues),
+        zod4Client(objectPersonalSchema),
+    );
+    const form = superForm(initialForm, {
+        validators: zod4Client(objectPersonalSchema),
         invalidateAll: false,
         onSubmit: () => {
             submitToastId = toast.loading('Сохраняю...');
@@ -115,7 +110,7 @@
     }
 </script>
 
-<form method="POST" action="?/save" class="flex min-h-0 flex-1 flex-col" use:enhance>
+<form method="POST" action="?/savePersonal" class="flex min-h-0 flex-1 flex-col" use:enhance>
     <div class="bg-muted/40 flex items-center justify-between gap-3 border-b px-4 py-2.5">
         <Button type="submit" disabled={$submitting} class="px-6 text-base">Сохранить</Button>
         <BackButton isConfirmationRequired={isTainted()} onClick={handleBack} />
@@ -147,24 +142,6 @@
                 <Flags {...flags} />
             </div>
         {/if}
-
-        <Input type="hidden" name="id" bind:value={$formData.id} />
-        <Input type="hidden" name="latitude" bind:value={$formData.latitude} />
-        <Input type="hidden" name="longitude" bind:value={$formData.longitude} />
-        <Input type="hidden" name="name" bind:value={$formData.name} />
-        <Input type="hidden" name="category" bind:value={$formData.category} />
-        <Input type="hidden" name="isPublic" value={$formData.isPublic ? 'on' : ''} />
-        <Input type="hidden" name="isRemoved" value={$formData.isRemoved ? 'on' : ''} />
-        <Input type="hidden" name="description" bind:value={$formData.description} />
-        <Input type="hidden" name="address" bind:value={$formData.address} />
-        <Input type="hidden" name="city" bind:value={$formData.city} />
-        <Input type="hidden" name="country" bind:value={$formData.country} />
-        <Input type="hidden" name="installedPeriod" bind:value={$formData.installedPeriod} />
-        <Input type="hidden" name="removalPeriod" bind:value={$formData.removalPeriod} />
-        <Input type="hidden" name="source" bind:value={$formData.source} />
-        {#each $formData.tags as tag (tag)}
-            <Input type="hidden" name="tags" value={tag} />
-        {/each}
 
         <div class="bg-muted/40 space-y-4 rounded-lg border p-4">
             <div class="flex flex-col items-start gap-1.5">
