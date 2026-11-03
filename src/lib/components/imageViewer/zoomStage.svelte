@@ -44,8 +44,8 @@
         getView: () => view,
         getFrame: () => frame!,
         show,
-        pull: offset => {
-            isAnimated = false;
+        pull: (offset, animate = false) => {
+            isAnimated = animate;
             pull = offset;
         },
         release: settlePull,

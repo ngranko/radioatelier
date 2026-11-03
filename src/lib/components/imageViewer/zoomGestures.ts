@@ -5,7 +5,7 @@ export type ZoomGestureOptions = {
     getFrame(): Frame;
     show(view: View, animate?: boolean): void;
     /** A drag of the fitted image has nowhere to pan to, so it is reported as a pull instead. */
-    pull(offset: number): void;
+    pull(offset: number, animate?: boolean): void;
     release(): void;
     tap(point: Point): void;
 };
@@ -118,7 +118,7 @@ export class ZoomGestures {
     private handleCancel = (event: PointerEvent) => {
         this.pointers.delete(event.pointerId);
         this.pulled = 0;
-        this.options.pull(0);
+        this.options.pull(0, true);
     };
 
     private handleWheel = (event: WheelEvent) => {
