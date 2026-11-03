@@ -19,7 +19,7 @@ The shared details panel displays archive objects and turns map coordinates or G
 | `pointPreview` | `pointPreview.svelte` | Inspect a coordinate or place                         |
 | `pointCreate`  | `pointCreate.svelte`  | Fill in a new object                                  |
 
-Use the state module's transition functions to open, load, edit, return, and close. They reset unrelated state between selections. Reopening the same open object preserves mode and position. `showObjectDetailsOverlay` can retain existing details when no initial values are supplied.
+`src/lib/services/objectSelection.ts` owns selection from Marker clicks, search results, and map coordinates. Its interface groups confirmation, temporary pins, loading state, navigation, and focus. The state module's transitions implement the modes; editing, returning, and refreshing continue to use those transitions. Reopening the same open object preserves mode and position. `showObjectDetailsOverlay` can retain existing details when no initial values are supplied.
 
 ## Panel position
 
@@ -35,7 +35,7 @@ Height is independent of mode.
 
 ## Map and search selection
 
-1. An authenticated map click with the panel closed sets the draft position and opens a loading overlay.
+1. An authenticated map click with the panel closed selects a Map point, sets the draft position, and opens a loading overlay.
 2. `buildPointUrl` in `src/lib/utils/pointRoute.ts` creates the `/point` URL.
 3. The server loader resolves address or Place details while the overlay shows address loading state.
 4. `point/+page.svelte` merges route data with any selected search-point data and opens preview or preserves create mode.
@@ -43,7 +43,7 @@ Height is independent of mode.
 
 Map click suppression and renderer behavior are documented in [Map architecture](map-architecture.md#focus-and-gestures).
 
-The point route avoids reopening a closed overlay when the point ID has not changed. Search maintains its temporary pins separately; see [Search](search.md#map-integration).
+The point route avoids reopening a closed overlay when the point ID has not changed. Search results can open details without a ready map or registered Marker. Selection retains coordinates, and the map follows once ready. Search maintains its temporary pins separately; see [Search](search.md#map-integration).
 
 ## Address lookup and form submission
 
@@ -87,7 +87,9 @@ Cancelling the native sheet returns `dismissed` and does not copy anything. Othe
 
 `objectDetails.svelte` routes close-button and Escape requests through `requestClose`. Create and edit forms register a taint check; unsaved changes open `closeConfirmDialog.svelte` before discard.
 
-The map stays interactive while the panel is open. A map tap closes the panel instead of placing a point, and a tap on another marker swaps the panel's contents, keeping a `peek` or `full` panel where it is. Both go through `utils/detailsExit.ts`, which hands the exit to the mounted panel so the same confirmation guards it; tapping the marker already shown does nothing.
+The map stays interactive while the panel is open. Search and filters are unavailable; opening details also closes an open filter panel. A map tap closes the panel instead of placing a point, and a tap on another Marker swaps the contents, keeping a `peek` or `full` panel where it is. Both use the mounted panel's confirmation through `utils/detailsExit.ts`. Selection changes the camera, pins, and route only after confirmation; cancelling preserves the current form and selection. Tapping the Marker already shown does nothing.
+
+Replacing a rendered Marker does not close details. This includes replacing a shared-link star with the normal category Marker when an Object becomes public to a signed-in viewer. If the details query fails, selection checks `objects.resolveShareId` to confirm whether the Object was deleted. Confirmed deletion closes details and returns to search without a discard prompt; another query failure leaves the selection intact. A late deletion check cannot close a newer selection.
 
 The taxonomy sheet uses the `data-details-sheet` portal target on the panel shell so its backdrop covers the header and form. Dismissing taxonomy keeps its live-bound selections in the parent form; saving the object persists them.
 

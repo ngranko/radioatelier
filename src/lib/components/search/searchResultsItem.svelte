@@ -1,13 +1,9 @@
 <script lang="ts">
     import SearchItemCard from '$lib/components/search/searchItemCard.svelte';
     import type {SearchItem} from '$lib/interfaces/object';
-    import {focusDetailsTarget} from '$lib/services/map/map.svelte';
     import type {Marker} from '$lib/services/map/marker';
-    import {
-        pointAtMarker,
-        stopPointingAtAllMarkers,
-        stopPointingAtMarker,
-    } from '$lib/services/map/markerHover';
+    import {pointAtMarker, stopPointingAtMarker} from '$lib/services/map/markerHover';
+    import {selectSearchResult} from '$lib/services/objectSelection';
     import {mapState} from '$lib/state/map.svelte.ts';
     import {onDestroy} from 'svelte';
 
@@ -23,13 +19,6 @@
 
     function findMarker() {
         return id ? mapState.markerManager?.getMarker(id) : undefined;
-    }
-
-    function handleClick() {
-        // The details highlight takes over the pin, and the inert list may never report the leave.
-        stopPointingAtAllMarkers();
-        focusDetailsTarget(object.latitude, object.longitude);
-        findMarker()?.options.onClick?.();
     }
 
     function claimMarker() {
@@ -49,7 +38,7 @@
 
 <SearchItemCard
     {object}
-    onClick={handleClick}
+    onClick={() => selectSearchResult(object)}
     onPointAt={claimMarker}
     onPointAway={releaseMarker}
 />
