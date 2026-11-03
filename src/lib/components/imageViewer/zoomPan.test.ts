@@ -13,9 +13,12 @@ describe('zoomAround', () => {
         const before = {scale: 2, x: 30, y: 20};
         const after = zoomAround(before, 3, anchor, frame);
 
-        const pointBefore = (anchor.x - before.x) / before.scale;
-        const pointAfter = (anchor.x - after.x) / after.scale;
-        expect(pointAfter).toBeCloseTo(pointBefore);
+        expect((anchor.x - after.x) / after.scale).toBeCloseTo(
+            (anchor.x - before.x) / before.scale,
+        );
+        expect((anchor.y - after.y) / after.scale).toBeCloseTo(
+            (anchor.y - before.y) / before.scale,
+        );
     });
 
     it('stops at the fitted size and at the maximum', () => {

@@ -64,7 +64,8 @@
     };
 
     function measureFrame() {
-        if (!stage || !image) {
+        // resize calls this too, so it must not mark a loading or broken image as ready
+        if (!stage || !image?.complete || !image.naturalWidth) {
             return;
         }
 
@@ -117,8 +118,8 @@
     }
 
     function handleKeydown(event: KeyboardEvent) {
-        // leaves the browser's own ⌘+/⌘− page zoom alone
-        const action = !event.metaKey && !event.ctrlKey && keyActions[event.key];
+        // leaves the browser's own ⌘+/⌘− page zoom and Alt+← / Alt+→ history navigation alone
+        const action = !event.metaKey && !event.ctrlKey && !event.altKey && keyActions[event.key];
         if (action) {
             event.preventDefault();
             action();
@@ -128,11 +129,14 @@
 
 <svelte:window onkeydown={handleKeydown} onresize={measureFrame} />
 
+<!-- a backdrop tap is a pointer shortcut; keyboard users close with Escape or the close button -->
+<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 <div
     bind:this={stage}
     class="absolute inset-0 flex touch-none items-center justify-center overflow-hidden select-none"
     style:background-color="rgb(0 0 0 / {backdropAlpha})"
     {@attach isReady && gestures.attach}
+    onclick={isReady ? undefined : onClose}
 >
     <img
         bind:this={image}

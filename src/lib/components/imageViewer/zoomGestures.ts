@@ -46,7 +46,7 @@ export class ZoomGestures {
         node.addEventListener('pointerdown', this.handlePress, {signal});
         node.addEventListener('pointermove', this.handleMove, {signal});
         node.addEventListener('pointerup', this.handleLift, {signal});
-        node.addEventListener('pointercancel', this.handleLift, {signal});
+        node.addEventListener('pointercancel', this.handleCancel, {signal});
         node.addEventListener('wheel', this.handleWheel, {signal, passive: false});
         node.addEventListener('click', this.handleClick, {signal});
         node.addEventListener('dblclick', this.handleDoubleClick, {signal});
@@ -112,6 +112,13 @@ export class ZoomGestures {
             this.pulled = 0;
             this.options.release();
         }
+    };
+
+    // the system took the pointer away (e.g. an iOS edge swipe), so an unfinished pull must not dismiss
+    private handleCancel = (event: PointerEvent) => {
+        this.pointers.delete(event.pointerId);
+        this.pulled = 0;
+        this.options.pull(0);
     };
 
     private handleWheel = (event: WheelEvent) => {
