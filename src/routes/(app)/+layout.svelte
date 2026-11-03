@@ -12,14 +12,18 @@
     import Search from '$lib/components/search/search.svelte';
     import UserMenu from '$lib/components/userMenu/userMenu.svelte';
     import type {Location} from '$lib/interfaces/location.ts';
+    import {selectMapPoint} from '$lib/services/objectSelection';
     import {setCategories} from '$lib/state/categories.svelte';
-    import {createDraftState, setCreateDraftPosition} from '$lib/state/createDraft.svelte.ts';
+    import {createDraftState} from '$lib/state/createDraft.svelte.ts';
     import {mapState} from '$lib/state/map.svelte.ts';
-    import {markerFilterState, watchMarkerFilterFlag} from '$lib/state/markerFilter.svelte';
+    import {
+        closeMarkerFilter,
+        markerFilterState,
+        watchMarkerFilterFlag,
+    } from '$lib/state/markerFilter.svelte';
     import {
         objectDetailsOverlay,
         setOverlayAddressLoading,
-        showLoadingDetailsOverlay,
     } from '$lib/state/objectDetailsOverlay.svelte';
     import {setPrivateTags} from '$lib/state/privateTags.svelte';
     import {hasSearchPointAt, searchPointList} from '$lib/state/searchPointList.svelte.ts';
@@ -27,7 +31,6 @@
     import {setTags} from '$lib/state/tags.svelte';
     import {requestDetailsClose} from '$lib/utils/detailsExit.ts';
     import {allowsAnonymousViewer, buildLoginUrl} from '$lib/utils/loginRoute';
-    import {buildPointUrl} from '$lib/utils/pointRoute.ts';
     import SearchIcon from '@lucide/svelte/icons/search';
     import SproutIcon from '@lucide/svelte/icons/sprout';
     import StarIcon from '@lucide/svelte/icons/star';
@@ -70,14 +73,17 @@
             return;
         }
 
-        setCreateDraftPosition({lat: location.lat, lng: location.lng});
         posthog.capture('map_point_placed', {latitude: location.lat, longitude: location.lng});
-
-        showLoadingDetailsOverlay(new Date().getTime().toString());
-        goto(buildPointUrl({latitude: location.lat, longitude: location.lng}));
+        selectMapPoint({latitude: location.lat, longitude: location.lng});
     }
 
     onMount(watchMarkerFilterFlag);
+
+    $effect(() => {
+        if (objectDetailsOverlay.isOpen) {
+            closeMarkerFilter();
+        }
+    });
 
     $effect(() => {
         setCategories(categories.data ?? data.categories);
@@ -121,7 +127,7 @@
     <UserMenu />
 </div>
 
-{#if markerFilterState.isEnabled && mapState.isReady && clerkCtx.auth.userId}
+{#if markerFilterState.isEnabled && mapState.isReady && clerkCtx.auth.userId && !objectDetailsOverlay.isOpen}
     <MarkerFilter />
 {/if}
 

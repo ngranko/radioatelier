@@ -14,13 +14,13 @@
         MapClickTimeout,
         takePairedRendererClick,
     } from '$lib/services/map/mapClick';
-    import {notifyFocusableMarkerShown, setFocusedTarget} from '$lib/services/map/markerFocus';
+    import {notifyFocusableMarkerShown} from '$lib/services/map/markerFocus';
     import {MarkerManager} from '$lib/services/map/markerManager';
     import {PointerDragZoomController} from '$lib/services/map/pointerDragZoom';
     import {GoogleMapsProvider} from '$lib/services/map/providers/google/provider';
     import {cancelActiveMarkerHold} from '$lib/services/map/renderer/markerHold';
+    import {focusObjectSelection} from '$lib/services/objectSelection';
     import {mapState} from '$lib/state/map.svelte';
-    import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
     import {onMount, onDestroy} from 'svelte';
 
     interface Props {
@@ -91,12 +91,7 @@
         }
     });
 
-    // Without a registered marker, setFocusedTarget cannot reach focusDetailsTarget,
-    // so read position here to keep this effect subscribed to later sheet snaps.
-    $effect(() => {
-        void objectDetailsOverlay.position;
-        setFocusedTarget(objectDetailsOverlay.detailsId || null);
-    });
+    $effect(focusObjectSelection);
 
     async function initMarkerManager(
         provider: MapProvider,
