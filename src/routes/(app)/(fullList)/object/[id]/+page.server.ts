@@ -1,5 +1,6 @@
 import {api} from '$convex/_generated/api';
 import type {Id} from '$convex/_generated/dataModel';
+import {objectPersonalSchema} from '$lib/schema/objectPersonalSchema';
 import {schema} from '$lib/schema/objectSchema.ts';
 import {getConvexClient} from '$lib/server/convexClient';
 import {getPostHogClient} from '$lib/server/posthog';
@@ -30,6 +31,29 @@ export const load = async ({params, locals, isDataRequest, url}) => {
 };
 
 export const actions: Actions = {
+    savePersonal: async ({request, params, url, locals}) => {
+        const {client, token} = await getConvexClient(locals);
+        if (!token) {
+            redirect(307, `/login?ref=${encodeURIComponent(url.pathname)}`);
+        }
+        const form = await superValidate(request, zod4(objectPersonalSchema));
+        if (!form.valid) {
+            return fail(400, {form});
+        }
+        const id = params.id as Id<'objects'>;
+        try {
+            await client.mutation(api.objectPersonal.update, {id, data: form.data});
+            getPostHogClient().capture({
+                distinctId: locals.auth().userId ?? 'anonymous',
+                event: 'object_updated',
+                properties: {object_id: id, is_visited: form.data.isVisited},
+            });
+            return {form, id};
+        } catch (err) {
+            console.error('Failed to update personal object state:', err);
+            throw error(500, 'Не удалось сохранить точку');
+        }
+    },
     save: async ({request, params, url, locals}) => {
         const {client, token} = await getConvexClient(locals);
         if (!token) {

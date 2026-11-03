@@ -85,20 +85,25 @@ export const objectTableFields = {
     internalId: v.string(),
 };
 
+export const objectPersonalFields = {
+    privateTags: v.array(v.id('privateTags')),
+    isVisited: v.boolean(),
+};
+
+export type ObjectPersonalData = Infer<ReturnType<typeof v.object<typeof objectPersonalFields>>>;
+
 export const createObjectRecordFields = {
     ...objectFormFields,
     ...mapPointCoreFields,
     imageIds: v.array(v.id('images')),
-    privateTags: v.array(v.id('privateTags')),
-    isVisited: v.boolean(),
+    ...objectPersonalFields,
 };
 
 export const updateObjectRecordFields = {
     ...objectFormFields,
     ...mapPointAddressFields,
     imageIds: v.array(v.id('images')),
-    privateTags: v.array(v.id('privateTags')),
-    isVisited: v.boolean(),
+    ...objectPersonalFields,
 };
 
 export const repositionObjectRecordFields = {

@@ -57,6 +57,10 @@ Callers handle authentication, category/tag resolution, visited state, and outbo
 
 ## Personal state and deletion
 
+`objectPersonal.update` accepts only private-tag IDs and the visited flag, alongside the Object ID. Its implementation in `helpers/objectPersonalState.ts` checks owner-or-public access in the writing transaction and updates only the caller's personal records. It does not replace the Object, touch its gallery, or load map/category relations. The limited form uses its own schema and the Object route's `savePersonal` action.
+
+The existing full `objects.update` payload remains supported. Its non-owner branch delegates to the same personal-write module; owner edits keep their full-form behavior. A dedicated personal write schedules Notion sync only when a sync-enabled owner's visited flag changes. Other viewers' personal writes schedule neither Notion sync nor search indexing.
+
 Visited state is bucketed by user and object-ID hash. `src/convex/utils/visitedChunks.ts` takes the first three hexadecimal characters of an FNV-1a hash, giving 4,096 possible bucket keys. A `userVisitedChunks` row stores visited IDs for one user and bucket; it is not a fixed-size page of objects.
 
 `getIsVisited` reads one bucket through `byUserIdAndChunkId`. `updateIsVisited` adds or removes an ID only when its value changes and deletes empty buckets. The marker query reads all buckets for the viewer and flattens them into a separate visited-ID feed.
