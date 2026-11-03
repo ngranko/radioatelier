@@ -73,6 +73,16 @@ export function toggleFilterSelection(kind: FilterKind, id: string): void {
     }
 }
 
+export function pruneFilterSelection(kind: FilterKind, options: FilterOption[]): void {
+    const available = new Set(options.map(option => option.id));
+    const set = markerFilterState.selected[kind] as SvelteSet<string>;
+    for (const id of set) {
+        if (!available.has(id)) {
+            set.delete(id);
+        }
+    }
+}
+
 export function clearMarkerFilter(): void {
     markerFilterState.selected.categories.clear();
     markerFilterState.selected.tags.clear();
