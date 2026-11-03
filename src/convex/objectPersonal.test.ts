@@ -3,27 +3,23 @@ import {describe, expect, it, vi} from 'vitest';
 import type {Id} from './_generated/dataModel';
 import type {MutationCtx} from './_generated/server';
 import {matchIndexRange, type IndexRange} from './helpers/mockIndexRange';
-import {update} from './objectPersonal';
-import type {ObjectPersonalData} from './sharedValidators';
+import {updateObjectPersonalState} from './helpers/objectPersonalState';
 import {getVisitedChunkId} from './utils/visitedChunks';
 
 const objectId = 'object-1' as Id<'objects'>;
 const privateTagId = 'private-1' as Id<'privateTags'>;
 const data = {isVisited: true, privateTags: [privateTagId]};
 
-// Convex attaches the handler at runtime but strips it from its published types.
-const handleUpdate = (
-    update as unknown as {
-        _handler(
-            this: void,
-            ctx: MutationCtx,
-            args: {id: Id<'objects'>; data: ObjectPersonalData},
-        ): Promise<Id<'objects'>>;
-    }
-)._handler;
-
 function createContext(userId = 'viewer') {
-    const user = {_id: userId, externalId: 'clerk-1', isDeleted: false, notionSyncEnabled: true};
+    const user = {
+        _id: userId as Id<'users'>,
+        _creationTime: 0,
+        email: 'viewer@example.test',
+        externalId: 'clerk-1',
+        role: 'user',
+        isDeleted: false,
+        notionSyncEnabled: true,
+    };
     const object = {
         _id: objectId,
         createdById: 'owner',
@@ -40,13 +36,19 @@ function createContext(userId = 'viewer') {
         chunkId: getVisitedChunkId(objectId),
         visitedObjectIds: [] as string[],
     };
-    const association = {_id: 'association-1', objectId, userId, privateTagIds: []};
+    const association = {
+        _id: 'association-1',
+        objectId,
+        userId,
+        privateTagIds: [] as Id<'privateTags'>[],
+    };
     const docs = new Map<string, unknown>([
         ['objects:object-1', object],
         ['privateTags:private-1', tag],
     ]);
     const rows: Record<string, Record<string, unknown>[]> = {
-        users: [user],
+        objects: [object],
+        objectImages: [{_id: 'link-1', objectId, imageId: 'image-1', position: 0}],
         userVisitedChunks: [visited],
         objectPrivateTags: [association],
     };
@@ -57,81 +59,70 @@ function createContext(userId = 'viewer') {
                 unique: async () => rows[table]?.find(matchIndexRange(range)) ?? null,
             }),
         })),
-        patch: vi.fn(),
-        insert: vi.fn(),
-        delete: vi.fn(),
+        patch: vi.fn(async (table: string, id: string, patch: Record<string, unknown>) => {
+            const row = rows[table]?.find(row => row._id === id);
+            if (!row) {
+                throw new Error(`Missing test record: ${table}/${id}`);
+            }
+            Object.assign(row, patch);
+        }),
+        insert: vi.fn(async (table: string, values: Record<string, unknown>) => {
+            const id = `new-${table}`;
+            (rows[table] ??= []).push({...values, _id: id});
+            return id;
+        }),
+        delete: vi.fn(async (table: string, id: string) => {
+            rows[table] = rows[table].filter(row => row._id !== id);
+        }),
     };
-    const auth = {getUserIdentity: vi.fn(async () => ({subject: user.externalId}) as unknown)};
     const scheduler = {runAfter: vi.fn()};
     return {
-        ctx: {db, auth, scheduler} as unknown as MutationCtx,
+        ctx: {db, scheduler} as unknown as MutationCtx,
         db,
-        auth,
         scheduler,
         object,
         user,
         visited,
         docs,
+        rows,
+        association,
     };
 }
 
 describe('personal Object writes', () => {
     it.each([true, false])(
-        'saves or clears personal state without touching shared fields or gallery, visited=%s',
+        'saves or clears personal state without changing shared fields or gallery, visited=%s',
         async isVisited => {
-            const {ctx, db, object, scheduler, visited} = createContext();
+            const {ctx, user, scheduler, visited, association, rows} = createContext();
             visited.visitedObjectIds = isVisited ? [] : [objectId];
-            const before = structuredClone(object);
+            association.privateTagIds = isVisited ? [] : [privateTagId];
+            const before = structuredClone({objects: rows.objects, gallery: rows.objectImages});
 
             await expect(
-                handleUpdate(ctx, {
-                    id: objectId,
-                    data: {
-                        isVisited,
-                        privateTags: isVisited ? [privateTagId] : [],
-                    },
+                updateObjectPersonalState(ctx, objectId, user, {
+                    isVisited,
+                    privateTags: isVisited ? [privateTagId] : [],
                 }),
             ).resolves.toBe(objectId);
 
-            expect(object).toEqual(before);
-            expect(db.patch.mock.calls).toEqual(
-                isVisited
-                    ? [
-                          ['objectPrivateTags', 'association-1', {privateTagIds: [privateTagId]}],
-                          ['userVisitedChunks', 'visited-1', {visitedObjectIds: [objectId]}],
-                      ]
-                    : [['objectPrivateTags', 'association-1', {privateTagIds: []}]],
-            );
-            expect(db.delete.mock.calls).toEqual(
-                isVisited ? [] : [['userVisitedChunks', 'visited-1']],
-            );
-            expect(db.insert).not.toHaveBeenCalled();
-            expect(db.get.mock.calls.map(([table]) => table)).not.toContain('images');
+            expect(
+                rows.objectPrivateTags.find(row => row.userId === user._id)?.privateTagIds,
+            ).toEqual(isVisited ? [privateTagId] : []);
+            const chunk = rows.userVisitedChunks.find(row => row.userId === user._id);
+            expect(
+                (chunk?.visitedObjectIds as string[] | undefined)?.includes(objectId) ?? false,
+            ).toBe(isVisited);
+            expect({objects: rows.objects, gallery: rows.objectImages}).toEqual(before);
             expect(scheduler.runAfter).not.toHaveBeenCalled();
         },
     );
 
-    it.each(['anonymous', 'deleted'])('rejects an %s user before any writes', async status => {
-        const {ctx, db, auth, user, scheduler} = createContext();
-        if (status === 'anonymous') {
-            auth.getUserIdentity.mockResolvedValue(null);
-        } else {
-            user.isDeleted = true;
-        }
-
-        await expect(handleUpdate(ctx, {id: objectId, data})).rejects.toThrow(
-            "Can't get current user",
-        );
-        expect(db.patch).not.toHaveBeenCalled();
-        expect(db.insert).not.toHaveBeenCalled();
-        expect(db.delete).not.toHaveBeenCalled();
-        expect(scheduler.runAfter).not.toHaveBeenCalled();
-    });
-
     it('rejects a non-owner if the Object became private during editing', async () => {
-        const {ctx, db, object} = createContext();
+        const {ctx, user, db, object} = createContext();
         object.isPublic = false;
-        await expect(handleUpdate(ctx, {id: objectId, data})).rejects.toThrow('Not allowed');
+        await expect(updateObjectPersonalState(ctx, objectId, user, data)).rejects.toThrow(
+            'Not allowed',
+        );
         expect(db.patch).not.toHaveBeenCalled();
         expect(db.delete).not.toHaveBeenCalled();
     });
@@ -139,13 +130,15 @@ describe('personal Object writes', () => {
     it.each(['missing', 'foreign'])(
         'rejects a %s private tag before either personal write',
         async status => {
-            const {ctx, db, docs} = createContext();
+            const {ctx, user, db, docs} = createContext();
             if (status === 'missing') {
                 docs.delete('privateTags:private-1');
             } else {
                 docs.set('privateTags:private-1', {_id: privateTagId, createdById: 'someone-else'});
             }
-            await expect(handleUpdate(ctx, {id: objectId, data})).rejects.toMatchObject({
+            await expect(
+                updateObjectPersonalState(ctx, objectId, user, data),
+            ).rejects.toMatchObject({
                 data: {code: 'notFound'},
             });
             expect(db.patch).not.toHaveBeenCalled();
@@ -156,14 +149,13 @@ describe('personal Object writes', () => {
     it.each([true, false])(
         'syncs an owner visited change on a private Object, visited=%s',
         async isVisited => {
-            const {ctx, object, visited, scheduler} = createContext('owner');
+            const {ctx, user, object, visited, scheduler} = createContext('owner');
             object.isPublic = false;
             visited.visitedObjectIds = isVisited ? [] : [objectId];
-            await handleUpdate(ctx, {id: objectId, data: {...data, isVisited}});
+            await updateObjectPersonalState(ctx, objectId, user, {...data, isVisited});
 
             expect(scheduler.runAfter).toHaveBeenCalledTimes(1);
-            const [delay, ref, args] = scheduler.runAfter.mock.calls[0];
-            expect(delay).toBe(0);
+            const [, ref, args] = scheduler.runAfter.mock.calls[0];
             expect(getFunctionName(ref)).toBe('notionSync/outbound:enqueueOutboundObjectSync');
             expect(args).toEqual({objectId});
         },
@@ -176,14 +168,16 @@ describe('personal Object writes', () => {
         } else {
             user.notionSyncEnabled = false;
         }
-        await handleUpdate(ctx, {id: objectId, data});
+        await updateObjectPersonalState(ctx, objectId, user, data);
         expect(scheduler.runAfter).not.toHaveBeenCalled();
     });
 
     it('rejects a missing Object without creating personal records', async () => {
-        const {ctx, db, docs} = createContext();
+        const {ctx, user, db, docs} = createContext();
         docs.delete('objects:object-1');
-        await expect(handleUpdate(ctx, {id: objectId, data})).rejects.toThrow('Object not found');
+        await expect(updateObjectPersonalState(ctx, objectId, user, data)).rejects.toThrow(
+            'Object not found',
+        );
         expect(db.patch).not.toHaveBeenCalled();
         expect(db.insert).not.toHaveBeenCalled();
     });

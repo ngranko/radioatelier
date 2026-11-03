@@ -23,7 +23,6 @@ export function createPage(name: string, nextCursor = ''): SearchResultsPage {
 export function createHarness() {
     const local = vi.fn<SearchPageSource>().mockResolvedValue(createPage('local'));
     const google = vi.fn<SearchPageSource>().mockResolvedValue(createPage('google'));
-    const createSources = vi.fn(() => ({local, google}));
     const events: string[] = [];
     const map = {
         clear: vi.fn(() => {
@@ -40,10 +39,9 @@ export function createHarness() {
         }),
     };
     return {
-        results: createSearchResults(createSources, map),
+        results: createSearchResults(() => ({local, google}), map),
         local,
         google,
-        createSources,
         map,
         events,
     };
