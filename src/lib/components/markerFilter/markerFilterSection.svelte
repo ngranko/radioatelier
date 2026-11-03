@@ -85,7 +85,7 @@
                             showName={false}
                             size="sm"
                         />
-                        <span class="min-w-0 flex-1 break-words">
+                        <span class="min-w-0 flex-1 wrap-break-word">
                             {@render highlightedName(option.name)}
                         </span>
                     </button>
@@ -100,7 +100,7 @@
                         onclick={() => toggleFilterSelection(kind, option.id)}
                         aria-pressed={isSelected}
                         class={cn(
-                            'max-w-full rounded-md border px-2 py-1 text-left text-xs font-medium break-words lowercase transition-colors',
+                            'max-w-full rounded-md border px-2 py-1 text-left text-xs font-medium wrap-break-word lowercase transition-colors',
                             isSelected
                                 ? 'text-primary border-primary/15 bg-primary/10'
                                 : 'text-muted-foreground hover:text-foreground hover:bg-accent',

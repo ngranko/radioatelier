@@ -108,7 +108,7 @@
 
 <div class="h-full overflow-y-auto overscroll-contain">
     {#if isLoading}
-        <div class="divide-y divide-black/[0.04] dark:divide-white/[0.06]">
+        <div class="divide-y divide-black/4 dark:divide-white/6">
             <SearchItemSkeleton />
             <SearchItemSkeleton />
             <SearchItemSkeleton />
@@ -132,7 +132,7 @@
                 {/if}
             </div>
         {:else}
-            <div class="divide-y divide-black/[0.04] dark:divide-white/[0.06]">
+            <div class="divide-y divide-black/4 dark:divide-white/6">
                 {#each Object.keys(searchPointList) as id (id)}
                     {@const searchPoint = searchPointList[id]}
                     {#if searchPoint?.object}
@@ -144,7 +144,7 @@
 
         {#if isAppendError}
             <div
-                class="text-muted-foreground flex items-center gap-2.5 border-t border-black/[0.04] px-4 py-3 text-sm dark:border-white/[0.06]"
+                class="text-muted-foreground flex items-center gap-2.5 border-t border-black/4 px-4 py-3 text-sm dark:border-white/6"
             >
                 <CircleAlertIcon class="text-destructive/70" />
                 Не удалось загрузить ещё
@@ -152,7 +152,7 @@
         {/if}
 
         {#if hasMore}
-            <div class="border-t border-black/[0.04] dark:border-white/[0.06]">
+            <div class="border-t border-black/4 dark:border-white/6">
                 <Button
                     variant="ghost"
                     class="text-primary hover:text-primary/80 w-full text-xs font-medium"

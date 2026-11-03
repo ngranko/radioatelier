@@ -85,7 +85,7 @@
                 size="icon"
                 onclick={closeMarkerFilter}
                 aria-label="Закрыть фильтр"
-                class="text-muted-foreground hover:text-foreground h-8 w-8 rounded-full"
+                class="text-muted-foreground hover:text-foreground size-8 rounded-full"
             >
                 <ChevronLeftIcon />
             </Button>

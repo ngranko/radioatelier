@@ -25,7 +25,7 @@
 
 <div class="space-y-3 px-3 pb-3">
     {#if isUsed}
-        <p class="text-muted-foreground text-xs leading-snug">
+        <p class="text-muted-foreground text-xs/snug">
             {isReplacementRequired
                 ? 'Объекты не могут остаться без категории — выберите, куда их перенести.'
                 : 'Без переноса тег просто снимется с объектов.'}

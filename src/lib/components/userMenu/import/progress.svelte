@@ -39,7 +39,7 @@
 <div class="flex flex-1 items-center justify-center pt-12 pb-6">
     <div class="w-full max-w-md space-y-6">
         <div class="flex flex-col items-center gap-4">
-            <div class="bg-primary/10 flex h-16 w-16 items-center justify-center rounded-full">
+            <div class="bg-primary/10 flex size-16 items-center justify-center rounded-full">
                 <Spinner class="text-primary size-6 stroke-2" />
             </div>
             <div class="space-y-2 text-center">

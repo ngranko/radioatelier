@@ -333,7 +333,7 @@
                                     size="sm"
                                 />
                             {/if}
-                            <span class="min-w-0 flex-1 break-words">{option.name}</span>
+                            <span class="min-w-0 flex-1 wrap-break-word">{option.name}</span>
                         </button>
                     {:else}
                         <p class="text-muted-foreground px-3 py-6 text-center text-sm">

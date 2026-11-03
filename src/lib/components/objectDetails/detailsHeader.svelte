@@ -111,7 +111,7 @@
     <Button
         variant="ghost"
         size="icon"
-        class="h-8 w-8 shrink-0"
+        class="size-8 shrink-0"
         onclick={onTogglePosition}
         aria-label={positionToggleLabel}
         title={positionToggleLabel}

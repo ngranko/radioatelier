@@ -20,7 +20,7 @@
 
 <div class="flex-1 space-y-6 overflow-y-auto">
     <div class="flex flex-col items-center gap-4 py-6">
-        <div class="flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+        <div class="flex size-16 items-center justify-center rounded-full bg-green-100">
             <CheckCircleIcon class="size-6 stroke-2 text-green-600" />
         </div>
         <div class="space-y-2 text-center">
@@ -54,13 +54,9 @@
                     {#each importState.lineFeedback as item (item.line)}
                         <div class="flex items-start gap-3 p-4">
                             {#if item.severity === 'error'}
-                                <CircleXMarkIcon
-                                    class="text-destructive mt-0.5 size-5 flex-shrink-0"
-                                />
+                                <CircleXMarkIcon class="text-destructive mt-0.5 size-5 shrink-0" />
                             {:else}
-                                <TriangleAlertIcon
-                                    class="mt-0.5 size-5 flex-shrink-0 text-amber-600"
-                                />
+                                <TriangleAlertIcon class="mt-0.5 size-5 shrink-0 text-amber-600" />
                             {/if}
                             <div class="min-w-0 flex-1">
                                 <span class="text-sm font-medium">Строка {item.line}</span>

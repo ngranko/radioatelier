@@ -25,16 +25,16 @@
 
     <div class="relative z-10 w-full max-w-[400px]">
         <div
-            class="glass group relative overflow-hidden rounded-2xl bg-white/80 shadow-2xl ring-black/[0.04] transition-[transform,opacity] duration-700 ease-out motion-reduce:transition-none dark:bg-white/[0.06] dark:shadow-black/30 dark:ring-white/[0.08] {mounted
+            class="glass group relative overflow-hidden rounded-2xl bg-white/80 shadow-2xl ring-black/4 transition-[transform,opacity] duration-700 ease-out motion-reduce:transition-none dark:bg-white/6 dark:shadow-black/30 dark:ring-white/8 {mounted
                 ? 'translate-y-0 opacity-100'
                 : 'translate-y-6 opacity-0 motion-reduce:translate-y-0 motion-reduce:opacity-100'}"
         >
             <div
-                class="absolute inset-0 bg-gradient-to-br from-white/50 via-transparent to-transparent dark:from-white/[0.02]"
+                class="absolute inset-0 bg-linear-to-br from-white/50 via-transparent to-transparent dark:from-white/2"
             ></div>
 
             <div
-                class="from-primary via-primary/70 absolute top-0 right-0 left-0 h-[3px] bg-gradient-to-r to-transparent"
+                class="from-primary via-primary/70 absolute inset-x-0 top-0 h-[3px] bg-linear-to-r to-transparent"
             ></div>
 
             <div class="relative px-8 pt-10 pb-8 sm:px-10 sm:pt-12 sm:pb-10">

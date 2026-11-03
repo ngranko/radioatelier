@@ -15,7 +15,7 @@
     <Input type={isPlainPassword ? 'text' : 'password'} class="pr-12" bind:value {...rest} />
     <button
         type="button"
-        class="text-muted-foreground/60 hover:text-foreground/80 absolute top-1/2 right-3 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg transition-colors"
+        class="text-muted-foreground/60 hover:text-foreground/80 absolute top-1/2 right-3 flex size-8 -translate-y-1/2 items-center justify-center rounded-lg transition-colors"
         onclick={e => {
             e.stopPropagation();
             isPlainPassword = !isPlainPassword;

@@ -12,7 +12,7 @@
 <Button
     variant="ghost"
     size="icon"
-    class="h-8 w-8"
+    class="size-8"
     onclick={onRequestClose}
     aria-label="Закрыть карточку точки"
     title="Закрыть карточку точки"

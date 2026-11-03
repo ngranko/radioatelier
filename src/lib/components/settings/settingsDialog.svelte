@@ -146,11 +146,11 @@
         onInteractOutside={preventCloseWhileSaving}
     >
         <div
-            class="from-primary via-primary/60 absolute top-0 right-0 left-0 h-0.5 bg-gradient-to-r to-transparent"
+            class="from-primary via-primary/60 absolute inset-x-0 top-0 h-0.5 bg-linear-to-r to-transparent"
         ></div>
         <div class="relative shrink-0 px-6 pt-6 pb-4">
             <div
-                class="from-primary/[0.07] via-primary/[0.03] absolute inset-0 bg-gradient-to-br to-transparent"
+                class="from-primary/[0.07] via-primary/3 absolute inset-0 bg-linear-to-br to-transparent"
             ></div>
             <div class="relative flex items-center gap-3.5">
                 <div
@@ -162,7 +162,7 @@
                     <Title class="text-lg font-semibold tracking-[-0.01em]">
                         Настройки категорий
                     </Title>
-                    <p class="text-muted-foreground mt-0.5 text-xs leading-snug">
+                    <p class="text-muted-foreground mt-0.5 text-xs/snug">
                         Настройте цвет, иконку и доступность категорий
                     </p>
                 </div>

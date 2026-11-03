@@ -62,7 +62,7 @@
         <TabsContent
             value="local"
             class={cn(
-                'min-h-0 flex-1 border-t border-black/[0.06] dark:border-white/[0.08]',
+                'min-h-0 flex-1 border-t border-black/6 dark:border-white/8',
                 searchState.isResultsMinimized && 'hidden',
             )}
         >
@@ -83,7 +83,7 @@
         <TabsContent
             value="google"
             class={cn(
-                'min-h-0 flex-1 border-t border-black/[0.06] dark:border-white/[0.08]',
+                'min-h-0 flex-1 border-t border-black/6 dark:border-white/8',
                 searchState.isResultsMinimized && 'hidden',
             )}
         >

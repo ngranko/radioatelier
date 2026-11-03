@@ -39,7 +39,7 @@
 <div class="group/carousel relative">
     <div
         bind:this={strip}
-        class="flex snap-x snap-mandatory [scrollbar-width:none] overflow-x-auto [&::-webkit-scrollbar]:hidden"
+        class="flex snap-x snap-mandatory scrollbar-none overflow-x-auto [&::-webkit-scrollbar]:hidden"
         onscroll={trackIndex}
     >
         {#each images as image (image.id)}
@@ -52,7 +52,7 @@
                 aria-busy={disabled}
             >
                 <img
-                    class="h-full w-full object-cover transition-transform ease-out group-hover:scale-[1.03]"
+                    class="size-full object-cover transition-transform ease-out group-hover:scale-[1.03]"
                     src={image.previewUrl || image.url}
                     alt="Изображение"
                 />

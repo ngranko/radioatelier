@@ -85,12 +85,12 @@
 
 <form class="flex flex-col gap-6" use:enhance>
     <div
-        class="bg-warning/10 dark:bg-warning/15 border-warning/30 mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border"
+        class="bg-warning/10 dark:bg-warning/15 border-warning/30 mx-auto flex size-16 items-center justify-center rounded-2xl border"
     >
         <KeyRoundIcon class="text-warning size-6 stroke-2" />
     </div>
 
-    <p class="text-muted-foreground text-center text-sm leading-relaxed">
+    <p class="text-muted-foreground text-center text-sm/relaxed">
         Введите email, связанный с вашим аккаунтом. Мы отправим на него код для сброса пароля.
     </p>
 

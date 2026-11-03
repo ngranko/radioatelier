@@ -240,9 +240,9 @@
 
 <div
     class={cn(
-        'pointer-events-auto absolute top-4 left-4 overflow-hidden rounded-2xl shadow-lg ring-1 shadow-black/[0.08] ring-black/[0.06] transition-[width,height] duration-300 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] sm:top-auto sm:right-4 sm:bottom-4 sm:left-auto dark:shadow-black/40 dark:ring-white/[0.1]',
+        'pointer-events-auto absolute top-4 left-4 overflow-hidden rounded-2xl shadow-lg ring-1 shadow-black/8 ring-black/6 transition-[width,height] duration-300 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] sm:top-auto sm:right-4 sm:bottom-4 sm:left-auto dark:shadow-black/40 dark:ring-white/10',
         isMiniMapExpanded
-            ? 'h-[min(22rem,calc(100vh-7rem))] w-[min(22rem,calc(100vw-2rem))] sm:h-72 sm:w-[22rem]'
+            ? 'h-[min(22rem,calc(100vh-7rem))] w-[min(22rem,calc(100vw-2rem))] sm:h-72 sm:w-88'
             : 'h-44 w-[min(16rem,calc(100vw-2rem))] sm:h-40 sm:w-55',
     )}
 >
@@ -250,10 +250,10 @@
 
     <div class="pointer-events-none absolute inset-0 z-10">
         <div
-            class="absolute inset-x-0 top-0 h-10 bg-gradient-to-b from-black/[0.03] to-transparent dark:from-black/10"
+            class="absolute inset-x-0 top-0 h-10 bg-linear-to-b from-black/3 to-transparent dark:from-black/10"
         ></div>
 
-        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+        <div class="absolute top-1/2 left-1/2 -translate-1/2">
             <svg
                 width="40"
                 height="40"
@@ -282,7 +282,7 @@
     <Button
         variant="ghost"
         size="icon"
-        class="absolute top-1.5 left-1.5 z-20 size-7 rounded-lg bg-white/80 shadow-sm ring-1 ring-black/[0.06] backdrop-blur-sm hover:bg-white dark:bg-black/50 dark:ring-white/[0.08] dark:hover:bg-black/70"
+        class="absolute top-1.5 left-1.5 z-20 size-7 rounded-lg bg-white/80 shadow-sm ring-1 ring-black/6 backdrop-blur-sm hover:bg-white dark:bg-black/50 dark:ring-white/8 dark:hover:bg-black/70"
         aria-label={isMiniMapExpanded ? 'Свернуть миникарту' : 'Развернуть миникарту'}
         title={isMiniMapExpanded ? 'Свернуть миникарту' : 'Развернуть миникарту'}
         onclick={toggleMiniMapSize}

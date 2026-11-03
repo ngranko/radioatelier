@@ -79,12 +79,12 @@
 
 <form class="flex flex-col gap-6" use:enhance>
     <div
-        class="bg-primary/5 dark:bg-primary/10 border-primary/20 mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border"
+        class="bg-primary/5 dark:bg-primary/10 border-primary/20 mx-auto flex size-16 items-center justify-center rounded-2xl border"
     >
         <MailOpenIcon class="text-primary size-6 stroke-2" />
     </div>
 
-    <p class="text-muted-foreground text-center text-sm leading-relaxed">
+    <p class="text-muted-foreground text-center text-sm/relaxed">
         Мы отправили код подтверждения на вашу почту. Введите его ниже для завершения входа.
     </p>
 

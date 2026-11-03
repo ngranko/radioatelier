@@ -112,7 +112,7 @@
 
 <div bind:this={consoleElement}></div>
 
-<div class="menu absolute top-2 right-4 left-2 z-20 flex items-center justify-between gap-4">
+<div class="absolute top-2 right-4 left-2 z-20 flex items-center justify-between gap-4">
     {#if clerkCtx.auth.userId}
         <Search />
     {:else}
