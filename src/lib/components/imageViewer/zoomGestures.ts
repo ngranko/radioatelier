@@ -139,6 +139,7 @@ export class ZoomGestures {
     private handleCancel = (event: PointerEvent) => {
         this.pointers.delete(event.pointerId);
         this.pulled = 0;
+        this.swiped = 0;
         this.options.pull(0, true);
     };
 
