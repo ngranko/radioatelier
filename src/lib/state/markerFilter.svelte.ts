@@ -1,5 +1,4 @@
 import type {Id} from '$convex/_generated/dataModel';
-import type {Component} from 'svelte';
 import {SvelteSet} from 'svelte/reactivity';
 
 export type FilterKind = 'categories' | 'tags' | 'privateTags';
@@ -7,16 +6,10 @@ export type FilterKind = 'categories' | 'tags' | 'privateTags';
 export interface FilterOption {
     id: string;
     name: string;
-    // category dot color (oklch string); omitted for tags
-    color?: string;
 }
 
-export interface TrayItem {
+export interface TrayItem extends FilterOption {
     kind: FilterKind;
-    id: string;
-    name: string;
-    color?: string;
-    icon?: Component;
 }
 
 interface MarkerFilterState {
@@ -77,6 +70,16 @@ export function toggleFilterSelection(kind: FilterKind, id: string): void {
         set.delete(id);
     } else {
         set.add(id);
+    }
+}
+
+export function pruneFilterSelection(kind: FilterKind, options: FilterOption[]): void {
+    const available = new Set(options.map(option => option.id));
+    const set = markerFilterState.selected[kind] as SvelteSet<string>;
+    for (const id of set) {
+        if (!available.has(id)) {
+            set.delete(id);
+        }
     }
 }
 
