@@ -1,4 +1,4 @@
-import type {LooseObject, Object, PointPreviewDetails} from '$lib/interfaces/object';
+import type {LooseObject, MapPlaceable, Object, PointPreviewDetails} from '$lib/interfaces/object';
 import {untrack} from 'svelte';
 
 export type ObjectDetailsOverlayMode = 'objectView' | 'objectEdit' | 'pointPreview' | 'pointCreate';
@@ -94,8 +94,14 @@ function resolveSwitchPosition(): ObjectDetailsOverlayPosition {
     );
 }
 
-export function showLoadingDetailsOverlay(id: string) {
-    transition({isOpen: true, isLoading: true, detailsId: id, position: resolveSwitchPosition()});
+export function showLoadingDetailsOverlay(id: string, position?: MapPlaceable) {
+    transition({
+        isOpen: true,
+        isLoading: true,
+        detailsId: id,
+        details: position,
+        position: resolveSwitchPosition(),
+    });
 }
 
 export function showObjectDetailsOverlay(id: string, initialValues?: Object) {
