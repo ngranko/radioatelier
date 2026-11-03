@@ -83,17 +83,9 @@ async function loadViewerContext(
 
 async function loadImages(ctx: QueryCtx, object: Doc<'objects'>) {
     const attached = await listObjectImages(ctx, object._id);
-    // A cover from before galleries existed is referenced by coverId alone.
-    const cover = object.coverId
-        ? (attached.find(image => image._id === object.coverId) ??
-          (await ctx.db.get('images', object.coverId)))
-        : null;
-    const ordered = cover
-        ? [cover, ...attached.filter(image => image._id !== cover._id)]
-        : attached;
-    const images = await Promise.all(ordered.map(image => resolveImageUrls(ctx, image)));
+    const images = await Promise.all(attached.map(image => resolveImageUrls(ctx, image)));
 
-    return {cover: cover ? images[0] : null, images};
+    return {cover: images[0] ?? null, images};
 }
 
 async function resolveImageUrls(ctx: QueryCtx, image: Doc<'images'>): Promise<ObjectImage> {
