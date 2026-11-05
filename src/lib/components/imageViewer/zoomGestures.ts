@@ -34,6 +34,7 @@ export class ZoomGestures {
     private node: HTMLElement | null = null;
     private travelled = 0;
     private pulled = 0;
+    private isPinch = false;
 
     constructor(options: ZoomGestureOptions) {
         this.options = options;
@@ -61,15 +62,16 @@ export class ZoomGestures {
         }
         if (this.pointers.size === 0) {
             this.travelled = 0;
+            this.isPinch = false;
         }
 
         this.node?.setPointerCapture(event.pointerId);
         this.pointers.set(event.pointerId, locateEvent(event));
 
         if (this.pointers.size > 1) {
-            // a second finger turns the gesture into a pinch, which must neither close
-            // the viewer as a tap nor carry on dismissing it as a pull
-            this.travelled = Infinity;
+            // a second finger turns the gesture into a pinch until every finger is lifted, so
+            // neither it nor the finger left behind can close the viewer as a tap or a pull
+            this.isPinch = true;
             this.pulled = 0;
             this.options.pull(0);
         }
@@ -91,7 +93,7 @@ export class ZoomGestures {
 
     private applyMove(delta: Point, stretch: number, centre: Point) {
         const view = this.options.getView();
-        if (this.pointers.size === 1 && view.scale === 1) {
+        if (this.pointers.size === 1 && view.scale === 1 && !this.isPinch) {
             this.pulled += delta.y;
             this.options.pull(this.pulled);
             return;
@@ -136,7 +138,7 @@ export class ZoomGestures {
     // Browsers fire a click at the end of a drag or pinch as well, so only a pointer
     // that barely moved counts as a tap.
     private handleClick = (event: MouseEvent) => {
-        if (this.travelled <= MAX_TAP_TRAVEL) {
+        if (!this.isPinch && this.travelled <= MAX_TAP_TRAVEL) {
             this.options.tap(locateEvent(event));
         }
     };
