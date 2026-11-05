@@ -7,9 +7,9 @@
 
 <Button
     variant="ghost"
-    class="text-primary hover:text-primary/80 group w-full text-xs font-medium"
+    class="text-primary hover:text-primary/80 group w-full text-sm font-medium"
     onclick={onLoadMoreClick}
 >
     Все результаты
-    <ChevronDownIcon class="size-3.5 translate-y-0.5 transition-transform" />
+    <ChevronDownIcon class="size-4 translate-y-px transition-transform" />
 </Button>

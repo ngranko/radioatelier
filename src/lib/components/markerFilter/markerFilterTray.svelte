@@ -10,7 +10,7 @@
 </script>
 
 {#if items.length > 0}
-    <div class="flex flex-wrap gap-1.5 border-b px-3 py-2.5">
+    <div class="flex flex-wrap gap-1.5 border-b px-3 py-2.5 pointer-coarse:gap-y-4">
         {#each items as item (item.kind + item.id)}
             {#if item.kind === 'categories'}
                 <Badge variant="secondary" title={item.name} class="max-w-full min-w-0 pr-1">

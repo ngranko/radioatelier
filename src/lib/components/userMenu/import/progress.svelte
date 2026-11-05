@@ -2,6 +2,7 @@
     import {api} from '$convex/_generated/api';
     import type {Doc, Id} from '$convex/_generated/dataModel';
     import Spinner from '$lib/components/spinner.svelte';
+    import {buttonVariants} from '$lib/components/ui/button';
     import {DialogClose, DialogFooter} from '$lib/components/ui/dialog';
     import {Progress} from '$lib/components/ui/progress';
     import type {ImportJobSnapshot} from '$lib/interfaces/import';
@@ -61,6 +62,6 @@
         </div>
     </div>
 </div>
-<DialogFooter>
-    <DialogClose>Отменить</DialogClose>
+<DialogFooter class="max-sm:grid max-sm:auto-cols-fr max-sm:grid-flow-col max-sm:*:h-11">
+    <DialogClose class={buttonVariants({variant: 'outline'})}>Отменить</DialogClose>
 </DialogFooter>

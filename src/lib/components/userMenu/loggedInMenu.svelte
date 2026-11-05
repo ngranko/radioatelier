@@ -1,7 +1,6 @@
 <script lang="ts">
     import {goto} from '$app/navigation';
     import {api} from '$convex/_generated/api';
-    import ThemeSwitcher from '$lib/components/themeSwitcher.svelte';
     import {Root as AvatarRoot, Fallback} from '$lib/components/ui/avatar';
     import {Button} from '$lib/components/ui/button';
     import {
@@ -13,6 +12,7 @@
         Item as DropdownMenuItem,
     } from '$lib/components/ui/dropdown-menu';
     import LogoutDialog from '$lib/components/userMenu/logoutDialog.svelte';
+    import ThemeMenuRow from '$lib/components/userMenu/themeMenuRow.svelte';
     import FileInputIcon from '@lucide/svelte/icons/file-input';
     import KeyRoundIcon from '@lucide/svelte/icons/key-round';
     import LogOutIcon from '@lucide/svelte/icons/log-out';
@@ -86,9 +86,7 @@
                 Сменить пароль
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <div class="flex justify-center px-2 py-1.5">
-                <ThemeSwitcher />
-            </div>
+            <ThemeMenuRow />
             <DropdownMenuSeparator />
             <DropdownMenuItem onclick={handleLogoutClick}>
                 <LogOutIcon />

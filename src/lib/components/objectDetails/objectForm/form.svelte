@@ -143,7 +143,7 @@
         },
     });
 
-    const {form: formData, errors, enhance, isTainted, submitting} = form;
+    const {form: formData, errors, enhance, isTainted, tainted, submitting} = form;
 
     onMount(() => registerCloseConfirmationCheck?.(() => isTainted()) ?? undefined);
 
@@ -289,14 +289,14 @@
         >
             Сохранить
         </Button>
-        <BackButton isConfirmationRequired={isTainted()} onClick={handleBack} />
+        <BackButton isConfirmationRequired={isTainted($tainted)} onClick={handleBack} />
         <span class="flex-1"></span>
         {#if $formData.id}
             <DeleteButton disabled={$submitting} />
         {/if}
     </div>
     <div class="min-h-0 flex-1 overflow-x-hidden overflow-y-auto p-4">
-        <FormField {form} name="images" class="mb-6">
+        <FormField {form} name="images" class="mb-3">
             <FormControl>
                 {#snippet children({props})}
                     <ImageUpload
@@ -326,6 +326,8 @@
                             <Input
                                 type="text"
                                 {...props}
+                                aria-required="true"
+                                placeholder="Обязательное поле"
                                 bind:ref={nameInput}
                                 bind:value={$formData.name}
                                 data-1p-ignore
@@ -336,7 +338,7 @@
                 <FormFieldErrors />
             </FormField>
 
-            <div class="col-span-full flex flex-wrap gap-2">
+            <div class="col-span-full flex flex-wrap gap-2 *:flex-1 *:justify-center *:px-2">
                 <FlagToggle
                     name="isVisited"
                     label="посещена"
@@ -360,7 +362,9 @@
             <FormField {form} name="category" class="col-span-full">
                 <FormControl>
                     {#snippet children({props})}
-                        <div class="space-y-1">
+                        <!-- a flex gap rather than space-y, which would put a bottom margin on the
+                             field ahead of its trailing hidden inputs and widen the next group gap -->
+                        <div class="flex flex-col gap-1">
                             <FormLabel>категория и теги</FormLabel>
                             <TaxonomyField
                                 {...props}
@@ -376,17 +380,18 @@
                 <FormFieldErrors />
             </FormField>
             {#if isAddressCollapsed}
-                <div class="col-span-full mt-3 space-y-1">
+                <div class="col-span-full mt-3 -mb-1.5 space-y-0.5">
                     <span class="flex items-center gap-2 text-sm leading-none">адрес</span>
                     <button
                         type="button"
                         onclick={() => (isAddressExpanded = true)}
-                        class="flex w-full items-start gap-2 py-1 text-left"
+                        title={resolvedAddress}
+                        class="relative flex w-full items-center gap-2 text-left pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:top-1/2 pointer-coarse:after:h-11 pointer-coarse:after:min-h-full pointer-coarse:after:-translate-y-1/2"
                     >
-                        <span class="min-w-0 flex-1 text-base wrap-break-word">
+                        <span class="min-w-0 flex-1 truncate text-base">
                             {resolvedAddress}
                         </span>
-                        <PencilIcon class="text-muted-foreground mt-1 size-4 shrink-0" />
+                        <PencilIcon class="text-muted-foreground size-4 shrink-0" />
                     </button>
                 </div>
                 <input type="hidden" name="address" value={$formData.address ?? ''} />
@@ -447,7 +452,12 @@
                     {#snippet children({props})}
                         <div class="space-y-1">
                             <FormLabel>период создания</FormLabel>
-                            <Input type="text" {...props} bind:value={$formData.installedPeriod} />
+                            <Input
+                                type="text"
+                                placeholder="1960-е, 1972–1975"
+                                {...props}
+                                bind:value={$formData.installedPeriod}
+                            />
                         </div>
                     {/snippet}
                 </FormControl>
@@ -461,6 +471,7 @@
                                 <FormLabel>период пропажи</FormLabel>
                                 <Input
                                     type="text"
+                                    placeholder="2010-е, 2015–2018"
                                     {...props}
                                     bind:value={$formData.removalPeriod}
                                 />

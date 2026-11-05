@@ -96,7 +96,7 @@
                 autocomplete="off"
                 autocorrect="off"
                 spellcheck="false"
-                class="placeholder:text-muted-foreground/60 h-8 min-w-0 flex-1 bg-transparent text-sm outline-none"
+                class="placeholder:text-muted-foreground h-8 min-w-0 flex-1 bg-transparent text-sm outline-none"
             />
             {#if markerFilterState.query}
                 <ClearButton onClick={() => (markerFilterState.query = '')} />
@@ -136,7 +136,7 @@
                 <button
                     type="button"
                     onclick={clearMarkerFilter}
-                    class="text-destructive ml-auto shrink-0 rounded-md px-2 py-2.5 underline-offset-4 hover:underline"
+                    class="text-primary ml-auto shrink-0 rounded-md px-2 py-2.5 underline-offset-4 hover:underline"
                 >
                     сбросить все
                 </button>

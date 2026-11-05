@@ -4,20 +4,30 @@
     import type {SearchResultsListState} from '$lib/services/search/searchResults.svelte';
     import {searchPointList} from '$lib/state/searchPointList.svelte.ts';
     import CircleAlertIcon from '@lucide/svelte/icons/circle-alert';
+    import RotateCwIcon from '@lucide/svelte/icons/rotate-cw';
     import ZoomOutIcon from '@lucide/svelte/icons/zoom-out';
     import SearchItemSkeleton from './searchItemSkeleton.svelte';
+    import SearchNotice from './searchNotice.svelte';
     import SearchResultsItem from './searchResultsItem.svelte';
 
     let {
         state,
         onLoadMore,
-        emptyAction,
+        onRetry,
+        fallbackAction,
     }: {
         state: Readonly<SearchResultsListState>;
         onLoadMore(): void;
-        emptyAction?: {label: string; onClick: () => void};
+        onRetry(): void;
+        fallbackAction?: {label: string; onClick: () => void};
     } = $props();
 </script>
+
+{#snippet fallbackButton()}
+    <Button variant="outline" size="sm" class="text-sm" onclick={fallbackAction?.onClick}>
+        {fallbackAction?.label}
+    </Button>
+{/snippet}
 
 <div class="h-full overflow-y-auto overscroll-contain">
     {#if state.isLoading}
@@ -29,21 +39,27 @@
             <SearchItemSkeleton />
         </div>
     {:else if state.isError}
-        <div class="text-muted-foreground flex items-center gap-2.5 px-4 py-6 text-sm">
-            <CircleAlertIcon class="text-destructive/70" />
-            Не удалось загрузить результаты
-        </div>
+        <SearchNotice
+            icon={CircleAlertIcon}
+            iconClass="text-destructive/70"
+            message="Не удалось загрузить результаты"
+        >
+            <Button variant="outline" size="sm" class="text-sm" onclick={onRetry}>
+                <RotateCwIcon />
+                Повторить
+            </Button>
+            {#if fallbackAction}
+                {@render fallbackButton()}
+            {/if}
+        </SearchNotice>
     {:else if state.hasLoaded}
         {#if Object.keys(searchPointList).length === 0}
-            <div class="flex flex-col items-center gap-2 px-4 py-8 text-center">
-                <ZoomOutIcon class="text-muted-foreground/50" />
-                <span class="text-muted-foreground text-sm">Ничего не найдено</span>
-                {#if emptyAction}
-                    <Button variant="outline" size="sm" class="mt-1" onclick={emptyAction.onClick}>
-                        {emptyAction.label}
-                    </Button>
-                {/if}
-            </div>
+            <SearchNotice
+                icon={ZoomOutIcon}
+                iconClass="text-muted-foreground/50"
+                message="Ничего не найдено"
+                children={fallbackAction ? fallbackButton : undefined}
+            />
         {:else}
             <div class="divide-y divide-black/4 dark:divide-white/6">
                 {#each Object.keys(searchPointList) as id (id)}

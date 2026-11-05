@@ -1,9 +1,10 @@
 <script lang="ts">
     import {api} from '$convex/_generated/api';
     import type {Id} from '$convex/_generated/dataModel';
+    import DialogHeading from '$lib/components/dialogHeading.svelte';
     import RoutedDialog from '$lib/components/routedDialog.svelte';
-    import {Button} from '$lib/components/ui/button';
-    import {Content, Title, Footer} from '$lib/components/ui/dialog';
+    import {Button, buttonVariants} from '$lib/components/ui/button';
+    import {Content, Footer} from '$lib/components/ui/dialog';
     import {DialogClose} from '$lib/components/ui/dialog/index.js';
     import {Input} from '$lib/components/ui/input';
     import type {Category} from '$lib/interfaces/category';
@@ -139,37 +140,19 @@
     }
 </script>
 
-<RoutedDialog bind:isOpen>
+<RoutedDialog bind:isOpen hasUnsavedChanges={hasChanges}>
     <Content
-        class="flex max-h-[85vh] flex-col overflow-hidden border-t-0 p-0 sm:max-w-lg"
+        class="flex max-h-[85vh] flex-col overflow-hidden border-t-0 p-0 max-sm:gap-0 sm:max-w-lg"
         onEscapeKeydown={preventCloseWhileSaving}
         onInteractOutside={preventCloseWhileSaving}
     >
-        <div
-            class="from-primary via-primary/60 absolute inset-x-0 top-0 h-0.5 bg-linear-to-r to-transparent"
-        ></div>
-        <div class="relative shrink-0 px-6 pt-6 pb-4">
-            <div
-                class="from-primary/[0.07] via-primary/3 absolute inset-0 bg-linear-to-br to-transparent"
-            ></div>
-            <div class="relative flex items-center gap-3.5">
-                <div
-                    class="bg-primary/10 ring-primary/20 flex size-10 shrink-0 items-center justify-center rounded-xl ring-1"
-                >
-                    <PaletteIcon class="text-primary size-4.5" />
-                </div>
-                <div>
-                    <Title class="text-lg font-semibold tracking-[-0.01em]">
-                        Настройки категорий
-                    </Title>
-                    <p class="text-muted-foreground mt-0.5 text-xs/snug">
-                        Настройте цвет, иконку и доступность категорий
-                    </p>
-                </div>
-            </div>
-        </div>
+        <DialogHeading
+            icon={PaletteIcon}
+            title="Настройки категорий"
+            hint="Настройте цвет, иконку и доступность категорий"
+        />
 
-        <div class="shrink-0 px-6 pb-3">
+        <div class="shrink-0 px-6 pb-3 max-sm:pt-4">
             <div class="relative">
                 <SearchIcon
                     class="text-muted-foreground/50 pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2"
@@ -181,6 +164,9 @@
                     bind:value={searchQuery}
                 />
             </div>
+            <p class="text-muted-foreground mt-2 text-sm/snug">
+                Скрытые категории не видны в списках
+            </p>
         </div>
 
         <div class="min-h-0 grow overflow-y-auto px-6">
@@ -202,8 +188,12 @@
             </div>
         </div>
 
-        <Footer class="border-border/50 bg-muted/20 shrink-0 gap-3 border-t px-6 py-4">
-            <DialogClose disabled={isSaving} class="mr-2">Закрыть</DialogClose>
+        <Footer
+            class="border-border/50 bg-muted/20 shrink-0 gap-3 border-t px-6 py-3 max-sm:grid max-sm:auto-cols-fr max-sm:grid-flow-col max-sm:*:h-11 sm:py-4"
+        >
+            <DialogClose disabled={isSaving} class={buttonVariants({variant: 'outline'})}>
+                Закрыть
+            </DialogClose>
             <Button disabled={!hasChanges} loading={isSaving} onclick={handleSave}>
                 Сохранить
             </Button>

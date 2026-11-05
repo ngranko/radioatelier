@@ -20,7 +20,7 @@
         <div
             bind:this={ref}
             data-slot="form-item"
-            class={cn('space-y-2', className)}
+            class={cn('flex flex-col gap-2', className)}
             {...restProps}
         >
             {@render childrenProp?.({constraints, errors, tainted, value: value as T[U]})}

@@ -3,6 +3,7 @@
     import type {ObjectImage} from '$lib/interfaces/object';
     import ChevronLeftIcon from '@lucide/svelte/icons/chevron-left';
     import ChevronRightIcon from '@lucide/svelte/icons/chevron-right';
+    import ExpandIcon from '@lucide/svelte/icons/expand';
 
     interface Props {
         images: ObjectImage[];
@@ -59,6 +60,12 @@
                 {#if image.id === coverId}
                     <span class="{badge} top-3">обложка</span>
                 {/if}
+                <span
+                    class="pointer-events-none absolute top-3 right-3 flex size-7 items-center justify-center rounded-full bg-black/55 text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 pointer-coarse:opacity-100"
+                    aria-hidden="true"
+                >
+                    <ExpandIcon class="size-3.5" />
+                </span>
             </button>
         {/each}
     </div>

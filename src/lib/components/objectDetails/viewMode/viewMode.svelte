@@ -67,7 +67,7 @@
                 />
             </div>
         {/if}
-        <h1 class="text-foreground text-2xl/tight font-semibold">
+        <h1 class="text-foreground text-2xl/tight font-semibold wrap-break-word">
             {initialValues.name}
         </h1>
     </div>
@@ -85,22 +85,22 @@
         />
     {/if}
     {#if description}
-        <p class="text-foreground text-base/relaxed whitespace-pre-line">
+        <p class="text-foreground text-base/relaxed wrap-break-word whitespace-pre-line">
             {description}
         </p>
     {/if}
     {#if initialValues.installedPeriod || removalPeriod}
         <dl class="flex gap-4 text-sm">
             {#if initialValues.installedPeriod}
-                <div class="flex-1">
+                <div class="min-w-0 flex-1">
                     <dt class="text-muted-foreground">Появилась</dt>
-                    <dd>{initialValues.installedPeriod}</dd>
+                    <dd class="wrap-break-word">{initialValues.installedPeriod}</dd>
                 </div>
             {/if}
             {#if removalPeriod}
-                <div class="flex-1">
+                <div class="min-w-0 flex-1">
                     <dt class="text-muted-foreground">Пропала</dt>
-                    <dd>{removalPeriod}</dd>
+                    <dd class="wrap-break-word">{removalPeriod}</dd>
                 </div>
             {/if}
         </dl>
@@ -111,10 +111,12 @@
                 href={initialValues.source}
                 target="_blank"
                 rel="noopener noreferrer nofollow"
-                class="text-primary hover:text-primary/90 inline-flex items-center gap-1 text-sm hover:underline"
+                class="text-primary hover:text-primary/90 relative inline-flex max-w-full items-center gap-1 text-sm hover:underline pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:top-1/2 pointer-coarse:after:h-11 pointer-coarse:after:-translate-y-1/2"
             >
-                {sourceHost ? `Источник · ${sourceHost}` : 'Источник'}
-                <ExternalLinkIcon class="ml-1 size-3.5" />
+                <span class="truncate">
+                    {sourceHost ? `Источник · ${sourceHost}` : 'Источник'}
+                </span>
+                <ExternalLinkIcon class="ml-1 size-3.5 shrink-0" />
             </a>
         </div>
     {/if}

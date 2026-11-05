@@ -3,11 +3,21 @@
     import type {HTMLAnchorAttributes, HTMLButtonAttributes} from 'svelte/elements';
     import {type VariantProps, tv} from 'tailwind-variants';
 
+    const coarseHitArea =
+        'relative pointer-coarse:after:absolute pointer-coarse:after:top-1/2 pointer-coarse:after:left-1/2 pointer-coarse:after:size-full pointer-coarse:after:min-h-11 pointer-coarse:after:min-w-11 pointer-coarse:after:-translate-1/2';
+
     export const buttonVariants = tv({
-        base: "focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl font-medium text-base outline-none transition-all focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+        base: [
+            coarseHitArea,
+            "focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl font-medium text-base outline-none transition-all focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+        ],
         variants: {
             variant: {
-                default: 'bg-primary text-primary-foreground shadow-xs hover:bg-primary/90',
+                default: [
+                    'bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 disabled:opacity-100 aria-disabled:opacity-100',
+                    'disabled:not-aria-busy:bg-muted disabled:not-aria-busy:text-muted-foreground/60 disabled:not-aria-busy:shadow-none',
+                    'aria-disabled:not-aria-busy:bg-muted aria-disabled:not-aria-busy:text-muted-foreground/60 aria-disabled:not-aria-busy:shadow-none',
+                ],
                 destructive:
                     'bg-destructive shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60 text-white',
                 outline:

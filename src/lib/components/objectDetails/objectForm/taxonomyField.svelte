@@ -10,6 +10,7 @@
     import {cn} from '$lib/utils.js';
     import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
     import {useConvexClient} from 'convex-svelte';
+    import {tick} from 'svelte';
 
     type Section = 'category' | 'tags' | 'privateTags';
 
@@ -34,6 +35,7 @@
     }: Props = $props();
 
     let isOpen = $state(false);
+    let opener = $state<HTMLButtonElement>();
 
     const categories = $derived(
         Object.values(categoriesState.categories)
@@ -45,7 +47,9 @@
         privateTagsState.privateTags.map(tag => ({id: tag.id, name: tag.name})),
     );
 
-    const selectedCategory = $derived(categories.find(item => item.id === category));
+    const selectedCategory = $derived(
+        category ? categoriesState.categories[category as Id<'categories'>] : undefined,
+    );
     const selectedTags = $derived(tagOptions.filter(item => tags.includes(item.id)));
     const selectedPrivateTags = $derived(
         privateTagOptions.filter(item => privateTags.includes(item.id)),
@@ -60,6 +64,12 @@
         privateTags: name => client.mutation(api.privateTags.create, {name}),
     };
 
+    async function closeSheet() {
+        isOpen = false;
+        await tick();
+        opener?.focus();
+    }
+
     function removeTag(id: string) {
         tags = tags.filter(item => item !== id);
     }
@@ -71,7 +81,7 @@
 
 <div
     class={cn(
-        'border-input bg-background/50 dark:bg-background/30 relative flex min-h-12 w-full items-center gap-2 rounded-md border px-3 py-2 text-left',
+        'border-input bg-background/50 dark:bg-background/30 relative flex min-h-12 w-full items-start gap-2 rounded-xl border px-3 py-2.25 text-left',
         'focus-within:border-primary focus-within:ring-primary/30 focus-within:ring-4 dark:focus-within:ring-2',
         error && 'border-destructive',
     )}
@@ -80,15 +90,16 @@
          still opens the sheet, which a <button> wrapping them could not do. -->
     <button
         {...controlProps}
+        bind:this={opener}
         type="button"
         {disabled}
         onclick={() => (isOpen = true)}
         aria-label="Выбрать категорию и теги"
-        class="absolute inset-0 rounded-md"
+        class="absolute inset-0 rounded-xl"
     ></button>
     <span
         class={cn(
-            'pointer-events-none relative flex min-w-0 flex-1 flex-wrap items-center gap-2',
+            'pointer-events-none relative flex min-h-7 min-w-0 flex-1 flex-wrap items-center gap-2 pointer-coarse:gap-y-4',
             !disabled && '[&_button]:pointer-events-auto',
         )}
     >
@@ -96,7 +107,7 @@
             <CategoryBadge
                 name={selectedCategory.name}
                 categoryId={selectedCategory.id as Id<'categories'>}
-                size="sm"
+                nameClass="text-foreground text-base"
             />
         {/if}
         {#each selectedTags as tag (tag.id)}
@@ -111,10 +122,12 @@
             />
         {/each}
         {#if isEmpty}
-            <span class="text-muted-foreground/40 text-base">Не выбраны</span>
+            <span class="text-muted-foreground text-base">Выберите категорию</span>
         {/if}
     </span>
-    <ChevronDownIcon class="pointer-events-none relative size-4 shrink-0 opacity-50" />
+    <span class="pointer-events-none relative flex h-7 shrink-0 items-center">
+        <ChevronDownIcon class="size-4 opacity-50" />
+    </span>
 </div>
 
 <input type="hidden" name="category" value={category ?? ''} />
@@ -138,6 +151,6 @@
         bind:tags
         bind:privateTags
         onCreate={(section, name) => creators[section](name)}
-        onClose={() => (isOpen = false)}
+        onClose={closeSheet}
     />
 {/if}

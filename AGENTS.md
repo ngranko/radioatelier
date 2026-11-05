@@ -8,4 +8,4 @@ Follow SOLID, DRY and KISS principles in your work. Don't create huge god-files.
 
 Delete unused or obsolete files when your changes make them irrelevant (refactors, feature removals, etc.), and revert files only when the change is yours or explicitly requested. If a git operation leaves you unsure about other agents' in-flight work, stop and coordinate instead of deleting.
 
-Do not write too much code, keep your changes succinct while still fully achieving the required result.
+Do not write too much code, keep your changes succinct while still fully achieving the required result. Avoid scope creep, it's better to ask about nice-to-haves than to end up with 5000 LoC PR in the end

@@ -33,7 +33,7 @@
 
 <div class="mb-10 text-center">
     <Logo class="mb-4 flex items-center justify-center gap-3 text-3xl" />
-    <p class="text-muted-foreground/70 text-sm tracking-wide">Обновление пароля</p>
+    <p class="text-muted-foreground text-sm tracking-wide">Обновление пароля</p>
 </div>
 
 <div class="space-y-6">
