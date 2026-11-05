@@ -1,4 +1,5 @@
 import type {LooseObject, MapPlaceable, Object, PointPreviewDetails} from '$lib/interfaces/object';
+import {usesSidePanelOffset} from '$lib/services/map/detailsFocusOffset';
 import {untrack} from 'svelte';
 
 export type ObjectDetailsOverlayMode = 'objectView' | 'objectEdit' | 'pointPreview' | 'pointCreate';
@@ -94,6 +95,29 @@ function resolveSwitchPosition(): ObjectDetailsOverlayPosition {
     );
 }
 
+function resolvePointPosition(id: string): ObjectDetailsOverlayPosition {
+    return untrack(() => {
+        if (overlay.isOpen && overlay.detailsId === id) {
+            return overlay.position;
+        }
+        return isSidePanelLayout() ? resolveSwitchPosition() : 'peek';
+    });
+}
+
+function isSidePanelLayout() {
+    return typeof document === 'undefined' || usesSidePanelOffset(document.body.clientWidth);
+}
+
+export function showLoadingPointOverlay(id: string, position: MapPlaceable) {
+    transition({
+        isOpen: true,
+        isLoading: true,
+        detailsId: id,
+        details: position,
+        position: resolvePointPosition(id),
+    });
+}
+
 export function showLoadingDetailsOverlay(id: string, position?: MapPlaceable) {
     transition({
         isOpen: true,
@@ -134,6 +158,7 @@ export function showPointPreviewOverlay(
         isOpen: true,
         detailsId: id,
         mode: 'pointPreview',
+        position: resolvePointPosition(id),
         details: initialValues,
         pointDetails,
     });
