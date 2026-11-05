@@ -1,13 +1,10 @@
 <script lang="ts">
     import {Button} from '$lib/components/ui/button';
     import type {Permissions} from '$lib/interfaces/permissions';
-    import {getStreetView} from '$lib/services/map/streetView.svelte';
     import {enterEditMode, objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
-    import BinocularsIcon from '@lucide/svelte/icons/binoculars';
     import PenIcon from '@lucide/svelte/icons/pen';
-    import RouteIcon from '@lucide/svelte/icons/route';
     import UserPenIcon from '@lucide/svelte/icons/user-pen';
-    import {toast} from 'svelte-sonner';
+    import NavigationActions from './navigationActions.svelte';
     import ShareButton from './shareButton.svelte';
 
     interface Props {
@@ -26,22 +23,11 @@
         permissions = {canEditAll: true, canEditPersonal: true},
     }: Props = $props();
 
-    const routeUrl = $derived(
-        `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&dir_action=navigate`,
-    );
-
     function handleEditClick() {
         if (!objectDetailsOverlay.detailsId) {
             return;
         }
         enterEditMode();
-    }
-
-    function handleStreetViewClick() {
-        getStreetView(Number(lat), Number(lng)).catch(error => {
-            console.error(error);
-            toast.error('Нет панорамы для этой точки');
-        });
     }
 </script>
 
@@ -67,28 +53,7 @@
             <UserPenIcon class="fill-current" />
         </Button>
     {/if}
-    <Button
-        variant="ghost"
-        size="icon"
-        class="text-muted-foreground hover:text-foreground"
-        href={routeUrl}
-        target="_blank"
-        rel="noopener"
-        aria-label="Проложить маршрут"
-        title="Проложить маршрут"
-    >
-        <RouteIcon />
-    </Button>
-    <Button
-        variant="ghost"
-        size="icon"
-        class="text-muted-foreground hover:text-foreground"
-        onclick={handleStreetViewClick}
-        aria-label="Открыть панораму"
-        title="Открыть панораму"
-    >
-        <BinocularsIcon />
-    </Button>
+    <NavigationActions lat={Number(lat)} lng={Number(lng)} />
     {#if id}
         <ShareButton {id} {name} />
     {/if}

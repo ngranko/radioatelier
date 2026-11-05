@@ -12,6 +12,18 @@ export const MARKER_COLORS = [
 
 export type MarkerColor = (typeof MARKER_COLORS)[number];
 
+export const MARKER_COLOR_NAMES: Record<MarkerColor, string> = {
+    'oklch(0 0 0)': 'Чёрный',
+    'oklch(0.60 0.24 18)': 'Красный',
+    'oklch(0.73 0.22 45)': 'Оранжевый',
+    'oklch(0.72 0.22 95)': 'Жёлтый',
+    'oklch(0.65 0.27 145)': 'Зелёный',
+    'oklch(0.72 0.18 210)': 'Голубой',
+    'oklch(0.55 0.20 258)': 'Синий',
+    'oklch(0.53 0.24 310)': 'Фиолетовый',
+    'oklch(0.65 0.27 340)': 'Розовый',
+};
+
 export const MARKER_ICON_KEYS = [
     'activity',
     'anchor',
@@ -46,6 +58,39 @@ export const MARKER_ICON_KEYS = [
 ] as const;
 
 export type MarkerIconKey = (typeof MARKER_ICON_KEYS)[number];
+
+export const MARKER_ICON_NAMES: Record<MarkerIconKey, string> = {
+    activity: 'Пульс',
+    anchor: 'Якорь',
+    antenna: 'Антенна',
+    bookmark: 'Закладка',
+    cableCar: 'Канатная дорога',
+    cctv: 'Камера наблюдения',
+    crown: 'Корона',
+    flag: 'Флаг',
+    flame: 'Огонь',
+    flask: 'Колба',
+    footprints: 'Следы',
+    hammer: 'Молоток',
+    heart: 'Сердце',
+    hourglass: 'Песочные часы',
+    house: 'Дом',
+    lamp: 'Лампа',
+    landmark: 'Здание с колоннами',
+    library: 'Библиотека',
+    lightbulb: 'Лампочка',
+    martini: 'Коктейль',
+    milestone: 'Указатель',
+    mountain: 'Гора',
+    plane: 'Самолёт',
+    plug: 'Штепсель',
+    puzzle: 'Пазл',
+    rocket: 'Ракета',
+    shopping: 'Покупки',
+    trafficCone: 'Дорожный конус',
+    wrench: 'Гаечный ключ',
+    zap: 'Молния',
+};
 
 // The DOM glyph renders these classes and the sprite atlas reads its stroke and fill from them, so a
 // marker promoted from a sprite to a DOM element keeps its exact look.

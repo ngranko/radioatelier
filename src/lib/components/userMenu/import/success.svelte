@@ -1,5 +1,5 @@
 <script lang="ts">
-    import {Button} from '$lib/components/ui/button';
+    import {Button, buttonVariants} from '$lib/components/ui/button';
     import {DialogClose, DialogFooter} from '$lib/components/ui/dialog';
     import {importState, resetImportState} from '$lib/state/import.svelte.ts';
     import CheckCircleIcon from '@lucide/svelte/icons/check-circle';
@@ -71,7 +71,7 @@
         </div>
     {/if}
 </div>
-<DialogFooter class="gap-4">
-    <DialogClose>Закрыть</DialogClose>
+<DialogFooter class="gap-3 max-sm:*:h-11">
+    <DialogClose class={buttonVariants({variant: 'outline'})}>Закрыть</DialogClose>
     <Button onclick={handleReset}>Импортировать другой файл</Button>
 </DialogFooter>

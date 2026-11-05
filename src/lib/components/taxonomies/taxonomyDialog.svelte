@@ -1,13 +1,16 @@
 <script lang="ts">
     import {api} from '$convex/_generated/api';
+    import DialogHeading from '$lib/components/dialogHeading.svelte';
     import LoadingDots from '$lib/components/loadingDots.svelte';
+    import CloseConfirmDialog from '$lib/components/objectDetails/closeConfirmDialog.svelte';
     import RoutedDialog from '$lib/components/routedDialog.svelte';
     import TaxonomyRow from '$lib/components/taxonomies/taxonomyRow.svelte';
-    import {Content, Title, Footer} from '$lib/components/ui/dialog';
+    import {buttonVariants} from '$lib/components/ui/button';
+    import {Content, Footer} from '$lib/components/ui/dialog';
     import {DialogClose} from '$lib/components/ui/dialog/index.js';
     import {Input} from '$lib/components/ui/input';
+    import {List, Root as Tabs, TabsContent, Trigger} from '$lib/components/ui/tabs';
     import type {TaxonomyEntry, TaxonomyRowMode, TaxonomyType} from '$lib/interfaces/taxonomy';
-    import {cn} from '$lib/utils.js';
     import SearchIcon from '@lucide/svelte/icons/search';
     import TagsIcon from '@lucide/svelte/icons/tags';
     import {useQuery} from 'convex-svelte';
@@ -19,9 +22,9 @@
     let {isOpen = $bindable()}: Props = $props();
 
     const sections: {type: TaxonomyType; label: string; searchPlaceholder: string}[] = [
-        {type: 'category', label: 'категории', searchPlaceholder: 'Поиск категорий...'},
-        {type: 'tag', label: 'теги', searchPlaceholder: 'Поиск тегов...'},
-        {type: 'privateTag', label: 'приватные', searchPlaceholder: 'Поиск приватных тегов...'},
+        {type: 'category', label: 'Категории', searchPlaceholder: 'Поиск категорий...'},
+        {type: 'tag', label: 'Теги', searchPlaceholder: 'Поиск тегов...'},
+        {type: 'privateTag', label: 'Приватные', searchPlaceholder: 'Поиск приватных тегов...'},
     ];
 
     const currentUser = useQuery(api.users.current, {});
@@ -30,9 +33,9 @@
     let pickedType = $state<TaxonomyType>('category');
     let searchQuery = $state('');
     let activeRow = $state<{id: string; mode: TaxonomyRowMode} | null>(null);
-
-    // Without the shared vocabulary there is only one list to show, so the
-    // picked tab cannot lead anywhere but the private tags.
+    let draftName = $state('');
+    let isDiscardConfirmOpen = $state(false);
+    let pendingTransition = () => {};
     const isAdmin = $derived(currentUser.data?.role === 'admin');
     const activeType = $derived<TaxonomyType>(isAdmin ? pickedType : 'privateTag');
     // Left empty until the user resolves, so an admin never sees the private-tag
@@ -51,24 +54,57 @@
     const activeSection = $derived(sections.find(section => section.type === activeType)!);
     const listKeyByType = {category: 'categories', tag: 'tags', privateTag: 'privateTags'} as const;
     const entries = $derived<TaxonomyEntry[]>(taxonomies.data?.[listKeyByType[activeType]] ?? []);
+    const renamedId = $derived(activeRow?.mode === 'rename' ? activeRow.id : null);
     const visibleEntries = $derived.by(() => {
         const search = searchQuery.trim().toLowerCase();
         return search
-            ? entries.filter(entry => entry.name.toLowerCase().includes(search))
+            ? entries.filter(
+                  entry => entry.id === renamedId || entry.name.toLowerCase().includes(search),
+              )
             : entries;
     });
+    const hasPendingRename = $derived(
+        renamedId !== null && draftName.trim() !== entries.find(e => e.id === renamedId)?.name,
+    );
 
-    function pickSection(type: TaxonomyType) {
-        pickedType = type;
-        activeRow = null;
+    function confirmDiscardingRename(transition: () => void) {
+        if (hasPendingRename) {
+            pendingTransition = transition;
+            isDiscardConfirmOpen = true;
+        } else {
+            transition();
+        }
+    }
+
+    function discardRename() {
+        isDiscardConfirmOpen = false;
+        pendingTransition();
+    }
+
+    function pickSection(type: string) {
+        confirmDiscardingRename(() => {
+            pickedType = type as TaxonomyType;
+            activeRow = null;
+        });
     }
 
     // A row's pending action can settle after another row took over, and its
     // completion must not close that other row's editor.
-    function changeRowMode(id: string, mode: TaxonomyRowMode) {
-        if (mode !== 'view') {
-            activeRow = {id, mode};
-        } else if (activeRow?.id === id) {
+    function changeRowMode(entry: TaxonomyEntry, mode: TaxonomyRowMode) {
+        if (mode === 'view') {
+            if (activeRow?.id === entry.id) {
+                activeRow = null;
+            }
+            return;
+        }
+        confirmDiscardingRename(() => {
+            draftName = entry.name;
+            activeRow = {id: entry.id, mode};
+        });
+    }
+
+    function closeRemovalOnSearch() {
+        if (activeRow?.mode === 'remove') {
             activeRow = null;
         }
     }
@@ -76,7 +112,9 @@
     function closeActiveRowFirst(event: Event) {
         if (activeRow) {
             event.preventDefault();
-            activeRow = null;
+            confirmDiscardingRename(() => {
+                activeRow = null;
+            });
         }
     }
 
@@ -88,96 +126,77 @@
     });
 </script>
 
-<RoutedDialog bind:isOpen>
+<RoutedDialog bind:isOpen hasUnsavedChanges={hasPendingRename}>
     <Content
-        class="flex max-h-[85vh] flex-col overflow-hidden border-t-0 p-0 sm:max-w-lg"
+        class="flex max-h-[85vh] flex-col overflow-hidden border-t-0 p-0 max-sm:gap-0 sm:max-w-lg"
         onEscapeKeydown={closeActiveRowFirst}
     >
-        <div
-            class="from-primary via-primary/60 absolute inset-x-0 top-0 h-0.5 bg-linear-to-r to-transparent"
-        ></div>
-        <div class="relative shrink-0 px-6 pt-6 pb-4">
-            <div
-                class="from-primary/[0.07] via-primary/3 absolute inset-0 bg-linear-to-br to-transparent"
-            ></div>
-            <div class="relative flex items-center gap-3.5">
-                <div
-                    class="bg-primary/10 ring-primary/20 flex size-10 shrink-0 items-center justify-center rounded-xl ring-1"
-                >
-                    <TagsIcon class="text-primary size-4.5" />
-                </div>
-                <div>
-                    <Title class="min-h-7 text-lg font-semibold tracking-[-0.01em]">
-                        {heading?.title}
-                    </Title>
-                    <p class="text-muted-foreground mt-0.5 min-h-4 text-xs/snug">
-                        {heading?.hint}
-                    </p>
+        <DialogHeading icon={TagsIcon} title={heading?.title} hint={heading?.hint} />
+
+        <Tabs
+            bind:value={() => activeType, pickSection}
+            activationMode="manual"
+            class="min-h-0 grow gap-0"
+        >
+            <div class="shrink-0 space-y-3 px-6 pb-3 max-sm:pt-4">
+                {#if isAdmin}
+                    <List class="h-9 w-full pointer-coarse:h-11">
+                        {#each sections as section (section.type)}
+                            <Trigger value={section.type}>{section.label}</Trigger>
+                        {/each}
+                    </List>
+                {/if}
+                <div class="relative">
+                    <SearchIcon
+                        class="text-muted-foreground/50 pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2"
+                    />
+                    <Input
+                        type="text"
+                        placeholder={activeSection.searchPlaceholder}
+                        class="pl-10"
+                        bind:value={searchQuery}
+                        oninput={closeRemovalOnSearch}
+                    />
                 </div>
             </div>
-        </div>
 
-        <div class="shrink-0 space-y-3 px-6 pb-3">
-            {#if isAdmin}
-                <div class="flex gap-1">
-                    {#each sections as section (section.type)}
-                        <button
-                            type="button"
-                            onclick={() => pickSection(section.type)}
-                            class={cn(
-                                'flex-1 rounded-lg py-1.5 text-sm transition-colors',
-                                activeType === section.type
-                                    ? 'bg-primary text-primary-foreground'
-                                    : 'text-muted-foreground hover:bg-accent',
-                            )}
-                        >
-                            {section.label}
-                        </button>
-                    {/each}
-                </div>
-            {/if}
-            <div class="relative">
-                <SearchIcon
-                    class="text-muted-foreground/50 pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2"
-                />
-                <Input
-                    type="text"
-                    placeholder={activeSection.searchPlaceholder}
-                    class="pl-10"
-                    bind:value={searchQuery}
-                    oninput={() => (activeRow = null)}
-                />
-            </div>
-        </div>
+            <TabsContent value={activeType} class="min-h-0 overflow-y-auto px-3 pb-4">
+                {#each visibleEntries as entry (entry.id)}
+                    <TaxonomyRow
+                        {entry}
+                        type={activeType}
+                        siblings={entries}
+                        mode={activeRow?.id === entry.id ? activeRow.mode : 'view'}
+                        bind:draftName
+                        onModeChange={mode => changeRowMode(entry, mode)}
+                    />
+                {:else}
+                    <div class="text-muted-foreground px-3 py-8 text-center text-sm">
+                        {#if taxonomies.error}
+                            Не удалось загрузить список
+                        {:else if taxonomies.isLoading}
+                            <LoadingDots />
+                        {:else if entries.length > 0}
+                            Ничего не найдено
+                        {:else if activeType === 'privateTag'}
+                            Приватных тегов пока нет. Они создаются в форме объекта.
+                        {:else}
+                            Здесь пока пусто
+                        {/if}
+                    </div>
+                {/each}
+            </TabsContent>
+        </Tabs>
 
-        <div class="min-h-0 grow overflow-y-auto px-3 pb-4">
-            {#each visibleEntries as entry (entry.id)}
-                <TaxonomyRow
-                    {entry}
-                    type={activeType}
-                    siblings={entries}
-                    mode={activeRow?.id === entry.id ? activeRow.mode : 'view'}
-                    onModeChange={mode => changeRowMode(entry.id, mode)}
-                />
-            {:else}
-                <div class="text-muted-foreground px-3 py-8 text-center text-sm">
-                    {#if taxonomies.error}
-                        Не удалось загрузить список
-                    {:else if taxonomies.isLoading}
-                        <LoadingDots />
-                    {:else if entries.length > 0}
-                        Ничего не найдено
-                    {:else if activeType === 'privateTag'}
-                        Приватных тегов пока нет. Они создаются в форме объекта.
-                    {:else}
-                        Здесь пока пусто
-                    {/if}
-                </div>
-            {/each}
-        </div>
-
-        <Footer class="border-border/50 bg-muted/20 shrink-0 gap-3 border-t px-6 py-4">
-            <DialogClose>Закрыть</DialogClose>
+        <Footer
+            class="border-border/50 bg-muted/20 shrink-0 gap-3 border-t px-6 py-3 max-sm:grid max-sm:auto-cols-fr max-sm:grid-flow-col max-sm:*:h-11 sm:py-4"
+        >
+            <DialogClose class={buttonVariants({variant: 'outline'})}>Закрыть</DialogClose>
         </Footer>
     </Content>
+    <CloseConfirmDialog
+        bind:open={isDiscardConfirmOpen}
+        title="Вы действительно хотите закрыть переименование?"
+        onConfirmClose={discardRename}
+    />
 </RoutedDialog>

@@ -1,16 +1,6 @@
 <script lang="ts">
-    import {
-        Root as AlertDialogRoot,
-        Trigger,
-        Content,
-        Header,
-        Title,
-        Description,
-        Footer,
-        Cancel,
-        Action,
-    } from '$lib/components/ui/alert-dialog';
-    import {Button, buttonVariants} from '$lib/components/ui/button';
+    import CloseConfirmDialog from '$lib/components/objectDetails/closeConfirmDialog.svelte';
+    import {Button} from '$lib/components/ui/button';
 
     interface Props {
         isConfirmationRequired?: boolean;
@@ -18,24 +8,17 @@
     }
 
     let {isConfirmationRequired = false, onClick}: Props = $props();
+
+    let isConfirmOpen = $state(false);
+
+    function goBack() {
+        if (isConfirmationRequired) {
+            isConfirmOpen = true;
+            return;
+        }
+        onClick();
+    }
 </script>
 
-{#if isConfirmationRequired}
-    <AlertDialogRoot>
-        <Trigger type="button" class={buttonVariants({variant: 'ghost'})}>Назад</Trigger>
-        <Content>
-            <Header>
-                <Title>Вы действительно хотите выйти из редактирования точки?</Title>
-                <Description>Изменения не будут сохранены</Description>
-            </Header>
-            <Footer>
-                <Cancel>Отменить</Cancel>
-                <Action class="bg-destructive hover:bg-destructive/70" onclick={onClick}>
-                    Закрыть
-                </Action>
-            </Footer>
-        </Content>
-    </AlertDialogRoot>
-{:else}
-    <Button variant="ghost" onclick={onClick}>Назад</Button>
-{/if}
+<Button variant="ghost" onclick={goBack}>Назад</Button>
+<CloseConfirmDialog bind:open={isConfirmOpen} onConfirmClose={onClick} />

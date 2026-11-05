@@ -164,7 +164,13 @@
     </div>
 
     <div class="flex flex-col gap-3 pt-1">
-        <Button type="submit" size="lg" class="w-full" disabled={$submitting}>
+        <Button
+            type="submit"
+            size="lg"
+            class="w-full"
+            disabled={$submitting}
+            aria-busy={$submitting}
+        >
             {#if $submitting}
                 <LoadingDots />
             {:else}
