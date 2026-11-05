@@ -10,11 +10,12 @@ export type ZoomGestureOptions = {
     tap(point: Point): void;
 };
 
-const TAP_SLOP = 6;
+const MAX_TAP_TRAVEL = 6;
 const DOUBLE_TAP_SCALE = 2.5;
-const WHEEL_ZOOM_RATE = 0.002;
-// Browsers report a trackpad pinch as ctrl+wheel, with far smaller deltas than a real wheel.
-const PINCH_WHEEL_ZOOM_RATE = 0.01;
+const MOUSE_WHEEL_ZOOM_RATE = 0.002;
+// Browsers report a trackpad pinch as ctrl+wheel with deltas several times smaller than a
+// mouse wheel's, so each unit of a pinch zooms more for both to feel equally fast.
+const TRACKPAD_PINCH_ZOOM_RATE = 0.01;
 
 function locateEvent(event: MouseEvent): Point {
     return {x: event.clientX, y: event.clientY};
@@ -114,7 +115,8 @@ export class ZoomGestures {
         }
     };
 
-    // the system took the pointer away (e.g. an iOS edge swipe), so an unfinished pull must not dismiss
+    // The system took the pointer away (e.g. an iOS edge swipe). Unlike a lift, that is not the
+    // user letting go, so a pulled image eases back into place instead of being judged for dismissal.
     private handleCancel = (event: PointerEvent) => {
         this.pointers.delete(event.pointerId);
         this.pulled = 0;
@@ -124,15 +126,17 @@ export class ZoomGestures {
     private handleWheel = (event: WheelEvent) => {
         event.preventDefault();
         const view = this.options.getView();
-        const rate = event.ctrlKey ? PINCH_WHEEL_ZOOM_RATE : WHEEL_ZOOM_RATE;
+        const rate = event.ctrlKey ? TRACKPAD_PINCH_ZOOM_RATE : MOUSE_WHEEL_ZOOM_RATE;
         const scale = view.scale * Math.exp(-event.deltaY * rate);
         const anchor = this.measureFromCentre(locateEvent(event));
 
         this.options.show(zoomAround(view, scale, anchor, this.options.getFrame()));
     };
 
+    // Browsers fire a click at the end of a drag or pinch as well, so only a pointer
+    // that barely moved counts as a tap.
     private handleClick = (event: MouseEvent) => {
-        if (this.travelled <= TAP_SLOP) {
+        if (this.travelled <= MAX_TAP_TRAVEL) {
             this.options.tap(locateEvent(event));
         }
     };
