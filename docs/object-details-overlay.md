@@ -35,7 +35,7 @@ Height is independent of mode.
 
 ## Map and search selection
 
-1. An authenticated map click sets the draft position and opens a loading overlay.
+1. An authenticated map click with the panel closed sets the draft position and opens a loading overlay.
 2. `buildPointUrl` in `src/lib/utils/pointRoute.ts` creates the `/point` URL.
 3. The server loader resolves address or Place details while the overlay shows address loading state.
 4. `point/+page.svelte` merges route data with any selected search-point data and opens preview or preserves create mode.
@@ -85,7 +85,9 @@ Cancelling the native sheet returns `dismissed` and does not copy anything. Othe
 
 ## Unsaved changes and nested sheets
 
-`objectDetails.svelte` routes close-button, backdrop, and Escape requests through `requestClose`. Create and edit forms register a taint check; unsaved changes open `closeConfirmDialog.svelte` before discard.
+`objectDetails.svelte` routes close-button and Escape requests through `requestClose`. Create and edit forms register a taint check; unsaved changes open `closeConfirmDialog.svelte` before discard.
+
+The map stays interactive while the panel is open. A map tap closes the panel instead of placing a point, and a tap on another marker swaps the panel's contents, keeping a `peek` or `full` panel where it is. Both go through `utils/detailsExit.ts`, which hands the exit to the mounted panel so the same confirmation guards it; tapping the marker already shown does nothing.
 
 The taxonomy sheet uses the `data-details-sheet` portal target on the panel shell so its backdrop covers the header and form. Dismissing taxonomy keeps its live-bound selections in the parent form; saving the object persists them.
 
@@ -98,7 +100,7 @@ All components below live in `src/lib/components/objectDetails/`.
 | `objectDetails.svelte`                        | Coordinate modes, permissions, and close confirmation |
 | `detailsSheet.svelte`, `detailsHeader.svelte` | Panel shell, sizing, and header                       |
 | `detailsContent.svelte`                       | Select content for the active mode                    |
-| `background.svelte`, `closeButton.svelte`     | Request closure                                       |
+| `closeButton.svelte`                          | Request closure                                       |
 | `objectForm/`                                 | Editable fields, taxonomy, and delete control         |
 | `viewMode/`                                   | Read-only metadata, sharing, and Street View actions  |
 

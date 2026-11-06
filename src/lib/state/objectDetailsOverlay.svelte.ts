@@ -83,8 +83,19 @@ function transition(next: Partial<ObjectDetailsOverlay>) {
     overlay.pendingCoverFile = nextState.pendingCoverFile;
 }
 
+// Switching cards leaves a peeking sheet in place so the map stays in reach, but
+// reopens a minimized one at the default size, since its header alone would hide
+// the new contents.
+function resolveSwitchPosition(): ObjectDetailsOverlayPosition {
+    return untrack(() =>
+        overlay.isOpen && overlay.position !== 'minimized'
+            ? overlay.position
+            : defaultState().position,
+    );
+}
+
 export function showLoadingDetailsOverlay(id: string) {
-    transition({isOpen: true, isLoading: true, detailsId: id});
+    transition({isOpen: true, isLoading: true, detailsId: id, position: resolveSwitchPosition()});
 }
 
 export function showObjectDetailsOverlay(id: string, initialValues?: Object) {

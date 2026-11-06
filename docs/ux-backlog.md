@@ -106,27 +106,15 @@ Listed so the list stays reconstructable, not as work to redo.
   (`services/map/markerHover.ts`). The GPU renderer never mattered here: every
   row's pin is a search marker, and those are DOM markers in every renderer.
   The preview list has no pins, so it has nothing to highlight.
+- **An open card no longer locks the map.** The invisible backdrop is gone, so
+  the map pans and zooms under an open card. A tap on another marker swaps the
+  card's contents and keeps a peeking card at peek. A tap on empty map closes
+  the card without placing a point. Both go through the card's unsaved-changes
+  confirm (`utils/detailsExit.ts`).
 
 ---
 
 ## Map and the details card
-
-### An open card locks the map
-
-`src/lib/components/objectDetails/background.svelte` — an invisible
-`fixed inset-0` button covers the viewport whenever a card is open, so the map
-underneath cannot be panned, zoomed, or tapped. Reaching the next object costs
-a close, a pan, and a tap.
-
-Most of the plumbing for the alternative already exists: `showObjectDetailsOverlay`
-(`src/lib/state/objectDetailsOverlay.svelte.ts:83`) deliberately keeps the
-card's position and mode when it is already open, which is exactly what
-swapping contents under a standing card needs. The shape:
-
-- the map stays interactive while a card is open;
-- tapping another marker swaps the card's contents in place;
-- tapping empty map closes the card, with the existing confirm dialog still
-  guarding edit mode.
 
 ### Cards open full-height
 
@@ -144,11 +132,10 @@ swapping contents under a standing card needs. The shape:
 
 ### Every map tap creates a draft point
 
-`src/routes/(app)/+layout.svelte:53` — `handleMapClick` places a draft and
+`src/routes/(app)/+layout.svelte:62` — `handleMapClick` places a draft and
 navigates to `/point`, which geocodes server-side. A sloppy tap, or a tap meant
-to dismiss something, costs a draft plus a geocode call. Once the card no
-longer blocks the map, the tap rule needs to be explicit: a tap that dismisses
-a card must not also create a point.
+to dismiss something, costs a draft plus a geocode call. A tap that closes an
+open card already places nothing; a tap with no card open still always does.
 
 ## Search
 
