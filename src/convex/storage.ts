@@ -2,6 +2,7 @@ import {v} from 'convex/values';
 import {internal} from './_generated/api';
 import type {Doc, Id} from './_generated/dataModel';
 import {internalMutation, type MutationCtx} from './_generated/server';
+import {isImageInGallery} from './helpers/objectImages';
 
 const SWEEP_BATCH_SIZE = 100;
 // Uploads are stored before the object that references them is saved, so a
@@ -57,7 +58,7 @@ export const sweepUnusedFiles = internalMutation({
 });
 
 async function isImageReferenced(ctx: MutationCtx, image: Doc<'images'>) {
-    if (image.objectId && (await ctx.db.get('objects', image.objectId))) {
+    if (await isImageInGallery(ctx, image._id)) {
         return true;
     }
 

@@ -19,8 +19,8 @@
 
     let shown = $derived(Math.min(index, urls.length - 1));
 
-    function step(delta: number) {
-        const next = shown + delta;
+    function switchImage(direction: number) {
+        const next = shown + direction;
         if (next >= 0 && next < urls.length) {
             index = next;
         }
@@ -35,7 +35,11 @@
         >
             <DialogTitle class="sr-only">Просмотр изображения</DialogTitle>
             {#key urls[shown]}
-                <ZoomStage url={urls[shown]} onClose={() => (isOpen = false)} onStep={step} />
+                <ZoomStage
+                    url={urls[shown]}
+                    onClose={() => (isOpen = false)}
+                    onSwitchImage={switchImage}
+                />
             {/key}
             {#if urls.length > 1}
                 <span
@@ -46,7 +50,7 @@
                 <button
                     type="button"
                     class="{control} top-1/2 left-3 -translate-y-1/2"
-                    onclick={() => step(-1)}
+                    onclick={() => switchImage(-1)}
                     disabled={shown === 0}
                     aria-label="Предыдущее фото"
                 >
@@ -55,7 +59,7 @@
                 <button
                     type="button"
                     class="{control} top-1/2 right-3 -translate-y-1/2"
-                    onclick={() => step(1)}
+                    onclick={() => switchImage(1)}
                     disabled={shown === urls.length - 1}
                     aria-label="Следующее фото"
                 >

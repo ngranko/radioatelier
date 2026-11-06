@@ -56,17 +56,23 @@ export const mapPointTableFields = {
     ...mapPointCoreFields,
 };
 
-export const objectCoreFields = {
+// Form saves leave coverId out: the server takes the cover from the gallery
+// order rather than trusting an image id sent by the client.
+const objectFormFields = {
     name: v.string(),
     description: v.nullable(v.string()),
     installedPeriod: v.nullable(v.string()),
     isRemoved: v.boolean(),
     removalPeriod: v.nullable(v.string()),
     source: v.nullable(v.string()),
-    coverId: v.nullable(v.id('images')),
     categoryId: v.id('categories'),
     isPublic: v.boolean(),
     tagIds: v.array(v.id('tags')),
+};
+
+export const objectCoreFields = {
+    ...objectFormFields,
+    coverId: v.nullable(v.id('images')),
 };
 
 export type ObjectCoreData = Infer<ReturnType<typeof v.object<typeof objectCoreFields>>>;
@@ -80,7 +86,7 @@ export const objectTableFields = {
 };
 
 export const createObjectRecordFields = {
-    ...objectCoreFields,
+    ...objectFormFields,
     ...mapPointCoreFields,
     imageIds: v.array(v.id('images')),
     privateTags: v.array(v.id('privateTags')),
@@ -88,7 +94,7 @@ export const createObjectRecordFields = {
 };
 
 export const updateObjectRecordFields = {
-    ...objectCoreFields,
+    ...objectFormFields,
     ...mapPointAddressFields,
     imageIds: v.array(v.id('images')),
     privateTags: v.array(v.id('privateTags')),

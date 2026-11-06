@@ -1,6 +1,7 @@
 import type {Doc, Id} from '../_generated/dataModel';
 import type {MutationCtx} from '../_generated/server';
 import {removeVisitedForObject} from './objectHelpers';
+import {detachObjectImages} from './objectImages';
 
 type MapPointSearchFields = Pick<
     Doc<'mapPoints'>,
@@ -46,6 +47,7 @@ export async function deleteObjectAggregate(ctx: MutationCtx, object: Doc<'objec
     }
 
     await removeVisitedForObject(ctx, object._id);
+    await detachObjectImages(ctx, object._id);
     await ctx.db.delete('mapPoints', object.mapPointId);
     await ctx.db.delete('objects', object._id);
 }

@@ -240,7 +240,6 @@
     function showImages(next: ObjectImage[]) {
         images = next;
         $formData.images = next.map(image => image.id);
-        $formData.cover = next[0]?.id ?? null;
     }
 
     async function uploadImage(file: File) {
@@ -308,12 +307,11 @@
         {/if}
     </div>
     <div class="min-h-0 flex-1 overflow-x-hidden overflow-y-auto p-4">
-        <FormField {form} name="cover" class="mb-6">
+        <FormField {form} name="images" class="mb-6">
             <FormControl>
                 {#snippet children({props})}
                     <ImageUpload
                         {...props}
-                        value={$formData.cover}
                         bind:images={() => images, showImages}
                         bind:isUploading={isUploadingImage}
                         categoryId={$formData.category || null}
@@ -326,9 +324,6 @@
             <FormFieldErrors />
         </FormField>
 
-        {#each $formData.images as image (image)}
-            <input type="hidden" name="images" value={image} />
-        {/each}
         <Input type="hidden" name="id" bind:value={$formData.id} />
         <Input type="hidden" name="latitude" bind:value={$formData.latitude} />
         <Input type="hidden" name="longitude" bind:value={$formData.longitude} />

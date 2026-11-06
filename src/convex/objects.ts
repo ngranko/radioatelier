@@ -92,7 +92,7 @@ export const create = mutation({
             installedPeriod: data.installedPeriod ?? null,
             removalPeriod: data.removalPeriod ?? null,
             source: data.source ?? null,
-            coverId: data.coverId ?? null,
+            coverId: null,
             categoryId: data.categoryId,
             tagIds: data.tagIds,
             isPublic: data.isPublic,
@@ -144,7 +144,6 @@ export const update = mutation({
             await replaceObjectRecords(ctx, target, {
                 name: data.name,
                 description: data.description,
-                coverId: data.coverId,
                 categoryId: data.categoryId,
                 tagIds: data.tagIds,
                 isPublic: data.isPublic,

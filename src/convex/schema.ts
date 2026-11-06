@@ -23,13 +23,7 @@ export default defineSchema({
         // backfillImageOwners migration fills them in; rows it cannot resolve to
         // a single owner stay unset and locked against preview writes.
         createdById: v.optional(v.id('users')),
-        // Set when an Object is saved with the image in its gallery. A cover
-        // from before galleries existed (or from an import) has only the
-        // Object's coverId pointing at it.
-        objectId: v.optional(v.id('objects')),
-        position: v.optional(v.number()),
     })
-        .index('byObjectId', ['objectId'])
         .index('byOriginalStorageId', ['originalStorageId'])
         .index('byPreviewStorageId', ['previewStorageId']),
     geocodeLookupLeases: defineTable({
@@ -83,6 +77,15 @@ export default defineSchema({
         .index('byMysqlId', ['mysqlId'])
         .index('byCreatedById', ['createdById'])
         .index('byCoverId', ['coverId']),
+    // A cover from before galleries existed (or from an import) has no row
+    // here, only the Object's coverId pointing at it.
+    objectImages: defineTable({
+        objectId: v.id('objects'),
+        imageId: v.id('images'),
+        position: v.number(),
+    })
+        .index('byObjectIdAndPosition', ['objectId', 'position'])
+        .index('byImageId', ['imageId']),
     objectPrivateTags: defineTable({
         objectId: v.id('objects'),
         privateTagIds: v.array(v.id('privateTags')),

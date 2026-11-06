@@ -10,4 +10,4 @@ export const LIMITS = {
     source: 2048,
 } as const;
 
-export const MAX_OBJECT_IMAGES = 10;
+export const MAX_OBJECT_IMAGES = 3;

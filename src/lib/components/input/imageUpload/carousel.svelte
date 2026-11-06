@@ -6,14 +6,14 @@
 
     interface Props {
         images: ObjectImage[];
-        index?: number;
+        currentIndex?: number;
         /** Labels this image's slide, for the mode where the cover can be changed. */
         coverId?: string;
         disabled?: boolean;
         onOpen(): void;
     }
 
-    let {images, index = $bindable(0), coverId, disabled = false, onOpen}: Props = $props();
+    let {images, currentIndex = $bindable(0), coverId, disabled = false, onOpen}: Props = $props();
 
     const badge =
         'pointer-events-none absolute left-3 rounded-full bg-black/55 px-2 py-0.5 text-xs font-medium text-white';
@@ -21,9 +21,9 @@
         'text-foreground/80 absolute top-1/2 size-7 -translate-y-1/2 rounded-full opacity-0 shadow-sm group-hover/carousel:opacity-100 focus-visible:opacity-100 pointer-coarse:hidden';
 
     let strip: HTMLElement | undefined = $state();
-    let shown = $derived(Math.min(index, images.length - 1));
+    let shown = $derived(Math.min(currentIndex, images.length - 1));
 
-    // `index` only ever follows the scroll position, so a swipe, an arrow and
+    // `currentIndex` only ever follows the scroll position, so a swipe, an arrow and
     // a jump from outside cannot disagree about which slide is in view
     export function show(target: number, behavior: ScrollBehavior = 'smooth') {
         strip?.scrollTo({left: target * strip.clientWidth, behavior});
@@ -31,7 +31,7 @@
 
     function trackIndex() {
         if (strip) {
-            index = Math.round(strip.scrollLeft / strip.clientWidth);
+            currentIndex = Math.round(strip.scrollLeft / strip.clientWidth);
         }
     }
 </script>

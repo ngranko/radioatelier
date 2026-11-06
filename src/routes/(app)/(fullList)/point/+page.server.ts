@@ -75,7 +75,6 @@ export const actions: Actions = {
                     installedPeriod: d.installedPeriod ?? null,
                     removalPeriod: d.removalPeriod ?? null,
                     source: d.source ?? null,
-                    coverId: d.cover ?? null,
                     imageIds: d.images,
                     categoryId: d.category,
                     tagIds: d.tags,

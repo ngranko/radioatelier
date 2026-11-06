@@ -49,7 +49,6 @@
             <AddCoverButton categoryId={initialValues.category?.id} />
         {:else}
             <ImageUpload
-                value={initialValues.cover?.id}
                 onChange={() => {
                     /* do nothing */
                 }}

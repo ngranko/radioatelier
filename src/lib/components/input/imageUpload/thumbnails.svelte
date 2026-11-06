@@ -7,19 +7,21 @@
     interface Props {
         images: ObjectImage[];
         /** The image the carousel is showing. */
-        index: number;
+        currentIndex: number;
         disabled?: boolean;
-        onSelect(index: number): void;
+        onShowImage(position: number): void;
     }
 
-    let {images = $bindable(), index, disabled = false, onSelect}: Props = $props();
+    let {images = $bindable(), currentIndex, disabled = false, onShowImage}: Props = $props();
+
+    const ARROW_STEPS: Partial<Record<string, number>> = {ArrowLeft: -1, ArrowRight: 1};
 
     let draggedId: string | null = $state(null);
 
-    function place(id: string, target: number) {
-        const moved = images.find(image => image.id === id)!;
+    function moveImage(imageId: string, toPosition: number) {
+        const moved = images.find(image => image.id === imageId)!;
         const rest = images.filter(image => image !== moved);
-        images = rest.toSpliced(Math.max(0, target), 0, moved);
+        images = rest.toSpliced(Math.max(0, toPosition), 0, moved);
     }
 
     // The strip takes the capture rather than the thumbnail, because reordering
@@ -35,35 +37,37 @@
     }
 
     function handleMove(event: PointerEvent) {
-        const over = document
+        const hoveredThumbnail = document
             .elementFromPoint(event.clientX, event.clientY)
             ?.closest<HTMLElement>('[data-image-id]');
-        const target = images.findIndex(image => image.id === over?.dataset.imageId);
+        const hoveredPosition = images.findIndex(
+            image => image.id === hoveredThumbnail?.dataset.imageId,
+        );
 
-        if (draggedId && target >= 0 && images[target].id !== draggedId) {
-            place(draggedId, target);
+        if (draggedId && hoveredPosition >= 0 && images[hoveredPosition].id !== draggedId) {
+            moveImage(draggedId, hoveredPosition);
         }
     }
 
-    function handleLift() {
+    function handleDragEnd() {
         if (draggedId) {
-            onSelect(images.findIndex(image => image.id === draggedId));
+            onShowImage(images.findIndex(image => image.id === draggedId));
         }
         draggedId = null;
     }
 
     async function handleKeydown(event: KeyboardEvent, position: number) {
-        const step = {ArrowLeft: -1, ArrowRight: 1}[event.key];
+        const step = ARROW_STEPS[event.key];
         if (!step || disabled) {
             return;
         }
 
         event.preventDefault();
         const thumbnail = event.currentTarget as HTMLElement;
-        place(images[position].id, position + step);
+        moveImage(images[position].id, position + step);
         await tick();
         thumbnail.focus();
-        onSelect(Math.min(Math.max(0, position + step), images.length - 1));
+        onShowImage(Math.min(Math.max(0, position + step), images.length - 1));
     }
 </script>
 
@@ -73,8 +77,8 @@
     aria-label="Порядок фото: перетащите или сдвиньте стрелками, первое фото — обложка"
     onpointerdown={handlePress}
     onpointermove={handleMove}
-    onpointerup={handleLift}
-    onpointercancel={handleLift}
+    onpointerup={handleDragEnd}
+    onpointercancel={handleDragEnd}
 >
     {#each images as image, position (image.id)}
         <button
@@ -82,13 +86,13 @@
             data-image-id={image.id}
             class={cn(
                 'bg-muted relative size-12 cursor-grab touch-none overflow-hidden rounded-md border transition-[opacity,box-shadow] select-none',
-                position === index && 'ring-primary ring-2',
+                position === currentIndex && 'ring-primary ring-2',
                 image.id === draggedId && 'cursor-grabbing opacity-60',
             )}
-            onclick={() => onSelect(position)}
+            onclick={() => onShowImage(position)}
             onkeydown={event => handleKeydown(event, position)}
             aria-label="Фото {position + 1} из {images.length}"
-            aria-current={position === index}
+            aria-current={position === currentIndex}
         >
             <img
                 class="h-full w-full object-cover"

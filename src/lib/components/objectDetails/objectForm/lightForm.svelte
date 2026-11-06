@@ -123,7 +123,6 @@
     <div class="min-h-0 flex-1 overflow-x-hidden overflow-y-auto p-4">
         <div class="mb-3">
             <ImageUpload
-                value={initialValues.cover?.id}
                 onChange={() => {
                     /* do nothing */
                 }}
@@ -156,7 +155,6 @@
         <Input type="hidden" name="category" bind:value={$formData.category} />
         <Input type="hidden" name="isPublic" value={$formData.isPublic ? 'on' : ''} />
         <Input type="hidden" name="isRemoved" value={$formData.isRemoved ? 'on' : ''} />
-        <Input type="hidden" name="cover" bind:value={$formData.cover} />
         <Input type="hidden" name="description" bind:value={$formData.description} />
         <Input type="hidden" name="address" bind:value={$formData.address} />
         <Input type="hidden" name="city" bind:value={$formData.city} />
