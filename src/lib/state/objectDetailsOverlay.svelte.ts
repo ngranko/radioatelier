@@ -84,10 +84,13 @@ function transition(next: Partial<ObjectDetailsOverlay>) {
 }
 
 // Switching cards leaves a peeking sheet in place so the map stays in reach, but
-// expands a minimized one, whose header alone would hide the new contents.
+// reopens a minimized one at the default size, since its header alone would hide
+// the new contents.
 function resolveSwitchPosition(): ObjectDetailsOverlayPosition {
     return untrack(() =>
-        overlay.isOpen && overlay.position !== 'minimized' ? overlay.position : 'full',
+        overlay.isOpen && overlay.position !== 'minimized'
+            ? overlay.position
+            : defaultState().position,
     );
 }
 

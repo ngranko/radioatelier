@@ -1,26 +1,26 @@
 type DetailsExitGuard = (proceed?: () => void) => void;
 
-let guard: DetailsExitGuard | null = null;
+let activeGuard: DetailsExitGuard | null = null;
 
 // The open card owns the unsaved-changes check, so the map routes its exits
 // through whichever card is mounted instead of navigating past it.
-export function registerDetailsExitGuard(next: DetailsExitGuard): () => void {
-    guard = next;
+export function registerDetailsExitGuard(guard: DetailsExitGuard): () => void {
+    activeGuard = guard;
 
     return () => {
-        if (guard === next) {
-            guard = null;
+        if (activeGuard === guard) {
+            activeGuard = null;
         }
     };
 }
 
 export function requestDetailsClose() {
-    guard?.();
+    activeGuard?.();
 }
 
 export function requestDetailsSwitch(open: () => void) {
-    if (guard) {
-        guard(open);
+    if (activeGuard) {
+        activeGuard(open);
     } else {
         open();
     }

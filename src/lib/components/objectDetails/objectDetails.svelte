@@ -95,6 +95,7 @@
         proceed();
     }
 
+    // Click handlers pass their event along, which requestExit would take for `proceed`.
     function requestClose() {
         requestExit();
     }
