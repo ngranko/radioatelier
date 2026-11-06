@@ -25,11 +25,14 @@ interface BaseObject extends TaxonomlessObject {
     category: Category;
     tags: Tag[];
     privateTags: PrivateTag[];
-    cover: {
-        id: Id<'images'>;
-        url: string;
-        previewUrl: string;
-    } | null;
+    cover: ObjectImage | null;
+    images: ObjectImage[];
+}
+
+export interface ObjectImage {
+    id: Id<'images'>;
+    url: string;
+    previewUrl: string;
 }
 
 export interface Object extends BaseObject {

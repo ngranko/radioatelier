@@ -11,8 +11,10 @@ type MapPointFields = MapPointCoreData;
 
 export type ObjectRecordData = ObjectFields & MapPointFields;
 // Replace deliberately omits coordinates: the form edits fields in place,
-// while repositioning is a separate gesture that goes through `patch`.
-export type ObjectRecordReplace = ObjectFields & Omit<MapPointFields, 'latitude' | 'longitude'>;
+// while repositioning is a separate gesture that goes through `patch`. The
+// cover follows the gallery, which replaceObjectImages owns.
+export type ObjectRecordReplace = Omit<ObjectFields, 'coverId'> &
+    Omit<MapPointFields, 'latitude' | 'longitude'>;
 export type ObjectRecordPatch = Partial<ObjectRecordData>;
 
 const objectPatchKeys = Object.keys(objectCoreFields) as (keyof ObjectFields)[];

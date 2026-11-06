@@ -77,6 +77,15 @@ export default defineSchema({
         .index('byMysqlId', ['mysqlId'])
         .index('byCreatedById', ['createdById'])
         .index('byCoverId', ['coverId']),
+    // A cover from before galleries existed (or from an import) has no row
+    // here, only the Object's coverId pointing at it.
+    objectImages: defineTable({
+        objectId: v.id('objects'),
+        imageId: v.id('images'),
+        position: v.number(),
+    })
+        .index('byObjectIdAndPosition', ['objectId', 'position'])
+        .index('byImageId', ['imageId']),
     objectPrivateTags: defineTable({
         objectId: v.id('objects'),
         privateTagIds: v.array(v.id('privateTags')),

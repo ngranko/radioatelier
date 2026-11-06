@@ -5,6 +5,7 @@ import {internalQuery, mutation, query} from './_generated/server';
 import {buildObjectSearchRecord, deleteObjectAggregate} from './helpers/objectAggregate';
 import {loadObjectDetails} from './helpers/objectDetails';
 import {updateIsVisited} from './helpers/objectHelpers';
+import {replaceObjectImages} from './helpers/objectImages';
 import {loadObjectAggregate, loadObjectAggregates} from './helpers/objectReader';
 import {
     createObjectRecords,
@@ -91,7 +92,7 @@ export const create = mutation({
             installedPeriod: data.installedPeriod ?? null,
             removalPeriod: data.removalPeriod ?? null,
             source: data.source ?? null,
-            coverId: data.coverId ?? null,
+            coverId: null,
             categoryId: data.categoryId,
             tagIds: data.tagIds,
             isPublic: data.isPublic,
@@ -103,6 +104,7 @@ export const create = mutation({
             country: data.country,
         });
 
+        await replaceObjectImages(ctx, objectId, user._id, data.imageIds);
         await upsertPrivateTags(ctx, objectId, user._id, data.privateTags);
         if (data.isVisited) {
             await updateIsVisited(ctx, objectId, user._id, true);
@@ -142,7 +144,6 @@ export const update = mutation({
             await replaceObjectRecords(ctx, target, {
                 name: data.name,
                 description: data.description,
-                coverId: data.coverId,
                 categoryId: data.categoryId,
                 tagIds: data.tagIds,
                 isPublic: data.isPublic,
@@ -154,6 +155,7 @@ export const update = mutation({
                 city: data.city,
                 country: data.country,
             });
+            await replaceObjectImages(ctx, id, user._id, data.imageIds);
 
             // Non-owners only touch per-user state (private tags, visited), so
             // outbound sync stays untouched for them.

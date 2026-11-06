@@ -27,7 +27,8 @@
     interface Props {
         imageId: string;
         imageUrl: string;
-        onChange(url: string): void;
+        /** Gets the cropped image's id back, since the slide in view may change while it uploads. */
+        onChange(imageId: string, previewUrl: string): void;
     }
 
     const client = useConvexClient();
@@ -145,8 +146,8 @@
                 throw new Error('Не удалось определить область кадрирования');
             }
             const croppedFile = await createCroppedFile(imageUrl, currentPosition);
-            const {previewUrl} = await uploadPreview(croppedFile);
-            onChange(previewUrl);
+            const {id, previewUrl} = await uploadPreview(croppedFile);
+            onChange(id, previewUrl);
             isOpen = false;
         } catch (error) {
             console.error('Failed to update preview:', error);
