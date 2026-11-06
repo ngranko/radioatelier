@@ -24,8 +24,9 @@
         images = rest.toSpliced(Math.max(0, toPosition), 0, moved);
     }
 
-    // The strip takes the capture rather than the thumbnail, because reordering
-    // moves the thumbnail in the DOM and a moved node drops its capture.
+    // Capture the pointer on the strip, not on the pressed thumbnail: reordering
+    // re-inserts the thumbnail into the DOM, and the browser releases capture
+    // from a removed node, which would end the drag after the first swap.
     function handlePress(event: PointerEvent) {
         const thumbnail = (event.target as HTMLElement).closest<HTMLElement>('[data-image-id]');
         if (!thumbnail || disabled || event.button !== 0) {

@@ -73,7 +73,9 @@
         isUploading = true;
         try {
             for (const file of uploadable) {
-                await onChange(file);
+                // onChange reports its own failure, and one bad file should
+                // not cost the user the rest of the selection
+                await Promise.resolve(onChange(file)).catch(() => {});
             }
         } finally {
             isUploading = false;
@@ -84,9 +86,7 @@
 
     onMount(() => {
         if (initialFile) {
-            uploadFiles([initialFile]).catch(() => {
-                // onChange already reports upload failures through its toast.
-            });
+            uploadFiles([initialFile]);
         }
     });
 
@@ -141,7 +141,7 @@
                         <CropDialog
                             imageId={current.id}
                             imageUrl={current.url}
-                            onChange={url => handlePreviewChange(current.id, url)}
+                            onChange={handlePreviewChange}
                         />
                     {/key}
                 {/if}
