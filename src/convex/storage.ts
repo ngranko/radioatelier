@@ -1,7 +1,8 @@
 import {v} from 'convex/values';
 import {internal} from './_generated/api';
-import type {Doc, Id} from './_generated/dataModel';
+import type {Doc} from './_generated/dataModel';
 import {internalMutation, type MutationCtx} from './_generated/server';
+import {deleteUnusedImageFile} from './helpers/imageStorage';
 import {isImageInGallery} from './helpers/objectImages';
 
 const SWEEP_BATCH_SIZE = 100;
@@ -37,6 +38,7 @@ export const sweepUnusedImages = internalMutation({
 
 export const sweepUnusedFiles = internalMutation({
     args: {cursor: v.nullable(v.string())},
+    returns: v.null(),
     handler: async (ctx, {cursor}) => {
         const page = await ctx.db.system
             .query('_storage')
@@ -44,8 +46,8 @@ export const sweepUnusedFiles = internalMutation({
         const cutoff = Date.now() - GRACE_PERIOD_MS;
 
         for (const file of page.page) {
-            if (file._creationTime < cutoff && !(await isFileReferenced(ctx, file._id))) {
-                await ctx.storage.delete(file._id);
+            if (file._creationTime < cutoff) {
+                await deleteUnusedImageFile(ctx, file._id);
             }
         }
 
@@ -54,6 +56,7 @@ export const sweepUnusedFiles = internalMutation({
                 cursor: page.continueCursor,
             });
         }
+        return null;
     },
 });
 
@@ -67,20 +70,4 @@ async function isImageReferenced(ctx: MutationCtx, image: Doc<'images'>) {
         .withIndex('byCoverId', q => q.eq('coverId', image._id))
         .first();
     return cover !== null;
-}
-
-async function isFileReferenced(ctx: MutationCtx, fileId: Id<'_storage'>) {
-    const asOriginal = await ctx.db
-        .query('images')
-        .withIndex('byOriginalStorageId', q => q.eq('originalStorageId', fileId))
-        .first();
-    if (asOriginal) {
-        return true;
-    }
-
-    const asPreview = await ctx.db
-        .query('images')
-        .withIndex('byPreviewStorageId', q => q.eq('previewStorageId', fileId))
-        .first();
-    return asPreview !== null;
 }
