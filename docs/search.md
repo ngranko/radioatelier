@@ -23,15 +23,19 @@ Typesense searches name, address, city, country, and category. It filters to the
 
 Selecting an archive preview result focuses its marker and opens `/object/[id]`, using a loading overlay if the marker is not yet available. Selecting a Places or coordinate result opens `/point` with coordinates and an optional `placeId`.
 
-The expanded results panel has archive and Google tabs. Both use `searchResultsList.svelte` for loading, pagination, errors, and map pins. Selecting a full-list result focuses its location and invokes its registered marker click handler when available. An empty archive result offers a button to switch the same query to Google. Moving the map can offer an explicit area re-search through `searchArea.svelte.ts`.
+The expanded results panel has archive and Google tabs. `services/search/searchResults.svelte.ts` owns their request lifetime, cached pages, pagination, and map updates; `searchResultsList.svelte` renders the resulting state. Source and map adapters live in `searchResultsAdapters.ts`. Selecting a full-list result focuses its location and invokes its registered marker click handler when available. An empty archive result offers a button to switch the same query to Google. Moving the map can offer an explicit area re-search through `searchArea.svelte.ts`.
 
-`SearchItem`, `SearchPageSource`, and `SearchResultsPage` live in `src/lib/interfaces/object.ts`. The list treats each page cursor as opaque; the tab callback translates it to an offset or page token.
+Tabs load lazily and keep independent pages and cursors. A new query resets to the archive tab; a center-only re-search keeps the selected tab and resets both caches. Superseded responses are ignored. Inactive responses can fill their cache without changing pins or moving the map. Initial failures settle until the source is reactivated or another search starts; append failures retain the items and cursor for the next load-more attempt.
+
+`SearchItem`, `SearchPageSource`, and `SearchResultsPage` live in `src/lib/interfaces/object.ts`. The results module treats each page cursor as opaque; the source adapter translates it to an offset or page token.
 
 Search URLs use `/?q=<query>&lat=<latitude>&lng=<longitude>`. Valid query and center values restore the full results panel; see [Browser state](browser-state.md#url-and-transient-state).
 
 ## Map integration
 
 Results enter `searchPointList` and `fitMarkerList` frames them with panel padding. The app layout renders search pins as DOM markers. Selection shares the overlay's focus and zoom helper.
+
+A new search clears old pins and the searched-area baseline. Successful active results publish their pins, fit the map, then immediately capture that baseline, including for an empty result. Loading and failed requests do not record a searched area. Cached tab switches and successful appended pages use the same sequence.
 
 `selectSearchPoint` tracks a single temporary preview pin. If the selected item already belongs to the results list, closing the preview does not remove that list-owned pin. Selecting an existing object clears any temporary preview pin.
 
