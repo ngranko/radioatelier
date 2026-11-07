@@ -1,25 +1,15 @@
 <script lang="ts">
-    import {goto} from '$app/navigation';
-    import {page} from '$app/state';
     import {api} from '$convex/_generated/api';
     import type {Id} from '$convex/_generated/dataModel';
     import type {LatLngLiteral} from '$lib/interfaces/map';
     import type {MarkerIcon, MarkerSource} from '$lib/interfaces/marker';
-    import type {SearchPointListItem} from '$lib/interfaces/object';
     import {Marker as MarkerObject} from '$lib/services/map/marker';
     import {registerFocusableMarker} from '$lib/services/map/markerFocus';
     import {saveReposition} from '$lib/services/map/markerReposition';
     import type {MarkerIconKey} from '$lib/services/map/markerStyling.data';
+    import {selectObject, selectSearchResult} from '$lib/services/objectSelection';
     import {mapState} from '$lib/state/map.svelte';
-    import {
-        objectDetailsOverlay,
-        closeDetailsOverlay,
-        showLoadingDetailsOverlay,
-        showObjectDetailsOverlay,
-    } from '$lib/state/objectDetailsOverlay.svelte';
     import {searchPointList} from '$lib/state/searchPointList.svelte.ts';
-    import {requestDetailsSwitch} from '$lib/utils/detailsExit';
-    import {buildPointUrl} from '$lib/utils/pointRoute.ts';
     import {useConvexClient} from 'convex-svelte';
     import {onMount, onDestroy} from 'svelte';
 
@@ -102,7 +92,7 @@
 
     function resolveDetailsTargetId() {
         const searchPoint = searchPointId ? searchPointList[searchPointId] : null;
-        return searchPoint?.object.id ?? id ?? null;
+        return searchPoint?.object.id ?? id ?? searchPointId ?? null;
     }
 
     function createMarker() {
@@ -151,10 +141,6 @@
         if (mapState.markerManager && marker) {
             mapState.markerManager.removeMarker(markerId!, marker);
         }
-
-        if (objectDetailsOverlay.detailsId === activeTargetId) {
-            closeDetailsOverlay();
-        }
     });
 
     async function persistPosition(position: LatLngLiteral) {
@@ -170,35 +156,10 @@
 
     function handleMarkerClick() {
         const searchPoint = searchPointId ? searchPointList[searchPointId] : null;
-        const targetId = resolveDetailsTargetId();
-
-        if (targetId && page.params.id === targetId) {
-            // this is a case for anonymous users accessing a shared page
-            // the details are not set here because there is a workaround in the objectDetails.svelte
-            showObjectDetailsOverlay(targetId);
-            return;
+        if (searchPoint) {
+            selectSearchResult(searchPoint.object);
+        } else if (id) {
+            selectObject(id, {latitude: lat, longitude: lng});
         }
-
-        if (targetId) {
-            requestDetailsSwitch(() => openObject(targetId));
-        } else if (source === 'search' && searchPoint && searchPointId) {
-            requestDetailsSwitch(() => openSearchPoint(searchPointId, searchPoint));
-        }
-    }
-
-    function openObject(targetId: string) {
-        showLoadingDetailsOverlay(targetId);
-        goto(`/object/${targetId}`);
-    }
-
-    function openSearchPoint(pointId: string, {object}: SearchPointListItem) {
-        showLoadingDetailsOverlay(pointId);
-        goto(
-            buildPointUrl({
-                latitude: object.latitude,
-                longitude: object.longitude,
-                placeId: object.googlePlaceId,
-            }),
-        );
     }
 </script>
