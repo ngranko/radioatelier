@@ -95,7 +95,7 @@
     );
 </script>
 
-<div class="pointer-events-none fixed inset-0 z-2">
+<div class="pointer-events-none fixed inset-0 z-35">
     <div
         class={cn({
             'absolute inset-0 transition-opacity duration-150': true,
