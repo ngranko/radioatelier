@@ -85,6 +85,21 @@ describe('search results lifetime', () => {
         },
     );
 
+    it('retries only a failed active source, leaving Google untouched', async () => {
+        const {results, local, google} = createHarness();
+        vi.spyOn(console, 'error').mockImplementation(() => {});
+        local.mockRejectedValueOnce(new Error('offline'));
+        await results.startSearch(request);
+        expect(results.pages.local.isError).toBe(true);
+
+        await results.retry();
+        await results.retry();
+
+        expect(local).toHaveBeenCalledTimes(2);
+        expect(google).not.toHaveBeenCalled();
+        expect(results.pages.local).toMatchObject({isError: false, hasLoaded: true});
+    });
+
     it('ignores completions and commands after disposal', async () => {
         const {results, local, events} = createHarness();
         const response = Promise.withResolvers<SearchResultsPage>();

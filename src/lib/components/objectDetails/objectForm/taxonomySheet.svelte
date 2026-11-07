@@ -1,12 +1,14 @@
 <script lang="ts">
-    import type {Id} from '$convex/_generated/dataModel';
-    import CategoryBadge from '$lib/components/categoryBadge.svelte';
+    import TaxonomyOptionList, {
+        CREATE_ROW_ID,
+        optionElementId,
+    } from '$lib/components/objectDetails/objectForm/taxonomyOptionList.svelte';
+    import {Button} from '$lib/components/ui/button';
     import {Input} from '$lib/components/ui/input';
+    import * as Tabs from '$lib/components/ui/tabs';
     import type {Option} from '$lib/interfaces/option';
-    import {cn} from '$lib/utils.js';
     import CheckIcon from '@lucide/svelte/icons/check';
-    import PlusIcon from '@lucide/svelte/icons/plus';
-    import {Portal} from 'bits-ui';
+    import {Dialog} from 'bits-ui';
     import {tick} from 'svelte';
     import {toast} from 'svelte-sonner';
 
@@ -35,17 +37,22 @@
     }: Props = $props();
 
     const sections: {id: Section; label: string}[] = [
-        {id: 'category', label: 'категория'},
-        {id: 'tags', label: 'теги'},
-        {id: 'privateTags', label: 'приватные'},
+        {id: 'category', label: 'Категория'},
+        {id: 'tags', label: 'Теги'},
+        {id: 'privateTags', label: 'Приватные'},
     ];
+
+    const listId = $props.id();
 
     let section = $state<Section>('category');
     let query = $state('');
     let cursor = $state(0);
+    let isCursorSteered = $state(false);
     let isCreating = $state(false);
     let listElement = $state<HTMLElement>();
     let queryInput = $state<HTMLInputElement | null>(null);
+    let overlayElement = $state<HTMLElement | null>(null);
+    let contentElement = $state<HTMLElement | null>(null);
 
     const catalog = $derived.by(() => {
         switch (section) {
@@ -89,11 +96,18 @@
         );
     });
     const rowCount = $derived(matches.length + (canCreate ? 1 : 0));
+    const cursorRow = $derived(isCursorSteered || query.trim() ? cursor : undefined);
+    const cursorOptionId = $derived.by(() => {
+        if (cursorRow === undefined) {
+            return undefined;
+        }
+        return isCreateRow(cursorRow) ? CREATE_ROW_ID : optionAt(cursorRow)?.id;
+    });
     const summary = $derived.by(() => {
         if (section === 'category') {
-            return categories.find(item => item.id === category)?.name ?? 'ничего не выбрано';
+            return categories.find(item => item.id === category)?.name ?? 'Ничего не выбрано';
         }
-        return selectedIds.length ? `выбрано: ${selectedIds.length}` : 'ничего не выбрано';
+        return selectedIds.length ? `Выбрано: ${selectedIds.length}` : 'Ничего не выбрано';
     });
 
     function select(id: string) {
@@ -155,25 +169,57 @@
     }
 
     $effect(() => {
-        queryInput?.focus();
+        const card = contentElement?.parentElement;
+        if (!card || !overlayElement) {
+            return;
+        }
+        const covered = [...card.children].filter(
+            (child): child is HTMLElement =>
+                child instanceof HTMLElement &&
+                child !== overlayElement &&
+                child !== contentElement &&
+                !child.inert,
+        );
+        covered.forEach(element => (element.inert = true));
+        return () => covered.forEach(element => (element.inert = false));
     });
 
+    function focusQueryOnOpen(event: Event) {
+        event.preventDefault();
+        queryInput?.focus();
+    }
+
     function activate(row: number) {
-        if (canCreate && row === 0) {
+        if (isCreateRow(row)) {
             void create();
             return;
         }
-        const option = matches[canCreate ? row - 1 : row];
+        const option = optionAt(row);
         if (option) {
             apply(option.id);
         }
+    }
+
+    function optionAt(row: number): Option | undefined {
+        return matches[row];
+    }
+
+    function isCreateRow(row: number) {
+        return canCreate && row === matches.length;
     }
 
     function moveCursor(step: number) {
         if (rowCount === 0) {
             return;
         }
-        moveCursorTo((cursor + step + rowCount) % rowCount);
+        const next = cursorRow === undefined ? cursor : (cursor + step + rowCount) % rowCount;
+        isCursorSteered = true;
+        moveCursorTo(next);
+    }
+
+    function pointCursorAt(row: number) {
+        isCursorSteered = true;
+        cursor = row;
     }
 
     function moveCursorTo(row: number) {
@@ -187,16 +233,17 @@
             moveCursor(event.key === 'ArrowDown' ? 1 : -1);
         } else if (event.key === 'Enter') {
             event.preventDefault();
-            activate(cursor);
-        } else if (event.key === 'Escape') {
-            onClose();
+            if (cursorRow !== undefined) {
+                isCursorSteered = true;
+                activate(cursorRow);
+            }
         }
     }
 
     function switchTo(next: Section) {
         section = next;
         query = '';
-        returnToTop();
+        cursor = 0;
     }
 
     function returnToTop() {
@@ -205,143 +252,119 @@
     }
 
     function clearSection() {
-        switch (section) {
-            case 'category':
-                category = undefined;
-                break;
-            case 'tags':
-                tags = [];
-                break;
-            case 'privateTags':
-                privateTags = [];
-                break;
-            default:
-                break;
+        if (section === 'tags') {
+            tags = [];
+        } else if (section === 'privateTags') {
+            privateTags = [];
         }
     }
 </script>
 
-<!-- the sheet is portalled so that it dims the whole card, header row included -->
-<Portal to="[data-details-sheet]">
-    <div class="absolute inset-0 z-10 flex flex-col justify-end overflow-hidden rounded-2xl">
-        <button
-            type="button"
-            class="bg-foreground/20 absolute inset-0"
-            aria-label="Закрыть"
-            onclick={onClose}
-        ></button>
-        <div
-            class="bg-background relative flex max-h-[85%] min-h-0 flex-col rounded-t-2xl border-t shadow-2xl"
+<Dialog.Root open onOpenChange={open => !open && onClose()}>
+    <!-- portalled into the card so that it dims the whole card, header row included -->
+    <Dialog.Portal to="[data-details-sheet]">
+        <Dialog.Overlay
+            bind:ref={overlayElement}
+            class="bg-foreground/20 absolute inset-0 z-10 rounded-2xl"
+        />
+        <!-- data-slot marks it as an open layer, so Escape closes the sheet, not the card. The
+             height is fixed for every section and query because the sheet is anchored to the
+             bottom: fitting it to the list would move the tabs and the field under the finger -->
+        <Dialog.Content
+            bind:ref={contentElement}
+            data-slot="dialog-content"
+            preventScroll={false}
+            onOpenAutoFocus={focusQueryOnOpen}
+            class="bg-background absolute inset-x-0 bottom-0 z-10 flex h-[85%] flex-col rounded-2xl border-t shadow-2xl outline-none"
         >
             <div class="flex items-center gap-2 border-b px-4 py-3">
-                <span class="flex-1 text-base">категория и теги</span>
-                <button
-                    type="button"
+                <Dialog.Title class="flex-1 text-base">Категория и теги</Dialog.Title>
+                <Button
+                    variant="ghost"
+                    size="sm"
                     onclick={onClose}
-                    aria-label="Готово"
-                    class="text-muted-foreground hover:text-foreground rounded-sm p-0.5"
+                    class="text-primary hover:text-primary -my-1 -mr-2 rounded-lg text-sm"
                 >
-                    <CheckIcon class="size-5" />
-                </button>
+                    <CheckIcon />
+                    Готово
+                </Button>
             </div>
 
-            <div class="flex gap-1 p-2">
-                {#each sections as item (item.id)}
-                    <button
-                        type="button"
-                        onclick={() => switchTo(item.id)}
-                        class={cn(
-                            'flex-1 rounded-lg py-1.5 text-sm transition-colors',
-                            section === item.id
-                                ? 'bg-primary text-primary-foreground'
-                                : 'text-muted-foreground hover:bg-accent',
-                        )}
-                    >
-                        {item.label}
-                    </button>
-                {/each}
-            </div>
-
-            <div class="text-muted-foreground flex h-9 items-center gap-2 px-4 text-sm">
-                <span class="min-w-0 flex-1 truncate">{summary}</span>
-                {#if selectedIds.length > 0}
-                    <button
-                        type="button"
-                        onclick={clearSection}
-                        class="text-destructive shrink-0 underline-offset-4 hover:underline"
-                    >
-                        снять все
-                    </button>
-                {/if}
-            </div>
-
-            <div class="flex min-h-0 flex-1 flex-col gap-2 px-4 pb-4">
-                <Input
-                    type="text"
-                    placeholder="Поиск или новое имя..."
-                    autocomplete="off"
-                    autocorrect="off"
-                    spellcheck="false"
-                    data-1p-ignore
-                    data-lpignore="true"
-                    data-bwignore
-                    data-form-type="other"
-                    bind:ref={queryInput}
-                    bind:value={query}
-                    oninput={returnToTop}
-                    onkeydown={handleKeydown}
-                />
-                <div bind:this={listElement} class="-mx-1 min-h-0 flex-1 overflow-y-auto px-1">
-                    {#if canCreate}
-                        <button
-                            type="button"
-                            data-row="0"
-                            disabled={isCreating}
-                            onclick={create}
-                            onpointerenter={() => (cursor = 0)}
-                            class={cn(
-                                'text-primary flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm',
-                                cursor === 0 && 'bg-accent',
-                            )}
-                        >
-                            <PlusIcon class="size-3.5 shrink-0" />
-                            Создать «{query.trim()}»
-                        </button>
-                    {/if}
-                    {#each matches as option, index (option.id)}
-                        {@const row = canCreate ? index + 1 : index}
-                        {@const isSelected = selectedIds.includes(option.id)}
-                        <button
-                            type="button"
-                            data-row={row}
-                            onclick={() => apply(option.id)}
-                            onpointerenter={() => (cursor = row)}
-                            class={cn(
-                                'flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm',
-                                cursor === row && 'bg-accent',
-                                isSelected && 'font-medium',
-                            )}
-                        >
-                            <CheckIcon
-                                class={cn('size-3.5 shrink-0', !isSelected && 'opacity-0')}
-                            />
-                            {#if section === 'category'}
-                                <CategoryBadge
-                                    name={option.name}
-                                    categoryId={option.id as Id<'categories'>}
-                                    showName={false}
-                                    size="sm"
-                                />
-                            {/if}
-                            <span class="min-w-0 flex-1 wrap-break-word">{option.name}</span>
-                        </button>
-                    {:else}
-                        <p class="text-muted-foreground px-3 py-6 text-center text-sm">
-                            Не найдено
-                        </p>
+            <Tabs.Root
+                value={section}
+                onValueChange={value => switchTo(value as Section)}
+                class="min-h-0 flex-1 gap-0"
+            >
+                <Tabs.List class="mx-4 my-2 h-9 w-auto">
+                    {#each sections as item (item.id)}
+                        <Tabs.Trigger value={item.id} onclick={returnFocusToQuery}>
+                            {item.label}
+                        </Tabs.Trigger>
                     {/each}
-                </div>
-            </div>
-        </div>
-    </div>
-</Portal>
+                </Tabs.List>
+
+                <Tabs.Content value={section} class="flex min-h-0 flex-col">
+                    <div
+                        class="text-muted-foreground flex h-9 shrink-0 items-center gap-2 px-4 text-sm pointer-coarse:h-11"
+                    >
+                        <span class="min-w-0 flex-1 truncate">{summary}</span>
+                        {#if section !== 'category' && selectedIds.length > 0}
+                            <button
+                                type="button"
+                                onclick={clearSection}
+                                class="text-primary -mr-2 shrink-0 self-stretch rounded-md px-2 underline-offset-4 hover:underline"
+                            >
+                                Снять все
+                            </button>
+                        {/if}
+                    </div>
+
+                    <div class="flex min-h-0 flex-1 flex-col gap-2 px-4 pb-4">
+                        <Input
+                            type="text"
+                            class="shrink-0"
+                            placeholder="Поиск или новое имя..."
+                            autocomplete="off"
+                            autocorrect="off"
+                            spellcheck="false"
+                            data-1p-ignore
+                            data-lpignore="true"
+                            data-bwignore
+                            data-form-type="other"
+                            role="combobox"
+                            aria-controls={listId}
+                            aria-expanded="true"
+                            aria-autocomplete="list"
+                            aria-activedescendant={cursorOptionId &&
+                                optionElementId(listId, cursorOptionId)}
+                            bind:ref={queryInput}
+                            bind:value={query}
+                            oninput={returnToTop}
+                            onkeydown={handleKeydown}
+                        />
+                        {#if section === 'privateTags'}
+                            <p class="text-muted-foreground pt-1 text-sm">
+                                Приватные теги видны только вам
+                            </p>
+                        {/if}
+                        <TaxonomyOptionList
+                            id={listId}
+                            label={sections.find(item => item.id === section)?.label ?? ''}
+                            multiple={section !== 'category'}
+                            options={matches}
+                            {selectedIds}
+                            createName={canCreate ? query.trim() : undefined}
+                            {isCreating}
+                            withBadges={section === 'category'}
+                            cursor={cursorRow}
+                            bind:listElement
+                            onCreate={create}
+                            onPick={apply}
+                            onPoint={pointCursorAt}
+                        />
+                    </div>
+                </Tabs.Content>
+            </Tabs.Root>
+        </Dialog.Content>
+    </Dialog.Portal>
+</Dialog.Root>

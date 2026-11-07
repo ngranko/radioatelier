@@ -1,7 +1,6 @@
 <script lang="ts">
     import {goto} from '$app/navigation';
     import {page} from '$app/state';
-    import ThemeSwitcher from '$lib/components/themeSwitcher.svelte';
     import {Root as AvatarRoot, Fallback} from '$lib/components/ui/avatar';
     import {Button} from '$lib/components/ui/button';
     import {
@@ -12,6 +11,7 @@
         Separator as DropdownMenuSeparator,
         Item as DropdownMenuItem,
     } from '$lib/components/ui/dropdown-menu';
+    import ThemeMenuRow from '$lib/components/userMenu/themeMenuRow.svelte';
     import LogInIcon from '@lucide/svelte/icons/log-in';
     import UserRoundXIcon from '@lucide/svelte/icons/user-round-x';
 
@@ -47,9 +47,7 @@
                 Войти
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <div class="flex justify-center px-2 py-1.5">
-                <ThemeSwitcher />
-            </div>
+            <ThemeMenuRow />
         </Group>
     </DropdownMenuContent>
 </DropdownMenuRoot>

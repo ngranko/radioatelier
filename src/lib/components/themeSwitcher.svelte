@@ -1,14 +1,24 @@
+<script lang="ts" module>
+    import type {ThemePreference} from '$lib/state/theme.svelte';
+
+    export const themeLabels: Record<ThemePreference, string> = {
+        light: 'Светлая',
+        system: 'Системная',
+        dark: 'Тёмная',
+    };
+</script>
+
 <script lang="ts">
-    import {themeState, setTheme, type ThemePreference} from '$lib/state/theme.svelte';
+    import {themeState, setTheme} from '$lib/state/theme.svelte';
     import MoonIcon from '@lucide/svelte/icons/moon';
     import SunIcon from '@lucide/svelte/icons/sun';
     import SunMoonIcon from '@lucide/svelte/icons/sun-moon';
     import type {Component} from 'svelte';
 
-    const options: {value: ThemePreference; label: string; icon: Component<{class?: string}>}[] = [
-        {value: 'light', label: 'Светлая', icon: SunIcon},
-        {value: 'system', label: 'Системная', icon: SunMoonIcon},
-        {value: 'dark', label: 'Тёмная', icon: MoonIcon},
+    const options: {value: ThemePreference; icon: Component<{class?: string}>}[] = [
+        {value: 'light', icon: SunIcon},
+        {value: 'system', icon: SunMoonIcon},
+        {value: 'dark', icon: MoonIcon},
     ];
 </script>
 
@@ -21,9 +31,10 @@
         <button
             role="radio"
             aria-checked={themeState.preference === option.value}
-            aria-label={option.label}
+            aria-label={themeLabels[option.value]}
+            title={themeLabels[option.value]}
             onclick={() => setTheme(option.value)}
-            class="relative rounded-md px-2.5 py-1.5 transition-all duration-200
+            class="relative rounded-md px-2.5 py-1.5 transition-all duration-200 pointer-coarse:px-3.5 pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:inset-y-[calc(50%-22px)]
                 {themeState.preference === option.value
                 ? 'text-primary dark:text-primary bg-white shadow-sm dark:bg-white/15'
                 : 'text-foreground/60 hover:text-foreground/85 dark:text-white/55 dark:hover:text-white/80'}"

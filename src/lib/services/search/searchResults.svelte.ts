@@ -102,6 +102,13 @@ class SearchResults {
         return this.#loadPage(this.#activeSource, true);
     }
 
+    retry() {
+        if (this.#disposed || !this.#request || !this.#pages[this.#activeSource].isError) {
+            return Promise.resolve();
+        }
+        return this.#loadPage(this.#activeSource, false);
+    }
+
     dispose() {
         this.#disposed = true;
     }

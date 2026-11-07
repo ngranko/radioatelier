@@ -52,5 +52,7 @@ export function focusAdjacentResult(origin: HTMLElement, step: number): boolean 
 export async function focusSearchResults(origin: HTMLElement): Promise<void> {
     const scope = origin.closest('[data-search-scope]');
     await tick();
-    scope?.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]')?.focus();
+    scope
+        ?.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]')
+        ?.focus({focusVisible: false});
 }

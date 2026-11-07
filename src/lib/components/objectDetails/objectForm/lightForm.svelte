@@ -97,7 +97,7 @@
         },
     });
 
-    const {form: formData, errors, enhance, isTainted, submitting} = form;
+    const {form: formData, errors, enhance, isTainted, tainted, submitting} = form;
 
     onMount(() => registerCloseConfirmationCheck?.(() => isTainted()) ?? undefined);
 
@@ -113,7 +113,7 @@
 <form method="POST" action="?/savePersonal" class="flex min-h-0 flex-1 flex-col" use:enhance>
     <div class="bg-muted/40 flex items-center justify-between gap-3 border-b px-4 py-2.5">
         <Button type="submit" disabled={$submitting} class="px-6 text-base">Сохранить</Button>
-        <BackButton isConfirmationRequired={isTainted()} onClick={handleBack} />
+        <BackButton isConfirmationRequired={isTainted($tainted)} onClick={handleBack} />
     </div>
     <div class="min-h-0 flex-1 overflow-x-hidden overflow-y-auto p-4">
         <div class="mb-3">

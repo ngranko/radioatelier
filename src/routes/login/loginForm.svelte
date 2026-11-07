@@ -146,14 +146,20 @@
         {/if}
         <a
             href={buildForgotPasswordUrl()}
-            class="text-primary hover:text-primary/80 inline-flex items-center gap-1 text-sm font-medium transition-colors"
+            class="text-primary hover:text-primary/80 relative inline-flex items-center gap-1 text-sm font-medium transition-colors pointer-coarse:after:absolute pointer-coarse:after:-inset-x-2 pointer-coarse:after:-top-2 pointer-coarse:after:-bottom-4"
         >
             Забыли пароль?
         </a>
     </div>
 
     <div class="pt-2">
-        <Button type="submit" size="lg" class="w-full" disabled={$submitting}>
+        <Button
+            type="submit"
+            size="lg"
+            class="w-full"
+            disabled={$submitting}
+            aria-busy={$submitting}
+        >
             {#if $submitting}
                 <LoadingDots />
             {:else}

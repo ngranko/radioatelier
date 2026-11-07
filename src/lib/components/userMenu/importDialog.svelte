@@ -1,11 +1,7 @@
 <script lang="ts">
     import {goto} from '$app/navigation';
-    import {
-        Root as DialogRoot,
-        Content,
-        DialogHeader,
-        DialogTitle,
-    } from '$lib/components/ui/dialog';
+    import DialogHeading from '$lib/components/dialogHeading.svelte';
+    import {Root as DialogRoot, Content} from '$lib/components/ui/dialog';
     import CloseConfirmation from '$lib/components/userMenu/import/closeConfirmation.svelte';
     import Error from '$lib/components/userMenu/import/error.svelte';
     import PreviewImport from '$lib/components/userMenu/import/preview.svelte';
@@ -20,6 +16,7 @@
         ImportStepUpload,
     } from '$lib/interfaces/import.ts';
     import {importState, resetImportState} from '$lib/state/import.svelte.ts';
+    import FileInputIcon from '@lucide/svelte/icons/file-input';
 
     interface Props {
         isOpen: boolean;
@@ -60,10 +57,13 @@
 
 <!-- prettier-ignore -->
 <DialogRoot bind:open={getIsOpen, setIsOpen}>
-    <Content class="max-h-[95vh] flex flex-col">
-        <DialogHeader>
-            <DialogTitle>Импорт csv</DialogTitle>
-        </DialogHeader>
+    <Content class="max-h-[95vh] flex flex-col overflow-hidden border-t-0 pt-0">
+        <DialogHeading
+            icon={FileInputIcon}
+            title="Импорт CSV"
+            hint="Добавление точек на карту из таблицы"
+            class="-mx-6"
+        />
         {#if importState.step === ImportStepUpload}
             <UploadFile />
         {:else if importState.step === ImportStepPreview}
