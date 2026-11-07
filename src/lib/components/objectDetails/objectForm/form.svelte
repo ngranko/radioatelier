@@ -1,7 +1,6 @@
 <script lang="ts">
     import {goto} from '$app/navigation';
     import {page} from '$app/state';
-    import {api} from '$convex/_generated/api';
     import type {Id} from '$convex/_generated/dataModel';
     import ImageUpload from '$lib/components/input/imageUpload/index.svelte';
     import AddressLoadingIndicator from '$lib/components/objectDetails/objectForm/addressLoadingIndicator.svelte';
@@ -20,6 +19,7 @@
     import {Textarea} from '$lib/components/ui/textarea';
     import type {LooseObject, ObjectImage} from '$lib/interfaces/object';
     import {schema, toFormDefaults} from '$lib/schema/objectSchema.ts';
+    import {uploadImage} from '$lib/services/imageUpload';
     import {
         objectDetailsOverlay,
         returnToPointPreview,
@@ -232,7 +232,7 @@
 
     async function doImageChange(file: File) {
         const resizedFile = await resizeImage(file);
-        const image = await uploadImage(resizedFile);
+        const image = await uploadImage(client, resizedFile);
 
         showImages([...images, image]);
     }
@@ -240,17 +240,6 @@
     function showImages(next: ObjectImage[]) {
         images = next;
         $formData.images = next.map(image => image.id);
-    }
-
-    async function uploadImage(file: File) {
-        const uploadUrl = await client.mutation(api.images.generateUploadUrl, {});
-        const result = await fetch(uploadUrl, {
-            method: 'POST',
-            headers: {'Content-Type': file.type},
-            body: file,
-        });
-        const {storageId} = await result.json();
-        return client.mutation(api.images.create, {storageId});
     }
 
     function handleSaveSuccess(id: Id<'objects'>) {

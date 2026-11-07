@@ -1,5 +1,4 @@
 <script lang="ts">
-    import {api} from '$convex/_generated/api';
     import type {Id} from '$convex/_generated/dataModel';
     import {Button} from '$lib/components/ui/button';
     import {
@@ -9,6 +8,7 @@
         DialogTrigger,
     } from '$lib/components/ui/dialog';
     import {DialogClose} from '$lib/components/ui/dialog/index.js';
+    import {uploadImagePreview} from '$lib/services/imageUpload';
     import MinusIcon from '@lucide/svelte/icons/minus';
     import MoveIcon from '@lucide/svelte/icons/move';
     import PlusIcon from '@lucide/svelte/icons/plus';
@@ -57,28 +57,6 @@
 
     function nudgeZoom(delta: number) {
         zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom + delta));
-    }
-
-    async function uploadPreview(file: File) {
-        const uploadUrl = await client.mutation(api.images.generateUploadUrl, {});
-        const result = await fetch(uploadUrl, {
-            method: 'POST',
-            headers: {'Content-Type': file.type},
-            body: file,
-        });
-        if (!result.ok) {
-            throw new Error('Не удалось загрузить кадрированное изображение');
-        }
-
-        const {storageId} = (await result.json()) as {storageId?: Id<'_storage'>};
-        if (!storageId) {
-            throw new Error('Не удалось получить ID загруженного изображения');
-        }
-
-        return client.mutation(api.images.updatePreview, {
-            id: imageId as Id<'images'>,
-            storageId,
-        });
     }
 
     async function createCroppedFile(imageSourceUrl: string, area: CropArea): Promise<File> {
@@ -146,7 +124,11 @@
                 throw new Error('Не удалось определить область кадрирования');
             }
             const croppedFile = await createCroppedFile(imageUrl, currentPosition);
-            const {id, previewUrl} = await uploadPreview(croppedFile);
+            const {id, previewUrl} = await uploadImagePreview(
+                client,
+                imageId as Id<'images'>,
+                croppedFile,
+            );
             onChange(id, previewUrl);
             isOpen = false;
         } catch (error) {
