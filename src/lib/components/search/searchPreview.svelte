@@ -66,24 +66,24 @@
     >
         <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain">
             {#if isLoading}
-                <div class="divide-y divide-black/[0.04] dark:divide-white/[0.06]">
+                <div class="divide-y divide-black/4 dark:divide-white/6">
                     <SearchItemSkeleton />
                     <SearchItemSkeleton />
                     <SearchItemSkeleton />
                 </div>
             {:else if isError}
-                <div class="text-muted-foreground flex items-center gap-2.5 px-4 py-4 text-sm">
+                <div class="text-muted-foreground flex items-center gap-2.5 p-4 text-sm">
                     <CircleAlertIcon class="text-destructive/70 size-4" />
                     Что-то пошло не так
                 </div>
             {:else if results}
                 {#if results.items.length === 0}
-                    <div class="text-muted-foreground flex items-center gap-2.5 px-4 py-4 text-sm">
+                    <div class="text-muted-foreground flex items-center gap-2.5 p-4 text-sm">
                         <ZoomOutIcon class="size-4" />
                         Ничего не найдено
                     </div>
                 {:else}
-                    <div class="divide-y divide-black/[0.04] dark:divide-white/[0.06]">
+                    <div class="divide-y divide-black/4 dark:divide-white/6">
                         {#each results.items as object (getPreviewKey(object))}
                             <SearchPreviewItem {object} />
                         {/each}
@@ -91,7 +91,7 @@
                 {/if}
 
                 {#if results.hasMore}
-                    <div class="border-t border-black/[0.04] dark:border-white/[0.06]">
+                    <div class="border-t border-black/4 dark:border-white/6">
                         <LoadMoreButton onLoadMoreClick={handleLoadMoreClick} />
                     </div>
                 {/if}

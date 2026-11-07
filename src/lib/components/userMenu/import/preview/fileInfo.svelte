@@ -64,7 +64,7 @@
 <div class="bg-muted/50 space-y-2 rounded-lg border p-4">
     <div class="flex items-start justify-between">
         <div class="flex items-center gap-3">
-            <div class="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-md">
+            <div class="bg-primary/10 flex size-10 items-center justify-center rounded-md">
                 <FileSpreadsheetIcon class="text-primary size-6 stroke-2" />
             </div>
             <div>

@@ -89,7 +89,7 @@
                 data-slot="button-label"
                 class={cn(
                     face,
-                    loading ? `-translate-y-[115%] ${leaving}` : `translate-y-0 ${arriving}`,
+                    loading ? `translate-y-[-115%] ${leaving}` : `translate-y-0 ${arriving}`,
                 )}
             >
                 {@render children?.()}

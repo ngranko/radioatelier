@@ -14,7 +14,7 @@
                     <tr class="border-b last:border-0">
                         {#each row as cell, cellIndex (`cell-${rowIndex}-${cellIndex}`)}
                             <td
-                                class="text-muted-foreground max-w-40 overflow-hidden px-4 py-3 text-nowrap overflow-ellipsis"
+                                class="text-muted-foreground max-w-40 overflow-hidden px-4 py-3 text-nowrap text-ellipsis"
                             >
                                 {cell}
                             </td>

@@ -1,18 +1,18 @@
 <div class="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
     <div
-        class="absolute -inset-[30%] opacity-60 blur-[80px] [background:radial-gradient(800px_circle_at_20%_30%,oklch(0.75_0.15_195_/_0.25),transparent_50%),radial-gradient(600px_circle_at_80%_70%,oklch(0.70_0.12_260_/_0.20),transparent_50%),radial-gradient(500px_circle_at_50%_50%,oklch(0.80_0.10_180_/_0.15),transparent_55%)] dark:opacity-40"
+        class="absolute inset-[-30%] opacity-60 blur-[80px] [background:radial-gradient(800px_circle_at_20%_30%,oklch(0.75_0.15_195/0.25),transparent_50%),radial-gradient(600px_circle_at_80%_70%,oklch(0.70_0.12_260/0.20),transparent_50%),radial-gradient(500px_circle_at_50%_50%,oklch(0.80_0.10_180/0.15),transparent_55%)] dark:opacity-40"
     ></div>
 
     <div
-        class="[background-image:url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noise%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.85%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noise)%22/%3E%3C/svg%3E')] absolute inset-0 opacity-[0.03] dark:opacity-[0.04]"
+        class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20viewBox=%220%200%20200%20200%22%20xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter%20id=%22noise%22%3E%3CfeTurbulence%20type=%22fractalNoise%22%20baseFrequency=%220.85%22%20numOctaves=%223%22%20stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect%20width=%22100%25%22%20height=%22100%25%22%20filter=%22url(%23noise)%22/%3E%3C/svg%3E')] opacity-[0.03] dark:opacity-[0.04]"
     ></div>
 
     <div
-        class="absolute -inset-[15%] bg-[radial-gradient(closest-side_at_50%_50%,transparent_0%,var(--background)_100%)] opacity-40 dark:opacity-60"
+        class="absolute inset-[-15%] bg-[radial-gradient(closest-side_at_50%_50%,transparent_0%,var(--background)_100%)] opacity-40 dark:opacity-60"
     ></div>
 
     <svg
-        class="absolute inset-0 z-[1] h-full w-full [mask-image:radial-gradient(ellipse_70%_60%_at_50%_50%,black_0%,transparent_70%)] opacity-100 [-webkit-mask-image:radial-gradient(ellipse_70%_60%_at_50%_50%,black_0%,transparent_70%)] dark:opacity-70"
+        class="absolute inset-0 z-1 size-full mask-[radial-gradient(ellipse_70%_60%_at_50%_50%,black_0%,transparent_70%)] opacity-100 [-webkit-mask-image:radial-gradient(ellipse_70%_60%_at_50%_50%,black_0%,transparent_70%)] dark:opacity-70"
         preserveAspectRatio="xMidYMid slice"
         viewBox="0 0 100 100"
         focusable="false"

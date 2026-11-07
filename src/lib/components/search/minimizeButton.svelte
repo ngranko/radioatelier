@@ -12,7 +12,7 @@
 <Button
     variant="ghost"
     size="icon"
-    class="text-muted-foreground hover:text-foreground h-7 w-7 rounded-md"
+    class="text-muted-foreground hover:text-foreground size-7 rounded-md"
     onclick={handleMinimizeClick}
     aria-label={searchState.isResultsMinimized ? 'Развернуть' : 'Свернуть'}
 >

@@ -90,7 +90,7 @@
     aria-dropeffect="link"
 >
     <label class="flex cursor-pointer flex-col items-center justify-center gap-4 px-6 py-16">
-        <div class="bg-primary/10 flex h-16 w-16 items-center justify-center rounded-full">
+        <div class="bg-primary/10 flex size-16 items-center justify-center rounded-full">
             <FileSpreadsheetIcon class="text-primary size-6 stroke-2" />
         </div>
         <div class="space-y-2 text-center">

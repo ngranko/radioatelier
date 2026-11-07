@@ -13,7 +13,7 @@
 </script>
 
 <div
-    class="inline-flex items-center gap-0.5 rounded-lg bg-black/[0.06] p-0.5 dark:bg-white/[0.08]"
+    class="inline-flex items-center gap-0.5 rounded-lg bg-black/6 p-0.5 dark:bg-white/8"
     role="radiogroup"
     aria-label="Выбор темы"
 >

@@ -173,7 +173,7 @@
                 Кадрирование превью
             </DialogTitle>
             <DialogClose
-                class="flex h-7 w-7 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-black/5 hover:text-zinc-600 dark:text-zinc-500 dark:hover:bg-white/8 dark:hover:text-zinc-300"
+                class="flex size-7 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-black/5 hover:text-zinc-600 dark:text-zinc-500 dark:hover:bg-white/8 dark:hover:text-zinc-300"
                 disabled={isSubmitting}
             >
                 <XMarkIcon class="size-3.5 stroke-3" />
@@ -195,7 +195,7 @@
             <div class="flex items-center gap-3">
                 <button
                     type="button"
-                    class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-black/5 hover:text-zinc-600 dark:text-zinc-500 dark:hover:bg-white/8 dark:hover:text-zinc-300"
+                    class="flex size-7 shrink-0 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-black/5 hover:text-zinc-600 dark:text-zinc-500 dark:hover:bg-white/8 dark:hover:text-zinc-300"
                     onclick={() => nudgeZoom(-ZOOM_STEP)}
                     disabled={zoom <= MIN_ZOOM}
                     aria-label="Уменьшить"
@@ -219,7 +219,7 @@
 
                 <button
                     type="button"
-                    class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-black/5 hover:text-zinc-600 dark:text-zinc-500 dark:hover:bg-white/8 dark:hover:text-zinc-300"
+                    class="flex size-7 shrink-0 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-black/5 hover:text-zinc-600 dark:text-zinc-500 dark:hover:bg-white/8 dark:hover:text-zinc-300"
                     onclick={() => nudgeZoom(ZOOM_STEP)}
                     disabled={zoom >= MAX_ZOOM}
                     aria-label="Увеличить"

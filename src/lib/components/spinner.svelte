@@ -11,4 +11,4 @@
 
 <!-- transform-box defaults to view-box, so WebKit resolves transform-origin against the icon's
      24-unit viewBox: anything rendered smaller than 24px orbits instead of spinning in place -->
-<LoaderCircleIcon class={cn('origin-center animate-spin [transform-box:border-box]', className)} />
+<LoaderCircleIcon class={cn('origin-center animate-spin transform-border', className)} />

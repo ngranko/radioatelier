@@ -18,8 +18,8 @@
     aria-label="Фильтр по категориям и тегам"
     aria-expanded={markerFilterState.isOpen}
     class={cn(
-        'before:bg-foreground/15 absolute top-1/2 right-1 z-10 h-8 w-8 -translate-y-1/2 rounded-full transition-colors',
-        'before:absolute before:top-1.5 before:bottom-1.5 before:-left-1 before:w-px',
+        'before:bg-foreground/15 absolute top-1/2 right-1 z-10 size-8 -translate-y-1/2 rounded-full transition-colors',
+        'before:absolute before:inset-y-1.5 before:-left-1 before:w-px',
         count > 0
             ? 'text-primary hover:text-primary'
             : 'text-muted-foreground hover:text-foreground',

@@ -96,7 +96,7 @@
             aria-current={position === currentIndex}
         >
             <img
-                class="h-full w-full object-cover"
+                class="size-full object-cover"
                 src={image.previewUrl || image.url}
                 alt=""
                 draggable="false"

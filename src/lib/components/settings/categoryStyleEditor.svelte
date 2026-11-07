@@ -20,7 +20,7 @@
 
 <div
     class="group rounded-xl border p-3.5 transition-all duration-200 {isChanged
-        ? 'border-primary/30 bg-primary/[0.03] shadow-sm'
+        ? 'border-primary/30 bg-primary/3 shadow-sm'
         : 'border-border/60 bg-card hover:border-border'}"
 >
     <div class="flex items-center gap-3">
@@ -64,7 +64,7 @@
             </label>
         </div>
         {#if style.isHidden}
-            <p class="text-muted-foreground/70 mt-2 text-right text-xs leading-tight">
+            <p class="text-muted-foreground/70 mt-2 text-right text-xs/tight">
                 Не будет показана при выборе категории
             </p>
         {/if}

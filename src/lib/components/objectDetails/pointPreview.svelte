@@ -85,7 +85,7 @@
                 &middot; {details.categoryName}
             {/if}
         </div>
-        <h1 class="text-foreground text-2xl leading-tight font-semibold">{title}</h1>
+        <h1 class="text-foreground text-2xl/tight font-semibold">{title}</h1>
     </div>
 
     {#if details.address || details.city || details.country}

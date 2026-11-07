@@ -76,7 +76,7 @@
 {#if isSupported}
     <button
         class={cn([
-            'bg-map-control align-center absolute right-2.5 bottom-30 z-1 flex w-10 justify-center rounded-xs border-0 p-2.5 shadow-md transition-colors',
+            'bg-map-control absolute right-2.5 bottom-30 z-1 flex w-10 justify-center rounded-xs border-0 p-2.5 shadow-md transition-colors',
             {
                 'text-map-control-muted-foreground': !isEnabled,
                 'text-map-control-active-foreground': isEnabled,

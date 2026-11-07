@@ -140,11 +140,11 @@
 <RoutedDialog bind:isOpen>
     <Content class="overflow-hidden border-t-0 p-0 sm:max-w-md">
         <div
-            class="from-primary via-primary/60 absolute top-0 right-0 left-0 h-[2px] bg-gradient-to-r to-transparent"
+            class="from-primary via-primary/60 absolute inset-x-0 top-0 h-[2px] bg-linear-to-r to-transparent"
         ></div>
         <div class="relative px-6 pt-6 pb-4">
             <div
-                class="from-primary/[0.07] via-primary/[0.03] absolute inset-0 bg-gradient-to-br to-transparent"
+                class="from-primary/[0.07] via-primary/3 absolute inset-0 bg-linear-to-br to-transparent"
             ></div>
             <div class="relative flex items-center gap-3.5">
                 <div
@@ -191,7 +191,7 @@
                 </FormField>
             </div>
 
-            <div class="space-y-3.5 px-6 pt-4 pb-4">
+            <div class="space-y-3.5 px-6 py-4">
                 <FormField {form} name="password">
                     <FormControl>
                         {#snippet children({props})}
@@ -228,7 +228,7 @@
                     <FormControl>
                         {#snippet children({props})}
                             <label
-                                class="border-border bg-muted/50 hover:border-primary/30 hover:bg-primary/[0.04] flex cursor-pointer items-center gap-3 rounded-lg border px-3.5 py-3 shadow-xs transition-all select-none hover:shadow-sm"
+                                class="border-border bg-muted/50 hover:border-primary/30 hover:bg-primary/4 flex cursor-pointer items-center gap-3 rounded-lg border px-3.5 py-3 shadow-xs transition-all select-none hover:shadow-sm"
                             >
                                 <ShieldCheckIcon class="text-primary/60 size-4 shrink-0" />
                                 <span class="grow text-[13px] leading-snug">

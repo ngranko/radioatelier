@@ -139,7 +139,7 @@
                 />
             </div>
         {/if}
-        <h1 class="text-foreground mb-3 text-2xl leading-tight font-semibold">
+        <h1 class="text-foreground mb-3 text-2xl/tight font-semibold">
             {initialValues.name}
         </h1>
         {#if hasAnyFlag(flags)}

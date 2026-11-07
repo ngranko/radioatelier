@@ -8,7 +8,7 @@
 <Button
     variant="ghost"
     size="icon"
-    class="text-muted-foreground hover:text-foreground h-8 w-8 rounded-full transition-colors"
+    class="text-muted-foreground hover:text-foreground size-8 rounded-full transition-colors"
     aria-label="Очистить"
     onclick={onClick}
 >

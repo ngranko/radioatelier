@@ -67,7 +67,7 @@
                 />
             </div>
         {/if}
-        <h1 class="text-foreground text-2xl leading-tight font-semibold">
+        <h1 class="text-foreground text-2xl/tight font-semibold">
             {initialValues.name}
         </h1>
     </div>
@@ -85,7 +85,7 @@
         />
     {/if}
     {#if description}
-        <p class="text-foreground text-base leading-relaxed whitespace-pre-line">
+        <p class="text-foreground text-base/relaxed whitespace-pre-line">
             {description}
         </p>
     {/if}

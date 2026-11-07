@@ -94,7 +94,7 @@
         onEscapeKeydown={closeActiveRowFirst}
     >
         <div
-            class="from-primary via-primary/60 absolute top-0 right-0 left-0 h-0.5 bg-linear-to-r to-transparent"
+            class="from-primary via-primary/60 absolute inset-x-0 top-0 h-0.5 bg-linear-to-r to-transparent"
         ></div>
         <div class="relative shrink-0 px-6 pt-6 pb-4">
             <div
@@ -110,7 +110,7 @@
                     <Title class="min-h-7 text-lg font-semibold tracking-[-0.01em]">
                         {heading?.title}
                     </Title>
-                    <p class="text-muted-foreground mt-0.5 min-h-4 text-xs leading-snug">
+                    <p class="text-muted-foreground mt-0.5 min-h-4 text-xs/snug">
                         {heading?.hint}
                     </p>
                 </div>

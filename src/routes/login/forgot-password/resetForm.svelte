@@ -81,12 +81,12 @@
 
 <form class="flex flex-col gap-5" use:enhance>
     <div
-        class="bg-success/10 dark:bg-success/15 border-success/30 mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border"
+        class="bg-success/10 dark:bg-success/15 border-success/30 mx-auto flex size-14 items-center justify-center rounded-2xl border"
     >
         <MailCheckIcon class="text-success size-6 stroke-2" />
     </div>
 
-    <p class="text-muted-foreground text-center text-sm leading-relaxed">
+    <p class="text-muted-foreground text-center text-sm/relaxed">
         Код отправлен на <span class="text-foreground font-medium">
             {requestedEmail}
         </span>

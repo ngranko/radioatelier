@@ -394,7 +394,9 @@
                         onclick={() => (isAddressExpanded = true)}
                         class="flex w-full items-start gap-2 py-1 text-left"
                     >
-                        <span class="min-w-0 flex-1 text-base break-words">{resolvedAddress}</span>
+                        <span class="min-w-0 flex-1 text-base wrap-break-word">
+                            {resolvedAddress}
+                        </span>
                         <PencilIcon class="text-muted-foreground mt-1 size-4 shrink-0" />
                     </button>
                 </div>
