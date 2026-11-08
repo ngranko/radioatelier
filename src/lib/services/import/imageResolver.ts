@@ -1,5 +1,5 @@
-import {api} from '$convex/_generated/api';
 import type {Id} from '$convex/_generated/dataModel';
+import {uploadImage} from '$lib/services/imageUpload';
 import {resizeImage} from '$lib/utils/imageResizer';
 import type {ConvexClient} from 'convex/browser';
 
@@ -79,31 +79,6 @@ async function resizeImageBytesIfNeeded(
     };
 }
 
-async function uploadBytes(
-    client: ConvexClient,
-    bytes: Uint8Array,
-    contentType: string,
-): Promise<Id<'images'>> {
-    const uploadUrl = await client.mutation(api.images.generateUploadUrl, {});
-    const requestBody = Uint8Array.from(bytes).buffer;
-    const uploadResponse = await fetch(uploadUrl, {
-        method: 'POST',
-        headers: {'Content-Type': contentType},
-        body: requestBody,
-    });
-    if (!uploadResponse.ok) {
-        throw new Error('Не удалось загрузить изображение в хранилище');
-    }
-    const payload = (await uploadResponse.json()) as {storageId?: Id<'_storage'>};
-    if (!payload.storageId) {
-        throw new Error('Не удалось получить storageId для изображения');
-    }
-    const image = await client.mutation(api.images.create, {
-        storageId: payload.storageId,
-    });
-    return image.id;
-}
-
 async function uploadFromDataUrl(
     client: ConvexClient,
     dataUrl: string,
@@ -116,7 +91,10 @@ async function uploadFromDataUrl(
         contentType,
         'import-image-data',
     );
-    const id = await uploadBytes(client, bytes, resizedContentType);
+    const {id} = await uploadImage(
+        client,
+        new Blob([toArrayBuffer(bytes)], {type: resizedContentType}),
+    );
     cache.set(dataUrl, id);
     return id;
 }
@@ -137,7 +115,10 @@ async function uploadFromUrl(client: ConvexClient, url: string, cache: Map<strin
         supportedContentType,
         'import-image-url',
     );
-    const id = await uploadBytes(client, bytes, resizedContentType);
+    const {id} = await uploadImage(
+        client,
+        new Blob([toArrayBuffer(bytes)], {type: resizedContentType}),
+    );
     cache.set(url, id);
     return id;
 }

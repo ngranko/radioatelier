@@ -12,7 +12,7 @@ The image field (`input/imageUpload/`) shows the gallery as a swipeable carousel
 
 1. `objectForm/form.svelte` receives a JPEG, PNG, or WebP from the image input.
 2. `resizeImage` processes it before upload.
-3. The client obtains an upload URL through `images.generateUploadUrl`, posts the processed file, then calls `images.create` with the returned storage ID.
+3. `src/lib/services/imageUpload.ts` obtains an upload URL through `images.generateUploadUrl`, posts the processed file, checks the response and storage ID, then calls `images.create`.
 4. The resulting image ID and URLs join the form's local image list. Several files can be picked at once; they upload one after another.
 5. Saving the object attaches the listed images to its gallery and stores the first one as `objects.coverId`.
 
@@ -39,7 +39,9 @@ Decoding first tries `createImageBitmap` with image orientation applied, then a 
 
 `src/lib/components/input/imageUpload/cropDialog.svelte` crops the stored original at a 2:1 aspect ratio, with zoom from 1 to 3. It renders the selected pixels to a canvas and encodes a JPEG at quality 0.9.
 
-The crop uploads a new file and calls `images.updatePreview`. This updates the image record immediately and deletes the previous preview file if it differs. Cropping is not deferred until the object form is saved, so discarding form changes does not undo an already saved crop.
+The crop uses the same upload module to upload a new file and call `images.updatePreview`. This updates the image record immediately and deletes the previous preview file if it differs. Cropping is not deferred until the object form is saved, so discarding form changes does not undo an already saved crop.
+
+The upload module returns only after the image or preview commit succeeds. It propagates failures without retrying; callers own their messages, and CSV import continues without an image when its upload fails.
 
 Each slide displays `previewUrl` when available and otherwise the original URL, so every image can have its own crop. Opening the image viewer uses the original URL. Removing an image drops it from the form's list; saving the form detaches it from the object.
 
