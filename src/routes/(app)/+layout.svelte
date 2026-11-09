@@ -2,6 +2,7 @@
     import {goto} from '$app/navigation';
     import {navigating, page} from '$app/state';
     import {api} from '$convex/_generated/api';
+    import GoogleLogo from '$lib/components/branding/googleLogo.svelte';
     import EscapeCloseHandler from '$lib/components/escapeCloseHandler.svelte';
     import LocationMarker from '$lib/components/map/locationMarker.svelte';
     import Map from '$lib/components/map/map.svelte';
@@ -35,7 +36,6 @@
     import SproutIcon from '@lucide/svelte/icons/sprout';
     import StarIcon from '@lucide/svelte/icons/star';
     import {webgl2Adapter} from '@luma.gl/webgl';
-    import {SvglGoogleLogo} from '@selemondev/svgl-svelte';
     import {useQuery} from 'convex-svelte';
     import posthog from 'posthog-js';
     import {onMount} from 'svelte';
@@ -151,7 +151,7 @@
                 {searchPointId}
                 lat={searchPoint.object.latitude}
                 lng={searchPoint.object.longitude}
-                icon={searchPoint.object.type === 'local' ? SearchIcon : SvglGoogleLogo}
+                icon={searchPoint.object.type === 'local' ? SearchIcon : GoogleLogo}
                 iconClassName="stroke-3"
                 color="#e11d48"
                 source="search"

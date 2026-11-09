@@ -22,8 +22,8 @@
         'max-w-full min-w-0',
         isPrivate
             ? 'border-border bg-muted text-muted-foreground'
-            : 'text-primary border-primary/15 bg-primary/10',
-        onRemove && 'pr-1',
+            : 'dark:text-primary border-primary/15 bg-primary/10 text-[color-mix(in_oklab,var(--primary)_80%,var(--foreground))]',
+        onRemove && 'overflow-visible pr-1',
     )}
 >
     {#if isPrivate}
@@ -38,7 +38,10 @@
             {disabled}
             onclick={onRemove}
             aria-label="Убрать {name}"
-            class="shrink-0 rounded-sm p-1 hover:bg-current/10 disabled:pointer-events-none"
+            class={cn(
+                'shrink-0 rounded-sm p-1 hover:bg-current/10 disabled:pointer-events-none',
+                'relative pointer-coarse:after:absolute pointer-coarse:after:-inset-y-2.75 pointer-coarse:after:-right-1.25 pointer-coarse:after:-left-4.25',
+            )}
         >
             <XIcon class="size-3.5" />
         </button>

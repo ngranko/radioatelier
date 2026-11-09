@@ -1,11 +1,11 @@
 <script lang="ts">
+    import GoogleLogo from '$lib/components/branding/googleLogo.svelte';
     import CategoryBadge from '$lib/components/categoryBadge.svelte';
     import {Button} from '$lib/components/ui/button';
     import type {SearchItem} from '$lib/interfaces/object';
     import {searchState} from '$lib/state/search.svelte';
     import {cn} from '$lib/utils';
     import {formatDistance, metresBetween} from '$lib/utils/distance';
-    import {SvglGoogleLogo} from '@selemondev/svgl-svelte';
     import {focusAdjacentResult, readArrowStep} from './resultFocus';
 
     interface Props {
@@ -92,7 +92,7 @@
         </span>
     {/if}
     {#if object.type === 'google'}
-        <SvglGoogleLogo width={12} height={12} class="opacity-50" />
+        <GoogleLogo width={12} height={12} class="opacity-50" />
     {/if}
 {/snippet}
 
@@ -100,9 +100,6 @@
     variant="ghost"
     class={cn(
         'font-branding relative block h-auto w-full rounded-none px-3.5 py-2.5 text-left',
-        // the row is full-bleed inside the list, so a focus ring would trace a box across it;
-        // the keyboard's place in the list is painted instead, as a stronger shade of the hover
-        // tint plus a marker on the edge the list is walked along
         'hover:bg-accent/50 dark:hover:bg-accent/40',
         'focus-visible:bg-accent/80 focus-visible:text-accent-foreground dark:focus-visible:bg-accent/60 focus-visible:ring-0',
         'before:bg-primary before:absolute before:inset-y-1.5 before:left-0 before:w-[3px] before:rounded-r-full before:opacity-0 before:transition-opacity focus-visible:before:opacity-100',
@@ -130,10 +127,14 @@
         {#if object.categoryName || secondaryAddress}
             <div class="text-muted-foreground flex min-w-0 items-center gap-1.5 text-xs">
                 {#if object.categoryName}
-                    <CategoryBadge name={object.categoryName} size="sm" class="shrink-0" />
+                    <CategoryBadge
+                        name={object.categoryName}
+                        size="sm"
+                        class={cn('shrink-0', secondaryAddress && 'max-w-[55%]')}
+                    />
                 {/if}
                 {#if object.categoryName && secondaryAddress}
-                    <span aria-hidden="true">·</span>
+                    <span class="shrink-0" aria-hidden="true">·</span>
                 {/if}
                 <span class="truncate">{secondaryAddress}</span>
             </div>

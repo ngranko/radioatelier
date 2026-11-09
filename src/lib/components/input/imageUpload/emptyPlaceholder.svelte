@@ -16,21 +16,28 @@
     const icon = $derived(category ? markerIconMap[category.markerIcon] : undefined);
 </script>
 
+<!-- the glyph's lightness is clamped per theme so very dark or very light categories stay
+     visible; the surface keeps only the category's hue at a fixed lightness, so no category turns
+     the slot into a heavy slab. Mixing in oklab keeps greyscale colours from drifting purple. -->
 <div
     class={cn(
-        'bg-muted relative flex aspect-2/1 w-full items-center justify-center overflow-hidden',
+        'relative flex aspect-2/1 w-full items-center justify-center overflow-hidden',
+        '[--cover-l:0.9] [--cover-mix:18%] [--tint-l-max:0.55] [--tint-l-min:0.3] [--tint-mix:22%]',
+        'dark:[--cover-l:0.26] dark:[--tint-l-max:0.9] dark:[--tint-l-min:0.75] dark:[--tint-mix:32%]',
         className,
     )}
-    style:background-color={category
-        ? `color-mix(in oklch, ${category.markerColor} 14%, var(--muted))`
+    style:--tint={category
+        ? `oklch(from ${category.markerColor} clamp(var(--tint-l-min), l, var(--tint-l-max)) c h)`
         : undefined}
+    style:--cover-surface={category
+        ? `color-mix(in oklab, oklch(from ${category.markerColor} var(--cover-l) min(c, 0.1) h) var(--cover-mix), var(--muted))`
+        : 'var(--muted)'}
+    style:background-color="var(--cover-surface)"
 >
     {#if category && icon}
-        <!-- mixed toward --muted rather than faded with opacity, so the black category
-             still reads against the dark theme -->
         <icon.component
-            class={cn(icon.className, 'size-20')}
-            style="color: color-mix(in oklch, {category.markerColor} 45%, var(--muted))"
+            class={cn(icon.className, 'size-14')}
+            style="color: color-mix(in oklab, var(--tint) var(--tint-mix), var(--cover-surface))"
             aria-hidden="true"
         />
     {:else}

@@ -26,5 +26,5 @@
 
 <p class="text-muted-foreground flex items-start gap-1.5 text-sm">
     <MapPinIcon class="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-    {composeAddress()}
+    <span class="min-w-0 wrap-break-word">{composeAddress()}</span>
 </p>

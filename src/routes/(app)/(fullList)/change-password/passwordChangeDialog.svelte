@@ -1,9 +1,10 @@
 <script lang="ts">
+    import DialogHeading from '$lib/components/dialogHeading.svelte';
     import PasswordInput from '$lib/components/input/passwordInput.svelte';
     import RoutedDialog from '$lib/components/routedDialog.svelte';
-    import {Button} from '$lib/components/ui/button';
+    import {Button, buttonVariants} from '$lib/components/ui/button';
     import {Checkbox} from '$lib/components/ui/checkbox';
-    import {Content, Title, Footer} from '$lib/components/ui/dialog';
+    import {Content, Footer} from '$lib/components/ui/dialog';
     import {DialogClose} from '$lib/components/ui/dialog/index.ts';
     import {FormLabel, FormField, FormControl, FormFieldErrors} from '$lib/components/ui/form';
     import KeyRoundIcon from '@lucide/svelte/icons/key-round';
@@ -139,29 +140,11 @@
 
 <RoutedDialog bind:isOpen>
     <Content class="overflow-hidden border-t-0 p-0 sm:max-w-md">
-        <div
-            class="from-primary via-primary/60 absolute inset-x-0 top-0 h-[2px] bg-linear-to-r to-transparent"
-        ></div>
-        <div class="relative px-6 pt-6 pb-4">
-            <div
-                class="from-primary/[0.07] via-primary/3 absolute inset-0 bg-linear-to-br to-transparent"
-            ></div>
-            <div class="relative flex items-center gap-3.5">
-                <div
-                    class="bg-primary/10 ring-primary/20 flex size-10 shrink-0 items-center justify-center rounded-xl ring-1"
-                >
-                    <KeyRoundIcon class="text-primary size-[18px]" />
-                </div>
-                <div>
-                    <Title class="text-[17px] font-semibold tracking-[-0.01em]">
-                        Сменить пароль
-                    </Title>
-                    <p class="text-muted-foreground mt-0.5 text-[13px] leading-snug">
-                        Обновите пароль для защиты учетной записи
-                    </p>
-                </div>
-            </div>
-        </div>
+        <DialogHeading
+            icon={KeyRoundIcon}
+            title="Сменить пароль"
+            hint="Обновите пароль для защиты учетной записи"
+        />
 
         <form method="POST" class="flex flex-col" use:enhance>
             {#if !isPasswordEnabled}
@@ -201,7 +184,7 @@
                                 disabled={!isPasswordEnabled}
                                 {...props}
                             />
-                            <p class="text-muted-foreground/70 mt-1.5 text-[12px] leading-relaxed">
+                            <p class="text-muted-foreground/70 text-[12px] leading-relaxed">
                                 Минимум 8 символов и не из списков взломанных паролей.
                             </p>
                         {/snippet}
@@ -246,8 +229,12 @@
                 </FormField>
             </div>
 
-            <Footer class="border-border/50 bg-muted/20 gap-3 border-t px-6 py-4">
-                <DialogClose disabled={$submitting} class="mr-2">Отменить</DialogClose>
+            <Footer
+                class="border-border/50 bg-muted/20 gap-3 border-t px-6 py-3 max-sm:grid max-sm:auto-cols-fr max-sm:grid-flow-col max-sm:*:h-11 sm:py-4"
+            >
+                <DialogClose disabled={$submitting} class={buttonVariants({variant: 'outline'})}>
+                    Отменить
+                </DialogClose>
                 <Button
                     variant="default"
                     type="submit"

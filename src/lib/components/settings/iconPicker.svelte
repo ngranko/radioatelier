@@ -4,7 +4,7 @@
     import {Root as PopoverRoot, Content, Trigger} from '$lib/components/ui/popover';
     import type {MarkerIcon as MarkerIconType} from '$lib/interfaces/marker';
     import {markerIconMap, type MarkerIconKey} from '$lib/services/map/markerStyling';
-    import {MARKER_ICON_KEYS} from '$lib/services/map/markerStyling.data';
+    import {MARKER_ICON_KEYS, MARKER_ICON_NAMES} from '$lib/services/map/markerStyling.data';
 
     interface Props {
         value: MarkerIconKey;
@@ -25,7 +25,7 @@
 <PopoverRoot bind:open={isOpen}>
     <Trigger>
         {#snippet child({props})}
-            <Button {...props} variant="outline" size="sm" class="h-8 gap-1.5 px-2.5 text-xs">
+            <Button {...props} variant="outline" size="sm" class="h-8 gap-1.5 px-2.5 text-sm">
                 {#if activeIcon}
                     <MarkerIcon
                         icon={activeIcon.component as MarkerIconType}
@@ -36,18 +36,19 @@
             </Button>
         {/snippet}
     </Trigger>
-    <Content class="w-68 p-2" align="start" sideOffset={8}>
+    <Content class="w-68 p-2 pointer-coarse:w-auto" align="start" sideOffset={8}>
         <div class="grid grid-cols-6 gap-1">
             {#each MARKER_ICON_KEYS as key (key)}
                 {@const icon = markerIconMap[key]}
                 <button
                     type="button"
-                    class="flex size-9 items-center justify-center rounded-md transition-colors {value ===
+                    class="flex size-9 items-center justify-center rounded-md transition-colors pointer-coarse:size-11 {value ===
                     key
                         ? 'bg-primary/15 text-primary ring-primary/30 ring-1'
                         : 'text-muted-foreground hover:bg-accent hover:text-foreground'}"
                     onclick={() => handleSelect(key)}
-                    aria-label={key}
+                    aria-label={MARKER_ICON_NAMES[key]}
+                    aria-pressed={value === key}
                 >
                     <MarkerIcon
                         icon={icon.component as MarkerIconType}

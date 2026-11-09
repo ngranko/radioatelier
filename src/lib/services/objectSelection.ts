@@ -10,6 +10,7 @@ import {
     closeDetailsOverlay,
     objectDetailsOverlay,
     showLoadingDetailsOverlay,
+    showLoadingPointOverlay,
     showObjectDetailsOverlay,
 } from '$lib/state/objectDetailsOverlay.svelte';
 import {getActiveSearchUrl} from '$lib/state/search.svelte';
@@ -45,7 +46,7 @@ export function selectSearchResult(item: SearchItem) {
     const id = item.googlePlaceId ?? `${item.latitude},${item.longitude}`;
     requestSelection(id, () => {
         selectSearchPoint({object: item});
-        showLoadingDetailsOverlay(id, item);
+        showLoadingPointOverlay(id, item);
         void goto(buildPointUrl({...item, placeId: item.googlePlaceId}));
     });
 }
@@ -55,7 +56,7 @@ export function selectMapPoint(position: MapPlaceable) {
     requestSelection(id, () => {
         clearSelectedSearchPoint();
         setCreateDraftPosition({lat: position.latitude, lng: position.longitude});
-        showLoadingDetailsOverlay(id, position);
+        showLoadingPointOverlay(id, position);
         void goto(buildPointUrl(position));
     });
 }
