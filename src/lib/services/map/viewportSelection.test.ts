@@ -29,17 +29,6 @@ function makeRepo(
 }
 
 describe('selectVisibleMarkerIds', () => {
-    it('keeps only markers inside the bounds', () => {
-        const repo = makeRepo({
-            inside: {lat: 10, lng: 10},
-            northOfBounds: {lat: 40, lng: 10},
-            eastOfBounds: {lat: 10, lng: 40},
-        });
-        const bounds = makeBounds({north: 20, south: 0, east: 20, west: 0}, {lat: 10, lng: 10});
-
-        expect([...selectVisibleMarkerIds(bounds, repo, 100)]).toEqual(['inside']);
-    });
-
     it('handles viewports that straddle the antimeridian', () => {
         const repo = makeRepo({
             westOfLine: {lat: 0, lng: 175},

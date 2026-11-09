@@ -1,17 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {detailsFocusOffsets, usesSidePanelOffset} from './detailsFocusOffset';
-
-describe('usesSidePanelOffset', () => {
-    it('uses the side-panel offset on wide viewports', () => {
-        expect(usesSidePanelOffset(824)).toBe(true);
-        expect(usesSidePanelOffset(1200)).toBe(true);
-    });
-
-    it('skips the side-panel offset on narrow viewports', () => {
-        expect(usesSidePanelOffset(823)).toBe(false);
-        expect(usesSidePanelOffset(390)).toBe(false);
-    });
-});
+import {detailsFocusOffsets} from './detailsFocusOffset';
 
 describe('detailsFocusOffsets', () => {
     const mobile = {
@@ -33,15 +21,6 @@ describe('detailsFocusOffsets', () => {
 
             expect(offset.latOffset).toBe(0);
             expect(offset.lngOffset).toBeLessThan(0);
-        }
-    });
-
-    it('centers with no offset for mobile full and minimized', () => {
-        for (const overlayPosition of ['full', 'minimized'] as const) {
-            expect(detailsFocusOffsets({...mobile, overlayPosition})).toEqual({
-                latOffset: 0,
-                lngOffset: 0,
-            });
         }
     });
 

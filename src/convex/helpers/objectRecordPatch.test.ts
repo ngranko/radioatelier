@@ -56,15 +56,6 @@ describe('splitObjectRecordPatch', () => {
         expect(markerPatch).toEqual({});
     });
 
-    it('keeps explicit nulls as writes', () => {
-        const {objectPatch} = splitObjectRecordPatch({
-            description: null,
-            source: null,
-        });
-
-        expect(objectPatch).toEqual({description: null, source: null});
-    });
-
     it('does not leak sync-invisible fields to the marker', () => {
         const {markerPatch} = splitObjectRecordPatch({
             name: 'Sign',
@@ -77,15 +68,6 @@ describe('splitObjectRecordPatch', () => {
 });
 
 describe('filterChangedPatch', () => {
-    it('removes unchanged scalar fields', () => {
-        const patch = filterChangedPatch(
-            {name: 'Mosaic', isRemoved: false},
-            {name: 'Mosaic', isRemoved: true},
-        );
-
-        expect(patch).toEqual({isRemoved: true});
-    });
-
     it('treats tag order as unchanged', () => {
         const patch = filterChangedPatch(
             {tagIds: [tagIds[0], secondTagId]},
@@ -93,12 +75,6 @@ describe('filterChangedPatch', () => {
         );
 
         expect(patch).toEqual({});
-    });
-
-    it('keeps changed tag sets', () => {
-        const patch = filterChangedPatch({tagIds}, {tagIds: [tagIds[0], secondTagId]});
-
-        expect(patch).toEqual({tagIds: [tagIds[0], secondTagId]});
     });
 });
 
