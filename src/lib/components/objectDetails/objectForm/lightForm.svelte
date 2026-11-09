@@ -20,7 +20,7 @@
     import {describeValidationFailure, getErrorArray} from '$lib/utils/formErrors';
     import {hasAnyFlag} from '$lib/utils/objectFlags';
     import UserCheckIcon from '@lucide/svelte/icons/user-check';
-    import {onMount} from 'svelte';
+    import {onMount, untrack} from 'svelte';
     import {toast} from 'svelte-sonner';
     import {superForm, defaults} from 'sveltekit-superforms';
     import {zod4Client} from 'sveltekit-superforms/adapters';
@@ -53,9 +53,8 @@
     }
 
     // Editing starts from a snapshot so live updates cannot overwrite unsaved personal changes.
-    // svelte-ignore state_referenced_locally
     const initialForm = defaults(
-        toPersonalFormDefaults(initialValues),
+        untrack(() => toPersonalFormDefaults(initialValues)),
         zod4Client(objectPersonalSchema),
     );
     const form = superForm(initialForm, {
