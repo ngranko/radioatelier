@@ -47,123 +47,122 @@ export function createSearchResults(createSources: CreateSources, map: SearchRes
 }
 
 class SearchResults {
-    #pages = $state({local: createPage(), google: createPage()});
-    #activeSource = $state<SearchSource>('local');
-    #request: SearchRequest | null = null;
-    #sources: SearchSources | null = null;
-    #disposed = false;
+    private sourcePages = $state({local: createPage(), google: createPage()});
+    private currentSource = $state<SearchSource>('local');
+    private request: SearchRequest | null = null;
+    private sources: SearchSources | null = null;
+    private isDisposed = false;
 
-    constructor(
+    public constructor(
         private createSources: CreateSources,
         private map: SearchResultsMap,
     ) {}
 
-    get activeSource() {
-        return this.#activeSource;
+    public get activeSource() {
+        return this.currentSource;
     }
 
-    get pages(): Readonly<Record<SearchSource, Readonly<SearchResultsListState>>> {
-        return this.#pages;
+    public get pages(): Readonly<Record<SearchSource, Readonly<SearchResultsListState>>> {
+        return this.sourcePages;
     }
 
-    startSearch(request: SearchRequest) {
-        if (this.#disposed) {
+    public startSearch(request: SearchRequest) {
+        if (this.isDisposed) {
             return Promise.resolve();
         }
-        if (this.#request?.query !== request.query) {
-            this.#activeSource = 'local';
+        if (this.request?.query !== request.query) {
+            this.currentSource = 'local';
         }
-        this.#request = {...request};
-        this.#sources = this.createSources(this.#request);
-        this.#pages = {local: createPage(), google: createPage()};
+        this.request = {...request};
+        this.sources = this.createSources(this.request);
+        this.sourcePages = {local: createPage(), google: createPage()};
         this.map.clear();
-        return this.#loadPage(this.#activeSource, false);
+        return this.loadPage(this.currentSource, false);
     }
 
-    activateSource(source: SearchSource) {
-        if (this.#disposed || !this.#request || source === this.#activeSource) {
+    public activateSource(source: SearchSource) {
+        if (this.isDisposed || !this.request || source === this.currentSource) {
             return Promise.resolve();
         }
-        this.#activeSource = source;
-        const page = this.#pages[source];
+        this.currentSource = source;
+        const page = this.sourcePages[source];
         if (page.hasLoaded) {
-            this.#publish(page.items, this.#request);
+            this.publish(page.items, this.request);
             return Promise.resolve();
         }
         this.map.clear();
-        return this.#loadPage(source, false);
+        return this.loadPage(source, false);
     }
 
-    loadMore() {
-        const page = this.#pages[this.#activeSource];
-        if (this.#disposed || !page.hasLoaded || !page.hasMore) {
+    public loadMore() {
+        const page = this.sourcePages[this.currentSource];
+        if (this.isDisposed || !page.hasLoaded || !page.hasMore) {
             return Promise.resolve();
         }
-        return this.#loadPage(this.#activeSource, true);
+        return this.loadPage(this.currentSource, true);
     }
 
-    dispose() {
-        this.#disposed = true;
+    public dispose() {
+        this.isDisposed = true;
     }
 
-    async #loadPage(source: SearchSource, append: boolean): Promise<void> {
-        const page = this.#pages[source];
+    private async loadPage(source: SearchSource, append: boolean): Promise<void> {
+        const page = this.sourcePages[source];
         if (page.isLoading || page.isLoadingMore) {
             return Promise.resolve();
         }
-        const request = this.#request!;
-        const load = this.#sources![source];
+        const request = this.request!;
+        const load = this.sources![source];
         page.isLoading = !append;
         page.isLoadingMore = append;
-        page.isError = page.isAppendError = false;
+        page.isError = false;
+        page.isAppendError = false;
         try {
             const result = await load(append ? page.nextCursor : '');
-            this.#acceptPage(source, page, request, result, append);
+            this.acceptPage(source, page, request, result, append);
         } catch (error) {
-            this.#rejectPage(source, page, error, append);
+            this.rejectPage(source, page, error, append);
         } finally {
-            if (this.#isCurrent(source, page)) {
-                page.isLoading = page.isLoadingMore = false;
+            if (this.isCurrent(source, page)) {
+                page.isLoading = false;
+                page.isLoadingMore = false;
             }
         }
     }
 
-    #acceptPage(
+    private acceptPage(
         source: SearchSource,
         page: ResultsPage,
         request: SearchRequest,
         result: SearchResultsPage,
         append: boolean,
     ) {
-        if (!this.#isCurrent(source, page)) {
+        if (!this.isCurrent(source, page)) {
             return;
         }
         page.items = append ? [...page.items, ...result.items] : result.items;
         page.nextCursor = result.nextCursor;
         page.hasMore = result.hasMore;
         page.hasLoaded = true;
-        if (source === this.#activeSource) {
-            this.#publish(page.items, request);
+        if (source === this.currentSource) {
+            this.publish(page.items, request);
         }
     }
 
-    #rejectPage(source: SearchSource, page: ResultsPage, error: unknown, append: boolean) {
-        if (!this.#isCurrent(source, page)) {
+    private rejectPage(source: SearchSource, page: ResultsPage, error: unknown, append: boolean) {
+        if (!this.isCurrent(source, page)) {
             return;
         }
-        if (append) {
-            page.isAppendError = true;
-        } else {
-            page.isError = true;
-        }
+        page.isAppendError = append;
+        page.isError = !append;
         console.error(`${source} search failed`, error);
     }
 
-    #isCurrent(source: SearchSource, page: ResultsPage) {
-        return !this.#disposed && this.#pages[source] === page;
+    private isCurrent(source: SearchSource, page: ResultsPage) {
+        return !this.isDisposed && this.sourcePages[source] === page;
     }
 
-    #publish(items: SearchItem[], request: SearchRequest) {
+    private publish(items: SearchItem[], request: SearchRequest) {
         this.map.publishPins(items);
         this.map.fit(items, request);
         this.map.rememberArea();

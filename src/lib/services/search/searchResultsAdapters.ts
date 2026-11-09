@@ -13,7 +13,7 @@ export function createSearchSources(
         local: async cursor => {
             const page = await client.action(api.search.local, {
                 ...request,
-                offset: Number(cursor || '0'),
+                offset: cursor ? Number(cursor) : 0,
             });
             return {items: page.items, hasMore: page.hasMore, nextCursor: String(page.offset)};
         },

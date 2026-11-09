@@ -23,6 +23,10 @@
     function loadMore() {
         void results.loadMore();
     }
+
+    // Remounting the lists for each search starts their scroll at the top.
+    const searchKey = $derived(`${searchState.lat}:${searchState.lng}:${searchState.query}`);
+
     let classes: string = $derived(
         cn({
             'bg-background surface-edge fixed top-0 left-0 w-[calc(100vw-16px)] max-w-sm m-2 rounded-2xl overflow-hidden transition-[height] ease-out motion-reduce:transition-none z-0': true,
@@ -52,14 +56,16 @@
             )}
         >
             <div class="h-full min-h-0">
-                <SearchResultsList
-                    state={results.pages.local}
-                    onLoadMore={loadMore}
-                    emptyAction={{
-                        label: 'Поискать в Google',
-                        onClick: () => activateSource('google'),
-                    }}
-                />
+                {#key searchKey}
+                    <SearchResultsList
+                        state={results.pages.local}
+                        onLoadMore={loadMore}
+                        emptyAction={{
+                            label: 'Поискать в Google',
+                            onClick: () => activateSource('google'),
+                        }}
+                    />
+                {/key}
             </div>
         </TabsContent>
         <TabsContent
@@ -70,7 +76,9 @@
             )}
         >
             <div class="h-full min-h-0">
-                <SearchResultsList state={results.pages.google} onLoadMore={loadMore} />
+                {#key searchKey}
+                    <SearchResultsList state={results.pages.google} onLoadMore={loadMore} />
+                {/key}
             </div>
         </TabsContent>
     </TabsRoot>
