@@ -1,5 +1,6 @@
 import {ConvexError, v} from 'convex/values';
 import {mutation} from './_generated/server';
+import {replaceImagePreview} from './helpers/imageStorage';
 import {getCurrentUserOrThrow} from './users';
 
 export const generateUploadUrl = mutation({
@@ -34,31 +35,9 @@ export const updatePreview = mutation({
         id: v.id('images'),
         storageId: v.id('_storage'),
     },
+    returns: v.object({id: v.id('images'), previewUrl: v.string()}),
     handler: async (ctx, {id, storageId}) => {
         const user = await getCurrentUserOrThrow(ctx);
-
-        const image = await ctx.db.get(id);
-        // Cover ids are handed to every viewer of an Object, so without an owner
-        // check any signed-in user could repoint someone else's preview at their
-        // own upload and delete the file behind the old one.
-        if (!image || image.createdById !== user._id) {
-            throw new ConvexError('Image not found');
-        }
-
-        const previousPreviewStorageId = image.previewStorageId;
-        await ctx.db.patch(id, {
-            previewStorageId: storageId,
-        });
-
-        if (previousPreviewStorageId && previousPreviewStorageId !== storageId) {
-            await ctx.storage.delete(previousPreviewStorageId);
-        }
-
-        const previewUrl = await ctx.storage.getUrl(storageId);
-        if (!previewUrl) {
-            throw new ConvexError('Failed to get URL for image preview');
-        }
-
-        return {id, previewUrl};
+        return replaceImagePreview(ctx, user._id, id, storageId);
     },
 });

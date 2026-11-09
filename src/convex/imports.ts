@@ -7,6 +7,7 @@ import type {Id} from './_generated/dataModel';
 import {internalMutation, mutation, query} from './_generated/server';
 import {ensureCategory, ensurePrivateTags, ensureTags} from './helpers/importHelpers';
 import {updateIsVisited} from './helpers/objectHelpers';
+import {replaceObjectImages} from './helpers/objectImages';
 import {createObjectRecords, upsertPrivateTags} from './helpers/objectWriter';
 import {getCurrentUserOrThrow} from './users';
 
@@ -270,7 +271,7 @@ export const importBatch = mutation({
                     isRemoved: row.isRemoved,
                     removalPeriod: toLimitedNullable(row.removalPeriod, LIMITS.period),
                     source: validatedSource,
-                    coverId: row.imageId ?? null,
+                    coverId: null,
                     categoryId,
                     isPublic: row.isPublic,
                     tagIds,
@@ -281,6 +282,12 @@ export const importBatch = mutation({
                     country: toLimitedNullable(row.country, LIMITS.country),
                 });
 
+                await replaceObjectImages(
+                    ctx,
+                    objectId,
+                    user._id,
+                    row.imageId ? [row.imageId] : [],
+                );
                 await upsertPrivateTags(ctx, objectId, user._id, privateTagIds);
                 await updateIsVisited(ctx, objectId, user._id, row.isVisited);
                 if (user.notionSyncEnabled) {
