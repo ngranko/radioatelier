@@ -5,6 +5,11 @@
     import SearchBar from '$lib/components/search/searchBar.svelte';
     import SearchPreview from '$lib/components/search/searchPreview.svelte';
     import SearchResults from '$lib/components/search/searchResults.svelte';
+    import {createSearchResults} from '$lib/services/search/searchResults.svelte';
+    import {
+        createSearchSources,
+        searchResultsMap,
+    } from '$lib/services/search/searchResultsAdapters';
     import {mapState} from '$lib/state/map.svelte';
     import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
     import {searchState, applyUrlToSearchState, buildSearchUrl} from '$lib/state/search.svelte';
@@ -13,7 +18,39 @@
         searchArea,
         shouldOfferAreaSearch,
     } from '$lib/state/searchArea.svelte.ts';
+    import {useConvexClient} from 'convex-svelte';
     import {untrack} from 'svelte';
+
+    const client = useConvexClient();
+    const areResultsShown = $derived(Boolean(searchState.query && searchState.isResultsShown));
+    const results = $derived(
+        areResultsShown
+            ? createSearchResults(request => createSearchSources(client, request), searchResultsMap)
+            : null,
+    );
+
+    $effect(() => {
+        const current = results;
+        // The host outlives the panel's exit animation, so closing it invalidates requests immediately.
+        return () => current?.dispose();
+    });
+
+    $effect(() => {
+        const current = results;
+        if (!mapState.isReady) {
+            return;
+        }
+        const request = {
+            query: searchState.query,
+            latitude: Number(searchState.lat),
+            longitude: Number(searchState.lng),
+        };
+        untrack(() => {
+            if (current) {
+                void current.startSearch(request);
+            }
+        });
+    });
 
     const areaSearchCenter = $derived.by(() => {
         const {searched, current} = searchArea;
@@ -71,10 +108,8 @@
                 <SearchPreview />
             {/key}
         {/if}
-        {#if searchState.query && searchState.isResultsShown}
-            {#key searchState.query}
-                <SearchResults />
-            {/key}
+        {#if results}
+            <SearchResults {results} />
         {/if}
     </div>
     {#if areaSearchCenter}

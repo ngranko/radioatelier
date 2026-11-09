@@ -1,46 +1,32 @@
 <script lang="ts">
-    import {api} from '$convex/_generated/api';
     import {
         Root as TabsRoot,
         List,
         Trigger,
         Content as TabsContent,
     } from '$lib/components/ui/tabs/index.js';
-    import type {SearchPageSource} from '$lib/interfaces/object';
+    import type {createSearchResults} from '$lib/services/search/searchResults.svelte';
     import {searchState} from '$lib/state/search.svelte';
     import {cn} from '$lib/utils.ts';
     import {slideFromLeft} from '$lib/utils/motion';
-    import {useConvexClient} from 'convex-svelte';
     import MinimizeButton from './minimizeButton.svelte';
     import SearchResultsList from './searchResultsList.svelte';
 
-    const client = useConvexClient();
+    let {results}: {results: ReturnType<typeof createSearchResults>} = $props();
 
-    function searchArgs() {
-        return {
-            query: searchState.query,
-            latitude: Number(searchState.lat),
-            longitude: Number(searchState.lng),
-        };
+    function activateSource(source: string) {
+        if (source === 'local' || source === 'google') {
+            void results.activateSource(source);
+        }
     }
 
-    const localSource: SearchPageSource = async cursor => {
-        const page = await client.action(api.search.local, {
-            ...searchArgs(),
-            offset: Number(cursor || '0'),
-        });
-        return {items: page.items, hasMore: page.hasMore, nextCursor: String(page.offset)};
-    };
+    function loadMore() {
+        void results.loadMore();
+    }
 
-    const googleSource: SearchPageSource = async cursor => {
-        const page = await client.action(api.search.google, {
-            ...searchArgs(),
-            pageToken: cursor,
-        });
-        return {items: page.items, hasMore: page.hasMore, nextCursor: page.nextPageToken};
-    };
+    // Remounting the lists for each search starts their scroll at the top.
+    const searchKey = $derived(`${searchState.lat}:${searchState.lng}:${searchState.query}`);
 
-    let currentTab = $state('local');
     let classes: string = $derived(
         cn({
             'bg-background surface-edge fixed top-0 left-0 w-[calc(100vw-16px)] max-w-sm m-2 rounded-2xl overflow-hidden transition-[height] ease-out motion-reduce:transition-none z-0': true,
@@ -51,7 +37,10 @@
 </script>
 
 <aside class={classes} aria-label="Результаты поиска" transition:slideFromLeft>
-    <TabsRoot bind:value={currentTab} class="h-full min-h-0 gap-0 pt-14">
+    <TabsRoot
+        bind:value={() => results.activeSource, activateSource}
+        class="h-full min-h-0 gap-0 pt-14"
+    >
         <div class="flex shrink-0 items-center gap-2 px-3 pb-2">
             <List class="h-8 min-w-1/2">
                 <Trigger value="local">Локально</Trigger>
@@ -67,14 +56,13 @@
             )}
         >
             <div class="h-full min-h-0">
-                {#key `${searchState.lat}:${searchState.lng}:${searchState.query}`}
+                {#key searchKey}
                     <SearchResultsList
-                        isActive={currentTab === 'local'}
-                        source={localSource}
-                        sourceName="Local"
+                        state={results.pages.local}
+                        onLoadMore={loadMore}
                         emptyAction={{
                             label: 'Поискать в Google',
-                            onClick: () => (currentTab = 'google'),
+                            onClick: () => activateSource('google'),
                         }}
                     />
                 {/key}
@@ -88,12 +76,8 @@
             )}
         >
             <div class="h-full min-h-0">
-                {#key `${searchState.lat}:${searchState.lng}:${searchState.query}`}
-                    <SearchResultsList
-                        isActive={currentTab === 'google'}
-                        source={googleSource}
-                        sourceName="Google"
-                    />
+                {#key searchKey}
+                    <SearchResultsList state={results.pages.google} onLoadMore={loadMore} />
                 {/key}
             </div>
         </TabsContent>
