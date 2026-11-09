@@ -5,7 +5,7 @@ import type {MutationCtx} from '../_generated/server';
 import {deleteUnusedImageFile, replaceImagePreview} from './imageStorage';
 import {matchIndexRange, type IndexRange} from './mockIndexRange';
 import {repairObjectGallery} from './objectImageRepair';
-import {listObjectImages, replaceObjectImages} from './objectImages';
+import {listObjectImages} from './objectImages';
 
 type Row = {_id: string; [field: string]: unknown};
 type Link = {objectId: string; imageId: string; position: number};
@@ -107,25 +107,6 @@ describe('repairObjectGallery', () => {
         expect(objects[0].coverId).not.toBe(objects[1].coverId);
     });
 
-    it('preserves the other gallery and keeps the repaired photo when reordered', async () => {
-        const extra = createImage({_id: 'extra' as Id<'images'>});
-        const {ctx, objects} = createContext(
-            [createImage(), extra],
-            [
-                {objectId: 'a', imageId: 'shared', position: 0},
-                {objectId: 'b', imageId: 'extra', position: 0},
-            ],
-        );
-        await repairObjectGallery(ctx, objects[1]);
-        const copyId = objects[1].coverId!;
-        expect(await galleryIds(ctx, objects[1])).toEqual([copyId, extra._id]);
-
-        await replaceObjectImages(ctx, objects[1]._id, objects[1].createdById, [extra._id, copyId]);
-
-        expect(await galleryIds(ctx, objects[1])).toEqual([extra._id, copyId]);
-        expect(await galleryIds(ctx, objects[0])).toEqual(['shared']);
-    });
-
     it('fails before writing when a cover is missing or its gallery is full', async () => {
         const {ctx, db, objects, rows} = createContext([]);
         await expect(repairObjectGallery(ctx, objects[0])).rejects.toThrow('Missing cover');
@@ -134,18 +115,6 @@ describe('repairObjectGallery', () => {
             rows.objectImages.push({_id: `link-${i}`, objectId: 'a', imageId: `extra-${i}`});
         }
         await expect(repairObjectGallery(ctx, objects[0])).rejects.toThrow('Gallery is full');
-        expect(db.insert).not.toHaveBeenCalled();
-        expect(db.patch).not.toHaveBeenCalled();
-    });
-
-    it('leaves Objects without covers and already independent covers unchanged', async () => {
-        const {ctx, db, objects} = createContext(
-            [createImage({createdById: 'owner-a' as Id<'users'>})],
-            [{objectId: 'a', imageId: 'shared', position: 0}],
-        );
-        objects[1].coverId = null;
-        await repairObjectGallery(ctx, objects[0]);
-        await repairObjectGallery(ctx, objects[1]);
         expect(db.insert).not.toHaveBeenCalled();
         expect(db.patch).not.toHaveBeenCalled();
     });

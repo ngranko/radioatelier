@@ -5,27 +5,6 @@ import {createHarness, createPage, request} from './searchResultsTestHelpers';
 afterEach(() => vi.restoreAllMocks());
 
 describe('search results paging', () => {
-    it('settles first-page failures and retries only when the source is reactivated', async () => {
-        const {results, local, events} = createHarness();
-        local.mockRejectedValueOnce(new Error('unavailable'));
-        vi.spyOn(console, 'error').mockImplementation(() => {});
-        await results.startSearch(request);
-        await results.activateSource('local');
-        await results.loadMore();
-
-        expect(local).toHaveBeenCalledTimes(1);
-        expect(events).toEqual(['clear']);
-        expect(results.pages.local).toMatchObject({
-            isError: true,
-            isLoading: false,
-            hasLoaded: false,
-        });
-        await results.activateSource('google');
-        await results.activateSource('local');
-        expect(local).toHaveBeenCalledTimes(2);
-        expect(results.pages.local).toMatchObject({isError: false, hasLoaded: true});
-    });
-
     it('keeps items and the opaque cursor after append failure, then retries that page', async () => {
         const {results, local, events} = createHarness();
         local

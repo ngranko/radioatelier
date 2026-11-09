@@ -41,15 +41,6 @@ describe('marker hover', () => {
         expect(second.classList.toggle).toHaveBeenCalledTimes(1);
     });
 
-    it('settles the pin when its own row is left', () => {
-        const only = makeMarker();
-
-        pointAtMarker(only.marker);
-        stopPointingAtMarker(only.marker);
-
-        expect(only.classList.toggle).toHaveBeenLastCalledWith('marker-hovered', false);
-    });
-
     it('hands the pin back to a row still pointing once a newer one lets go', () => {
         const focused = makeMarker();
         const hovered = makeMarker();

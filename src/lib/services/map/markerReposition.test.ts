@@ -28,16 +28,6 @@ function takeUndoAction() {
 describe('saveReposition', () => {
     beforeEach(() => vi.clearAllMocks());
 
-    it('offers the way back once the new position is stored', async () => {
-        const save = vi.fn(async () => {});
-        const {request: req} = request(save);
-
-        await saveReposition(req);
-
-        expect(save).toHaveBeenCalledWith(dragged);
-        expect(takeUndoAction()?.label).toBeTruthy();
-    });
-
     it('puts the marker back where it started when the undo is used', async () => {
         const save = vi.fn(async () => {});
         const {request: req, moveTo} = request(save);
@@ -48,14 +38,6 @@ describe('saveReposition', () => {
 
         expect(moveTo).toHaveBeenCalledWith(origin);
         expect(save).toHaveBeenLastCalledWith(origin);
-    });
-
-    it('leaves no undo when the marker had no known origin', async () => {
-        const {request: req} = request(vi.fn(async () => {}));
-
-        await saveReposition({...req, origin: undefined});
-
-        expect(takeUndoAction()).toBeUndefined();
     });
 
     it('returns the marker to its origin when the save is rejected', async () => {

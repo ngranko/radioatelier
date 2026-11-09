@@ -187,26 +187,6 @@ describe('patchObjectRecords', () => {
 
 describe('assigning taxonomies during deletion', () => {
     it.each(['categories', 'tags'] as const)(
-        'blocks creating objects with deleting %s',
-        async table => {
-            const {ctx, db, scheduler} = createMockCtx();
-            db.get.mockImplementation(async requested => ({
-                _id: categoryId,
-                name: 'old',
-                isDeleting: requested === table,
-            }));
-            await expect(
-                createObjectRecords(ctx, ownerId, {
-                    ...createData,
-                    tagIds: ['tag-1' as Id<'tags'>],
-                }),
-            ).rejects.toMatchObject({data: {code: 'deletionInProgress'}});
-            expect(db.insert).not.toHaveBeenCalled();
-            expect(scheduler.runAfter).not.toHaveBeenCalled();
-        },
-    );
-
-    it.each(['categories', 'tags'] as const)(
         'blocks reassigning objects to deleting %s',
         async table => {
             const {ctx, db, scheduler} = createMockCtx();

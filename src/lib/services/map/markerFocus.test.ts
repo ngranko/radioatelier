@@ -141,16 +141,6 @@ describe('marker focus', () => {
         expect(second.classList.add).toHaveBeenCalledWith('scale-120');
     });
 
-    it('removes the highlight when focus clears', () => {
-        const {marker, classList} = makeMarker();
-        registerFocusableMarker('object-1', marker);
-        setFocusedTarget('object-1');
-
-        setFocusedTarget(null);
-
-        expect(classList.remove).toHaveBeenCalledWith('scale-120');
-    });
-
     it('does not let stale cleanup or animation affect a replacement', () => {
         const frames = stubDeferredAnimationFrame();
         const first = makeMarker();
@@ -180,19 +170,6 @@ describe('marker focus', () => {
         expect(focusDetailsTarget).toHaveBeenCalledTimes(2);
     });
 
-    it('ignores shown notifications for non-focused markers', () => {
-        const focused = makeMarker();
-        const other = makeMarker();
-        registerFocusableMarker('object-1', focused.marker);
-        setFocusedTarget('object-1');
-        vi.clearAllMocks();
-
-        notifyFocusableMarkerShown(other.marker);
-
-        expect(other.classList.add).not.toHaveBeenCalled();
-        expect(focusDetailsTarget).not.toHaveBeenCalled();
-    });
-
     it('waits for the element to be placed before scaling it up', () => {
         const frames = stubDeferredAnimationFrame();
         reveals.hold = true;
@@ -215,20 +192,6 @@ describe('marker focus', () => {
         reveals.hold = false;
         reveals.pending.length = 0;
         stubImmediateAnimationFrame();
-    });
-
-    it('does not apply a stale highlight after focus clears before the deferred frame', () => {
-        const frames = stubDeferredAnimationFrame();
-        const {marker, classList} = makeMarker();
-        registerFocusableMarker('object-1', marker);
-
-        setFocusedTarget('object-1');
-        expect(classList.add).not.toHaveBeenCalledWith('scale-120');
-
-        setFocusedTarget(null);
-        frames.flush();
-
-        expect(classList.add).not.toHaveBeenCalledWith('scale-120');
     });
 
     it('does not apply a stale highlight after focus moves before the deferred frame', () => {

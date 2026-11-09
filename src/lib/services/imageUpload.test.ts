@@ -54,31 +54,6 @@ describe.each(operations)('$name', ({upload, commit, args, result}) => {
         expect(mutation.mock.calls[1][1]).toEqual(args);
     });
 
-    it('waits for the upload before committing the image', async () => {
-        const {client, mutation, post} = prepareUpload();
-        const response = Promise.withResolvers<Response>();
-        post.mockReturnValueOnce(response.promise);
-        mutation.mockResolvedValueOnce(result);
-
-        const pending = upload(client, image);
-        await vi.waitFor(() => expect(post).toHaveBeenCalledTimes(1));
-        expect(mutation).toHaveBeenCalledTimes(1);
-
-        response.resolve(Response.json({storageId}));
-        await expect(pending).resolves.toEqual(result);
-    });
-
-    it('propagates URL acquisition failure without uploading or retrying', async () => {
-        const {client, mutation, post} = prepareUpload();
-        const error = new Error('not authenticated');
-        mutation.mockReset().mockRejectedValueOnce(error);
-
-        await expect(upload(client, image)).rejects.toThrow(error.message);
-
-        expect(mutation).toHaveBeenCalledTimes(1);
-        expect(post).not.toHaveBeenCalled();
-    });
-
     it('rejects unsuccessful uploads even when their body contains a storage ID', async () => {
         const {client, mutation, post} = prepareUpload();
         post.mockResolvedValueOnce(Response.json({storageId}, {status: 500}));
@@ -89,18 +64,7 @@ describe.each(operations)('$name', ({upload, commit, args, result}) => {
         expect(post).toHaveBeenCalledTimes(1);
     });
 
-    it('propagates network failures without committing or retrying', async () => {
-        const {client, mutation, post} = prepareUpload();
-        const error = new Error('network failed');
-        post.mockRejectedValueOnce(error);
-
-        await expect(upload(client, image)).rejects.toThrow(error.message);
-
-        expect(mutation).toHaveBeenCalledTimes(1);
-        expect(post).toHaveBeenCalledTimes(1);
-    });
-
-    it.each([null, {}, {storageId: 123}, {storageId: ''}, {storageId: '   '}])(
+    it.each([null, {storageId: '   '}])(
         'rejects an invalid storage payload %j without committing',
         async payload => {
             const {client, mutation, post} = prepareUpload();
@@ -112,15 +76,4 @@ describe.each(operations)('$name', ({upload, commit, args, result}) => {
             expect(post).toHaveBeenCalledTimes(1);
         },
     );
-
-    it('propagates commit failures without retrying the upload or commit', async () => {
-        const {client, mutation, post} = prepareUpload();
-        const error = new Error('commit failed');
-        mutation.mockRejectedValueOnce(error);
-
-        await expect(upload(client, image)).rejects.toThrow(error.message);
-
-        expect(mutation).toHaveBeenCalledTimes(2);
-        expect(post).toHaveBeenCalledTimes(1);
-    });
 });

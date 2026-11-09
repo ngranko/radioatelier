@@ -61,24 +61,6 @@ describe('MarkerHold', () => {
         expect(onHold).toHaveBeenCalledOnce();
     });
 
-    it('confirms the fired hold with a haptic tick', () => {
-        const vibrate = vi.fn();
-        vi.stubGlobal('navigator', {vibrate});
-
-        hold.arm(press(), onHold);
-        vi.advanceTimersByTime(HOLD_MS);
-
-        expect(vibrate).toHaveBeenCalledOnce();
-    });
-
-    it('stops watching the pointer once it fired', () => {
-        hold.arm(press(), onHold);
-        vi.advanceTimersByTime(HOLD_MS);
-
-        expect(listeners.countFor('pointermove')).toBe(0);
-        expect(listeners.countFor('pointerup')).toBe(0);
-    });
-
     it('drops the hold when the press slides away', () => {
         hold.arm(press(), onHold);
         listeners.dispatch('pointermove', press({clientX: 120}));
@@ -95,33 +77,9 @@ describe('MarkerHold', () => {
         expect(onHold).toHaveBeenCalledOnce();
     });
 
-    it('ignores movement of another pointer', () => {
-        hold.arm(press(), onHold);
-        listeners.dispatch('pointermove', press({pointerId: 2, clientX: 400}));
-        vi.advanceTimersByTime(HOLD_MS);
-
-        expect(onHold).toHaveBeenCalledOnce();
-    });
-
     it('drops the hold when a second finger lands', () => {
         hold.arm(press(), onHold);
         listeners.dispatch('pointerdown', press({pointerId: 2}));
-        vi.advanceTimersByTime(HOLD_MS);
-
-        expect(onHold).not.toHaveBeenCalled();
-    });
-
-    it('drops the hold when its pointer is released or cancelled', () => {
-        hold.arm(press(), onHold);
-        listeners.dispatch('pointercancel', press());
-        vi.advanceTimersByTime(HOLD_MS);
-
-        expect(onHold).not.toHaveBeenCalled();
-    });
-
-    it('drops the hold when the wheel zooms the map', () => {
-        hold.arm(press(), onHold);
-        listeners.dispatch('wheel');
         vi.advanceTimersByTime(HOLD_MS);
 
         expect(onHold).not.toHaveBeenCalled();

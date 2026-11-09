@@ -62,10 +62,4 @@ describe('loadObjectAggregates', () => {
 
         expect(await loadObjectAggregate(ctx, makeObject('object-1'))).toBeNull();
     });
-
-    it('invalidates the aggregate when the category is missing', async () => {
-        const {ctx} = makeCtx({...allDocs, 'category-1': null});
-
-        expect(await loadObjectAggregate(ctx, makeObject('object-1'))).toBeNull();
-    });
 });

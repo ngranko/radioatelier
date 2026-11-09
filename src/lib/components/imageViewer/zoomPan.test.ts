@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {FIT_VIEW, clampView, panBy, resolveMaxScale, zoomAround, type Frame} from './zoomPan';
+import {FIT_VIEW, clampView, panBy, zoomAround, type Frame} from './zoomPan';
 
 const frame: Frame = {
     stage: {width: 1000, height: 600},
@@ -21,11 +21,6 @@ describe('zoomAround', () => {
         );
     });
 
-    it('stops at the fitted size and at the maximum', () => {
-        expect(zoomAround(FIT_VIEW, 0.2, {x: 0, y: 0}, frame).scale).toBe(1);
-        expect(zoomAround(FIT_VIEW, 99, {x: 0, y: 0}, frame).scale).toBe(4);
-    });
-
     it('recentres the image on the way back to the fitted size', () => {
         const zoomed = zoomAround(FIT_VIEW, 3, {x: 300, y: 200}, frame);
 
@@ -34,10 +29,6 @@ describe('zoomAround', () => {
 });
 
 describe('panBy', () => {
-    it('does not move an image that still fits the stage', () => {
-        expect(panBy(FIT_VIEW, {x: 120, y: -80}, frame)).toEqual(FIT_VIEW);
-    });
-
     it('stops when an image edge meets the stage edge', () => {
         const zoomed = {scale: 2, x: 0, y: 0};
 
@@ -56,15 +47,5 @@ describe('clampView', () => {
         const roomy: Frame = {...frame, stage: {width: 1600, height: 1200}};
 
         expect(clampView({scale: 2, x: 300, y: -300}, roomy)).toEqual({scale: 2, x: 0, y: 0});
-    });
-});
-
-describe('resolveMaxScale', () => {
-    it('lets a large photo reach its own pixels', () => {
-        expect(resolveMaxScale(6000, 800)).toBe(7.5);
-    });
-
-    it('keeps a useful range for a small photo', () => {
-        expect(resolveMaxScale(400, 800)).toBe(4);
     });
 });

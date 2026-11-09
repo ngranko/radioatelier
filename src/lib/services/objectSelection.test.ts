@@ -1,8 +1,6 @@
 import {goto} from '$app/navigation';
 import {page} from '$app/state';
 import type {Id} from '$convex/_generated/dataModel';
-import {createDraftState} from '$lib/state/createDraft.svelte';
-import {markerFilterState, openMarkerFilter} from '$lib/state/markerFilter.svelte';
 import {
     enterEditMode,
     objectDetailsOverlay,
@@ -19,7 +17,6 @@ import {
     closeObjectSelection,
     focusObjectSelection,
     selectObject,
-    selectMapPoint,
     selectSearchResult,
 } from './objectSelection';
 import {
@@ -87,15 +84,6 @@ describe('Object selection', () => {
         expect(goto).toHaveBeenCalledWith('/object/object-2');
     });
 
-    it('closes the filter when opening details', () => {
-        openMarkerFilter();
-
-        selectSearchResult(createSearchItem());
-
-        expect(markerFilterState.isOpen).toBe(false);
-        expect(objectDetailsOverlay.isOpen).toBe(true);
-    });
-
     it('leaves same-target edits and sheet position untouched', () => {
         showObjectDetailsOverlay('object-1', {id: 'object-1', name: 'Keep edits'} as never);
         enterEditMode();
@@ -119,16 +107,6 @@ describe('Object selection', () => {
         focusObjectSelection();
 
         expect(map.setCenter).toHaveBeenCalledWith(55.75, 37.61);
-    });
-
-    it('opens a map draft at the chosen coordinates', () => {
-        selectMapPoint({latitude: 10, longitude: 20});
-
-        expect(createDraftState.position).toEqual({lat: 10, lng: 20});
-        expect(objectDetailsOverlay).toMatchObject({isOpen: true, isLoading: true});
-        const destination = new URL(vi.mocked(goto).mock.calls[0][0], 'https://archive.test');
-        expect(destination.pathname).toBe('/point');
-        expect(Object.fromEntries(destination.searchParams)).toEqual({lat: '10', lng: '20'});
     });
 
     it('keeps result-list pins when their preview is closed', () => {

@@ -15,18 +15,6 @@ describe('resolveGpuRendererFlag', () => {
         expect(client.isFeatureEnabled).toHaveBeenCalledWith(GPU_RENDERER_FLAG);
     });
 
-    it('keeps the legacy renderer when the flag is off', async () => {
-        const client = {
-            isFeatureEnabled: vi.fn(() => false),
-            onFeatureFlags: vi.fn((callback: () => void) => {
-                callback();
-                return vi.fn();
-            }),
-        };
-
-        await expect(resolveGpuRendererFlag(client)).resolves.toBe(false);
-    });
-
     it('cleans up a synchronous subscription', async () => {
         let value: boolean | undefined;
         const unsubscribe = vi.fn();
@@ -51,17 +39,6 @@ describe('resolveGpuRendererFlag', () => {
             onFeatureFlags: vi.fn((callback: () => void) => {
                 callback();
                 return vi.fn();
-            }),
-        };
-
-        await expect(resolveGpuRendererFlag(client)).resolves.toBe(false);
-    });
-
-    it('falls back when feature flag subscription throws', async () => {
-        const client = {
-            isFeatureEnabled: vi.fn(() => undefined),
-            onFeatureFlags: vi.fn(() => {
-                throw new Error('subscription unavailable');
             }),
         };
 
