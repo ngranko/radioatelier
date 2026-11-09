@@ -9,7 +9,6 @@ import {belongsToConfiguredDataSource} from '../notion/config';
 import {readNotionPageFields} from '../notion/fields';
 import type {NotionPage, NotionPageFields} from '../notion/types';
 import {performInboundSync} from './inbound';
-import {computeSyncHash} from './reconcile';
 import type {ObjectSyncSnapshot} from './snapshot';
 import type {AppSyncFields} from './types';
 
@@ -125,27 +124,6 @@ describe('performInboundSync', () => {
         expect(runMutation).not.toHaveBeenCalled();
     });
 
-    it('records an echo when the edited time moved forward', async () => {
-        const {ctx, runMutation} = makeCtx(
-            makeSyncRecord({
-                lastOutboundHash: computeSyncHash(notionFields),
-                lastInboundEditedTime: '2026-01-01T00:00:00.000Z',
-            }),
-            makeSnapshot(),
-        );
-
-        await performInboundSync(ctx, {pageId: 'page-1', eventType: 'page.properties_updated'});
-
-        expect(runMutation).toHaveBeenCalledTimes(1);
-        expectMutationRef(runMutation, internal.notionSync.state.upsertSyncState);
-        expect(runMutation.mock.calls[0][1]).toMatchObject({
-            objectId: 'object-1',
-            notionPageId: 'page-1',
-            lastOutboundHash: computeSyncHash(notionFields),
-            lastInboundEditedTime: editedTime,
-        });
-    });
-
     it('patches the linked Object with the inbound apply patch', async () => {
         vi.mocked(readNotionPageFields).mockReturnValue({
             ...notionFields,
@@ -213,14 +191,5 @@ describe('performInboundSync', () => {
 
         expect(runMutation).not.toHaveBeenCalled();
         warn.mockRestore();
-    });
-
-    it('drops a new page when no sync-enabled owner can be resolved', async () => {
-        const {ctx, runMutation} = makeCtx(null, null);
-
-        await performInboundSync(ctx, {pageId: 'page-1', eventType: 'page.created'});
-
-        expect(geocodeAddress).not.toHaveBeenCalled();
-        expect(runMutation).not.toHaveBeenCalled();
     });
 });

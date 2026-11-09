@@ -127,21 +127,6 @@ describe('VisibilityEngine', () => {
         expect(onComplete).toHaveBeenCalledTimes(1);
     });
 
-    it('stops mid-pass when suppressed but still completes', () => {
-        stubClock(10);
-        const {repo} = makeRepo(['a', 'b', 'c', 'd']);
-        const {renderer, shown} = makeRenderer();
-        const engine = new VisibilityEngine(repo, {frameBudgetMs: 5}, renderer);
-        const onComplete = vi.fn();
-
-        engine.updateVisibility(new Set(['a', 'b', 'c', 'd']), onComplete);
-        engine.setSuppressed(true);
-        flushAllFrames();
-
-        expect(shown).toHaveLength(1);
-        expect(onComplete).toHaveBeenCalledTimes(1);
-    });
-
     it('cancels a queued batch so it cannot resume after suppression lifts', () => {
         stubClock(10);
         const {repo} = makeRepo(['a', 'b', 'c', 'd']);

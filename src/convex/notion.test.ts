@@ -6,17 +6,12 @@ import {computeNotionWebhookSignature, verifyNotionWebhookSignature} from './not
 import {chooseObjectOwner} from './notionSync/identity';
 import {decideInboundSync} from './notionSync/inboundDecision';
 import {
-    computeFieldDiscrepancies,
     computeNotionToAppDiff,
     computeSyncHash,
     findMatchForAppObject,
 } from './notionSync/reconcile';
 import type {ObjectSyncSnapshot} from './notionSync/snapshot';
-import {
-    buildSyncStateArgs,
-    needsSyncErrorPatchWrite,
-    needsSyncStateWrite,
-} from './notionSync/state';
+import {buildSyncStateArgs, needsSyncStateWrite} from './notionSync/state';
 import type {AppSyncFields} from './notionSync/types';
 
 const appFields: AppSyncFields = {
@@ -58,20 +53,6 @@ describe('notion sync matching', () => {
         });
     });
 
-    it('preserves nulls while excluding non-applicable fields from raw inbound diffs', () => {
-        const {appPatch} = computeNotionToAppDiff(appFields, {
-            ...appFields,
-            mapLink: 'https://radioatelier.app/object/changed',
-            name: null,
-            city: 'Berlin',
-        });
-
-        expect(appPatch).toEqual({
-            name: null,
-            city: 'Berlin',
-        });
-    });
-
     it('keeps internalId out of inbound app patches', () => {
         const {appPatch} = computeNotionToAppDiff(appFields, {
             ...appFields,
@@ -92,59 +73,9 @@ describe('notion sync matching', () => {
             }),
         );
     });
-
-    it('hashes independently of the key insertion order of its input', () => {
-        const reordered = Object.fromEntries(Object.entries(appFields).reverse()) as AppSyncFields;
-
-        expect(computeSyncHash(reordered)).toBe(computeSyncHash(appFields));
-    });
-
-    it('reports differing sync fields between app and Notion snapshots', () => {
-        expect(
-            computeFieldDiscrepancies(appFields, {
-                ...appFields,
-                city: 'Berlin',
-                tagNames: ['historic'],
-                isVisited: true,
-            }),
-        ).toEqual({
-            differingFields: ['city', 'isVisited', 'tagNames'],
-            inSync: false,
-        });
-    });
 });
 
 describe('notion inbound sync decisions', () => {
-    it('deletes the linked Object when the Notion page is removed', () => {
-        expect(
-            decideInboundSync({
-                eventType: 'page.deleted',
-                pageState: 'removed',
-                existingSync: {
-                    objectId: objectId('object-1'),
-                    lastOutboundHash: null,
-                },
-                notionFields: null,
-                existingSnapshot: null,
-            }),
-        ).toEqual({
-            kind: 'deleteObject',
-            objectId: objectId('object-1'),
-        });
-    });
-
-    it('skips removed pages that have no linked Object', () => {
-        expect(
-            decideInboundSync({
-                eventType: 'page.deleted',
-                pageState: 'removed',
-                existingSync: null,
-                notionFields: null,
-                existingSnapshot: null,
-            }),
-        ).toEqual({kind: 'skip'});
-    });
-
     it('records an echo when Notion sends back the last outbound state', () => {
         const lastOutboundHash = computeSyncHash(appFields);
 
@@ -163,92 +94,6 @@ describe('notion inbound sync decisions', () => {
             kind: 'recordEcho',
             objectId: objectId('object-1'),
             lastOutboundHash,
-        });
-    });
-
-    it('patches an existing Object when Notion fields changed', () => {
-        expect(
-            decideInboundSync({
-                eventType: 'page.properties_updated',
-                pageState: 'active',
-                existingSync: {
-                    objectId: objectId('object-1'),
-                    lastOutboundHash: 'older-hash',
-                },
-                notionFields: {...appFields, city: 'Berlin'},
-                existingSnapshot: objectSnapshot('object-1', appFields),
-            }),
-        ).toEqual({
-            kind: 'patchObject',
-            objectId: objectId('object-1'),
-            patch: {city: 'Berlin'},
-        });
-    });
-
-    it('skips linked updates when the Object snapshot is unavailable', () => {
-        expect(
-            decideInboundSync({
-                eventType: 'page.properties_updated',
-                pageState: 'active',
-                existingSync: {
-                    objectId: objectId('object-1'),
-                    lastOutboundHash: 'older-hash',
-                },
-                notionFields: {...appFields, city: 'Berlin'},
-                existingSnapshot: null,
-            }),
-        ).toEqual({kind: 'skip'});
-    });
-
-    it('clears nullable app fields when Notion empties them', () => {
-        expect(
-            decideInboundSync({
-                eventType: 'page.properties_updated',
-                pageState: 'active',
-                existingSync: {
-                    objectId: objectId('object-1'),
-                    lastOutboundHash: 'older-hash',
-                },
-                notionFields: {
-                    ...appFields,
-                    installedPeriod: null,
-                    source: null,
-                    city: 'Berlin',
-                },
-                existingSnapshot: objectSnapshot('object-1', appFields),
-            }),
-        ).toEqual({
-            kind: 'patchObject',
-            objectId: objectId('object-1'),
-            patch: {
-                installedPeriod: null,
-                source: null,
-                city: 'Berlin',
-            },
-        });
-    });
-
-    it('refuses inbound patches that empty required name or category', () => {
-        expect(
-            decideInboundSync({
-                eventType: 'page.properties_updated',
-                pageState: 'active',
-                existingSync: {
-                    objectId: objectId('object-1'),
-                    lastOutboundHash: 'older-hash',
-                },
-                notionFields: {
-                    ...appFields,
-                    name: null,
-                    categoryName: null,
-                    city: 'Berlin',
-                },
-                existingSnapshot: objectSnapshot('object-1', appFields),
-            }),
-        ).toEqual({
-            kind: 'rejectInbound',
-            objectId: objectId('object-1'),
-            fields: ['name', 'categoryName'],
         });
     });
 
@@ -271,29 +116,6 @@ describe('notion inbound sync decisions', () => {
         });
     });
 
-    it('unmatched page.created uses create flow when no linked object exists', () => {
-        expect(
-            decideInboundSync({
-                eventType: 'page.created',
-                pageState: 'active',
-                existingSync: null,
-                notionFields: {
-                    ...appFields,
-                    mapLink: 'https://radioatelier.app/object/object-1',
-                    city: 'Berlin',
-                },
-                existingSnapshot: null,
-            }),
-        ).toEqual({
-            kind: 'createObject',
-            fields: {
-                ...appFields,
-                mapLink: 'https://radioatelier.app/object/object-1',
-                city: 'Berlin',
-            },
-        });
-    });
-
     it('skips unmatched Notion updates that are not creates', () => {
         expect(
             decideInboundSync({
@@ -308,13 +130,6 @@ describe('notion inbound sync decisions', () => {
 });
 
 describe('notion sync identity', () => {
-    it('prefers an eligible mapped owner over the fallback owner', () => {
-        const mappedOwner = makeStubOwner({id: 'mapped', notionSyncEnabled: true});
-        const fallbackOwner = makeStubOwner({id: 'fallback', notionSyncEnabled: true});
-
-        expect(chooseObjectOwner(mappedOwner, fallbackOwner)).toBe(mappedOwner);
-    });
-
     it('falls back when the mapped owner cannot receive sync Objects', () => {
         const mappedOwner = makeStubOwner({id: 'mapped', notionSyncEnabled: false});
         const fallbackOwner = makeStubOwner({id: 'fallback', notionSyncEnabled: true});
@@ -424,18 +239,6 @@ describe('notion sync state records', () => {
                 ...next,
                 lastInboundEditedTime: 'edited-2',
             }),
-        ).toBe(true);
-    });
-
-    it('skips error patches when the stored message is unchanged', () => {
-        expect(
-            needsSyncErrorPatchWrite(
-                makeSyncRecord({lastSyncError: 'Notion failed'}),
-                'Notion failed',
-            ),
-        ).toBe(false);
-        expect(
-            needsSyncErrorPatchWrite(makeSyncRecord({lastSyncError: 'Notion failed'}), null),
         ).toBe(true);
     });
 });

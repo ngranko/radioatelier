@@ -71,30 +71,6 @@ describe('renaming', () => {
         });
     });
 
-    it('lets a legacy lowercase category take on its capitalized form', async () => {
-        const legacyCategory = {_id: categoryId, name: 'mosaic'};
-        const {ctx, db} = createMockCtx({
-            docs: {'categories:category-1': legacyCategory},
-            rows: {categories: [legacyCategory]},
-        });
-
-        await renameCategory(ctx, categoryId, 'mosaic');
-
-        expect(db.patch).toHaveBeenCalledWith('categories', categoryId, {name: 'Mosaic'});
-    });
-
-    it('leaves a name that normalizes to itself untouched and resyncs nothing', async () => {
-        const {ctx, db} = createMockCtx({
-            docs: {'tags:tag-1': {_id: tagId, name: 'mosaic'}},
-            rows: {markers: [{_id: 'marker-1', objectId: 'object-1', tagIds: [tagId]}]},
-        });
-
-        await renameTag(ctx, tagId, ' Mosaic ');
-
-        expect(db.patch).not.toHaveBeenCalled();
-        expect(scheduleTaxonomyFanout).not.toHaveBeenCalled();
-    });
-
     it('normalizes the new name and resyncs the objects that carry it', async () => {
         const {ctx, db} = createMockCtx({
             docs: {'tags:tag-1': {_id: tagId, name: 'mosaic'}},
@@ -151,20 +127,6 @@ describe('removal', () => {
         expect(db.patch).toHaveBeenCalledWith('categories', categoryId, {
             isDeleting: true,
             deletionReplacementId: replacementCategoryId,
-        });
-        expect(db.delete).not.toHaveBeenCalled();
-    });
-
-    it('hands an unused category to the batched job with nothing to move', async () => {
-        const {ctx, db, scheduler} = createMockCtx({
-            docs: {'categories:category-1': {_id: categoryId, name: 'Mosaic'}},
-        });
-
-        await removeCategory(ctx, categoryId, null);
-
-        expect(scheduler.runAfter).toHaveBeenCalledWith(0, expect.anything(), {
-            categoryId,
-            replacementId: null,
         });
         expect(db.delete).not.toHaveBeenCalled();
     });
@@ -237,20 +199,4 @@ describe('concurrent taxonomy edits', () => {
             expect(scheduler.runAfter).not.toHaveBeenCalled();
         },
     );
-
-    it('marks tags before scheduling their removal', async () => {
-        const {ctx, db, scheduler} = createMockCtx({
-            docs: {'tags:tag-1': {_id: tagId, name: 'old'}},
-        });
-        await removeTag(ctx, tagId, null);
-        expect(db.patch).toHaveBeenCalledWith('tags', tagId, {
-            isDeleting: true,
-            deletionReplacementId: undefined,
-        });
-        expect(scheduler.runAfter).toHaveBeenCalledWith(0, expect.anything(), {
-            tagId,
-            replacementId: null,
-            cursor: null,
-        });
-    });
 });

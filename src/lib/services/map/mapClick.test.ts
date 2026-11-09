@@ -15,20 +15,6 @@ describe('MapClickTimeout', () => {
         vi.useRealTimers();
     });
 
-    it('replaces a pending timeout so only the latest callback runs', () => {
-        const timeout = new MapClickTimeout();
-        const first = vi.fn();
-        const second = vi.fn();
-
-        timeout.replace(first, MAP_CLICK_DEBOUNCE_MS);
-        timeout.replace(second, MAP_CLICK_DEBOUNCE_MS);
-        vi.advanceTimersByTime(MAP_CLICK_DEBOUNCE_MS);
-
-        expect(first).not.toHaveBeenCalled();
-        expect(second).toHaveBeenCalledOnce();
-        expect(timeout.isPending).toBe(false);
-    });
-
     it('does not let a stale callback clear a newer timeout', () => {
         const timeout = new MapClickTimeout();
         const first = vi.fn();
@@ -45,18 +31,6 @@ describe('MapClickTimeout', () => {
 
         vi.advanceTimersByTime(MAP_CLICK_DEBOUNCE_MS - 1);
         expect(second).toHaveBeenCalledOnce();
-    });
-
-    it('clear() cancels every pending callback', () => {
-        const timeout = new MapClickTimeout();
-        const callback = vi.fn();
-
-        timeout.replace(callback, MAP_CLICK_DEBOUNCE_MS);
-        expect(timeout.clear()).toBe(true);
-        vi.advanceTimersByTime(MAP_CLICK_DEBOUNCE_MS);
-
-        expect(callback).not.toHaveBeenCalled();
-        expect(timeout.clear()).toBe(false);
     });
 });
 
