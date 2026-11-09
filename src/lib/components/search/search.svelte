@@ -19,7 +19,7 @@
         shouldOfferAreaSearch,
     } from '$lib/state/searchArea.svelte.ts';
     import {useConvexClient} from 'convex-svelte';
-    import {untrack} from 'svelte';
+    import {onMount, untrack} from 'svelte';
 
     const client = useConvexClient();
     const areResultsShown = $derived(Boolean(searchState.query && searchState.isResultsShown));
@@ -29,6 +29,10 @@
             : null,
     );
 
+    onMount(() => {
+        applyUrlToSearchState(page.url);
+    });
+
     $effect(() => {
         const current = results;
         // The host outlives the panel's exit animation, so closing it invalidates requests immediately.
@@ -37,7 +41,7 @@
 
     $effect(() => {
         const current = results;
-        if (!mapState.isReady) {
+        if (!searchState.query || !searchState.lat || !searchState.lng) {
             return;
         }
         const request = {
@@ -60,8 +64,6 @@
         return shouldOfferAreaSearch(searched, current) ? current.center : null;
     });
 
-    // The bar renders before the map so the top bar does not pop in; only the
-    // parts that read or move the map wait for it.
     $effect(() => {
         if (mapState.isReady) {
             return untrack(attachToMap);
@@ -72,8 +74,17 @@
         // Idle covers the zooms a drag never reports, and the pans that end without one.
         const unsubIdle = mapState.provider!.onIdle(followMapViewport);
 
-        const applied = applyUrlToSearchState(page.url);
-        if (applied) {
+        if (objectDetailsOverlay.isOpen) {
+            return unsubIdle;
+        }
+        const current = results?.pages[results.activeSource];
+        if (current?.hasLoaded) {
+            searchResultsMap.fit(current.items, {
+                latitude: Number(searchState.lat),
+                longitude: Number(searchState.lng),
+            });
+            searchResultsMap.rememberArea();
+        } else if (searchState.lat && searchState.lng) {
             mapState.provider!.setCenter(Number(searchState.lat), Number(searchState.lng));
         }
 
@@ -81,7 +92,7 @@
     }
 
     $effect(() => {
-        // Until the URL's search is restored above, an empty query would wipe it.
+        // Initial URL restoration runs on mount before this map-dependent URL update.
         if (!mapState.isReady) {
             return;
         }
@@ -102,7 +113,10 @@
 
 <div class="w-full max-w-sm p-2" inert={objectDetailsOverlay.isOpen}>
     <div class="relative z-2" data-search-scope>
-        <SearchBar disabled={objectDetailsOverlay.isOpen || !mapState.isReady} />
+        <SearchBar
+            disabled={objectDetailsOverlay.isOpen ||
+                (!mapState.isReady && (!searchState.lat || !searchState.lng))}
+        />
         {#if searchState.query && !searchState.isResultsShown}
             {#key searchState.query}
                 <SearchPreview />
