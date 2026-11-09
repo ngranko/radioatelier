@@ -39,8 +39,11 @@
 </script>
 
 <!-- TODO: add an error state -->
-{#if permissions.canEditAll}
-    <Form initialValues={formValues} {registerCloseConfirmationCheck} />
-{:else if permissions.canEditPersonal}
-    <LightForm initialValues={formValues} {registerCloseConfirmationCheck} />
-{/if}
+<!-- Forms snapshot their values on mount, so history navigation to another Object must remount them -->
+{#key formValues.id}
+    {#if permissions.canEditAll}
+        <Form initialValues={formValues} {registerCloseConfirmationCheck} />
+    {:else if permissions.canEditPersonal}
+        <LightForm initialValues={formValues} {registerCloseConfirmationCheck} />
+    {/if}
+{/key}

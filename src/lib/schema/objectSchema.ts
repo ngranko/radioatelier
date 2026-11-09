@@ -2,6 +2,7 @@ import type {Id} from '$convex/_generated/dataModel';
 import type {LooseObject} from '$lib/interfaces/object';
 import {LIMITS, MAX_OBJECT_IMAGES} from '$lib/utils/fieldLimits';
 import {z} from 'zod';
+import {objectPersonalSchema} from './objectPersonalSchema';
 
 const emptyOrMissingToNull = (v: unknown) => (!v ? null : v);
 
@@ -43,7 +44,7 @@ export const schema = z.object({
     latitude: coordinateField(-90, 90, 'Широта должна быть от -90 до 90'),
     longitude: coordinateField(-180, 180, 'Долгота должна быть от -180 до 180'),
     name: z.string().min(1, 'Пожалуйста, введите название').max(255, 'Слишком длинное название'),
-    isVisited: z.boolean(),
+    isVisited: objectPersonalSchema.shape.isVisited,
     isRemoved: z.boolean(),
     isPublic: z.boolean(),
     category: z
@@ -51,7 +52,7 @@ export const schema = z.object({
         .min(1, 'Нужно выбрать категорию')
         .transform(v => v as Id<'categories'>),
     tags: z.array(z.string().transform(v => v as Id<'tags'>)),
-    privateTags: z.array(z.string().transform(v => v as Id<'privateTags'>)),
+    privateTags: objectPersonalSchema.shape.privateTags,
     address: z.preprocess(
         emptyOrMissingToNull,
         z.string().max(128, 'Слишком длинный адрес').nullable(),
