@@ -1,5 +1,5 @@
 <script lang="ts">
-    import {ZoomGestures} from '$lib/components/imageViewer/zoomGestures';
+    import {ZoomGestures, type DragHandlers} from '$lib/components/imageViewer/zoomGestures';
     import {
         FIT_VIEW,
         clampView,
@@ -16,42 +16,44 @@
 
     interface Props {
         url: string;
+        isActive: boolean;
+        /** Where the swipe track has moved this photo to; the zoom toolbar stays put. */
+        shift: Point;
+        dragHandlers: DragHandlers;
         onClose(): void;
-        onSwitchImage?(direction: number): void;
+        onSwitchImage(direction: number): void;
     }
 
-    let {url, onClose, onSwitchImage}: Props = $props();
+    let {url, isActive, shift, dragHandlers, onClose, onSwitchImage}: Props = $props();
 
     const ZOOM_STEP = 1.5;
     const PAN_STEP = 80;
-    const DISMISS_PULL = 120;
-    const BACKDROP_ALPHA = 0.9;
     const STAGE_CENTRE: Point = {x: 0, y: 0};
 
     let stage: HTMLElement | undefined = $state();
     let image: HTMLImageElement | undefined = $state();
     let frame: Frame | null = $state.raw(null);
     let view = $state.raw(FIT_VIEW);
-    let pull = $state(0);
     let isAnimated = $state(false);
     let hasFailed = $state(false);
 
     let isReady = $derived(frame !== null);
-    let backdropAlpha = $derived(
-        BACKDROP_ALPHA * (1 - Math.min(Math.abs(pull) / (DISMISS_PULL * 3), 0.6)),
-    );
 
     const gestures = new ZoomGestures({
         getView: () => view,
         getFrame: () => frame!,
         show,
-        pull: (offset, animate = false) => {
-            isAnimated = animate;
-            pull = offset;
-        },
-        release: settlePull,
-        swipe: direction => onSwitchImage?.(direction),
+        drag: travel => dragHandlers.drag(travel),
+        release: (travel, velocity) => dragHandlers.release(travel, velocity),
+        cancel: () => dragHandlers.cancel(),
         tap: closeOnOutsideTap,
+    });
+
+    // a photo swiped away should be back at its fitted size when swiped back to
+    $effect(() => {
+        if (!isActive) {
+            show(FIT_VIEW, true);
+        }
     });
 
     const keyActions: Record<string, () => void> = {
@@ -59,8 +61,8 @@
         '=': () => zoomBy(ZOOM_STEP),
         '-': () => zoomBy(1 / ZOOM_STEP),
         '0': () => show(FIT_VIEW, true),
-        ArrowLeft: () => (view.scale > 1 ? nudge({x: PAN_STEP, y: 0}) : onSwitchImage?.(-1)),
-        ArrowRight: () => (view.scale > 1 ? nudge({x: -PAN_STEP, y: 0}) : onSwitchImage?.(1)),
+        ArrowLeft: () => (view.scale > 1 ? nudge({x: PAN_STEP, y: 0}) : onSwitchImage(-1)),
+        ArrowRight: () => (view.scale > 1 ? nudge({x: -PAN_STEP, y: 0}) : onSwitchImage(1)),
         ArrowUp: () => nudge({x: 0, y: PAN_STEP}),
         ArrowDown: () => nudge({x: 0, y: -PAN_STEP}),
     };
@@ -96,16 +98,6 @@
         }
     }
 
-    function settlePull() {
-        if (Math.abs(pull) > DISMISS_PULL) {
-            onClose();
-            return;
-        }
-
-        isAnimated = true;
-        pull = 0;
-    }
-
     function closeOnOutsideTap(point: Point) {
         const rect = image!.getBoundingClientRect();
         const isOnImage =
@@ -121,7 +113,8 @@
 
     function handleKeydown(event: KeyboardEvent) {
         // leaves the browser's own ⌘+/⌘− page zoom and Alt+← / Alt+→ history navigation alone
-        const action = !event.metaKey && !event.ctrlKey && !event.altKey && keyActions[event.key];
+        const action =
+            isActive && !event.metaKey && !event.ctrlKey && !event.altKey && keyActions[event.key];
         if (action) {
             event.preventDefault();
             action();
@@ -136,7 +129,7 @@
 <div
     bind:this={stage}
     class="absolute inset-0 flex touch-none items-center justify-center overflow-hidden select-none"
-    style:background-color="rgb(0 0 0 / {backdropAlpha})"
+    style:transform="translate({shift.x}px, {shift.y}px)"
     {@attach isReady && gestures.attach}
     onclick={isReady ? undefined : onClose}
 >
@@ -148,16 +141,23 @@
             !isReady && 'opacity-0',
             view.scale > 1 ? 'cursor-grab' : 'cursor-zoom-in',
         )}
-        style:transform="translate({view.x}px, {view.y + pull}px) scale({view.scale})"
+        style:transform="translate({view.x}px, {view.y}px) scale({view.scale})"
         src={url}
         alt="Изображение"
         draggable="false"
         onload={measureFrame}
         onerror={() => (hasFailed = true)}
     />
+    {#if hasFailed}
+        <p class="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-sm text-white/70">
+            Не удалось загрузить изображение
+        </p>
+    {:else if !frame}
+        <Spinner class="absolute inset-0 m-auto size-6 text-white/70" />
+    {/if}
 </div>
 
-{#if frame}
+{#if frame && isActive}
     <ZoomToolbar
         scale={view.scale}
         maxScale={frame.maxScale}
@@ -165,10 +165,4 @@
         onZoomOut={() => zoomBy(1 / ZOOM_STEP)}
         onReset={() => show(FIT_VIEW, true)}
     />
-{:else if hasFailed}
-    <p class="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-sm text-white/70">
-        Не удалось загрузить изображение
-    </p>
-{:else}
-    <Spinner class="absolute inset-0 m-auto size-6 text-white/70" />
 {/if}
