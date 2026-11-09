@@ -133,14 +133,13 @@ export const update = mutation({
     returns: v.id('objects'),
     handler: async (ctx, {id, data}) => {
         const user = await getCurrentUserOrThrow(ctx);
-        assertObjectFieldLengths(data);
-
         const target = await loadObjectTarget(ctx, id);
 
         const isOwner = target.object.createdById === user._id;
         if (!isOwner) {
             return updateObjectPersonalState(ctx, id, user, data);
         }
+        assertObjectFieldLengths(data);
 
         await replaceObjectRecords(ctx, target, {
             name: data.name,
