@@ -24,7 +24,7 @@
         "@deck.gl/google-maps": "^9.4.0",
         "@deck.gl/layers": "^9.4.0",
         "@googlemaps/js-api-loader": "^2.1.1",
-        "@lucide/svelte": "^1.44.0",
+        "@lucide/svelte": "^1.49.0",
         "@luma.gl/webgl": "^9.4.1",
         "@selemondev/svgl-svelte": "^2.17.0",
         "@tailwindcss/vite": "^4.3.3",
