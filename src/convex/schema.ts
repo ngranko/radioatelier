@@ -77,8 +77,8 @@ export default defineSchema({
         .index('byMysqlId', ['mysqlId'])
         .index('byCreatedById', ['createdById'])
         .index('byCoverId', ['coverId']),
-    // A cover from before galleries existed (or from an import) has no row
-    // here, only the Object's coverId pointing at it.
+    // objects.coverId mirrors position 0. Covers from before galleries existed
+    // get their row from the backfillObjectGalleries migration.
     objectImages: defineTable({
         objectId: v.id('objects'),
         imageId: v.id('images'),

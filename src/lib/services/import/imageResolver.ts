@@ -1,4 +1,3 @@
-import type {Id} from '$convex/_generated/dataModel';
 import {uploadImage} from '$lib/services/imageUpload';
 import {resizeImage} from '$lib/utils/imageResizer';
 import type {ConvexClient} from 'convex/browser';
@@ -79,11 +78,7 @@ async function resizeImageBytesIfNeeded(
     };
 }
 
-async function uploadFromDataUrl(
-    client: ConvexClient,
-    dataUrl: string,
-    cache: Map<string, Id<'images'>>,
-) {
+async function uploadFromDataUrl(client: ConvexClient, dataUrl: string) {
     const rawBytes = base64ToBytes(dataUrl);
     const contentType = assertSupportedImportImageType(getMimeTypeFromDataUrl(dataUrl));
     const {bytes, contentType: resizedContentType} = await resizeImageBytesIfNeeded(
@@ -95,11 +90,10 @@ async function uploadFromDataUrl(
         client,
         new Blob([toArrayBuffer(bytes)], {type: resizedContentType}),
     );
-    cache.set(dataUrl, id);
     return id;
 }
 
-async function uploadFromUrl(client: ConvexClient, url: string, cache: Map<string, Id<'images'>>) {
+async function uploadFromUrl(client: ConvexClient, url: string) {
     const response = await fetch(url);
     if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
@@ -119,15 +113,10 @@ async function uploadFromUrl(client: ConvexClient, url: string, cache: Map<strin
         client,
         new Blob([toArrayBuffer(bytes)], {type: resizedContentType}),
     );
-    cache.set(url, id);
     return id;
 }
 
-export async function resolveImportImage(
-    client: ConvexClient,
-    source: string | undefined,
-    cache: Map<string, Id<'images'>>,
-) {
+export async function resolveImportImage(client: ConvexClient, source: string | undefined) {
     if (!source) {
         return null;
     }
@@ -137,18 +126,13 @@ export async function resolveImportImage(
         return null;
     }
 
-    const cached = cache.get(normalized);
-    if (cached) {
-        return cached;
-    }
-
     try {
         if (normalized.startsWith('data:')) {
-            return await uploadFromDataUrl(client, normalized, cache);
+            return await uploadFromDataUrl(client, normalized);
         }
 
         if (normalized.startsWith('http://') || normalized.startsWith('https://')) {
-            return await uploadFromUrl(client, normalized, cache);
+            return await uploadFromUrl(client, normalized);
         }
 
         return null;

@@ -46,11 +46,8 @@ async function selectAttachable(
     userId: Id<'users'>,
     imageIds: Id<'images'>[],
 ) {
-    const object = await ctx.db.get('objects', objectId);
     const links = await listGalleryLinks(ctx, objectId);
-    // A cover from before galleries existed has no gallery row yet, but it is
-    // already this Object's own.
-    const held = new Set([...links.map(link => link.imageId), object?.coverId]);
+    const held = new Set(links.map(link => link.imageId));
     const accepted: Id<'images'>[] = [];
     for (const imageId of new Set(imageIds)) {
         if (held.has(imageId) || (await isClaimable(ctx, imageId, userId))) {

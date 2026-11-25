@@ -27,7 +27,6 @@ export class ImportProvider {
     private isFinished = false;
     private isCancelled = false;
     private currentJobId?: Id<'importJobs'>;
-    private imageIdBySource = new Map<string, Id<'images'>>();
 
     public constructor(client: ConvexClientLike) {
         this.client = client;
@@ -115,11 +114,7 @@ export class ImportProvider {
                 const batch = rows.slice(i, i + BATCH_SIZE);
                 const preparedBatch = await Promise.all(
                     batch.map(async row => {
-                        const imageId = await resolveImportImage(
-                            this.client,
-                            row.imageSource,
-                            this.imageIdBySource,
-                        );
+                        const imageId = await resolveImportImage(this.client, row.imageSource);
                         return {
                             ...row,
                             ...(imageId ? {imageId} : {}),

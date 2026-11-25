@@ -9,14 +9,13 @@ type Row = {_id: string; [field: string]: unknown};
 const objectId = 'object-1' as Id<'objects'>;
 const ownerId = 'owner' as Id<'users'>;
 
-function createContext(coverId: string | null = null) {
+function createContext() {
     const rows: Record<string, Row[]> = {
-        objects: [{_id: objectId, coverId}],
+        objects: [{_id: objectId, coverId: null}],
         images: [
             {_id: 'own', createdById: ownerId},
             {_id: 'foreign', createdById: 'someone-else'},
             {_id: 'held', createdById: ownerId},
-            {_id: 'legacy'},
         ],
         objectImages: [{_id: 'link-0', objectId: 'other-object', imageId: 'held', position: 0}],
     };
@@ -59,13 +58,6 @@ describe('replaceObjectImages', () => {
         const {ctx, rows} = createContext();
 
         expect(await saveGallery(ctx, ['foreign', 'held', 'own'])).toEqual(['own']);
-        expect(rows.objects[0].coverId).toBe('own');
-    });
-
-    it('keeps an Object its legacy cover even though the saver did not upload it', async () => {
-        const {ctx, rows} = createContext('legacy');
-
-        expect(await saveGallery(ctx, ['own', 'legacy'])).toEqual(['own', 'legacy']);
         expect(rows.objects[0].coverId).toBe('own');
     });
 

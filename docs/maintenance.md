@@ -6,12 +6,17 @@ Convex owns the application database, file storage, migration state, and schedul
 
 `src/convex/convex.config.ts` installs `@convex-dev/migrations`. Definitions and the generic `run` runner live in `src/convex/migrations.ts`.
 
-| Function                | Table        | Effect                                                                                      |
-| ----------------------- | ------------ | ------------------------------------------------------------------------------------------- |
-| `backfillMarkerStyling` | `categories` | Fill missing color or icon values using the allowed random defaults; retain existing values |
-| `backfillImageOwners`   | `images`     | Fill an absent uploader ID when all objects using the cover resolve to exactly one owner    |
+| Function                  | Table        | Effect                                                                                         |
+| ------------------------- | ------------ | ---------------------------------------------------------------------------------------------- |
+| `backfillMarkerStyling`   | `categories` | Fill missing color or icon values using the allowed random defaults; retain existing values    |
+| `backfillImageOwners`     | `images`     | Fill an absent uploader ID when all objects using the cover resolve to exactly one owner       |
+| `backfillObjectGalleries` | `objects`    | Give each cover-only or shared cover its own image record, owned by and attached to its Object |
 
 The image-owner migration skips already attributed rows. Images with no referencing objects or with several distinct owners remain unchanged and log their candidate owners. Skipped rows need investigation; migration completion does not mean every image gained an owner.
+
+`backfillObjectGalleries` preserves each Object's current cover, crop, and gallery order. It copies a cover into the Object's gallery, or swaps the gallery's link to the copy, unless the Object's owner uploaded the cover and no other gallery holds it; the copy belongs to the Object's owner. Covers already independent are unchanged. The migration is safe to rerun and processes 20 Objects per batch. A missing image record or an overfull gallery stops the batch for investigation.
+
+The copies have independent image IDs and preview choices. They reuse immutable storage files; replacing a preview retains the old file while any image still references it. Old unreferenced image records pass through normal storage cleanup.
 
 ## Run a migration
 
@@ -32,6 +37,16 @@ npx convex run migrations:run '{"fn":"migrations:backfillImageOwners"}'
 Substitute `migrations:backfillMarkerStyling` for category styling. The component records progress and schedules batches. Repeating the runner reports or resumes its recorded state; it does not implicitly restart a completed migration. An explicit `reset: true` starts from the beginning. `batchSize` can override batch size.
 
 A dry run checks a batch, not the whole table. Review completion status and logs in Convex after a real run, then verify the affected behavior, such as recropping a previously ownerless cover. The repository defines migrations but does not automatically run them from its deploy script.
+
+To repair existing covers, pause imports and Object edits, deploy the preview-reference check together with the migration, then preview and run it:
+
+```bash
+npx convex run migrations:run '{"fn":"migrations:backfillObjectGalleries","dryRun":true}'
+npx convex run migrations:run '{"fn":"migrations:backfillObjectGalleries"}'
+npx convex run --component migrations lib:getStatus '{"names":["migrations:backfillObjectGalleries"]}'
+```
+
+Wait for the status to report `success`. On the intended production deployment, add `--prod` to each command. Refresh open forms before resuming edits so they use the repaired image IDs. Afterward, check a formerly shared photo: reordering or cropping it on one Object must preserve the other Object's gallery and crop.
 
 ## Scheduled cleanup
 

@@ -2,6 +2,7 @@ import {Migrations} from '@convex-dev/migrations';
 import {randomMarkerColor, randomMarkerIconKey} from '../lib/services/map/markerStyling.data.js';
 import {components} from './_generated/api.js';
 import type {DataModel, Doc} from './_generated/dataModel.js';
+import {repairObjectGallery} from './helpers/objectImageRepair';
 
 export const migrations = new Migrations<DataModel>(components.migrations);
 export const run = migrations.runner();
@@ -48,4 +49,10 @@ export const backfillImageOwners = migrations.define({
 
         return {createdById: ownerIds[0]};
     },
+});
+
+export const backfillObjectGalleries = migrations.define({
+    table: 'objects',
+    batchSize: 20,
+    migrateOne: repairObjectGallery,
 });

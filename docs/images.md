@@ -4,7 +4,7 @@ An object has an ordered gallery of up to three images (`MAX_OBJECT_IMAGES`); th
 
 ## Gallery and cover
 
-An `objectImages` row puts an image in an object's gallery at a `position`; the `images` table itself knows nothing about where an image is used. `helpers/objectImages.ts` rewrites the gallery from the ordered `imageIds` the form saves: images left out are detached, and a new one is attached only when the saving user uploaded it and no gallery holds it yet. The server then sets `objects.coverId` to the first attached image, so the client never names the cover directly. A cover saved before galleries existed, or created by CSV import, is referenced by `coverId` alone, so the details reader adds the cover to the attached images and lists it first, and the next save attaches it.
+An `objectImages` row puts an image in an object's gallery at a `position`; the `images` table itself knows nothing about where an image is used. `helpers/objectImages.ts` rewrites the gallery from the ordered `imageIds` the form saves: images left out are detached, and a new one is attached only when the saving user uploaded it and no gallery holds it yet. The server then sets `objects.coverId` to the first attached image, so the client never names the cover directly. CSV import attaches each row's photo the same way. The details reader lists only gallery images, so covers saved before galleries existed need the `backfillObjectGalleries` migration below.
 
 The image field (`input/imageUpload/`) shows the gallery as a swipeable carousel in both view and edit mode, and the full-screen viewer steps through the originals. In edit mode the buttons act on the slide in view: crop its preview, make it the cover, or remove it. From two images up, a thumbnail strip under the box (`thumbnails.svelte`) reorders them by dragging or with the arrow keys, and a tap jumps the carousel to that image. The form derives the cover from the order, so making an image the cover moves it to the front and removing the cover promotes the next one.
 
@@ -39,7 +39,7 @@ Decoding first tries `createImageBitmap` with image orientation applied, then a 
 
 `src/lib/components/input/imageUpload/cropDialog.svelte` crops the stored original at a 2:1 aspect ratio, with zoom from 1 to 3. It renders the selected pixels to a canvas and encodes a JPEG at quality 0.9.
 
-The crop uses the same upload module to upload a new file and call `images.updatePreview`. This updates the image record immediately and deletes the previous preview file if it differs. Cropping is not deferred until the object form is saved, so discarding form changes does not undo an already saved crop.
+The crop uses the same upload module to upload a new file and call `images.updatePreview`. This updates the image record immediately and deletes the previous preview file if it differs and no image still references it. Cropping is not deferred until the object form is saved, so discarding form changes does not undo an already saved crop.
 
 The upload module returns only after the image or preview commit succeeds. It propagates failures without retrying; callers own their messages, and CSV import continues without an image when its upload fails.
 
@@ -50,6 +50,8 @@ Each slide displays `previewUrl` when available and otherwise the original URL, 
 `src/convex/images.ts` requires a current app user for upload URLs and image creation. New rows store `createdById`. Preview changes require that uploader ID to match the current user; knowing an image ID is insufficient.
 
 Old image rows may lack an owner. They reject preview updates until attributed through the [image-owner migration](maintenance.md#available-migrations) or a deliberate manual correction.
+
+The `backfillObjectGalleries` migration gives legacy and shared covers independent image records attached to their respective Objects. Each copy belongs to that Object's owner and keeps its existing crop. Immutable storage files can be shared safely because preview changes replace only one image record, and file deletion checks all remaining references. See [Maintenance](maintenance.md#run-a-migration) for the one-time repair.
 
 `storage.sweepUnusedImages` runs daily at 00:00 UTC. It deletes image rows that are neither in a live object's gallery nor an object's cover, then hands off to `storage.sweepUnusedFiles`, which deletes storage files no image references. Both page through their table in batches and skip anything younger than a day, so an upload waiting in an unsaved form survives. Removing one object's cover does not collect an image still referenced by another object, and deleting an object removes its gallery rows and leaves the images to this sweep.
 

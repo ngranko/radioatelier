@@ -41,7 +41,7 @@ Import category resolution title-cases words and matches existing names case-ins
 
 `imageResolver.ts` fetches or decodes images in the browser, checks MIME type, resizes, and uploads them to Convex storage. Remote hosts must permit the browser fetch. Failed images produce a warning and the row can still import without a cover.
 
-Successfully resolved image sources are cached during the job. Image upload happens before the object batch, so cancellation or a failed row can leave an unused upload for scheduled storage cleanup.
+Each row uploads its own image, even when several rows use the same URL or data URL, so changing one Object's photo does not affect another. Image upload happens before the object batch, so cancellation or a failed row can leave an unused upload for scheduled storage cleanup.
 
 See [Images and cover photos](images.md) for resize policy, ownership, and storage retention.
 
