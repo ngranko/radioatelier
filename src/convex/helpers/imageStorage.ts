@@ -13,13 +13,13 @@ export async function replaceImagePreview(
     if (!image || image.createdById !== userId) {
         throw new ConvexError('Image not found');
     }
-    await ctx.db.patch('images', id, {previewStorageId: storageId});
-    if (image.previewStorageId && image.previewStorageId !== storageId) {
-        await deleteUnusedImageFile(ctx, image.previewStorageId);
-    }
     const previewUrl = await ctx.storage.getUrl(storageId);
     if (!previewUrl) {
         throw new ConvexError('Failed to get URL for image preview');
+    }
+    await ctx.db.patch('images', id, {previewStorageId: storageId});
+    if (image.previewStorageId && image.previewStorageId !== storageId) {
+        await deleteUnusedImageFile(ctx, image.previewStorageId);
     }
     return {id, previewUrl};
 }
