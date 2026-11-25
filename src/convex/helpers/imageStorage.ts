@@ -17,9 +17,10 @@ export async function replaceImagePreview(
     if (!previewUrl) {
         throw new ConvexError('Failed to get URL for image preview');
     }
+    const previousPreviewId = image.previewStorageId;
     await ctx.db.patch('images', id, {previewStorageId: storageId});
-    if (image.previewStorageId && image.previewStorageId !== storageId) {
-        await deleteUnusedImageFile(ctx, image.previewStorageId);
+    if (previousPreviewId && previousPreviewId !== storageId) {
+        await deleteUnusedImageFile(ctx, previousPreviewId);
     }
     return {id, previewUrl};
 }
