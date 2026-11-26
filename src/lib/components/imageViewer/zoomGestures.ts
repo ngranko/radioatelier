@@ -50,33 +50,35 @@ export class ZoomGestures {
     private movedAt = 0;
     private isPinch = false;
 
-    constructor(options: ZoomGestureOptions) {
+    public constructor(options: ZoomGestureOptions) {
         this.options = options;
     }
 
-    attach = (node: HTMLElement) => {
+    public attach(node: HTMLElement) {
         const listeners = new AbortController();
         const {signal} = listeners;
         this.node = node;
 
-        node.addEventListener('pointerdown', this.handlePress, {signal});
-        node.addEventListener('pointermove', this.handleMove, {signal});
-        node.addEventListener('pointerup', this.handleLift, {signal});
-        node.addEventListener('pointercancel', this.handleCancel, {signal});
-        node.addEventListener('wheel', this.handleWheel, {signal, passive: false});
-        node.addEventListener('click', this.handleClick, {signal});
-        node.addEventListener('dblclick', this.handleDoubleClick, {signal});
+        node.addEventListener('pointerdown', event => this.handlePress(event), {signal});
+        node.addEventListener('pointermove', event => this.handleMove(event), {signal});
+        node.addEventListener('pointerup', event => this.handleLift(event), {signal});
+        node.addEventListener('pointercancel', event => this.handleCancel(event), {signal});
+        node.addEventListener('wheel', event => this.handleWheel(event), {
+            signal,
+            passive: false,
+        });
+        node.addEventListener('click', event => this.handleClick(event), {signal});
+        node.addEventListener('dblclick', event => this.handleDoubleClick(event), {signal});
 
         return () => listeners.abort();
-    };
+    }
 
-    private handlePress = (event: PointerEvent) => {
+    private handlePress(event: PointerEvent) {
         if (event.button !== 0) {
             return;
         }
         if (this.pointers.size === 0) {
-            this.travelled = 0;
-            this.isPinch = false;
+            this.beginGesture(event.timeStamp);
         }
 
         this.node?.setPointerCapture(event.pointerId);
@@ -88,9 +90,19 @@ export class ZoomGestures {
             this.isPinch = true;
             this.cancelDrag();
         }
-    };
+    }
 
-    private handleMove = (event: PointerEvent) => {
+    // A lift before the axis locks leaves its travel and timing behind, and the next gesture's
+    // first move is measured against them, so every gesture starts from its own press.
+    private beginGesture(time: number) {
+        this.travelled = 0;
+        this.isPinch = false;
+        this.velocity = ORIGIN;
+        this.movedAt = time;
+        this.resetDrag();
+    }
+
+    private handleMove(event: PointerEvent) {
         if (!this.pointers.has(event.pointerId)) {
             return;
         }
@@ -103,7 +115,7 @@ export class ZoomGestures {
         this.travelled += Math.hypot(delta.x, delta.y);
         this.trackVelocity(delta, event.timeStamp);
         this.applyMove(delta, before.spread ? after.spread / before.spread : 1, before.centre);
-    };
+    }
 
     private applyMove(delta: Point, stretch: number, centre: Point) {
         const view = this.options.getView();
@@ -140,7 +152,7 @@ export class ZoomGestures {
         }
     }
 
-    private handleLift = (event: PointerEvent) => {
+    private handleLift(event: PointerEvent) {
         this.pointers.delete(event.pointerId);
         if (this.pointers.size > 0 || !this.axis) {
             return;
@@ -151,14 +163,14 @@ export class ZoomGestures {
         const velocity = isStale ? ORIGIN : this.projectOnAxis(this.velocity);
         this.resetDrag();
         this.options.release(travel, velocity);
-    };
+    }
 
     // The system took the pointer away (e.g. an iOS edge swipe). Unlike a lift, that is not the
     // user letting go, so a dragged image eases back into place instead of being judged.
-    private handleCancel = (event: PointerEvent) => {
+    private handleCancel(event: PointerEvent) {
         this.pointers.delete(event.pointerId);
         this.cancelDrag();
-    };
+    }
 
     private cancelDrag() {
         if (this.axis) {
@@ -176,7 +188,7 @@ export class ZoomGestures {
         return this.axis === 'x' ? {x: point.x, y: 0} : {x: 0, y: point.y};
     }
 
-    private handleWheel = (event: WheelEvent) => {
+    private handleWheel(event: WheelEvent) {
         event.preventDefault();
         const view = this.options.getView();
         const rate = event.ctrlKey ? TRACKPAD_PINCH_ZOOM_RATE : MOUSE_WHEEL_ZOOM_RATE;
@@ -184,23 +196,23 @@ export class ZoomGestures {
         const anchor = this.measureFromCentre(locateEvent(event));
 
         this.options.show(zoomAround(view, scale, anchor, this.options.getFrame()));
-    };
+    }
 
     // Browsers fire a click at the end of a drag or pinch as well, so only a pointer
     // that barely moved counts as a tap.
-    private handleClick = (event: MouseEvent) => {
+    private handleClick(event: MouseEvent) {
         if (!this.isPinch && this.travelled <= MAX_TAP_TRAVEL) {
             this.options.tap(locateEvent(event));
         }
-    };
+    }
 
-    private handleDoubleClick = (event: MouseEvent) => {
+    private handleDoubleClick(event: MouseEvent) {
         const view = this.options.getView();
         const scale = view.scale > 1 ? 1 : DOUBLE_TAP_SCALE;
         const anchor = this.measureFromCentre(locateEvent(event));
 
         this.options.show(zoomAround(view, scale, anchor, this.options.getFrame()), true);
-    };
+    }
 
     private measureFromCentre(point: Point): Point {
         const rect = this.node!.getBoundingClientRect();

@@ -130,7 +130,7 @@
     bind:this={stage}
     class="absolute inset-0 flex touch-none items-center justify-center overflow-hidden select-none"
     style:transform="translate({shift.x}px, {shift.y}px)"
-    {@attach isReady && gestures.attach}
+    {@attach isReady && (node => gestures.attach(node))}
     onclick={isReady ? undefined : onClose}
 >
     <img

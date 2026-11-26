@@ -53,7 +53,7 @@
                 shift={{x: track.locate(i - shown), y: track.pull}}
                 dragHandlers={track}
                 {onClose}
-                onSwitchImage={track.step}
+                onSwitchImage={direction => track.step(direction)}
             />
         {/if}
     {/each}

@@ -25,33 +25,33 @@ function isPastThreshold(travel: number, velocity: number, distance: number): bo
 
 /** A row of slides that follows the finger sideways to change photos and downwards to close. */
 export class SwipeTrack implements DragHandlers {
-    width = $state(0);
+    public width = $state(0);
     private options: SwipeTrackOptions;
     private offset = new Tween(0, {easing: cubicOut});
     private pullOffset = new Tween(0, {easing: cubicOut});
     // where the track was when the drag caught it, possibly halfway through settling
     private base: number | null = null;
 
-    constructor(options: SwipeTrackOptions) {
+    public constructor(options: SwipeTrackOptions) {
         this.options = options;
     }
 
-    get pull() {
+    public get pull() {
         return this.pullOffset.current;
     }
 
     /** `position` counts slides from the shown one. */
-    locate(position: number): number {
+    public locate(position: number): number {
         return position * (this.width + GAP) + this.offset.current;
     }
 
     // a quick run of swipes can leave the track several slides behind, so slides stay
     // rendered while still on screen, not just while they are neighbours
-    isNear(position: number): boolean {
+    public isNear(position: number): boolean {
         return Math.abs(position) <= 1 || Math.abs(this.locate(position)) < this.width + GAP;
     }
 
-    step = (direction: number) => {
+    public step(direction: number) {
         const next = this.options.getIndex() + direction;
         if (next >= 0 && next < this.options.getCount()) {
             this.options.setIndex(next);
@@ -61,15 +61,15 @@ export class SwipeTrack implements DragHandlers {
             });
         }
         this.settle();
-    };
+    }
 
-    drag = (travel: Point) => {
+    public drag(travel: Point) {
         this.base ??= this.offset.current;
         void this.offset.set(this.resistAtEdges(this.base + travel.x), {duration: 0});
         void this.pullOffset.set(travel.y, {duration: 0});
-    };
+    }
 
-    release = (travel: Point, velocity: Point) => {
+    public release(travel: Point, velocity: Point) {
         this.base = null;
         if (isPastThreshold(travel.y, velocity.y, DISMISS_PULL)) {
             this.options.close();
@@ -78,12 +78,12 @@ export class SwipeTrack implements DragHandlers {
         } else {
             this.settle();
         }
-    };
+    }
 
-    cancel = () => {
+    public cancel() {
         this.base = null;
         this.settle();
-    };
+    }
 
     private settle() {
         const duration = prefersReducedMotion.current ? 0 : SETTLE_MS;
