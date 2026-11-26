@@ -87,12 +87,9 @@ export function focusObjectSelection() {
 }
 
 export async function closeDeletedObject(id: Id<'objects'>, client: Pick<ConvexClient, 'query'>) {
-    if (!isSelected(id)) {
-        return;
-    }
     // A failed details query can also mean broken relations; verify deletion before closing.
     const object = await client.query(api.objects.resolveShareId, {id});
-    // The viewer may have selected something else while the lookup was in flight.
+    // Checked after the lookup because the viewer may select something else while it is in flight.
     if (object || !isSelected(id)) {
         return;
     }
