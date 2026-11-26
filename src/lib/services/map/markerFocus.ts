@@ -1,3 +1,4 @@
+import type {LatLngLiteral} from '$lib/interfaces/map';
 import {RevealWatcher} from '$lib/services/map/renderer/dom/revealWatcher';
 import {focusDetailsTarget} from './map.svelte.ts';
 import type {Marker} from './marker';
@@ -29,7 +30,7 @@ export function registerFocusableMarker(targetId: string, marker: Marker) {
     };
 }
 
-export function setFocusedTarget(targetId: string | null) {
+export function setFocusedTarget(targetId: string | null, position?: LatLngLiteral) {
     if (focusedId && focusedId !== targetId) {
         removeHighlight(registry.get(focusedId));
     }
@@ -39,6 +40,8 @@ export function setFocusedTarget(targetId: string | null) {
     setFocusedMarker(marker);
     if (marker) {
         focusMarker(marker);
+    } else if (targetId && position) {
+        focusDetailsTarget(position.lat, position.lng);
     }
 }
 

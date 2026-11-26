@@ -61,7 +61,7 @@ Service markers are `search`, `share`, and `draft`. `list` and `map` use the arc
 
 ## Focus and gestures
 
-`markerFocus.ts` owns focused-marker registration, highlighting, and recentering. The map component bridges the overlay's `detailsId` and sheet position into it. Search selection uses the same `focusDetailsTarget` helper.
+`markerFocus.ts` owns focused-marker registration, highlighting, and recentering. The map module follows Object selection through `focusObjectSelection`, including map readiness, target coordinates, and sheet position. A target can be centered using its coordinates before its Marker registers; registration then applies its highlight. Marker destruction only removes rendering and focus registration. Object selection handles confirmed deletion separately.
 
 Focus zooms to 15 when the current zoom is below 13. `detailsFocusOffset.ts` shifts the center for a 424 px side panel when at least 400 px of map remains. On narrower screens, only the `peek` sheet adds a vertical offset.
 

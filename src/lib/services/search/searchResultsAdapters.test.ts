@@ -1,11 +1,55 @@
+import type {MapProvider} from '$lib/interfaces/map';
+import {mapState} from '$lib/state/map.svelte';
+import {
+    closeDetailsOverlay,
+    showLoadingDetailsOverlay,
+} from '$lib/state/objectDetailsOverlay.svelte';
+import {searchArea} from '$lib/state/searchArea.svelte';
 import type {ConvexClient} from 'convex/browser';
 import {getFunctionName} from 'convex/server';
-import {describe, expect, it, vi} from 'vitest';
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {createSearchResults} from './searchResults.svelte';
-import {createSearchSources} from './searchResultsAdapters';
-import {createHarness, request} from './searchResultsTestHelpers';
+import {createSearchSources, searchResultsMap} from './searchResultsAdapters';
+import {createHarness, createPage, request} from './searchResultsTestHelpers';
+
+beforeEach(() => {
+    closeDetailsOverlay();
+    mapState.isReady = false;
+    mapState.provider = null;
+    searchArea.searched = searchArea.current = null;
+    vi.clearAllMocks();
+});
+afterEach(() => vi.unstubAllGlobals());
 
 describe('search source adapters', () => {
+    it('accepts a late page without moving the selected details camera or its area baseline', async () => {
+        const map = {
+            fitBounds: vi.fn(),
+            setCenter: vi.fn(),
+            createBounds: () => ({extend: vi.fn()}),
+            getCenter: () => ({lat: 10, lng: 20}),
+            getBounds: () => ({toRect: () => ({north: 11, south: 9, east: 21, west: 19})}),
+        };
+        mapState.provider = map as unknown as MapProvider;
+        mapState.isReady = true;
+        vi.stubGlobal('document', {body: {clientWidth: 1000}});
+        const response = Promise.withResolvers<ReturnType<typeof createPage>>();
+        const results = createSearchResults(
+            () => ({local: () => response.promise, google: async () => createPage('google')}),
+            searchResultsMap,
+        );
+        const pending = results.startSearch(request);
+        showLoadingDetailsOverlay('object-1', {latitude: 10, longitude: 20});
+
+        response.resolve(createPage('late'));
+        await pending;
+
+        expect(results.pages.local.items).toEqual(createPage('late').items);
+        expect(map.fitBounds).not.toHaveBeenCalled();
+        expect(map.setCenter).not.toHaveBeenCalled();
+        expect(searchArea.searched).toBeNull();
+    });
+
     it('keeps each search snapshot while translating independent offsets and page tokens', async () => {
         const action = vi
             .fn<ConvexClient['action']>()
