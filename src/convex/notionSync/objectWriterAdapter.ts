@@ -73,7 +73,6 @@ export function buildSyncCreateData(
         isRemoved: input.fields.isRemoved,
         removalPeriod: input.fields.removalPeriod,
         source: input.fields.source,
-        coverId: null,
         categoryId: classification.categoryId,
         isPublic: false,
         isPendingReview: false,

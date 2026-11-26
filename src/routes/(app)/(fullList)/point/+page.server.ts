@@ -167,7 +167,7 @@ function composePointDraft(
         isOwner: true,
         isPublic: false,
         // A photo taken on the spot means the owner was there.
-        ...(image && {isVisited: true, images: [image], cover: image}),
+        ...(image && {isVisited: true, images: [image]}),
     };
 }
 

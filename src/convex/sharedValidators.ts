@@ -56,8 +56,6 @@ export const mapPointTableFields = {
     ...mapPointCoreFields,
 };
 
-// Form saves leave coverId out: the server takes the cover from the gallery
-// order rather than trusting an image id sent by the client.
 const objectFormFields = {
     name: v.string(),
     description: v.nullable(v.string()),
@@ -72,7 +70,6 @@ const objectFormFields = {
 
 export const objectCoreFields = {
     ...objectFormFields,
-    coverId: v.nullable(v.id('images')),
     // Set on Objects created from a Photo capture until their owner approves them.
     isPendingReview: v.boolean(),
 };
@@ -81,6 +78,9 @@ export type ObjectCoreData = Infer<ReturnType<typeof v.object<typeof objectCoreF
 
 export const objectTableFields = {
     ...objectCoreFields,
+    // Retired: the cover is the first gallery image. Kept only until the
+    // clearObjectCovers migration has unset it on every Object.
+    coverId: v.optional(v.nullable(v.id('images'))),
     mysqlId: v.optional(v.string()),
     mapPointId: v.id('mapPoints'),
     createdById: v.id('users'),

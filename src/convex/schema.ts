@@ -19,9 +19,8 @@ export default defineSchema({
     images: defineTable({
         originalStorageId: v.id('_storage'),
         previewStorageId: v.optional(v.id('_storage')),
-        // Optional for rows created before uploads were attributed. The
-        // backfillImageOwners migration fills them in; rows it cannot resolve to
-        // a single owner stay unset and locked against preview writes.
+        // Optional for rows created before uploads were attributed. Those stay
+        // locked against preview writes; no gallery holds one any more.
         createdById: v.optional(v.id('users')),
     })
         .index('byOriginalStorageId', ['originalStorageId'])
@@ -77,10 +76,7 @@ export default defineSchema({
         .index('byIsPublic', ['isPublic'])
         .index('byMysqlId', ['mysqlId'])
         .index('byCreatedById', ['createdById'])
-        .index('byCreatedByIdAndIsPendingReview', ['createdById', 'isPendingReview'])
-        .index('byCoverId', ['coverId']),
-    // objects.coverId mirrors position 0. Covers from before galleries existed
-    // get their row from the backfillObjectGalleries migration.
+        .index('byCreatedByIdAndIsPendingReview', ['createdById', 'isPendingReview']),
     objectImages: defineTable({
         objectId: v.id('objects'),
         imageId: v.id('images'),

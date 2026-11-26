@@ -26,7 +26,6 @@ function createContext(userId = 'viewer') {
         isPublic: true,
         name: 'Mosaic',
         description: 'Keep this',
-        coverId: 'image-1',
         categoryId: 'category-1',
     };
     const tag = {_id: privateTagId, createdById: userId};

@@ -65,16 +65,10 @@ async function isImageReferenced(ctx: MutationCtx, image: Doc<'images'>) {
         return true;
     }
 
-    const [cover, capture] = await Promise.all([
-        ctx.db
-            .query('objects')
-            .withIndex('byCoverId', q => q.eq('coverId', image._id))
-            .first(),
-        // A failed capture can wait for a retry longer than the grace period.
-        ctx.db
-            .query('photoCaptures')
-            .withIndex('byImageId', q => q.eq('imageId', image._id))
-            .first(),
-    ]);
-    return cover !== null || capture !== null;
+    // A failed capture can wait for a retry longer than the grace period.
+    const capture = await ctx.db
+        .query('photoCaptures')
+        .withIndex('byImageId', q => q.eq('imageId', image._id))
+        .first();
+    return capture !== null;
 }

@@ -18,7 +18,6 @@ import type * as helpers_mockIndexRange from "../helpers/mockIndexRange.js";
 import type * as helpers_objectAggregate from "../helpers/objectAggregate.js";
 import type * as helpers_objectDetails from "../helpers/objectDetails.js";
 import type * as helpers_objectHelpers from "../helpers/objectHelpers.js";
-import type * as helpers_objectImageRepair from "../helpers/objectImageRepair.js";
 import type * as helpers_objectImages from "../helpers/objectImages.js";
 import type * as helpers_objectPersonalState from "../helpers/objectPersonalState.js";
 import type * as helpers_objectReader from "../helpers/objectReader.js";
@@ -99,7 +98,6 @@ declare const fullApi: ApiFromModules<{
   "helpers/objectAggregate": typeof helpers_objectAggregate;
   "helpers/objectDetails": typeof helpers_objectDetails;
   "helpers/objectHelpers": typeof helpers_objectHelpers;
-  "helpers/objectImageRepair": typeof helpers_objectImageRepair;
   "helpers/objectImages": typeof helpers_objectImages;
   "helpers/objectPersonalState": typeof helpers_objectPersonalState;
   "helpers/objectReader": typeof helpers_objectReader;

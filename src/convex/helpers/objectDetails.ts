@@ -14,7 +14,6 @@ type ObjectViewerContext = {
     userId: Id<'users'> | null;
     privateTags: Doc<'privateTags'>[];
     isVisited: boolean;
-    cover: ObjectImage | null;
     images: ObjectImage[];
 };
 
@@ -42,7 +41,6 @@ export function buildObjectDetails(aggregate: ObjectAggregate, viewer: ObjectVie
         isRemoved: object.isRemoved,
         removalPeriod: object.removalPeriod,
         source: object.source,
-        cover: viewer.cover,
         images: viewer.images,
         isPublic: object.isPublic,
         category: {
@@ -88,7 +86,7 @@ async function loadImages(ctx: QueryCtx, object: Doc<'objects'>) {
     const attached = await listObjectImages(ctx, object._id);
     const images = await Promise.all(attached.map(image => resolveImageUrls(ctx, image)));
 
-    return {cover: images[0] ?? null, images};
+    return {images};
 }
 
 async function resolveImageUrls(ctx: QueryCtx, image: Doc<'images'>): Promise<ObjectImage> {
