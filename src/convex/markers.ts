@@ -30,6 +30,7 @@ export const list = query({
             categoryId: item.categoryId,
             isPublic: item.isPublic,
             isOwner: item.createdById === user._id,
+            isPendingReview: item.createdById === user._id && item.isPendingReview === true,
         }));
     },
 });

@@ -28,6 +28,7 @@ export async function loadObjectDetails(
 
 export function buildObjectDetails(aggregate: ObjectAggregate, viewer: ObjectViewerContext) {
     const {object, mapPoint, category, tags} = aggregate;
+    const isOwner = object.createdById === viewer.userId;
     return {
         id: object._id,
         latitude: mapPoint.latitude,
@@ -57,7 +58,9 @@ export function buildObjectDetails(aggregate: ObjectAggregate, viewer: ObjectVie
             name: tag.name,
         })),
         isVisited: viewer.isVisited,
-        isOwner: object.createdById === viewer.userId,
+        isOwner,
+        // Only the owner can act on a review, so nobody else is told about it.
+        isPendingReview: isOwner && object.isPendingReview === true,
         internalId: viewer.userId ? object.internalId : null,
     };
 }

@@ -185,6 +185,20 @@ describe('patchObjectRecords', () => {
     });
 });
 
+describe('approving a pending review', () => {
+    it('clears the flag on the object and its marker together', async () => {
+        const {ctx, db} = createMockCtx();
+        const target = createTarget();
+        target.object.isPendingReview = true;
+        target.marker.isPendingReview = true;
+
+        await patchObjectRecords(ctx, target, {isPendingReview: false});
+
+        expect(db.patch).toHaveBeenCalledWith('objects', 'object-1', {isPendingReview: false});
+        expect(db.patch).toHaveBeenCalledWith('markers', 'marker-1', {isPendingReview: false});
+    });
+});
+
 describe('assigning taxonomies during deletion', () => {
     it.each(['categories', 'tags'] as const)(
         'blocks reassigning objects to deleting %s',
