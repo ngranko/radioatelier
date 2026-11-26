@@ -1,6 +1,6 @@
 import {defineSchema, defineTable} from 'convex/server';
 import {v} from 'convex/values';
-import {mapPointTableFields, objectTableFields} from './sharedValidators';
+import {mapPointCoreFields, mapPointTableFields, objectTableFields} from './sharedValidators';
 
 export default defineSchema({
     categories: defineTable({
@@ -94,6 +94,18 @@ export default defineSchema({
     })
         .index('byObjectIdUserId', ['objectId', 'userId'])
         .index('byUserId', ['userId']),
+    // A photo waiting for analysis. Success turns it into an Object pending
+    // review and deletes the row; a failed one stays until retried or dismissed.
+    photoCaptures: defineTable({
+        createdById: v.id('users'),
+        imageId: v.id('images'),
+        ...mapPointCoreFields,
+        status: v.union(v.literal('processing'), v.literal('failed')),
+        attempts: v.number(),
+        failureReason: v.optional(v.string()),
+    })
+        .index('byCreatedById', ['createdById'])
+        .index('byImageId', ['imageId']),
     privateTags: defineTable({
         name: v.string(),
         createdById: v.id('users'),
