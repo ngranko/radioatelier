@@ -1,5 +1,6 @@
 import {api} from '$convex/_generated/api.js';
-import type {LooseObject, PointPreviewDetails} from '$lib/interfaces/object.ts';
+import type {Id} from '$convex/_generated/dataModel';
+import type {LooseObject, ObjectImage, PointPreviewDetails} from '$lib/interfaces/object.ts';
 import {schema, toFormDefaults} from '$lib/schema/objectSchema.ts';
 import {getConvexClient} from '$lib/server/convexClient';
 import {getPostHogClient} from '$lib/server/posthog';
@@ -18,10 +19,17 @@ export const load = async ({url, locals, isDataRequest}) => {
     }
 
     const placeId = url.searchParams.get('placeId')?.trim() || null;
+    const captureId = url.searchParams.get('capture') as Id<'photoCaptures'> | null;
+    const capture = captureId
+        ? await client.query(api.photoCaptures.getManualDraft, {id: captureId}).catch(() => null)
+        : null;
 
-    const addressResult = placeId
-        ? null
-        : await client.action(api.locations.getAddress, {latitude, longitude}).catch(() => null);
+    const addressResult =
+        placeId || capture
+            ? capture
+            : await client
+                  .action(api.locations.getAddress, {latitude, longitude})
+                  .catch(() => null);
 
     const placeResult = placeId
         ? await client.action(api.search.googlePlaceDetails, {placeId}).catch(() => null)
@@ -34,7 +42,7 @@ export const load = async ({url, locals, isDataRequest}) => {
         addressResult,
         placeResult,
     });
-    const draft = composePointDraft(preview);
+    const draft = composePointDraft(preview, capture?.image ?? null);
     const form = await superValidate(toFormDefaults(draft), zod4(schema), {errors: false});
 
     return {
@@ -44,6 +52,7 @@ export const load = async ({url, locals, isDataRequest}) => {
             id: buildPointDetailsId(preview),
             draft,
             preview,
+            opensForm: capture !== null,
         },
     };
 };
@@ -141,7 +150,10 @@ function composePointPreview({
     };
 }
 
-function composePointDraft(preview: PointPreviewDetails): Partial<LooseObject> {
+function composePointDraft(
+    preview: PointPreviewDetails,
+    image: ObjectImage | null,
+): Partial<LooseObject> {
     return {
         id: null,
         latitude: preview.latitude,
@@ -154,6 +166,8 @@ function composePointDraft(preview: PointPreviewDetails): Partial<LooseObject> {
         isRemoved: false,
         isOwner: true,
         isPublic: false,
+        // A photo taken on the spot means the owner was there.
+        ...(image && {isVisited: true, images: [image], cover: image}),
     };
 }
 

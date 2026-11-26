@@ -1,8 +1,10 @@
 <script lang="ts">
     import {api} from '$convex/_generated/api';
     import {trackArrivals} from '$lib/services/photoCapture/arrivals';
+    import {refreshUnsentCaptures} from '$lib/state/photoCapture.svelte';
     import {useQuery} from 'convex-svelte';
     import posthog from 'posthog-js';
+    import {onMount} from 'svelte';
     import {toast} from 'svelte-sonner';
 
     // Analyses finish on the server, possibly long after the photo was sent, so
@@ -15,6 +17,8 @@
         status: string;
         failureReason: string | null;
     }>(capture => capture.status === 'failed');
+
+    onMount(refreshUnsentCaptures);
 
     $effect(() => {
         for (const object of pending.data ? takeNewObjects(pending.data) : []) {

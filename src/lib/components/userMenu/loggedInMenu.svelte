@@ -13,8 +13,10 @@
     } from '$lib/components/ui/dropdown-menu';
     import LogoutDialog from '$lib/components/userMenu/logoutDialog.svelte';
     import ThemeMenuRow from '$lib/components/userMenu/themeMenuRow.svelte';
+    import {photoCaptureState} from '$lib/state/photoCapture.svelte';
     import FileInputIcon from '@lucide/svelte/icons/file-input';
     import KeyRoundIcon from '@lucide/svelte/icons/key-round';
+    import ListChecksIcon from '@lucide/svelte/icons/list-checks';
     import LogOutIcon from '@lucide/svelte/icons/log-out';
     import PaletteIcon from '@lucide/svelte/icons/palette';
     import TagsIcon from '@lucide/svelte/icons/tags';
@@ -24,7 +26,19 @@
     let isLogoutDialogOpen = $state(false);
 
     const currentUser = useQuery(api.users.current, {});
+    const pending = useQuery(api.pendingReview.list, {});
+    const captures = useQuery(api.photoCaptures.list, {});
     const isAdmin = $derived(currentUser.data?.role === 'admin');
+    // Everything on the review page that waits for the owner, not for the server.
+    const reviewCount = $derived(
+        (pending.data?.length ?? 0) +
+            (captures.data?.filter(capture => capture.status === 'failed').length ?? 0) +
+            photoCaptureState.unsent.length,
+    );
+
+    function handleReviewClick() {
+        goto('/review');
+    }
 
     function handleImportClick() {
         goto('/import');
@@ -64,11 +78,28 @@
                         <UserRoundIcon class="size-5" />
                     </Fallback>
                 </AvatarRoot>
+                {#if reviewCount > 0}
+                    <span
+                        class="absolute top-0.5 right-0.5 size-2.5 rounded-full bg-amber-500 ring-2 ring-white dark:ring-neutral-800"
+                        aria-hidden="true"
+                    ></span>
+                {/if}
             </Button>
         {/snippet}
     </DropdownMenuTrigger>
     <DropdownMenuContent class="mr-4">
         <Group>
+            <DropdownMenuItem onclick={handleReviewClick}>
+                <ListChecksIcon />
+                На проверке
+                {#if reviewCount > 0}
+                    <span
+                        class="ml-auto grid h-4.5 min-w-4.5 place-items-center rounded-full bg-amber-500/15 px-1.5 text-[11px] font-semibold text-amber-800 tabular-nums dark:text-amber-300"
+                    >
+                        {reviewCount}
+                    </span>
+                {/if}
+            </DropdownMenuItem>
             <DropdownMenuItem onclick={handleImportClick}>
                 <FileInputIcon />
                 Импорт точек

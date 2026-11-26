@@ -31,6 +31,7 @@ import type * as helpers_photoCaptures_analyzePhoto from "../helpers/photoCaptur
 import type * as helpers_photoCaptures_captureObject from "../helpers/photoCaptures/captureObject.js";
 import type * as helpers_photoCaptures_openRouter from "../helpers/photoCaptures/openRouter.js";
 import type * as helpers_photoCaptures_quota from "../helpers/photoCaptures/quota.js";
+import type * as helpers_photoCaptures_releaseCaptures from "../helpers/photoCaptures/releaseCaptures.js";
 import type * as helpers_photoCaptures_userKeys from "../helpers/photoCaptures/userKeys.js";
 import type * as helpers_taxonomyEditor from "../helpers/taxonomyEditor.js";
 import type * as helpers_taxonomyFanout from "../helpers/taxonomyFanout.js";
@@ -111,6 +112,7 @@ declare const fullApi: ApiFromModules<{
   "helpers/photoCaptures/captureObject": typeof helpers_photoCaptures_captureObject;
   "helpers/photoCaptures/openRouter": typeof helpers_photoCaptures_openRouter;
   "helpers/photoCaptures/quota": typeof helpers_photoCaptures_quota;
+  "helpers/photoCaptures/releaseCaptures": typeof helpers_photoCaptures_releaseCaptures;
   "helpers/photoCaptures/userKeys": typeof helpers_photoCaptures_userKeys;
   "helpers/taxonomyEditor": typeof helpers_taxonomyEditor;
   "helpers/taxonomyFanout": typeof helpers_taxonomyFanout;
