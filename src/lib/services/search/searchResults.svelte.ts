@@ -102,6 +102,13 @@ class SearchResults {
         return this.loadPage(this.currentSource, true);
     }
 
+    public retry() {
+        if (this.isDisposed || !this.request || !this.sourcePages[this.currentSource].isError) {
+            return Promise.resolve();
+        }
+        return this.loadPage(this.currentSource, false);
+    }
+
     public dispose() {
         this.isDisposed = true;
     }

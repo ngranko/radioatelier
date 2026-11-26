@@ -12,22 +12,27 @@
 
     interface Props {
         open: boolean;
+        title?: string;
         onConfirmClose(): void;
     }
 
-    let {open = $bindable(), onConfirmClose}: Props = $props();
+    let {
+        open = $bindable(),
+        title = 'Вы действительно хотите выйти из редактирования точки?',
+        onConfirmClose,
+    }: Props = $props();
 </script>
 
 <AlertDialogRoot bind:open>
     <Content>
         <Header>
-            <Title>Вы действительно хотите выйти из редактирования точки?</Title>
+            <Title>{title}</Title>
             <Description>Изменения не будут сохранены</Description>
         </Header>
         <Footer>
-            <Cancel>Отменить</Cancel>
+            <Cancel>Продолжить редактирование</Cancel>
             <Action class="bg-destructive hover:bg-destructive/70" onclick={onConfirmClose}>
-                Закрыть
+                Не сохранять
             </Action>
         </Footer>
     </Content>

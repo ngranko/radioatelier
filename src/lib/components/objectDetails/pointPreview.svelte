@@ -2,15 +2,12 @@
     import Address from '$lib/components/objectDetails/viewMode/address.svelte';
     import {Button} from '$lib/components/ui/button';
     import type {PointPreviewDetails} from '$lib/interfaces/object.ts';
-    import {getStreetView} from '$lib/services/map/streetView.svelte';
     import {
         objectDetailsOverlay,
         showPointCreateOverlay,
     } from '$lib/state/objectDetailsOverlay.svelte.js';
-    import BinocularsIcon from '@lucide/svelte/icons/binoculars';
     import PlusIcon from '@lucide/svelte/icons/plus';
-    import RouteIcon from '@lucide/svelte/icons/route';
-    import {toast} from 'svelte-sonner';
+    import NavigationActions from './viewMode/navigationActions.svelte';
 
     interface Props {
         details: PointPreviewDetails;
@@ -18,13 +15,11 @@
 
     let {details}: Props = $props();
 
+    const isAddressTitle = $derived(!details.name && details.type === 'map' && Boolean(details.address));
     const title = $derived(
-        details.name || (details.type === 'map' ? details.address : '') || 'Новая точка',
+        details.name || (isAddressTitle ? details.address : '') || 'Новая точка',
     );
-    const coordinates = $derived(`${details.latitude.toFixed(5)}, ${details.longitude.toFixed(5)}`);
-    const routeUrl = $derived(
-        `https://www.google.com/maps/dir/?api=1&destination=${details.latitude},${details.longitude}&dir_action=navigate`,
-    );
+    const address = $derived(isAddressTitle ? null : details.address);
 
     function handleCreateClick() {
         const draft = objectDetailsOverlay.details;
@@ -32,13 +27,6 @@
             return;
         }
         showPointCreateOverlay(objectDetailsOverlay.detailsId, draft, details);
-    }
-
-    function handleStreetViewClick() {
-        getStreetView(details.latitude, details.longitude).catch(error => {
-            console.error(error);
-            toast.error('Нет панорамы для этой точки');
-        });
     }
 </script>
 
@@ -48,49 +36,19 @@
         Создать точку
     </Button>
     <div class="flex items-center gap-2">
-        <Button
-            variant="ghost"
-            size="icon"
-            class="text-muted-foreground hover:text-foreground"
-            href={routeUrl}
-            target="_blank"
-            rel="noopener"
-            aria-label="Проложить маршрут"
-            title="Проложить маршрут"
-        >
-            <RouteIcon />
-        </Button>
-        <Button
-            variant="ghost"
-            size="icon"
-            class="text-muted-foreground hover:text-foreground"
-            onclick={handleStreetViewClick}
-            aria-label="Открыть панораму"
-            title="Открыть панораму"
-        >
-            <BinocularsIcon />
-        </Button>
+        <NavigationActions lat={details.latitude} lng={details.longitude} />
     </div>
 </div>
 
 <div class="relative min-h-0 flex-1 space-y-3 overflow-x-hidden overflow-y-auto p-4">
     <div>
-        <div class="text-muted-foreground text-sm">
-            {#if details.type === 'google'}
-                Google Place
-            {:else}
-                Координаты
-            {/if}
-            {#if details.categoryName}
-                &middot; {details.categoryName}
-            {/if}
-        </div>
-        <h1 class="text-foreground text-2xl/tight font-semibold">{title}</h1>
+        {#if details.categoryName}
+            <div class="text-muted-foreground text-sm">{details.categoryName}</div>
+        {/if}
+        <h1 class="text-foreground text-2xl/tight font-semibold wrap-break-word">{title}</h1>
     </div>
 
-    {#if details.address || details.city || details.country}
-        <Address address={details.address} city={details.city} country={details.country} />
+    {#if address || details.city || details.country}
+        <Address {address} city={details.city} country={details.country} />
     {/if}
-
-    <div class="text-muted-foreground text-sm">{coordinates}</div>
 </div>

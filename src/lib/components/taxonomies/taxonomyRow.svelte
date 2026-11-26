@@ -15,7 +15,6 @@
     import Trash2Icon from '@lucide/svelte/icons/trash-2';
     import XIcon from '@lucide/svelte/icons/x';
     import {useConvexClient} from 'convex-svelte';
-    import {tick} from 'svelte';
     import {toast} from 'svelte-sonner';
 
     interface Props {
@@ -23,16 +22,16 @@
         type: TaxonomyType;
         siblings: TaxonomyEntry[];
         mode: TaxonomyRowMode;
+        draftName?: string;
         onModeChange(mode: TaxonomyRowMode): void;
     }
 
-    let {entry, type, siblings, mode, onModeChange}: Props = $props();
+    let {entry, type, siblings, mode, draftName = $bindable(''), onModeChange}: Props = $props();
 
     const actionsByType = bindTaxonomyActions(useConvexClient());
 
     let hasRequestedRemoval = $state(false);
     const isRemoving = $derived(hasRequestedRemoval || Boolean(entry.isDeleting));
-    let draftName = $state('');
     let isBusy = $state(false);
     let nameInput = $state<HTMLInputElement | null>(null);
 
@@ -48,11 +47,9 @@
             : `${entry.usageCount} ${pluralizeRussian(entry.usageCount, ['объект', 'объекта', 'объектов'])}`,
     );
 
-    function startRename() {
-        draftName = entry.name;
-        onModeChange('rename');
-        tick().then(() => nameInput?.select());
-    }
+    $effect(() => {
+        nameInput?.select();
+    });
 
     async function applyRename() {
         if (draftName.trim() === entry.name) {
@@ -68,6 +65,17 @@
             toast.error(describeTaxonomyError(error));
         } finally {
             isBusy = false;
+        }
+    }
+
+    // Stopping Escape here keeps the dialog from treating it as a request to
+    // leave a changed draft, which it would confirm first.
+    function handleNameKeydown(event: KeyboardEvent) {
+        if (event.key === 'Enter') {
+            applyRename();
+        } else if (event.key === 'Escape') {
+            event.stopPropagation();
+            onModeChange('view');
         }
     }
 
@@ -88,19 +96,25 @@
 </script>
 
 <div class={cn('rounded-lg', mode === 'view' ? 'hover:bg-accent/50' : 'bg-muted/50')}>
-    <div class="flex min-h-11 items-center gap-2 py-1 pr-1 pl-3">
+    <div
+        class={cn(
+            'flex min-h-11 gap-2 py-1 pr-1 pl-3 pointer-coarse:py-0',
+            mode === 'rename' ? 'items-center' : 'items-start',
+        )}
+    >
         {#if mode === 'rename'}
             <Input
                 bind:value={draftName}
                 bind:ref={nameInput}
                 disabled={isBusy}
-                onkeydown={event => event.key === 'Enter' && applyRename()}
+                onkeydown={handleNameKeydown}
                 aria-label="Новое название"
                 class="-ml-2 h-9"
             />
             <Button
                 size="icon"
                 variant="ghost"
+                class="pointer-coarse:size-11"
                 loading={isBusy}
                 onclick={applyRename}
                 aria-label="Сохранить"
@@ -110,7 +124,7 @@
             <Button
                 size="icon"
                 variant="ghost"
-                class="text-muted-foreground"
+                class="text-muted-foreground pointer-coarse:size-11"
                 disabled={isBusy}
                 onclick={() => onModeChange('view')}
                 aria-label="Отменить"
@@ -123,45 +137,61 @@
                     name={entry.name}
                     categoryId={entry.id as Id<'categories'>}
                     showName={false}
+                    class="mt-2 pointer-coarse:mt-3"
                 />
             {/if}
-            <span
-                class="min-w-0 flex-1 py-1 text-sm wrap-break-word"
-                class:text-muted-foreground={isRemoving}
+            <div
+                class="min-w-0 flex-1 pt-1.5 pb-1 sm:flex sm:items-baseline sm:gap-3 pointer-coarse:pt-2.5"
             >
-                {entry.name}
-            </span>
-            <span class="text-muted-foreground shrink-0 text-xs">{usageLabel}</span>
-            {#if isRemoving}
                 <span
-                    class="text-muted-foreground flex h-9 shrink-0 items-center gap-1.5 pr-2 text-xs"
+                    class="block text-sm wrap-break-word sm:flex-1"
+                    class:text-muted-foreground={isRemoving}
                 >
-                    <Spinner class="size-3.5" />
-                    Удаляется…
+                    {entry.name}
                 </span>
-            {:else}
-                <Button
-                    size="icon"
-                    variant="ghost"
-                    class="text-muted-foreground"
-                    onclick={startRename}
-                    aria-label="Переименовать"
+                <span
+                    class="text-muted-foreground block text-[13px]/4.5 sm:w-28 sm:shrink-0 sm:text-right"
                 >
-                    <PencilIcon />
-                </Button>
-                <Button
-                    size="icon"
-                    variant="ghost"
-                    class={mode === 'remove'
-                        ? 'text-destructive hover:text-destructive'
-                        : 'text-muted-foreground hover:text-destructive'}
-                    onclick={() => onModeChange(mode === 'remove' ? 'view' : 'remove')}
-                    aria-label="Удалить"
-                    aria-expanded={mode === 'remove'}
-                >
-                    <Trash2Icon />
-                </Button>
-            {/if}
+                    {usageLabel}
+                </span>
+            </div>
+            <div
+                class="flex min-w-19 shrink-0 items-center justify-end gap-1 pointer-coarse:min-w-23"
+            >
+                {#if isRemoving}
+                    <span
+                        class="text-muted-foreground flex h-9 shrink-0 items-center gap-1.5 pr-2 text-xs"
+                    >
+                        <Spinner class="size-3.5" />
+                        Удаляется…
+                    </span>
+                {:else}
+                    <Button
+                        size="icon"
+                        variant="ghost"
+                        class="text-muted-foreground pointer-coarse:size-11"
+                        onclick={() => onModeChange('rename')}
+                        aria-label="Переименовать"
+                    >
+                        <PencilIcon />
+                    </Button>
+                    <Button
+                        size="icon"
+                        variant="ghost"
+                        class={cn(
+                            'pointer-coarse:size-11',
+                            mode === 'remove'
+                                ? 'text-destructive hover:text-destructive'
+                                : 'text-muted-foreground hover:text-destructive',
+                        )}
+                        onclick={() => onModeChange(mode === 'remove' ? 'view' : 'remove')}
+                        aria-label="Удалить"
+                        aria-expanded={mode === 'remove'}
+                    >
+                        <Trash2Icon />
+                    </Button>
+                {/if}
+            </div>
         {/if}
     </div>
 

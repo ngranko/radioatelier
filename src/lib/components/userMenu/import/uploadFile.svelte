@@ -1,11 +1,15 @@
 <script lang="ts">
+    import {Button, buttonVariants} from '$lib/components/ui/button';
+    import {DialogClose, Footer} from '$lib/components/ui/dialog';
     import {ImportStepPreview} from '$lib/interfaces/import.ts';
     import {parseCsv, readCsvFile} from '$lib/services/import/csv';
     import {importState} from '$lib/state/import.svelte.ts';
+    import {cn} from '$lib/utils.js';
     import FileSpreadsheetIcon from '@lucide/svelte/icons/file-spreadsheet';
     import {toast} from 'svelte-sonner';
 
     let isDragging = $state(false);
+    let fileInput = $state<HTMLInputElement | null>(null);
 
     function handleDragOver(e: DragEvent) {
         e.preventDefault();
@@ -76,32 +80,41 @@
     }
 </script>
 
-<!-- prettier-ignore -->
 <div
-    class={`w-full max-w-xl rounded-lg border-2 border-dashed transition-colors ${
-        isDragging
-            ? 'border-primary bg-primary/5'
-            : 'border-muted-foreground/25 hover:border-muted-foreground/50'
-    }`}
+    class={cn(
+        'w-full max-w-xl rounded-lg border-2 border-dashed transition-colors',
+        isDragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/25',
+    )}
     ondragover={handleDragOver}
     ondragleave={handleDragLeave}
     ondrop={handleDrop}
     role="region"
     aria-dropeffect="link"
 >
-    <label class="flex cursor-pointer flex-col items-center justify-center gap-4 px-6 py-16">
-        <div class="bg-primary/10 flex size-16 items-center justify-center rounded-full">
+    <div class="flex flex-col items-center gap-4 px-6 py-10 text-center">
+        <div class="bg-primary/10 flex size-14 items-center justify-center rounded-full">
             <FileSpreadsheetIcon class="text-primary size-6 stroke-2" />
         </div>
-        <div class="space-y-2 text-center">
-            <p class="text-lg">
-                {isDragging ? 'Перетащите файл сюда' : 'Перетащите ваш CSV файл сюда'}
-            </p>
-            <p class="text-muted-foreground text-sm">
-                или <span class="text-primary">нажмите</span>, чтобы выбрать файл
-            </p>
-        </div>
-        <div class="text-muted-foreground text-xs">Поддерживаются .csv файлы до 10MB</div>
-        <input type="file" accept=".csv,text/csv" onchange={handleFileChange} class="hidden" />
-    </label>
+        <!-- Dragging only makes sense with a mouse, so touch screens get the button alone. -->
+        <p class="hidden text-base pointer-fine:block">
+            {isDragging ? 'Отпустите, чтобы загрузить файл' : 'Перетащите CSV-файл сюда или'}
+        </p>
+        <Button onclick={() => fileInput?.click()}>Выбрать CSV-файл</Button>
+        <p class="text-muted-foreground text-[13px]">Поддерживаются .csv файлы до 10 МБ</p>
+        <input
+            bind:this={fileInput}
+            type="file"
+            accept=".csv,text/csv"
+            onchange={handleFileChange}
+            class="hidden"
+        />
+    </div>
 </div>
+<p class="text-muted-foreground w-full max-w-xl text-sm/relaxed">
+    Обязательно: координаты «широта, долгота», название и категория
+</p>
+<Footer
+    class="border-border/50 bg-muted/20 -mx-6 -mb-6 shrink-0 gap-3 border-t px-6 py-3 max-sm:grid max-sm:auto-cols-fr max-sm:grid-flow-col max-sm:*:h-11 sm:py-4"
+>
+    <DialogClose class={buttonVariants({variant: 'outline'})}>Закрыть</DialogClose>
+</Footer>

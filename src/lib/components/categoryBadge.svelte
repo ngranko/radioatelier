@@ -11,6 +11,7 @@
         categoryId?: Id<'categories'> | null;
         showName?: boolean;
         size?: 'sm' | 'md';
+        nameClass?: string;
         class?: string;
     }
 
@@ -19,6 +20,7 @@
         categoryId = null,
         showName = true,
         size = 'md',
+        nameClass = '',
         class: className = '',
     }: Props = $props();
 
@@ -46,7 +48,13 @@
         </span>
     {/if}
     {#if showName}
-        <span class={cn('text-muted-foreground truncate', size === 'md' ? 'text-sm' : 'text-xs')}>
+        <span
+            class={cn(
+                'text-muted-foreground truncate',
+                size === 'md' ? 'text-sm' : 'text-xs',
+                nameClass,
+            )}
+        >
             {name}
         </span>
     {/if}

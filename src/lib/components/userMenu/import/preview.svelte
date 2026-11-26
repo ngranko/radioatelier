@@ -1,5 +1,5 @@
 <script lang="ts">
-    import {Button} from '$lib/components/ui/button';
+    import {Button, buttonVariants} from '$lib/components/ui/button';
     import {DialogClose, DialogFooter} from '$lib/components/ui/dialog/index.js';
     import Field from '$lib/components/userMenu/import/preview/field.svelte';
     import FileInfo from '$lib/components/userMenu/import/preview/fileInfo.svelte';
@@ -148,8 +148,10 @@
             </div>
         </div>
     </div>
-    <DialogFooter class="bg-background gap-4 border-t pt-2">
-        <DialogClose>Отменить</DialogClose>
+    <DialogFooter
+        class="bg-background gap-3 border-t pt-4 max-sm:grid max-sm:auto-cols-fr max-sm:grid-flow-col max-sm:*:h-11"
+    >
+        <DialogClose class={buttonVariants({variant: 'outline'})}>Отменить</DialogClose>
         <Button type="submit" disabled={$submitting || isImportStarting}>Импортировать</Button>
     </DialogFooter>
 </form>

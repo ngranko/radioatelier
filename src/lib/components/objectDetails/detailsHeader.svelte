@@ -54,7 +54,7 @@
     role="group"
     aria-label="Заголовок карточки точки"
     class={cn(
-        'relative flex touch-none items-center gap-1 border-b p-3 select-none',
+        'relative flex touch-none items-center gap-1 border-b p-3 select-none pointer-coarse:gap-0 pointer-coarse:py-1.5 pointer-coarse:pr-1.5',
         isDragging ? 'cursor-grabbing' : 'cursor-grab',
     )}
     onpointerdown={onDragStart}
@@ -74,6 +74,7 @@
                     class={cn(
                         badgeVariants({variant: 'outline'}),
                         'hover:bg-accent hover:text-accent-foreground shrink-0 font-mono text-xs tracking-wider',
+                        'relative overflow-visible pointer-coarse:after:absolute pointer-coarse:after:top-1/2 pointer-coarse:after:left-1/2 pointer-coarse:after:size-full pointer-coarse:after:min-h-11 pointer-coarse:after:min-w-11 pointer-coarse:after:-translate-1/2',
                     )}
                     title="Нажмите, чтобы скопировать"
                     onclick={() => copyInternalId(initialValues.internalId ?? '')}
@@ -111,7 +112,7 @@
     <Button
         variant="ghost"
         size="icon"
-        class="size-8 shrink-0"
+        class="size-8 shrink-0 pointer-coarse:size-11"
         onclick={onTogglePosition}
         aria-label={positionToggleLabel}
         title={positionToggleLabel}

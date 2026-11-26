@@ -1,5 +1,5 @@
 import type {PointPreviewDetails} from '$lib/interfaces/object';
-import {beforeEach, describe, expect, it} from 'vitest';
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {
     closeDetailsOverlay,
     enterEditMode,
@@ -8,8 +8,10 @@ import {
     setOverlayAddressLoading,
     setOverlayPosition,
     showLoadingDetailsOverlay,
+    showLoadingPointOverlay,
     showObjectDetailsOverlay,
     showPointCreateOverlay,
+    showPointPreviewOverlay,
 } from './objectDetailsOverlay.svelte.ts';
 
 const pointDetails: PointPreviewDetails = {
@@ -106,5 +108,47 @@ describe('objectDetailsOverlay transitions', () => {
         closeDetailsOverlay({preserveDetails: true});
         expect(objectDetailsOverlay.isOpen).toBe(false);
         expect(objectDetailsOverlay.details).toEqual({name: 'Plaque'});
+    });
+});
+
+describe('point overlay position', () => {
+    const point = {latitude: 55.75, longitude: 37.61};
+
+    beforeEach(() => {
+        closeDetailsOverlay();
+    });
+
+    afterEach(() => {
+        vi.unstubAllGlobals();
+    });
+
+    it('opens a point at peek on phones and keeps a later drag across re-syncs', () => {
+        vi.stubGlobal('document', {body: {clientWidth: 390}});
+
+        showLoadingPointOverlay('point-1', point);
+        expect(objectDetailsOverlay.position).toBe('peek');
+        showPointPreviewOverlay('point-1', {}, pointDetails);
+        expect(objectDetailsOverlay.position).toBe('peek');
+
+        setOverlayPosition('full');
+        showPointPreviewOverlay('point-1', {}, pointDetails);
+        expect(objectDetailsOverlay.position).toBe('full');
+    });
+
+    it('opens a point as a full side panel on wide screens', () => {
+        vi.stubGlobal('document', {body: {clientWidth: 1440}});
+
+        showLoadingPointOverlay('point-1', point);
+
+        expect(objectDetailsOverlay.position).toBe('full');
+    });
+
+    it('expands to full when creating from a peeking preview', () => {
+        vi.stubGlobal('document', {body: {clientWidth: 390}});
+        showPointPreviewOverlay('point-1', {}, pointDetails);
+
+        showPointCreateOverlay('point-1', {}, pointDetails);
+
+        expect(objectDetailsOverlay.position).toBe('full');
     });
 });
