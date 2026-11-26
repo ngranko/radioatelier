@@ -112,6 +112,7 @@ function requestSelection(id: string, open: () => void) {
     const applySelection = () => {
         stopPointingAtAllMarkers();
         closeMarkerFilter();
+        setCreateDraftPosition(null);
         open();
         focusObjectSelection();
     };

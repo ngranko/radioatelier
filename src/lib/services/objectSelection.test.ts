@@ -131,6 +131,17 @@ describe('Object selection', () => {
         expect(Object.fromEntries(destination.searchParams)).toEqual({lat: '10', lng: '20'});
     });
 
+    it.each([
+        ['a point result', () => selectSearchResult(createSearchItem())],
+        ['an Object', () => selectObject('object-1' as Id<'objects'>, {latitude: 1, longitude: 2})],
+    ])('drops a map draft when %s is selected next', (_, selectNext) => {
+        selectMapPoint({latitude: 10, longitude: 20});
+
+        selectNext();
+
+        expect(createDraftState.position).toBeNull();
+    });
+
     it('keeps result-list pins when their preview is closed', () => {
         const item = createSearchItem();
         replaceSearchPointList([{object: item}]);
