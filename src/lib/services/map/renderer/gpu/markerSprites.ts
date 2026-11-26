@@ -1,6 +1,7 @@
 import {cssColorToRgb} from '$lib/services/colorConverter';
 import type {Marker} from '$lib/services/map/marker';
 import type {MarkerIconKey} from '$lib/services/map/markerStyling.data';
+import {PENDING_REVIEW_COLOR} from '$lib/services/map/pendingReviewMark';
 import {GLYPH_VIEWBOX_SIZE, MARKER_GLYPHS} from '$lib/services/map/renderer/gpu/markerIcons';
 
 // Every measure below mirrors the DOM marker in renderer/dom/markerAppearance: a 24px disk (w-6 h-6)
@@ -20,6 +21,10 @@ const PLAIN_RING = '#ffffff';
 const SHADOW_OFFSET = 2;
 const SHADOW_DEVIATION = 2;
 const SHADOW_OPACITY = 0.2;
+// The DOM dot is a size-2 span with a ring-2 white edge, sitting on the ring at 45°.
+const PENDING_DOT_OFFSET = 9;
+const PENDING_DOT_RADIUS = 4;
+const PENDING_DOT_EDGE_RADIUS = 6;
 // Sprites are rasterised at twice their on-screen size so the atlas stays sharp on retina displays.
 const RASTER_SCALE = 2;
 
@@ -28,6 +33,7 @@ export interface SpriteStyle {
     iconKey: MarkerIconKey;
     isVisited: boolean;
     isRemoved: boolean;
+    isPendingReview: boolean;
     withHalo: boolean;
 }
 
@@ -42,12 +48,13 @@ export interface MarkerSprite {
 const sprites = new Map<string, MarkerSprite>();
 
 export function markerSpriteFor(marker: Marker, withHalo = true): MarkerSprite {
-    const {isVisited, isRemoved} = marker.getState();
+    const {isVisited, isRemoved, isPendingReview} = marker.getState();
     return markerSprite({
         color: marker.options.color,
         iconKey: marker.options.iconKey ?? 'landmark',
         isVisited,
         isRemoved,
+        isPendingReview,
         withHalo,
     });
 }
@@ -80,12 +87,18 @@ export function markerSprite(style: SpriteStyle): MarkerSprite {
     return sprite;
 }
 
-function spriteId({color, iconKey, isVisited, isRemoved, withHalo}: SpriteStyle): string {
-    const state = [isVisited ? 'visited' : 'plain', isRemoved ? 'removed' : 'present'];
+function spriteId(style: SpriteStyle): string {
+    const {color, iconKey, isVisited, isRemoved, isPendingReview, withHalo} = style;
+    const state = [
+        isVisited ? 'visited' : 'plain',
+        isRemoved ? 'removed' : 'present',
+        isPendingReview ? 'pending' : 'reviewed',
+    ];
     return [iconKey, color, ...state, withHalo ? 'halo' : 'core'].join(':');
 }
 
-function spriteSvg({color, iconKey, isVisited, isRemoved, withHalo}: SpriteStyle): string {
+function spriteSvg(style: SpriteStyle): string {
+    const {color, iconKey, isVisited, isRemoved, isPendingReview, withHalo} = style;
     const center = MARKER_SPRITE_SIZE / 2;
     const fill = sRgbCss(color);
     const glyphOffset = center - GLYPH_SIZE / 2;
@@ -100,7 +113,18 @@ function spriteSvg({color, iconKey, isVisited, isRemoved, withHalo}: SpriteStyle
         isVisited ? circle(center, VISITED_EDGE_RADIUS, '#000000', VISITED_EDGE_OPACITY) : '',
         circle(center, DISK_RADIUS, fill),
         `<g transform="translate(${glyphOffset} ${glyphOffset}) scale(${glyphScale})">${MARKER_GLYPHS[iconKey]}</g>`,
+        isPendingReview ? pendingDotSvg(center) : '',
         '</g></svg>',
+    ].join('');
+}
+
+// SVG's y axis points down, so the DOM dot's top-right corner is +x, −y from the centre.
+function pendingDotSvg(center: number): string {
+    const x = center + PENDING_DOT_OFFSET;
+    const y = center - PENDING_DOT_OFFSET;
+    return [
+        `<circle cx="${x}" cy="${y}" r="${PENDING_DOT_EDGE_RADIUS}" fill="${PLAIN_RING}"/>`,
+        `<circle cx="${x}" cy="${y}" r="${PENDING_DOT_RADIUS}" fill="${sRgbCss(PENDING_REVIEW_COLOR)}"/>`,
     ].join('');
 }
 

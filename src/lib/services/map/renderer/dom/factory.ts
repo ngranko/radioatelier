@@ -15,7 +15,7 @@ export class Factory {
     /** Only the style-independent shell; the renderer paints it via applyMarkerAppearance. */
     private createMarkerContent(marker: Marker): HTMLElement {
         const markerElement = document.createElement('div');
-        markerElement.className = `w-6 h-6 translate-y-1/2 flex justify-center items-center rounded-full transition-transform transition-opacity duration-100 ease-in-out text-sm ${marker.isServiceMarker() ? '' : 'text-white'}`;
+        markerElement.className = `relative w-6 h-6 translate-y-1/2 flex justify-center items-center rounded-full transition-transform transition-opacity duration-100 ease-in-out text-sm ${marker.isServiceMarker() ? '' : 'text-white'}`;
         return markerElement;
     }
 }

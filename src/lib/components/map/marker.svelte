@@ -20,6 +20,7 @@
         lng: number;
         isRemoved?: boolean;
         isVisited?: boolean;
+        isPendingReview?: boolean;
         icon: MarkerIcon;
         iconKey?: MarkerIconKey;
         iconClassName?: string;
@@ -36,6 +37,7 @@
         lng,
         isRemoved = false,
         isVisited = false,
+        isPendingReview = false,
         icon,
         iconKey,
         iconClassName = '',
@@ -67,7 +69,7 @@
         if (!marker || !markerId || !mapState.markerManager) {
             return;
         }
-        mapState.markerManager.updateMarkerState(markerId, {isVisited, isRemoved});
+        mapState.markerManager.updateMarkerState(markerId, {isVisited, isRemoved, isPendingReview});
     });
 
     // Re-categorising a point, or restyling its category, only changes these props on a marker that
@@ -114,6 +116,7 @@
             source,
             isVisited,
             isRemoved,
+            isPendingReview,
             onClick: handleMarkerClick,
             onDragStart: rememberPositionBeforeDrag,
             onDragEnd: handleDragEnd,

@@ -7,6 +7,7 @@ function style(overrides: Partial<SpriteStyle> = {}): SpriteStyle {
         iconKey: 'zap',
         isVisited: false,
         isRemoved: false,
+        isPendingReview: false,
         withHalo: true,
         ...overrides,
     };

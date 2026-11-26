@@ -10,6 +10,7 @@
     import Actions from './actions.svelte';
     import AddCoverButton from './addCoverButton.svelte';
     import Address from './address.svelte';
+    import PendingReviewNotice from './pendingReviewNotice.svelte';
     import Tags from './tags.svelte';
 
     interface Props {
@@ -58,6 +59,9 @@
             />
         {/if}
     </div>
+    {#if initialValues.isPendingReview && initialValues.id}
+        <PendingReviewNotice id={initialValues.id} />
+    {/if}
     <div class={hasChips ? '' : 'mb-4'}>
         {#if initialValues.category}
             <div class="flex">

@@ -2,6 +2,7 @@ import MarkerIcon from '$lib/components/map/markerIcon.svelte';
 import type {MarkerIcon as MarkerIconComponent} from '$lib/interfaces/marker';
 import {markerHaloColor} from '$lib/services/colorConverter';
 import type {Marker} from '$lib/services/map/marker';
+import {PENDING_REVIEW_COLOR} from '$lib/services/map/pendingReviewMark';
 import {cn} from '$lib/utils';
 import {mount} from 'svelte';
 
@@ -33,6 +34,27 @@ export function applyMarkerAppearance(marker: Marker): void {
     element.style.setProperty('--marker-color', isInverted ? 'white' : color);
     element.classList.toggle('opacity-50', !isInverted && marker.getState().isRemoved);
     applyIcon(element, marker);
+    applyPendingDot(element, !isInverted && marker.getState().isPendingReview);
+}
+
+// Mirrored by the sprite in renderer/gpu/markerSprites, so promotion to the DOM doesn't shift it.
+function applyPendingDot(element: HTMLElement, isShown: boolean): void {
+    const existing = element.querySelector(':scope > [data-pending-dot]');
+    if (!isShown) {
+        existing?.remove();
+        return;
+    }
+    if (!existing) {
+        element.append(createPendingDot());
+    }
+}
+
+function createPendingDot(): HTMLElement {
+    const dot = document.createElement('span');
+    dot.dataset.pendingDot = '';
+    dot.className = 'absolute -top-px -right-px size-2 rounded-full ring-2 ring-white';
+    dot.style.backgroundColor = PENDING_REVIEW_COLOR;
+    return dot;
 }
 
 /** The glyph is mounted once against a reactive props object; a later swap just reassigns it. */
