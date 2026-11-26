@@ -34,15 +34,6 @@ export const enqueueOutboundObjectSync = internalAction({
     },
 });
 
-export const enqueueOutboundObjectSyncBatch = internalAction({
-    args: {
-        objectIds: v.array(v.id('objects')),
-    },
-    handler: async (ctx, {objectIds}) => {
-        return await performOutboundObjectSyncBatch(ctx, objectIds);
-    },
-});
-
 // Notion rate-limits the whole integration, so a long list is worked through
 // one chunk at a time; each chunk hands the rest to a fresh action to stay
 // within the action time limit.
@@ -114,25 +105,6 @@ export async function performOutboundObjectSync(
         });
         throw error;
     }
-}
-
-export async function performOutboundObjectSyncBatch(
-    ctx: ActionCtx,
-    objectIds: Id<'objects'>[],
-): Promise<OutboundBatchResult> {
-    const result: OutboundBatchResult = {synced: 0, skipped: 0, failed: 0};
-    const uniqueObjectIds = [...new Set(objectIds)];
-
-    for (const objectId of uniqueObjectIds) {
-        const notionPageId = await performOutboundObjectSync(ctx, objectId);
-        if (notionPageId) {
-            result.synced += 1;
-        } else {
-            result.skipped += 1;
-        }
-    }
-
-    return result;
 }
 
 export async function performOutboundObjectSyncBatchLenient(

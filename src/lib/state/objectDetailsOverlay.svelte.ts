@@ -201,10 +201,6 @@ export function setOverlayPosition(position: ObjectDetailsOverlayPosition) {
     overlay.position = position;
 }
 
-export function refreshOverlayDetails(details: Partial<LooseObject>) {
-    overlay.details = details;
-}
-
 export function setOverlayAddressLoading(isLoading: boolean) {
     overlay.isAddressLoading = isLoading;
 }
