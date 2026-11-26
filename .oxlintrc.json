@@ -20,6 +20,7 @@
         "no-nested-ternary": "error",
         "no-unused-expressions": "error",
         "typescript/ban-ts-comment": "error",
+        "typescript/explicit-member-accessibility": "error",
         "typescript/no-duplicate-enum-values": "error",
         "typescript/no-empty-object-type": "error",
         "typescript/no-explicit-any": "error",

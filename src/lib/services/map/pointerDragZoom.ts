@@ -17,11 +17,11 @@ export class PointerDragZoomController {
     private frameId: number | null = null;
     private lastAppliedZoom: number | null = null;
 
-    constructor(options: PointerDragZoomOptions) {
+    public constructor(options: PointerDragZoomOptions) {
         this.options = options;
     }
 
-    attachDoubleTapDragZoom(element: HTMLElement) {
+    public attachDoubleTapDragZoom(element: HTMLElement) {
         let lastTapTime = 0;
         let tapCount = 0;
         let activeTouchCount = 0;

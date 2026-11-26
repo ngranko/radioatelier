@@ -45,16 +45,16 @@ export class GoogleMapsProvider implements MapProvider {
     private minZoom = 2;
     private resizeObserver?: ResizeObserver;
 
-    constructor() {
+    public constructor() {
         configureLoader();
     }
 
-    importLibrary<T extends GoogleMapsLibraryName>(library: T) {
+    public importLibrary<T extends GoogleMapsLibraryName>(library: T) {
         configureLoader();
         return loadGoogleMapsLibrary(library);
     }
 
-    async initialize(container: HTMLElement, center: Location): Promise<void> {
+    public async initialize(container: HTMLElement, center: Location): Promise<void> {
         const [{Map}, {ColorScheme}] = await Promise.all([
             this.importLibrary('maps'),
             this.importLibrary('core'),
@@ -100,36 +100,36 @@ export class GoogleMapsProvider implements MapProvider {
         return themeState.resolved === 'dark' ? ColorScheme.DARK : ColorScheme.LIGHT;
     }
 
-    getZoom(): number {
+    public getZoom(): number {
         return this.map?.getZoom() ?? 15;
     }
 
-    getMinZoom(): number {
+    public getMinZoom(): number {
         return this.minZoom;
     }
 
-    getMaxZoom(): number {
+    public getMaxZoom(): number {
         return MAP_MAX_ZOOM;
     }
 
-    setZoom(zoom: number): void {
+    public setZoom(zoom: number): void {
         if (!this.map) {
             return;
         }
         this.map.moveCamera({zoom});
     }
 
-    getCenter(): LatLngLiteral | undefined {
+    public getCenter(): LatLngLiteral | undefined {
         const center = this.map?.getCenter();
         return center ? {lat: center.lat(), lng: center.lng()} : undefined;
     }
 
-    getBounds(): MapBounds | undefined {
+    public getBounds(): MapBounds | undefined {
         const bounds = this.map?.getBounds();
         return bounds ? new GoogleMapBounds(bounds) : undefined;
     }
 
-    setCenter(lat: number, lng: number): void {
+    public setCenter(lat: number, lng: number): void {
         const center = new google.maps.LatLng(lat, lng);
         if (prefersReducedMotion.current) {
             this.map?.setCenter(center);
@@ -138,7 +138,7 @@ export class GoogleMapsProvider implements MapProvider {
         this.map?.panTo(center);
     }
 
-    fitBounds(bounds: MapBounds, padding?: BoundsPadding): void {
+    public fitBounds(bounds: MapBounds, padding?: BoundsPadding): void {
         if (!(bounds instanceof GoogleMapBounds) || !this.map) {
             return;
         }
@@ -154,15 +154,15 @@ export class GoogleMapsProvider implements MapProvider {
         map.moveCamera({center: map.getCenter(), zoom: map.getZoom()});
     }
 
-    createBounds(): MapBounds {
+    public createBounds(): MapBounds {
         return new GoogleMapBounds(new google.maps.LatLngBounds());
     }
 
-    setDraggable(isDraggable: boolean): void {
+    public setDraggable(isDraggable: boolean): void {
         this.map?.set('draggable', isDraggable);
     }
 
-    onIdle(callback: () => void): EventUnsubscribe {
+    public onIdle(callback: () => void): EventUnsubscribe {
         if (!this.map) {
             return () => {};
         }
@@ -170,7 +170,7 @@ export class GoogleMapsProvider implements MapProvider {
         return () => google.maps.event.removeListener(listener);
     }
 
-    onClick(callback: (latLng: LatLngLiteral) => void): EventUnsubscribe {
+    public onClick(callback: (latLng: LatLngLiteral) => void): EventUnsubscribe {
         if (!this.map) {
             return () => {};
         }
@@ -186,7 +186,7 @@ export class GoogleMapsProvider implements MapProvider {
         return () => google.maps.event.removeListener(listener);
     }
 
-    onDragStart(callback: () => void): EventUnsubscribe {
+    public onDragStart(callback: () => void): EventUnsubscribe {
         if (!this.map) {
             return () => {};
         }
@@ -194,7 +194,7 @@ export class GoogleMapsProvider implements MapProvider {
         return () => google.maps.event.removeListener(listener);
     }
 
-    onDragEnd(callback: () => void): EventUnsubscribe {
+    public onDragEnd(callback: () => void): EventUnsubscribe {
         if (!this.map) {
             return () => {};
         }
@@ -202,7 +202,7 @@ export class GoogleMapsProvider implements MapProvider {
         return () => google.maps.event.removeListener(listener);
     }
 
-    onPointerMove(callback: (latLng: LatLngLiteral) => void): EventUnsubscribe {
+    public onPointerMove(callback: (latLng: LatLngLiteral) => void): EventUnsubscribe {
         if (!this.map) {
             return () => {};
         }
@@ -218,7 +218,7 @@ export class GoogleMapsProvider implements MapProvider {
         return () => google.maps.event.removeListener(listener);
     }
 
-    createMarkerHandle(
+    public createMarkerHandle(
         position: LatLngLiteral,
         content: HTMLElement,
         options: MarkerHandleOptions = {},
@@ -229,15 +229,15 @@ export class GoogleMapsProvider implements MapProvider {
         return new GoogleMarkerHandle(this.map, position, content, options);
     }
 
-    async preloadMarkerLibrary(): Promise<void> {
+    public async preloadMarkerLibrary(): Promise<void> {
         await this.importLibrary('marker');
     }
 
-    closeStreetView(): void {
+    public closeStreetView(): void {
         this.map?.getStreetView().setVisible(false);
     }
 
-    destroy(): void {
+    public destroy(): void {
         this.deckOverlay?.destroy();
         this.deckOverlay = undefined;
         this.resizeObserver?.disconnect();
@@ -248,11 +248,11 @@ export class GoogleMapsProvider implements MapProvider {
         this.map = undefined;
     }
 
-    getGoogleMap(): google.maps.Map | undefined {
+    public getGoogleMap(): google.maps.Map | undefined {
         return this.map;
     }
 
-    getDeckOverlay(): DeckOverlayHost {
+    public getDeckOverlay(): DeckOverlayHost {
         if (!this.map) {
             throw new Error('Map not initialized');
         }

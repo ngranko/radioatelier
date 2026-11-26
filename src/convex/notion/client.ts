@@ -14,10 +14,10 @@ type QueryResponse = {
 };
 
 export class NotionRequestError extends Error {
-    constructor(
+    public constructor(
         message: string,
-        readonly status: number,
-        readonly retryable: boolean,
+        public readonly status: number,
+        public readonly retryable: boolean,
     ) {
         super(message);
         this.name = 'NotionRequestError';

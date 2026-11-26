@@ -18,6 +18,7 @@ interface GestureHandlers {
 export class SpriteDragGesture {
     private activePointerId?: number;
     private hold = new MarkerHold();
+    private listeners?: AbortController;
 
     public constructor(
         private container: HTMLElement,
@@ -26,21 +27,24 @@ export class SpriteDragGesture {
     ) {}
 
     public attach(): void {
-        this.container.addEventListener('pointerdown', this.handlePointerDown);
+        this.listeners = new AbortController();
+        const {signal} = this.listeners;
+        this.container.addEventListener('pointerdown', event => this.handlePointerDown(event), {
+            signal,
+        });
         // The release is watched globally: a drag that started on a sprite can end anywhere.
-        window.addEventListener('pointerup', this.handlePointerUp);
-        window.addEventListener('pointercancel', this.handlePointerUp);
+        window.addEventListener('pointerup', event => this.handlePointerUp(event), {signal});
+        window.addEventListener('pointercancel', event => this.handlePointerUp(event), {signal});
     }
 
     public detach(): void {
-        this.container.removeEventListener('pointerdown', this.handlePointerDown);
-        window.removeEventListener('pointerup', this.handlePointerUp);
-        window.removeEventListener('pointercancel', this.handlePointerUp);
+        this.listeners?.abort();
+        this.listeners = undefined;
         this.activePointerId = undefined;
         this.hold.cancel();
     }
 
-    private handlePointerDown = (event: PointerEvent): void => {
+    private handlePointerDown(event: PointerEvent): void {
         // A second finger landing mid-hold is never primary, so it cannot restart the gesture on
         // another marker. A stale pointer whose release never arrived must not block the next press.
         if (!event.isPrimary || event.button !== 0) {
@@ -53,9 +57,9 @@ export class SpriteDragGesture {
         }
         this.activePointerId = event.pointerId;
         this.hold.arm(event, () => this.handlers.onHold(marker));
-    };
+    }
 
-    private handlePointerUp = (event: PointerEvent): void => {
+    private handlePointerUp(event: PointerEvent): void {
         // Only the pointer that began the hold ends it; another one lifting leaves the drag alive.
         if (event.pointerId !== this.activePointerId) {
             return;
@@ -64,7 +68,7 @@ export class SpriteDragGesture {
         this.activePointerId = undefined;
         this.hold.cancel();
         this.handlers.onRelease();
-    };
+    }
 
     private draggableAt(event: PointerEvent): Marker | undefined {
         const {left, top} = this.container.getBoundingClientRect();
