@@ -59,6 +59,15 @@ Point Clerk user webhooks at `https://<deployment>.convex.site/clerk-users-webho
 
 `GOOGLE_API_KEY` is used by Convex geocoding and Google Places search. Configure it separately from the browser key. The browser key serves Maps JavaScript, Street View, and initial geolocation; the server key serves Geocoding and Places.
 
+### OpenRouter
+
+| Variable             | Consumer                                                                                                |
+| -------------------- | ------------------------------------------------------------------------------------------------------- |
+| `OPENROUTER_API_KEY` | Photo capture analysis for accounts without their own key                                               |
+| `OPENROUTER_MODEL`   | Optional model id; default `anthropic/claude-sonnet-5.5`. It must accept images and structured outputs. |
+
+See [Photo captures](photo-captures.md).
+
 ### Typesense
 
 | Variable                 | Consumer                                        |

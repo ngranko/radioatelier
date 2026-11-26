@@ -12,11 +12,12 @@ Entry points are `src/routes/+layout.svelte`, `src/routes/(app)/+layout.svelte`,
 | Theme choice                           | `localStorage.theme`                           | Same browser, including after sign-out       |
 | Map viewport                           | `localStorage.lastCenter`                      | Same browser; cleared by the sign-out dialog |
 | Last device position                   | `localStorage.lastPosition`                    | Same browser; cleared by the sign-out dialog |
+| Photo captures that failed to send     | IndexedDB `photoCaptures` / `unsent`           | Same browser, until resent or dismissed      |
 | First-run hint dismissal               | `localStorage.firstRunHintDismissed`           | Same browser, including after sign-out       |
 | Search query and center                | URL `q`, `lat`, and `lng`, plus reactive state | Restored from a valid search URL             |
 | Draft position and unsaved form values | Reactive state                                 | No durable draft storage                     |
 
-The local-storage preferences are not keyed by account. Sign-out clears map location keys but leaves theme and hint dismissal. Category styling remains an account preference in Convex; it is unrelated to the browser theme.
+The local-storage preferences are not keyed by account, and neither are unsent photo captures: whoever is signed in when one is resent owns the result. Sign-out clears map location keys but leaves theme and hint dismissal. Category styling remains an account preference in Convex; it is unrelated to the browser theme.
 
 ## Theme
 

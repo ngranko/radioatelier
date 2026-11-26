@@ -31,7 +31,7 @@ The full-list layout subscribes to two authenticated Convex queries:
 - `markers.list` reads the user's private markers and all public markers from the compact `markers` table.
 - `markers.listVisitedIds` reads the user's visited object IDs from `userVisitedChunks`.
 
-The layout merges visited IDs into the catalog. Keeping them separate prevents a visit toggle from invalidating the entire marker payload. Category colors and icons come from the merged [category settings](category-settings.md).
+The layout merges visited IDs into the catalog. Keeping them separate prevents a visit toggle from invalidating the entire marker payload. Category colors and icons come from the merged [category settings](category-settings.md). `markers.list` also reports `isPendingReview`, true only for the owner: DOM markers and GPU sprites draw it as an amber dot on the ring, while the legacy Deck layer below zoom 10 leaves it out. See [Photo captures](photo-captures.md#pending-review).
 
 Both queries pass the Clerk user ID, which the backend checks against the session. `keepPreviousData` retains results during reconnects; client identity and `isStale` guards decide when those results can render. The layout waits for usable visited data before rendering the merged list. Neither query seeds an empty initial result, so first-load state remains distinguishable from an empty catalog.
 
