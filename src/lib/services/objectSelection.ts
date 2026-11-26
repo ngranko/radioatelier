@@ -22,6 +22,7 @@ import {clearSharedMarker, sharedMarker} from '$lib/state/sharedMarker.svelte';
 import {requestDetailsSwitch} from '$lib/utils/detailsExit';
 import {buildPointUrl} from '$lib/utils/pointRoute';
 import type {ConvexClient} from 'convex/browser';
+import posthog from 'posthog-js';
 import {setFocusedTarget} from './map/markerFocus';
 import {stopPointingAtAllMarkers} from './map/markerHover';
 
@@ -53,6 +54,10 @@ export function selectSearchResult(item: SearchItem) {
 export function selectMapPoint(position: MapPlaceable) {
     const id = `${position.latitude},${position.longitude}`;
     requestSelection(id, () => {
+        posthog.capture('map_point_placed', {
+            latitude: position.latitude,
+            longitude: position.longitude,
+        });
         clearSelectedSearchPoint();
         setCreateDraftPosition({lat: position.latitude, lng: position.longitude});
         showLoadingDetailsOverlay(id, position);
@@ -70,9 +75,7 @@ export function closeObjectSelection(preserveDetails = false) {
 }
 
 export function focusObjectSelection() {
-    // Sheet snaps must refocus even when the selected Marker has not registered yet.
-    const {details, detailsId, position} = objectDetailsOverlay;
-    void position;
+    const {details, detailsId} = objectDetailsOverlay;
     if (!mapState.isReady) {
         return;
     }
@@ -89,6 +92,7 @@ export async function closeDeletedObject(id: Id<'objects'>, client: Pick<ConvexC
     }
     // A failed details query can also mean broken relations; verify deletion before closing.
     const object = await client.query(api.objects.resolveShareId, {id});
+    // The viewer may have selected something else while the lookup was in flight.
     if (object || !isSelected(id)) {
         return;
     }
@@ -108,15 +112,15 @@ function requestSelection(id: string, open: () => void) {
     if (isSelected(id)) {
         return;
     }
-    const accept = () => {
+    const applySelection = () => {
         stopPointingAtAllMarkers();
         closeMarkerFilter();
         open();
         focusObjectSelection();
     };
     if (objectDetailsOverlay.isOpen) {
-        requestDetailsSwitch(accept);
+        requestDetailsSwitch(applySelection);
     } else {
-        accept();
+        applySelection();
     }
 }

@@ -21,6 +21,7 @@
     import {cancelActiveMarkerHold} from '$lib/services/map/renderer/markerHold';
     import {focusObjectSelection} from '$lib/services/objectSelection';
     import {mapState} from '$lib/state/map.svelte';
+    import {objectDetailsOverlay} from '$lib/state/objectDetailsOverlay.svelte';
     import {onMount, onDestroy} from 'svelte';
 
     interface Props {
@@ -91,7 +92,12 @@
         }
     });
 
-    $effect(focusObjectSelection);
+    // Without a registered marker or coordinates, focusing never reads the sheet position,
+    // so read it here to keep this effect subscribed to later sheet snaps.
+    $effect(() => {
+        void objectDetailsOverlay.position;
+        focusObjectSelection();
+    });
 
     async function initMarkerManager(
         provider: MapProvider,

@@ -37,7 +37,6 @@
     import {webgl2Adapter} from '@luma.gl/webgl';
     import {SvglGoogleLogo} from '@selemondev/svgl-svelte';
     import {useQuery} from 'convex-svelte';
-    import posthog from 'posthog-js';
     import {onMount} from 'svelte';
     import {useClerkContext} from 'svelte-clerk';
     import type {LayoutProps} from './$types';
@@ -73,7 +72,6 @@
             return;
         }
 
-        posthog.capture('map_point_placed', {latitude: location.lat, longitude: location.lng});
         selectMapPoint({latitude: location.lat, longitude: location.lng});
     }
 
