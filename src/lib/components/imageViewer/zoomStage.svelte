@@ -112,9 +112,16 @@
     }
 
     function handleKeydown(event: KeyboardEvent) {
-        // leaves the browser's own ⌘+/⌘− page zoom and Alt+← / Alt+→ history navigation alone
+        // Every mounted stage listens, and a step makes the next one active within this same
+        // dispatch, so a key another stage already handled is left alone. Modified keys are left
+        // to the browser's own ⌘+/⌘− page zoom and Alt+← / Alt+→ history navigation.
         const action =
-            isActive && !event.metaKey && !event.ctrlKey && !event.altKey && keyActions[event.key];
+            isActive &&
+            !event.defaultPrevented &&
+            !event.metaKey &&
+            !event.ctrlKey &&
+            !event.altKey &&
+            keyActions[event.key];
         if (action) {
             event.preventDefault();
             action();

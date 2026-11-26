@@ -42,6 +42,7 @@
 
 <div
     bind:clientWidth={track.width}
+    {@attach node => track.attach(node)}
     class="absolute inset-0 overflow-hidden"
     style:background-color="rgb(0 0 0 / {backdropAlpha})"
 >

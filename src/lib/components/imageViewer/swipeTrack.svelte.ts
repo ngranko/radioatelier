@@ -32,6 +32,8 @@ export class SwipeTrack implements DragHandlers {
     // Where the drag caught the track, possibly halfway through settling. It is kept in finger
     // travel rather than on-screen offset, so an edge pull caught mid-settle isn't resisted twice.
     private base: number | null = null;
+    private pointers = new Set<number>();
+    private isSuspended = false;
 
     public constructor(options: SwipeTrackOptions) {
         this.options = options;
@@ -52,7 +54,22 @@ export class SwipeTrack implements DragHandlers {
         return Math.abs(position) <= 1 || Math.abs(this.locate(position)) < this.width + GAP;
     }
 
+    public attach(node: HTMLElement) {
+        const listeners = new AbortController();
+        const {signal} = listeners;
+        node.addEventListener('pointerdown', event => this.countPress(event), {signal});
+        // a lift can land outside the track, and a stage holding the pointer can unmount
+        window.addEventListener('pointerup', event => this.countLift(event), {signal});
+        window.addEventListener('pointercancel', event => this.countLift(event), {signal});
+        return () => listeners.abort();
+    }
+
     public step(direction: number) {
+        // the finger holding the track decides where it goes; a key or button press would
+        // otherwise shift the slides out from under it
+        if (this.base !== null) {
+            return;
+        }
         const next = this.options.getIndex() + direction;
         if (next >= 0 && next < this.options.getCount()) {
             this.options.setIndex(next);
@@ -65,6 +82,9 @@ export class SwipeTrack implements DragHandlers {
     }
 
     public drag(travel: Point) {
+        if (this.isSuspended) {
+            return;
+        }
         this.base ??= this.offset.current / this.measureEdgeResistance(this.offset.current);
         const offset = this.base + travel.x;
         void this.offset.set(offset * this.measureEdgeResistance(offset), {duration: 0});
@@ -73,6 +93,9 @@ export class SwipeTrack implements DragHandlers {
 
     public release(travel: Point, velocity: Point) {
         this.base = null;
+        if (this.isSuspended) {
+            return;
+        }
         if (isPastThreshold(travel.y, velocity.y, DISMISS_PULL)) {
             this.options.close();
         } else if (isPastThreshold(travel.x, velocity.x, this.width * SWIPE_SHARE)) {
@@ -85,6 +108,24 @@ export class SwipeTrack implements DragHandlers {
     public cancel() {
         this.base = null;
         this.settle();
+    }
+
+    // Each photo's stage only sees the fingers on itself, so one landing on a neighbouring photo
+    // mid-swipe would go unnoticed there. Counted across the whole track, a second finger cancels
+    // the swipe until every finger is lifted, as it does within a single stage.
+    private countPress(event: PointerEvent) {
+        this.pointers.add(event.pointerId);
+        if (this.pointers.size > 1 && !this.isSuspended) {
+            this.isSuspended = true;
+            this.cancel();
+        }
+    }
+
+    private countLift(event: PointerEvent) {
+        this.pointers.delete(event.pointerId);
+        if (this.pointers.size === 0) {
+            this.isSuspended = false;
+        }
     }
 
     private settle() {
