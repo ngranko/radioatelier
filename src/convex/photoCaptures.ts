@@ -13,6 +13,7 @@ import {isImageInGallery} from './helpers/objectImages';
 import {loadAnalysisContext} from './helpers/photoCaptures/analysisContext';
 import {createCapturedObject} from './helpers/photoCaptures/captureObject';
 import {consumePhotoCaptureQuota, readPhotoCaptureQuota} from './helpers/photoCaptures/quota';
+import {findUserOpenRouterKey} from './helpers/photoCaptures/userKeys';
 import {
     assertObjectFieldLengths,
     assertValidMapPointCoordinates,
@@ -29,7 +30,10 @@ export const create = mutation({
         assertValidMapPointCoordinates(location.latitude, location.longitude);
         assertObjectFieldLengths(location);
         await assertImageCapturable(ctx, imageId, user._id);
-        await consumePhotoCaptureQuota(ctx, user._id);
+        // An account paying for its own analyses has nothing to ration.
+        if (!(await findUserOpenRouterKey(ctx, user._id))) {
+            await consumePhotoCaptureQuota(ctx, user._id);
+        }
 
         const captureId = await ctx.db.insert('photoCaptures', {
             createdById: user._id,
@@ -84,7 +88,11 @@ export const getQuota = query({
     args: {},
     handler: async ctx => {
         const user = await getCurrentUserOrThrow(ctx);
-        return {isUnlimited: false, ...(await readPhotoCaptureQuota(ctx, user._id))};
+        const [userKey, quota] = await Promise.all([
+            findUserOpenRouterKey(ctx, user._id),
+            readPhotoCaptureQuota(ctx, user._id),
+        ]);
+        return {isUnlimited: userKey !== null, ...quota};
     },
 });
 
@@ -95,10 +103,14 @@ export const loadAnalysisInput = internalQuery({
         if (capture?.status !== 'processing') {
             return null;
         }
-        const image = await ctx.db.get('images', capture.imageId);
+        const [image, userKey] = await Promise.all([
+            ctx.db.get('images', capture.imageId),
+            findUserOpenRouterKey(ctx, capture.createdById),
+        ]);
         return {
             imageUrl: image ? await ctx.storage.getUrl(image.originalStorageId) : null,
             context: await loadAnalysisContext(ctx, capture),
+            userApiKey: userKey?.apiKey ?? null,
         };
     },
 });

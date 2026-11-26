@@ -10,8 +10,12 @@ export const analyze = internalAction({
         if (!input) {
             return;
         }
+        const {userApiKey, ...photo} = input;
         try {
-            const analysis = await analyzePhoto({...input, apiKey: requireArchiveKey()});
+            const analysis = await analyzePhoto({
+                ...photo,
+                apiKey: userApiKey ?? requireArchiveKey(),
+            });
             await ctx.runMutation(internal.photoCaptures.complete, {captureId, ...analysis});
         } catch (error) {
             console.error('Photo capture analysis failed:', error);

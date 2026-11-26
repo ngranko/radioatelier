@@ -106,6 +106,11 @@ export default defineSchema({
     })
         .index('byCreatedById', ['createdById'])
         .index('byImageId', ['imageId']),
+    // Only internal functions read this table: a key never travels back to a browser.
+    userOpenRouterKeys: defineTable({
+        userId: v.id('users'),
+        apiKey: v.string(),
+    }).index('byUserId', ['userId']),
     privateTags: defineTable({
         name: v.string(),
         createdById: v.id('users'),

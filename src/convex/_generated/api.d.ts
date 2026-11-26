@@ -31,6 +31,7 @@ import type * as helpers_photoCaptures_analyzePhoto from "../helpers/photoCaptur
 import type * as helpers_photoCaptures_captureObject from "../helpers/photoCaptures/captureObject.js";
 import type * as helpers_photoCaptures_openRouter from "../helpers/photoCaptures/openRouter.js";
 import type * as helpers_photoCaptures_quota from "../helpers/photoCaptures/quota.js";
+import type * as helpers_photoCaptures_userKeys from "../helpers/photoCaptures/userKeys.js";
 import type * as helpers_taxonomyEditor from "../helpers/taxonomyEditor.js";
 import type * as helpers_taxonomyFanout from "../helpers/taxonomyFanout.js";
 import type * as helpers_taxonomyGuards from "../helpers/taxonomyGuards.js";
@@ -61,6 +62,7 @@ import type * as notionSync_types from "../notionSync/types.js";
 import type * as objectPersonal from "../objectPersonal.js";
 import type * as objects from "../objects.js";
 import type * as objectsSync from "../objectsSync.js";
+import type * as openRouterKeys from "../openRouterKeys.js";
 import type * as photoCaptureAnalysis from "../photoCaptureAnalysis.js";
 import type * as photoCaptures from "../photoCaptures.js";
 import type * as privateTags from "../privateTags.js";
@@ -108,6 +110,7 @@ declare const fullApi: ApiFromModules<{
   "helpers/photoCaptures/captureObject": typeof helpers_photoCaptures_captureObject;
   "helpers/photoCaptures/openRouter": typeof helpers_photoCaptures_openRouter;
   "helpers/photoCaptures/quota": typeof helpers_photoCaptures_quota;
+  "helpers/photoCaptures/userKeys": typeof helpers_photoCaptures_userKeys;
   "helpers/taxonomyEditor": typeof helpers_taxonomyEditor;
   "helpers/taxonomyFanout": typeof helpers_taxonomyFanout;
   "helpers/taxonomyGuards": typeof helpers_taxonomyGuards;
@@ -138,6 +141,7 @@ declare const fullApi: ApiFromModules<{
   objectPersonal: typeof objectPersonal;
   objects: typeof objects;
   objectsSync: typeof objectsSync;
+  openRouterKeys: typeof openRouterKeys;
   photoCaptureAnalysis: typeof photoCaptureAnalysis;
   photoCaptures: typeof photoCaptures;
   privateTags: typeof privateTags;
