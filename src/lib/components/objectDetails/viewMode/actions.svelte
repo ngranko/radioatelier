@@ -53,7 +53,9 @@
             <UserPenIcon class="fill-current" />
         </Button>
     {/if}
-    <NavigationActions lat={Number(lat)} lng={Number(lng)} />
+    {#if lat && lng}
+        <NavigationActions lat={Number(lat)} lng={Number(lng)} />
+    {/if}
     {#if id}
         <ShareButton {id} {name} />
     {/if}

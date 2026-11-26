@@ -57,7 +57,7 @@
 
 <!-- prettier-ignore -->
 <DialogRoot bind:open={getIsOpen, setIsOpen}>
-    <Content class="max-h-[95vh] flex flex-col overflow-hidden border-t-0 pt-0">
+    <Content class="max-h-[95vh] flex flex-col overflow-y-auto border-t-0 pt-0">
         <DialogHeading
             icon={FileInputIcon}
             title="Импорт CSV"

@@ -102,14 +102,14 @@ class SearchResults {
         return this.loadPage(this.currentSource, true);
     }
 
-    retry() {
-        if (this.isDisposed || !this.request || !this.pages[this.activeSource].isError) {
+    public retry() {
+        if (this.isDisposed || !this.request || !this.sourcePages[this.currentSource].isError) {
             return Promise.resolve();
         }
-        return this.loadPage(this.activeSource, false);
+        return this.loadPage(this.currentSource, false);
     }
 
-    dispose() {
+    public dispose() {
         this.isDisposed = true;
     }
 

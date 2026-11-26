@@ -29,6 +29,14 @@
         void results.retry();
     }
 
+    // A retry restored from minimized must hold the expanded height, not the
+    // collapsed one measured while minimized.
+    function rememberExpandedHeight(height: number) {
+        if (!searchState.isResultsMinimized) {
+            panelHeight = height;
+        }
+    }
+
     const searchKey = $derived(`${searchState.lat}:${searchState.lng}:${searchState.query}`);
     const activePage = $derived(results.pages[results.activeSource]);
     let isNoticeShown = $state(false);
@@ -57,7 +65,7 @@
 <aside
     class={classes}
     style:height={isHeightHeld ? `${panelHeight}px` : undefined}
-    bind:offsetHeight={panelHeight}
+    bind:offsetHeight={null, rememberExpandedHeight}
     aria-label="Результаты поиска"
     transition:slideFromLeft
 >
