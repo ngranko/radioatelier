@@ -29,7 +29,8 @@ export class SwipeTrack implements DragHandlers {
     private options: SwipeTrackOptions;
     private offset = new Tween(0, {easing: cubicOut});
     private pullOffset = new Tween(0, {easing: cubicOut});
-    // where the track was when the drag caught it, possibly halfway through settling
+    // Where the drag caught the track, possibly halfway through settling. It is kept in finger
+    // travel rather than on-screen offset, so an edge pull caught mid-settle isn't resisted twice.
     private base: number | null = null;
 
     public constructor(options: SwipeTrackOptions) {
@@ -64,8 +65,9 @@ export class SwipeTrack implements DragHandlers {
     }
 
     public drag(travel: Point) {
-        this.base ??= this.offset.current;
-        void this.offset.set(this.resistAtEdges(this.base + travel.x), {duration: 0});
+        this.base ??= this.offset.current / this.measureEdgeResistance(this.offset.current);
+        const offset = this.base + travel.x;
+        void this.offset.set(offset * this.measureEdgeResistance(offset), {duration: 0});
         void this.pullOffset.set(travel.y, {duration: 0});
     }
 
@@ -91,10 +93,10 @@ export class SwipeTrack implements DragHandlers {
         void this.pullOffset.set(0, {duration});
     }
 
-    private resistAtEdges(offset: number): number {
+    private measureEdgeResistance(offset: number): number {
         const index = this.options.getIndex();
         const isPastEdge =
             (offset > 0 && index === 0) || (offset < 0 && index === this.options.getCount() - 1);
-        return isPastEdge ? offset * EDGE_RESISTANCE : offset;
+        return isPastEdge ? EDGE_RESISTANCE : 1;
     }
 }
