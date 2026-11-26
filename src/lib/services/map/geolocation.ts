@@ -60,6 +60,20 @@ async function getLocationFromGoogle(): Promise<GetLocationResponseData> {
     return response.json();
 }
 
+/**
+ * The watched position, provided it is current and recent. Reading it rather than asking the
+ * browser again keeps iOS from prompting for permission mid-session.
+ */
+export function readRecentPosition(maxAgeMs: number): Location | null {
+    const stored = localStorage.getItem('lastPosition');
+    if (!stored) {
+        return null;
+    }
+    const {lat, lng, isCurrent, measuredAt} = JSON.parse(stored);
+    const isRecent = typeof measuredAt === 'number' && Date.now() - measuredAt <= maxAgeMs;
+    return isCurrent && isRecent ? {lat, lng} : null;
+}
+
 function rememberPosition(position: GeolocationPosition) {
     localStorage.setItem(
         'lastPosition',
@@ -67,6 +81,7 @@ function rememberPosition(position: GeolocationPosition) {
             lat: position.coords.latitude,
             lng: position.coords.longitude,
             isCurrent: true,
+            measuredAt: position.timestamp,
         }),
     );
 }

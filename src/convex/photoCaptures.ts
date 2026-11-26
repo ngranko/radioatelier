@@ -9,6 +9,7 @@ import {
     query,
     type QueryCtx,
 } from './_generated/server';
+import {resolveImageThumbnailUrl} from './helpers/imageStorage';
 import {isImageInGallery} from './helpers/objectImages';
 import {loadAnalysisContext} from './helpers/photoCaptures/analysisContext';
 import {createCapturedObject} from './helpers/photoCaptures/captureObject';
@@ -168,14 +169,12 @@ async function loadOwnFailedCapture(ctx: MutationCtx, id: Id<'photoCaptures'>) {
 }
 
 async function describeCapture(ctx: QueryCtx, capture: Doc<'photoCaptures'>) {
-    const image = await ctx.db.get('images', capture.imageId);
-    const storageId = image?.previewStorageId ?? image?.originalStorageId;
     return {
         id: capture._id,
         status: capture.status,
         failureReason: capture.failureReason ?? null,
         canRetry: capture.attempts < MAX_ATTEMPTS,
-        imageUrl: storageId ? await ctx.storage.getUrl(storageId) : null,
+        imageUrl: await resolveImageThumbnailUrl(ctx, capture.imageId),
         createdAt: capture._creationTime,
     };
 }

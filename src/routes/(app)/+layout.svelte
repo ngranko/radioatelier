@@ -10,6 +10,9 @@
     import OrientationButton from '$lib/components/map/orientationButton.svelte';
     import PositionButton from '$lib/components/map/positionButton.svelte';
     import MarkerFilter from '$lib/components/markerFilter/markerFilter.svelte';
+    import CapturePinHint from '$lib/components/photoCapture/capturePinHint.svelte';
+    import PhotoCaptureButton from '$lib/components/photoCapture/photoCaptureButton.svelte';
+    import PhotoCaptureFeedback from '$lib/components/photoCapture/photoCaptureFeedback.svelte';
     import Search from '$lib/components/search/search.svelte';
     import UserMenu from '$lib/components/userMenu/userMenu.svelte';
     import type {Location} from '$lib/interfaces/location.ts';
@@ -26,6 +29,7 @@
         objectDetailsOverlay,
         setOverlayAddressLoading,
     } from '$lib/state/objectDetailsOverlay.svelte';
+    import {photoCaptureState, resolveCapturePin} from '$lib/state/photoCapture.svelte';
     import {setPrivateTags} from '$lib/state/privateTags.svelte';
     import {hasSearchPointAt, searchPointList} from '$lib/state/searchPointList.svelte.ts';
     import {sharedMarker} from '$lib/state/sharedMarker.svelte.ts';
@@ -63,6 +67,10 @@
     });
 
     function handleMapClick(location: Location) {
+        if (photoCaptureState.isPinRequested) {
+            resolveCapturePin(location);
+            return;
+        }
         // A tap that dismisses the card must not also place a point behind it.
         if (objectDetailsOverlay.isOpen) {
             requestDetailsClose();
@@ -135,6 +143,14 @@
 
 <OrientationButton bind:isEnabled={orientationEnabled} />
 <PositionButton />
+
+{#if clerkCtx.auth.userId}
+    <PhotoCaptureButton />
+    <PhotoCaptureFeedback />
+{/if}
+{#if photoCaptureState.isPinRequested}
+    <CapturePinHint />
+{/if}
 
 {@render children?.()}
 
