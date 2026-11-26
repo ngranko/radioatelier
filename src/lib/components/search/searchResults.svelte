@@ -29,10 +29,10 @@
         void results.retry();
     }
 
-    // A retry restored from minimized must hold the expanded height, not the
-    // collapsed one measured while minimized.
+    // A held height must stay the last expanded measurement: sizes taken while
+    // minimized, or mid-transition toward the held height, would replace it.
     function rememberExpandedHeight(height: number) {
-        if (!searchState.isResultsMinimized) {
+        if (!searchState.isResultsMinimized && !isHeightHeld) {
             panelHeight = height;
         }
     }
