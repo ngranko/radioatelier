@@ -36,8 +36,13 @@
         val = (evt.target as HTMLInputElement).value;
         clearTimeout(timeout);
         timeout = window.setTimeout(() => {
-            runSearch(val);
             timeout = undefined;
+            // An emptied box ends the search the same way the clear button does.
+            if (val.trim()) {
+                runSearch(val);
+            } else {
+                clearSearch();
+            }
         }, DEBOUNCE_MS);
     }
 

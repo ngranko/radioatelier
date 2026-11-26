@@ -41,7 +41,7 @@ Separately, the map starts one `navigator.geolocation.watchPosition` subscriptio
 
 ## URL and transient state
 
-`src/lib/state/search.svelte.ts` restores full results only when the URL has a nonempty query and valid latitude and longitude. `getActiveSearchUrl` supplies the return location after object interactions. Clearing search also clears search pins and the remembered search area.
+`src/lib/state/search.svelte.ts` restores full results only when the URL has a nonempty query and valid latitude and longitude. `getActiveSearchUrl` supplies the return location after object interactions. Clearing search, with the clear button, Escape, or by emptying the input, also clears search pins and the remembered search area.
 
 `createDraftState` stores only the temporary point position. The details overlay and form hold the remaining unsaved values. Reloading is not a draft recovery mechanism; it reconstructs the selected route's data.
 
