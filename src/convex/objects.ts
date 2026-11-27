@@ -130,7 +130,7 @@ export const update = mutation({
         id: v.id('objects'),
         data: v.object(updateObjectRecordFields),
     },
-    returns: v.object({wasApproved: v.boolean()}),
+    returns: v.object({id: v.id('objects'), wasApproved: v.boolean()}),
     handler: async (ctx, {id, data}) => {
         const user = await getCurrentUserOrThrow(ctx);
         const target = await loadObjectTarget(ctx, id);
@@ -138,7 +138,7 @@ export const update = mutation({
         const isOwner = target.object.createdById === user._id;
         if (!isOwner) {
             await updateObjectPersonalState(ctx, id, user, data);
-            return {wasApproved: false};
+            return {id, wasApproved: false};
         }
         assertObjectFieldLengths(data);
         // Saving the form means the owner has looked the Object over.
@@ -174,7 +174,7 @@ export const update = mutation({
         await upsertPrivateTags(ctx, id, user._id, data.privateTags);
         await updateIsVisited(ctx, id, user._id, data.isVisited);
 
-        return {wasApproved};
+        return {id, wasApproved};
     },
 });
 
