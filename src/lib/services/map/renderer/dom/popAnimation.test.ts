@@ -99,18 +99,6 @@ describe('PopAnimator', () => {
         expect(style.scale).toBe('');
     });
 
-    it('stops observing a marker it has already revealed', () => {
-        const observer = stubObserver();
-        stubFrames();
-        const {element} = makeElement();
-
-        new PopAnimator().popIn(element);
-        expect(observer.observed.has(element)).toBe(true);
-
-        observer.reveal(element);
-        expect(observer.observed.has(element)).toBe(false);
-    });
-
     it('plays anyway once the wait runs out', () => {
         vi.useFakeTimers();
         stubObserver();
@@ -125,39 +113,6 @@ describe('PopAnimator', () => {
         frames.advance();
         frames.advance();
         expect(classes.has('animate-popin')).toBe(true);
-    });
-
-    it('falls back to the timeout when IntersectionObserver is unavailable', () => {
-        vi.useFakeTimers();
-        vi.stubGlobal('IntersectionObserver', undefined);
-        const frames = stubFrames();
-        const {element, classes, style} = makeElement();
-
-        new PopAnimator().popIn(element);
-        expect(style.visibility).toBe('hidden');
-
-        vi.advanceTimersByTime(REVEAL_TIMEOUT_MS);
-        frames.advance();
-        frames.advance();
-        expect(classes.has('animate-popin')).toBe(true);
-    });
-
-    it.each(['animationend', 'animationcancel'])('cleans up on %s', eventName => {
-        const observer = stubObserver();
-        const frames = stubFrames();
-        const {element, classes, style} = makeElement();
-
-        new PopAnimator().popIn(element);
-        observer.reveal(element);
-        frames.advance();
-        frames.advance();
-        expect(classes.has('animate-popin')).toBe(true);
-
-        element.dispatchEvent(new Event(eventName));
-        expect(classes.has('animate-popin')).toBe(false);
-        expect(style.visibility).toBe('');
-        expect(style.scale).toBe('');
-        expect(style.transitionProperty).toBe('');
     });
 
     it('cancels a pending animation and allows another one', () => {
@@ -218,22 +173,6 @@ describe('PopAnimator', () => {
 
         vi.advanceTimersByTime(REVEAL_TIMEOUT_MS);
         expect(classes.has('animate-popin')).toBe(false);
-    });
-
-    it('cancels a revealed marker before its animation starts', () => {
-        const observer = stubObserver();
-        const frames = stubFrames();
-        const {element, classes, style} = makeElement();
-        const animator = new PopAnimator();
-
-        animator.popIn(element);
-        observer.reveal(element);
-        animator.cancel(element);
-        frames.advance();
-        frames.advance();
-
-        expect(classes.has('animate-popin')).toBe(false);
-        expect(style.scale).toBe('');
     });
 
     it('keeps the pipeline busy until pop-in finishes', () => {

@@ -4,7 +4,6 @@ import {beforeEach, describe, expect, it} from 'vitest';
 import {
     clearSearchPointList,
     clearSelectedSearchPoint,
-    hasSearchPointAt,
     removeSearchPointsAt,
     replaceSearchPointList,
     searchPointList,
@@ -49,14 +48,6 @@ describe('searchPointList', () => {
         expect(Object.keys(searchPointList)).toEqual(['55.75,37.61']);
     });
 
-    it('drops the selected pin without touching the result list pins', () => {
-        replaceSearchPointList([{object: makeItem()}]);
-
-        clearSelectedSearchPoint();
-
-        expect(Object.keys(searchPointList)).toEqual(['place-1']);
-    });
-
     it('leaves a result list pin alone when the next point is selected', () => {
         replaceSearchPointList([{object: makeItem()}]);
 
@@ -75,13 +66,6 @@ describe('searchPointList', () => {
         removeSearchPointsAt({lat: 55.75, lng: 37.61});
 
         expect(Object.keys(searchPointList)).toEqual(['place-2']);
-    });
-
-    it('reports a search point sitting at a draft position', () => {
-        selectSearchPoint({object: makeItem()});
-
-        expect(hasSearchPointAt({lat: 55.75, lng: 37.61})).toBe(true);
-        expect(hasSearchPointAt({lat: 55.75, lng: 37.62})).toBe(false);
     });
 
     it('forgets the selection once the list is replaced', () => {

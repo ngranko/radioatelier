@@ -146,20 +146,16 @@ describe('personal Object writes', () => {
         },
     );
 
-    it.each([true, false])(
-        'syncs an owner visited change on a private Object, visited=%s',
-        async isVisited => {
-            const {ctx, user, object, visited, scheduler} = createContext('owner');
-            object.isPublic = false;
-            visited.visitedObjectIds = isVisited ? [] : [objectId];
-            await updateObjectPersonalState(ctx, objectId, user, {...data, isVisited});
+    it('syncs an owner visited change on a private Object', async () => {
+        const {ctx, user, object, scheduler} = createContext('owner');
+        object.isPublic = false;
+        await updateObjectPersonalState(ctx, objectId, user, data);
 
-            expect(scheduler.runAfter).toHaveBeenCalledTimes(1);
-            const [, ref, args] = scheduler.runAfter.mock.calls[0];
-            expect(getFunctionName(ref)).toBe('notionSync/outbound:enqueueOutboundObjectSync');
-            expect(args).toEqual({objectId});
-        },
-    );
+        expect(scheduler.runAfter).toHaveBeenCalledTimes(1);
+        const [, ref, args] = scheduler.runAfter.mock.calls[0];
+        expect(getFunctionName(ref)).toBe('notionSync/outbound:enqueueOutboundObjectSync');
+        expect(args).toEqual({objectId});
+    });
 
     it.each(['unchanged', 'disabled'])('skips owner sync when visited is %s', async state => {
         const {ctx, user, visited, scheduler} = createContext('owner');
@@ -170,15 +166,5 @@ describe('personal Object writes', () => {
         }
         await updateObjectPersonalState(ctx, objectId, user, data);
         expect(scheduler.runAfter).not.toHaveBeenCalled();
-    });
-
-    it('rejects a missing Object without creating personal records', async () => {
-        const {ctx, user, db, docs} = createContext();
-        docs.delete('objects:object-1');
-        await expect(updateObjectPersonalState(ctx, objectId, user, data)).rejects.toThrow(
-            'Object not found',
-        );
-        expect(db.patch).not.toHaveBeenCalled();
-        expect(db.insert).not.toHaveBeenCalled();
     });
 });

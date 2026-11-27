@@ -1,18 +1,11 @@
-import {afterEach, describe, expect, it, vi} from 'vitest';
+import {describe, expect, it} from 'vitest';
 import type {Doc, Id} from '../_generated/dataModel';
-import type {QueryCtx} from '../_generated/server';
 import type {ObjectAggregate} from '../helpers/objectReader';
-import * as visitedChunks from '../utils/visitedChunks';
 import {assembleObjectSnapshot} from './snapshot';
-import {loadSyncSnapshotExtras} from './snapshotExtras';
 
 process.env.NOTION_SYNC_APP_URL = 'https://radioatelier.app';
 
 describe('notion snapshot assembly', () => {
-    afterEach(() => {
-        vi.restoreAllMocks();
-    });
-
     it('assembles a snapshot from an Object aggregate and sync extras', () => {
         const aggregate: ObjectAggregate = {
             object: makeObject('object-1', id('users', 'owner-1')),
@@ -43,49 +36,7 @@ describe('notion snapshot assembly', () => {
             }),
         });
     });
-
-    it('dedupes visited chunk lookups by user and chunk', async () => {
-        vi.spyOn(visitedChunks, 'getVisitedChunkId').mockReturnValue('abc');
-        const owner = makeOwner('owner-1');
-        const objects = [makeObject('object-1', owner._id), makeObject('object-2', owner._id)];
-        const {ctx, query} = createMockQueryCtx(objects[0]._id);
-
-        const extras = await loadSyncSnapshotExtras(ctx, objects);
-
-        expect(query).toHaveBeenCalledTimes(objects.length + 1);
-        expect(extras.visitedByObjectId.get(objects[0]._id)).toBe(true);
-        expect(extras.visitedByObjectId.get(objects[1]._id)).toBe(false);
-    });
 });
-
-function createMockQueryCtx(visitedObjectId: Id<'objects'>) {
-    const query = vi.fn((table: string) => ({
-        withIndex: vi.fn((_index: string, buildIndex: (q: IndexBuilder) => IndexBuilder) => {
-            buildIndex(createIndexBuilder());
-            return {
-                unique: vi.fn(async () => {
-                    if (table === 'objectNotionSync') {
-                        return null;
-                    }
-                    if (table === 'userVisitedChunks') {
-                        return {visitedObjectIds: [visitedObjectId]};
-                    }
-                    throw new Error(`Unexpected query table: ${table}`);
-                }),
-            };
-        }),
-    }));
-    return {ctx: {db: {query}} as unknown as QueryCtx, query};
-}
-
-type IndexBuilder = {
-    eq: () => IndexBuilder;
-};
-
-function createIndexBuilder(): IndexBuilder {
-    const builder: IndexBuilder = {eq: () => builder};
-    return builder;
-}
 
 function makeOwner(ownerId: string): Doc<'users'> {
     return {

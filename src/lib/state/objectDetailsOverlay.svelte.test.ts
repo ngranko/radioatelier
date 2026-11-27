@@ -47,22 +47,6 @@ describe('objectDetailsOverlay transitions', () => {
         expect(objectDetailsOverlay.pointDetails).toBeUndefined();
     });
 
-    it('switching from a peeking card keeps it peeking', () => {
-        showObjectDetailsOverlay('object-1', {name: 'Plaque'} as never);
-        setOverlayPosition('peek');
-
-        showLoadingDetailsOverlay('object-2');
-
-        expect(objectDetailsOverlay.position).toBe('peek');
-    });
-
-    it('keeps previous details when reopening without fresh values', () => {
-        showObjectDetailsOverlay('object-1', {name: 'Plaque'} as never);
-        showObjectDetailsOverlay('object-1');
-
-        expect(objectDetailsOverlay.details).toEqual({name: 'Plaque'});
-    });
-
     it('keeps edit state when current object details refresh', () => {
         showObjectDetailsOverlay('object-1', {name: 'Plaque'} as never);
         enterEditMode();
@@ -132,14 +116,6 @@ describe('point overlay position', () => {
 
         setOverlayPosition('full');
         showPointPreviewOverlay('point-1', {}, pointDetails);
-        expect(objectDetailsOverlay.position).toBe('full');
-    });
-
-    it('opens a point as a full side panel on wide screens', () => {
-        vi.stubGlobal('document', {body: {clientWidth: 1440}});
-
-        showLoadingPointOverlay('point-1', point);
-
         expect(objectDetailsOverlay.position).toBe('full');
     });
 

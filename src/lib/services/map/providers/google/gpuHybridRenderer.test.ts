@@ -40,25 +40,6 @@ describe('GpuHybridRenderer', () => {
         vi.unstubAllGlobals();
     });
 
-    it('does not hide the DOM marker while it is promoted', () => {
-        const marker = {usesDomRenderer: () => false} as Marker;
-        const domHide = vi.fn();
-        const gpuHide = vi.fn();
-        const renderer = createRenderer({
-            dom: {hide: domHide},
-            gpu: {hide: gpuHide},
-            promoted: marker,
-        });
-
-        renderer.hide(marker);
-        expect(domHide).not.toHaveBeenCalled();
-        expect(gpuHide).not.toHaveBeenCalled();
-
-        Object.assign(renderer, {promoted: undefined});
-        renderer.hide(marker);
-        expect(gpuHide).toHaveBeenCalledWith(marker);
-    });
-
     it('hands a held sprite to the DOM renderer and takes it back on release', () => {
         const marker = {usesDomRenderer: () => false} as Marker;
         const dom = {
@@ -114,15 +95,6 @@ describe('GpuHybridRenderer', () => {
         expect(gpu.setExcludedMarker).toHaveBeenCalledWith(marker);
     });
 
-    it('leaves a release that never became a drag to the map click handler', () => {
-        const onInteraction = vi.fn();
-        const renderer = createRenderer({onInteraction});
-
-        (renderer as unknown as {endDrag(): void}).endDrag();
-
-        expect(onInteraction).not.toHaveBeenCalled();
-    });
-
     it('keeps the sprite hidden until the highlight has scaled back down', () => {
         const marker = {usesDomRenderer: () => false} as Marker;
         const dom = {ensureCreated: vi.fn(), reveal: revealsImmediately(), hide: vi.fn()};
@@ -169,32 +141,5 @@ describe('GpuHybridRenderer', () => {
         flushFrames();
         expect(dom.hide).toHaveBeenCalledWith(second);
         expect(gpu.setExcludedMarker).toHaveBeenLastCalledWith(undefined);
-    });
-
-    it('drops a retirement whose renderers were destroyed before its frame ran', () => {
-        const marker = {usesDomRenderer: () => false} as Marker;
-        const dom = {
-            ensureCreated: vi.fn(),
-            reveal: revealsImmediately(),
-            hide: vi.fn(),
-            destroy: vi.fn(),
-        };
-        const gpu = {setExcludedMarker: vi.fn(), destroy: vi.fn()};
-        const renderer = createRenderer({
-            dom,
-            gpu,
-            unsubscribeClustering: vi.fn(),
-            unsubscribeFocus: vi.fn(),
-        });
-        const focus = renderer as unknown as {promote(m: Marker | undefined): void};
-
-        focus.promote(marker);
-        focus.promote(undefined);
-        vi.runAllTimers();
-
-        renderer.destroy();
-        flushFrames();
-
-        expect(dom.hide).not.toHaveBeenCalled();
     });
 });

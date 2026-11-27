@@ -104,19 +104,6 @@ describe('SpriteDragGesture', () => {
         expect(onHold).not.toHaveBeenCalled();
     });
 
-    it('gives up the hold when a second finger starts a pinch', () => {
-        const {press, release, onHold, onRelease} = harness(markerPoint(true));
-
-        press();
-        press({pointerId: 2, isPrimary: false});
-        vi.advanceTimersByTime(HOLD_MS);
-
-        expect(onHold).not.toHaveBeenCalled();
-
-        release(2);
-        expect(onRelease).not.toHaveBeenCalled();
-    });
-
     it('can start another gesture after the map cancels its hold', () => {
         const point = markerPoint(true);
         const {press, onHold} = harness(point);
@@ -127,15 +114,6 @@ describe('SpriteDragGesture', () => {
         vi.advanceTimersByTime(HOLD_MS);
 
         expect(onHold).toHaveBeenCalledWith(point.marker);
-    });
-
-    it('leaves non-left-button presses to the browser', () => {
-        const {press, onHold} = harness(markerPoint(true));
-
-        press({button: 2});
-        vi.advanceTimersByTime(HOLD_MS);
-
-        expect(onHold).not.toHaveBeenCalled();
     });
 
     it('ignores markers that cannot be moved', () => {

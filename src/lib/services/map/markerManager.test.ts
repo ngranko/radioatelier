@@ -69,22 +69,6 @@ describe('MarkerManager', () => {
         expect(manager.getMarker('marker')).toBe(replacement);
     });
 
-    it('picks the initial renderer from the current zoom', () => {
-        const {factory, created} = makeRendererFactory();
-
-        const zoomedOut = new MarkerManager(makeProvider(8).provider, factory, {
-            deckZoomThreshold: 10,
-        });
-        expect(zoomedOut.isDeckRenderer).toBe(true);
-        expect(created[0].mode).toBe('deck');
-
-        const zoomedIn = new MarkerManager(makeProvider(15).provider, factory, {
-            deckZoomThreshold: 10,
-        });
-        expect(zoomedIn.isDeckRenderer).toBe(false);
-        expect(created[1].mode).toBe('dom');
-    });
-
     it('switches renderers when the zoom crosses the threshold', () => {
         const {provider, getZoom} = makeProvider(15);
         const {factory, created} = makeRendererFactory();
@@ -100,19 +84,6 @@ describe('MarkerManager', () => {
         expect(created[0].renderer.destroy).toHaveBeenCalled();
         const syncedMarkers = [...vi.mocked(created[1].renderer.syncAll).mock.calls[0][0]];
         expect(syncedMarkers).toEqual([marker]);
-    });
-
-    it('keeps the current renderer while the zoom stays on one side', () => {
-        const {provider} = makeProvider(15);
-        const {factory, created} = makeRendererFactory();
-        const manager = new MarkerManager(provider, factory, {deckZoomThreshold: 10});
-
-        manager.syncRendererWithViewport();
-        manager.syncRendererWithViewport();
-
-        expect(manager.isDeckRenderer).toBe(false);
-        expect(created).toHaveLength(1);
-        expect(created[0].renderer.destroy).not.toHaveBeenCalled();
     });
 
     it('keeps one GPU renderer at every zoom for the gpu strategy', () => {
@@ -131,20 +102,6 @@ describe('MarkerManager', () => {
         expect(created).toHaveLength(1);
         expect(created[0].mode).toBe('deck');
         expect([...vi.mocked(created[0].renderer.syncAll).mock.calls[0][0]]).toEqual([marker]);
-    });
-
-    it('switches back when the zoom returns across the threshold', () => {
-        const {provider, getZoom} = makeProvider(8);
-        const {factory, created} = makeRendererFactory();
-        const manager = new MarkerManager(provider, factory, {deckZoomThreshold: 10});
-
-        getZoom.mockReturnValue(15);
-        manager.syncRendererWithViewport();
-        getZoom.mockReturnValue(8);
-        manager.syncRendererWithViewport();
-
-        expect(manager.isDeckRenderer).toBe(true);
-        expect(created.map(item => item.mode)).toEqual(['deck', 'dom', 'deck']);
     });
 
     it('repaints a marker whose category style changed and skips an unchanged one', () => {

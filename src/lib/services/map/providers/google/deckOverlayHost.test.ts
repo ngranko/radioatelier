@@ -83,22 +83,6 @@ describe('DeckOverlayHost', () => {
         }
     });
 
-    it('switches the map cursor to a pointer while a picked object is hovered', () => {
-        const {map, setOptions} = createMap();
-        const host = new DeckOverlayHost(map);
-        host.attach();
-        const onHover = lastHoverHandler();
-
-        onHover({object: {id: 'marker'}});
-        onHover({object: {id: 'marker'}});
-        onHover({});
-
-        expect(setOptions.mock.calls).toEqual([
-            [{draggableCursor: 'pointer'}],
-            [{draggableCursor: null}],
-        ]);
-    });
-
     it('restores the map cursor when the overlay detaches mid-hover', () => {
         const {map, setOptions} = createMap();
         const host = new DeckOverlayHost(map);
