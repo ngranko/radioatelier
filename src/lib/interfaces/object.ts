@@ -26,7 +26,6 @@ interface BaseObject extends TaxonomlessObject {
     category: Category;
     tags: Tag[];
     privateTags: PrivateTag[];
-    cover: ObjectImage | null;
     images: ObjectImage[];
 }
 

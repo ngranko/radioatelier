@@ -1,5 +1,6 @@
 import {query} from './_generated/server';
 import {resolveImageThumbnailUrl} from './helpers/imageStorage';
+import {findCoverImageId} from './helpers/objectImages';
 import {loadObjectAggregates} from './helpers/objectReader';
 import {getCurrentUserOrThrow} from './users';
 
@@ -20,14 +21,13 @@ export const list = query({
             if (!aggregate) {
                 return null;
             }
+            const coverId = await findCoverImageId(ctx, object._id);
             return {
                 id: object._id,
                 name: object.name,
                 category: {id: aggregate.category._id, name: aggregate.category.name},
                 tags: aggregate.tags.map(tag => ({id: tag._id, name: tag.name})),
-                imageUrl: object.coverId
-                    ? await resolveImageThumbnailUrl(ctx, object.coverId)
-                    : null,
+                imageUrl: coverId ? await resolveImageThumbnailUrl(ctx, coverId) : null,
                 latitude: aggregate.mapPoint.latitude,
                 longitude: aggregate.mapPoint.longitude,
             };

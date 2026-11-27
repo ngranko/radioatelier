@@ -20,7 +20,6 @@ export async function createCapturedObject(
         installedPeriod: null,
         removalPeriod: null,
         source: null,
-        coverId: null,
         isPublic: false,
         isRemoved: false,
         isPendingReview: true,

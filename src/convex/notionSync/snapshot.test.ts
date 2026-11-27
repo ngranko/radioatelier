@@ -90,7 +90,6 @@ function makeObject(objectIdValue: string, ownerId: Id<'users'>): Doc<'objects'>
         isRemoved: false,
         removalPeriod: null,
         source: 'https://example.com',
-        coverId: null,
         categoryId: id('categories', 'category-1'),
         isPublic: false,
         isPendingReview: false,

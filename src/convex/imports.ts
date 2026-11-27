@@ -271,7 +271,6 @@ export const importBatch = mutation({
                     isRemoved: row.isRemoved,
                     removalPeriod: toLimitedNullable(row.removalPeriod, LIMITS.period),
                     source: validatedSource,
-                    coverId: null,
                     categoryId,
                     isPublic: row.isPublic,
                     isPendingReview: false,

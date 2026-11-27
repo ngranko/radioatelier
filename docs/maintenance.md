@@ -6,16 +6,11 @@ Convex owns the application database, file storage, migration state, and schedul
 
 `src/convex/convex.config.ts` installs `@convex-dev/migrations`. Definitions and the generic `run` runner live in `src/convex/migrations.ts`.
 
-| Function                  | Table     | Effect                                                                                         |
-| ------------------------- | --------- | ---------------------------------------------------------------------------------------------- |
-| `backfillImageOwners`     | `images`  | Fill an absent uploader ID when all objects using the cover resolve to exactly one owner       |
-| `backfillObjectGalleries` | `objects` | Give each cover-only or shared cover its own image record, owned by and attached to its Object |
+| Function            | Table     | Effect                                    |
+| ------------------- | --------- | ----------------------------------------- |
+| `clearObjectCovers` | `objects` | Unset the retired `objects.coverId` field |
 
-The image-owner migration skips already attributed rows. Images with no referencing objects or with several distinct owners remain unchanged and log their candidate owners. Skipped rows need investigation; migration completion does not mean every image gained an owner.
-
-`backfillObjectGalleries` preserves each Object's current cover, crop, and gallery order. It copies a cover into the Object's gallery, or swaps the gallery's link to the copy, unless the Object's owner uploaded the cover and no other gallery holds it; the copy belongs to the Object's owner. Covers already independent are unchanged. The migration is safe to rerun and processes 20 Objects per batch. A missing image record or an overfull gallery stops the batch for investigation.
-
-The copies have independent image IDs and preview choices. They reuse immutable storage files; replacing a preview retains the old file while any image still references it. Old unreferenced image records pass through normal storage cleanup.
+The cover is the first gallery image, so nothing reads `coverId`. Once `clearObjectCovers` has completed on production, remove `coverId` from `objectTableFields` in `src/convex/sharedValidators.ts` together with the migration.
 
 ## Run a migration
 
@@ -24,37 +19,33 @@ Use the installed migration runner from the repository root. These examples targ
 Preview one batch without persisting its changes:
 
 ```bash
-npx convex run migrations:run '{"fn":"migrations:backfillImageOwners","dryRun":true}'
+npx convex run migrations:run '{"fn":"migrations:clearObjectCovers","dryRun":true}'
 ```
 
 Inspect its output, then start or resume the migration:
 
 ```bash
-npx convex run migrations:run '{"fn":"migrations:backfillImageOwners"}'
+npx convex run migrations:run '{"fn":"migrations:clearObjectCovers"}'
 ```
 
 The component records progress and schedules batches. Repeating the runner reports or resumes its recorded state; it does not implicitly restart a completed migration. An explicit `reset: true` starts from the beginning. `batchSize` can override batch size.
 
-A dry run checks a batch, not the whole table. Review completion status and logs in Convex after a real run, then verify the affected behavior, such as recropping a previously ownerless cover. The repository defines migrations but does not automatically run them from its deploy script.
+A dry run checks a batch, not the whole table. Review completion status and logs in Convex after a real run, then verify the affected behavior. The repository defines migrations but does not automatically run them from its deploy script.
 
-To repair existing covers, pause imports and Object edits, deploy the preview-reference check together with the migration, then preview and run it:
+Check its status with:
 
 ```bash
-npx convex run migrations:run '{"fn":"migrations:backfillObjectGalleries","dryRun":true}'
-npx convex run migrations:run '{"fn":"migrations:backfillObjectGalleries"}'
-npx convex run --component migrations lib:getStatus '{"names":["migrations:backfillObjectGalleries"]}'
+npx convex run --component migrations lib:getStatus '{"names":["migrations:clearObjectCovers"]}'
 ```
-
-Wait for the status to report `success`. On the intended production deployment, add `--prod` to each command. Refresh open forms before resuming edits so they use the repaired image IDs. Afterward, check a formerly shared photo: reordering or cropping it on one Object must preserve the other Object's gallery and crop.
 
 ## Scheduled cleanup
 
 `src/convex/crons.ts` registers two daily internal mutations:
 
-| Time, UTC | Function                    | Effect                                                                                                |
-| --------- | --------------------------- | ----------------------------------------------------------------------------------------------------- |
-| 00:00     | `storage.sweepUnusedImages` | Remove image rows unused by galleries, covers or photo captures, then files unreferenced by any image |
-| 00:15     | `imports.cleanupOldJobs`    | Remove jobs older than seven days, using finish time or start time                                    |
+| Time, UTC | Function                    | Effect                                                                                        |
+| --------- | --------------------------- | --------------------------------------------------------------------------------------------- |
+| 00:00     | `storage.sweepUnusedImages` | Remove image rows unused by galleries or photo captures, then files unreferenced by any image |
+| 00:15     | `imports.cleanupOldJobs`    | Remove jobs older than seven days, using finish time or start time                            |
 
 Storage cleanup pages through images and then files in batches, rescheduling itself until done, and skips anything younger than a day. Import-job cleanup pages through jobs the same way and removes progress and feedback records, not imported objects.
 
@@ -64,6 +55,6 @@ Object removal separately deletes its map point, marker, all personal tag associ
 
 - For missing or stale archive search results, use the [Typesense backfill](search.md#running-the-backfill-against-production). It reconciles documents and can delete stale index rows.
 - For Notion mismatches, run the [sync audit](notion-sync.md#audit-discrepancies). It reports differences without repairing them.
-- For image preview ownership failures, inspect image ownership and the migration results described above.
+- For image preview ownership failures, inspect the image's `createdById`.
 
 Neither external-service procedure runs automatically as part of the two daily cleanup jobs. A successful database mutation does not establish that its scheduled external action succeeded.

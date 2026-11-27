@@ -8,6 +8,14 @@ export async function listObjectImages(ctx: QueryCtx, objectId: Id<'objects'>) {
     return images.filter(image => image !== null);
 }
 
+export async function findCoverImageId(ctx: QueryCtx, objectId: Id<'objects'>) {
+    const link = await ctx.db
+        .query('objectImages')
+        .withIndex('byObjectIdAndPosition', q => q.eq('objectId', objectId))
+        .first();
+    return link?.imageId ?? null;
+}
+
 export async function replaceObjectImages(
     ctx: MutationCtx,
     objectId: Id<'objects'>,
@@ -23,7 +31,6 @@ export async function replaceObjectImages(
     for (const [position, imageId] of accepted.entries()) {
         await ctx.db.insert('objectImages', {objectId, imageId, position});
     }
-    await ctx.db.patch('objects', objectId, {coverId: accepted[0] ?? null});
 }
 
 export async function detachObjectImages(ctx: MutationCtx, objectId: Id<'objects'>) {

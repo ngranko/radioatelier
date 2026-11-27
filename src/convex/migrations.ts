@@ -1,38 +1,9 @@
 import {Migrations} from '@convex-dev/migrations';
 import {components} from './_generated/api.js';
 import type {DataModel} from './_generated/dataModel.js';
-import {repairObjectGallery} from './helpers/objectImageRepair';
 
 export const migrations = new Migrations<DataModel>(components.migrations);
 export const run = migrations.runner();
-
-// Legacy images have no owner, so updatePreview's ownership check locks the
-// Object's own author out of re-cropping its cover. An image referenced by
-// Objects of several authors (or by none) has no single owner to inherit, so
-// it is logged for manual assignment instead of guessed.
-export const backfillImageOwners = migrations.define({
-    table: 'images',
-    migrateOne: async (ctx, image) => {
-        if (image.createdById) {
-            return;
-        }
-
-        const objects = await ctx.db
-            .query('objects')
-            .withIndex('byCoverId', q => q.eq('coverId', image._id))
-            .collect();
-        const ownerIds = [...new Set(objects.map(object => object.createdById))];
-        if (ownerIds.length !== 1) {
-            console.warn(
-                `Image ${image._id} left without owner: ${ownerIds.length} candidates`,
-                ownerIds,
-            );
-            return;
-        }
-
-        return {createdById: ownerIds[0]};
-    },
-});
 
 // The schema requires isPendingReview, so these must complete on a deployment
 // before it takes that schema.
@@ -54,8 +25,9 @@ export const backfillMarkerPendingReview = migrations.define({
     },
 });
 
-export const backfillObjectGalleries = migrations.define({
+// The schema still accepts objects.coverId so this can run; drop the field
+// from objectTableFields once it has completed on every deployment.
+export const clearObjectCovers = migrations.define({
     table: 'objects',
-    batchSize: 20,
-    migrateOne: repairObjectGallery,
+    migrateOne: (_ctx, object) => (object.coverId === undefined ? undefined : {coverId: undefined}),
 });

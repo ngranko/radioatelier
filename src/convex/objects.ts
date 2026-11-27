@@ -94,7 +94,6 @@ export const create = mutation({
             installedPeriod: data.installedPeriod ?? null,
             removalPeriod: data.removalPeriod ?? null,
             source: data.source ?? null,
-            coverId: null,
             categoryId: data.categoryId,
             tagIds: data.tagIds,
             isPublic: data.isPublic,

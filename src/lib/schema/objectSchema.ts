@@ -14,10 +14,7 @@ const coordinateField = (min: number, max: number, message: string) =>
 
 export type ObjectFormData = z.infer<typeof schema>;
 
-export function toFormDefaults({
-    cover: _cover,
-    ...obj
-}: Partial<LooseObject>): Partial<ObjectFormData> {
+export function toFormDefaults(obj: Partial<LooseObject>): Partial<ObjectFormData> {
     return {
         ...obj,
         category: (obj.category?.id ?? '') as Id<'categories'>,

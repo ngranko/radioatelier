@@ -46,7 +46,7 @@
 />
 <div class="relative min-h-0 flex-1 space-y-3 overflow-x-hidden overflow-y-auto p-4">
     <div class="mb-3">
-        {#if !initialValues.cover && permissions.canEditAll}
+        {#if !initialValues.images?.length && permissions.canEditAll}
             <AddCoverButton categoryId={initialValues.category?.id} />
         {:else}
             <ImageUpload

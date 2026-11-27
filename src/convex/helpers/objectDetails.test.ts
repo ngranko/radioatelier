@@ -15,7 +15,6 @@ const aggregate: ObjectAggregate = {
         isRemoved: false,
         removalPeriod: null,
         source: null,
-        coverId: null,
         categoryId: 'category-1',
         isPublic: true,
         tagIds: ['tag-1'],
@@ -40,7 +39,6 @@ function makeViewer(overrides: Partial<ObjectViewerContext> = {}): ObjectViewerC
         userId: ownerId,
         privateTags: [],
         isVisited: false,
-        cover: null,
         images: [],
         ...overrides,
     };
