@@ -93,6 +93,7 @@ function makeObject(objectIdValue: string, ownerId: Id<'users'>): Doc<'objects'>
         coverId: null,
         categoryId: id('categories', 'category-1'),
         isPublic: false,
+        isPendingReview: false,
         tagIds: [id('tags', 'tag-1')],
         mapPointId: id('mapPoints', 'map-1'),
         createdById: ownerId,

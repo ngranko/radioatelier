@@ -60,7 +60,7 @@ export function buildObjectDetails(aggregate: ObjectAggregate, viewer: ObjectVie
         isVisited: viewer.isVisited,
         isOwner,
         // Only the owner can act on a review, so nobody else is told about it.
-        isPendingReview: isOwner && object.isPendingReview === true,
+        isPendingReview: isOwner && object.isPendingReview,
         internalId: viewer.userId ? object.internalId : null,
     };
 }
