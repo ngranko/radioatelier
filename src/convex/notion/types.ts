@@ -43,10 +43,3 @@ export type NotionPageFields = {
     isVisited: boolean;
     source: string | null;
 };
-
-export type MatchResult =
-    | {kind: 'already_linked'; pageId: string}
-    | {kind: 'matched_by_link'; pageId: string}
-    | {kind: 'matched_by_heuristic'; pageId: string}
-    | {kind: 'ambiguous'; pageIds: string[]}
-    | {kind: 'no_match'};

@@ -1,5 +1,3 @@
-export type FormErrorMap = Record<string, string | string[] | undefined>;
-
 export function getErrorArray(fieldErrors: unknown): string[] | null {
     if (!fieldErrors) {
         return null;

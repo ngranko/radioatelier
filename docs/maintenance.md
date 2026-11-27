@@ -6,11 +6,10 @@ Convex owns the application database, file storage, migration state, and schedul
 
 `src/convex/convex.config.ts` installs `@convex-dev/migrations`. Definitions and the generic `run` runner live in `src/convex/migrations.ts`.
 
-| Function                  | Table        | Effect                                                                                         |
-| ------------------------- | ------------ | ---------------------------------------------------------------------------------------------- |
-| `backfillMarkerStyling`   | `categories` | Fill missing color or icon values using the allowed random defaults; retain existing values    |
-| `backfillImageOwners`     | `images`     | Fill an absent uploader ID when all objects using the cover resolve to exactly one owner       |
-| `backfillObjectGalleries` | `objects`    | Give each cover-only or shared cover its own image record, owned by and attached to its Object |
+| Function                  | Table     | Effect                                                                                         |
+| ------------------------- | --------- | ---------------------------------------------------------------------------------------------- |
+| `backfillImageOwners`     | `images`  | Fill an absent uploader ID when all objects using the cover resolve to exactly one owner       |
+| `backfillObjectGalleries` | `objects` | Give each cover-only or shared cover its own image record, owned by and attached to its Object |
 
 The image-owner migration skips already attributed rows. Images with no referencing objects or with several distinct owners remain unchanged and log their candidate owners. Skipped rows need investigation; migration completion does not mean every image gained an owner.
 
@@ -34,7 +33,7 @@ Inspect its output, then start or resume the migration:
 npx convex run migrations:run '{"fn":"migrations:backfillImageOwners"}'
 ```
 
-Substitute `migrations:backfillMarkerStyling` for category styling. The component records progress and schedules batches. Repeating the runner reports or resumes its recorded state; it does not implicitly restart a completed migration. An explicit `reset: true` starts from the beginning. `batchSize` can override batch size.
+The component records progress and schedules batches. Repeating the runner reports or resumes its recorded state; it does not implicitly restart a completed migration. An explicit `reset: true` starts from the beginning. `batchSize` can override batch size.
 
 A dry run checks a batch, not the whole table. Review completion status and logs in Convex after a real run, then verify the affected behavior, such as recropping a previously ownerless cover. The repository defines migrations but does not automatically run them from its deploy script.
 

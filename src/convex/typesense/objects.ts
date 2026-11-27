@@ -14,19 +14,6 @@ export interface TypesenseObject {
     isPublic: boolean;
 }
 
-export interface LocalSearchItem {
-    id: Id<'objects'>;
-    name: string;
-    categoryName: string;
-    latitude: number;
-    longitude: number;
-    address: string | null;
-    city: string | null;
-    country: string | null;
-    type: 'local';
-    googlePlaceId: null;
-}
-
 interface TypesenseSearchHit {
     document?: TypesenseObject;
 }
