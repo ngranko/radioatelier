@@ -1,6 +1,6 @@
 import {ConvexError} from 'convex/values';
 import type {Id} from '../_generated/dataModel';
-import type {MutationCtx} from '../_generated/server';
+import type {MutationCtx, QueryCtx} from '../_generated/server';
 
 export async function replaceImagePreview(
     ctx: MutationCtx,
@@ -37,4 +37,11 @@ export async function deleteUnusedImageFile(ctx: MutationCtx, fileId: Id<'_stora
     if (!original && !preview) {
         await ctx.storage.delete(fileId);
     }
+}
+
+// The cropped preview is how an Object presents its photo; the original stands in until one is cut.
+export async function resolveImageThumbnailUrl(ctx: QueryCtx, imageId: Id<'images'>) {
+    const image = await ctx.db.get('images', imageId);
+    const storageId = image?.previewStorageId ?? image?.originalStorageId;
+    return storageId ? await ctx.storage.getUrl(storageId) : null;
 }

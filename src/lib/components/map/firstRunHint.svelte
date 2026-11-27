@@ -1,10 +1,7 @@
 <script lang="ts">
-    import {respectReducedMotion} from '$lib/utils/motion';
+    import MapHint from '$lib/components/map/mapHint.svelte';
     import MapPinPlusIcon from '@lucide/svelte/icons/map-pin-plus';
-    import XIcon from '@lucide/svelte/icons/x';
     import {onMount} from 'svelte';
-    import {cubicInOut} from 'svelte/easing';
-    import {fly} from 'svelte/transition';
 
     const STORAGE_KEY = 'firstRunHintDismissed';
 
@@ -22,25 +19,10 @@
 </script>
 
 {#if !isDismissed}
-    <div
-        transition:fly={{y: 16, duration: respectReducedMotion(200), easing: cubicInOut}}
-        class="pointer-events-none absolute inset-x-4 bottom-8 z-2 flex justify-center"
-    >
-        <div
-            class="bg-background/95 surface-edge pointer-events-auto flex min-w-0 items-center gap-2 rounded-full py-2 pr-2 pl-4 backdrop-blur-sm"
-        >
-            <MapPinPlusIcon class="text-primary size-4 shrink-0" />
-            <span class="text-foreground min-w-0 truncate text-sm">
-                Нажмите на карту, чтобы добавить точку
-            </span>
-            <button
-                type="button"
-                class="hover:bg-muted shrink-0 rounded-full p-1 transition-colors"
-                onclick={dismiss}
-                aria-label="Скрыть подсказку"
-            >
-                <XIcon class="text-muted-foreground size-4" />
-            </button>
-        </div>
-    </div>
+    <MapHint
+        icon={MapPinPlusIcon}
+        text="Нажмите на карту, чтобы добавить точку"
+        dismissLabel="Скрыть подсказку"
+        onDismiss={dismiss}
+    />
 {/if}

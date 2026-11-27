@@ -3,7 +3,7 @@ const DEFAULT_ORIENTATION = 1;
 const MARKER_SIZE = 2;
 const SEGMENT_LENGTH_SIZE = 2;
 const IFD_ENTRY_SIZE = 12;
-const IFD_ENTRY_VALUE_OFFSET = 8;
+export const IFD_ENTRY_VALUE_OFFSET = 8;
 const TIFF_HEADER_SIZE = 8;
 const EXIF_IDENTIFIER_SIZE = 6;
 
@@ -15,18 +15,56 @@ const TIFF_LITTLE_ENDIAN_MARKER = 0x4949;
 const EXIF_HEADER_MAGIC = 0x45786966;
 const ORIENTATION_TAG = 0x0112;
 
+export interface ExifTiff {
+    data: DataView;
+    offset: number;
+    limit: number;
+    littleEndian: boolean;
+}
+
 export async function readExifOrientation(file: File): Promise<number> {
+    const tiff = await locateExifTiff(file);
+    if (!tiff) {
+        return DEFAULT_ORIENTATION;
+    }
+    const entry = findIfdEntry(tiff, readFirstIfdOffset(tiff), ORIENTATION_TAG);
+    return entry === null
+        ? DEFAULT_ORIENTATION
+        : tiff.data.getUint16(entry + IFD_ENTRY_VALUE_OFFSET, tiff.littleEndian);
+}
+
+export async function locateExifTiff(file: File): Promise<ExifTiff | null> {
     const data = new DataView(await file.arrayBuffer());
     if (!isJpeg(data)) {
-        return DEFAULT_ORIENTATION;
+        return null;
     }
-
     const exifSegmentOffset = findExifSegmentOffset(data);
-    if (exifSegmentOffset === null) {
-        return DEFAULT_ORIENTATION;
+    return exifSegmentOffset === null ? null : readTiffFromExifSegment(data, exifSegmentOffset);
+}
+
+export function readFirstIfdOffset(tiff: ExifTiff): number {
+    return tiff.offset + tiff.data.getUint32(tiff.offset + 4, tiff.littleEndian);
+}
+
+/** The byte offset of the entry carrying `tag` in the IFD at `ifdOffset`, or null. */
+export function findIfdEntry(tiff: ExifTiff, ifdOffset: number, tag: number): number | null {
+    const {data, limit, littleEndian} = tiff;
+    if (!hasBytes(data, ifdOffset, 2, limit)) {
+        return null;
     }
 
-    return readOrientationFromExifSegment(data, exifSegmentOffset) ?? DEFAULT_ORIENTATION;
+    const entryCount = data.getUint16(ifdOffset, littleEndian);
+    for (let index = 0; index < entryCount; index += 1) {
+        const entryOffset = ifdOffset + 2 + index * IFD_ENTRY_SIZE;
+        if (!hasBytes(data, entryOffset, IFD_ENTRY_SIZE, limit)) {
+            return null;
+        }
+        if (data.getUint16(entryOffset, littleEndian) === tag) {
+            return entryOffset;
+        }
+    }
+
+    return null;
 }
 
 function isJpeg(data: DataView): boolean {
@@ -69,7 +107,7 @@ function hasExifHeader(data: DataView, offset: number): boolean {
     );
 }
 
-function readOrientationFromExifSegment(data: DataView, segmentOffset: number): number | null {
+function readTiffFromExifSegment(data: DataView, segmentOffset: number): ExifTiff | null {
     if (!hasBytes(data, segmentOffset, SEGMENT_LENGTH_SIZE + EXIF_IDENTIFIER_SIZE)) {
         return null;
     }
@@ -93,37 +131,15 @@ function readOrientationFromExifSegment(data: DataView, segmentOffset: number): 
         return null;
     }
 
-    return readOrientationFromTiff(data, tiffOffset, segmentEnd);
+    return {
+        data,
+        offset: tiffOffset,
+        limit: segmentEnd,
+        littleEndian: data.getUint16(tiffOffset, false) === TIFF_LITTLE_ENDIAN_MARKER,
+    };
 }
 
-function readOrientationFromTiff(data: DataView, tiffOffset: number, limit: number): number | null {
-    const littleEndian = data.getUint16(tiffOffset, false) === TIFF_LITTLE_ENDIAN_MARKER;
-
-    const firstIfdOffset = data.getUint32(tiffOffset + 4, littleEndian);
-    const ifdOffset = tiffOffset + firstIfdOffset;
-    if (!hasBytes(data, ifdOffset, 2, limit)) {
-        return null;
-    }
-
-    const entryCount = data.getUint16(ifdOffset, littleEndian);
-    const firstEntryOffset = ifdOffset + 2;
-
-    for (let index = 0; index < entryCount; index += 1) {
-        const entryOffset = firstEntryOffset + index * IFD_ENTRY_SIZE;
-        if (!hasBytes(data, entryOffset, IFD_ENTRY_SIZE, limit)) {
-            return null;
-        }
-
-        const tag = data.getUint16(entryOffset, littleEndian);
-        if (tag === ORIENTATION_TAG) {
-            return data.getUint16(entryOffset + IFD_ENTRY_VALUE_OFFSET, littleEndian);
-        }
-    }
-
-    return null;
-}
-
-function hasBytes(
+export function hasBytes(
     data: DataView,
     offset: number,
     length: number,

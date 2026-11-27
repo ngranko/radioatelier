@@ -77,6 +77,7 @@ export default defineSchema({
         .index('byIsPublic', ['isPublic'])
         .index('byMysqlId', ['mysqlId'])
         .index('byCreatedById', ['createdById'])
+        .index('byCreatedByIdAndIsPendingReview', ['createdById', 'isPendingReview'])
         .index('byCoverId', ['coverId']),
     // objects.coverId mirrors position 0. Covers from before galleries existed
     // get their row from the backfillObjectGalleries migration.

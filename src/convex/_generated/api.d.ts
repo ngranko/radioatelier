@@ -63,6 +63,7 @@ import type * as objectPersonal from "../objectPersonal.js";
 import type * as objects from "../objects.js";
 import type * as objectsSync from "../objectsSync.js";
 import type * as openRouterKeys from "../openRouterKeys.js";
+import type * as pendingReview from "../pendingReview.js";
 import type * as photoCaptureAnalysis from "../photoCaptureAnalysis.js";
 import type * as photoCaptures from "../photoCaptures.js";
 import type * as privateTags from "../privateTags.js";
@@ -142,6 +143,7 @@ declare const fullApi: ApiFromModules<{
   objects: typeof objects;
   objectsSync: typeof objectsSync;
   openRouterKeys: typeof openRouterKeys;
+  pendingReview: typeof pendingReview;
   photoCaptureAnalysis: typeof photoCaptureAnalysis;
   photoCaptures: typeof photoCaptures;
   privateTags: typeof privateTags;
