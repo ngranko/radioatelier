@@ -62,3 +62,4 @@ Start with [Context](CONTEXT.md) for domain terms.
 - [Taxonomy management](docs/taxonomy-management.md): renaming, deleting, and merging categories, tags, and private tags.
 - [Street View](docs/street-view.md): panorama lookup, caching, and minimap.
 - [CSV import](docs/import.md): accepted fields, batches, progress, and failure handling.
+- [Photo captures](docs/photo-captures.md): camera capture, AI analysis, limits, and the review queue.

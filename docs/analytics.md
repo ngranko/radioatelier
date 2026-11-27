@@ -58,16 +58,23 @@ Server form actions use the Clerk user ID, with `anonymous` as the fallback. Ser
 | `search_performed`       | `searchBar.svelte`            | `query_length`              |
 | `object_viewed`          | Object page                   | `object_id`                 |
 | `map_point_placed`       | App layout                    | `latitude`, `longitude`     |
+| `photo_captured`         | `submitCapture.ts`            | `location_source`           |
+| `photo_capture_analyzed` | `photoCaptureFeedback.svelte` | `object_id`                 |
+| `photo_capture_failed`   | `photoCaptureFeedback.svelte` | `reason`                    |
+| `object_approved`        | `objectReview.ts`             | `object_id`, `source`       |
 
 ### SvelteKit server
 
-| Event            | Source                       | Properties                                           |
-| ---------------- | ---------------------------- | ---------------------------------------------------- |
-| `object_created` | Point `save` action          | `object_id`, `is_public`, `is_visited`               |
-| `object_updated` | Object `save` action         | `object_id`, `is_public`, `is_visited`, `is_removed` |
-| `object_updated` | Object `savePersonal` action | `object_id`, `is_visited`                            |
-| `object_deleted` | Object `delete` action       | `object_id`                                          |
-| `server_error`   | Server error hook            | `error`, `status`, `message`                         |
+| Event             | Source                       | Properties                                           |
+| ----------------- | ---------------------------- | ---------------------------------------------------- |
+| `object_created`  | Point `save` action          | `object_id`, `is_public`, `is_visited`               |
+| `object_updated`  | Object `save` action         | `object_id`, `is_public`, `is_visited`, `is_removed` |
+| `object_updated`  | Object `savePersonal` action | `object_id`, `is_visited`                            |
+| `object_approved` | Object `save` action         | `object_id`, `source: 'edit'`                        |
+| `object_deleted`  | Object `delete` action       | `object_id`                                          |
+| `server_error`    | Server error hook            | `error`, `status`, `message`                         |
+
+Analysis outcomes happen in Convex, so the browser reports them when its live lists change: they are counted only while the app is open, once per open session.
 
 Client errors call `posthog.captureException(error)`. Server errors emit `server_error` and flush.
 

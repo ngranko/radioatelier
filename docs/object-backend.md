@@ -4,16 +4,17 @@ Convex stores archive data and schedules external synchronization. The interacti
 
 ## Data ownership
 
-| Table                              | Contents                                                                        |
-| ---------------------------------- | ------------------------------------------------------------------------------- |
-| `objects`                          | Metadata, owner, category/tag IDs, cover reference, visibility, and internal ID |
-| `mapPoints`                        | Coordinates and address fields                                                  |
-| `markers`                          | Compact map projection, including owner, category, coordinates, and visibility  |
-| `categories`, `tags`               | Shared taxonomy                                                                 |
-| `privateTags`, `objectPrivateTags` | Personal labels and per-object associations                                     |
-| `userVisitedChunks`                | Per-user visited object IDs                                                     |
-| `images`                           | Original and preview storage references, plus uploader ownership                |
-| `objectNotionSync`                 | Notion page link, sync hashes, timestamps, and errors                           |
+| Table                                 | Contents                                                                                          |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `objects`                             | Metadata, owner, category/tag IDs, cover reference, visibility, review state, and internal ID     |
+| `mapPoints`                           | Coordinates and address fields                                                                    |
+| `markers`                             | Compact map projection, including owner, category, coordinates, and visibility                    |
+| `categories`, `tags`                  | Shared taxonomy                                                                                   |
+| `privateTags`, `objectPrivateTags`    | Personal labels and per-object associations                                                       |
+| `userVisitedChunks`                   | Per-user visited object IDs                                                                       |
+| `images`                              | Original and preview storage references, plus uploader ownership                                  |
+| `objectNotionSync`                    | Notion page link, sync hashes, timestamps, and errors                                             |
+| `photoCaptures`, `userOpenRouterKeys` | Photos waiting for analysis, and users' own OpenRouter keys ([Photo captures](photo-captures.md)) |
 
 The complete schema is in [schema.ts](../src/convex/schema.ts). See [Authentication](authentication.md#object-permissions) for read and write permissions.
 
@@ -73,7 +74,8 @@ Object deletion removes personal tag associations for all viewers. It uses the o
 
 | Module                              | Operations                                                                         |
 | ----------------------------------- | ---------------------------------------------------------------------------------- |
-| `objects.ts`                        | Public `create`, `update`, `reposition`, and `remove` mutations                    |
+| `objects.ts`                        | Public `create`, `update`, `approve`, `reposition`, and `remove` mutations         |
+| `photoCaptureAnalysis.ts`           | Internal analysis action; `complete` creates the pending Object through the writer |
 | `imports.ts`                        | `importBatch`, creating records for each accepted row                              |
 | `objectsSync.ts`                    | Internal `createObjectFromSync`, `patchObjectFromSync`, and `deleteObjectFromSync` |
 | `notionSync/objectWriterAdapter.ts` | Resolve sync taxonomy and translate sync fields into writer payloads               |
