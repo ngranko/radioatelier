@@ -68,7 +68,7 @@
             lng: preview.longitude,
         });
 
-        if (objectDetailsOverlay.mode === 'pointCreate') {
+        if (objectDetailsOverlay.mode === 'pointCreate' || activePoint.opensForm) {
             showPointCreateOverlay(activePoint.id, draft, preview);
         } else {
             showPointPreviewOverlay(activePoint.id, draft, preview);

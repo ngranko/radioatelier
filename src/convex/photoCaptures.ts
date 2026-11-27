@@ -1,18 +1,9 @@
 import {ConvexError, v} from 'convex/values';
 import {internal} from './_generated/api';
 import type {Doc, Id} from './_generated/dataModel';
-import {
-    internalMutation,
-    internalQuery,
-    mutation,
-    type MutationCtx,
-    query,
-    type QueryCtx,
-} from './_generated/server';
+import {mutation, type MutationCtx, query, type QueryCtx} from './_generated/server';
 import {resolveImageThumbnailUrl} from './helpers/imageStorage';
 import {isImageInGallery} from './helpers/objectImages';
-import {loadAnalysisContext} from './helpers/photoCaptures/analysisContext';
-import {createCapturedObject} from './helpers/photoCaptures/captureObject';
 import {consumePhotoCaptureQuota, readPhotoCaptureQuota} from './helpers/photoCaptures/quota';
 import {findUserOpenRouterKey} from './helpers/photoCaptures/userKeys';
 import {
@@ -85,6 +76,25 @@ export const list = query({
     },
 });
 
+// What the create form needs to take over a capture the analysis gave up on.
+export const getManualDraft = query({
+    args: {id: v.id('photoCaptures')},
+    handler: async (ctx, {id}) => {
+        const user = await getCurrentUserOrThrow(ctx);
+        const capture = await ctx.db.get('photoCaptures', id);
+        if (capture?.createdById !== user._id || capture.status !== 'failed') {
+            return null;
+        }
+        const url = await resolveImageThumbnailUrl(ctx, capture.imageId);
+        return {
+            image: url ? {id: capture.imageId, url, previewUrl: ''} : null,
+            address: capture.address,
+            city: capture.city,
+            country: capture.country,
+        };
+    },
+});
+
 export const getQuota = query({
     args: {},
     handler: async ctx => {
@@ -94,55 +104,6 @@ export const getQuota = query({
             readPhotoCaptureQuota(ctx, user._id),
         ]);
         return {isUnlimited: userKey !== null, ...quota};
-    },
-});
-
-export const loadAnalysisInput = internalQuery({
-    args: {captureId: v.id('photoCaptures')},
-    handler: async (ctx, {captureId}) => {
-        const capture = await ctx.db.get('photoCaptures', captureId);
-        if (capture?.status !== 'processing') {
-            return null;
-        }
-        const [image, userKey] = await Promise.all([
-            ctx.db.get('images', capture.imageId),
-            findUserOpenRouterKey(ctx, capture.createdById),
-        ]);
-        return {
-            imageUrl: image ? await ctx.storage.getUrl(image.originalStorageId) : null,
-            context: await loadAnalysisContext(ctx, capture),
-            userApiKey: userKey?.apiKey ?? null,
-        };
-    },
-});
-
-export const complete = internalMutation({
-    args: {
-        captureId: v.id('photoCaptures'),
-        name: v.string(),
-        categoryId: v.id('categories'),
-        tagIds: v.array(v.id('tags')),
-    },
-    handler: async (ctx, {captureId, ...analysis}) => {
-        const capture = await ctx.db.get('photoCaptures', captureId);
-        if (capture?.status !== 'processing') {
-            return;
-        }
-        await createCapturedObject(ctx, capture, analysis);
-        await ctx.db.delete('photoCaptures', captureId);
-    },
-});
-
-export const fail = internalMutation({
-    args: {captureId: v.id('photoCaptures'), reason: v.string()},
-    handler: async (ctx, {captureId, reason}) => {
-        const capture = await ctx.db.get('photoCaptures', captureId);
-        if (capture?.status === 'processing') {
-            await ctx.db.patch('photoCaptures', captureId, {
-                status: 'failed',
-                failureReason: reason,
-            });
-        }
     },
 });
 
@@ -175,6 +136,8 @@ async function describeCapture(ctx: QueryCtx, capture: Doc<'photoCaptures'>) {
         failureReason: capture.failureReason ?? null,
         canRetry: capture.attempts < MAX_ATTEMPTS,
         imageUrl: await resolveImageThumbnailUrl(ctx, capture.imageId),
+        latitude: capture.latitude,
+        longitude: capture.longitude,
         createdAt: capture._creationTime,
     };
 }

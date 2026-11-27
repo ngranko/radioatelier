@@ -15,6 +15,7 @@ import {
     replaceObjectRecords,
     upsertPrivateTags,
 } from './helpers/objectWriter';
+import {releaseCapturesHolding} from './helpers/photoCaptures/releaseCaptures';
 import {deleteSyncStateForObject} from './notionSync/state';
 import {
     assertObjectFieldLengths,
@@ -107,6 +108,7 @@ export const create = mutation({
         });
 
         await replaceObjectImages(ctx, objectId, user._id, data.imageIds);
+        await releaseCapturesHolding(ctx, user._id, data.imageIds);
         await upsertPrivateTags(ctx, objectId, user._id, data.privateTags);
         if (data.isVisited) {
             await updateIsVisited(ctx, objectId, user._id, true);
