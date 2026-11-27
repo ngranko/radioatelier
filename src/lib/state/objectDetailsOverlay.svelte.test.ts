@@ -119,6 +119,15 @@ describe('point overlay position', () => {
         expect(objectDetailsOverlay.position).toBe('full');
     });
 
+    it('opens an object at peek on phones like a point', () => {
+        vi.stubGlobal('document', {body: {clientWidth: 390}});
+
+        showLoadingDetailsOverlay('object-1', point);
+        showObjectDetailsOverlay('object-1', {name: 'Plaque'} as never);
+
+        expect(objectDetailsOverlay.position).toBe('peek');
+    });
+
     it('expands to full when creating from a peeking preview', () => {
         vi.stubGlobal('document', {body: {clientWidth: 390}});
         showPointPreviewOverlay('point-1', {}, pointDetails);

@@ -85,14 +85,19 @@ function transition(next: Partial<ObjectDetailsOverlay>) {
 }
 
 // Switching cards leaves a peeking sheet in place so the map stays in reach, but
-// reopens a minimized one at the default size, since its header alone would hide
+// reopens a minimized one at the opening size, since its header alone would hide
 // the new contents.
 function resolveSwitchPosition(): ObjectDetailsOverlayPosition {
     return untrack(() =>
         overlay.isOpen && overlay.position !== 'minimized'
             ? overlay.position
-            : defaultState().position,
+            : resolveOpenPosition(),
     );
+}
+
+// Phones open at peek so the tapped spot stays visible above the sheet.
+function resolveOpenPosition(): ObjectDetailsOverlayPosition {
+    return isSidePanelLayout() ? 'full' : 'peek';
 }
 
 function resolvePointPosition(id: string): ObjectDetailsOverlayPosition {
