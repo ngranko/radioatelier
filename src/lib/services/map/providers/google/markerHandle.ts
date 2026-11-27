@@ -8,7 +8,7 @@ import type {
 export class GoogleMarkerHandle implements MarkerHandle {
     private marker: google.maps.marker.AdvancedMarkerElement;
 
-    constructor(
+    public constructor(
         private map: google.maps.Map,
         position: LatLngLiteral,
         content: HTMLElement,
@@ -23,11 +23,11 @@ export class GoogleMarkerHandle implements MarkerHandle {
         });
     }
 
-    setPosition(latLng: LatLngLiteral): void {
+    public setPosition(latLng: LatLngLiteral): void {
         this.marker.position = latLng;
     }
 
-    getPosition(): LatLngLiteral {
+    public getPosition(): LatLngLiteral {
         const pos = this.marker.position;
         if (!pos) {
             return {lat: 0, lng: 0};
@@ -39,29 +39,29 @@ export class GoogleMarkerHandle implements MarkerHandle {
         return {lat: (pos as LatLngLiteral).lat, lng: (pos as LatLngLiteral).lng};
     }
 
-    show(): void {
+    public show(): void {
         if (!this.marker.map) {
             this.marker.map = this.map;
         }
     }
 
-    hide(): void {
+    public hide(): void {
         this.marker.map = null;
     }
 
-    remove(): void {
+    public remove(): void {
         this.hide();
     }
 
-    getElement(): HTMLElement | null {
+    public getElement(): HTMLElement | null {
         return this.marker.content instanceof HTMLElement ? this.marker.content : null;
     }
 
-    setZIndex(zIndex: number): void {
+    public setZIndex(zIndex: number): void {
         this.marker.zIndex = zIndex;
     }
 
-    addClickListener(callback: () => void): EventUnsubscribe {
+    public addClickListener(callback: () => void): EventUnsubscribe {
         const listener = this.marker.addListener('gmp-click', callback);
         return () => google.maps.event.removeListener(listener);
     }

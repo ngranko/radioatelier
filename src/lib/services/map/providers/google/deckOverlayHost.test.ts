@@ -9,19 +9,19 @@ const overlay = vi.hoisted(() => ({
 
 vi.mock('@deck.gl/google-maps', () => ({
     GoogleMapsOverlay: class {
-        constructor(props: unknown) {
+        public constructor(props: unknown) {
             overlay.constructor(props);
         }
 
-        setMap(map: unknown) {
+        public setMap(map: unknown) {
             overlay.setMap(map);
         }
 
-        setProps(props: unknown) {
+        public setProps(props: unknown) {
             overlay.setProps(props);
         }
 
-        finalize() {
+        public finalize() {
             overlay.finalize();
         }
     },

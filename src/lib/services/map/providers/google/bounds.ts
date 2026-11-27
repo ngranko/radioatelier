@@ -1,22 +1,22 @@
 import type {BoundsRect, LatLngLiteral, MapBounds} from '$lib/interfaces/map';
 
 export class GoogleMapBounds implements MapBounds {
-    constructor(private bounds: google.maps.LatLngBounds) {}
+    public constructor(private bounds: google.maps.LatLngBounds) {}
 
-    getCenter(): LatLngLiteral {
+    public getCenter(): LatLngLiteral {
         const center = this.bounds.getCenter();
         return {lat: center.lat(), lng: center.lng()};
     }
 
-    extend(point: LatLngLiteral): void {
+    public extend(point: LatLngLiteral): void {
         this.bounds.extend(point);
     }
 
-    toRect(): BoundsRect {
+    public toRect(): BoundsRect {
         return this.bounds.toJSON();
     }
 
-    get raw(): google.maps.LatLngBounds {
+    public get raw(): google.maps.LatLngBounds {
         return this.bounds;
     }
 }

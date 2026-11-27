@@ -5,17 +5,19 @@ type Listener = (event: Event) => void;
 
 function stubWindow() {
     const listeners = new Map<string, Listener[]>();
+    const removeListener = (type: string, handler: Listener) => {
+        listeners.set(
+            type,
+            (listeners.get(type) ?? []).filter(known => known !== handler),
+        );
+    };
     vi.stubGlobal('window', {
         setTimeout: (callback: () => void, ms: number) => setTimeout(callback, ms),
-        addEventListener: (type: string, handler: Listener) => {
+        addEventListener: (type: string, handler: Listener, options?: AddEventListenerOptions) => {
             listeners.set(type, [...(listeners.get(type) ?? []), handler]);
+            options?.signal?.addEventListener('abort', () => removeListener(type, handler));
         },
-        removeEventListener: (type: string, handler: Listener) => {
-            listeners.set(
-                type,
-                (listeners.get(type) ?? []).filter(known => known !== handler),
-            );
-        },
+        removeEventListener: removeListener,
     });
 
     return {
