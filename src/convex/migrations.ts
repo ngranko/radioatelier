@@ -51,8 +51,8 @@ export const backfillImageOwners = migrations.define({
     },
 });
 
-// isPendingReview is optional in the schema only until these run; once every
-// record holds a real boolean, the schema can require it.
+// The schema requires isPendingReview, so these must complete on a deployment
+// before it takes that schema.
 export const backfillObjectPendingReview = migrations.define({
     table: 'objects',
     migrateOne: (ctx, object) => {

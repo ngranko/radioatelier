@@ -74,7 +74,7 @@ export const objectCoreFields = {
     ...objectFormFields,
     coverId: v.nullable(v.id('images')),
     // Set on Objects created from a Photo capture until their owner approves them.
-    isPendingReview: v.optional(v.boolean()),
+    isPendingReview: v.boolean(),
 };
 
 export type ObjectCoreData = Infer<ReturnType<typeof v.object<typeof objectCoreFields>>>;

@@ -143,7 +143,7 @@ export const update = mutation({
         }
         assertObjectFieldLengths(data);
         // Saving the form means the owner has looked the Object over.
-        const wasApproved = target.object.isPendingReview === true;
+        const wasApproved = target.object.isPendingReview;
 
         await replaceObjectRecords(ctx, target, {
             name: data.name,
