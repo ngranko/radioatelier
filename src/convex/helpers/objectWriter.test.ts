@@ -43,6 +43,7 @@ const createData: ObjectRecordData = {
     tagIds: [],
     isPublic: true,
     isRemoved: false,
+    isPendingReview: false,
     latitude: 55.75,
     longitude: 37.61,
     address: 'Tverskaya 1',
@@ -182,6 +183,20 @@ describe('patchObjectRecords', () => {
                 isPublic: true,
             },
         });
+    });
+});
+
+describe('approving a pending review', () => {
+    it('clears the flag on the object and its marker together', async () => {
+        const {ctx, db} = createMockCtx();
+        const target = createTarget();
+        target.object.isPendingReview = true;
+        target.marker.isPendingReview = true;
+
+        await patchObjectRecords(ctx, target, {isPendingReview: false});
+
+        expect(db.patch).toHaveBeenCalledWith('objects', 'object-1', {isPendingReview: false});
+        expect(db.patch).toHaveBeenCalledWith('markers', 'marker-1', {isPendingReview: false});
     });
 });
 

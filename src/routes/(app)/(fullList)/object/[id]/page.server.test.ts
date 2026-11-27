@@ -27,7 +27,7 @@ function createEvent() {
 beforeEach(() => {
     vi.clearAllMocks();
     mocks.token = 'token';
-    mocks.mutation.mockResolvedValue('object-1');
+    mocks.mutation.mockResolvedValue({id: 'object-1', wasApproved: false});
 });
 
 describe('personal Object save action', () => {

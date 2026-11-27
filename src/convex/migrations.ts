@@ -51,6 +51,26 @@ export const backfillImageOwners = migrations.define({
     },
 });
 
+// isPendingReview is optional in the schema only until these run; once every
+// record holds a real boolean, the schema can require it.
+export const backfillObjectPendingReview = migrations.define({
+    table: 'objects',
+    migrateOne: (ctx, object) => {
+        if (object.isPendingReview === undefined) {
+            return {isPendingReview: false};
+        }
+    },
+});
+
+export const backfillMarkerPendingReview = migrations.define({
+    table: 'markers',
+    migrateOne: (ctx, marker) => {
+        if (marker.isPendingReview === undefined) {
+            return {isPendingReview: false};
+        }
+    },
+});
+
 export const backfillObjectGalleries = migrations.define({
     table: 'objects',
     batchSize: 20,

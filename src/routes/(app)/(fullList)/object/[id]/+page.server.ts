@@ -69,7 +69,7 @@ export const actions: Actions = {
         const d = form.data;
 
         try {
-            await client.mutation(api.objects.update, {
+            const {wasApproved} = await client.mutation(api.objects.update, {
                 id,
                 data: {
                     name: d.name,
@@ -102,6 +102,13 @@ export const actions: Actions = {
                     is_removed: d.isRemoved,
                 },
             });
+            if (wasApproved) {
+                posthog.capture({
+                    distinctId,
+                    event: 'object_approved',
+                    properties: {object_id: id, source: 'edit'},
+                });
+            }
 
             return {form, id};
         } catch (err) {

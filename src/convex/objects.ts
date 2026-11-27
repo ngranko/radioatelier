@@ -98,6 +98,7 @@ export const create = mutation({
             tagIds: data.tagIds,
             isPublic: data.isPublic,
             isRemoved: data.isRemoved,
+            isPendingReview: false,
             latitude: data.latitude,
             longitude: data.longitude,
             address: data.address,
@@ -130,16 +131,19 @@ export const update = mutation({
         id: v.id('objects'),
         data: v.object(updateObjectRecordFields),
     },
-    returns: v.id('objects'),
+    returns: v.object({id: v.id('objects'), wasApproved: v.boolean()}),
     handler: async (ctx, {id, data}) => {
         const user = await getCurrentUserOrThrow(ctx);
         const target = await loadObjectTarget(ctx, id);
 
         const isOwner = target.object.createdById === user._id;
         if (!isOwner) {
-            return updateObjectPersonalState(ctx, id, user, data);
+            await updateObjectPersonalState(ctx, id, user, data);
+            return {id, wasApproved: false};
         }
         assertObjectFieldLengths(data);
+        // Saving the form means the owner has looked the Object over.
+        const wasApproved = target.object.isPendingReview === true;
 
         await replaceObjectRecords(ctx, target, {
             name: data.name,
@@ -154,6 +158,7 @@ export const update = mutation({
             address: data.address,
             city: data.city,
             country: data.country,
+            isPendingReview: false,
         });
         await replaceObjectImages(ctx, id, user._id, data.imageIds);
 
@@ -170,7 +175,23 @@ export const update = mutation({
         await upsertPrivateTags(ctx, id, user._id, data.privateTags);
         await updateIsVisited(ctx, id, user._id, data.isVisited);
 
-        return id;
+        return {id, wasApproved};
+    },
+});
+
+export const approve = mutation({
+    args: {id: v.id('objects')},
+    handler: async (ctx, {id}) => {
+        const user = await getCurrentUserOrThrow(ctx);
+        const target = await loadObjectTarget(ctx, id);
+        if (target.object.createdById !== user._id) {
+            throw new Error('Only the owner can approve this object');
+        }
+        if (!target.object.isPendingReview) {
+            return;
+        }
+
+        await patchObjectRecords(ctx, target, {isPendingReview: false});
     },
 });
 

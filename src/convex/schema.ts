@@ -67,6 +67,7 @@ export default defineSchema({
         tagIds: v.array(v.id('tags')),
         isRemoved: v.boolean(),
         isPublic: v.boolean(),
+        isPendingReview: v.optional(v.boolean()),
     })
         .index('byCreatedByIdAndIsPublic', ['createdById', 'isPublic'])
         .index('byIsPublic', ['isPublic'])

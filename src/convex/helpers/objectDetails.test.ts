@@ -80,4 +80,15 @@ describe('buildObjectDetails', () => {
         expect(details.isOwner).toBe(false);
         expect(details.internalId).toBe(internalId);
     });
+
+    it.each([
+        {viewer: 'the owner', userId: ownerId, isPendingReview: true},
+        {viewer: 'anyone else', userId: 'user-2' as Id<'users'>, isPendingReview: false},
+    ])('shows a pending review to $viewer', ({userId, isPendingReview}) => {
+        const pending = {...aggregate, object: {...aggregate.object, isPendingReview: true}};
+
+        expect(buildObjectDetails(pending, makeViewer({userId})).isPendingReview).toBe(
+            isPendingReview,
+        );
+    });
 });

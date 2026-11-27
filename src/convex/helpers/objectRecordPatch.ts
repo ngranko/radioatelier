@@ -26,6 +26,7 @@ const markerPatchKeys = [
     'tagIds',
     'isRemoved',
     'isPublic',
+    'isPendingReview',
 ] as const;
 
 // A field is written only when present (`undefined` means "leave as is",

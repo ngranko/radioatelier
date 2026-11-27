@@ -56,6 +56,7 @@ export async function createObjectRecords(
         tagIds: object.tagIds,
         isRemoved: object.isRemoved,
         isPublic: object.isPublic,
+        isPendingReview: object.isPendingReview,
     });
     await ctx.scheduler.runAfter(0, internal.typesense.createInTypesense, {
         object: buildObjectSearchRecord({

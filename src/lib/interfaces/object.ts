@@ -18,6 +18,7 @@ interface TaxonomlessObject {
     isPublic: boolean;
     isVisited: boolean;
     isOwner: boolean;
+    isPendingReview: boolean;
     readonly internalId: string | null;
 }
 
