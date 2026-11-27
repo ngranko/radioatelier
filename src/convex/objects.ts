@@ -98,6 +98,7 @@ export const create = mutation({
             tagIds: data.tagIds,
             isPublic: data.isPublic,
             isRemoved: data.isRemoved,
+            isPendingReview: false,
             latitude: data.latitude,
             longitude: data.longitude,
             address: data.address,
@@ -157,7 +158,7 @@ export const update = mutation({
             address: data.address,
             city: data.city,
             country: data.country,
-            isPendingReview: wasApproved ? false : undefined,
+            isPendingReview: false,
         });
         await replaceObjectImages(ctx, id, user._id, data.imageIds);
 

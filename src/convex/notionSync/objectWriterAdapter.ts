@@ -76,6 +76,7 @@ export function buildSyncCreateData(
         coverId: null,
         categoryId: classification.categoryId,
         isPublic: false,
+        isPendingReview: false,
         tagIds: classification.tagIds,
         latitude: input.latitude,
         longitude: input.longitude,

@@ -43,6 +43,7 @@ const createData: ObjectRecordData = {
     tagIds: [],
     isPublic: true,
     isRemoved: false,
+    isPendingReview: false,
     latitude: 55.75,
     longitude: 37.61,
     address: 'Tverskaya 1',

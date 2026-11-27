@@ -274,6 +274,7 @@ export const importBatch = mutation({
                     coverId: null,
                     categoryId,
                     isPublic: row.isPublic,
+                    isPendingReview: false,
                     tagIds,
                     latitude: coordinates.latitude,
                     longitude: coordinates.longitude,
