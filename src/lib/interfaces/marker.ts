@@ -13,6 +13,7 @@ export interface MarkerOptions {
     source: MarkerSource;
     isVisited?: boolean;
     isRemoved?: boolean;
+    isPendingReview?: boolean;
     onClick?: () => void;
     onDragStart?: () => void;
     onDragEnd?: () => void;
@@ -27,6 +28,7 @@ export type MarkerStyleUpdate = Pick<MarkerOptions, 'icon' | 'iconKey' | 'iconCl
 export interface MarkerStateUpdate {
     isVisited?: boolean;
     isRemoved?: boolean;
+    isPendingReview?: boolean;
 }
 
 export interface MarkerListItem {
@@ -37,4 +39,5 @@ export interface MarkerListItem {
     isRemoved: boolean;
     isPublic: boolean;
     isOwner: boolean;
+    isPendingReview: boolean;
 }

@@ -1,5 +1,5 @@
 import type {LatLngLiteral, MarkerHandle} from '$lib/interfaces/map';
-import type {MarkerOptions, MarkerStyleUpdate} from '$lib/interfaces/marker';
+import type {MarkerOptions, MarkerStateUpdate, MarkerStyleUpdate} from '$lib/interfaces/marker';
 
 export class Marker {
     private handle?: MarkerHandle;
@@ -10,6 +10,7 @@ export class Marker {
     public isDragged = false;
     private isVisited = false;
     private isRemoved = false;
+    private isPendingReview = false;
 
     public constructor(
         private position: LatLngLiteral,
@@ -17,6 +18,7 @@ export class Marker {
     ) {
         this.isVisited = Boolean(options.isVisited);
         this.isRemoved = Boolean(options.isRemoved);
+        this.isPendingReview = Boolean(options.isPendingReview);
     }
 
     public getPosition(): LatLngLiteral {
@@ -53,15 +55,22 @@ export class Marker {
     }
 
     public getState() {
-        return {isVisited: this.isVisited, isRemoved: this.isRemoved};
+        return {
+            isVisited: this.isVisited,
+            isRemoved: this.isRemoved,
+            isPendingReview: this.isPendingReview,
+        };
     }
 
-    public setState(update: {isVisited?: boolean; isRemoved?: boolean}) {
+    public setState(update: MarkerStateUpdate) {
         if (update.isVisited !== undefined) {
             this.isVisited = update.isVisited;
         }
         if (update.isRemoved !== undefined) {
             this.isRemoved = update.isRemoved;
+        }
+        if (update.isPendingReview !== undefined) {
+            this.isPendingReview = update.isPendingReview;
         }
     }
 

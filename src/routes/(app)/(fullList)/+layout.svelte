@@ -185,6 +185,7 @@
             isRemoved: renderedObject.isRemoved,
             isPublic: renderedObject.isPublic,
             isOwner: renderedObject.isOwner,
+            isPendingReview: renderedObject.isPendingReview,
             isVisited: visitedObjectIdSet.has(renderedObject.id) || renderedObject.isVisited,
         };
     }
@@ -234,6 +235,7 @@
                 lng={point.longitude}
                 isVisited={point.isVisited}
                 isRemoved={point.isRemoved}
+                isPendingReview={point.isPendingReview}
                 isDraggable={point.isOwner}
                 icon={markerIcon.component}
                 iconKey={category.markerIcon as MarkerIconKey}
